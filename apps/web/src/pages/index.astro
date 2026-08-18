@@ -1,0 +1,61 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import { listProjects } from "../lib/api";
+
+const featured = await listProjects({ featured: true, limit: 6 });
+---
+
+<BaseLayout
+  title="Studio Arsitektur"
+  description="Pahlevi Dirga merancang hunian, ruang komersial, dan interior yang tenang, tahan lama, dan sesuai iklim tropis Indonesia."
+>
+  <section class="hero shell">
+    <p class="eyebrow">Arsitektur &amp; Interior</p>
+    <h1>Ruang yang menua dengan baik.</h1>
+    <p class="lede">
+      Kami merancang hunian dan ruang komersial di Indonesia — memperhatikan
+      cahaya, aliran udara, dan material yang jujur, agar bangunan tetap
+      relevan jauh setelah selesai dibangun.
+    </p>
+    <a href="/proyek" class="button">Lihat proyek</a>
+  </section>
+
+  <section class="section shell">
+    <p class="eyebrow">Pilihan proyek</p>
+
+    {
+      featured.length > 0 ? (
+        <ul class="project-grid">
+          {featured.map((project, index) => (
+            <ProjectCard project={project} priority={index < 2} />
+          ))}
+        </ul>
+      ) : (
+        <p class="lede">
+          Belum ada proyek yang dipublikasikan. Tandai proyek sebagai
+          <em>featured</em> di panel admin agar tampil di sini.
+        </p>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-block: clamp(4rem, 12vw, 10rem) var(--stack);
+  }
+
+  .hero h1 {
+    max-width: 16ch;
+    margin-bottom: 2rem;
+  }
+
+  .hero .lede {
+    margin-bottom: 2.5rem;
+  }
+
+  .button {
+    text-decoration: none;
+  }
+</style>

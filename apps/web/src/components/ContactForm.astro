@@ -1,0 +1,136 @@
+---
+// Widget Turnstile hanya dirender kalau site key sudah diisi, supaya form
+// tetap bisa dipakai saat development.
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+---
+
+<form id="contact-form" novalidate>
+  <div class="field">
+    <label for="name">Nama</label>
+    <input id="name" name="name" type="text" required minlength="2" maxlength="120" autocomplete="name" />
+  </div>
+
+  <div class="field">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required autocomplete="email" />
+  </div>
+
+  <div class="field">
+    <label for="phone">Telepon / WhatsApp (opsional)</label>
+    <input id="phone" name="phone" type="tel" maxlength="32" autocomplete="tel" />
+  </div>
+
+  <div class="field">
+    <label for="projectType">Jenis proyek</label>
+    <select id="projectType" name="projectType">
+      <option value="">Belum ditentukan</option>
+      <option value="residential">Hunian</option>
+      <option value="commercial">Komersial</option>
+      <option value="interior">Interior</option>
+      <option value="landscape">Lanskap</option>
+      <option value="masterplan">Masterplan</option>
+      <option value="renovation">Renovasi</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="budgetRange">Perkiraan anggaran (opsional)</label>
+    <input id="budgetRange" name="budgetRange" type="text" maxlength="80" placeholder="mis. 500 juta – 1 miliar" />
+  </div>
+
+  <div class="field">
+    <label for="message">Ceritakan rencana Anda</label>
+    <textarea id="message" name="message" required minlength="10" maxlength="5000"></textarea>
+  </div>
+
+  <div class="honeypot" aria-hidden="true">
+    <label for="website">Website</label>
+    <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  {turnstileSiteKey && <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="light" />}
+
+  <button type="submit" class="button">Kirim pesan</button>
+
+  <p id="form-status" role="status" aria-live="polite" class="status"></p>
+</form>
+
+{
+  turnstileSiteKey && (
+    <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js" />
+  )
+}
+
+<script>
+  import { submitInquiry } from "../lib/api";
+
+  const form = document.querySelector<HTMLFormElement>("#contact-form");
+  const status = document.querySelector<HTMLParagraphElement>("#form-status");
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const button = form.querySelector<HTMLButtonElement>("button[type=submit]");
+    const data = new FormData(form);
+
+    if (button) button.disabled = true;
+    if (status) {
+      status.textContent = "Mengirim…";
+      status.dataset.state = "pending";
+    }
+
+    try {
+      await submitInquiry({
+        name: String(data.get("name") ?? ""),
+        email: String(data.get("email") ?? ""),
+        phone: String(data.get("phone") ?? ""),
+        projectType: String(data.get("projectType") ?? ""),
+        budgetRange: String(data.get("budgetRange") ?? ""),
+        message: String(data.get("message") ?? ""),
+        website: String(data.get("website") ?? ""),
+        turnstileToken: String(data.get("cf-turnstile-response") ?? ""),
+      });
+
+      form.reset();
+      if (status) {
+        status.textContent = "Terima kasih. Kami akan menghubungi Anda dalam 1–2 hari kerja.";
+        status.dataset.state = "success";
+      }
+    } catch (error) {
+      if (status) {
+        status.textContent = (error as Error).message;
+        status.dataset.state = "error";
+      }
+      // Token Turnstile sekali pakai; minta yang baru supaya percobaan
+      // berikutnya tidak otomatis ditolak.
+      window.turnstile?.reset();
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  form {
+    max-width: 34rem;
+  }
+
+  .status {
+    margin-top: 1.25rem;
+    font-size: 0.9rem;
+    min-height: 1.4em;
+  }
+
+  .status[data-state="error"] {
+    color: #a3392c;
+  }
+
+  .status[data-state="success"] {
+    color: var(--accent);
+  }
+</style>

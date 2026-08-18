@@ -1,0 +1,65 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Tentang"
+  description="Profil studio arsitektur Pahlevi Dirga: pendekatan, layanan, dan cara kami bekerja."
+>
+  <section class="section shell">
+    <p class="eyebrow">Studio</p>
+    <h1>Tentang</h1>
+
+    <div class="prose">
+      <p class="lede">
+        Ganti teks ini dengan profil studio Anda — kapan berdiri, siapa di
+        baliknya, dan apa yang membedakan cara kerjanya.
+      </p>
+
+      <h2>Pendekatan</h2>
+      <p>
+        Jelaskan filosofi desain studio: bagaimana iklim tropis, konteks
+        lingkungan, dan kebutuhan penghuni memengaruhi setiap keputusan
+        rancangan.
+      </p>
+
+      <h2>Layanan</h2>
+      <ul>
+        <li>Perancangan arsitektur</li>
+        <li>Desain interior</li>
+        <li>Perizinan dan dokumen teknis</li>
+        <li>Pengawasan berkala pelaksanaan</li>
+      </ul>
+
+      <h2>Proses</h2>
+      <p>
+        Uraikan tahapan kerja dari konsultasi awal, konsep, pengembangan
+        desain, dokumen konstruksi, hingga pendampingan pembangunan.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: 2.5rem;
+  }
+
+  .prose {
+    max-width: var(--measure);
+  }
+
+  .prose h2 {
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose ul {
+    padding-left: 1.2rem;
+    color: var(--ink-soft);
+  }
+
+  .prose li {
+    margin-bottom: 0.4rem;
+  }
+</style>

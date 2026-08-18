@@ -1,0 +1,45 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="shell footer-inner">
+    <div>
+      <p class="footer-name">Pahlevi Dirga</p>
+      <p class="footer-note">Arsitektur &amp; Interior — Indonesia</p>
+    </div>
+    <div>
+      <p class="footer-note">
+        <a href="mailto:studio@pahlevidirga.com">studio@pahlevidirga.com</a>
+      </p>
+      <p class="footer-note">&copy; {year}</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--line);
+    margin-top: var(--stack);
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+    padding-block: 3rem;
+  }
+
+  .footer-name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .footer-note {
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+</style>

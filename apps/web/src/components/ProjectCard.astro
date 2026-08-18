@@ -1,0 +1,73 @@
+---
+import { CATEGORY_LABELS, type Project } from "../lib/api";
+
+interface Props {
+  project: Project;
+  /** Kartu pertama di viewport dimuat eager supaya LCP tidak tertunda. */
+  priority?: boolean;
+}
+
+const { project, priority = false } = Astro.props;
+const meta = [project.city ?? project.location, project.year].filter(Boolean).join(" · ");
+---
+
+<li class="card" data-category={project.category}>
+  <a href={`/proyek/${project.slug}`}>
+    {
+      project.coverImageUrl ? (
+        <img
+          src={project.coverImageUrl}
+          alt={`Foto proyek ${project.title}`}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          fetchpriority={priority ? "high" : "auto"}
+        />
+      ) : (
+        <div class="placeholder" aria-hidden="true" />
+      )
+    }
+    <div class="caption">
+      <p class="category">{CATEGORY_LABELS[project.category]}</p>
+      <h3>{project.title}</h3>
+      {meta && <p class="meta">{meta}</p>}
+    </div>
+  </a>
+</li>
+
+<style>
+  .card a {
+    display: block;
+    text-decoration: none;
+  }
+
+  .card img,
+  .placeholder {
+    aspect-ratio: 4 / 3;
+    width: 100%;
+    object-fit: cover;
+    background: var(--paper-alt);
+    transition: opacity 0.3s ease;
+  }
+
+  .card a:hover img {
+    opacity: 0.88;
+  }
+
+  .caption {
+    padding-top: 1rem;
+  }
+
+  .category {
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.35rem;
+  }
+
+  .meta {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0.35rem 0 0;
+  }
+</style>

@@ -1,0 +1,79 @@
+---
+const links = [
+  { href: "/proyek", label: "Proyek" },
+  { href: "/tentang", label: "Tentang" },
+  { href: "/kontak", label: "Kontak" },
+];
+
+const current = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="shell header-inner">
+    <a href="/" class="wordmark">Pahlevi Dirga</a>
+    <nav aria-label="Navigasi utama">
+      <ul>
+        {
+          links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                aria-current={current.startsWith(link.href) ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(8px);
+    z-index: 10;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-block: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+
+  nav ul {
+    display: flex;
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  nav a {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink-soft);
+  }
+
+  nav a:hover,
+  nav a[aria-current="page"] {
+    color: var(--ink);
+  }
+</style>

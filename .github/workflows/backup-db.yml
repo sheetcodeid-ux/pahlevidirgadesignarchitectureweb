@@ -1,0 +1,44 @@
+name: Backup database
+
+# Supabase free tier tidak menyediakan backup otomatis maupun PITR, jadi
+# dump harian ini adalah satu-satunya jaring pengaman kalau data terhapus.
+on:
+  schedule:
+    - cron: "0 19 * * *" # 02:00 WIB
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pasang klien Postgres 17
+        run: |
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client-17
+
+      - name: Dump database
+        env:
+          # Pakai koneksi langsung (port 5432), bukan pooler — pg_dump butuh
+          # session penuh dan prepared statement.
+          DATABASE_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
+        run: |
+          pg_dump "$DATABASE_URL" \
+            --format=custom \
+            --no-owner \
+            --no-privileges \
+            --schema=public \
+            --file="backup-$(date -u +%Y%m%d).dump"
+
+      - name: Unggah ke R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BACKUP_BUCKET: ${{ vars.R2_BACKUP_BUCKET }}
+        run: |
+          aws s3 cp "backup-$(date -u +%Y%m%d).dump" \
+            "s3://${R2_BACKUP_BUCKET}/postgres/" \
+            --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"

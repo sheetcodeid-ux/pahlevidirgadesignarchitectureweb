@@ -1,0 +1,176 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { listProjects, getProject, CATEGORY_LABELS, type Project } from "../../lib/api";
+
+// Satu halaman statis per proyek published, dibangun saat deploy.
+export async function getStaticPaths() {
+  const projects = await listProjects({ limit: 200 });
+
+  const detailed = await Promise.all(
+    projects.map(async (summary) => (await getProject(summary.slug)) ?? summary),
+  );
+
+  return detailed.map((project) => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+
+const facts = [
+  { label: "Lokasi", value: [project.location, project.city].filter(Boolean).join(", ") },
+  { label: "Tahun", value: project.year?.toString() },
+  { label: "Kategori", value: CATEGORY_LABELS[project.category] },
+  { label: "Klien", value: project.client },
+  { label: "Luas", value: project.areaSqm ? `${project.areaSqm} m²` : undefined },
+  { label: "Arsitek utama", value: project.leadArchitect },
+].filter((fact) => fact.value);
+---
+
+<BaseLayout
+  title={project.seoTitle ?? project.title}
+  description={project.seoDescription ?? project.summary}
+  image={project.coverImageUrl}
+>
+  <article>
+    {
+      project.coverImageUrl && (
+        <img
+          class="cover"
+          src={project.coverImageUrl}
+          alt={`Foto utama proyek ${project.title}`}
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+      )
+    }
+
+    <header class="shell section">
+      <p class="eyebrow">{CATEGORY_LABELS[project.category]}</p>
+      <h1>{project.title}</h1>
+      {project.subtitle && <p class="lede">{project.subtitle}</p>}
+    </header>
+
+    <div class="shell body">
+      <div class="prose">
+        {project.summary && <p class="lede">{project.summary}</p>}
+        {project.description && <p>{project.description}</p>}
+      </div>
+
+      {
+        facts.length > 0 && (
+          <dl class="facts">
+            {facts.map((fact) => (
+              <div>
+                <dt>{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+    </div>
+
+    {
+      project.images && project.images.length > 0 && (
+        <section class="shell section gallery">
+          {project.images.map((image) => (
+            <figure>
+              <img
+                src={image.url}
+                alt={image.altText ?? `Dokumentasi proyek ${project.title}`}
+                width={image.width}
+                height={image.height}
+                loading="lazy"
+                decoding="async"
+              />
+              {image.caption && <figcaption>{image.caption}</figcaption>}
+            </figure>
+          ))}
+        </section>
+      )
+    }
+
+    <nav class="shell back">
+      <a href="/proyek">← Semua proyek</a>
+    </nav>
+  </article>
+</BaseLayout>
+
+<style>
+  .cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--paper-alt);
+  }
+
+  header h1 {
+    margin-bottom: 1.5rem;
+  }
+
+  .body {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  @media (max-width: 48rem) {
+    .body {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .facts {
+    margin: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .facts > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .facts dt {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .facts dd {
+    margin: 0;
+    font-size: 0.9rem;
+    text-align: right;
+  }
+
+  .gallery {
+    display: grid;
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .gallery figure {
+    margin: 0;
+  }
+
+  .gallery figcaption {
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    padding-top: 0.75rem;
+  }
+
+  .back {
+    padding-bottom: var(--stack);
+    font-size: 0.85rem;
+  }
+</style>

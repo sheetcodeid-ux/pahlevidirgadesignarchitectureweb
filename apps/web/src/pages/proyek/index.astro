@@ -1,0 +1,99 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import { listProjects, CATEGORY_LABELS, type ProjectCategory } from "../../lib/api";
+
+const projects = await listProjects({ limit: 48 });
+
+// Filter dibangun dari data yang benar-benar ada, bukan dari daftar statis —
+// kategori kosong tidak perlu ditampilkan.
+const categories = [...new Set(projects.map((p) => p.category))] as ProjectCategory[];
+---
+
+<BaseLayout
+  title="Proyek"
+  description="Arsip proyek arsitektur dan interior yang telah diselesaikan studio Pahlevi Dirga."
+>
+  <section class="section shell">
+    <p class="eyebrow">Arsip</p>
+    <h1>Proyek</h1>
+
+    {
+      categories.length > 1 && (
+        <div class="filters" role="group" aria-label="Saring berdasarkan kategori">
+          <button type="button" class="filter is-active" data-category="all">
+            Semua
+          </button>
+          {categories.map((category) => (
+            <button type="button" class="filter" data-category={category}>
+              {CATEGORY_LABELS[category]}
+            </button>
+          ))}
+        </div>
+      )
+    }
+
+    {
+      projects.length > 0 ? (
+        <ul class="project-grid" id="project-grid">
+          {projects.map((project, index) => (
+            <ProjectCard project={project} priority={index < 3} />
+          ))}
+        </ul>
+      ) : (
+        <p class="lede">Belum ada proyek yang dipublikasikan.</p>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<script>
+  // Penyaringan dilakukan di klien terhadap kartu yang sudah ter-render.
+  // Jumlah proyek studio ada di orde puluhan, jadi tidak perlu request ulang.
+  const grid = document.querySelector<HTMLUListElement>("#project-grid");
+  const filters = document.querySelectorAll<HTMLButtonElement>(".filter");
+
+  filters.forEach((filter) => {
+    filter.addEventListener("click", () => {
+      const selected = filter.dataset.category ?? "all";
+
+      filters.forEach((f) => f.classList.toggle("is-active", f === filter));
+
+      grid?.querySelectorAll<HTMLLIElement>("li").forEach((card) => {
+        card.hidden = selected !== "all" && card.dataset.category !== selected;
+      });
+    });
+  });
+</script>
+
+<style>
+  h1 {
+    margin-bottom: 2.5rem;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .filter {
+    background: none;
+    border: 0;
+    padding: 0.25rem 0;
+    font: inherit;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+  }
+
+  .filter:hover,
+  .filter.is-active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+</style>

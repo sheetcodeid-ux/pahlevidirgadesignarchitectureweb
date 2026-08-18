@@ -1,0 +1,67 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ContactForm from "../components/ContactForm.astro";
+---
+
+<BaseLayout
+  title="Kontak"
+  description="Hubungi studio Pahlevi Dirga untuk konsultasi proyek arsitektur dan interior."
+>
+  <section class="section shell layout">
+    <div>
+      <p class="eyebrow">Mulai percakapan</p>
+      <h1>Kontak</h1>
+      <p class="lede">
+        Ceritakan lokasi, perkiraan luas, dan target waktu proyek Anda. Kami
+        membalas setiap pesan dalam 1–2 hari kerja.
+      </p>
+
+      <dl class="contact-details">
+        <div>
+          <dt>Email</dt>
+          <dd><a href="mailto:studio@pahlevidirga.com">studio@pahlevidirga.com</a></dd>
+        </div>
+        <div>
+          <dt>Studio</dt>
+          <dd>Indonesia</dd>
+        </div>
+      </dl>
+    </div>
+
+    <ContactForm />
+  </section>
+</BaseLayout>
+
+<style>
+  .layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  h1 {
+    margin-bottom: 1.5rem;
+  }
+
+  .contact-details {
+    margin-top: 3rem;
+  }
+
+  .contact-details > div {
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .contact-details dt {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.25rem;
+  }
+
+  .contact-details dd {
+    margin: 0;
+  }
+</style>

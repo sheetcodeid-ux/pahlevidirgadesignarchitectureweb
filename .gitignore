@@ -1,0 +1,27 @@
+# Rahasia
+.env
+.env.*
+!.env.example
+
+# Go
+apps/api/bin/
+apps/api/tmp/
+
+# Node / Astro
+node_modules/
+apps/web/dist/
+apps/web/.astro/
+
+# Supabase CLI
+supabase/.branches/
+supabase/.temp/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Backup lokal
+*.dump
