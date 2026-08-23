@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import sitemap from "@astrojs/sitemap";
+import react from "@astrojs/react";
 
 const site = process.env.PUBLIC_SITE_URL ?? "https://pahlevidirga.com";
 
@@ -12,7 +13,11 @@ export default defineConfig({
   // kontak dikirim, jadi instance-nya nyaris selalu idle.
   output: "static",
 
-  integrations: [sitemap()],
+  integrations: [
+    // Halaman admin bertanda noindex; jangan diumumkan lewat sitemap.
+    sitemap({ filter: (url) => !url.includes("/admin") }),
+    react(),
+  ],
 
   build: {
     inlineStylesheets: "auto",

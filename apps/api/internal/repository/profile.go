@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -30,4 +32,21 @@ func (r *ProfileRepository) IsStaff(ctx context.Context, userID string) (bool, e
 		return false, fmt.Errorf("periksa status staf: %w", err)
 	}
 	return ada, nil
+}
+
+// Role mengembalikan peran staf: "admin" (master admin) atau "editor".
+// Peran kosong berarti user tidak terdaftar sebagai staf.
+func (r *ProfileRepository) Role(ctx context.Context, userID string) (string, error) {
+	var role string
+	err := r.pool.QueryRow(ctx,
+		`select role from public.profiles where id = $1::uuid`,
+		userID,
+	).Scan(&role)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("baca peran staf: %w", err)
+	}
+	return role, nil
 }

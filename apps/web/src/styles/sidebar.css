@@ -1,0 +1,208 @@
+/* =============================================================================
+   Sidebar admin.
+
+   Tiga wujud, satu markup:
+   - layar sempit  → drawer di luar layar, dibuka tombol
+   - layar sedang+ → kolom tetap
+   - disempitkan   → rail selebar ikon saja
+   ============================================================================= */
+
+.sidebar {
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--sidebar-w), 85vw);
+  background: var(--bg-sunken);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+  transition: transform var(--dur) var(--ease), width var(--dur) var(--ease);
+}
+
+.sidebar[data-open] { transform: translateX(0); box-shadow: var(--shadow-lg); }
+
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.sidebar-trigger { position: fixed; top: var(--space-3); left: var(--space-3); z-index: 50; }
+
+/* --- Kepala -------------------------------------------------------------- */
+
+.sidebar__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  min-height: var(--topbar-h);
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--text-strong);
+}
+
+.sidebar__mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+}
+
+.sidebar__wordmark {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__collapse { display: none; }
+.sidebar__close { display: inline-flex; }
+
+/* --- Daftar navigasi ----------------------------------------------------- */
+
+.sidebar__nav { flex: 1; overflow-y: auto; padding: var(--space-3); }
+.sidebar__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-base);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.sidebar__item:hover { background: var(--surface-raised); color: var(--text-strong); }
+
+/* Halaman aktif: pill terisi penuh — satu-satunya di sidebar pada satu waktu. */
+.sidebar__item[aria-current="page"] {
+  background: var(--surface-raised);
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+/* Grup yang salah satu anaknya aktif ditandai lebih halus daripada halaman
+   aktif itu sendiri, supaya tidak ada dua penanda yang bersaing. */
+.sidebar__item[data-active-branch] { color: var(--text-strong); font-weight: 600; }
+
+.sidebar__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sidebar__chevron {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-faint);
+  transition: transform var(--dur) var(--ease);
+}
+
+.sidebar__chevron[data-open] { transform: rotate(180deg); }
+
+/* --- Submenu ------------------------------------------------------------- */
+
+.sidebar__sub {
+  list-style: none;
+  margin: 2px 0 var(--space-2);
+  padding: 0 0 0 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: relative;
+}
+
+/* Garis penghubung vertikal — menandai bahwa anak-anak ini milik induknya. */
+.sidebar__sub::before {
+  content: "";
+  position: absolute;
+  left: 1.35rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 1px;
+  background: var(--border);
+}
+
+.sidebar__subitem {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.sidebar__subitem:hover { background: var(--surface-raised); color: var(--text-body); }
+.sidebar__subitem[aria-current="page"] { background: var(--surface-raised); color: var(--text-strong); font-weight: 600; }
+
+/* --- Kaki ---------------------------------------------------------------- */
+
+.sidebar__foot { padding: var(--space-3); border-top: 1px solid var(--border); }
+
+.sidebar__site {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.sidebar__site:hover { border-color: var(--border-strong); color: var(--text-strong); }
+.sidebar__site-text { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
+.sidebar__site-name { font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* --- Layar sedang ke atas ------------------------------------------------ */
+
+@media (min-width: 60rem) {
+  .sidebar { position: sticky; top: 0; height: 100dvh; transform: none; box-shadow: none; }
+  .sidebar-trigger,
+  .sidebar-scrim,
+  .sidebar__close { display: none; }
+  .sidebar__collapse { display: inline-flex; }
+
+  /* Rail sempit: label dan submenu disembunyikan, ikon tetap terbaca. */
+  .sidebar[data-collapsed] { width: 4.5rem; }
+  .sidebar[data-collapsed] .sidebar__wordmark,
+  .sidebar[data-collapsed] .sidebar__label,
+  .sidebar[data-collapsed] .sidebar__chevron,
+  .sidebar[data-collapsed] .sidebar__sub,
+  .sidebar[data-collapsed] .sidebar__site-text { display: none; }
+  .sidebar[data-collapsed] .sidebar__item { justify-content: center; padding-inline: 0; }
+  .sidebar[data-collapsed] .sidebar__site { justify-content: center; }
+  .sidebar[data-collapsed] .sidebar__head { flex-direction: column; gap: var(--space-3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar { transition: none; }
+}

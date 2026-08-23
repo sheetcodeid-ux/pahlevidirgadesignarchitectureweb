@@ -50,7 +50,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
   {turnstileSiteKey && <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="light" />}
 
-  <button type="submit" class="button">Kirim pesan</button>
+  <button type="submit" class="btn btn--primary btn--lg">Kirim pesan</button>
 
   <p id="form-status" role="status" aria-live="polite" class="status"></p>
 </form>
@@ -127,10 +127,10 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
   }
 
   .status[data-state="error"] {
-    color: #a3392c;
+    color: var(--brand);
   }
 
   .status[data-state="success"] {
-    color: var(--accent);
+    color: var(--success);
   }
 </style>

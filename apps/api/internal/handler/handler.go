@@ -15,6 +15,7 @@ type Handler struct {
 	cfg       *config.Config
 	projects  *repository.ProjectRepository
 	inquiries *repository.InquiryRepository
+	profiles  *repository.ProfileRepository
 	storage   *storage.R2
 	mailer    *mailer.Resend
 }
@@ -23,6 +24,7 @@ func New(
 	cfg *config.Config,
 	projects *repository.ProjectRepository,
 	inquiries *repository.InquiryRepository,
+	profiles *repository.ProfileRepository,
 	store *storage.R2,
 	mail *mailer.Resend,
 ) *Handler {
@@ -30,6 +32,7 @@ func New(
 		cfg:       cfg,
 		projects:  projects,
 		inquiries: inquiries,
+		profiles:  profiles,
 		storage:   store,
 		mailer:    mail,
 	}

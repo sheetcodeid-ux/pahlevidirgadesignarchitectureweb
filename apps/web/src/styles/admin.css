@@ -1,0 +1,133 @@
+/* Kerangka panel admin: sidebar + kolom kerja. */
+
+.admin { display: flex; min-height: 100dvh; }
+
+.admin__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--topbar-h);
+  padding: var(--space-3) clamp(var(--space-4), 3vw, var(--space-6));
+  padding-left: calc(clamp(var(--space-4), 3vw, var(--space-6)) + 3rem);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__crumb { min-width: 0; overflow: hidden; }
+.topbar__tools { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+
+.admin__content {
+  flex: 1;
+  width: 100%;
+  max-width: 82rem;
+  margin-inline: auto;
+  padding: clamp(var(--space-5), 4vw, var(--space-7)) clamp(var(--space-4), 3vw, var(--space-6)) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.page-head { display: flex; flex-direction: column; gap: var(--space-2); }
+.page-head .t-muted { max-width: var(--measure); margin: 0; }
+
+@media (min-width: 60rem) {
+  /* Tombol drawer hilang, jadi ruang kirinya dikembalikan. */
+  .topbar { padding-left: clamp(var(--space-4), 3vw, var(--space-6)); }
+}
+
+/* --- Penjaga akses ------------------------------------------------------- */
+
+.guard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: center;
+}
+
+.guard p { max-width: 42ch; margin: 0; }
+.guard--locked .icon-tile { margin-bottom: var(--space-2); }
+.guard .btn { margin-top: var(--space-2); }
+
+.guard__spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--text-strong);
+  animation: putar 700ms linear infinite;
+}
+
+@keyframes putar { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .guard__spinner { animation-duration: 2s; }
+}
+
+/* --- Galeri komponen ----------------------------------------------------- */
+
+.spec-section { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.spec-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+  gap: var(--space-4);
+}
+
+.spec-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.spec-demo__stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 3.5rem;
+}
+
+.spec-demo__stage--stack { flex-direction: column; align-items: stretch; }
+.spec-demo__name { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.spec-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: var(--space-3); }
+
+.swatch { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.swatch__chip {
+  height: 3rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.swatch__name { font-size: var(--text-2xs); color: var(--text-muted); font-family: var(--font-mono); }

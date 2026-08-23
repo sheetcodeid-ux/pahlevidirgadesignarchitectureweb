@@ -38,13 +38,25 @@ func (h *Handler) CreateUploadURL(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"data": target})
 }
 
-// Me mengembalikan identitas dari token, berguna untuk memverifikasi bahwa
-// alur login panel admin sudah tersambung benar.
+// Me mengembalikan identitas dan peran pemilik token.
+//
+// Peran dipakai frontend untuk menyembunyikan menu yang tidak relevan. Itu
+// kenyamanan, bukan keamanan: penjagaan sesungguhnya tetap di RequireStaff dan
+// pada tiap endpoint.
 func (h *Handler) Me(c *fiber.Ctx) error {
+	userID, _ := c.Locals("userID").(string)
+
+	role, err := h.profiles.Role(c.Context(), userID)
+	if err != nil {
+		return err
+	}
+
 	return c.JSON(fiber.Map{
 		"data": fiber.Map{
-			"id":    c.Locals("userID"),
-			"email": c.Locals("userEmail"),
+			"id":            userID,
+			"email":         c.Locals("userEmail"),
+			"role":          role,
+			"isMasterAdmin": role == "admin",
 		},
 	})
 }

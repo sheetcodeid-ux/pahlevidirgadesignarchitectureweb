@@ -1,0 +1,287 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { MasterGuard } from "../../components/admin/MasterGuard";
+import { Icon } from "../../components/ui/Icon";
+
+// Warna ditampilkan lewat variabel CSS-nya, bukan nilai heksa yang disalin.
+// Dengan begitu petak warna di halaman ini ikut berubah saat tema diganti,
+// dan tidak bisa hanyut berbeda dari token yang sebenarnya.
+const warna = [
+  { grup: "Permukaan", token: ["--bg", "--bg-sunken", "--surface", "--surface-raised", "--surface-hover"] },
+  { grup: "Garis", token: ["--border", "--border-strong"] },
+  { grup: "Teks", token: ["--text-strong", "--text-body", "--text-muted", "--text-faint"] },
+  { grup: "Semantik", token: ["--brand", "--upgrade", "--warn", "--success", "--info"] },
+];
+
+const tombol = [
+  { kelas: "btn--primary", nama: "Primary", catatan: "Aksi utama. Satu per layar." },
+  { kelas: "btn--secondary", nama: "Secondary", catatan: "Aksi pendamping." },
+  { kelas: "btn--ghost", nama: "Ghost", catatan: "Aksi tersier, di dalam toolbar." },
+  { kelas: "btn--brand", nama: "Brand", catatan: "Aksi bertekanan tinggi." },
+  { kelas: "btn--upgrade", nama: "Upgrade", catatan: "Hanya untuk fitur berbayar." },
+  { kelas: "btn--danger", nama: "Danger", catatan: "Menghapus, memutus." },
+];
+
+const lencana = [
+  { kelas: "", nama: "Netral" },
+  { kelas: "badge--brand", nama: "Brand" },
+  { kelas: "badge--upgrade", nama: "Upgrade" },
+  { kelas: "badge--warn", nama: "Peringatan" },
+  { kelas: "badge--success", nama: "Sukses" },
+  { kelas: "badge--info", nama: "Info" },
+];
+
+const ikon = [
+  "dashboard", "project", "image", "inquiry", "component", "settings",
+  "logout", "chevronDown", "chevronRight", "chevronLeft", "sun", "moon",
+  "check", "plus", "search", "trash", "edit", "upload", "calendar",
+  "alert", "info", "lock", "external", "copy", "filter", "close",
+] as const;
+---
+
+<AdminLayout
+  title="UI Component"
+  heading="UI Component"
+  description="Sumber kebenaran komponen. Fitur baru mengambil dari sini — jangan membuat komponen baru tanpa mendaftarkannya."
+  isMasterAdmin={true}
+>
+  <MasterGuard client:load target="galeri" />
+
+  <div id="galeri" hidden class="stack" style="gap: var(--space-7)">
+    <!-- Token warna -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Token warna</h2>
+        <p class="t-muted" style="margin:0">Ganti tema di kanan atas — petak di bawah ikut berubah.</p>
+      </div>
+
+      {
+        warna.map((g) => (
+          <div class="stack" style="gap: var(--space-3)">
+            <p class="t-label" style="margin:0">{g.grup}</p>
+            <div class="spec-swatches">
+              {g.token.map((t) => (
+                <div class="swatch">
+                  <div class="swatch__chip" style={`background: var(${t})`} />
+                  <span class="swatch__name">{t}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </section>
+
+    <!-- Typography -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Typography</h2>
+        <p class="t-muted" style="margin:0">Serif untuk judul halaman, sans untuk perkakas, mono untuk data.</p>
+      </div>
+      <div class="spec-demo">
+        <div class="spec-demo__stage spec-demo__stage--stack">
+          <p class="t-display" style="margin:0">Selamat datang.</p>
+          <p class="t-title" style="margin:0">Judul halaman</p>
+          <p class="t-heading">Judul kartu</p>
+          <p class="t-subheading">Sub-judul</p>
+          <p class="t-body" style="margin:0">Teks isi — ukuran yang dipakai untuk hampir semua kalimat di panel ini.</p>
+          <p class="t-muted" style="margin:0">Teks pendukung yang lebih redup.</p>
+          <p class="t-label" style="margin:0">Label seksi</p>
+          <p class="t-mono" style="margin:0">082354860207 · Rp 120.000</p>
+          <p class="t-numeral" style="margin:0">28</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Button -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Button</h2>
+        <p class="t-muted" style="margin:0">Enam varian, masing-masing punya tugas tetap.</p>
+      </div>
+      <div class="spec-grid">
+        {
+          tombol.map((t) => (
+            <div class="spec-demo">
+              <div class="spec-demo__name">
+                <span class="t-subheading">{t.nama}</span>
+                <code class="swatch__name">.{t.kelas}</code>
+              </div>
+              <div class="spec-demo__stage">
+                <button type="button" class={`btn ${t.kelas}`}>Simpan</button>
+                <button type="button" class={`btn ${t.kelas} btn--sm`}>Kecil</button>
+                <button type="button" class={`btn ${t.kelas}`} disabled>Nonaktif</button>
+              </div>
+              <p class="t-muted" style="margin:0">{t.catatan}</p>
+            </div>
+          ))
+        }
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Dengan ikon</span>
+            <code class="swatch__name">.btn--icon</code>
+          </div>
+          <div class="spec-demo__stage">
+            <button type="button" class="btn btn--primary">
+              <Icon name="plus" size={16} />Tambah Proyek
+            </button>
+            <button type="button" class="btn btn--secondary btn--icon" aria-label="Sunting">
+              <Icon name="edit" size={16} />
+            </button>
+          </div>
+          <p class="t-muted" style="margin:0">Ikon selalu cocok dengan labelnya.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Badge -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Badge</h2>
+        <p class="t-muted" style="margin:0">Warnanya menyatakan makna, bukan selera.</p>
+      </div>
+      <div class="spec-demo">
+        <div class="spec-demo__stage">
+          {lencana.map((b) => <span class={`badge ${b.kelas}`}>{b.nama}</span>)}
+          <span class="badge badge--success"><span class="badge__dot" />Aktif</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Card -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Card</h2>
+        <p class="t-muted" style="margin:0">Tile ikon, judul, subjudul, isi, lalu baris aksi opsional.</p>
+      </div>
+      <div class="spec-grid">
+        <div class="card">
+          <div class="card__header">
+            <span class="icon-tile"><Icon name="project" size={20} /></span>
+            <span class="card__titles">
+              <span class="t-subheading">Rumah Tepi Sawah</span>
+              <span class="t-muted">Canggu, Badung · 2024</span>
+            </span>
+          </div>
+          <div class="card__body">
+            <p class="t-body" style="margin:0">
+              Hunian dua lantai dengan koridor angin melintang.
+            </p>
+          </div>
+          <div class="card__footer">
+            <span class="badge badge--success"><span class="badge__dot" />Published</span>
+            <button type="button" class="btn btn--secondary btn--sm">
+              <Icon name="edit" size={14} />Sunting
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <span class="icon-tile icon-tile--invert"><Icon name="inquiry" size={20} /></span>
+            <span class="card__titles">
+              <span class="t-subheading">Tile terbalik</span>
+              <span class="t-muted">Dipakai untuk judul halaman.</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <span class="icon-tile icon-tile--brand"><Icon name="alert" size={20} /></span>
+            <span class="card__titles">
+              <span class="t-subheading">Tile brand</span>
+              <span class="t-muted">Hanya untuk hal yang menuntut perhatian.</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Item -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Item</h2>
+        <p class="t-muted" style="margin:0">Baris yang bisa diklik — judul, deskripsi, jejak di kanan.</p>
+      </div>
+      <div class="spec-demo spec-demo__stage--stack">
+        <a href="#galeri" class="item item--bordered">
+          <span class="icon-tile icon-tile--sm"><Icon name="settings" size={16} /></span>
+          <span class="item__text">
+            <span class="item__title">Info Studio</span>
+            <span class="item__desc">Nama, kontak, dan alamat yang tampil di situs</span>
+          </span>
+          <span class="item__trail"><Icon name="chevronRight" size={18} /></span>
+        </a>
+        <button type="button" class="item item--danger">
+          <span class="icon-tile icon-tile--sm"><Icon name="logout" size={16} /></span>
+          <span class="item__text">
+            <span class="item__title">Keluar</span>
+            <span class="item__desc">Keluar dari akun ini</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Breadcrumb & Separator -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Breadcrumb &amp; Separator</h2>
+      </div>
+      <div class="spec-demo spec-demo__stage--stack">
+        <nav class="breadcrumb" aria-label="Contoh remah roti">
+          <a href="#galeri">Admin</a>
+          <span class="breadcrumb__sep" aria-hidden="true">/</span>
+          <a href="#galeri">Proyek</a>
+          <span class="breadcrumb__sep" aria-hidden="true">/</span>
+          <span aria-current="page">Rumah Tepi Sawah</span>
+        </nav>
+        <hr class="separator" />
+        <div class="row">
+          <span class="t-muted">Kiri</span>
+          <hr class="separator separator--vertical" style="height: 1.5rem" />
+          <span class="t-muted">Kanan</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Icon -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Icon</h2>
+        <p class="t-muted" style="margin:0">
+          SVG inline, semuanya pada grid 24 dengan stroke seragam. Tanpa emoji, tanpa icon-font.
+        </p>
+      </div>
+      <div class="spec-demo">
+        <div class="spec-swatches">
+          {
+            ikon.map((n) => (
+              <div class="swatch" style="align-items:center; text-align:center">
+                <span class="icon-tile"><Icon name={n} size={20} /></span>
+                <span class="swatch__name">{n}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Peta jalan -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Yang belum dibangun</h2>
+        <p class="t-muted" style="margin:0">Urutannya ada di docs/design-system.md.</p>
+      </div>
+      <div class="spec-demo">
+        <div class="spec-demo__stage">
+          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–1 selesai</span>
+          <span class="badge">Gelombang 2 · Form</span>
+          <span class="badge">Gelombang 3 · Overlay</span>
+          <span class="badge">Gelombang 4 · Data &amp; Chart</span>
+          <span class="badge">Gelombang 5 · Sisanya</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</AdminLayout>

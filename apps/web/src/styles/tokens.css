@@ -1,0 +1,177 @@
+/* =============================================================================
+   Token desain — sumber tunggal untuk warna, tipografi, radius, dan spasi.
+   Tidak ada nilai literal di dalam komponen; semuanya menunjuk ke sini.
+
+   Tema gelap adalah bawaan. Tema terang bukan hasil pembalikan otomatis —
+   setiap warna semantik punya nilai sendiri, karena amber dan hijau yang
+   terbaca jelas di atas hitam akan pudar di atas putih.
+   ============================================================================= */
+
+:root {
+  /* --- Tipografi ------------------------------------------------------- */
+  --font-display: "Newsreader", "Times New Roman", serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(2rem, 4vw, 2.75rem);
+  --text-4xl: clamp(2.5rem, 6vw, 4rem);
+
+  --tracking-label: 0.12em;
+  --tracking-tight: -0.015em;
+
+  /* --- Radius ----------------------------------------------------------- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
+
+  /* --- Spasi ------------------------------------------------------------ */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --sidebar-w: 17rem;
+  --topbar-h: 4.25rem;
+  --measure: 68ch;
+
+  /* --- Gerak ------------------------------------------------------------ */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+
+  /* --- Warna: tema GELAP (bawaan) --------------------------------------- */
+  --bg: #0a0a0a;
+  --bg-sunken: #000000;
+  --surface: #141414;
+  --surface-raised: #1c1c1c;
+  --surface-hover: #232323;
+
+  --border: #272727;
+  --border-strong: #3a3a3a;
+
+  --text-strong: #fafafa;
+  --text-body: #e4e4e4;
+  --text-muted: #a0a0a0;
+  --text-faint: #6b6b6b;
+
+  /* Aksi utama membalik terhadap latar */
+  --action: #fafafa;
+  --action-ink: #0a0a0a;
+
+  --brand: #ef2b26;
+  --brand-ink: #ffffff;
+  --brand-soft: #2a0f0e;
+  --brand-line: #7a1a18;
+
+  --upgrade: #8b5cf6;
+  --upgrade-ink: #ffffff;
+  --upgrade-soft: #1d1630;
+
+  --warn: #f0a92c;
+  --warn-soft: #241a09;
+  --warn-line: #6b4c12;
+
+  --success: #35c76a;
+  --success-soft: #0d2416;
+
+  --info: #4a8ef0;
+  --info-soft: #0e1c30;
+
+  --focus: #7fb2ff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.65);
+
+  color-scheme: dark;
+}
+
+/* --- Warna: tema TERANG ------------------------------------------------- */
+/* Nilai aksen sengaja digelapkan; amber dan hijau versi gelap tidak cukup
+   kontras di atas putih. */
+:root[data-theme="light"] {
+  --bg: #f7f7f5;
+  --bg-sunken: #ffffff;
+  --surface: #ffffff;
+  --surface-raised: #f1f1ef;
+  --surface-hover: #e8e8e5;
+
+  --border: #e2e2de;
+  --border-strong: #c9c9c3;
+
+  --text-strong: #0d0d0c;
+  --text-body: #262624;
+  --text-muted: #5e5e5a;
+  --text-faint: #8b8b86;
+
+  --action: #0d0d0c;
+  --action-ink: #ffffff;
+
+  --brand: #cf1b17;
+  --brand-ink: #ffffff;
+  --brand-soft: #fdecec;
+  --brand-line: #f3b9b7;
+
+  --upgrade: #6d34d6;
+  --upgrade-ink: #ffffff;
+  --upgrade-soft: #f2ecfd;
+
+  --warn: #9a6206;
+  --warn-soft: #fdf3e0;
+  --warn-line: #e9cd97;
+
+  --success: #167a3d;
+  --success-soft: #e7f6ed;
+
+  --info: #1d5fc4;
+  --info-soft: #e8f0fd;
+
+  --focus: #1d5fc4;
+
+  --shadow-sm: 0 1px 2px rgba(13, 13, 12, 0.07);
+  --shadow-md: 0 8px 24px rgba(13, 13, 12, 0.1);
+  --shadow-lg: 0 24px 60px rgba(13, 13, 12, 0.14);
+
+  color-scheme: light;
+}
+
+/* Transisi tema. Hanya properti warna yang dianimasikan supaya layout tidak
+   ikut bergoyang. Kelas dipasang sesaat oleh skrip toggle lalu dilepas, agar
+   interaksi lain tetap responsif. */
+:root.theme-switching,
+:root.theme-switching *,
+:root.theme-switching *::before,
+:root.theme-switching *::after {
+  transition:
+    background-color var(--dur-slow) var(--ease),
+    border-color var(--dur-slow) var(--ease),
+    color var(--dur-slow) var(--ease),
+    fill var(--dur-slow) var(--ease),
+    stroke var(--dur-slow) var(--ease),
+    box-shadow var(--dur-slow) var(--ease) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root.theme-switching,
+  :root.theme-switching *,
+  :root.theme-switching *::before,
+  :root.theme-switching *::after {
+    transition: none !important;
+  }
+}

@@ -70,6 +70,7 @@ func run() error {
 		cfg,
 		repository.NewProjectRepository(pool, cfg.R2PublicBaseURL),
 		repository.NewInquiryRepository(pool),
+		profiles,
 		store,
 		mailer.NewResend(cfg.ResendAPIKey, cfg.InquiryFrom),
 	)

@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import "../styles/components.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 
@@ -23,7 +24,7 @@ const studioName = "Pahlevi Dirga";
 ---
 
 <!doctype html>
-<html lang="id">
+<html lang="id" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,8 +45,20 @@ const studioName = "Pahlevi Dirga";
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
     />
+
+    <script is:inline>
+      (function () {
+        try {
+          var simpan = localStorage.getItem("tema");
+          var sistem = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          document.documentElement.setAttribute("data-theme", simpan || sistem);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
 
     <script
       is:inline

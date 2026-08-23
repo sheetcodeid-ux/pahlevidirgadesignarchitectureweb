@@ -70,9 +70,29 @@ menambah assertion, buktikan ia merah dulu sebelum dibuat hijau.
 
 ## Desain
 
-Bahasa visual: **neo-brutalism**, gabungan inspirasi dari Wise, Framer, dan
-Gumroad. Referensi visual datang dari pemilik berupa gambar; jangan mengarang
-arah visual sendiri.
+Berlaku untuk **seluruh situs**, publik maupun admin — bukan panel admin saja.
+
+Arah visualnya diturunkan dari 27 tangkapan layar referensi milik pemilik:
+gelap sebagai bawaan, radius besar, border 1px yang nyaris tak terlihat, tanpa
+bayangan keras. Pemilik menyebutnya "neo-brutalism"; wujud yang sebenarnya
+lebih dekat ke dark premium SaaS, dan itulah yang ditiru.
+
+Aturan yang mengikat:
+
+1. **Warna punya makna tetap.** Putih/hitam = aksi utama, merah = brand dan
+   destruktif, amber = terbatas atau terkunci sebagian, ungu = upgrade dan
+   fitur berbayar, hijau = status hidup dan konfirmasi, biru = penjelasan.
+   Ungu tidak pernah dipakai untuk aksi biasa.
+2. **Serif untuk judul halaman dan momen bernada manusia; sans untuk perkakas;
+   mono untuk data dan angka.** Newsreader / Plus Jakarta Sans / IBM Plex Mono.
+3. **Ikon selalu SVG inline** dari `apps/web/src/components/ui/Icon.tsx`. Tanpa
+   emoji, tanpa icon-font. Ikon wajib cocok maknanya dengan label di sebelahnya.
+4. **Tidak ada nilai warna literal di komponen.** Semuanya menunjuk token di
+   `apps/web/src/styles/tokens.css`.
+5. **Tema terang bukan pembalikan otomatis.** Tiap warna semantik punya nilai
+   sendiri per tema, karena amber dan hijau versi gelap pudar di atas putih.
+6. **Responsif wajib**, termasuk ponsel sempit. Tidak boleh ada gulir
+   horizontal pada badan halaman.
 
 **Halaman UI Component adalah satu-satunya sumber kebenaran komponen.** Hanya
 master admin yang bisa membukanya. Saat membangun fitur baru, ambil komponen
@@ -80,10 +100,16 @@ dari sana — jangan membuat komponen baru kecuali diminta, dan kalau membuat,
 daftarkan ke halaman itu. Inventaris dan urutan pengerjaan ada di
 `docs/design-system.md`.
 
-Catatan: `apps/web/src/styles/global.css` masih memakai palet editorial hangat
-(kertas/tinta, Cormorant Garamond) dari scaffold awal. Itu **belum** diselaraskan
-dengan arah neo-brutalism dan perlu diputuskan apakah situs publik ikut berubah
-atau hanya panel admin.
+Frontend memakai Astro dengan island React untuk komponen interaktif. Primitif
+headless dipakai untuk lapisan perilaku overlay (focus trap, ARIA, penempatan);
+seluruh tampilan tetap ditulis sendiri.
+
+**Penjagaan halaman UI Component adalah penjagaan tampilan, bukan keamanan.**
+Situs ini statis, jadi markup-nya sudah sampai di browser sebelum pemeriksaan
+berjalan. Itu diterima karena halaman itu hanya berisi contoh komponen. Kalau
+nanti ada halaman admin yang memuat data sungguhan, penjagaannya harus pindah
+ke edge (Cloudflare Access di depan `/admin/*`) — jangan mengandalkan
+`MasterGuard`.
 
 ## Perintah
 

@@ -77,8 +77,8 @@ ketimbang setelah 64 komponen terlanjur jadi.
 
 | Gelombang | Isi | Kenapa duluan |
 | --- | --- | --- |
-| 0 | Token: warna, tipografi, border, bayangan, radius, spasi. Ditambah Typography dan Button | Token yang mengunci bahasa visual. Semua gelombang berikutnya mewarisinya |
-| 1 | Sidebar, Navigation Menu, Breadcrumb, Card, Badge, Separator, Item — dan halaman UI Component itu sendiri | Ini yang diminta pertama, sekaligus wadah untuk memamerkan sisanya |
+| 0 ✅ | Token, Typography, Button | **Selesai** |
+| 1 ✅ | Sidebar, Breadcrumb, Card, Badge, Separator, Item, Icon, Theme Toggle, halaman UI Component | **Selesai** |
 | 2 | Seluruh kelompok Form | Yang dibutuhkan panel admin untuk benar-benar bekerja |
 | 3 | Seluruh kelompok Overlay | Paling berat; dikerjakan setelah bahasa visual mantap |
 | 4 | Data dan konten | Data Table, Chart, dan Calendar paling banyak permukaannya |
@@ -98,6 +98,30 @@ perlu, itu satu migrasi kecil.
 
 Endpoint `/api/v1/admin/me` saat ini belum mengembalikan `role`. Perlu
 ditambahkan sebelum halaman ini bisa menggatingkan aksesnya.
+
+## Tipografi
+
+| Peran | Typeface | Dipakai untuk |
+| --- | --- | --- |
+| Display | Newsreader | Judul halaman dan momen bernada manusia |
+| UI | Plus Jakarta Sans | Seluruh perkakas sehari-hari |
+| Data | IBM Plex Mono | Angka, kode, dan nilai yang berjajar |
+
+Plus Jakarta Sans dipilih bukan hanya karena bentuknya cocok — typeface itu
+dirancang di Indonesia untuk identitas kota Jakarta.
+
+## Tema terang dan gelap
+
+Gelap adalah bawaan; terang adalah pasangan yang setara, bukan renungan.
+Setiap warna semantik punya nilai sendiri di tiap tema — amber `#f0a92c` yang
+terbaca jelas di atas hitam menjadi `#9a6206` di atas putih. Membalik warna
+secara otomatis akan membuat sebagian teks tidak terbaca.
+
+Peralihannya dianimasikan: `ThemeToggle` memasang kelas `.theme-switching`
+sesaat sebelum mengganti atribut, sehingga halaman meluncur antar-warna alih-alih
+berkedip, lalu melepasnya lagi agar hover dan fokus tetap gesit. Skrip inline di
+`<head>` menetapkan tema sebelum paint pertama supaya tidak ada kedipan saat
+halaman dimuat.
 
 ## Aturan yang mengikat
 
