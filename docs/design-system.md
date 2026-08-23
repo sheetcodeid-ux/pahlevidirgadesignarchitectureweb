@@ -79,7 +79,7 @@ ketimbang setelah 64 komponen terlanjur jadi.
 | --- | --- | --- |
 | 0 ✅ | Token, Typography, Button | **Selesai** |
 | 1 ✅ | Sidebar, Breadcrumb, Card, Badge, Separator, Item, Icon, Theme Toggle, halaman UI Component | **Selesai** |
-| 2 | Seluruh kelompok Form | Yang dibutuhkan panel admin untuk benar-benar bekerja |
+| 2 ✅ | Seluruh kelompok Form | **Selesai** |
 | 3 | Seluruh kelompok Overlay | Paling berat; dikerjakan setelah bahasa visual mantap |
 | 4 | Data dan konten | Data Table, Chart, dan Calendar paling banyak permukaannya |
 | 5 | Sisanya | Bubble, Message, Message Scroller, Questionnaire, Marker, Attachment |

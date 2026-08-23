@@ -1,6 +1,7 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { MasterGuard } from "../../components/admin/MasterGuard";
+import { FormShowcase } from "../../components/admin/FormShowcase";
 import { Icon } from "../../components/ui/Icon";
 
 // Warna ditampilkan lewat variabel CSS-nya, bukan nilai heksa yang disalin.
@@ -267,6 +268,176 @@ const ikon = [
       </div>
     </section>
 
+
+    <!-- Form -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Form</h2>
+        <p class="t-muted" style="margin:0">
+          Dibangun di atas elemen HTML asli — yang diganti hanya penampilannya.
+        </p>
+      </div>
+
+      <div class="spec-grid">
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Input</span>
+            <code class="swatch__name">.field · .input</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <div class="field">
+              <label class="field__label" for="d-nama">
+                Nama proyek<span class="field__req" aria-hidden="true">*</span>
+              </label>
+              <input id="d-nama" class="input" type="text" placeholder="Rumah Tepi Sawah" />
+              <p class="field__help">Muncul sebagai judul di halaman publik.</p>
+            </div>
+
+            <div class="field" data-invalid>
+              <label class="field__label" for="d-slug">Slug</label>
+              <input id="d-slug" class="input input--mono" type="text" value="rumah tepi sawah" aria-invalid="true" aria-describedby="d-slug-err" />
+              <p class="field__error" id="d-slug-err">
+                <Icon name="alert" size={15} />
+                Slug tidak boleh mengandung spasi.
+              </p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="d-mati">Dikunci</label>
+              <input id="d-mati" class="input" type="text" value="Tidak bisa diubah" disabled />
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Textarea &amp; Select</span>
+            <code class="swatch__name">.input--area · .select</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <div class="field">
+              <label class="field__label" for="d-desc">Deskripsi</label>
+              <textarea id="d-desc" class="input input--area" placeholder="Ceritakan konteks tapak dan keputusan rancangannya…"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="d-kat">Kategori</label>
+              <span class="select">
+                <select id="d-kat" class="input">
+                  <option>Hunian</option>
+                  <option>Komersial</option>
+                  <option>Interior</option>
+                  <option>Renovasi</option>
+                </select>
+                <span class="select__chevron"><Icon name="chevronDown" size={16} /></span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Input Group</span>
+            <code class="swatch__name">.input-group · .input-affix</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <div class="field">
+              <label class="field__label" for="d-kode">Kode referral</label>
+              <div class="input-group">
+                <input id="d-kode" class="input input--mono" type="text" placeholder="STUDIO-2026" />
+                <button type="button" class="btn btn--secondary">Periksa</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="d-luas">Luas bangunan</label>
+              <div class="input-affix">
+                <input id="d-luas" class="input" type="number" placeholder="320" />
+                <span class="input-affix__unit">m²</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Checkbox &amp; Radio</span>
+            <code class="swatch__name">.choice</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <label class="choice">
+              <input type="checkbox" checked />
+              <span class="choice__text">
+                <span>Tandai sebagai proyek unggulan</span>
+                <span class="choice__desc">Tampil di beranda</span>
+              </span>
+            </label>
+            <label class="choice">
+              <input type="checkbox" />
+              <span class="choice__text"><span>Sembunyikan dari arsip</span></span>
+            </label>
+            <label class="choice">
+              <input type="checkbox" disabled />
+              <span class="choice__text"><span>Tidak tersedia</span></span>
+            </label>
+            <hr class="separator" />
+            <label class="choice">
+              <input type="radio" name="d-status" checked />
+              <span class="choice__text"><span>Draf</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="d-status" />
+              <span class="choice__text"><span>Terbit</span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="spec-demo" style="grid-column: 1 / -1">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Radio Card</span>
+            <code class="swatch__name">.radio-card</code>
+          </div>
+          <p class="t-muted" style="margin:0">
+            Untuk pilihan yang berkonsekuensi. Yang terpilih ditandai border dan latar brand — tidak mungkin salah baca.
+          </p>
+          <div class="spec-demo__stage" style="align-items: stretch">
+            <label class="radio-card" style="flex:1; min-width:16rem">
+              <input type="radio" name="d-mode" checked />
+              <span class="radio-card__mark"><Icon name="check" size={14} /></span>
+              <span class="radio-card__body">
+                <span class="radio-card__title">Terbitkan sekarang</span>
+                <span class="radio-card__desc">Proyek langsung tampil setelah build berikutnya.</span>
+              </span>
+            </label>
+            <label class="radio-card" style="flex:1; min-width:16rem">
+              <input type="radio" name="d-mode" />
+              <span class="radio-card__mark"><Icon name="check" size={14} /></span>
+              <span class="radio-card__body">
+                <span class="radio-card__title">Simpan sebagai draf</span>
+                <span class="radio-card__desc">Hanya terlihat oleh staf studio.</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Button Group</span>
+            <code class="swatch__name">.btn-group</code>
+          </div>
+          <div class="spec-demo__stage">
+            <div class="btn-group">
+              <button type="button" class="btn btn--secondary">Hari ini</button>
+              <button type="button" class="btn btn--secondary">Minggu</button>
+              <button type="button" class="btn btn--secondary">Bulan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <FormShowcase client:visible />
+    </section>
+
     <!-- Peta jalan -->
     <section class="spec-section">
       <div class="spec-section__head">
@@ -275,8 +446,7 @@ const ikon = [
       </div>
       <div class="spec-demo">
         <div class="spec-demo__stage">
-          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–1 selesai</span>
-          <span class="badge">Gelombang 2 · Form</span>
+          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–2 selesai</span>
           <span class="badge">Gelombang 3 · Overlay</span>
           <span class="badge">Gelombang 4 · Data &amp; Chart</span>
           <span class="badge">Gelombang 5 · Sisanya</span>

@@ -1,0 +1,409 @@
+/* =============================================================================
+   Form — Gelombang 2.
+
+   Kontrol dibangun di atas elemen HTML asli (input, select, textarea,
+   checkbox, radio, range). Yang diganti hanya penampilannya; perilaku
+   keyboard, pembacaan oleh screen reader, dan integrasi dengan <form>
+   dibiarkan bekerja sebagaimana mestinya.
+   ============================================================================= */
+
+/* --- Field: pembungkus label + kontrol + keterangan ----------------------- */
+
+.field { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+
+.field__label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field__req { color: var(--brand); }
+.field__help { font-size: var(--text-sm); color: var(--text-muted); }
+
+.field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: var(--text-sm);
+  color: var(--brand);
+}
+
+/* --- Input, Textarea, Select --------------------------------------------- */
+
+.input {
+  width: 100%;
+  padding: 0.7rem 1.05rem;
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--text-strong);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  transition:
+    border-color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.input::placeholder { color: var(--text-faint); }
+.input:hover:not(:disabled):not([readonly]) { border-color: var(--border-strong); }
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--text-faint);
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.input:disabled { opacity: 0.5; cursor: not-allowed; }
+.input[readonly] { color: var(--text-muted); }
+
+/* Textarea memakai radius kartu, bukan pill — bentuk pill pada kotak tinggi
+   membuat baris pertama dan terakhir terlihat terpotong. */
+.input--area { border-radius: var(--radius-md); resize: vertical; min-height: 7.5rem; line-height: 1.6; }
+.input--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
+
+.field[data-invalid] .input { border-color: var(--brand); }
+.field[data-invalid] .input:focus-visible { box-shadow: 0 0 0 2px var(--brand); }
+
+/* Select: chevron digambar sebagai SVG di markup, bukan background-image,
+   supaya warnanya ikut currentColor di kedua tema. */
+.select { position: relative; display: block; }
+.select .input { appearance: none; padding-right: 2.75rem; cursor: pointer; }
+
+.select__chevron {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+/* --- Input group: kontrol dengan aksi menempel ---------------------------- */
+
+.input-group { display: flex; align-items: stretch; gap: var(--space-2); }
+.input-group .input { flex: 1; min-width: 0; }
+.input-group .btn { flex: none; }
+
+/* Awalan/akhiran di dalam kotak yang sama (mis. tombol mata, satuan). */
+.input-affix { position: relative; display: flex; align-items: center; width: 100%; }
+.input-affix .input { padding-right: 3rem; }
+
+.input-affix__action {
+  position: absolute;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.input-affix__action:hover { color: var(--text-strong); background: var(--surface-hover); }
+
+.input-affix__unit {
+  position: absolute;
+  right: 1.1rem;
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+/* --- Checkbox & Radio ----------------------------------------------------- */
+
+.choice {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+  font-size: var(--text-base);
+  color: var(--text-body);
+}
+
+.choice input {
+  appearance: none;
+  flex: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0.15rem 0 0;
+  background: var(--surface-raised);
+  border: 1.5px solid var(--border-strong);
+  cursor: pointer;
+  position: relative;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.choice input[type="checkbox"] { border-radius: var(--radius-xs); }
+.choice input[type="radio"] { border-radius: 50%; }
+
+.choice input:checked { background: var(--brand); border-color: var(--brand); }
+
+/* Centang digambar dari border yang diputar — tajam di semua ukuran layar
+   dan ikut warna teks tombol tanpa perlu aset. */
+.choice input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0.3rem;
+  height: 0.6rem;
+  border: solid var(--brand-ink);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.choice input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  inset: 0.26rem;
+  border-radius: 50%;
+  background: var(--brand-ink);
+}
+
+.choice input:disabled { opacity: 0.45; cursor: not-allowed; }
+.choice input:disabled + .choice__text { opacity: 0.45; }
+.choice__text { display: flex; flex-direction: column; gap: 0.1rem; }
+.choice__desc { font-size: var(--text-sm); color: var(--text-muted); }
+
+/* --- Radio card: pilihan bertekanan tinggi -------------------------------- */
+
+.radio-card {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.radio-card:hover { border-color: var(--border-strong); }
+
+/* Radio aslinya tetap ada demi keyboard dan screen reader, hanya tidak
+   digambar — penanda terpilihnya adalah kartu itu sendiri. */
+.radio-card input { position: absolute; opacity: 0; pointer-events: none; }
+
+.radio-card:has(input:checked) {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.radio-card:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.radio-card__mark {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  color: transparent;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.radio-card:has(input:checked) .radio-card__mark {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+.radio-card__body { display: flex; flex-direction: column; gap: 0.25rem; padding-right: 2rem; }
+.radio-card__title { font-weight: 700; color: var(--text-strong); }
+.radio-card__desc { font-size: var(--text-sm); color: var(--text-muted); }
+
+/* --- Switch --------------------------------------------------------------- */
+
+.switch { display: inline-flex; align-items: center; gap: var(--space-3); cursor: pointer; }
+
+.switch input {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 2.75rem;
+  height: 1.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.switch input::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.18rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transform: translateY(-50%);
+  transition: transform var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.switch input:checked { background: var(--success); border-color: var(--success); }
+.switch input:checked::after { background: #fff; transform: translate(1.13rem, -50%); }
+.switch input:disabled { opacity: 0.45; cursor: not-allowed; }
+.switch__label { font-size: var(--text-base); color: var(--text-body); }
+
+/* --- Toggle & Toggle Group (segmented) ------------------------------------ */
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.segmented::-webkit-scrollbar { display: none; }
+.segmented--block { display: flex; width: 100%; }
+.segmented--block .segmented__opt { flex: 1; }
+
+.segmented__opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.45rem 1rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.segmented__opt:hover:not([aria-pressed="true"]):not([aria-selected="true"]) {
+  color: var(--text-strong);
+}
+
+.segmented__opt[aria-pressed="true"],
+.segmented__opt[aria-selected="true"] {
+  background: var(--action);
+  color: var(--action-ink);
+}
+
+/* Toggle tunggal: tombol yang bisa menyala-mati. */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.toggle:hover { color: var(--text-strong); border-color: var(--border-strong); }
+.toggle[aria-pressed="true"] { background: var(--action); border-color: transparent; color: var(--action-ink); }
+
+/* --- Button group --------------------------------------------------------- */
+
+/* Tombol berdempet: radius luar dipertahankan, sekat di antaranya menyatu. */
+.btn-group { display: inline-flex; }
+.btn-group .btn { border-radius: 0; margin-left: -1px; }
+.btn-group .btn:first-child { border-start-start-radius: var(--radius-pill); border-end-start-radius: var(--radius-pill); margin-left: 0; }
+.btn-group .btn:last-child { border-start-end-radius: var(--radius-pill); border-end-end-radius: var(--radius-pill); }
+.btn-group .btn:focus-visible { position: relative; z-index: 1; }
+
+/* --- Slider --------------------------------------------------------------- */
+
+.slider { width: 100%; appearance: none; background: transparent; cursor: pointer; }
+
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+}
+
+.slider::-moz-range-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: -0.5rem;
+  border-radius: 50%;
+  background: var(--action);
+  border: 2px solid var(--bg);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.slider::-moz-range-thumb {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: var(--action);
+  border: 2px solid var(--bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.slider:active::-webkit-slider-thumb { transform: scale(1.12); }
+.slider:focus-visible { outline: none; }
+.slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--focus); }
+.slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--focus); }
+
+.slider-row { display: flex; align-items: center; gap: var(--space-4); }
+.slider-row .slider { flex: 1; }
+.slider-row__value { font-family: var(--font-mono); font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--text-strong); min-width: 3.5ch; text-align: right; }
+
+/* --- Input OTP ------------------------------------------------------------ */
+
+.otp { display: flex; gap: var(--space-2); }
+
+.otp__slot {
+  width: 2.9rem;
+  height: 3.4rem;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-strong);
+  background: var(--surface-raised);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.otp__slot:focus-visible { outline: none; border-color: var(--text-faint); box-shadow: 0 0 0 2px var(--focus); }
+.otp__slot[data-filled] { border-color: var(--border-strong); }
+
+@media (max-width: 26rem) {
+  .otp__slot { width: 2.4rem; height: 3rem; font-size: var(--text-lg); }
+}

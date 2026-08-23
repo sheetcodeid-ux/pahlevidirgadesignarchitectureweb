@@ -240,39 +240,3 @@
 @media (prefers-reduced-motion: reduce) {
   .theme-toggle__thumb { transition: none; }
 }
-
-/* --- Field (dasar; kelompok Form lengkap menyusul di Gelombang 2) -------- */
-
-.field { display: flex; flex-direction: column; gap: var(--space-2); }
-
-.field__label {
-  font-size: var(--text-2xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.field__req { color: var(--brand); margin-left: 0.2em; }
-
-.field input,
-.field select,
-.field textarea {
-  width: 100%;
-  padding: 0.7rem 1rem;
-  font: inherit;
-  font-size: var(--text-base);
-  color: var(--text-strong);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
-}
-
-.field textarea { border-radius: var(--radius-md); resize: vertical; min-height: 7rem; }
-.field input::placeholder,
-.field textarea::placeholder { color: var(--text-faint); }
-.field input:hover,
-.field select:hover,
-.field textarea:hover { border-color: var(--border-strong); }
-.field__help { font-size: var(--text-sm); color: var(--text-muted); }
