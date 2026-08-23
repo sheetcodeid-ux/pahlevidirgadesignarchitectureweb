@@ -16,6 +16,7 @@ type Handler struct {
 	projects  *repository.ProjectRepository
 	inquiries *repository.InquiryRepository
 	profiles  *repository.ProfileRepository
+	admin     *repository.AdminRepository
 	storage   *storage.R2
 	mailer    *mailer.Resend
 }
@@ -25,6 +26,7 @@ func New(
 	projects *repository.ProjectRepository,
 	inquiries *repository.InquiryRepository,
 	profiles *repository.ProfileRepository,
+	admin *repository.AdminRepository,
 	store *storage.R2,
 	mail *mailer.Resend,
 ) *Handler {
@@ -33,6 +35,7 @@ func New(
 		projects:  projects,
 		inquiries: inquiries,
 		profiles:  profiles,
+		admin:     admin,
 		storage:   store,
 		mailer:    mail,
 	}

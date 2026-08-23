@@ -38,8 +38,9 @@ otomatis begitu branch produksi berubah.
 
 Langgar ini dan ada yang rusak diam-diam:
 
-1. **Frontend tidak pernah bicara ke Supabase.** Semua lewat API Go. Anon key
-   tidak dipakai di browser sama sekali.
+1. **Frontend tidak pernah bicara ke Supabase.** Semua lewat API Go — termasuk
+   login, yang ditukar di `/api/v1/auth/login`. Anon key hidup di backend saja
+   dan tidak pernah sampai ke browser.
 2. **`service_role` hanya hidup di backend.** Tidak pernah di frontend, tidak
    pernah di-commit.
 3. **Gambar di R2, bukan Supabase Storage.** Storage Supabase dimatikan di

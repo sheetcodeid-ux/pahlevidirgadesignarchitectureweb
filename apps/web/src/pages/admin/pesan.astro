@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { InquiryList } from "../../components/admin/InquiryList";
+---
+
+<AdminLayout title="Pesan Masuk" heading="Pesan Masuk" description="Kiriman dari form kontak. Salinannya juga dikirim ke email studio.">
+  <InquiryList client:load />
+</AdminLayout>

@@ -12,6 +12,7 @@ type Project struct {
 	Summary        *string    `json:"summary,omitempty"`
 	Description    *string    `json:"description,omitempty"`
 	Category       string     `json:"category"`
+	Status         string     `json:"status,omitempty"`
 	Location       *string    `json:"location,omitempty"`
 	City           *string    `json:"city,omitempty"`
 	Year           *int16     `json:"year,omitempty"`
@@ -56,4 +57,50 @@ type Inquiry struct {
 	Source      *string
 	IPHash      string
 	UserAgent   string
+}
+
+// InquiryRecord adalah satu baris pesan masuk sebagaimana dibaca staf.
+type InquiryRecord struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Email       string    `json:"email"`
+	Phone       *string   `json:"phone,omitempty"`
+	ProjectType *string   `json:"projectType,omitempty"`
+	BudgetRange *string   `json:"budgetRange,omitempty"`
+	Message     string    `json:"message"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
+// ProjectInput menampung field yang boleh disunting staf. Pointer nil berarti
+// "jangan diubah", sehingga satu tipe melayani pembuatan dan pembaruan
+// sebagian.
+type ProjectInput struct {
+	Slug           *string  `json:"slug"`
+	Title          *string  `json:"title"`
+	Subtitle       *string  `json:"subtitle"`
+	Summary        *string  `json:"summary"`
+	Description    *string  `json:"description"`
+	Category       *string  `json:"category"`
+	Status         *string  `json:"status"`
+	Location       *string  `json:"location"`
+	City           *string  `json:"city"`
+	Year           *int16   `json:"year"`
+	Client         *string  `json:"client"`
+	AreaSqm        *float64 `json:"areaSqm"`
+	LeadArchitect  *string  `json:"leadArchitect"`
+	CoverImageKey  *string  `json:"coverImageKey"`
+	IsFeatured     *bool    `json:"isFeatured"`
+	SEOTitle       *string  `json:"seoTitle"`
+	SEODescription *string  `json:"seoDescription"`
+}
+
+// ImageInput adalah metadata gambar yang dicatat setelah berkasnya sampai di R2.
+type ImageInput struct {
+	StorageKey string  `json:"storageKey"`
+	AltText    *string `json:"altText"`
+	Caption    *string `json:"caption"`
+	Width      *int32  `json:"width"`
+	Height     *int32  `json:"height"`
+	SortOrder  int32   `json:"sortOrder"`
 }

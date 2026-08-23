@@ -65,12 +65,14 @@ func run() error {
 	}
 
 	profiles := repository.NewProfileRepository(pool)
+	adminRepo := repository.NewAdminRepository(pool, cfg.R2PublicBaseURL)
 
 	h := handler.New(
 		cfg,
 		repository.NewProjectRepository(pool, cfg.R2PublicBaseURL),
 		repository.NewInquiryRepository(pool),
 		profiles,
+		adminRepo,
 		store,
 		mailer.NewResend(cfg.ResendAPIKey, cfg.InquiryFrom),
 	)
@@ -140,6 +142,19 @@ func registerRoutes(app *fiber.App, cfg *config.Config, h *handler.Handler, staf
 	v1.Get("/projects/:slug", h.GetProject)
 
 	// Form kontak dibatasi ketat: 5 submission per IP per jam.
+	// Login dibatasi lebih ketat daripada form kontak: sepuluh percobaan per
+	// IP per jam cukup untuk orang yang lupa kata sandinya, tapi tidak cukup
+	// untuk menebak.
+	v1.Post("/auth/login", limiter.New(limiter.Config{
+		Max:          10,
+		Expiration:   time.Hour,
+		KeyGenerator: func(c *fiber.Ctx) string { return c.IP() },
+		LimitReached: func(c *fiber.Ctx) error {
+			return fiber.NewError(fiber.StatusTooManyRequests, "terlalu banyak percobaan masuk, coba lagi nanti")
+		},
+	}), h.Login)
+	v1.Post("/auth/refresh", h.Refresh)
+
 	v1.Post("/inquiries", limiter.New(limiter.Config{
 		Max:        5,
 		Expiration: time.Hour,
@@ -161,6 +176,16 @@ func registerRoutes(app *fiber.App, cfg *config.Config, h *handler.Handler, staf
 	)
 	admin.Get("/me", h.Me)
 	admin.Post("/uploads", h.CreateUploadURL)
+
+	admin.Get("/projects", h.ListProjectsAdmin)
+	admin.Post("/projects", h.CreateProject)
+	admin.Patch("/projects/:id", h.UpdateProject)
+	admin.Delete("/projects/:id", h.DeleteProject)
+	admin.Post("/projects/:id/images", h.AddProjectImage)
+	admin.Delete("/images/:imageId", h.DeleteProjectImage)
+
+	admin.Get("/inquiries", h.ListInquiries)
+	admin.Patch("/inquiries/:id", h.UpdateInquiry)
 }
 
 func newLogger(cfg *config.Config) *slog.Logger {

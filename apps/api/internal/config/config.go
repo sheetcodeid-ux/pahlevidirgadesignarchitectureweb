@@ -20,6 +20,7 @@ type Config struct {
 
 	SupabaseURL        string
 	SupabaseServiceKey string
+	SupabaseAnonKey    string
 	SupabaseJWTSecret  string
 
 	R2AccountID       string
@@ -49,6 +50,7 @@ func Load() (*Config, error) {
 
 		SupabaseURL:        os.Getenv("SUPABASE_URL"),
 		SupabaseServiceKey: os.Getenv("SUPABASE_SERVICE_ROLE_KEY"),
+		SupabaseAnonKey:    os.Getenv("SUPABASE_ANON_KEY"),
 		SupabaseJWTSecret:  os.Getenv("SUPABASE_JWT_SECRET"),
 
 		R2AccountID:       os.Getenv("R2_ACCOUNT_ID"),
@@ -86,6 +88,12 @@ func Load() (*Config, error) {
 // IsProduction dipakai untuk mengetatkan perilaku yang di dev sengaja longgar
 // (pesan error detail, CORS, verifikasi Turnstile).
 func (c *Config) IsProduction() bool { return c.Env == "production" }
+
+// AuthConfigured menandakan endpoint login bisa melayani permintaan. Tanpa
+// ini panel admin tidak bisa dipakai, tapi situs publik tetap jalan.
+func (c *Config) AuthConfigured() bool {
+	return c.SupabaseURL != "" && c.SupabaseAnonKey != ""
+}
 
 // StorageConfigured menandakan upload gambar bisa dilayani. Website tetap
 // bisa jalan tanpa ini selama belum ada admin panel yang meng-upload.

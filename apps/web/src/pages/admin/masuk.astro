@@ -1,0 +1,69 @@
+---
+import "../../styles/global.css";
+import "../../styles/components.css";
+import "../../styles/form.css";
+import "../../styles/misc.css";
+import { LoginForm } from "../../components/admin/LoginForm";
+---
+
+<!doctype html>
+<html lang="id" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Masuk — Admin Pahlevi Dirga</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+    <script is:inline>
+      (function () {
+        try {
+          var simpan = localStorage.getItem("tema");
+          var sistem = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          document.documentElement.setAttribute("data-theme", simpan || sistem);
+        } catch (e) { document.documentElement.setAttribute("data-theme", "dark"); }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <main class="masuk">
+      <div class="masuk__panel">
+        <a href="/" class="masuk__brand">
+          <span class="sidebar__mark" aria-hidden="true">PD</span>
+          <span>Pahlevi Dirga</span>
+        </a>
+        <h1 class="t-title">Selamat datang kembali.</h1>
+        <p class="t-muted" style="margin-bottom: var(--space-6)">Masuk untuk mengelola konten studio.</p>
+        <LoginForm client:load />
+      </div>
+    </main>
+
+    <style>
+      .masuk {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: var(--space-5);
+        background: var(--bg);
+      }
+
+      .masuk__panel { width: min(28rem, 100%); }
+
+      .masuk__brand {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-3);
+        margin-bottom: var(--space-6);
+        font-family: var(--font-display);
+        font-size: var(--text-lg);
+        color: var(--text-strong);
+        text-decoration: none;
+      }
+    </style>
+  </body>
+</html>

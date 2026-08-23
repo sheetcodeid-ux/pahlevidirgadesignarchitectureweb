@@ -57,8 +57,10 @@ apps/
     internal/storage/   Presigned upload R2
     internal/mailer/    Notifikasi Resend
   web/                  Frontend Astro (static)
-    src/lib/api.ts      Klien API bertipe
+    src/lib/api.ts      Klien API publik
+    src/lib/admin.ts    Klien API admin + penyegaran token
     src/pages/          Beranda, arsip proyek, detail, kontak
+    src/pages/admin/    Panel admin: masuk, dashboard, proyek, pesan
 supabase/
   migrations/           Skema + RLS
   bootstrap.sql         Seluruh skema dalam satu file, untuk SQL Editor
@@ -110,8 +112,16 @@ Cek cepat: `curl localhost:8080/healthz`.
 | GET | `/api/v1/projects` | publik, mendukung `?category=&featured=&limit=&offset=` |
 | GET | `/api/v1/projects/:slug` | publik |
 | POST | `/api/v1/inquiries` | publik, 5 request/IP/jam + Turnstile |
+| POST | `/api/v1/auth/login` | publik, 10 percobaan/IP/jam |
+| POST | `/api/v1/auth/refresh` | publik, butuh refresh token |
 | GET | `/api/v1/admin/me` | JWT Supabase **dan** terdaftar di `profiles` |
-| POST | `/api/v1/admin/uploads` | JWT Supabase **dan** terdaftar di `profiles` |
+| POST | `/api/v1/admin/uploads` | idem |
+| GET/POST | `/api/v1/admin/projects` | idem |
+| PATCH/DELETE | `/api/v1/admin/projects/:id` | idem |
+| POST | `/api/v1/admin/projects/:id/images` | idem |
+| DELETE | `/api/v1/admin/images/:imageId` | idem |
+| GET | `/api/v1/admin/inquiries` | idem |
+| PATCH | `/api/v1/admin/inquiries/:id` | idem |
 
 ## Dokumentasi
 

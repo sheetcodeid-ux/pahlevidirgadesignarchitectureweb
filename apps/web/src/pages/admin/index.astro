@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { DashboardPanel } from "../../components/admin/DashboardPanel";
+---
+
+<AdminLayout title="Dashboard" heading="Dashboard" description="Ringkasan konten dan pesan masuk studio.">
+  <DashboardPanel client:load />
+</AdminLayout>
