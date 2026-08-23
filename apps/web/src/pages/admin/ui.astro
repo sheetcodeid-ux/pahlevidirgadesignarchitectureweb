@@ -2,6 +2,7 @@
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { MasterGuard } from "../../components/admin/MasterGuard";
 import { FormShowcase } from "../../components/admin/FormShowcase";
+import { OverlayShowcase } from "../../components/admin/OverlayShowcase";
 import { Icon } from "../../components/ui/Icon";
 
 // Warna ditampilkan lewat variabel CSS-nya, bukan nilai heksa yang disalin.
@@ -438,6 +439,17 @@ const ikon = [
       <FormShowcase client:visible />
     </section>
 
+    <!-- Overlay -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Overlay</h2>
+        <p class="t-muted" style="margin:0">
+          Perilakunya — focus trap, pengembalian fokus, Esc, penempatan sadar tepi layar — datang dari primitif headless. Tampilannya seluruhnya milik kita.
+        </p>
+      </div>
+      <OverlayShowcase client:visible />
+    </section>
+
     <!-- Peta jalan -->
     <section class="spec-section">
       <div class="spec-section__head">
@@ -446,8 +458,7 @@ const ikon = [
       </div>
       <div class="spec-demo">
         <div class="spec-demo__stage">
-          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–2 selesai</span>
-          <span class="badge">Gelombang 3 · Overlay</span>
+          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–3 selesai</span>
           <span class="badge">Gelombang 4 · Data &amp; Chart</span>
           <span class="badge">Gelombang 5 · Sisanya</span>
         </div>

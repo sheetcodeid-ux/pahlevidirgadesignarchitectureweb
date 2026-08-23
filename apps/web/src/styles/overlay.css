@@ -1,0 +1,382 @@
+/* =============================================================================
+   Overlay — Gelombang 3.
+
+   Perilaku (focus trap, pengembalian fokus, Esc, penempatan sadar tepi layar,
+   roving tabindex) datang dari primitif headless. Seluruh isi file ini murni
+   tampilan; tidak ada satu pun gaya bawaan yang diwarisi dari primitifnya.
+   ============================================================================= */
+
+/* --- Lapisan gelap di belakang overlay ----------------------------------- */
+
+.ov-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(3px);
+}
+
+:root[data-theme="light"] .ov-scrim { background: rgba(13, 13, 12, 0.32); }
+
+.ov-scrim[data-state="open"] { animation: ov-fade-in var(--dur) var(--ease); }
+.ov-scrim[data-state="closed"] { animation: ov-fade-out var(--dur-fast) var(--ease); }
+
+/* --- Panel dasar: dipakai Dialog, Alert Dialog, Popover, Menu, Select ---- */
+
+.ov-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-body);
+}
+
+/* --- Dialog & Alert Dialog ----------------------------------------------- */
+
+.ov-dialog {
+  position: fixed;
+  z-index: 81;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ov-dialog[data-state="open"] { animation: ov-zoom-in var(--dur) var(--ease); }
+.ov-dialog[data-state="closed"] { animation: ov-zoom-out var(--dur-fast) var(--ease); }
+
+.ov-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+}
+
+.ov-dialog__titles { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; min-width: 0; }
+.ov-dialog__title { font-family: var(--font-sans); font-weight: 700; font-size: var(--text-lg); color: var(--text-strong); margin: 0; }
+.ov-dialog__desc { font-size: var(--text-sm); color: var(--text-muted); margin: 0; }
+
+.ov-dialog__body { padding: 0 var(--space-5) var(--space-5); overflow-y: auto; }
+
+.ov-dialog__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border);
+  background: var(--bg-sunken);
+  flex-wrap: wrap;
+}
+
+.ov-dialog__close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+}
+
+/* Di ponsel, dialog naik dari bawah dan menempel ke tepi — jempol lebih
+   mudah menjangkau bagian bawah layar daripada tengahnya. */
+@media (max-width: 34rem) {
+  .ov-dialog {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    max-height: 88dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .ov-dialog[data-state="open"] { animation: ov-slide-up var(--dur) var(--ease); }
+  .ov-dialog[data-state="closed"] { animation: ov-slide-down var(--dur-fast) var(--ease); }
+}
+
+/* --- Sheet & Drawer: panel dari tepi ------------------------------------- */
+
+.ov-sheet {
+  position: fixed;
+  z-index: 81;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.ov-sheet[data-side="right"] {
+  inset-block: 0;
+  right: 0;
+  width: min(26rem, 100vw);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+.ov-sheet[data-side="left"] {
+  inset-block: 0;
+  left: 0;
+  width: min(26rem, 100vw);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+
+.ov-sheet[data-side="bottom"] {
+  inset-inline: 0;
+  bottom: 0;
+  max-height: 88dvh;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.ov-sheet[data-side="right"][data-state="open"] { animation: ov-in-right var(--dur) var(--ease); }
+.ov-sheet[data-side="right"][data-state="closed"] { animation: ov-out-right var(--dur-fast) var(--ease); }
+.ov-sheet[data-side="left"][data-state="open"] { animation: ov-in-left var(--dur) var(--ease); }
+.ov-sheet[data-side="left"][data-state="closed"] { animation: ov-out-left var(--dur-fast) var(--ease); }
+.ov-sheet[data-side="bottom"][data-state="open"] { animation: ov-slide-up var(--dur) var(--ease); }
+.ov-sheet[data-side="bottom"][data-state="closed"] { animation: ov-slide-down var(--dur-fast) var(--ease); }
+
+/* Pegangan geser pada drawer bawah — penanda bahwa panel bisa ditarik. */
+.ov-sheet__grip {
+  align-self: center;
+  width: 2.5rem;
+  height: 4px;
+  margin: var(--space-3) 0 0;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+  flex: none;
+}
+
+/* --- Tooltip, Popover, Hover Card ---------------------------------------- */
+
+.ov-tooltip {
+  z-index: 90;
+  max-width: 18rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: var(--action-ink);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+}
+
+.ov-tooltip__arrow { fill: var(--action); }
+
+.ov-floating {
+  z-index: 85;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: var(--space-4);
+}
+
+.ov-floating[data-state="open"] { animation: ov-pop-in var(--dur) var(--ease); }
+.ov-floating[data-state="closed"] { animation: ov-fade-out var(--dur-fast) var(--ease); }
+.ov-floating__arrow { fill: var(--surface); stroke: var(--border); }
+
+/* --- Menu: Dropdown, Context, Menubar ------------------------------------ */
+
+.ov-menu {
+  z-index: 88;
+  min-width: 12rem;
+  max-width: min(20rem, calc(100vw - 1rem));
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+.ov-menu[data-state="open"] { animation: ov-pop-in var(--dur-fast) var(--ease); }
+
+.ov-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-base);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+/* Radix menandai item yang sedang disorot lewat data-highlighted, baik oleh
+   tetikus maupun panah keyboard — satu gaya menangani keduanya. */
+.ov-menu__item[data-highlighted] { background: var(--surface-hover); color: var(--text-strong); }
+.ov-menu__item[data-disabled] { color: var(--text-faint); cursor: not-allowed; }
+.ov-menu__item--danger { color: var(--brand); }
+.ov-menu__item--danger[data-highlighted] { background: var(--brand-soft); color: var(--brand); }
+.ov-menu__label { padding: 0.4rem 0.65rem; font-size: var(--text-2xs); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-faint); }
+.ov-menu__sep { height: 1px; margin: var(--space-2) 0.25rem; background: var(--border); }
+.ov-menu__shortcut { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); }
+.ov-menu__check { display: grid; place-items: center; width: 1rem; flex: none; color: var(--brand); }
+
+.ov-menubar { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-raised); }
+
+.ov-menubar__trigger {
+  padding: 0.4rem 0.85rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.ov-menubar__trigger[data-state="open"],
+.ov-menubar__trigger[data-highlighted] { background: var(--action); color: var(--action-ink); }
+
+/* --- Select -------------------------------------------------------------- */
+
+.ov-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 0.7rem 1.05rem;
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--text-strong);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.ov-select-trigger:hover { border-color: var(--border-strong); }
+.ov-select-trigger[data-placeholder] { color: var(--text-faint); }
+.ov-select-trigger__icon { color: var(--text-faint); flex: none; }
+
+.ov-select-content {
+  z-index: 88;
+  min-width: var(--radix-select-trigger-width);
+  max-height: var(--radix-select-content-available-height);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.ov-select-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-base);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.ov-select-item[data-highlighted] { background: var(--surface-hover); color: var(--text-strong); }
+.ov-select-item[data-state="checked"] { font-weight: 600; color: var(--text-strong); }
+
+/* --- Command / Combobox -------------------------------------------------- */
+
+.ov-command { display: flex; flex-direction: column; overflow: hidden; }
+
+.ov-command__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-faint);
+}
+
+.ov-command__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--text-md);
+  color: var(--text-strong);
+  outline: none;
+}
+
+.ov-command__input::placeholder { color: var(--text-faint); }
+.ov-command__list { max-height: 20rem; overflow-y: auto; padding: var(--space-2); }
+.ov-command__empty { padding: var(--space-6) var(--space-4); text-align: center; font-size: var(--text-sm); color: var(--text-muted); }
+.ov-command__group { padding-block: var(--space-1); }
+
+.ov-command__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: var(--text-base);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ov-command__item[data-selected="true"] { background: var(--surface-hover); color: var(--text-strong); }
+
+/* --- Toast --------------------------------------------------------------- */
+
+.ov-toast-region {
+  position: fixed;
+  z-index: 95;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(24rem, calc(100vw - 1.5rem));
+  margin: 0;
+  padding: var(--space-4);
+  list-style: none;
+  outline: none;
+}
+
+.ov-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.ov-toast[data-state="open"] { animation: ov-in-right var(--dur) var(--ease); }
+.ov-toast[data-state="closed"] { animation: ov-out-right var(--dur-fast) var(--ease); }
+.ov-toast[data-swipe="move"] { transform: translateX(var(--radix-toast-swipe-move-x)); }
+.ov-toast[data-swipe="end"] { animation: ov-out-right var(--dur-fast) var(--ease); }
+
+.ov-toast--success { border-color: var(--success); }
+.ov-toast--danger { border-color: var(--brand); }
+.ov-toast__icon { flex: none; margin-top: 0.1rem; }
+.ov-toast--success .ov-toast__icon { color: var(--success); }
+.ov-toast--danger .ov-toast__icon { color: var(--brand); }
+.ov-toast__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.ov-toast__title { font-weight: 700; font-size: var(--text-base); color: var(--text-strong); }
+.ov-toast__desc { font-size: var(--text-sm); color: var(--text-muted); }
+
+/* --- Animasi ------------------------------------------------------------- */
+
+@keyframes ov-fade-in { from { opacity: 0; } }
+@keyframes ov-fade-out { to { opacity: 0; } }
+@keyframes ov-zoom-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); } }
+@keyframes ov-zoom-out { to { opacity: 0; transform: translate(-50%, -50%) scale(0.97); } }
+@keyframes ov-pop-in { from { opacity: 0; transform: scale(0.97) translateY(-2px); } }
+@keyframes ov-slide-up { from { transform: translateY(100%); } }
+@keyframes ov-slide-down { to { transform: translateY(100%); } }
+@keyframes ov-in-right { from { transform: translateX(105%); } }
+@keyframes ov-out-right { to { transform: translateX(105%); } }
+@keyframes ov-in-left { from { transform: translateX(-105%); } }
+@keyframes ov-out-left { to { transform: translateX(-105%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-scrim, .ov-dialog, .ov-sheet, .ov-menu, .ov-floating, .ov-toast {
+    animation: none !important;
+  }
+}
