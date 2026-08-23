@@ -64,6 +64,8 @@ func run() error {
 		slog.Warn("R2 belum dikonfigurasi; endpoint upload akan menolak request")
 	}
 
+	profiles := repository.NewProfileRepository(pool)
+
 	h := handler.New(
 		cfg,
 		repository.NewProjectRepository(pool, cfg.R2PublicBaseURL),
@@ -73,7 +75,7 @@ func run() error {
 	)
 
 	app := newApp(cfg)
-	registerRoutes(app, cfg, h)
+	registerRoutes(app, cfg, h, profiles)
 
 	serverErr := make(chan error, 1)
 	go func() {
@@ -112,7 +114,7 @@ func newApp(cfg *config.Config) *fiber.App {
 	})
 }
 
-func registerRoutes(app *fiber.App, cfg *config.Config, h *handler.Handler) {
+func registerRoutes(app *fiber.App, cfg *config.Config, h *handler.Handler, staff middleware.StaffChecker) {
 	app.Use(recover.New())
 	app.Use(requestid.New())
 	app.Use(helmet.New())
@@ -149,7 +151,13 @@ func registerRoutes(app *fiber.App, cfg *config.Config, h *handler.Handler) {
 		},
 	}), h.CreateInquiry)
 
-	admin := v1.Group("/admin", middleware.RequireSupabaseAuth(cfg.SupabaseJWTSecret))
+	// Dua lapis: token harus sah, DAN pemiliknya harus terdaftar sebagai staf.
+	// Lapis kedua tidak bisa didelegasikan ke RLS, karena koneksi backend
+	// memakai kredensial yang melewatinya.
+	admin := v1.Group("/admin",
+		middleware.RequireSupabaseAuth(cfg.SupabaseJWTSecret),
+		middleware.RequireStaff(staff),
+	)
 	admin.Get("/me", h.Me)
 	admin.Post("/uploads", h.CreateUploadURL)
 }

@@ -82,6 +82,7 @@ Cek cepat: `curl localhost:8080/healthz`.
 | `cd apps/web && npm run build` | Build statis ke `dist/` |
 | `supabase db push` | Terapkan migrasi ke project remote |
 | `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` dari migrasi |
+| `./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"` | Periksa skema, RLS, GRANT, dan akun staf |
 | `psql "$DATABASE_URL" -f supabase/tests/rls_test.sql` | Uji policy RLS dan GRANT |
 
 ## Endpoint API
@@ -92,8 +93,8 @@ Cek cepat: `curl localhost:8080/healthz`.
 | GET | `/api/v1/projects` | publik, mendukung `?category=&featured=&limit=&offset=` |
 | GET | `/api/v1/projects/:slug` | publik |
 | POST | `/api/v1/inquiries` | publik, 5 request/IP/jam + Turnstile |
-| GET | `/api/v1/admin/me` | perlu JWT Supabase |
-| POST | `/api/v1/admin/uploads` | perlu JWT Supabase |
+| GET | `/api/v1/admin/me` | JWT Supabase **dan** terdaftar di `profiles` |
+| POST | `/api/v1/admin/uploads` | JWT Supabase **dan** terdaftar di `profiles` |
 
 ## Dokumentasi
 
