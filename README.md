@@ -44,6 +44,7 @@ apps/
     src/pages/          Beranda, arsip proyek, detail, kontak
 supabase/
   migrations/           Skema + RLS
+  bootstrap.sql         Seluruh skema dalam satu file, untuk SQL Editor
   tests/rls_test.sql    Assertion RLS (transaksi, di-rollback)
   seed.sql              Data contoh untuk development
 .github/workflows/      CI, deploy API, backup harian
@@ -80,6 +81,7 @@ Cek cepat: `curl localhost:8080/healthz`.
 | `cd apps/web && npm run check` | Typecheck Astro/TypeScript |
 | `cd apps/web && npm run build` | Build statis ke `dist/` |
 | `supabase db push` | Terapkan migrasi ke project remote |
+| `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` dari migrasi |
 | `psql "$DATABASE_URL" -f supabase/tests/rls_test.sql` | Uji policy RLS dan GRANT |
 
 ## Endpoint API

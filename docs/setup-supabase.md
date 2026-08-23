@@ -1,59 +1,32 @@
 # Setup Supabase
 
-Dari layar **New project** sampai database siap dipakai backend Go. Tujuh
-langkah, sekitar 20 menit.
+Menyiapkan database `pahlevidirga-web` sampai siap dipakai backend Go.
+Sekitar 10 menit.
 
 Versi web panduan ini: https://claude.ai/code/artifact/d975c708-cac7-4c4d-acfa-fae304f1e017
 
-## 1. Pilih organisasi dulu — di sinilah $10/bulan diputuskan
+## Status: project sudah dibuat
 
-Membuat project di `sheetcodeid-ux's Org` berbiaya **$10/bulan**, karena org itu
-berplan Pro dan menagih per project. Supabase menyelipkan jalan keluarnya di
-kotak bawah layar: kamu masih punya jatah **2 project gratis**, tapi hanya bisa
-dipakai lewat organisasi berplan Free.
+| | |
+| --- | --- |
+| Organisasi | `pahlevidirgadesignarchitecture` — plan **Free**, $0/bulan |
+| Project | `pahlevidirga-web` |
+| Region | AWS `ap-southeast-1` (Singapore) |
+| Compute | Nano |
+| Integrasi GitHub | Aktif, tersambung ke repo ini |
 
-| | Org Free baru | Tetap di org Pro |
-| --- | --- | --- |
-| Biaya | **$0** | $10/bulan |
-| Database | 500 MB | 8 GB |
-| Egress | 5 GB | 250 GB |
-| Tidur saat idle | Ya, setelah 7 hari | Tidak |
-| Backup terkelola | Tidak | Harian |
+Sisa langkahnya lima, di bawah. Inti pekerjaannya ada di **langkah 2**:
+satu kali tempel ke SQL Editor, tanpa memasang CLI apa pun.
 
-**Rekomendasi: org Free.** Website ini hanya menyimpan teks — foto proyek ada di
-R2 — jadi 500 MB sangat longgar. Dua kelemahan plan Free juga sudah ditutup oleh
-yang kita bangun: workflow `backup-db.yml` melakukan `pg_dump` harian ke R2, dan
-koneksi harian itu sekaligus mencegah project tertidur.
+> **Integrasi GitHub aktif.** Supabase akan menerapkan isi `supabase/migrations/`
+> secara otomatis begitu branch produksi (`main`) berubah. Karena migrasi kita
+> masih di branch `claude/stack-setup-…`, sekarang belum ada yang ia kerjakan.
+> `bootstrap.sql` di langkah 2 sudah mencatatkan kedua migrasi ke
+> `supabase_migrations.schema_migrations`, jadi setelah nanti di-merge ke `main`
+> integrasi itu akan melihatnya sebagai sudah terpasang dan melewatinya —
+> bukan menerapkannya dua kali.
 
-> Kalau memilih org Free, connector Supabase di sesi Claude perlu disambungkan
-> ulang agar project barunya terlihat. Seluruh langkah di bawah bisa dijalankan
-> sendiri tanpa connector.
-
-## 2. Isi form New Project
-
-| Kolom | Isi | Alasan |
-| --- | --- | --- |
-| Project name | `pahlevidirga-web` | Nama panjang akan muncul di banyak tempat sempit |
-| GitHub | **kosongkan** | Integrasi ini menerapkan migrasi dari branch produksi. Migrasi kita masih di branch `claude/stack-setup-…`, jadi belum ada yang bisa dikerjakannya. Sambungkan setelah di-merge ke `main` |
-| Database password | Generate → **simpan** | Masuk ke `DATABASE_URL` dan tidak bisa dilihat lagi setelah halaman ditutup |
-| Region | **Southeast Asia (Singapore)** | ±30 ms dari Indonesia. Jangan Seoul seperti `operation-gwg`. Tidak bisa diubah setelah project dibuat |
-| Enable Data API | biarkan menyala | Dipakai Supabase Studio. Frontend kita tidak memakainya |
-| Automatically expose new tables | **MATIKAN** | lihat di bawah |
-| Enable automatic RLS | **NYALAKAN** | Jaring pengaman untuk tabel yang kamu buat sendiri nanti |
-
-### Kenapa dua checkbox terakhir penting
-
-Kalau "automatically expose new tables" menyala, setiap tabel baru otomatis
-diberi hak `all` untuk role `anon` — artinya pengunjung anonim punya izin
-INSERT, UPDATE, dan DELETE, dan satu-satunya penjaga tinggal ketepatan tiap
-policy RLS. Supabase sendiri menulis *"We recommend disabling this"*.
-
-Saat menguji migrasi ini di Postgres lokal, ketahuan bahwa RLS hanya menyaring
-**baris** — yang menentukan sebuah role boleh menyentuh tabelnya sama sekali
-adalah `GRANT`. Migrasi `20260818000002` sekarang mencabut semua hak lebih dulu
-lalu memberikan seperlunya, jadi mematikan opsi ini tidak merusak apa pun.
-
-## 3. Salin lima kredensial
+## 1. Salin lima kredensial
 
 Semua ada di **Project Settings**.
 
@@ -72,21 +45,39 @@ Dua string koneksi berbeda peran: **pooler** untuk API Go, karena Cloud Run bisa
 menaikkan banyak instance dan koneksi langsung akan cepat kehabisan slot;
 **direct** untuk `pg_dump` dan `psql` yang butuh session penuh.
 
-## 4. Terapkan skema
+## 2. Terapkan skema — sekali tempel
+
+Buka **SQL Editor** di dashboard, tempel seluruh isi
+[`supabase/bootstrap.sql`](../supabase/bootstrap.sql), lalu **Run**.
+
+File itu berisi kedua migrasi sekaligus, dibungkus satu transaksi. Kalau ada
+yang gagal, tidak ada yang setengah terpasang. Menjalankannya dua kali juga
+aman — ia berhenti dengan pesan jelas alih-alih merusak skema yang sudah ada.
+
+Yang terbentuk: tabel `projects`, `project_images`, `inquiries`, `profiles`,
+beserta RLS, GRANT, dan catatan riwayat migrasi.
+
+<details>
+<summary>Alternatif: lewat Supabase CLI</summary>
 
 ```bash
 git fetch origin
 git checkout claude/stack-setup-supabase-cloudflare-kdwlkk
-
-# project-ref ada di URL dashboard: /project/<ref>
 supabase link --project-ref <project-ref>
 supabase db push
 ```
 
-Yang terpasang: `20260818000001_init_schema` (tabel `projects`,
-`project_images`, `inquiries`, `profiles`) dan `20260818000002_rls_policies`.
+Pilih salah satu saja — jangan keduanya. `bootstrap.sql` sudah mengisi riwayat
+migrasi, jadi `db push` setelahnya akan melaporkan tidak ada yang perlu
+diterapkan.
 
-## 5. Verifikasi RLS sebelum percaya
+</details>
+
+`bootstrap.sql` dihasilkan dari file migrasi oleh
+`scripts/build-bootstrap.sh`. Kalau migrasinya berubah, jalankan skrip itu lagi
+— jangan menyunting `bootstrap.sql` langsung.
+
+## 3. Verifikasi RLS sebelum percaya
 
 ```bash
 psql "<direct connection string>" -v ON_ERROR_STOP=1 -f supabase/tests/rls_test.sql
@@ -105,7 +96,7 @@ transaksi yang di-rollback, jadi aman dijalankan terhadap database berisi data.
 Tes ini sudah dibuktikan bisa gagal: saat policy select dilonggarkan supaya
 draft ikut terlihat publik, tes berhenti dengan `GAGAL`.
 
-## 6. Buat akun staf
+## 4. Buat akun staf
 
 **Authentication → Users → Add user**, isi email dan password, salin UUID-nya.
 Lalu di **SQL Editor**:
@@ -119,7 +110,7 @@ Punya akun Supabase tidak membuat seseorang jadi staf. Policy `is_staff()`
 memeriksa keberadaan baris di `public.profiles` — user tanpa baris di situ
 diperlakukan seperti pengunjung biasa.
 
-## 7. Jalankan backend dan buktikan tersambung
+## 5. Jalankan backend dan buktikan tersambung
 
 ```bash
 cp .env.example apps/api/.env
