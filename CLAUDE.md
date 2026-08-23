@@ -21,7 +21,7 @@ oleh orang yang bisnisnya arsitektur — pilih yang kedua.
 
 | Lapisan | Pakai | Region |
 | --- | --- | --- |
-| Frontend | Astro statis di Cloudflare Pages | edge |
+| Frontend | Astro statis di Cloudflare Workers (Static Assets) | edge |
 | Gambar | Cloudflare R2 | edge |
 | API | Go Fiber di Cloud Run | `asia-southeast1` |
 | Database + Auth | Supabase (plan Free) | `ap-southeast-1` |
@@ -49,8 +49,8 @@ Langgar ini dan ada yang rusak diam-diam:
    Cloud Run — hanya form kontak dan panel admin yang menyentuhnya. Ini yang
    membuat seluruh stack muat di free tier dan membuat biaya Cloud Run di
    region Singapura tetap di bawah $1/bulan.
-5. **Konten baru butuh build ulang.** Panggil Deploy Hook Cloudflare Pages
-   setelah konten berubah.
+5. **Konten baru butuh build ulang.** Deploy ulang Worker setelah konten
+   berubah — halaman proyek dibekukan saat build.
 
 ## Invarian keamanan
 

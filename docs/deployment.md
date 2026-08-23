@@ -78,23 +78,40 @@ Push ke `main` yang menyentuh `apps/api/**` akan men-deploy otomatis.
 Terakhir, arahkan `api.pahlevidirga.com` ke URL Cloud Run lewat CNAME
 ter-proxy (awan oranye) supaya WAF dan rate limiting Cloudflare ikut aktif.
 
-## 4. Cloudflare Pages
+## 4. Cloudflare Workers (situs statis)
 
-Sambungkan repo lewat Workers & Pages → Create → Pages → Connect to Git.
+Situs disajikan Workers Static Assets, bukan Pages. Worker
+`pahlevidirgadesignarchitectureweb` sudah tersambung ke repo ini; yang
+dibutuhkan hanya setelan build yang benar.
+
+`wrangler.jsonc` di akar repo sudah mengatur sisanya — nama Worker, direktori
+aset (`apps/web/dist`), dan penanganan 404. **Tidak ada `main`**, jadi tidak ada
+kode Worker yang berjalan: murni berkas statis dari edge.
+
+Di **Settings → Build**:
 
 | Setelan | Nilai |
 | --- | --- |
 | Build command | `npm run build` |
-| Build output directory | `dist` |
-| Root directory | `apps/web` |
+| Deploy command | `npx wrangler deploy` |
+| Root directory | `/` |
 
-Environment variable produksi:
+Build command wajib diisi. Workers Builds **tidak** membaca blok `build` di
+wrangler.jsonc — itu hanya berlaku untuk `wrangler dev` lokal — jadi tanpa
+setelan ini `dist` tidak pernah dibuat dan deploy gagal dengan
+"Could not detect a directory containing static files".
+
+Build variables:
 
 ```
 PUBLIC_API_BASE_URL=https://api.pahlevidirga.com
 PUBLIC_SITE_URL=https://pahlevidirga.com
 PUBLIC_TURNSTILE_SITE_KEY=<site key>
 ```
+
+Tanpa `PUBLIC_API_BASE_URL`, situs yang tayang akan menunjuk
+`http://localhost:8080` — halaman tetap tampil, tapi form kontak dan panel
+admin tidak akan berfungsi bagi pengunjung.
 
 Halaman proyek dibangun saat deploy, jadi **konten baru belum muncul sampai
 ada build ulang**. Buat Deploy Hook di Pages, lalu panggil URL-nya setiap kali

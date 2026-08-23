@@ -1,0 +1,24 @@
+{
+  // Situs statis Astro yang disajikan Cloudflare Workers Static Assets.
+  //
+  // Tanpa "main": tidak ada kode Worker yang berjalan, hanya berkas statis dari
+  // edge. Itu memang yang diinginkan — pengunjung tidak pernah menyentuh
+  // backend, dan halaman proyek sudah dirender saat build.
+  //
+  // Nama harus sama persis dengan Worker yang sudah ada di dashboard, kalau
+  // tidak wrangler akan membuat Worker kedua alih-alih memperbarui yang ini.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pahlevidirgadesignarchitectureweb",
+  "compatibility_date": "2026-08-23",
+
+  "assets": {
+    "directory": "./apps/web/dist",
+    // Path yang tidak ada disajikan dengan 404.html buatan kita, bukan halaman
+    // bawaan Cloudflare.
+    "not_found_handling": "404-page"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

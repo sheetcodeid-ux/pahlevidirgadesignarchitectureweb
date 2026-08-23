@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
+# Panel admin tidak untuk diindeks. Halamannya juga bertanda noindex dan tidak
+# terdaftar di sitemap; ini lapis ketiga, bukan pengganti keduanya.
+Disallow: /admin
+
 Sitemap: https://pahlevidirga.com/sitemap-index.xml

@@ -1,0 +1,13 @@
+{
+  "name": "pahlevidirga-web-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix apps/web ci && npm --prefix apps/web run build",
+    "deploy": "wrangler deploy",
+    "check": "npm --prefix apps/web run check"
+  },
+  "devDependencies": {
+    "wrangler": "^4.125.0"
+  }
+}
