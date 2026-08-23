@@ -10,8 +10,12 @@ on:
 
 env:
   SERVICE: pahlevidirga-api
-  # Free tier Cloud Run hanya berlaku di sebagian region US.
-  REGION: us-central1
+  # Satu region dengan Supabase (ap-southeast-1). Free tier Cloud Run hanya
+  # berlaku di us-central1/us-east1/us-west1, jadi region ini ditagih normal —
+  # tapi API ini tidak dilalui pengunjung biasa, sehingga pemakaiannya beberapa
+  # ratus request per bulan dan biayanya di bawah $1. Menaruhnya di AS demi
+  # free tier justru membuat setiap query database menyeberangi Pasifik.
+  REGION: asia-southeast1
 
 jobs:
   deploy:

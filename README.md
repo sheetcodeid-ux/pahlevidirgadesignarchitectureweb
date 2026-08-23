@@ -3,6 +3,23 @@
 Monorepo untuk website studio: portfolio statis di edge, API Go untuk hal-hal
 yang perlu rahasia, dan Supabase sebagai sumber data.
 
+## Stack
+
+| Lapisan | Dipakai | Region | Biaya |
+| --- | --- | --- | --- |
+| Frontend | Cloudflare Pages | edge global | gratis |
+| Gambar | Cloudflare R2 | edge global | gratis (10 GB, tanpa egress) |
+| API | Go Fiber di Cloud Run | `asia-southeast1` | < $1/bulan |
+| Database & Auth | Supabase | `ap-southeast-1` | gratis |
+| Email | Resend | — | gratis (3.000/bulan) |
+| Anti-bot | Cloudflare Turnstile | — | gratis |
+
+API dan database sengaja ditempatkan satu region di Singapura. Free tier Cloud
+Run hanya berlaku di region AS, tetapi API ini tidak dilalui pengunjung biasa —
+hanya form kontak dan panel admin — sehingga pemakaiannya beberapa ratus request
+per bulan. Memilih region AS demi free tier justru membuat tiap query database
+menyeberangi Pasifik.
+
 ## Arsitektur
 
 ```

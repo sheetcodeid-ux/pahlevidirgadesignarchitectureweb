@@ -46,6 +46,9 @@ Nama file mengandung suffix acak, jadi versi baru tidak akan tertahan cache.
 
 ## 3. Cloud Run
 
+Region: **`asia-southeast1`** (Singapura), satu region dengan Supabase. Sudah
+disetel di workflow deploy.
+
 Simpan rahasia di Secret Manager — nama-nama ini dirujuk oleh workflow deploy:
 
 ```bash

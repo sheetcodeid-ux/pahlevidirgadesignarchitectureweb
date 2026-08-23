@@ -28,15 +28,22 @@ Subdomain yang akan dipakai:
 
 ### 2. Google Cloud — **wajib**
 
-Untuk menjalankan API Go di Cloud Run. Free tier permanen (2 juta request,
-180.000 vCPU-detik/bulan) jauh di atas kebutuhan website portfolio, tapi akun
-tetap minta kartu kredit untuk aktivasi.
+Untuk menjalankan API Go di Cloud Run, region `asia-southeast1` (Singapura) —
+satu region dengan database Supabase.
 
-Agar dipastikan tidak ada tagihan:
+Free tier Cloud Run hanya berlaku di `us-central1`, `us-east1`, dan `us-west1`,
+jadi region Singapura ditagih normal. Itu disengaja: pengunjung website tidak
+pernah menyentuh API ini (halaman proyek statis di Cloudflare Pages), jadi
+pemakaiannya hanya beberapa ratus request per bulan — di bawah $1. Menaruhnya
+di AS demi free tier justru membuat setiap query database menyeberangi
+Pasifik, dan panel admin yang ramai query akan terasa lambat.
+
+Agar tagihannya tetap kecil dan terduga:
 
 - `--max-instances 3` sudah disetel di workflow deploy
-- pasang budget alert di angka kecil (mis. $1) lewat Billing → Budgets
-- pakai region `us-central1`; free tier tidak berlaku di region Jakarta
+- pasang budget alert di $1 lewat Billing → Budgets
+- taruh Cloudflare di depan `api.pahlevidirga.com` supaya rate limiting dan WAF
+  ikut menyaring sebelum request sampai ke Cloud Run
 
 ### 3. Cloudflare R2 — **wajib**
 
