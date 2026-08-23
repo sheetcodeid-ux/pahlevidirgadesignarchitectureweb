@@ -94,11 +94,16 @@ Aturan yang mengikat:
 6. **Responsif wajib**, termasuk ponsel sempit. Tidak boleh ada gulir
    horizontal pada badan halaman.
 
-**Halaman UI Component adalah satu-satunya sumber kebenaran komponen.** Hanya
-master admin yang bisa membukanya. Saat membangun fitur baru, ambil komponen
-dari sana — jangan membuat komponen baru kecuali diminta, dan kalau membuat,
-daftarkan ke halaman itu. Inventaris dan urutan pengerjaan ada di
-`docs/design-system.md`.
+**Halaman UI Component (`/admin/ui`) adalah satu-satunya sumber kebenaran
+komponen.** Hanya master admin yang bisa membukanya. Seluruh 64 komponen sudah
+dibangun. Saat membangun fitur baru, ambil komponen dari sana — jangan membuat
+komponen baru kecuali diminta, dan kalau membuat, daftarkan ke halaman itu.
+Inventaris lengkapnya ada di `docs/design-system.md`.
+
+Komponen yang butuh perilaku rumit memakai primitif headless; yang bisa
+dikerjakan elemen HTML asli tetap memakai elemen aslinya (`<details>` untuk
+Accordion, `<input type=file>` untuk Attachment, `<input type=range>` untuk
+Slider). Itu bukan kemalasan — perilaku bawaan tidak bisa rusak diam-diam.
 
 Frontend memakai Astro dengan island React untuk komponen interaktif. Primitif
 headless dipakai untuk lapisan perilaku overlay (focus trap, ARIA, penempatan);

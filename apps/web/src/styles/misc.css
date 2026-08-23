@@ -1,0 +1,338 @@
+/* =============================================================================
+   Gelombang 5 — sisa inventaris.
+   Aspect Ratio, Skeleton, Spinner, Kbd, Avatar, Empty, Marker, Progress,
+   Alert, Bubble, Message, Tabs, Pagination, Accordion, Collapsible,
+   Message Scroller, Attachment, Questionnaire, Navigation Menu.
+   ============================================================================= */
+
+/* --- Aspect Ratio --------------------------------------------------------- */
+
+.aspect { position: relative; width: 100%; overflow: hidden; border-radius: var(--radius-md); background: var(--surface-raised); }
+.aspect > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.aspect--16-9 { aspect-ratio: 16 / 9; }
+.aspect--4-3 { aspect-ratio: 4 / 3; }
+.aspect--1-1 { aspect-ratio: 1 / 1; }
+
+/* --- Skeleton ------------------------------------------------------------- */
+
+/* Denyutnya opacity, bukan gradien bergerak: satu properti yang berjalan di
+   compositor, dan tidak membebani halaman yang menampilkan banyak baris. */
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  animation: skeleton-pulse 1.6s var(--ease) infinite;
+}
+
+.skeleton--text { height: 0.85em; border-radius: var(--radius-xs); }
+.skeleton--title { height: 1.4em; width: 60%; }
+.skeleton--circle { border-radius: 50%; }
+
+@keyframes skeleton-pulse { 50% { opacity: 0.45; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; opacity: 0.7; }
+}
+
+/* --- Spinner -------------------------------------------------------------- */
+
+.spinner {
+  display: inline-block;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--text-strong);
+  animation: spinner-turn 700ms linear infinite;
+}
+
+.spinner--sm { width: 0.9rem; height: 0.9rem; border-width: 1.5px; }
+.spinner--lg { width: 1.75rem; height: 1.75rem; border-width: 2.5px; }
+.spinner--on-action { border-color: color-mix(in srgb, var(--action-ink) 30%, transparent); border-top-color: var(--action-ink); }
+
+@keyframes spinner-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+/* --- Kbd ------------------------------------------------------------------ */
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1.4;
+}
+
+/* --- Avatar --------------------------------------------------------------- */
+
+.avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  user-select: none;
+}
+
+/* Gambar menutupi inisial. Kalau gagal dimuat — atau tidak pernah diminta
+   karena lazy — inisialnya yang terlihat, bukan kotak kosong. */
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.avatar--sm { width: 1.85rem; height: 1.85rem; font-size: var(--text-2xs); }
+.avatar--lg { width: 4rem; height: 4rem; font-size: var(--text-lg); }
+.avatar--brand { background: var(--brand); color: var(--brand-ink); }
+
+.avatar-group { display: flex; }
+/* Tumpang tindih dengan cincin permukaan supaya tepi tiap avatar tetap terbaca. */
+.avatar-group .avatar + .avatar { margin-left: -0.6rem; box-shadow: 0 0 0 2px var(--surface); }
+
+/* --- Empty ---------------------------------------------------------------- */
+
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-8) var(--space-4); text-align: center; }
+.empty .icon-tile { margin-bottom: var(--space-2); }
+.empty p { max-width: 38ch; margin: 0; }
+.empty .btn { margin-top: var(--space-3); }
+.empty--sm { padding: var(--space-6) var(--space-4); }
+
+/* --- Marker --------------------------------------------------------------- */
+
+/* Penanda kecil untuk menandai hal yang berubah atau butuh perhatian. */
+.marker { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--text-sm); color: var(--text-muted); }
+.marker__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); flex: none; }
+.marker--new .marker__dot { background: var(--brand); }
+.marker--live .marker__dot { background: var(--success); }
+.marker--warn .marker__dot { background: var(--warn); }
+
+/* Titik yang menempel di pojok elemen lain (mis. lonceng notifikasi). */
+.marker-anchor { position: relative; display: inline-flex; }
+.marker-anchor__dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* --- Progress ------------------------------------------------------------- */
+
+.progress { display: flex; flex-direction: column; gap: var(--space-2); }
+.progress__meta { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--text-sm); color: var(--text-muted); }
+.progress__track { height: 6px; border-radius: var(--radius-pill); background: var(--surface-hover); overflow: hidden; }
+.progress__fill { height: 100%; border-radius: var(--radius-pill); background: var(--action); transition: width var(--dur-slow) var(--ease); }
+.progress__fill--success { background: var(--success); }
+.progress__fill--warn { background: var(--warn); }
+
+/* --- Alert ---------------------------------------------------------------- */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-left-width: 2px;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.alert__icon { flex: none; margin-top: 0.1rem; color: var(--text-muted); }
+.alert__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.alert__title { font-weight: 700; color: var(--text-strong); }
+.alert__text { font-size: var(--text-sm); color: var(--text-muted); }
+.alert__text b { color: var(--text-body); }
+
+.alert--info { border-left-color: var(--info); background: var(--info-soft); }
+.alert--info .alert__icon { color: var(--info); }
+.alert--warn { border-left-color: var(--warn); background: var(--warn-soft); }
+.alert--warn .alert__icon { color: var(--warn); }
+.alert--danger { border-left-color: var(--brand); background: var(--brand-soft); }
+.alert--danger .alert__icon { color: var(--brand); }
+.alert--success { border-left-color: var(--success); background: var(--success-soft); }
+.alert--success .alert__icon { color: var(--success); }
+
+/* --- Bubble, Message, Message Scroller ------------------------------------ */
+
+.msg-scroller { display: flex; flex-direction: column; gap: var(--space-4); height: 18rem; overflow-y: auto; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg-sunken); }
+
+.msg { display: flex; gap: var(--space-3); max-width: 85%; }
+.msg--sendiri { margin-left: auto; flex-direction: row-reverse; }
+.msg__body { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.msg--sendiri .msg__body { align-items: flex-end; }
+
+.bubble {
+  padding: 0.65rem 0.95rem;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: var(--text-base);
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+
+/* Sudut yang menempel ke pengirim dibuat kecil — arah percakapan terbaca dari
+   bentuknya, bukan hanya dari posisinya. */
+.msg:not(.msg--sendiri) .bubble { border-bottom-left-radius: var(--radius-xs); }
+.msg--sendiri .bubble { background: var(--action); color: var(--action-ink); border-color: transparent; border-bottom-right-radius: var(--radius-xs); }
+
+.msg__meta { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-2xs); color: var(--text-faint); }
+
+/* --- Tabs ----------------------------------------------------------------- */
+
+.tabs { display: flex; flex-direction: column; gap: var(--space-4); }
+.tabs__panel:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--radius-sm); }
+
+/* --- Pagination ----------------------------------------------------------- */
+
+.pagination { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+.pagination__page {
+  display: grid;
+  place-items: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding-inline: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.pagination__page:hover:not(:disabled) { background: var(--surface-hover); color: var(--text-strong); }
+.pagination__page[aria-current="page"] { background: var(--action); color: var(--action-ink); font-weight: 700; }
+.pagination__page:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination__gap { color: var(--text-faint); padding-inline: 0.25rem; }
+
+/* --- Accordion & Collapsible ---------------------------------------------- */
+
+.accordion { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
+.accordion > details + details { border-top: 1px solid var(--border); }
+
+.accordion summary,
+.collapsible summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: var(--text-strong);
+  transition: background-color var(--dur) var(--ease);
+}
+
+.accordion summary::-webkit-details-marker,
+.collapsible summary::-webkit-details-marker { display: none; }
+.accordion summary:hover,
+.collapsible summary:hover { background: var(--surface-raised); }
+
+.accordion__chevron,
+.collapsible__chevron { margin-left: auto; color: var(--text-faint); transition: transform var(--dur) var(--ease); }
+details[open] > summary .accordion__chevron,
+details[open] > summary .collapsible__chevron { transform: rotate(180deg); }
+
+.accordion__body { padding: 0 var(--space-4) var(--space-4); }
+.collapsible { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.collapsible__body { padding: 0 var(--space-4) var(--space-4); }
+
+/* --- Attachment ----------------------------------------------------------- */
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-7) var(--space-4);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: center;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.dropzone[data-over] { border-color: var(--brand); background: var(--brand-soft); }
+.dropzone__hint { display: flex; gap: var(--space-4); flex-wrap: wrap; justify-content: center; font-size: var(--text-sm); color: var(--text-faint); }
+.dropzone__hint span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.dropzone__hint span::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+
+.attachment { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.attachment__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.attachment__name { font-size: var(--text-base); color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment__size { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); }
+
+/* --- Questionnaire -------------------------------------------------------- */
+
+.quiz { display: flex; flex-direction: column; gap: var(--space-5); }
+.quiz__head { display: flex; flex-direction: column; gap: var(--space-3); }
+.quiz__steps { display: flex; gap: var(--space-2); }
+.quiz__step { flex: 1; height: 3px; border-radius: var(--radius-pill); background: var(--surface-hover); transition: background-color var(--dur) var(--ease); }
+.quiz__step[data-done] { background: var(--action); }
+.quiz__step[data-current] { background: var(--brand); }
+.quiz__nav { display: flex; justify-content: space-between; gap: var(--space-3); }
+
+/* --- Navigation Menu ------------------------------------------------------ */
+
+.navmenu { display: flex; position: relative; }
+.navmenu__list { display: flex; gap: 2px; list-style: none; margin: 0; padding: 0; }
+
+.navmenu__trigger,
+.navmenu__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.navmenu__trigger:hover,
+.navmenu__link:hover { background: var(--surface-hover); color: var(--text-strong); }
+.navmenu__trigger[data-state="open"] { background: var(--surface-hover); color: var(--text-strong); }
+.navmenu__viewport-wrap { position: absolute; top: 100%; left: 0; display: flex; justify-content: flex-start; width: 100%; perspective: 2000px; z-index: 30; }
+
+.navmenu__viewport {
+  position: relative;
+  margin-top: var(--space-2);
+  width: var(--radix-navigation-menu-viewport-width);
+  height: var(--radix-navigation-menu-viewport-height);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  transition: width var(--dur) var(--ease), height var(--dur) var(--ease);
+}
+
+.navmenu__content { padding: var(--space-3); width: max-content; }
+.navmenu__grid { display: grid; grid-template-columns: repeat(2, minmax(12rem, 1fr)); gap: var(--space-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .navmenu__viewport { transition: none; }
+}

@@ -4,6 +4,7 @@ import { MasterGuard } from "../../components/admin/MasterGuard";
 import { FormShowcase } from "../../components/admin/FormShowcase";
 import { OverlayShowcase } from "../../components/admin/OverlayShowcase";
 import { DataShowcase } from "../../components/admin/DataShowcase";
+import { MiscShowcase } from "../../components/admin/MiscShowcase";
 import { Icon } from "../../components/ui/Icon";
 
 // Warna ditampilkan lewat variabel CSS-nya, bukan nilai heksa yang disalin.
@@ -462,16 +463,192 @@ const ikon = [
       <DataShowcase client:visible />
     </section>
 
+    <!-- Umpan balik & konten -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Umpan Balik &amp; Status</h2>
+        <p class="t-muted" style="margin:0">Alert, Progress, Skeleton, Spinner, Marker, Empty, Kbd, Aspect Ratio.</p>
+      </div>
+
+      <div class="spec-grid">
+        <div class="spec-demo" style="grid-column: 1 / -1">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Alert</span>
+            <code class="swatch__name">.alert</code>
+          </div>
+          <div class="stack" style="gap: var(--space-3)">
+            <div class="alert alert--info">
+              <span class="alert__icon"><Icon name="info" size={18} /></span>
+              <span class="alert__body">
+                <span class="alert__title">Konten baru butuh build ulang</span>
+                <span class="alert__text">Halaman proyek dirender saat deploy. Perubahan tampil setelah build berikutnya.</span>
+              </span>
+            </div>
+            <div class="alert alert--warn">
+              <span class="alert__icon"><Icon name="alert" size={18} /></span>
+              <span class="alert__body">
+                <span class="alert__text"><b>Turnstile belum dikonfigurasi</b> — form kontak akan menerima kiriman bot.</span>
+              </span>
+            </div>
+            <div class="alert alert--danger">
+              <span class="alert__icon"><Icon name="alert" size={18} /></span>
+              <span class="alert__body">
+                <span class="alert__text"><b>Koneksi database terputus</b> — pesan masuk tidak tersimpan sejak 14.20.</span>
+              </span>
+            </div>
+            <div class="alert alert--success">
+              <span class="alert__icon"><Icon name="check" size={18} /></span>
+              <span class="alert__body">
+                <span class="alert__text"><b>Build selesai</b> — 12 halaman diperbarui.</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Progress</span>
+            <code class="swatch__name">.progress</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <div class="progress">
+              <div class="progress__meta"><span>Mengunggah galeri</span><span>7 dari 12</span></div>
+              <div class="progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="7">
+                <div class="progress__fill" style="width: 58%"></div>
+              </div>
+            </div>
+            <div class="progress">
+              <div class="progress__meta"><span>Kuota penyimpanan</span><span>0,4 dari 10 GB</span></div>
+              <div class="progress__track"><div class="progress__fill progress__fill--success" style="width: 4%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Skeleton</span>
+            <code class="swatch__name">.skeleton</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <div class="row" style="gap: var(--space-3)">
+              <span class="skeleton skeleton--circle" style="width:2.5rem;height:2.5rem"></span>
+              <span class="grow stack" style="gap: 0.5rem">
+                <span class="skeleton skeleton--title"></span>
+                <span class="skeleton skeleton--text"></span>
+              </span>
+            </div>
+            <span class="skeleton" style="height:6rem"></span>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Spinner &amp; Kbd</span>
+            <code class="swatch__name">.spinner · .kbd</code>
+          </div>
+          <div class="spec-demo__stage">
+            <span class="spinner spinner--sm"></span>
+            <span class="spinner"></span>
+            <span class="spinner spinner--lg"></span>
+            <button type="button" class="btn btn--primary" disabled>
+              <span class="spinner spinner--sm spinner--on-action"></span>Menyimpan
+            </button>
+            <span class="row" style="gap:0.35rem">
+              <kbd class="kbd">⌘</kbd><kbd class="kbd">K</kbd>
+            </span>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Marker</span>
+            <code class="swatch__name">.marker</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <span class="marker marker--live"><span class="marker__dot"></span>Terbit</span>
+            <span class="marker marker--new"><span class="marker__dot"></span>Belum dibaca</span>
+            <span class="marker marker--warn"><span class="marker__dot"></span>Perlu ditinjau</span>
+            <span class="marker"><span class="marker__dot"></span>Arsip</span>
+            <span class="marker-anchor">
+              <button type="button" class="btn btn--secondary btn--icon" aria-label="Notifikasi, ada yang belum dibaca">
+                <Icon name="inquiry" size={16} />
+              </button>
+              <span class="marker-anchor__dot"></span>
+            </span>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Aspect Ratio</span>
+            <code class="swatch__name">.aspect</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <div class="aspect aspect--16-9" style="display:grid;place-items:center;color:var(--text-faint)">16 : 9</div>
+            <div class="row" style="gap: var(--space-3)">
+              <div class="aspect aspect--4-3 grow" style="display:grid;place-items:center;color:var(--text-faint)">4 : 3</div>
+              <div class="aspect aspect--1-1 grow" style="display:grid;place-items:center;color:var(--text-faint)">1 : 1</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Empty</span>
+            <code class="swatch__name">.empty</code>
+          </div>
+          <div class="empty empty--sm">
+            <span class="icon-tile"><Icon name="inquiry" size={20} /></span>
+            <span class="t-subheading">Belum ada pesan masuk</span>
+            <p class="t-muted">Pesan dari form kontak akan muncul di sini.</p>
+            <a class="btn btn--secondary" href="/kontak">Lihat form kontak</a>
+          </div>
+        </div>
+
+        <div class="spec-demo" style="grid-column: 1 / -1">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Accordion &amp; Collapsible</span>
+            <code class="swatch__name">&lt;details&gt;</code>
+          </div>
+          <p class="t-muted" style="margin:0">
+            Dibangun di atas elemen <code>&lt;details&gt;</code> bawaan — bisa dibuka keyboard, dicari lewat Ctrl+F, dan tetap terbuka saat halaman dicetak.
+          </p>
+          <div class="accordion">
+            <details open>
+              <summary>Apa saja yang dibutuhkan sebelum survei?<span class="accordion__chevron"><Icon name="chevronDown" size={16} /></span></summary>
+              <div class="accordion__body t-muted">Sertifikat tanah, gambar situasi bila ada, dan perkiraan anggaran.</div>
+            </details>
+            <details>
+              <summary>Berapa lama tahap perancangan?<span class="accordion__chevron"><Icon name="chevronDown" size={16} /></span></summary>
+              <div class="accordion__body t-muted">Empat sampai delapan minggu, tergantung kompleksitas dan kecepatan persetujuan.</div>
+            </details>
+            <details>
+              <summary>Apakah studio mendampingi pelaksanaan?<span class="accordion__chevron"><Icon name="chevronDown" size={16} /></span></summary>
+              <div class="accordion__body t-muted">Ya, dalam bentuk pengawasan berkala sesuai kesepakatan.</div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interaktif sisanya -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Navigasi, Pesan &amp; Unggahan</h2>
+        <p class="t-muted" style="margin:0">Avatar, Tabs, Pagination, Navigation Menu, Direction, Bubble, Message Scroller, Attachment, Questionnaire.</p>
+      </div>
+      <MiscShowcase client:visible />
+    </section>
+
     <!-- Peta jalan -->
     <section class="spec-section">
       <div class="spec-section__head">
-        <h2 class="t-heading">Yang belum dibangun</h2>
+        <h2 class="t-heading">Status</h2>
         <p class="t-muted" style="margin:0">Urutannya ada di docs/design-system.md.</p>
       </div>
       <div class="spec-demo">
         <div class="spec-demo__stage">
-          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–4 selesai</span>
-          <span class="badge">Gelombang 5 · Sisanya</span>
+          <span class="badge badge--success"><span class="badge__dot" />Seluruh 64 komponen selesai</span>
         </div>
       </div>
     </section>

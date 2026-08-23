@@ -69,6 +69,11 @@ Resizable · Message Scroller · Questionnaire · Attachment
 
 Direction (konteks LTR/RTL)
 
+## Status
+
+Seluruh 64 komponen selesai dan terdaftar di halaman UI Component
+(`/admin/ui`). Fitur baru mengambil dari sana.
+
 ## Urutan pengerjaan
 
 Dibangun bergelombang, bukan sekaligus. Tiap gelombang menghasilkan sesuatu
@@ -82,7 +87,7 @@ ketimbang setelah 64 komponen terlanjur jadi.
 | 2 ✅ | Seluruh kelompok Form | **Selesai** |
 | 3 ✅ | Seluruh kelompok Overlay | **Selesai** |
 | 4 ✅ | Data dan konten | **Selesai** |
-| 5 | Sisanya | Bubble, Message, Message Scroller, Questionnaire, Marker, Attachment |
+| 5 ✅ | Sisanya | **Selesai** |
 
 ## Hak akses halaman UI Component
 
