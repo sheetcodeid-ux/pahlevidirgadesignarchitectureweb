@@ -34,6 +34,17 @@ Supabase: org `pahlevidirgadesignarchitecture`, project `pahlevidirga-web`.
 Integrasi GitHub aktif, jadi migrasi di `supabase/migrations/` diterapkan
 otomatis begitu branch produksi berubah.
 
+Cloudflare: akun **`pahlevidirgadesignarchitecture`**, ID
+`cf6a6bde45d3fd8a93463e6cc7e71aa1`. Worker `pahlevidirgadesignarchitectureweb`
+menyajikan situs statis dari `apps/web/dist` lewat `wrangler.jsonc` di akar.
+
+> **Satu login, dua akun.** Login `sheetcode.id@gmail.com` juga memuat akun
+> `Sheetcode.id@gmail.com's Account` yang berisi proyek lain yang tidak ada
+> hubungannya dengan web ini. **Jangan pernah membuat atau mengubah apa pun di
+> akun itu.** Connector kadang memakai akun Sheetcode sebagai bawaan, jadi
+> sebutkan account ID Dirga secara eksplisit di setiap panggilan — jangan
+> mengandalkan nilai bawaan.
+
 ## Invarian arsitektur
 
 Langgar ini dan ada yang rusak diam-diam:
