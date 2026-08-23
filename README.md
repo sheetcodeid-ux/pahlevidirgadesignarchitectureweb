@@ -95,5 +95,6 @@ Cek cepat: `curl localhost:8080/healthz`.
 
 ## Dokumentasi
 
+- [`docs/setup-supabase.md`](docs/setup-supabase.md) — panduan menyiapkan database, langkah demi langkah
 - [`docs/layanan.md`](docs/layanan.md) — daftar akun/layanan yang perlu disiapkan
 - [`docs/deployment.md`](docs/deployment.md) — langkah deploy ke production
