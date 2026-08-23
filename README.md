@@ -44,6 +44,7 @@ apps/
     src/pages/          Beranda, arsip proyek, detail, kontak
 supabase/
   migrations/           Skema + RLS
+  tests/rls_test.sql    Assertion RLS (transaksi, di-rollback)
   seed.sql              Data contoh untuk development
 .github/workflows/      CI, deploy API, backup harian
 docs/                   Panduan setup & deployment
@@ -79,6 +80,7 @@ Cek cepat: `curl localhost:8080/healthz`.
 | `cd apps/web && npm run check` | Typecheck Astro/TypeScript |
 | `cd apps/web && npm run build` | Build statis ke `dist/` |
 | `supabase db push` | Terapkan migrasi ke project remote |
+| `psql "$DATABASE_URL" -f supabase/tests/rls_test.sql` | Uji policy RLS dan GRANT |
 
 ## Endpoint API
 

@@ -84,3 +84,41 @@ create policy "staf update status inquiry"
   to authenticated
   using (public.is_staff())
   with check (public.is_staff());
+
+-- Hak akses tabel -------------------------------------------------------
+--
+-- RLS hanya menyaring BARIS; yang menentukan sebuah role boleh menyentuh
+-- tabel sama sekali adalah GRANT. Supabase memasang default privileges yang
+-- memberi `all` atas tabel baru di schema public kepada anon dan
+-- authenticated, jadi tanpa blok ini anon punya hak INSERT/UPDATE/DELETE
+-- atas seluruh tabel dan satu-satunya penjaga adalah policy RLS.
+--
+-- Dicabut dulu, lalu diberikan seperlunya, supaya hasil akhirnya tidak
+-- bergantung pada bawaan Supabase yang bisa berubah.
+
+revoke all on public.profiles       from anon, authenticated;
+revoke all on public.projects       from anon, authenticated;
+revoke all on public.project_images from anon, authenticated;
+revoke all on public.inquiries      from anon, authenticated;
+
+-- Pengunjung: baca saja, dan RLS membatasi ke baris published.
+grant select on public.projects       to anon;
+grant select on public.project_images to anon;
+
+-- Staf studio: kelola konten. Policy is_staff() yang memutuskan siapa yang
+-- benar-benar lolos.
+grant select                         on public.profiles       to authenticated;
+grant select, insert, update, delete on public.projects       to authenticated;
+grant select, insert, update, delete on public.project_images to authenticated;
+
+-- Inquiry: staf boleh membaca dan mengubah status, tapi tidak boleh membuat
+-- atau menghapus. Penulisan hanya lewat backend Go dengan service_role.
+grant select, update on public.inquiries to authenticated;
+
+-- anon tidak diberi hak apa pun atas inquiries — sengaja, agar form kontak
+-- tidak bisa dilewati dengan memanggil PostgREST langsung.
+
+grant all on public.profiles       to service_role;
+grant all on public.projects       to service_role;
+grant all on public.project_images to service_role;
+grant all on public.inquiries      to service_role;
