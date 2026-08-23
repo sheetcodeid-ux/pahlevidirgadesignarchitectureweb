@@ -3,6 +3,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 import { MasterGuard } from "../../components/admin/MasterGuard";
 import { FormShowcase } from "../../components/admin/FormShowcase";
 import { OverlayShowcase } from "../../components/admin/OverlayShowcase";
+import { DataShowcase } from "../../components/admin/DataShowcase";
 import { Icon } from "../../components/ui/Icon";
 
 // Warna ditampilkan lewat variabel CSS-nya, bukan nilai heksa yang disalin.
@@ -450,6 +451,17 @@ const ikon = [
       <OverlayShowcase client:visible />
     </section>
 
+    <!-- Data & konten -->
+    <section class="spec-section">
+      <div class="spec-section__head">
+        <h2 class="t-heading">Data &amp; Konten</h2>
+        <p class="t-muted" style="margin:0">
+          Palet grafik divalidasi terhadap simulasi buta warna, bukan dipilih dengan mata.
+        </p>
+      </div>
+      <DataShowcase client:visible />
+    </section>
+
     <!-- Peta jalan -->
     <section class="spec-section">
       <div class="spec-section__head">
@@ -458,8 +470,7 @@ const ikon = [
       </div>
       <div class="spec-demo">
         <div class="spec-demo__stage">
-          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–3 selesai</span>
-          <span class="badge">Gelombang 4 · Data &amp; Chart</span>
+          <span class="badge badge--success"><span class="badge__dot" />Gelombang 0–4 selesai</span>
           <span class="badge">Gelombang 5 · Sisanya</span>
         </div>
       </div>

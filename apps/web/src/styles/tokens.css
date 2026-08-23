@@ -175,3 +175,50 @@
     transition: none !important;
   }
 }
+
+/* =============================================================================
+   Token grafik.
+
+   Tiga warna kategorikal, bukan enam. Angkanya bukan selera: validator
+   memeriksa jarak antar-warna pada simulasi buta warna protan, deutan, dan
+   tritan untuk SEMUA pasangan, dan tiga adalah jumlah terbanyak yang masih
+   lolos tanpa peringatan. Deret keempat melebur jadi "Lainnya" atau dipecah
+   jadi beberapa grafik kecil.
+
+   Nilai tema terang bukan hasil pembalikan — keduanya diuji terpisah terhadap
+   permukaannya masing-masing (#141414 dan #ffffff).
+
+   Warna status (brand, warn, success, info) TIDAK boleh dipakai sebagai warna
+   deret; keduanya harus tetap bisa dibedakan maknanya.
+   ============================================================================= */
+
+:root {
+  --chart-1: #3f9bd0;
+  --chart-2: #c08400;
+  --chart-3: #0e8f6b;
+
+  /* Sekuensial: satu warna, terang ke gelap, untuk besaran. */
+  --chart-seq-1: #113347;
+  --chart-seq-2: #1b5678;
+  --chart-seq-3: #2b7aa8;
+  --chart-seq-4: #3f9bd0;
+  --chart-seq-5: #7bbde2;
+
+  --chart-grid: #232323;
+  --chart-axis: #6b6b6b;
+}
+
+:root[data-theme="light"] {
+  --chart-1: #155ba6;
+  --chart-2: #b57000;
+  --chart-3: #12a06d;
+
+  --chart-seq-1: #dbeaf6;
+  --chart-seq-2: #a8cce6;
+  --chart-seq-3: #6ba5cf;
+  --chart-seq-4: #2f7cb5;
+  --chart-seq-5: #155ba6;
+
+  --chart-grid: #e8e8e4;
+  --chart-axis: #8b8b86;
+}

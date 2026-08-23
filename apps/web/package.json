@@ -19,6 +19,7 @@
     "@radix-ui/react-hover-card": "^1.1.23",
     "@radix-ui/react-menubar": "^1.1.24",
     "@radix-ui/react-popover": "^1.1.23",
+    "@radix-ui/react-scroll-area": "^1.2.18",
     "@radix-ui/react-select": "^2.3.7",
     "@radix-ui/react-toast": "^1.2.23",
     "@radix-ui/react-tooltip": "^1.2.16",
@@ -27,7 +28,8 @@
     "astro": "^5.16.0",
     "cmdk": "^1.1.1",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-resizable-panels": "^4.12.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",

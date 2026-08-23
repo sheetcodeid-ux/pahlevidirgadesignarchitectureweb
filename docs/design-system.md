@@ -81,7 +81,7 @@ ketimbang setelah 64 komponen terlanjur jadi.
 | 1 ✅ | Sidebar, Breadcrumb, Card, Badge, Separator, Item, Icon, Theme Toggle, halaman UI Component | **Selesai** |
 | 2 ✅ | Seluruh kelompok Form | **Selesai** |
 | 3 ✅ | Seluruh kelompok Overlay | **Selesai** |
-| 4 | Data dan konten | Data Table, Chart, dan Calendar paling banyak permukaannya |
+| 4 ✅ | Data dan konten | **Selesai** |
 | 5 | Sisanya | Bubble, Message, Message Scroller, Questionnaire, Marker, Attachment |
 
 ## Hak akses halaman UI Component
@@ -122,6 +122,35 @@ sesaat sebelum mengganti atribut, sehingga halaman meluncur antar-warna alih-ali
 berkedip, lalu melepasnya lagi agar hover dan fokus tetap gesit. Skrip inline di
 `<head>` menetapkan tema sebelum paint pertama supaya tidak ada kedipan saat
 halaman dimuat.
+
+## Warna grafik
+
+Tiga warna kategorikal, bukan enam. Angkanya bukan selera — validator memeriksa
+jarak antar-warna pada simulasi buta warna protan, deutan, dan tritan untuk
+**semua** pasangan, dan tiga adalah jumlah terbanyak yang masih lolos tanpa
+peringatan pada kedua tema. Deret keempat melebur jadi "Lainnya" atau dipecah
+jadi beberapa grafik kecil.
+
+| Tema | Slot 1 | Slot 2 | Slot 3 | Permukaan uji |
+| --- | --- | --- | --- | --- |
+| Gelap | `#3f9bd0` | `#c08400` | `#0e8f6b` | `#141414` |
+| Terang | `#155ba6` | `#b57000` | `#12a06d` | `#ffffff` |
+
+Aturan yang menyertainya:
+
+- **Warna status tidak boleh jadi warna deret.** Merah, amber, hijau, dan biru
+  sudah punya makna; memakainya sebagai "deret ke-4" merusak keduanya.
+- **Besaran memakai satu warna**, bukan satu warna per batang. Warna
+  kategorikal hanya untuk identitas yang harus dilacak lintas deret.
+- **Tidak pernah sumbu ganda.** Dua besaran berbeda skala dipecah jadi dua
+  grafik atau diindeks ke basis yang sama.
+- **Teks memakai token teks, tidak pernah warna deret.** Identitas dibawa oleh
+  mark di sebelahnya.
+- **Setiap grafik menyediakan tampilan tabel**, sehingga isinya tetap terbaca
+  tanpa mengandalkan penglihatan warna.
+
+Kalau palet ini diubah, jalankan ulang validatornya sebelum di-commit — jangan
+menilainya dengan mata.
 
 ## Aturan yang mengikat
 

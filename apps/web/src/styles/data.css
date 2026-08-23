@@ -1,0 +1,217 @@
+/* =============================================================================
+   Data & konten — Gelombang 4.
+   Table, Data Table, Calendar, Chart, Carousel, Scroll Area, Resizable.
+   ============================================================================= */
+
+/* --- Table ---------------------------------------------------------------- */
+
+.table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-base); min-width: 40rem; }
+
+.table th,
+.table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+
+.table thead th {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: var(--bg-sunken);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover { background: var(--surface-raised); }
+.table__num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.table__actions { text-align: right; white-space: nowrap; }
+
+/* Header yang bisa diurutkan. Panahnya hanya muncul pada kolom aktif supaya
+   deretan header tidak jadi ramai. */
+.table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.table__sort:hover { color: var(--text-body); }
+.table__sort[aria-sort="ascending"],
+.table__sort[aria-sort="descending"] { color: var(--text-strong); }
+.table__sort-icon { transition: transform var(--dur) var(--ease); }
+.table__sort[aria-sort="descending"] .table__sort-icon { transform: rotate(180deg); }
+
+/* --- Data Table: toolbar + kaki ------------------------------------------- */
+
+.dt { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.dt__toolbar { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.dt__search { position: relative; display: flex; align-items: center; }
+.dt__search .input { padding-left: 2.75rem; }
+.dt__search-icon { position: absolute; left: 1rem; color: var(--text-faint); pointer-events: none; }
+
+.dt__meta { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.dt__count { font-size: var(--text-sm); color: var(--text-muted); }
+.dt__count b { color: var(--text-strong); font-variant-numeric: tabular-nums; }
+
+.dt__empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-8) var(--space-4); text-align: center; }
+.dt__empty .icon-tile { margin-bottom: var(--space-2); }
+
+/* --- Calendar & Date Picker ---------------------------------------------- */
+
+.cal { width: min(20rem, 100%); padding: var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+
+.cal__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-4); }
+.cal__title { font-weight: 700; font-size: var(--text-md); color: var(--text-strong); }
+.cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+
+.cal__dow {
+  display: grid;
+  place-items: center;
+  height: 2rem;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.cal__day {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.cal__day:hover:not(:disabled) { background: var(--surface-hover); color: var(--text-strong); }
+
+/* Di luar bulan berjalan: diredupkan, bukan disembunyikan — barisnya tetap
+   utuh sehingga posisi hari dalam minggu tidak bergeser. */
+.cal__day[data-outside] { color: var(--text-faint); }
+
+/* Hari yang tidak bisa dipilih dicoret, bukan sekadar diredupkan. Redup saja
+   mudah tertukar dengan "di luar bulan"; coretan menyatakan larangan. */
+.cal__day:disabled { color: var(--text-faint); text-decoration: line-through; cursor: not-allowed; }
+.cal__day[data-today]:not([aria-selected="true"]) { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.cal__day[aria-selected="true"] { background: var(--action); color: var(--action-ink); font-weight: 600; }
+
+/* --- Chart ---------------------------------------------------------------- */
+
+.chart { display: flex; flex-direction: column; gap: var(--space-3); }
+.chart__figure { position: relative; width: 100%; }
+.chart__svg { width: 100%; height: auto; overflow: visible; display: block; }
+.chart__grid-line { stroke: var(--chart-grid); stroke-width: 1; }
+.chart__axis-text { fill: var(--chart-axis); font-size: 11px; font-family: var(--font-sans); }
+.chart__value-text { fill: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
+
+.chart__legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.chart__legend-item { display: inline-flex; align-items: center; gap: 0.45rem; font-size: var(--text-sm); color: var(--text-muted); }
+.chart__swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+.chart__tip {
+  position: absolute;
+  z-index: 5;
+  min-width: 8rem;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  transform: translate(-50%, -110%);
+}
+
+.chart__tip-label { font-size: var(--text-2xs); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-faint); }
+.chart__tip-row { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.35rem; font-size: var(--text-sm); }
+.chart__tip-value { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-strong); }
+
+/* --- Carousel ------------------------------------------------------------- */
+
+.carousel { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Scroll-snap asli: bisa digeser jari, roda, dan panah keyboard tanpa
+   JavaScript apa pun. Tombolnya hanya menambah cara, bukan menggantikan. */
+.carousel__track {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.carousel__track::-webkit-scrollbar { display: none; }
+
+.carousel__slide {
+  flex: 0 0 min(18rem, 80%);
+  scroll-snap-align: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.carousel__figure { aspect-ratio: 4 / 3; display: grid; place-items: center; background: var(--surface-hover); color: var(--text-faint); }
+.carousel__caption { padding: var(--space-3) var(--space-4); }
+.carousel__nav { display: flex; gap: var(--space-2); justify-content: flex-end; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel__track { scroll-behavior: auto; }
+}
+
+/* --- Scroll Area ---------------------------------------------------------- */
+
+.scrollarea { height: 12rem; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.scrollarea__viewport { width: 100%; height: 100%; padding: var(--space-4); }
+.scrollarea__bar { display: flex; width: 8px; padding: 3px; background: transparent; touch-action: none; user-select: none; }
+.scrollarea__thumb { flex: 1; border-radius: var(--radius-pill); background: var(--border-strong); }
+.scrollarea__thumb:hover { background: var(--text-faint); }
+
+/* --- Resizable ------------------------------------------------------------ */
+
+.resizable { height: 14rem; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.resizable__pane { display: grid; place-items: center; padding: var(--space-4); color: var(--text-muted); font-size: var(--text-sm); }
+
+.resizable__handle {
+  position: relative;
+  width: 1px;
+  background: var(--border);
+  transition: background-color var(--dur) var(--ease);
+}
+
+/* Garis pemisahnya tipis, tapi area tangkapnya lebar — mudah diraih tetikus
+   tanpa membuat sekatnya terlihat tebal. */
+.resizable__handle::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: -5px;
+  right: -5px;
+  cursor: col-resize;
+}
+
+/* Pustakanya tidak memancarkan atribut status, jadi sorotannya digantung pada
+   :hover dan :active — sudah diperiksa cocok dengan markup yang benar-benar
+   dirender. */
+.resizable__handle:hover,
+.resizable__handle:active { background: var(--brand); }
+.resizable__handle:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
