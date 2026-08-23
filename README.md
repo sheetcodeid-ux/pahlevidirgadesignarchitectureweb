@@ -102,6 +102,7 @@ Cek cepat: `curl localhost:8080/healthz`.
 | `supabase db push` | Terapkan migrasi ke project remote |
 | `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` dari migrasi |
 | `./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"` | Periksa skema, RLS, GRANT, dan akun staf |
+| `cd apps/api && make verify-r2` | Periksa bucket, domain publik, dan presigned upload |
 | `psql "$DATABASE_URL" -f supabase/tests/rls_test.sql` | Uji policy RLS dan GRANT |
 
 ## Endpoint API

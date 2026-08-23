@@ -40,6 +40,20 @@ values ('<uuid-user>', 'Nama Staf', 'admin');
 2. Pada bucket media: Settings → Custom Domain → `media.pahlevidirga.com`
 3. R2 → Manage API Tokens → buat token Object Read & Write
 
+Setelah token dibuat dan `apps/api/.env` diisi, periksa hasilnya:
+
+```bash
+cd apps/api && make verify-r2
+```
+
+Lima pemeriksaan: bucket terjangkau, token bisa menulis, token bisa membaca,
+domain publik menyajikan berkas, dan presigned upload diterima. Yang terakhir
+itu jalur yang dipakai panel admin — browser mengunggah langsung ke R2 tanpa
+melewati server, jadi kalau itu gagal, upload gambar tidak akan berfungsi
+meski empat pemeriksaan lain hijau.
+
+Berkas ujinya selalu dihapus lagi, termasuk saat ada pemeriksaan yang gagal.
+
 Aktifkan juga cache rule agar gambar disimpan lama di edge:
 Caching → Cache Rules, hostname `media.pahlevidirga.com`, Edge TTL 1 tahun.
 Nama file mengandung suffix acak, jadi versi baru tidak akan tertahan cache.
