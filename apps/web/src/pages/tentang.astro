@@ -1,65 +1,341 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { Icon } from "../components/ui/Icon";
+
+const langkah = [
+  {
+    nomor: "01",
+    ikon: "search" as const,
+    judul: "Konsultasi & Survei",
+    teks: "Kami datang ke lokasi, mendengar kebutuhan dan anggaran Anda — sebelum satu garis pun digambar.",
+  },
+  {
+    nomor: "02",
+    ikon: "edit" as const,
+    judul: "Konsep & Estimasi",
+    teks: "Sketsa awal dan perkiraan anggaran, supaya keputusan besar diambil selagi masih murah untuk diubah.",
+  },
+  {
+    nomor: "03",
+    ikon: "project" as const,
+    judul: "Pengembangan Desain",
+    teks: "Gambar detail, material, dan spesifikasi teknis disepakati bersama, sampai semua pihak sepaham.",
+  },
+  {
+    nomor: "04",
+    ikon: "copy" as const,
+    judul: "Dokumen & Perizinan",
+    teks: "Gambar kerja lengkap untuk pelaksanaan, sekaligus dokumen yang dibutuhkan untuk pengurusan PBG.",
+  },
+  {
+    nomor: "05",
+    ikon: "calendar" as const,
+    judul: "Pendampingan Pembangunan",
+    teks: "Kunjungan berkala selama masa konstruksi, memastikan yang terbangun sesuai yang dirancang.",
+  },
+];
+
+const layanan = [
+  {
+    ikon: "project" as const,
+    judul: "Perancangan Arsitektur",
+    teks: "Dari sketsa konsep sampai gambar kerja siap dibangun, untuk hunian maupun ruang komersial.",
+  },
+  {
+    ikon: "image" as const,
+    judul: "Desain Interior",
+    teks: "Penataan ruang dalam yang menyatu dengan arsitektur bangunannya, bukan ditempel belakangan.",
+  },
+  {
+    ikon: "copy" as const,
+    judul: "Perizinan & Dokumen Teknis",
+    teks: "Menyiapkan gambar dan dokumen yang dibutuhkan untuk pengurusan PBG.",
+  },
+  {
+    ikon: "calendar" as const,
+    judul: "Pengawasan Berkala",
+    teks: "Kunjungan terjadwal selama masa pembangunan untuk menjaga kualitas pelaksanaan.",
+  },
+];
+
+const batasan = [
+  {
+    judul: "Bukan kontraktor pelaksana",
+    teks: "Kami merancang; pembangunan dikerjakan kontraktor pilihan Anda, dengan pengawasan berkala dari kami.",
+  },
+  {
+    judul: "Bukan pengurus sertifikat tanah",
+    teks: "Legalitas lahan adalah tanggung jawab pemilik, terpisah dari dokumen teknis bangunan yang kami siapkan.",
+  },
+  {
+    judul: "Bukan konsultan struktur independen",
+    teks: "Untuk bangunan yang kompleks, kami berkoordinasi dengan konsultan struktur dan MEP spesialis.",
+  },
+  {
+    judul: "Fokus hunian & komersial skala menengah",
+    teks: "Bukan gedung bertingkat tinggi atau perencanaan kawasan skala kota.",
+  },
+];
 ---
 
 <BaseLayout
   title="Tentang"
-  description="Profil studio arsitektur Pahlevi Dirga: pendekatan, layanan, dan cara kami bekerja."
+  description="Profil Dirga Pahlevi Architecture: pendekatan, layanan, dan cara kami bekerja."
 >
   <section class="section shell">
     <p class="eyebrow">Studio</p>
-    <h1>Tentang</h1>
+    <h1>Tentang Dirga Pahlevi Architecture</h1>
+    <p class="lede">
+      Kami studio arsitektur kecil yang sengaja tetap kecil — supaya setiap
+      proyek yang masuk benar-benar ditangani, bukan sekadar dijadwalkan.
+    </p>
 
     <div class="prose">
-      <p class="lede">
-        Ganti teks ini dengan profil studio Anda — kapan berdiri, siapa di
-        baliknya, dan apa yang membedakan cara kerjanya.
+      <p>
+        Dirga Pahlevi Architecture bekerja dengan ritme yang jarang
+        dibicarakan studio arsitektur: bukan yang tercepat, bukan yang
+        termurah, tapi yang paling teliti menimbang bagaimana sebuah bangunan
+        akan dipakai bertahun-tahun setelah selesai dibangun. Kami memilih
+        menangani proyek dalam jumlah terbatas setiap bulannya, karena
+        kualitas keputusan desain — bukan kecepatan produksi gambar — yang
+        menentukan apakah sebuah ruang benar-benar nyaman dihuni.
       </p>
 
       <h2>Pendekatan</h2>
       <p>
-        Jelaskan filosofi desain studio: bagaimana iklim tropis, konteks
-        lingkungan, dan kebutuhan penghuni memengaruhi setiap keputusan
-        rancangan.
+        Iklim tropis Indonesia bukan kendala yang perlu disiasati, melainkan
+        titik awal setiap rancangan. Cahaya matahari, arah angin, dan curah
+        hujan kami perhitungkan sejak sketsa pertama — bukan ditambal lewat AC
+        dan kaca gelap di akhir. Material dipilih karena kejujurannya: yang
+        menua dengan baik, gampang dirawat, dan tidak berpura-pura jadi
+        sesuatu yang lain.
       </p>
+    </div>
+  </section>
 
-      <h2>Layanan</h2>
-      <ul>
-        <li>Perancangan arsitektur</li>
-        <li>Desain interior</li>
-        <li>Perizinan dan dokumen teknis</li>
-        <li>Pengawasan berkala pelaksanaan</li>
-      </ul>
+  <section class="section shell">
+    <p class="eyebrow">Cara kerja</p>
+    <h2>Lima Langkah, Satu Studio</h2>
+    <p class="lede langkah-lede">
+      Dari kontak pertama sampai bangunan berdiri, prosesnya tetap sama untuk
+      setiap proyek — kecil atau besar.
+    </p>
 
-      <h2>Proses</h2>
-      <p>
-        Uraikan tahapan kerja dari konsultasi awal, konsep, pengembangan
-        desain, dokumen konstruksi, hingga pendampingan pembangunan.
-      </p>
+    <ol class="langkah-grid">
+      {
+        langkah.map((item) => (
+          <li class="langkah-item">
+            <div class="langkah-item__head">
+              <span class="langkah-item__nomor t-mono">{item.nomor}</span>
+              <span class="icon-tile icon-tile--sm">
+                <Icon name={item.ikon} size={18} />
+              </span>
+            </div>
+            <h3>{item.judul}</h3>
+            <p class="t-muted">{item.teks}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="section shell">
+    <p class="eyebrow">Layanan</p>
+    <h2>Yang Kami Kerjakan</h2>
+
+    <ul class="layanan-grid">
+      {
+        layanan.map((item) => (
+          <li class="card layanan-card">
+            <span class="icon-tile">
+              <Icon name={item.ikon} size={20} />
+            </span>
+            <h3>{item.judul}</h3>
+            <p class="t-muted">{item.teks}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="section shell">
+    <p class="eyebrow">Batasan layanan</p>
+    <h2>Yang Tidak Kami Kerjakan</h2>
+    <p class="lede batasan-lede">
+      Agar tidak ada ekspektasi yang salah, ini yang bukan cakupan kerja kami.
+    </p>
+
+    <ul class="batasan-grid">
+      {
+        batasan.map((item) => (
+          <li class="batasan-item">
+            <span class="batasan-item__ikon">
+              <Icon name="close" size={14} />
+            </span>
+            <span>
+              <strong>{item.judul}</strong>
+              <span class="t-muted"> — {item.teks}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="batasan-catatan">
+      <strong>Studio ini sengaja tetap kecil:</strong>
+      <span class="t-muted">
+        menangani sedikit proyek per bulan, supaya yang kami kerjakan benar-benar dikerjakan dengan baik.
+      </span>
+    </p>
+  </section>
+
+  <section class="section shell">
+    <div class="cta-card">
+      <div>
+        <h2>Punya proyek yang ingin dibicarakan?</h2>
+        <p class="t-muted">Ceritakan lokasi, kebutuhan, dan target waktu Anda — kami balas dalam 1–2 hari kerja.</p>
+      </div>
+      <a href="/kontak" class="btn btn--primary btn--lg">Mulai konsultasi</a>
     </div>
   </section>
 </BaseLayout>
 
 <style>
   h1 {
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .prose {
     max-width: var(--measure);
+    margin-top: 2.5rem;
   }
 
   .prose h2 {
-    margin-top: 3rem;
     margin-bottom: 1rem;
   }
 
-  .prose ul {
-    padding-left: 1.2rem;
-    color: var(--text-muted);
+  .langkah-lede,
+  .batasan-lede {
+    max-width: var(--measure);
   }
 
-  .prose li {
-    margin-bottom: 0.4rem;
+  /* --- Cara kerja ---------------------------------------------------- */
+
+  .langkah-grid {
+    list-style: none;
+    margin: 3rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+    border-top: 1px solid var(--border);
+  }
+
+  .langkah-item {
+    padding: var(--space-6) var(--space-5) 0;
+    border-left: 1px solid var(--border);
+  }
+
+  .langkah-item:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .langkah-item__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+  }
+
+  .langkah-item__nomor {
+    font-size: var(--text-2xl);
+    color: var(--text-faint);
+  }
+
+  .langkah-item h3 {
+    margin-bottom: var(--space-2);
+  }
+
+  /* --- Layanan --------------------------------------------------------- */
+
+  .layanan-grid {
+    list-style: none;
+    margin: 3rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+    gap: var(--space-5);
+  }
+
+  .layanan-card {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+
+  .layanan-card h3 {
+    margin-top: var(--space-1);
+  }
+
+  /* --- Batasan ----------------------------------------------------------- */
+
+  .batasan-grid {
+    list-style: none;
+    margin: 3rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .batasan-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .batasan-item__ikon {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+    border-radius: 50%;
+    background: var(--warn-soft);
+    color: var(--warn);
+    margin-top: 0.15rem;
+  }
+
+  .batasan-catatan {
+    margin: var(--space-6) 0 0;
+    padding: var(--space-5);
+    border: 1px solid var(--warn-line);
+    background: var(--warn-soft);
+    border-radius: var(--radius-lg);
+  }
+
+  .batasan-catatan strong {
+    color: var(--warn);
+  }
+
+  /* --- CTA ----------------------------------------------------------- */
+
+  .cta-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .cta-card h2 {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-2);
   }
 </style>

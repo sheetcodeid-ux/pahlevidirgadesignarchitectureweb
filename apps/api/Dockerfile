@@ -1,7 +1,7 @@
 # Image netral: jalan sama saja di Cloud Run, Render, atau Fly —
 # yang dibutuhkan cuma menghormati environment variable PORT.
 
-FROM golang:1.24-alpine AS build
+FROM golang:1.25-alpine AS build
 WORKDIR /src
 
 # Layer dependency terpisah supaya cache tidak invalid tiap kali kode berubah.

@@ -115,9 +115,9 @@ export function Sidebar({ currentPath, isMasterAdmin = false }: Props) {
         data-collapsed={ciut || undefined}
       >
         <div className="sidebar__head">
-          <a href="/admin" className="sidebar__brand" aria-label="Pahlevi Dirga, ke dashboard">
-            <span className="sidebar__mark" aria-hidden="true">PD</span>
-            <span className="sidebar__wordmark">Pahlevi Dirga</span>
+          <a href="/admin" className="sidebar__brand" aria-label="Dirga Pahlevi Architecture, ke dashboard">
+            <span className="sidebar__mark" aria-hidden="true">DPA</span>
+            <span className="sidebar__wordmark">Dirga Pahlevi Architecture</span>
           </a>
 
           <button

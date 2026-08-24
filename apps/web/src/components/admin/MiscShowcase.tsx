@@ -22,7 +22,7 @@ export function MiscShowcase() {
           </div>
           <div className="spec-demo__stage">
             <Avatar name="Muhammad Fikri" brand />
-            <Avatar name="Pahlevi Dirga" size="lg" />
+            <Avatar name="Dirga Pahlevi Architecture" size="lg" />
             <Avatar name="Gambar Rusak" src="/tidak-ada.jpg" />
             <div className="avatar-group">
               <Avatar name="Ana Wijaya" size="sm" />
