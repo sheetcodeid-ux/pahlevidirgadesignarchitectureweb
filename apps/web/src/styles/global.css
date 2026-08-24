@@ -93,6 +93,25 @@ video {
 
 .section { padding-block: clamp(var(--space-7), 8vw, var(--space-8)); }
 
+/* Tekstur titik yang memudar ke tepi — dekorasi latar untuk hero, bukan
+   konten. Diletakkan di ::before dengan stacking context sendiri supaya
+   tidak pernah menutupi atau memudarkan teks di atasnya. */
+.bg-dots {
+  position: relative;
+  isolation: isolate;
+}
+
+.bg-dots::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(color-mix(in srgb, var(--text-faint) 50%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 90%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 90%);
+}
+
 .eyebrow {
   font-size: var(--text-2xs);
   font-weight: 600;
