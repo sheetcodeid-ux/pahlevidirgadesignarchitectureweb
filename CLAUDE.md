@@ -40,7 +40,12 @@ otomatis begitu branch produksi berubah.
 
 Cloudflare: akun **`pahlevidirgadesignarchitecture`**, ID
 `cf6a6bde45d3fd8a93463e6cc7e71aa1`. Worker `pahlevidirgadesignarchitectureweb`
-menyajikan situs statis dari `apps/web/dist` lewat `wrangler.jsonc` di akar.
+menyajikan situs statis dari `apps/web/dist` lewat `wrangler.jsonc` di akar,
+tayang di `pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev`.
+Bucket R2 `pahlevidirga-media` (lokasi APAC) dengan CORS presigned upload dan
+widget Turnstile "Form kontak pahlevidirga" sudah ada. Domain publik R2 masih
+memakai `r2.dev` bawaan — **sementara**, karena kena rate limit dan tidak untuk
+produksi; ganti ke custom domain begitu domain sendiri aktif.
 
 > **Satu login, dua akun.** Login `sheetcode.id@gmail.com` juga memuat akun
 > `Sheetcode.id@gmail.com's Account` yang berisi proyek lain yang tidak ada
