@@ -26,7 +26,7 @@
   // Dibuat dengan: wrangler hyperdrive create pahlevidirga-db --connection-string="postgresql://..."
   // ID di bawah baru terisi setelah itu dijalankan — lihat scripts/setup-fase-04.sh.
   "hyperdrive": [
-    { "binding": "DB", "id": "GANTI_SETELAH_HYPERDRIVE_DIBUAT" }
+    { "binding": "DB", "id": "a6e312cc6ef14b0eb6e7553ad20e2029" }
   ],
 
   // Rate limit per-IP untuk /auth/login dan /inquiries. KV, bukan in-memory:
