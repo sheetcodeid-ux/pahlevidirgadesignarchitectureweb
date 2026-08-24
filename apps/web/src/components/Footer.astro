@@ -19,8 +19,8 @@ const year = new Date().getFullYear();
 
 <style>
   .site-footer {
-    border-top: 1px solid var(--line);
-    margin-top: var(--stack);
+    border-top: 1px solid var(--border);
+    margin-top: clamp(var(--space-7), 8vw, var(--space-8));
   }
 
   .footer-inner {
@@ -39,7 +39,7 @@ const year = new Date().getFullYear();
 
   .footer-note {
     font-size: 0.85rem;
-    color: var(--ink-faint);
+    color: var(--text-faint);
     margin: 0;
   }
 </style>

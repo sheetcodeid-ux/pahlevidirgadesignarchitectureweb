@@ -108,7 +108,7 @@ const facts = [
     width: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
-    background: var(--paper-alt);
+    background: var(--surface-raised);
   }
 
   header h1 {
@@ -130,7 +130,7 @@ const facts = [
 
   .facts {
     margin: 0;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--border);
   }
 
   .facts > div {
@@ -138,14 +138,14 @@ const facts = [
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
   }
 
   .facts dt {
     font-size: 0.72rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--text-faint);
   }
 
   .facts dd {
@@ -165,12 +165,12 @@ const facts = [
 
   .gallery figcaption {
     font-size: 0.85rem;
-    color: var(--ink-faint);
+    color: var(--text-faint);
     padding-top: 0.75rem;
   }
 
   .back {
-    padding-bottom: var(--stack);
+    padding-bottom: clamp(var(--space-7), 8vw, var(--space-8));
     font-size: 0.85rem;
   }
 </style>

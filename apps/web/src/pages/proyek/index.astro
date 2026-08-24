@@ -86,14 +86,14 @@ const categories = [...new Set(projects.map((p) => p.category))] as ProjectCateg
     font-size: 0.78rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--text-faint);
     cursor: pointer;
     border-bottom: 1px solid transparent;
   }
 
   .filter:hover,
   .filter.is-active {
-    color: var(--ink);
-    border-bottom-color: var(--ink);
+    color: var(--text-strong);
+    border-bottom-color: var(--text-strong);
   }
 </style>

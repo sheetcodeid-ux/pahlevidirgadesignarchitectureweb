@@ -32,10 +32,10 @@ const current = Astro.url.pathname;
 
 <style>
   .site-header {
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
-    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
     backdrop-filter: blur(8px);
     z-index: 10;
   }
@@ -69,11 +69,11 @@ const current = Astro.url.pathname;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     text-decoration: none;
-    color: var(--ink-soft);
+    color: var(--text-muted);
   }
 
   nav a:hover,
   nav a[aria-current="page"] {
-    color: var(--ink);
+    color: var(--text-strong);
   }
 </style>
