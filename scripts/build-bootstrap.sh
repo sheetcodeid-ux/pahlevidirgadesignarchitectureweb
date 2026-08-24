@@ -4,16 +4,25 @@
 # Gunanya: menerapkan seluruh skema lewat SQL Editor di dashboard dengan sekali
 # tempel, tanpa memasang Supabase CLI. File ini hasil generate — jangan disunting
 # langsung; ubah migrasinya lalu jalankan skrip ini lagi.
+#
+# Daftar migrasinya dibaca dari direktori, bukan ditulis di sini. Versi yang
+# sebelumnya menghardcode daftar itu diam-diam menghasilkan bootstrap yang
+# tertinggal setiap kali ada migrasi baru.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 OUT=supabase/bootstrap.sql
-MIGRATIONS=(
-  supabase/migrations/20260818000001_init_schema.sql
-  supabase/migrations/20260818000002_rls_policies.sql
-)
+
+shopt -s nullglob
+MIGRATIONS=(supabase/migrations/*.sql)
+shopt -u nullglob
+
+if [ ${#MIGRATIONS[@]} -eq 0 ]; then
+  echo "Tidak ada migrasi di supabase/migrations/." >&2
+  exit 1
+fi
 
 {
   cat <<'HEADER'
@@ -23,7 +32,7 @@ MIGRATIONS=(
 -- File ini HASIL GENERATE dari supabase/migrations/ oleh
 -- scripts/build-bootstrap.sh. Jangan disunting langsung.
 --
--- Setelah dijalankan, kedua migrasi juga dicatat di
+-- Setelah dijalankan, seluruh migrasi juga dicatat di
 -- supabase_migrations.schema_migrations, sehingga `supabase db push` maupun
 -- integrasi GitHub Supabase tahu skema ini sudah terpasang dan tidak mencoba
 -- menerapkannya ulang.
@@ -59,19 +68,44 @@ HEADER
 -- ----------------------------------------------------------------------------
 -- Catat di riwayat migrasi Supabase
 -- ----------------------------------------------------------------------------
+--
+-- Kolomnya mengikuti tabel bawaan Supabase CLI. Versi awal skrip ini hanya
+-- membuat kolom `version`, dan itu membuat dashboard maupun tooling Supabase
+-- gagal membaca riwayat migrasi dengan error "column name does not exist".
 
 create schema if not exists supabase_migrations;
 
 create table if not exists supabase_migrations.schema_migrations (
-  version text primary key
+  version    text primary key,
+  statements text[],
+  name       text
 );
 
-insert into supabase_migrations.schema_migrations (version)
-values ('20260818000001'), ('20260818000002')
-on conflict (version) do nothing;
+alter table supabase_migrations.schema_migrations
+  add column if not exists statements text[],
+  add column if not exists name       text;
+
+insert into supabase_migrations.schema_migrations (version, name) values
+FOOTER
+
+  # Versi = angka di depan nama file, nama = sisanya tanpa .sql.
+  baris=()
+  for file in "${MIGRATIONS[@]}"; do
+    dasar="$(basename "$file" .sql)"
+    versi="${dasar%%_*}"
+    nama="${dasar#*_}"
+    baris+=("  ('${versi}', '${nama}')")
+  done
+
+  # Koma antar baris, titik koma di akhir.
+  printf '%s,\n' "${baris[@]::${#baris[@]}-1}"
+  printf '%s\n' "${baris[-1]}"
+
+  cat <<'FOOTER2'
+on conflict (version) do update set name = excluded.name;
 
 commit;
-FOOTER
+FOOTER2
 } > "$OUT"
 
-echo "Tertulis: $OUT ($(wc -l < "$OUT") baris)"
+echo "Tertulis: $OUT ($(wc -l < "$OUT") baris, ${#MIGRATIONS[@]} migrasi)"

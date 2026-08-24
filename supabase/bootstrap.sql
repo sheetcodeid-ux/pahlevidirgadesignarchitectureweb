@@ -4,7 +4,7 @@
 -- File ini HASIL GENERATE dari supabase/migrations/ oleh
 -- scripts/build-bootstrap.sh. Jangan disunting langsung.
 --
--- Setelah dijalankan, kedua migrasi juga dicatat di
+-- Setelah dijalankan, seluruh migrasi juga dicatat di
 -- supabase_migrations.schema_migrations, sehingga `supabase db push` maupun
 -- integrasi GitHub Supabase tahu skema ini sudah terpasang dan tidak mencoba
 -- menerapkannya ulang.
@@ -272,17 +272,93 @@ grant all on public.project_images to service_role;
 grant all on public.inquiries      to service_role;
 
 -- ----------------------------------------------------------------------------
+-- 20260824000003_default_privileges.sql
+-- ----------------------------------------------------------------------------
+
+-- Menutup tabel masa depan secara bawaan.
+--
+-- Dua migrasi sebelumnya mencabut hak anon dan authenticated atas empat tabel
+-- yang ada, lalu memberikannya kembali seperlunya. Tapi itu hanya berlaku
+-- untuk tabel yang sudah ada saat itu. Tabel yang dibuat setelahnya kembali
+-- mengikuti default privileges bawaan Supabase.
+--
+-- Migrasi ini membalik bawaannya: tabel baru di schema public tidak memberi
+-- apa pun kepada anon maupun authenticated. Konsekuensinya disengaja — setiap
+-- tabel baru jadi WAJIB disertai GRANT eksplisit, kalau tidak ia tidak akan
+-- bisa dibaca siapa pun lewat PostgREST. Lebih baik gagal keras saat
+-- pengembangan daripada tabel bocor diam-diam ke publik.
+--
+-- Tidak menyentuh tabel yang sudah ada; GRANT dari 20260818000002 tetap utuh.
+-- Backend Go memakai service_role dan melewati semua ini.
+
+alter default privileges for role postgres in schema public
+  revoke all on tables from anon, authenticated;
+
+-- ----------------------------------------------------------------------------
+-- 20260824000004_kunci_fungsi.sql
+-- ----------------------------------------------------------------------------
+
+-- Menutup dua celah yang ditemukan database linter Supabase setelah skema
+-- terpasang di project sungguhan.
+--
+-- 1. is_staff() masih bisa dipanggil anon lewat /rest/v1/rpc/is_staff.
+--
+--    Migrasi 20260818000002 sudah menulis:
+--      revoke execute on function public.is_staff() from anon, authenticated;
+--    tapi itu tidak cukup. Postgres memberi EXECUTE kepada PUBLIC untuk setiap
+--    fungsi baru, dan mencabut dari role bernama tidak menyentuh pemberian ke
+--    PUBLIC. Jadi anon tetap boleh memanggilnya — lewat PUBLIC, bukan lewat
+--    anon.
+--
+--    Ini bentuk yang sama persis dengan invarian keamanan #1 di CLAUDE.md,
+--    hanya pindah dari tabel ke fungsi: mencabut dari role yang salah sambil
+--    mengira pintunya sudah tertutup.
+--
+--    Dampaknya kecil — untuk anon, auth.uid() null sehingga fungsinya
+--    mengembalikan false. Tapi ini fungsi security definer yang membaca
+--    profiles, dan ia terbuka tanpa login. Ditutup.
+--
+--    Aman: seluruh policy yang memanggil is_staff() adalah `to authenticated`,
+--    dan authenticated tetap punya EXECUTE eksplisit di bawah. anon tidak
+--    pernah mengevaluasi policy itu.
+--
+-- 2. touch_updated_at() tidak mengunci search_path.
+--
+--    Fungsi trigger tanpa search_path tetap bisa dibelokkan kalau ada objek
+--    bernama sama di schema lain yang lebih dulu ditemukan. Risikonya rendah
+--    karena fungsinya security invoker dan hanya memanggil now(), tapi
+--    menguncinya gratis.
+
+revoke execute on function public.is_staff() from public;
+grant  execute on function public.is_staff() to authenticated;
+
+alter function public.touch_updated_at() set search_path = pg_catalog;
+
+-- ----------------------------------------------------------------------------
 -- Catat di riwayat migrasi Supabase
 -- ----------------------------------------------------------------------------
+--
+-- Kolomnya mengikuti tabel bawaan Supabase CLI. Versi awal skrip ini hanya
+-- membuat kolom `version`, dan itu membuat dashboard maupun tooling Supabase
+-- gagal membaca riwayat migrasi dengan error "column name does not exist".
 
 create schema if not exists supabase_migrations;
 
 create table if not exists supabase_migrations.schema_migrations (
-  version text primary key
+  version    text primary key,
+  statements text[],
+  name       text
 );
 
-insert into supabase_migrations.schema_migrations (version)
-values ('20260818000001'), ('20260818000002')
-on conflict (version) do nothing;
+alter table supabase_migrations.schema_migrations
+  add column if not exists statements text[],
+  add column if not exists name       text;
+
+insert into supabase_migrations.schema_migrations (version, name) values
+  ('20260818000001', 'init_schema'),
+  ('20260818000002', 'rls_policies'),
+  ('20260824000003', 'default_privileges'),
+  ('20260824000004', 'kunci_fungsi')
+on conflict (version) do update set name = excluded.name;
 
 commit;

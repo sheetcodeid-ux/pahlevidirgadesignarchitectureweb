@@ -30,7 +30,11 @@ oleh orang yang bisnisnya arsitektur — pilih yang kedua.
 
 Tanpa Vercel — keputusan eksplisit pemilik.
 
-Supabase: org `pahlevidirgadesignarchitecture`, project `pahlevidirga-web`.
+Supabase: org `pahlevidirgadesignarchitecture`, project `pahlevidirga-web`,
+ref `ddzuzokkqofrpkpokcfa`, region `ap-southeast-1`. Direct connection hanya
+menerima IPv6 dan plan Free tidak punya add-on IPv4, jadi dari mesin biasa
+pakai **session pooler** port 5432 — bukan transaction pooler 6543, yang tidak
+mempertahankan `set local role` sehingga tes RLS jadi tak berarti.
 Integrasi GitHub aktif, jadi migrasi di `supabase/migrations/` diterapkan
 otomatis begitu branch produksi berubah.
 
@@ -67,10 +71,15 @@ Langgar ini dan ada yang rusak diam-diam:
 
 Dua hal ini pernah salah dan sudah diperbaiki — jangan diulang:
 
-1. **RLS saja tidak cukup; GRANT yang menentukan akses tabel.** Supabase
-   memberi `all` kepada `anon` untuk tabel baru lewat default privileges.
-   Migrasi mencabutnya lalu memberi seperlunya. Setelan "Automatically expose
-   new tables" di dashboard harus **mati**.
+1. **RLS saja tidak cukup; GRANT yang menentukan akses.** Supabase memberi
+   `all` kepada `anon` untuk tabel baru lewat default privileges. Migrasi
+   `20260824000003` membalik bawaannya, jadi tabel baru tertutup dan wajib
+   disertai GRANT eksplisit.
+
+   Berlaku juga untuk **fungsi**, dan di situ ada jebakan tersendiri: Postgres
+   memberi `execute` kepada **PUBLIC**, bukan kepada `anon`. Mencabut dari
+   `anon` tidak menutup apa pun — harus `revoke ... from public`. Pernah kena
+   sekali di `is_staff()`, diperbaiki di `20260824000004`.
 2. **Backend melewati RLS, jadi status staf harus dicek di aplikasi.** Token
    Supabase yang sah hanya membuktikan "punya akun", bukan "berhak mengelola".
    Setiap endpoint admin wajib lewat `RequireSupabaseAuth` **dan**
@@ -137,7 +146,7 @@ ke edge (Cloudflare Access di depan `/admin/*`) — jangan mengandalkan
 | `cd apps/web && npm run check` | Typecheck Astro |
 | `cd apps/web && npm run build` | Build statis |
 | `./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"` | Periksa skema, RLS, GRANT, akun staf |
-| `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 11 assertion RLS |
+| `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 13 assertion RLS |
 | `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` |
 
 `supabase/bootstrap.sql` **hasil generate** — ubah migrasinya, lalu jalankan

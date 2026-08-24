@@ -164,4 +164,48 @@ begin
 end;
 $$;
 
+-- Hak eksekusi fungsi ---------------------------------------------------
+--
+-- is_staff() adalah security definer yang membaca profiles. Postgres memberi
+-- EXECUTE kepada PUBLIC untuk setiap fungsi baru, dan mencabut dari role
+-- bernama (anon, authenticated) tidak menyentuh pemberian ke PUBLIC — jadi
+-- pernah ada masa fungsinya terbuka lewat /rest/v1/rpc/is_staff tanpa login.
+-- Bentuk keliru yang sama dengan hak tabel, hanya pindah objek.
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+  begin
+    perform public.is_staff();
+    raise exception 'GAGAL: anon boleh memanggil is_staff()';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak memanggil is_staff()';
+  end;
+  reset role;
+end;
+$$;
+
+-- Bawaan tabel baru -----------------------------------------------------
+--
+-- Menjaga migrasi 20260824000003. Tabel yang dibuat tanpa GRANT eksplisit
+-- harus tertutup, supaya tabel baru tidak pernah bocor karena lupa.
+
+do $$
+declare hak int;
+begin
+  create table public.tes_bawaan_tertutup (id int);
+
+  select count(*) into hak
+  from information_schema.role_table_grants
+  where table_schema = 'public'
+    and table_name = 'tes_bawaan_tertutup'
+    and grantee in ('anon', 'authenticated');
+
+  perform pg_temp.tolak(hak <> 0,
+    'tabel baru tidak memberi hak apa pun kepada anon/authenticated');
+
+  drop table public.tes_bawaan_tertutup;
+end;
+$$;
+
 rollback;
