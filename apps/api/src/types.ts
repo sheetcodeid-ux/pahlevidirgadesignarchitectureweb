@@ -1,0 +1,142 @@
+/** Binding dan environment variable Worker — cermin dari wrangler.jsonc + secrets. */
+export interface Env {
+  APP_ENV: string;
+  ALLOWED_ORIGINS: string;
+  INQUIRY_FROM: string;
+
+  // Secrets — diisi lewat `wrangler secret put`, tidak pernah di wrangler.jsonc.
+  SUPABASE_URL?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  SUPABASE_ANON_KEY?: string;
+  SUPABASE_JWT_SECRET: string;
+
+  R2_ACCOUNT_ID?: string;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
+  R2_BUCKET?: string;
+  R2_PUBLIC_BASE_URL?: string;
+
+  TURNSTILE_SECRET_KEY?: string;
+  IP_HASH_SALT?: string;
+
+  RESEND_API_KEY?: string;
+  INQUIRY_NOTIFY_TO?: string;
+
+  // Bindings
+  DB: Hyperdrive;
+  RATE_LIMIT: KVNamespace;
+  MEDIA: R2Bucket;
+}
+
+/** Konteks yang dipasang RequireSupabaseAuth ke Hono setelah token diverifikasi. */
+export interface AuthContext {
+  userID: string;
+  userEmail?: string;
+}
+
+export interface Project {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  category: string;
+  status?: string;
+  location?: string | null;
+  city?: string | null;
+  year?: number | null;
+  client?: string | null;
+  areaSqm?: number | null;
+  leadArchitect?: string | null;
+  coverImageUrl?: string | null;
+  isFeatured: boolean;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  publishedAt?: string | null;
+  images?: Image[];
+}
+
+export interface Image {
+  id: string;
+  url: string;
+  altText?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+  blurDataUrl?: string | null;
+  sortOrder: number;
+}
+
+export interface ProjectFilter {
+  category: string;
+  featured: boolean;
+  limit: number;
+  offset: number;
+}
+
+/** Field yang boleh disunting staf. undefined berarti "jangan diubah". */
+export interface ProjectInput {
+  slug?: string;
+  title?: string;
+  subtitle?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  category?: string;
+  status?: string;
+  location?: string | null;
+  city?: string | null;
+  year?: number | null;
+  client?: string | null;
+  areaSqm?: number | null;
+  leadArchitect?: string | null;
+  coverImageKey?: string | null;
+  isFeatured?: boolean;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+}
+
+export interface ImageInput {
+  storageKey: string;
+  altText?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+  sortOrder: number;
+}
+
+export interface InquiryInput {
+  name: string;
+  email: string;
+  phone?: string | null;
+  projectType?: string | null;
+  budgetRange?: string | null;
+  message: string;
+  source?: string | null;
+  ipHash: string;
+  userAgent: string;
+}
+
+export interface InquiryRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  projectType?: string | null;
+  budgetRange?: string | null;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+export const VALID_CATEGORIES = new Set([
+  "residential",
+  "commercial",
+  "interior",
+  "landscape",
+  "masterplan",
+  "renovation",
+]);
+
+export const VALID_PROJECT_STATUS = new Set(["draft", "published", "archived"]);
+export const VALID_INQUIRY_STATUS = new Set(["new", "contacted", "qualified", "closed"]);

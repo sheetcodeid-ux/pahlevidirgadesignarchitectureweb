@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   api:
-    name: API (Go)
+    name: API (Workers)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,28 +21,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-node@v7
         with:
-          go-version: "1.25"
-          cache-dependency-path: apps/api/go.sum
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
 
-      - name: Cek format
-        run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "File berikut belum diformat:"
-            echo "$unformatted"
-            exit 1
-          fi
+      - run: npm ci
 
-      - name: Vet
-        run: go vet ./...
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
-        run: go test ./... -race
+        run: npm test
 
-      - name: Build
-        run: go build ./...
+      - name: Bundling (dry-run)
+        run: npx wrangler deploy --dry-run
 
   web:
     name: Web (Astro)

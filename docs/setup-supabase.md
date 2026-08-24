@@ -32,18 +32,23 @@ Semua ada di **Project Settings**.
 
 | Nilai | Lokasi | Dipakai sebagai |
 | --- | --- | --- |
-| Connection string — Transaction pooler (6543) | Database → Connection pooling | `DATABASE_URL` |
+| Connection string — Session pooler (5432) | Database → Connection pooling | dipakai `wrangler hyperdrive create` untuk Worker API |
 | Connection string — Direct (5432) | Database → Connection string | `SUPABASE_DIRECT_URL` (backup & tes RLS) |
 | JWT Secret | API → JWT Settings | `SUPABASE_JWT_SECRET` |
 | service_role key | API → Project API keys | `SUPABASE_SERVICE_ROLE_KEY` |
 | Project URL | API | `SUPABASE_URL` |
 
-> `service_role` melewati seluruh RLS. Kunci ini hanya boleh hidup di environment
-> backend — Cloud Run atau `apps/api/.env` yang tidak pernah di-commit.
+> `service_role` melewati seluruh RLS. Kunci ini hanya boleh hidup di rahasia
+> Worker API (`wrangler secret put`) atau `apps/api/.dev.vars` yang tidak
+> pernah di-commit.
 
-Dua string koneksi berbeda peran: **pooler** untuk API Go, karena Cloud Run bisa
-menaikkan banyak instance dan koneksi langsung akan cepat kehabisan slot;
-**direct** untuk `pg_dump` dan `psql` yang butuh session penuh.
+Worker API tidak menyimpan `DATABASE_URL` langsung — koneksinya lewat
+**Hyperdrive**, yang diberi connection string **session pooler** (port 5432,
+bukan transaction pooler 6543) saat dibuat lewat
+`./scripts/setup-fase-04.sh`. Hyperdrive sudah jadi pooler-nya sendiri di
+sisi Cloudflare, jadi tidak perlu pooler transaksi di atasnya. **Direct**
+(juga 5432, tapi tanpa pooler sama sekali) dipakai terpisah untuk `pg_dump`
+dan `psql` yang butuh session penuh.
 
 ## 2. Terapkan skema — sekali tempel
 
@@ -110,50 +115,44 @@ Punya akun Supabase tidak membuat seseorang jadi staf. Policy `is_staff()`
 memeriksa keberadaan baris di `public.profiles` — user tanpa baris di situ
 diperlakukan seperti pengunjung biasa.
 
-## 5. Jalankan backend dan buktikan tersambung
+## 5. Buktikan tersambung
+
+Tanpa perlu menjalankan Worker API dulu:
 
 ```bash
-cp .env.example apps/api/.env
+./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"
 ```
 
-Isi tiga baris ini saja; sisanya boleh kosong untuk sekarang:
-
-```
-DATABASE_URL=<connection string pooler, port 6543>
-SUPABASE_JWT_SECRET=<jwt secret>
-IP_HASH_SALT=<openssl rand -hex 32>
-```
+Untuk membuktikan Worker API-nya sendiri tersambung (butuh Hyperdrive, lihat
+Fase 04 di [`deployment.md`](deployment.md)):
 
 ```bash
-cd apps/api && make run
-```
+cd apps/api && npm install && npm run dev   # http://localhost:8787
 
-Di terminal lain:
-
-```bash
-curl localhost:8080/healthz
+# terminal lain:
+curl localhost:8787/healthz
 # {"env":"development","status":"ok"}
 
-curl localhost:8080/api/v1/projects
+curl localhost:8787/api/v1/projects
 # {"data":[],"meta":{"count":0,"limit":12,"offset":0}}
 ```
 
 `data` kosong itu **benar** — belum ada proyek published. Yang dibuktikan di
-sini adalah koneksi pooler hidup dan query berjalan. Untuk melihat data contoh,
+sini adalah Hyperdrive hidup dan query berjalan. Untuk melihat data contoh,
 tempel `supabase/seed.sql` ke SQL Editor.
 
 ## Yang belum perlu disentuh di Supabase
 
 **Storage** sengaja dimatikan di `supabase/config.toml` — foto proyek ditaruh di
 Cloudflare R2 karena egress-nya gratis. **Edge Functions** juga tidak dipakai;
-logika ada di API Go.
+logika ada di Worker API sendiri.
 
 ## Tahap berikutnya
 
 1. Cloudflare R2 — bucket media dan backup, plus custom domain
 2. Turnstile — site key dan secret key untuk form kontak
 3. Resend — notifikasi email, perlu verifikasi domain
-4. Cloud Run — deploy API Go
-5. Cloudflare Pages — deploy frontend
+4. Worker API — Hyperdrive, rahasia, dan deploy (`./scripts/setup-fase-04.sh`)
+5. Worker situs statis — deploy frontend
 
 Rinciannya di [`deployment.md`](deployment.md) dan [`layanan.md`](layanan.md).

@@ -7,7 +7,7 @@
  * penyuntingan.
  */
 
-const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787").replace(/\/$/, "");
 
 const KUNCI_AKSES = "pd-access-token";
 const KUNCI_SEGAR = "pd-refresh-token";

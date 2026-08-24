@@ -1,0 +1,33 @@
+# Salin ke .dev.vars untuk development lokal (`npm run dev`).
+# Di production nilai-nilai ini diisi lewat `wrangler secret put`,
+# lihat scripts/setup-fase-04.sh — bukan lewat berkas ini.
+#
+# Nilai non-rahasia (SUPABASE_URL, R2_ACCOUNT_ID, dst.) sudah ada di
+# wrangler.jsonc bagian "vars" dan tidak perlu diulang di sini.
+
+# Settings > API > JWT Settings > JWT Secret.
+SUPABASE_JWT_SECRET=
+
+# Settings > API > anon/publishable key. Dipakai untuk menukar email dan kata
+# sandi dengan token; tetap tidak pernah sampai ke browser, karena login pun
+# berjalan lewat Worker API.
+SUPABASE_ANON_KEY=
+
+# Settings > API. JANGAN pernah dikirim ke browser.
+SUPABASE_SERVICE_ROLE_KEY=
+
+# R2 > Manage API tokens > Create Account API token, izin Object Read & Write,
+# dibatasi ke bucket pahlevidirga-media. Secret hanya ditampilkan sekali.
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+
+# Turnstile > widget "Form kontak pahlevidirga" > Settings.
+# Kosongkan saat development untuk melewati verifikasi.
+TURNSTILE_SECRET_KEY=
+
+RESEND_API_KEY=
+INQUIRY_NOTIFY_TO=studio@pahlevidirga.com
+
+# String acak panjang. Tanpa ini, hash IP di tabel inquiries dikosongkan.
+# Generate: openssl rand -hex 32
+IP_HASH_SALT=

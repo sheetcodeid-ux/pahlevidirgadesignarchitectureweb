@@ -1,11 +1,11 @@
 /**
- * Klien untuk backend Go.
+ * Klien untuk Worker API.
  *
  * Dipakai saat build (generate halaman statis) dan dari browser (form kontak).
  */
 
 const API_BASE_URL = (
-  import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8080"
+  import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787"
 ).replace(/\/$/, "");
 
 export type ProjectCategory =
