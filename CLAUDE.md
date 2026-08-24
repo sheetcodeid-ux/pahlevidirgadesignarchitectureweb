@@ -23,7 +23,7 @@ oleh orang yang bisnisnya arsitektur — pilih yang kedua.
 | --- | --- | --- |
 | Frontend | Astro statis di Cloudflare Workers (Static Assets) | edge |
 | Gambar | Cloudflare R2 | edge |
-| API | Go Fiber di Cloud Run | `asia-southeast1` |
+| API | Hono di Cloudflare Workers, Postgres lewat Hyperdrive | edge |
 | Database + Auth | Supabase (plan Free) | `ap-southeast-1` |
 | Email | Resend | — |
 | Anti-bot | Cloudflare Turnstile | — |
@@ -42,10 +42,15 @@ Cloudflare: akun **`pahlevidirgadesignarchitecture`**, ID
 `cf6a6bde45d3fd8a93463e6cc7e71aa1`. Worker `pahlevidirgadesignarchitectureweb`
 menyajikan situs statis dari `apps/web/dist` lewat `wrangler.jsonc` di akar,
 tayang di `pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev`.
-Bucket R2 `pahlevidirga-media` (lokasi APAC) dengan CORS presigned upload dan
-widget Turnstile "Form kontak pahlevidirga" sudah ada. Domain publik R2 masih
-memakai `r2.dev` bawaan — **sementara**, karena kena rate limit dan tidak untuk
-produksi; ganti ke custom domain begitu domain sendiri aktif.
+Worker kedua, `pahlevidirga-api`, menjalankan API (`apps/api/wrangler.jsonc`) —
+Postgres diakses lewat binding Hyperdrive (bukan koneksi langsung dari
+Worker), rate limit `/auth/login` dan `/inquiries` lewat KV (bukan in-memory,
+karena Worker tidak menyimpan state antar-request), R2 diakses lewat binding
+`MEDIA` untuk presigned upload. Bucket R2 `pahlevidirga-media` (lokasi APAC)
+dengan CORS presigned upload dan widget Turnstile "Form kontak pahlevidirga"
+sudah ada. Domain publik R2 masih memakai `r2.dev` bawaan — **sementara**,
+karena kena rate limit dan tidak untuk produksi; ganti ke custom domain
+begitu domain sendiri aktif.
 
 > **Satu login, dua akun.** Login `sheetcode.id@gmail.com` juga memuat akun
 > `Sheetcode.id@gmail.com's Account` yang berisi proyek lain yang tidak ada
@@ -58,19 +63,20 @@ produksi; ganti ke custom domain begitu domain sendiri aktif.
 
 Langgar ini dan ada yang rusak diam-diam:
 
-1. **Frontend tidak pernah bicara ke Supabase.** Semua lewat API Go — termasuk
-   login, yang ditukar di `/api/v1/auth/login`. Anon key hidup di backend saja
-   dan tidak pernah sampai ke browser.
-2. **`service_role` hanya hidup di backend.** Tidak pernah di frontend, tidak
-   pernah di-commit.
+1. **Frontend tidak pernah bicara ke Supabase.** Semua lewat API — termasuk
+   login, yang ditukar di `/api/v1/auth/login`. Anon key hidup di Worker API
+   saja dan tidak pernah sampai ke browser.
+2. **`service_role` hanya hidup di Worker API.** Tidak pernah di frontend,
+   tidak pernah di-commit — disetel lewat `wrangler secret put`.
 3. **Gambar di R2, bukan Supabase Storage.** Storage Supabase dimatikan di
    `config.toml`. R2 punya egress gratis; Supabase Free hanya 5 GB.
 4. **Halaman proyek dirender saat build.** Pengunjung tidak pernah menyentuh
-   Cloud Run — hanya form kontak dan panel admin yang menyentuhnya. Ini yang
-   membuat seluruh stack muat di free tier dan membuat biaya Cloud Run di
-   region Singapura tetap di bawah $1/bulan.
-5. **Konten baru butuh build ulang.** Deploy ulang Worker setelah konten
-   berubah — halaman proyek dibekukan saat build.
+   Worker API — hanya form kontak dan panel admin yang menyentuhnya. Karena
+   Workers scale-to-zero secara native dan tidak ditagih per-region seperti
+   Cloud Run dulu, ini juga yang menjaga biayanya tetap di free tier tanpa
+   perlu menimbang region.
+5. **Konten baru butuh build ulang.** Deploy ulang Worker statis setelah
+   konten berubah — halaman proyek dibekukan saat build.
 
 ## Invarian keamanan
 
@@ -146,13 +152,15 @@ ke edge (Cloudflare Access di depan `/admin/*`) — jangan mengandalkan
 
 | Perintah | Kegunaan |
 | --- | --- |
-| `cd apps/api && make test` | Test Go + race detector |
-| `cd apps/api && make lint` | `go vet` + cek format |
+| `cd apps/api && npm test` | Test API (vitest) |
+| `cd apps/api && npm run typecheck` | Typecheck API |
+| `cd apps/api && npx wrangler deploy --dry-run` | Periksa bundling & binding Worker API tanpa deploy |
 | `cd apps/web && npm run check` | Typecheck Astro |
 | `cd apps/web && npm run build` | Build statis |
 | `./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"` | Periksa skema, RLS, GRANT, akun staf |
 | `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 13 assertion RLS |
 | `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` |
+| `./scripts/setup-fase-04.sh` | Provisioning Hyperdrive + rahasia Worker API, lalu deploy |
 
 `supabase/bootstrap.sql` **hasil generate** — ubah migrasinya, lalu jalankan
 skrip; jangan sunting hasilnya.
@@ -171,8 +179,8 @@ skrip; jangan sunting hasilnya.
 
 | Keputusan | Alasan |
 | --- | --- |
-| Go Fiber, bukan serverless | Pilihan pemilik; sudah dipertimbangkan ulang sekali dan ditegaskan |
-| Cloud Run Singapura, bukan free tier AS | Free tier Cloud Run hanya di region AS; database di Singapura, dan API tidak dilalui pengunjung sehingga biayanya beberapa sen |
+| Hono di Cloudflare Workers, bukan Go Fiber di Cloud Run | Dibalik dari keputusan sebelumnya ("Go Fiber, bukan serverless") atas permintaan eksplisit pemilik — satu platform (Cloudflare) untuk frontend, API, R2, dan DNS, tanpa akun Google Cloud terpisah. Konsekuensinya: seluruh backend ditulis ulang dari Go ke TypeScript, bukan sekadar pindah hosting |
+| Hyperdrive, bukan koneksi Postgres langsung dari Worker | Worker tidak bisa membuka pool koneksi jangka panjang seperti pgxpool — Hyperdrive yang menyediakan pooling itu di sisi Cloudflare |
+| Rate limit lewat KV, bukan in-memory | Worker tidak menyimpan state antar-request sama sekali, beda dari instance Cloud Run yang setidaknya bertahan selama masih hangat. KV tersebar di seluruh edge — lebih ketat dari limiter in-memory sebelumnya, dengan trade-off baca-tulis yang tidak atomik dan propagasi hingga ~60 detik. Diterima dengan alasan yang sama seperti sebelumnya: Turnstile penjaga sesungguhnya |
 | Supabase di org Free terpisah | Menggabung ke `operation-gwg` (database operasional GWG yang live) akan berbagi `auth.users`, backup, dan radius kerusakan kredensial |
-| Astro statis, bukan SSR | Pengunjung tidak perlu menunggu backend; Cloud Run boleh tidur |
-| Rate limiter in-memory | Per instance, jadi lebih longgar dari angkanya. Diterima pada skala ini; Turnstile penjaga sesungguhnya |
+| Astro statis, bukan SSR | Pengunjung tidak perlu menunggu backend; Worker API boleh dingin |

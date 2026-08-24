@@ -1,0 +1,46 @@
+{
+  // API Hono di Cloudflare Workers.
+  //
+  // Rahasia (JWT secret, service role key, R2 key, dst.) TIDAK ada di sini —
+  // itu disetel lewat `wrangler secret put` atau dashboard, supaya tidak
+  // pernah ter-commit. Lihat scripts/setup-fase-04.sh.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pahlevidirga-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-23",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Nilai yang aman dilihat publik (bukan rahasia) — bandingkan dengan
+  // rahasia sungguhan yang lewat `wrangler secret put`, lihat
+  // scripts/setup-fase-04.sh.
+  "vars": {
+    "APP_ENV": "production",
+    "INQUIRY_FROM": "website@pahlevidirga.com",
+    "ALLOWED_ORIGINS": "https://pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev",
+    "SUPABASE_URL": "https://ddzuzokkqofrpkpokcfa.supabase.co",
+    "R2_ACCOUNT_ID": "cf6a6bde45d3fd8a93463e6cc7e71aa1",
+    "R2_BUCKET": "pahlevidirga-media",
+    "R2_PUBLIC_BASE_URL": "https://pub-e4c6ca03e74842e195bb46bc8445269f.r2.dev"
+  },
+
+  // Dibuat dengan: wrangler hyperdrive create pahlevidirga-db --connection-string="postgresql://..."
+  // ID di bawah baru terisi setelah itu dijalankan — lihat scripts/setup-fase-04.sh.
+  "hyperdrive": [
+    { "binding": "DB", "id": "GANTI_SETELAH_HYPERDRIVE_DIBUAT" }
+  ],
+
+  // Rate limit per-IP untuk /auth/login dan /inquiries. KV, bukan in-memory:
+  // tersebar di seluruh edge, bukan per-instance seperti limiter Go
+  // sebelumnya — jadi justru lebih ketat, bukan lebih longgar.
+  "kv_namespaces": [
+    { "binding": "RATE_LIMIT", "id": "36e99dae5b4a423390217300a5f80ff0" }
+  ],
+
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "pahlevidirga-media" }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}

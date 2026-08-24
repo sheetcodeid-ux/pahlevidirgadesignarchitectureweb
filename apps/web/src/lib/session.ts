@@ -40,7 +40,7 @@ export interface SesiAdmin {
   isMasterAdmin: boolean;
 }
 
-const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787").replace(/\/$/, "");
 
 /**
  * Menanyakan identitas pemilik token ke backend.

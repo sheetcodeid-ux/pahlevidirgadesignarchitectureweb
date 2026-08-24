@@ -9,7 +9,7 @@ tayang. Semua yang ditandai **wajib** harus beres; sisanya bisa menyusul.
 | --- | --- |
 | Supabase (free) | Postgres, Auth untuk panel admin |
 | GitHub | Repositori + CI/CD lewat Actions |
-| Cloudflare (free) | DNS, Pages, R2, Turnstile, analytics |
+| Cloudflare (free) | DNS, Workers (situs statis + API), R2, Turnstile, analytics |
 
 ## Masih kurang
 
@@ -22,30 +22,15 @@ Subdomain yang akan dipakai:
 
 | Host | Menunjuk ke |
 | --- | --- |
-| `pahlevidirga.com` | Cloudflare Pages |
-| `api.pahlevidirga.com` | Cloud Run (lewat proxy Cloudflare) |
+| `pahlevidirga.com` | Worker situs statis (`pahlevidirgadesignarchitectureweb`) |
+| `api.pahlevidirga.com` | Worker API (`pahlevidirga-api`), lewat Custom Domains |
 | `media.pahlevidirga.com` | bucket R2 |
 
-### 2. Google Cloud — **wajib**
+Tidak ada akun Google Cloud yang perlu disiapkan — API sekarang jalan di
+Cloudflare Workers yang sama dengan situs statis, bukan Cloud Run. Satu
+platform lebih sedikit untuk dikelola.
 
-Untuk menjalankan API Go di Cloud Run, region `asia-southeast1` (Singapura) —
-satu region dengan database Supabase.
-
-Free tier Cloud Run hanya berlaku di `us-central1`, `us-east1`, dan `us-west1`,
-jadi region Singapura ditagih normal. Itu disengaja: pengunjung website tidak
-pernah menyentuh API ini (halaman proyek statis di Cloudflare Pages), jadi
-pemakaiannya hanya beberapa ratus request per bulan — di bawah $1. Menaruhnya
-di AS demi free tier justru membuat setiap query database menyeberangi
-Pasifik, dan panel admin yang ramai query akan terasa lambat.
-
-Agar tagihannya tetap kecil dan terduga:
-
-- `--max-instances 3` sudah disetel di workflow deploy
-- pasang budget alert di $1 lewat Billing → Budgets
-- taruh Cloudflare di depan `api.pahlevidirga.com` supaya rate limiting dan WAF
-  ikut menyaring sebelum request sampai ke Cloud Run
-
-### 3. Cloudflare R2 — **wajib**
+### 2. Cloudflare R2 — **wajib**
 
 Bucket untuk foto proyek. 10 GB penyimpanan gratis dan **egress gratis** —
 inilah alasan gambar tidak ditaruh di Supabase Storage, yang free tier-nya
@@ -60,13 +45,13 @@ Yang perlu dibuat:
 - bucket `pahlevidirga-backup` untuk dump database harian
 - API token R2 dengan izin Object Read & Write
 
-### 4. Cloudflare Turnstile — **wajib**
+### 3. Cloudflare Turnstile — **wajib**
 
 Gratis, tanpa kartu. Buat satu widget, ambil site key (untuk frontend) dan
 secret key (untuk backend). Tanpa ini form kontak akan dibanjiri spam bot
 dalam hitungan hari setelah domain terindeks.
 
-### 5. Resend — **wajib**
+### 4. Resend — **wajib**
 
 Notifikasi email saat ada calon klien mengisi form. Free tier 3.000
 email/bulan. Perlu verifikasi domain pengirim dengan menambahkan record SPF,
@@ -75,17 +60,17 @@ DKIM, dan DMARC di Cloudflare DNS.
 Alasan tidak memakai SMTP bawaan Supabase: layanan itu hanya untuk email auth
 dan rate limit-nya sangat ketat.
 
-### 6. Cloudflare Email Routing — disarankan
+### 5. Cloudflare Email Routing — disarankan
 
 Gratis, dan membuat `studio@pahlevidirga.com` diteruskan ke Gmail tanpa perlu
 berlangganan Google Workspace.
 
-### 7. Sentry — disarankan
+### 6. Sentry — disarankan
 
-Error tracking untuk backend Go. Free tier 5.000 error/bulan. Tanpa ini,
-kegagalan hanya terlihat kalau kamu sedang membuka Cloud Logging.
+Error tracking untuk Worker API. Free tier 5.000 error/bulan. Tanpa ini,
+kegagalan hanya terlihat kalau kamu sedang membuka Cloudflare Workers Logs.
 
-### 8. Cloudflare Web Analytics — disarankan
+### 7. Cloudflare Web Analytics — disarankan
 
 Gratis, tanpa cookie, jadi tidak butuh cookie banner. Cukup aktifkan untuk
 domain di dashboard Cloudflare.
@@ -95,11 +80,9 @@ domain di dashboard Cloudflare.
 Ini yang biasanya membuat peluncuran mundur, bukan urusan teknisnya:
 
 - **Foto proyek resolusi tinggi.** Website arsitektur berdiri atau jatuh di
-  sini. Siapkan minimal 5–8 foto per proyek, sisi terpanjang 2400px.
-- **Teks profil studio dan deskripsi tiap proyek.** Halaman `/tentang` saat ini
-  masih berisi teks placeholder.
-- **Panel admin.** Belum dibuat. API-nya sudah siap
-  (`/api/v1/admin/uploads`), tapi antarmuka untuk staf mengunggah proyek
-  belum ada. Sementara ini konten bisa diisi lewat Supabase Studio.
+  sini. Siapkan minimal 5–8 foto per proyek, sisi terpanjang 2400px — belum
+  ada satu proyek pun yang dipublikasikan.
+- **Deskripsi tiap proyek.** Halaman `/tentang` sudah berisi profil studio
+  sungguhan; yang masih kosong adalah data proyek itu sendiri.
 - **Halaman kebijakan privasi.** Form kontak mengumpulkan nama, email, dan
   nomor telepon, jadi halaman ini perlu ada.

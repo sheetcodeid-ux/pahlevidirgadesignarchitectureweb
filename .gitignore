@@ -2,15 +2,16 @@
 .env
 .env.*
 !.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 
-# Go
-apps/api/bin/
-apps/api/tmp/
-
-# Node / Astro
+# Node / Astro / Workers
 node_modules/
 apps/web/dist/
 apps/web/.astro/
+apps/api/dist/
+.wrangler/
 
 # Supabase CLI
 supabase/.branches/

@@ -40,63 +40,66 @@ values ('<uuid-user>', 'Nama Staf', 'admin');
 2. Pada bucket media: Settings → Custom Domain → `media.pahlevidirga.com`
 3. R2 → Manage API Tokens → buat token Object Read & Write
 
-Setelah token dibuat dan `apps/api/.env` diisi, periksa hasilnya:
-
-```bash
-cd apps/api && make verify-r2
-```
-
-Lima pemeriksaan: bucket terjangkau, token bisa menulis, token bisa membaca,
-domain publik menyajikan berkas, dan presigned upload diterima. Yang terakhir
-itu jalur yang dipakai panel admin — browser mengunggah langsung ke R2 tanpa
-melewati server, jadi kalau itu gagal, upload gambar tidak akan berfungsi
-meski empat pemeriksaan lain hijau.
-
-Berkas ujinya selalu dihapus lagi, termasuk saat ada pemeriksaan yang gagal.
+Setelah token dibuat, isi lewat `wrangler secret put` (langkah 3) lalu coba
+endpoint `/api/v1/admin/uploads` langsung — presigned URL yang dikembalikan
+itu jalur yang dipakai panel admin, browser mengunggah langsung ke R2 tanpa
+melewati Worker API.
 
 Aktifkan juga cache rule agar gambar disimpan lama di edge:
 Caching → Cache Rules, hostname `media.pahlevidirga.com`, Edge TTL 1 tahun.
 Nama file mengandung suffix acak, jadi versi baru tidak akan tertahan cache.
 
-## 3. Cloud Run
+## 3. API (Cloudflare Workers)
 
-Region: **`asia-southeast1`** (Singapura), satu region dengan Supabase. Sudah
-disetel di workflow deploy.
+Worker `pahlevidirga-api`, terpisah dari Worker situs statis. Berjalan di
+edge Cloudflare — tidak terikat satu region seperti Cloud Run dulu.
 
-Langkah di bawah ini (Secret Manager, service account, Workload Identity
-Federation) bisa dikerjakan sekaligus lewat `./scripts/setup-fase-03.sh` —
-jalankan dari mesin sendiri atau Cloud Shell yang sudah login `gcloud`, bukan
-dari sesi Claude Code (tidak ada connector GCP maupun kredensial gcloud di
-sana). Aman dijalankan berulang.
+Langkah di bawah ini (Hyperdrive, rahasia lewat `wrangler secret`) bisa
+dikerjakan sekaligus lewat `./scripts/setup-fase-04.sh` — jalankan dari
+mesin sendiri yang sudah login `npx wrangler login`, bukan dari sesi Claude
+Code (tidak ada kredensial wrangler di sana). Aman dijalankan berulang.
 
-Simpan rahasia di Secret Manager — nama-nama ini dirujuk oleh workflow deploy:
+Ringkasannya:
 
-```bash
-for name in database-url supabase-jwt-secret supabase-service-role-key \
-            r2-access-key-id r2-secret-access-key turnstile-secret \
-            resend-api-key ip-hash-salt; do
-  printf '%s' "<nilai>" | gcloud secrets create "$name" --data-file=-
-done
-```
+1. **Hyperdrive** dibuat menunjuk ke session pooler Supabase (port 5432,
+   bukan transaction pooler 6543 — Hyperdrive sudah jadi pooler-nya sendiri):
+   ```bash
+   cd apps/api
+   npx wrangler hyperdrive create pahlevidirga-db \
+     --connection-string="postgresql://postgres.<ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+   ```
+   ID yang dikembalikan diisi ke `apps/api/wrangler.jsonc` bagian `hyperdrive[0].id`.
 
-Beri service account Cloud Run izin `roles/secretmanager.secretAccessor`.
+2. **Rahasia** disetel satu per satu, tidak pernah lewat `wrangler.jsonc`:
+   ```bash
+   printf '%s' "<nilai>" | npx wrangler secret put SUPABASE_JWT_SECRET
+   ```
+   Nama-nama yang dibutuhkan: `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `SUPABASE_ANON_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+   `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `INQUIRY_NOTIFY_TO`,
+   `IP_HASH_SALT`. Nilai yang bukan rahasia (`SUPABASE_URL`, `R2_ACCOUNT_ID`,
+   `R2_BUCKET`, `R2_PUBLIC_BASE_URL`, `ALLOWED_ORIGINS`) sudah ada di
+   `wrangler.jsonc` bagian `vars`.
 
-Untuk deploy dari GitHub Actions tanpa menyimpan key JSON, siapkan Workload
-Identity Federation, lalu isi di repo:
+3. **Deploy manual** untuk verifikasi pertama kali:
+   ```bash
+   npx wrangler deploy
+   curl https://pahlevidirga-api.<subdomain-akun>.workers.dev/healthz
+   ```
 
-| Tipe | Nama | Isi |
-| --- | --- | --- |
-| Secret | `GCP_WORKLOAD_IDENTITY_PROVIDER` | resource name provider |
-| Secret | `GCP_SERVICE_ACCOUNT` | email service account deployer |
-| Variable | `ALLOWED_ORIGINS` | `https://pahlevidirga.com` |
-| Variable | `R2_PUBLIC_BASE_URL` | `https://media.pahlevidirga.com` |
-| Variable | `R2_BUCKET`, `R2_ACCOUNT_ID` | dari langkah 2 |
-| Variable | `INQUIRY_NOTIFY_TO`, `INQUIRY_FROM` | alamat email studio |
+4. **Deploy otomatis dari GitHub Actions** butuh dua secret di repo:
 
-Push ke `main` yang menyentuh `apps/api/**` akan men-deploy otomatis.
+   | Secret | Isi |
+   | --- | --- |
+   | `CLOUDFLARE_API_TOKEN` | token dengan izin Edit Workers (dashboard → My Profile → API Tokens) |
+   | `CLOUDFLARE_ACCOUNT_ID` | `cf6a6bde45d3fd8a93463e6cc7e71aa1` |
 
-Terakhir, arahkan `api.pahlevidirga.com` ke URL Cloud Run lewat CNAME
-ter-proxy (awan oranye) supaya WAF dan rate limiting Cloudflare ikut aktif.
+   Push ke `main` yang menyentuh `apps/api/**` akan men-deploy otomatis
+   lewat `.github/workflows/deploy-api.yml`.
+
+Terakhir, arahkan `api.pahlevidirga.com` ke Worker ini lewat **Custom
+Domains** di dashboard Worker (bukan CNAME manual) — Cloudflare yang
+mengurus sertifikat dan routing-nya.
 
 ## 4. Cloudflare Workers (situs statis)
 
@@ -130,7 +133,7 @@ PUBLIC_TURNSTILE_SITE_KEY=<site key>
 ```
 
 Tanpa `PUBLIC_API_BASE_URL`, situs yang tayang akan menunjuk
-`http://localhost:8080` — halaman tetap tampil, tapi form kontak dan panel
+`http://localhost:8787` — halaman tetap tampil, tapi form kontak dan panel
 admin tidak akan berfungsi bagi pengunjung.
 
 Halaman proyek dibangun saat deploy, jadi **konten baru belum muncul sampai
