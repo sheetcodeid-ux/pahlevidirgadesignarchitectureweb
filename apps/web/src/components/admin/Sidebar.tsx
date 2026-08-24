@@ -13,32 +13,36 @@ interface NavItem {
   children?: SubItem[];
   /** Hanya tampil untuk master admin. */
   masterOnly?: boolean;
+  /** Label kelompok kecil di atas item — mengelompokkan sidebar seperti bagian di halaman panjang. */
+  group: string;
 }
 
 // Ikon dipilih agar cocok dengan labelnya, bukan sekadar mengisi ruang:
 // denah bangunan untuk proyek, amplop untuk pesan masuk, lapisan untuk
 // pustaka komponen.
 const NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "dashboard" },
+  { label: "Dashboard", href: "/admin", icon: "dashboard", group: "Utama" },
   {
     label: "Proyek",
     icon: "project",
+    group: "Utama",
     children: [
       { label: "Semua Proyek", href: "/admin/proyek" },
       { label: "Draf", href: "/admin/proyek?status=draft" },
     ],
   },
-  { label: "Media", href: "/admin/media", icon: "image" },
-  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry" },
+  { label: "Media", href: "/admin/media", icon: "image", group: "Utama" },
+  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   {
     label: "Pengaturan",
     icon: "settings",
+    group: "Sistem",
     children: [
       { label: "Info Studio", href: "/admin/pengaturan" },
       { label: "Akun", href: "/admin/pengaturan/akun" },
     ],
   },
-  { label: "UI Component", href: "/admin/ui", icon: "component", masterOnly: true },
+  { label: "UI Component", href: "/admin/ui", icon: "component", group: "Sistem", masterOnly: true },
 ];
 
 interface Props {
@@ -53,6 +57,14 @@ export function Sidebar({ currentPath, isMasterAdmin = false }: Props) {
   const drawerId = useId();
 
   const items = NAV.filter((item) => !item.masterOnly || isMasterAdmin);
+
+  // Object mempertahankan urutan penyisipan kunci string, jadi kelompok
+  // tampil sesuai urutan pertama kali muncul di NAV — tidak perlu daftar
+  // urutan terpisah.
+  const kelompok = items.reduce<Record<string, NavItem[]>>((acc, item) => {
+    (acc[item.group] ??= []).push(item);
+    return acc;
+  }, {});
 
   // Grup yang memuat halaman aktif dibuka sejak awal, supaya pengguna tidak
   // perlu mencari di mana dirinya berada.
@@ -140,8 +152,11 @@ export function Sidebar({ currentPath, isMasterAdmin = false }: Props) {
         </div>
 
         <nav className="sidebar__nav" aria-label="Navigasi admin">
+          {Object.entries(kelompok).map(([labelGrup, itemGrup]) => (
+          <div className="sidebar__group" key={labelGrup}>
+          <p className="sidebar__group-label">{labelGrup}</p>
           <ul className="sidebar__list">
-            {items.map((item) => {
+            {itemGrup.map((item) => {
               if (!item.children) {
                 const aktif = cocok(item.href!, currentPath);
                 return (
@@ -198,6 +213,8 @@ export function Sidebar({ currentPath, isMasterAdmin = false }: Props) {
               );
             })}
           </ul>
+          </div>
+          ))}
         </nav>
 
         <div className="sidebar__foot">

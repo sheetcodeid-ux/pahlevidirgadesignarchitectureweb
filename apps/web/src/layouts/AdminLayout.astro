@@ -8,6 +8,7 @@ import "../styles/misc.css";
 import "../styles/sidebar.css";
 import "../styles/admin.css";
 import { Sidebar } from "../components/admin/Sidebar";
+import { TopbarUser } from "../components/admin/TopbarUser";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 interface Props {
@@ -72,6 +73,7 @@ const currentPath = Astro.url.pathname;
           </div>
           <div class="topbar__tools">
             <ThemeToggle client:load />
+            <TopbarUser client:load />
           </div>
         </header>
 

@@ -28,6 +28,28 @@
 .topbar__crumb { min-width: 0; overflow: hidden; }
 .topbar__tools { display: flex; align-items: center; gap: var(--space-3); flex: none; }
 
+/* --- Identitas topbar ------------------------------------------------ */
+
+.topbar-user { display: flex; align-items: center; gap: var(--space-2); }
+
+.topbar-user__id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+}
+
+.topbar-user__text { display: flex; flex-direction: column; line-height: 1.2; }
+.topbar-user__nama { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); text-transform: capitalize; }
+.topbar-user__peran { font-size: var(--text-2xs); color: var(--text-faint); }
+
+@media (max-width: 30rem) {
+  .topbar-user__text { display: none; }
+  .topbar-user__id { padding: 0.15rem; border: 0; }
+}
+
 .admin__content {
   flex: 1;
   width: 100%;
@@ -41,6 +63,20 @@
 
 .page-head { display: flex; flex-direction: column; gap: var(--space-2); }
 .page-head .t-muted { max-width: var(--measure); margin: 0; }
+
+/* Lingkaran bernomor di "Panduan memulai" — cincin berwarna, bukan kotak
+   terisi, supaya status (selesai/aktif/belum) terbaca dari jauh. Warna
+   diatur inline per baris karena ketiga statusnya butuh warna berbeda. */
+.langkah-lingkaran {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+}
 
 @media (min-width: 60rem) {
   /* Tombol drawer hilang, jadi ruang kirinya dikembalikan. */

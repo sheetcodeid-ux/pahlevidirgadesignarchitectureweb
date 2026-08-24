@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
-import { RequireAuth, useProfil } from "./RequireAuth";
-import { daftarProyek, daftarPesan, hapusSesi } from "../../lib/admin";
+import { RequireAuth } from "./RequireAuth";
+import { daftarProyek, daftarPesan } from "../../lib/admin";
 
 function Isi() {
-  const profil = useProfil();
   const [angka, setAngka] = useState<{ terbit: number; draf: number; baru: number } | null>(null);
 
   useEffect(() => {
@@ -31,22 +30,6 @@ function Isi() {
 
   return (
     <div className="stack" style={{ gap: "var(--space-6)" }}>
-      <div className="card">
-        <div className="card__header">
-          <span className="icon-tile icon-tile--brand"><Icon name="dashboard" size={20} /></span>
-          <span className="card__titles">
-            <span className="t-subheading">Halo, {profil.email.split("@")[0]}</span>
-            <span className="t-muted">
-              Masuk sebagai {profil.isMasterAdmin ? "master admin" : "staf penginput"}
-            </span>
-          </span>
-          <button type="button" className="btn btn--ghost btn--sm"
-            onClick={() => { hapusSesi(); window.location.replace("/admin/masuk"); }}>
-            <Icon name="logout" size={15} />Keluar
-          </button>
-        </div>
-      </div>
-
       <div className="spec-grid">
         {[
           { label: "Proyek terbit", nilai: angka?.terbit, ikon: "project" as const, ke: "/admin/proyek" },
@@ -78,8 +61,11 @@ function Isi() {
           <div className="stack" style={{ gap: 0 }}>
             {langkah.map((l, i) => (
               <div className="item" key={l.judul} style={{ borderTop: i ? "1px solid var(--border)" : undefined, borderRadius: 0 }}>
-                <span className="icon-tile icon-tile--sm"
-                  style={{ color: l.selesai ? "var(--success)" : i === aktif ? "var(--brand)" : "var(--text-faint)" }}>
+                <span className="langkah-lingkaran"
+                  style={{
+                    borderColor: l.selesai ? "var(--success)" : i === aktif ? "var(--brand)" : "var(--border-strong)",
+                    color: l.selesai ? "var(--success)" : i === aktif ? "var(--brand)" : "var(--text-faint)",
+                  }}>
                   {l.selesai ? <Icon name="check" size={15} /> : <span className="t-mono">{i + 1}</span>}
                 </span>
                 <span className="item__text">

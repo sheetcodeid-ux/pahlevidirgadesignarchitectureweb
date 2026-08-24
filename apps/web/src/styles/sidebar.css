@@ -82,6 +82,19 @@
 /* --- Daftar navigasi ----------------------------------------------------- */
 
 .sidebar__nav { flex: 1; overflow-y: auto; padding: var(--space-3); }
+
+.sidebar__group + .sidebar__group { margin-top: var(--space-4); }
+
+.sidebar__group-label {
+  margin: 0 0 var(--space-2);
+  padding-inline: 0.75rem;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
 .sidebar__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 
 .sidebar__item {
@@ -197,6 +210,7 @@
   .sidebar[data-collapsed] .sidebar__label,
   .sidebar[data-collapsed] .sidebar__chevron,
   .sidebar[data-collapsed] .sidebar__sub,
+  .sidebar[data-collapsed] .sidebar__group-label,
   .sidebar[data-collapsed] .sidebar__site-text { display: none; }
   .sidebar[data-collapsed] .sidebar__item { justify-content: center; padding-inline: 0; }
   .sidebar[data-collapsed] .sidebar__site { justify-content: center; }
