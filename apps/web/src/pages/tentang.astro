@@ -82,16 +82,18 @@ const batasan = [
   title="Tentang"
   description="Profil Dirga Pahlevi Architecture: pendekatan, layanan, dan cara kami bekerja."
 >
-  <section class="section shell">
+  <section class="section shell bg-dots hero-tentang">
     <p class="eyebrow">Studio</p>
     <h1>Tentang Dirga Pahlevi Architecture</h1>
     <p class="lede">
       Kami studio arsitektur kecil yang sengaja tetap kecil — supaya setiap
       proyek yang masuk benar-benar ditangani, bukan sekadar dijadwalkan.
     </p>
+  </section>
 
+  <section class="section shell section--sunken">
     <div class="prose">
-      <p>
+      <p class="prose-lead">
         Dirga Pahlevi Architecture bekerja dengan ritme yang jarang
         dibicarakan studio arsitektur: bukan yang tercepat, bukan yang
         termurah, tapi yang paling teliti menimbang bagaimana sebuah bangunan
@@ -127,7 +129,7 @@ const batasan = [
           <li class="langkah-item">
             <div class="langkah-item__head">
               <span class="langkah-item__nomor t-mono">{item.nomor}</span>
-              <span class="icon-tile icon-tile--sm">
+              <span class="icon-tile icon-tile--sm icon-tile--brand">
                 <Icon name={item.ikon} size={18} />
               </span>
             </div>
@@ -147,7 +149,7 @@ const batasan = [
       {
         layanan.map((item) => (
           <li class="card layanan-card">
-            <span class="icon-tile">
+            <span class="icon-tile icon-tile--brand">
               <Icon name={item.ikon} size={20} />
             </span>
             <h3>{item.judul}</h3>
@@ -205,9 +207,27 @@ const batasan = [
     margin-bottom: 1.5rem;
   }
 
+  .hero-tentang {
+    padding-block: clamp(4rem, 10vw, 7rem) clamp(var(--space-6), 6vw, var(--space-7));
+  }
+
+  .hero-tentang .lede {
+    max-width: var(--measure);
+  }
+
+  /* Alternasi latar antar-section, seperti jeda napas di halaman panjang —
+     bukan warna baru, cuma --bg-sunken yang sudah ada di token. */
+  .section--sunken {
+    background: var(--bg-sunken);
+  }
+
   .prose {
     max-width: var(--measure);
-    margin-top: 2.5rem;
+  }
+
+  .prose-lead {
+    font-size: var(--text-lg);
+    color: var(--text-body);
   }
 
   .prose h2 {
@@ -231,13 +251,18 @@ const batasan = [
   }
 
   .langkah-item {
-    padding: var(--space-6) var(--space-5) 0;
+    padding: var(--space-6) var(--space-5) var(--space-5);
     border-left: 1px solid var(--border);
+    transition: background-color var(--dur) var(--ease);
   }
 
   .langkah-item:first-child {
     padding-left: 0;
     border-left: 0;
+  }
+
+  .langkah-item:hover {
+    background: var(--surface-hover);
   }
 
   .langkah-item__head {
@@ -273,6 +298,12 @@ const batasan = [
     flex-direction: column;
     gap: var(--space-3);
     align-items: flex-start;
+    transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+
+  .layanan-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
   }
 
   .layanan-card h3 {
@@ -294,6 +325,14 @@ const batasan = [
     display: flex;
     align-items: flex-start;
     gap: var(--space-3);
+    padding: var(--space-2);
+    margin: calc(var(--space-2) * -1);
+    border-radius: var(--radius-md);
+    transition: background-color var(--dur) var(--ease);
+  }
+
+  .batasan-item:hover {
+    background: var(--surface-hover);
   }
 
   .batasan-item__ikon {
