@@ -63,6 +63,12 @@ Nama file mengandung suffix acak, jadi versi baru tidak akan tertahan cache.
 Region: **`asia-southeast1`** (Singapura), satu region dengan Supabase. Sudah
 disetel di workflow deploy.
 
+Langkah di bawah ini (Secret Manager, service account, Workload Identity
+Federation) bisa dikerjakan sekaligus lewat `./scripts/setup-fase-03.sh` —
+jalankan dari mesin sendiri atau Cloud Shell yang sudah login `gcloud`, bukan
+dari sesi Claude Code (tidak ada connector GCP maupun kredensial gcloud di
+sana). Aman dijalankan berulang.
+
 Simpan rahasia di Secret Manager — nama-nama ini dirujuk oleh workflow deploy:
 
 ```bash
