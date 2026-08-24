@@ -112,7 +112,7 @@ function Isi() {
                   description={`${p.email} · ${tanggal(p.createdAt)}`}
                   trigger={<button type="button" className="btn btn--secondary btn--sm">Buka</button>}
                   footer={
-                    <a className="btn btn--primary" href={`mailto:${p.email}?subject=${encodeURIComponent("Balasan dari Studio Pahlevi Dirga")}`}>
+                    <a className="btn btn--primary" href={`mailto:${p.email}?subject=${encodeURIComponent("Balasan dari Studio Dirga Pahlevi Architecture")}`}>
                       Balas lewat email
                     </a>
                   }

@@ -1,0 +1,192 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Icon } from "../components/ui/Icon";
+import "../styles/misc.css";
+
+const kategori = [
+  {
+    id: "proses",
+    label: "Proses & Konsultasi",
+    pertanyaan: [
+      {
+        q: "Bagaimana proses dari kontak pertama sampai desain jadi?",
+        a: "Diawali konsultasi dan survei lokasi, dilanjutkan konsep dan estimasi anggaran, lalu pengembangan desain sampai dokumen kerja siap dibangun. Detail tiap tahap ada di bagian Cara Kerja pada halaman Tentang.",
+      },
+      {
+        q: "Apakah saya perlu sudah punya lahan sebelum konsultasi?",
+        a: "Tidak wajib. Kami juga membantu di tahap awal memikirkan kebutuhan ruang sebelum lahan ditentukan — meski desain rinci baru bisa dimulai setelah lokasi dan ukuran lahan pasti.",
+      },
+      {
+        q: "Berapa lama tahap perancangan biasanya berlangsung?",
+        a: "Empat sampai delapan minggu untuk hunian, tergantung kompleksitas dan kecepatan persetujuan dari Anda di tiap tahap. Proyek komersial bisa lebih lama.",
+      },
+    ],
+  },
+  {
+    id: "biaya",
+    label: "Biaya & Estimasi",
+    pertanyaan: [
+      {
+        q: "Bagaimana cara menghitung biaya jasa desain?",
+        a: "Berdasarkan luas bangunan dan tingkat kerumitan proyek. Kami berikan estimasi tertulis setelah konsultasi awal, sebelum ada kesepakatan apa pun.",
+      },
+      {
+        q: "Apakah konsultasi pertama berbayar?",
+        a: "Tidak. Konsultasi awal untuk memahami kebutuhan dan memberi gambaran biaya tidak dikenakan biaya.",
+      },
+      {
+        q: "Apa saja yang termasuk dalam biaya jasa desain?",
+        a: "Gambar konsep, pengembangan desain, dokumen konstruksi, dan dokumen untuk pengurusan PBG. Biaya pengawasan berkala pelaksanaan dihitung terpisah, disepakati di awal.",
+      },
+    ],
+  },
+  {
+    id: "legalitas",
+    label: "Legalitas & Dokumen",
+    pertanyaan: [
+      {
+        q: "Dokumen apa yang dibutuhkan sebelum survei?",
+        a: "Sertifikat tanah atau bukti kepemilikan, gambar situasi bila ada, dan perkiraan anggaran awal. Tidak masalah kalau belum lengkap — kami bantu identifikasi apa yang masih kurang.",
+      },
+      {
+        q: "Apakah studio mengurus PBG (dulu IMB)?",
+        a: "Kami menyiapkan gambar dan dokumen teknis yang dibutuhkan untuk pengurusan PBG. Proses pengajuan ke dinas terkait dikoordinasikan bersama, sesuai kesepakatan di awal proyek.",
+      },
+      {
+        q: "Siapa yang mengurus sertifikat tanah?",
+        a: "Legalitas lahan adalah tanggung jawab pemilik. Ini di luar dokumen teknis bangunan yang kami siapkan — lihat juga bagian Batasan Layanan di halaman Tentang.",
+      },
+    ],
+  },
+  {
+    id: "pelaksanaan",
+    label: "Pelaksanaan & Pengawasan",
+    pertanyaan: [
+      {
+        q: "Apakah studio mendampingi pelaksanaan pembangunan?",
+        a: "Ya, dalam bentuk pengawasan berkala sesuai kesepakatan — kunjungan terjadwal untuk memastikan yang terbangun sesuai rancangan.",
+      },
+      {
+        q: "Apakah studio juga berperan sebagai kontraktor?",
+        a: "Tidak. Kami merancang; pembangunan dikerjakan kontraktor pilihan Anda. Kami tetap mendampingi lewat pengawasan berkala, bukan mengelola pelaksanaan sehari-hari.",
+      },
+      {
+        q: "Bagaimana kalau ada perubahan desain saat pembangunan?",
+        a: "Perubahan kecil biasanya bisa disesuaikan langsung di lapangan. Perubahan yang memengaruhi struktur atau anggaran signifikan akan kami diskusikan dulu sebelum dilanjutkan.",
+      },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="FAQ"
+  description="Pertanyaan yang sering ditanyakan seputar proses, biaya, legalitas, dan pengawasan proyek di Dirga Pahlevi Architecture."
+>
+  <section class="section shell">
+    <p class="eyebrow">FAQ</p>
+    <h1>Pertanyaan yang Sering Ditanyakan</h1>
+    <p class="lede">
+      Tidak menemukan jawaban yang Anda cari?
+      <a href="/kontak">Hubungi kami langsung</a>.
+    </p>
+
+    <nav class="faq-jump" aria-label="Lompat ke kategori">
+      {
+        kategori.map((k) => (
+          <a href={`#${k.id}`} class="badge faq-jump__item">
+            {k.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="faq-kategori-list">
+      {
+        kategori.map((k) => (
+          <div id={k.id} class="faq-kategori">
+            <h2>{k.label}</h2>
+            <div class="accordion">
+              {k.pertanyaan.map((item) => (
+                <details>
+                  <summary>
+                    {item.q}
+                    <span class="accordion__chevron">
+                      <Icon name="chevronDown" size={16} />
+                    </span>
+                  </summary>
+                  <div class="accordion__body t-muted">{item.a}</div>
+                </details>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="cta-card">
+      <div>
+        <h2>Masih ada yang ingin ditanyakan?</h2>
+        <p class="t-muted">Kirim pesan lewat form kontak — kami balas dalam 1–2 hari kerja.</p>
+      </div>
+      <a href="/kontak" class="btn btn--primary btn--lg">Hubungi kami</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: 1.5rem;
+  }
+
+  .faq-jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: 2.5rem;
+  }
+
+  .faq-jump__item {
+    text-decoration: none;
+    padding-block: 0.4rem;
+  }
+
+  .faq-jump__item:hover {
+    color: var(--text-strong);
+    border-color: var(--border-strong);
+  }
+
+  .faq-kategori-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    margin-top: var(--space-7);
+  }
+
+  .faq-kategori {
+    scroll-margin-top: 6rem;
+  }
+
+  .faq-kategori h2 {
+    margin-bottom: var(--space-4);
+  }
+
+  .cta-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .cta-card h2 {
+    font-size: var(--text-2xl);
+    margin-bottom: var(--space-2);
+  }
+</style>
