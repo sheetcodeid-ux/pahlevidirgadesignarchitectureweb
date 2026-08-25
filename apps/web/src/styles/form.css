@@ -257,7 +257,7 @@
 }
 
 .switch input:checked { background: var(--success); border-color: var(--success); }
-.switch input:checked::after { background: #fff; transform: translate(1.13rem, -50%); }
+.switch input:checked::after { background: var(--success-ink); transform: translate(1.13rem, -50%); }
 .switch input:disabled { opacity: 0.45; cursor: not-allowed; }
 .switch__label { font-size: var(--text-base); color: var(--text-body); }
 
