@@ -26,7 +26,7 @@ satu kali tempel ke SQL Editor, tanpa memasang CLI apa pun.
 > integrasi itu akan melihatnya sebagai sudah terpasang dan melewatinya —
 > bukan menerapkannya dua kali.
 
-## 1. Salin lima kredensial
+## 1. Salin empat kredensial
 
 Semua ada di **Project Settings**.
 
@@ -34,9 +34,13 @@ Semua ada di **Project Settings**.
 | --- | --- | --- |
 | Connection string — Session pooler (5432) | Database → Connection pooling | dipakai `wrangler hyperdrive create` untuk Worker API |
 | Connection string — Direct (5432) | Database → Connection string | `SUPABASE_DIRECT_URL` (backup & tes RLS) |
-| JWT Secret | API → JWT Settings | `SUPABASE_JWT_SECRET` |
 | service_role key | API → Project API keys | `SUPABASE_SERVICE_ROLE_KEY` |
 | Project URL | API | `SUPABASE_URL` |
+
+Tidak perlu JWT Secret — Worker API memverifikasi token login lewat JWKS
+publik Supabase (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`), bukan
+shared secret, jadi otomatis ikut kunci mana pun yang aktif (Supabase kini
+memakai JWT Signing Keys ES256, bukan lagi JWT secret HS256).
 
 > `service_role` melewati seluruh RLS. Kunci ini hanya boleh hidup di rahasia
 > Worker API (`wrangler secret put`) atau `apps/api/.dev.vars` yang tidak

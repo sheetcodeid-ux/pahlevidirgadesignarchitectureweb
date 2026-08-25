@@ -5,9 +5,6 @@
 # Nilai non-rahasia (SUPABASE_URL, R2_ACCOUNT_ID, dst.) sudah ada di
 # wrangler.jsonc bagian "vars" dan tidak perlu diulang di sini.
 
-# Settings > API > JWT Settings > JWT Secret.
-SUPABASE_JWT_SECRET=
-
 # Settings > API > anon/publishable key. Dipakai untuk menukar email dan kata
 # sandi dengan token; tetap tidak pernah sampai ke browser, karena login pun
 # berjalan lewat Worker API.

@@ -106,9 +106,6 @@ isi_rahasia() {
   fi
 }
 
-read -r -s -p "  SUPABASE_JWT_SECRET (Settings > API > JWT Settings): " V; echo
-isi_rahasia SUPABASE_JWT_SECRET "$V"
-
 read -r -s -p "  SUPABASE_SERVICE_ROLE_KEY (Settings > API): " V; echo
 isi_rahasia SUPABASE_SERVICE_ROLE_KEY "$V"
 

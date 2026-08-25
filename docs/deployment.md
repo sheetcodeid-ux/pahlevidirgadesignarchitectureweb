@@ -72,14 +72,20 @@ Ringkasannya:
 
 2. **Rahasia** disetel satu per satu, tidak pernah lewat `wrangler.jsonc`:
    ```bash
-   printf '%s' "<nilai>" | npx wrangler secret put SUPABASE_JWT_SECRET
+   printf '%s' "<nilai>" | npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
    ```
-   Nama-nama yang dibutuhkan: `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`,
+   Nama-nama yang dibutuhkan: `SUPABASE_SERVICE_ROLE_KEY`,
    `SUPABASE_ANON_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
    `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `INQUIRY_NOTIFY_TO`,
    `IP_HASH_SALT`. Nilai yang bukan rahasia (`SUPABASE_URL`, `R2_ACCOUNT_ID`,
    `R2_BUCKET`, `R2_PUBLIC_BASE_URL`, `ALLOWED_ORIGINS`) sudah ada di
    `wrangler.jsonc` bagian `vars`.
+
+   Verifikasi token login memakai JWKS Supabase (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`),
+   bukan shared secret — jadi tidak ada `SUPABASE_JWT_SECRET` yang perlu
+   disetel. Supabase sendiri sudah pindah dari JWT secret simetris (HS256)
+   ke JWT Signing Keys asimetris (ES256), dan JWKS otomatis mengikuti kunci
+   mana pun yang sedang aktif di sana.
 
 3. **Deploy manual** untuk verifikasi pertama kali:
    ```bash
