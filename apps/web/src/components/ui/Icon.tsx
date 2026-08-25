@@ -39,7 +39,8 @@ export type IconName =
   | "external"
   | "copy"
   | "filter"
-  | "close";
+  | "close"
+  | "document";
 
 interface Props {
   name: IconName;
@@ -206,6 +207,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   filter: <path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
+  // Lembar dengan sudut terlipat — dokumen proyek (PDF gambar kerja, dsb).
+  document: (
+    <>
+      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+      <path d="M14 2v6h6" />
+      <path d="M9 13h6M9 17h6" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 20, className }: Props) {

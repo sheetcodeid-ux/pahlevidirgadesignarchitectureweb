@@ -446,6 +446,69 @@ begin
 end;
 $$;
 
+-- project_documents -------------------------------------------------------
+--
+-- Sama seperti project_progress: murni data internal, tidak ada policy
+-- anon. Klien membaca/menyetujui lewat endpoint backend, bukan tabel ini.
+
+do $$
+declare pid uuid;
+begin
+  select id into pid from public.projects where slug = 'tes-published';
+  insert into public.project_documents (project_id, title, file_key, status)
+  values (pid, 'DED Set A', 'documents/tes/ded-a.pdf', 'menunggu_klien');
+end;
+$$;
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.project_documents;
+    raise exception 'GAGAL: anon berhasil membaca project_documents';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca project_documents';
+  end;
+
+  begin
+    update public.project_documents set status = 'disetujui';
+    raise exception 'GAGAL: anon berhasil mengubah project_documents';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak mengubah project_documents';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.project_documents;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun project_documents');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.project_documents;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat project_documents');
+
+  update public.project_documents set status = 'disetujui' where title = 'DED Set A';
+  perform pg_temp.tolak(false, 'staf dapat mengubah status dokumen');
+
+  reset role;
+end;
+$$;
+
 -- Bawaan tabel baru -----------------------------------------------------
 --
 -- Menjaga migrasi 20260824000003. Tabel yang dibuat tanpa GRANT eksplisit

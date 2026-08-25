@@ -12,16 +12,17 @@ import * as tasksRepo from "../repository/tasks";
 import * as invoicesRepo from "../repository/invoices";
 import * as costsRepo from "../repository/costs";
 import * as financeRepo from "../repository/finance";
+import * as documentsRepo from "../repository/documents";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload } from "../lib/r2";
 import { checkProjectInput, ValidationError } from "../lib/validate";
 import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
-  InvoiceInput, ProjectCostInput,
+  InvoiceInput, ProjectCostInput, ProjectDocumentInput,
 } from "../types";
 import {
   VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
-  VALID_INVOICE_STATUS, VALID_COST_CATEGORY,
+  VALID_INVOICE_STATUS, VALID_COST_CATEGORY, VALID_DOCUMENT_STATUS,
 } from "../types";
 
 type Vars = { userID: string; userEmail?: string; accessToken: string };
@@ -367,6 +368,49 @@ admin.delete("/costs/:id", async (c) => {
     return c.json({ data: { deleted: true } });
   } catch (err) {
     if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "biaya tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+// GET /api/v1/admin/projects/:id/documents
+admin.get("/projects/:id/documents", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    documentsRepo.listForProject(sql, assetBase(c.env), c.req.param("id")),
+  );
+  return c.json({ data });
+});
+
+admin.post("/projects/:id/documents", async (c) => {
+  const input = await c.req.json<ProjectDocumentInput>().catch(() => ({}) as ProjectDocumentInput);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => documentsRepo.create(sql, c.req.param("id"), input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.patch("/documents/:id", async (c) => {
+  const input = await c.req.json<ProjectDocumentInput>().catch(() => ({}) as ProjectDocumentInput);
+  if (input.status !== undefined && !VALID_DOCUMENT_STATUS.has(input.status)) {
+    return c.json({ error: { status: 422, message: "status dokumen tidak dikenal" } }, 422);
+  }
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => documentsRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "dokumen tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+admin.delete("/documents/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => documentsRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "dokumen tidak ditemukan" } }, 404);
     throw err;
   }
 });

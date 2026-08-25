@@ -5,6 +5,7 @@ const ALLOWED_CONTENT_TYPES: Record<string, string> = {
   "image/png": ".png",
   "image/webp": ".webp",
   "image/avif": ".avif",
+  "application/pdf": ".pdf",
 };
 
 export interface UploadTarget {

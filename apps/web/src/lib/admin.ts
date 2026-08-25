@@ -365,3 +365,32 @@ export const tambahBiaya = (projectId: string, label: string, category: string, 
 
 export const hapusBiaya = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/costs/${id}`, { method: "DELETE" });
+
+// --- Dokumen proyek (dilihat & disetujui klien lewat link token) ----------
+
+export interface DokumenProyek {
+  id: string;
+  projectId: string;
+  title: string;
+  fileUrl: string;
+  status: string;
+  clientNote?: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const daftarDokumen = (projectId: string) =>
+  panggil<DokumenProyek[]>(`/admin/projects/${projectId}/documents`);
+
+export const tambahDokumen = (projectId: string, title: string, fileKey: string) =>
+  panggil<{ id: string }>(`/admin/projects/${projectId}/documents`, {
+    method: "POST",
+    body: JSON.stringify({ title, fileKey }),
+  });
+
+export const ubahDokumen = (id: string, patch: { title?: string; status?: string; fileKey?: string }) =>
+  panggil<{ updated: boolean }>(`/admin/documents/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusDokumen = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/documents/${id}`, { method: "DELETE" });

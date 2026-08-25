@@ -29,3 +29,56 @@ progress.get("/progress/:token", async (c) => {
 
   return c.json({ data });
 });
+
+/**
+ * POST /api/v1/progress/:token/documents/:documentId/approve
+ * POST /api/v1/progress/:token/documents/:documentId/revise
+ *
+ * Satu-satunya tulis yang klien bisa lakukan lewat portal token — menyetujui
+ * atau meminta revisi dokumen yang sedang menunggu mereka. Kepemilikan
+ * dokumen atas token dicek di repository, langsung di klausa WHERE.
+ */
+progress.post("/progress/:token/documents/:documentId/approve", async (c) => {
+  const token = c.req.param("token");
+  if (!/^[0-9a-f]{40}$/.test(token)) {
+    return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
+  }
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) =>
+      progressRepo.approveDocument(sql, token, c.req.param("documentId")),
+    );
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof progressRepo.DocumentActionError) {
+      return c.json({ error: { status: 422, message: err.message } }, 422);
+    }
+    throw err;
+  }
+});
+
+progress.post("/progress/:token/documents/:documentId/revise", async (c) => {
+  const token = c.req.param("token");
+  if (!/^[0-9a-f]{40}$/.test(token)) {
+    return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
+  }
+
+  type Body = { note?: string };
+  const body = await c.req.json<Body>().catch((): Body => ({}));
+  const note = (body.note ?? "").trim();
+  if (note.length < 2 || note.length > 2000) {
+    return c.json({ error: { status: 422, message: "catatan revisi harus 2-2000 karakter" } }, 422);
+  }
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) =>
+      progressRepo.requestDocumentRevision(sql, token, c.req.param("documentId"), note),
+    );
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof progressRepo.DocumentActionError) {
+      return c.json({ error: { status: 422, message: err.message } }, 422);
+    }
+    throw err;
+  }
+});
