@@ -9,7 +9,10 @@ import {
   tambahCatatanProgress, hapusCatatanProgress, type ProjectProgress,
   daftarTim, daftarTugasProyek, tambahTugas, ubahTugas, hapusTugas,
   type AnggotaTim, type Tugas,
+  daftarInvoice, tambahInvoice, ubahInvoice, hapusInvoice, type Invoice,
+  daftarBiaya, tambahBiaya, hapusBiaya, type BiayaProyek,
 } from "../../lib/admin";
+import { formatRupiah } from "../../lib/format";
 
 const KATEGORI: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
@@ -42,6 +45,243 @@ const STATUS_TUGAS: [string, string][] = [
   ["menunggu_klien", "Menunggu klien"],
   ["selesai", "Selesai"],
 ];
+
+const STATUS_INVOICE: [string, string][] = [
+  ["draft", "Draf"],
+  ["terbit", "Terbit"],
+  ["lunas", "Lunas"],
+];
+
+const KATEGORI_BIAYA: [string, string][] = [
+  ["freelancer", "Freelancer"],
+  ["operasional", "Operasional"],
+  ["prinsipal", "Prinsipal"],
+  ["lainnya", "Lainnya"],
+];
+
+function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontrak: (nilai: number | null) => void }) {
+  const toast = useToast();
+  const [invoice, setInvoice] = useState<Invoice[] | null>(null);
+  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(null);
+  const [kontrakInput, setKontrakInput] = useState(String(proyek.contractValue ?? ""));
+
+  const [labelInv, setLabelInv] = useState("");
+  const [nominalInv, setNominalInv] = useState("");
+
+  const [labelBiaya, setLabelBiaya] = useState("");
+  const [kategoriBiaya, setKategoriBiaya] = useState("lainnya");
+  const [nominalBiaya, setNominalBiaya] = useState("");
+
+  function muat() {
+    daftarInvoice(proyek.id).then(setInvoice).catch(() => setInvoice([]));
+    daftarBiaya(proyek.id).then(setBiaya).catch(() => setBiaya([]));
+  }
+
+  useEffect(muat, [proyek.id]);
+
+  async function simpanKontrak() {
+    const angka = Number(kontrakInput);
+    if (!kontrakInput || Number.isNaN(angka) || angka <= 0) return;
+    try {
+      await simpanProyek(proyek.id, { contractValue: angka });
+      onUbahKontrak(angka);
+      toast({ judul: "Nilai kontrak disimpan", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal menyimpan", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function tambahInv() {
+    const label = labelInv.trim();
+    const nominal = Number(nominalInv);
+    if (label.length < 2 || !nominal || nominal <= 0) return;
+    try {
+      await tambahInvoice(proyek.id, label, nominal, null);
+      setLabelInv("");
+      setNominalInv("");
+      muat();
+    } catch (e) {
+      toast({ judul: "Gagal menambah invoice", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function ubahStatusInv(id: string, status: string) {
+    if (!invoice) return;
+    const sebelum = invoice;
+    setInvoice(invoice.map((i) => (i.id === id ? { ...i, status } : i)));
+    try {
+      await ubahInvoice(id, { status });
+    } catch (e) {
+      setInvoice(sebelum);
+      toast({ judul: "Gagal mengubah status", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function hapusInv(id: string) {
+    if (!invoice) return;
+    try {
+      await hapusInvoice(id);
+      setInvoice(invoice.filter((i) => i.id !== id));
+    } catch (e) {
+      toast({ judul: "Gagal menghapus invoice", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function tambahBiayaBaru() {
+    const label = labelBiaya.trim();
+    const nominal = Number(nominalBiaya);
+    if (label.length < 2 || !nominal || nominal <= 0) return;
+    try {
+      await tambahBiaya(proyek.id, label, kategoriBiaya, nominal);
+      setLabelBiaya("");
+      setNominalBiaya("");
+      muat();
+    } catch (e) {
+      toast({ judul: "Gagal menambah biaya", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function hapusBiayaItem(id: string) {
+    if (!biaya) return;
+    try {
+      await hapusBiaya(id);
+      setBiaya(biaya.filter((b) => b.id !== id));
+    } catch (e) {
+      toast({ judul: "Gagal menghapus biaya", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  const totalBiaya = (biaya ?? []).reduce((s, b) => s + b.amount, 0);
+  const kontrak = proyek.contractValue ?? 0;
+  const marginPct = kontrak > 0 ? ((kontrak - totalBiaya) / kontrak) * 100 : null;
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="finance" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Nilai kontrak</span>
+            {marginPct !== null && <span className="t-muted">Margin saat ini: {marginPct.toFixed(0)}%</span>}
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="row" style={{ gap: "var(--space-2)" }}>
+            <input className="input" type="number" value={kontrakInput}
+              onChange={(e) => setKontrakInput(e.target.value)} placeholder="Contoh: 68000000" style={{ flex: 1 }} />
+            <button type="button" className="btn btn--secondary" onClick={simpanKontrak}>Simpan</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card__header">
+          <span className="card__titles">
+            <span className="t-subheading">Invoice</span>
+            <span className="t-muted">DP, pelunasan, atau tagihan lain untuk proyek ini.</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="stack">
+            <div className="spec-grid">
+              <div className="field">
+                <label className="field__label" htmlFor="inv-label">Label</label>
+                <input id="inv-label" className="input" value={labelInv} onChange={(e) => setLabelInv(e.target.value)}
+                  placeholder="Contoh: DP 50%" />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="inv-nominal">Nominal (Rp)</label>
+                <input id="inv-nominal" className="input" type="number" value={nominalInv}
+                  onChange={(e) => setNominalInv(e.target.value)} />
+              </div>
+            </div>
+            <div className="row row--end">
+              <button type="button" className="btn btn--secondary btn--sm" onClick={tambahInv}>
+                <Icon name="plus" size={14} />Tambah invoice
+              </button>
+            </div>
+
+            {invoice && invoice.length > 0 && (
+              <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0, marginTop: "var(--space-3)" }}>
+                {invoice.map((i) => (
+                  <li key={i.id} className="item item--bordered">
+                    <span className="item__text">
+                      <span className="item__title">{i.label}</span>
+                      <span className="item__desc">{formatRupiah(i.amount)}</span>
+                    </span>
+                    <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
+                      value={i.status} onChange={(e) => ubahStatusInv(i.id, e.target.value)}
+                      aria-label={`Ubah status ${i.label}`}>
+                      {STATUS_INVOICE.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                    </select>
+                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${i.label}`}
+                      onClick={() => hapusInv(i.id)}>
+                      <Icon name="trash" size={15} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card__header">
+          <span className="card__titles">
+            <span className="t-subheading">Biaya (HPP)</span>
+            <span className="t-muted">Fee freelancer, operasional, dan bagian prinsipal. Total: {formatRupiah(totalBiaya)}</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="stack">
+            <div className="spec-grid">
+              <div className="field">
+                <label className="field__label" htmlFor="biaya-label">Label</label>
+                <input id="biaya-label" className="input" value={labelBiaya} onChange={(e) => setLabelBiaya(e.target.value)}
+                  placeholder="Contoh: Fee Rian — DED" />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="biaya-kategori">Kategori</label>
+                <select id="biaya-kategori" className="input" value={kategoriBiaya}
+                  onChange={(e) => setKategoriBiaya(e.target.value)}>
+                  {KATEGORI_BIAYA.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="biaya-nominal">Nominal (Rp)</label>
+                <input id="biaya-nominal" className="input" type="number" value={nominalBiaya}
+                  onChange={(e) => setNominalBiaya(e.target.value)} />
+              </div>
+            </div>
+            <div className="row row--end">
+              <button type="button" className="btn btn--secondary btn--sm" onClick={tambahBiayaBaru}>
+                <Icon name="plus" size={14} />Tambah biaya
+              </button>
+            </div>
+
+            {biaya && biaya.length > 0 && (
+              <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0, marginTop: "var(--space-3)" }}>
+                {biaya.map((b) => (
+                  <li key={b.id} className="item item--bordered">
+                    <span className="item__text">
+                      <span className="item__title">{b.label}</span>
+                      <span className="item__desc">{KATEGORI_BIAYA.find(([v]) => v === b.category)?.[1] ?? b.category} · {formatRupiah(b.amount)}</span>
+                    </span>
+                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${b.label}`}
+                      onClick={() => hapusBiayaItem(b.id)}>
+                      <Icon name="trash" size={15} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function PanelTugas({ projectId }: { projectId: string }) {
   const toast = useToast();
@@ -640,6 +880,16 @@ function Isi() {
           { id: "detail", label: "Detail", content: detail },
           { id: "galeri", label: "Galeri", content: galeri },
           { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
+          {
+            id: "keuangan",
+            label: "Keuangan",
+            content: (
+              <PanelKeuangan
+                proyek={asli}
+                onUbahKontrak={(nilai) => setAsli((a) => (a ? { ...a, contractValue: nilai } : a))}
+              />
+            ),
+          },
           { id: "progres", label: "Progres", content: <PanelProgres projectId={asli.id} /> },
           { id: "seo", label: "SEO", content: seo },
         ]}

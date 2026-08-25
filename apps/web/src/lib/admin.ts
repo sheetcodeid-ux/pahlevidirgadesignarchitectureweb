@@ -140,6 +140,7 @@ export interface Proyek {
   seoDescription?: string;
   publishedAt?: string;
   pipelineStage?: string;
+  contractValue?: number | null;
 }
 
 export const daftarProyek = () => panggil<Proyek[]>("/admin/projects");
@@ -300,3 +301,67 @@ export const ubahTugas = (id: string, patch: Partial<Tugas>) =>
 
 export const hapusTugas = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/tasks/${id}`, { method: "DELETE" });
+
+// --- Keuangan --------------------------------------------------------------
+
+export interface FinanceOverviewRow {
+  projectId: string;
+  projectTitle: string;
+  contractValue: number | null;
+  received: number;
+  costsTotal: number;
+  marginPct: number | null;
+}
+
+export interface FinanceOverview {
+  kasMasuk: number;
+  piutang: number;
+  marginRataRata: number | null;
+  proyek: FinanceOverviewRow[];
+}
+
+export const ambilRingkasanKeuangan = () => panggil<FinanceOverview>("/admin/finance/overview");
+
+export interface Invoice {
+  id: string;
+  projectId: string;
+  label: string;
+  amount: number;
+  status: string;
+  dueDate?: string | null;
+  paidAt?: string | null;
+  sortOrder: number;
+}
+
+export const daftarInvoice = (projectId: string) => panggil<Invoice[]>(`/admin/projects/${projectId}/invoices`);
+
+export const tambahInvoice = (projectId: string, label: string, amount: number, dueDate: string | null) =>
+  panggil<{ id: string }>(`/admin/projects/${projectId}/invoices`, {
+    method: "POST",
+    body: JSON.stringify({ label, amount, dueDate }),
+  });
+
+export const ubahInvoice = (id: string, patch: Partial<Invoice>) =>
+  panggil<{ updated: boolean }>(`/admin/invoices/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusInvoice = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/invoices/${id}`, { method: "DELETE" });
+
+export interface BiayaProyek {
+  id: string;
+  projectId: string;
+  label: string;
+  category: string;
+  amount: number;
+}
+
+export const daftarBiaya = (projectId: string) => panggil<BiayaProyek[]>(`/admin/projects/${projectId}/costs`);
+
+export const tambahBiaya = (projectId: string, label: string, category: string, amount: number) =>
+  panggil<{ id: string }>(`/admin/projects/${projectId}/costs`, {
+    method: "POST",
+    body: JSON.stringify({ label, category, amount }),
+  });
+
+export const hapusBiaya = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/costs/${id}`, { method: "DELETE" });

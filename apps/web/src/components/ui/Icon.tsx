@@ -18,6 +18,7 @@ export type IconName =
   | "component"
   | "coffee"
   | "team"
+  | "finance"
   | "settings"
   | "logout"
   | "chevronDown"
@@ -103,6 +104,15 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  // Grafik batang — keuangan & laporan.
+  finance: (
+    <>
+      <path d="M3 3v18h18" />
+      <rect x="7" y="13" width="3" height="5" />
+      <rect x="12" y="9" width="3" height="9" />
+      <rect x="17" y="5" width="3" height="13" />
     </>
   ),
   settings: (

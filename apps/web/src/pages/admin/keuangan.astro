@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { FinancePanel } from "../../components/admin/FinancePanel";
+---
+
+<AdminLayout title="Keuangan" heading="Keuangan" description="Kas masuk, piutang, dan profitabilitas per proyek.">
+  <FinancePanel client:load />
+</AdminLayout>

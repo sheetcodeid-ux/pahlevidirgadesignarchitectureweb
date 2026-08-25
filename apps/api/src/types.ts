@@ -56,6 +56,7 @@ export interface Project {
   images?: Image[];
   /** Tahap alur kerja internal studio — beda dari status (draft/published/archived). */
   pipelineStage?: string;
+  contractValue?: number | null;
 }
 
 export interface Image {
@@ -96,6 +97,7 @@ export interface ProjectInput {
   seoTitle?: string | null;
   seoDescription?: string | null;
   pipelineStage?: string;
+  contractValue?: number | null;
 }
 
 export interface ImageInput {
@@ -196,6 +198,55 @@ export interface ProjectTaskInput {
   sortOrder?: number;
 }
 
+export interface Invoice {
+  id: string;
+  projectId: string;
+  label: string;
+  amount: number;
+  status: string;
+  dueDate?: string | null;
+  paidAt?: string | null;
+  sortOrder: number;
+}
+
+export interface InvoiceInput {
+  label?: string;
+  amount?: number;
+  status?: string;
+  dueDate?: string | null;
+  sortOrder?: number;
+}
+
+export interface ProjectCost {
+  id: string;
+  projectId: string;
+  label: string;
+  category: string;
+  amount: number;
+}
+
+export interface ProjectCostInput {
+  label?: string;
+  category?: string;
+  amount?: number;
+}
+
+export interface FinanceOverviewRow {
+  projectId: string;
+  projectTitle: string;
+  contractValue: number | null;
+  received: number;
+  costsTotal: number;
+  marginPct: number | null;
+}
+
+export interface FinanceOverview {
+  kasMasuk: number;
+  piutang: number;
+  marginRataRata: number | null;
+  proyek: FinanceOverviewRow[];
+}
+
 export interface InquiryRecord {
   id: string;
   name: string;
@@ -244,4 +295,13 @@ export const VALID_TASK_STATUS = new Set([
   "review_internal",
   "menunggu_klien",
   "selesai",
+]);
+
+export const VALID_INVOICE_STATUS = new Set(["draft", "terbit", "lunas"]);
+
+export const VALID_COST_CATEGORY = new Set([
+  "freelancer",
+  "operasional",
+  "prinsipal",
+  "lainnya",
 ]);
