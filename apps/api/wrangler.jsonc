@@ -15,8 +15,8 @@
   // scripts/setup-fase-04.sh.
   "vars": {
     "APP_ENV": "production",
-    // Sandbox Resend sementara — domain pahlevidirga.com belum diverifikasi
-    // di Resend. Ganti ke website@pahlevidirga.com begitu domain aktif dan
+    // Sandbox Resend sementara — domain pahlevidirgaarchitecture.com belum diverifikasi
+    // di Resend. Ganti ke website@pahlevidirgaarchitecture.com begitu domain aktif dan
     // diverifikasi (lihat docs/deployment.md §2 Resend).
     "INQUIRY_FROM": "onboarding@resend.dev",
     "ALLOWED_ORIGINS": "https://pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev",

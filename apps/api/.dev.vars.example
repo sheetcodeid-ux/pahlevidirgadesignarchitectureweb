@@ -26,7 +26,7 @@ R2_SECRET_ACCESS_KEY=
 TURNSTILE_SECRET_KEY=
 
 RESEND_API_KEY=
-INQUIRY_NOTIFY_TO=studio@pahlevidirga.com
+INQUIRY_NOTIFY_TO=studio@pahlevidirgaarchitecture.com
 
 # String acak panjang. Tanpa ini, hash IP di tabel inquiries dikosongkan.
 # Generate: openssl rand -hex 32
