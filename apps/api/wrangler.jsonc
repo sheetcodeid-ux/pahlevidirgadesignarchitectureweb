@@ -20,7 +20,7 @@
     "SUPABASE_URL": "https://ddzuzokkqofrpkpokcfa.supabase.co",
     "R2_ACCOUNT_ID": "cf6a6bde45d3fd8a93463e6cc7e71aa1",
     "R2_BUCKET": "pahlevidirga-media",
-    "R2_PUBLIC_BASE_URL": "https://pub-e4c6ca03e74842e195bb46bc8445269f.r2.dev"
+    "R2_PUBLIC_BASE_URL": "https://media.pahlevidirgaarchitecture.com"
   },
 
   // Dibuat dengan: wrangler hyperdrive create pahlevidirga-db --connection-string="postgresql://..."

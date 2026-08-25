@@ -48,9 +48,9 @@ Worker), rate limit `/auth/login` dan `/inquiries` lewat KV (bukan in-memory,
 karena Worker tidak menyimpan state antar-request), R2 diakses lewat binding
 `MEDIA` untuk presigned upload. Bucket R2 `pahlevidirga-media` (lokasi APAC)
 dengan CORS presigned upload dan widget Turnstile "Form kontak pahlevidirga"
-sudah ada. Domain publik R2 masih memakai `r2.dev` bawaan — **sementara**,
-karena kena rate limit dan tidak untuk produksi; ganti ke custom domain
-begitu domain sendiri aktif.
+sudah ada. Domain publik R2 memakai custom domain `media.pahlevidirgaarchitecture.com`
+(bukan lagi `r2.dev` bawaan yang kena rate limit dan sempat gagal SSL di
+sebagian browser/OS).
 
 > **Satu login, dua akun.** Login `sheetcode.id@gmail.com` juga memuat akun
 > `Sheetcode.id@gmail.com's Account` yang berisi proyek lain yang tidak ada
