@@ -106,6 +106,25 @@ export function getProject(slug: string): Promise<Project | null> {
   return safely<Project | null>(`/api/v1/projects/${encodeURIComponent(slug)}`, null);
 }
 
+export interface StudioSettings {
+  studioName: string;
+  tagline?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  instagramUrl?: string | null;
+}
+
+const FALLBACK_SETTINGS: StudioSettings = {
+  studioName: "Dirga Pahlevi Architecture",
+  email: "studio@pahlevidirgaarchitecture.com",
+};
+
+export function getSettings(): Promise<StudioSettings> {
+  return safely<StudioSettings>("/api/v1/settings", FALLBACK_SETTINGS);
+}
+
 export interface InquiryPayload {
   name: string;
   email: string;

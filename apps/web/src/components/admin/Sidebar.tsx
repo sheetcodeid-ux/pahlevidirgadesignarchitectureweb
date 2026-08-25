@@ -32,7 +32,6 @@ const NAV: NavItem[] = [
       { label: "Draf", href: "/admin/proyek?status=draft" },
     ],
   },
-  { label: "Media", href: "/admin/media", icon: "image", group: "Utama" },
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   {
     label: "Pengaturan",

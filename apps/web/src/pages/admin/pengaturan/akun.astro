@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { AccountPanel } from "../../../components/admin/AccountPanel";
+---
+
+<AdminLayout title="Akun" heading="Akun" description="Identitas Anda dan kata sandi masuk panel admin.">
+  <AccountPanel client:load />
+</AdminLayout>

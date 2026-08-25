@@ -116,6 +116,50 @@ export interface InquiryInput {
   userAgent: string;
 }
 
+export interface StudioSettings {
+  studioName: string;
+  tagline?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  instagramUrl?: string | null;
+}
+
+/** Field yang boleh diubah lewat panel admin. undefined berarti "jangan diubah". */
+export interface StudioSettingsInput {
+  studioName?: string;
+  tagline?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  instagramUrl?: string | null;
+}
+
+export interface ProjectProgressUpdate {
+  id: string;
+  title: string;
+  note?: string | null;
+  photoUrl?: string | null;
+  createdAt: string;
+}
+
+/** Dilihat staf: termasuk accessToken untuk menyalin link klien. */
+export interface ProjectProgress {
+  phase: string;
+  accessToken: string;
+  updates: ProjectProgressUpdate[];
+}
+
+/** Dilihat klien lewat link token: tanpa data admin, tanpa token itu sendiri. */
+export interface ClientProgressView {
+  projectTitle: string;
+  coverImageUrl?: string | null;
+  phase: string;
+  updates: ProjectProgressUpdate[];
+}
+
 export interface InquiryRecord {
   id: string;
   name: string;
@@ -139,3 +183,11 @@ export const VALID_CATEGORIES = new Set([
 
 export const VALID_PROJECT_STATUS = new Set(["draft", "published", "archived"]);
 export const VALID_INQUIRY_STATUS = new Set(["new", "contacted", "qualified", "closed"]);
+export const VALID_PROJECT_PHASE = new Set([
+  "konsultasi",
+  "konsep",
+  "ded",
+  "perizinan",
+  "konstruksi",
+  "selesai",
+]);

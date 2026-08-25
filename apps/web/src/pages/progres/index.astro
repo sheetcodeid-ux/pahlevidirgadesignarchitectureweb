@@ -1,0 +1,14 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { ClientProgressView } from "../../components/ClientProgressView";
+---
+
+<BaseLayout
+  title="Progres Proyek"
+  description="Lihat progres proyek Anda lewat link yang dibagikan studio."
+  noindex
+>
+  <section class="section shell" style="max-width: 42rem; margin-inline: auto;">
+    <ClientProgressView client:load />
+  </section>
+</BaseLayout>

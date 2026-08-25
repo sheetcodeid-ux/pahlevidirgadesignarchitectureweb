@@ -185,6 +185,128 @@ begin
 end;
 $$;
 
+-- studio_settings ---------------------------------------------------------
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_anon();
+
+  select count(*) into terlihat from public.studio_settings;
+  perform pg_temp.tolak(terlihat <> 1, 'anon boleh membaca info studio');
+
+  begin
+    update public.studio_settings set studio_name = 'diretas';
+    raise exception 'GAGAL: anon berhasil mengubah info studio';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak mengubah info studio';
+  end;
+
+  reset role;
+end;
+$$;
+
+-- Role authenticated punya GRANT UPDATE di level tabel, jadi RLS yang tidak
+-- lolos tidak melempar error — ia memfilter baris secara diam (0 baris
+-- terupdate). Beda dari kasus anon di atas yang memang tidak punya GRANT
+-- sama sekali sehingga langsung ditolak di level tabel.
+do $$
+declare terkena int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  update public.studio_settings set studio_name = 'diretas';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0, 'non-staf tidak bisa mengubah baris info studio (RLS memfilter, 0 baris)');
+
+  reset role;
+end;
+$$;
+
+do $$
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  update public.studio_settings set studio_name = 'Nama Baru';
+  perform pg_temp.tolak(false, 'staf dapat mengubah info studio');
+  reset role;
+end;
+$$;
+
+-- project_progress & project_progress_updates ------------------------------
+--
+-- Sengaja tidak ada policy anon sama sekali di kedua tabel ini — akses klien
+-- lewat token hanya boleh terjadi lewat backend, bukan PostgREST langsung.
+
+do $$
+declare pid uuid;
+begin
+  select id into pid from public.projects where slug = 'tes-published';
+  insert into public.project_progress (project_id) values (pid);
+  insert into public.project_progress_updates (project_id, title)
+  values (pid, 'Fondasi selesai');
+end;
+$$;
+
+-- anon tidak punya GRANT sama sekali di kedua tabel ini (bukan cuma
+-- difilter RLS), jadi setiap percobaan langsung ditolak di level tabel.
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.project_progress;
+    raise exception 'GAGAL: anon berhasil membaca project_progress';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca project_progress';
+  end;
+
+  begin
+    perform count(*) from public.project_progress_updates;
+    raise exception 'GAGAL: anon berhasil membaca catatan progress';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca catatan progress';
+  end;
+
+  begin
+    insert into public.project_progress_updates (project_id, title)
+    values ((select id from public.projects where slug = 'tes-published'), 'Nakal');
+    raise exception 'GAGAL: anon berhasil menulis catatan progress';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis catatan progress';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.project_progress;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun baris project_progress');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.project_progress;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat baris project_progress');
+
+  insert into public.project_progress_updates (project_id, title)
+  values ((select id from public.projects where slug = 'tes-published'), 'Catatan staf');
+  perform pg_temp.tolak(false, 'staf dapat menambah catatan progress');
+
+  reset role;
+end;
+$$;
+
 -- Bawaan tabel baru -----------------------------------------------------
 --
 -- Menjaga migrasi 20260824000003. Tabel yang dibuat tanpa GRANT eksplisit
