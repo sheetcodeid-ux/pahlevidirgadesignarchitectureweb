@@ -11,6 +11,7 @@ import {
   type AnggotaTim, type Tugas,
   daftarInvoice, tambahInvoice, ubahInvoice, hapusInvoice, type Invoice,
   daftarBiaya, tambahBiaya, hapusBiaya, type BiayaProyek,
+  daftarDokumen, tambahDokumen, ubahDokumen, hapusDokumen, type DokumenProyek,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 
@@ -57,6 +58,14 @@ const KATEGORI_BIAYA: [string, string][] = [
   ["operasional", "Operasional"],
   ["prinsipal", "Prinsipal"],
   ["lainnya", "Lainnya"],
+];
+
+const STATUS_DOKUMEN: [string, string][] = [
+  ["draft", "Draf"],
+  ["menunggu_klien", "Menunggu klien"],
+  ["revisi_diminta", "Revisi diminta"],
+  ["disetujui", "Disetujui"],
+  ["final", "Final"],
 ];
 
 function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontrak: (nilai: number | null) => void }) {
@@ -279,6 +288,128 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PanelDokumen({ proyek }: { proyek: Proyek }) {
+  const toast = useToast();
+  const [dokumen, setDokumen] = useState<DokumenProyek[] | null>(null);
+  const [judulBaru, setJudulBaru] = useState("");
+  const [mengunggah, setMengunggah] = useState(false);
+  const berkas = useRef<HTMLInputElement>(null);
+
+  function muat() {
+    daftarDokumen(proyek.id).then(setDokumen).catch(() => setDokumen([]));
+  }
+
+  useEffect(muat, [proyek.id]);
+
+  async function unggahDanTambah(f: File) {
+    const judul = judulBaru.trim();
+    if (judul.length < 2) {
+      toast({ judul: "Isi judul dokumen dulu", nada: "netral" });
+      return;
+    }
+    setMengunggah(true);
+    try {
+      const target = await mintaUrlUnggah(proyek.slug, f.type);
+      const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f });
+      if (!res.ok) throw new Error(`Penyimpanan menolak berkas (${res.status})`);
+
+      await tambahDokumen(proyek.id, judul, target.key);
+      setJudulBaru("");
+      muat();
+      toast({ judul: "Dokumen diunggah", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal mengunggah dokumen", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMengunggah(false);
+    }
+  }
+
+  async function ubahStatus(id: string, status: string) {
+    if (!dokumen) return;
+    const sebelum = dokumen;
+    setDokumen(dokumen.map((d) => (d.id === id ? { ...d, status } : d)));
+    try {
+      await ubahDokumen(id, { status });
+    } catch (e) {
+      setDokumen(sebelum);
+      toast({ judul: "Gagal mengubah status", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function hapus(id: string) {
+    if (!dokumen) return;
+    try {
+      await hapusDokumen(id);
+      setDokumen(dokumen.filter((d) => d.id !== id));
+    } catch (e) {
+      toast({ judul: "Gagal menghapus dokumen", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  if (!dokumen) {
+    return <span className="skeleton" style={{ height: "6rem" }} />;
+  }
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="document" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Unggah dokumen</span>
+            <span className="t-muted">PDF gambar kerja, RAB, atau dokumen lain untuk dilihat klien.</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="stack">
+            <div className="field">
+              <label className="field__label" htmlFor="dok-judul">Judul dokumen</label>
+              <input id="dok-judul" className="input" value={judulBaru}
+                onChange={(e) => setJudulBaru(e.target.value)} placeholder="Contoh: DED Rev.2" />
+            </div>
+            <input ref={berkas} type="file" className="sr-only" accept="application/pdf"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) unggahDanTambah(f); }} />
+            <div className="row row--end">
+              <button type="button" className="btn btn--secondary" disabled={judulBaru.trim().length < 2 || mengunggah}
+                onClick={() => berkas.current?.click()}>
+                {mengunggah && <span className="spinner spinner--sm spinner--on-action" />}
+                <Icon name="upload" size={15} />Pilih berkas PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {dokumen.length === 0 ? (
+        <p className="t-muted">Belum ada dokumen untuk proyek ini.</p>
+      ) : (
+        <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
+          {dokumen.map((d) => (
+            <li key={d.id} className="item item--bordered">
+              <span className="item__text">
+                <span className="item__title">{d.title}</span>
+                <span className="item__desc">
+                  <a href={d.fileUrl} target="_blank" rel="noreferrer">Lihat berkas</a>
+                  {d.status === "revisi_diminta" && d.clientNote && ` — Catatan klien: ${d.clientNote}`}
+                </span>
+              </span>
+              <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
+                value={d.status} onChange={(e) => ubahStatus(d.id, e.target.value)}
+                aria-label={`Ubah status ${d.title}`}>
+                {STATUS_DOKUMEN.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+              <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${d.title}`}
+                onClick={() => hapus(d.id)}>
+                <Icon name="trash" size={15} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -880,6 +1011,7 @@ function Isi() {
           { id: "detail", label: "Detail", content: detail },
           { id: "galeri", label: "Galeri", content: galeri },
           { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
+          { id: "dokumen", label: "Dokumen", content: <PanelDokumen proyek={asli} /> },
           {
             id: "keuangan",
             label: "Keuangan",

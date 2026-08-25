@@ -1,5 +1,7 @@
 import type { Sql } from "postgres";
-import type { ProjectProgress, ProjectProgressUpdate, ClientProgressView } from "../types";
+import type {
+  ProjectProgress, ProjectProgressUpdate, ClientProgressView, ClientDocument, ClientInvoice,
+} from "../types";
 import { NotFoundError } from "./projects";
 
 function url(assetBase: string, key: string | null): string | null {
@@ -87,9 +89,40 @@ export async function removeUpdate(sql: Sql, id: string): Promise<void> {
 }
 
 interface ClientRow {
+  project_id: string;
   title: string;
   cover_image_key: string | null;
   phase: string;
+}
+
+interface DocumentRow {
+  id: string;
+  title: string;
+  file_key: string;
+  status: string;
+  client_note: string | null;
+}
+
+function rowToClientDocument(row: DocumentRow, assetBase: string): ClientDocument {
+  return {
+    id: row.id,
+    title: row.title,
+    fileUrl: `${assetBase.replace(/\/$/, "")}/${row.file_key.replace(/^\//, "")}`,
+    status: row.status,
+    clientNote: row.client_note,
+  };
+}
+
+interface InvoiceRow {
+  id: string;
+  label: string;
+  amount: string;
+  status: string;
+  due_date: string | null;
+}
+
+function rowToClientInvoice(row: InvoiceRow): ClientInvoice {
+  return { id: row.id, label: row.label, amount: Number(row.amount), status: row.status, dueDate: row.due_date };
 }
 
 /**
@@ -97,27 +130,74 @@ interface ClientRow {
  * (160-bit) — tidak butuh autentikasi tambahan, tidak tertebak lewat
  * enumerasi wajar. Endpoint ini yang jadi satu-satunya jalur baca publik;
  * tabelnya sendiri sengaja tertutup total dari anon lewat RLS+GRANT.
+ *
+ * project_costs (HPP internal) sengaja TIDAK disertakan di sini — klien
+ * boleh melihat status tagihannya sendiri, tidak pernah rincian biaya/margin
+ * internal studio.
  */
 export async function getByToken(sql: Sql, assetBase: string, token: string): Promise<ClientProgressView | null> {
   const rows = await sql<ClientRow[]>`
-    select p.title, p.cover_image_key, pr.phase
+    select p.id as project_id, p.title, p.cover_image_key, pr.phase
     from public.project_progress pr
     join public.projects p on p.id = pr.project_id
     where pr.access_token = ${token}`;
 
   if (!rows[0]) return null;
 
+  const projectID = rows[0].project_id;
+
   const updates = await sql<UpdateRow[]>`
-    select pu.id, pu.title, pu.note, pu.photo_key, pu.created_at
-    from public.project_progress_updates pu
-    join public.project_progress pr on pr.project_id = pu.project_id
-    where pr.access_token = ${token}
-    order by pu.created_at desc`;
+    select id, title, note, photo_key, created_at
+    from public.project_progress_updates
+    where project_id = ${projectID}::uuid
+    order by created_at desc`;
+
+  const documents = await sql<DocumentRow[]>`
+    select id, title, file_key, status, client_note
+    from public.project_documents
+    where project_id = ${projectID}::uuid
+    order by sort_order, created_at`;
+
+  const invoices = await sql<InvoiceRow[]>`
+    select id, label, amount, status, due_date
+    from public.invoices
+    where project_id = ${projectID}::uuid
+    order by sort_order, created_at`;
 
   return {
     projectTitle: rows[0].title,
     coverImageUrl: url(assetBase, rows[0].cover_image_key),
     phase: rows[0].phase,
     updates: updates.map((r) => rowToUpdate(r, assetBase)),
+    documents: documents.map((r) => rowToClientDocument(r, assetBase)),
+    invoices: invoices.map(rowToClientInvoice),
   };
+}
+
+export class DocumentActionError extends Error {}
+
+/**
+ * Klien hanya bisa bertindak atas dokumen yang statusnya "menunggu_klien",
+ * dan hanya atas dokumen milik proyek yang tokennya cocok — dua syarat itu
+ * dicek langsung di klausa WHERE, bukan lewat query terpisah, supaya tidak
+ * ada celah antara pengecekan dan penulisan.
+ */
+export async function approveDocument(sql: Sql, token: string, documentID: string): Promise<void> {
+  const result = await sql`
+    update public.project_documents
+    set status = 'disetujui', client_note = null
+    where id = ${documentID}::uuid
+      and status = 'menunggu_klien'
+      and project_id = (select project_id from public.project_progress where access_token = ${token})`;
+  if (result.count === 0) throw new DocumentActionError("dokumen tidak ditemukan atau belum bisa disetujui");
+}
+
+export async function requestDocumentRevision(sql: Sql, token: string, documentID: string, note: string): Promise<void> {
+  const result = await sql`
+    update public.project_documents
+    set status = 'revisi_diminta', client_note = ${note}
+    where id = ${documentID}::uuid
+      and status = 'menunggu_klien'
+      and project_id = (select project_id from public.project_progress where access_token = ${token})`;
+  if (result.count === 0) throw new DocumentActionError("dokumen tidak ditemukan atau belum bisa diminta revisi");
 }

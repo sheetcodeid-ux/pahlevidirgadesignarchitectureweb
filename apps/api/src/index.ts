@@ -52,6 +52,8 @@ v1.route("/admin", admin);
 // form), tapi tokennya sendiri 160-bit — rate limit di sini cuma jaga-jaga
 // dari percobaan enumerasi kasar, bukan pertahanan utama.
 v1.use("/progress/:token", rateLimit("progress", 30, 3600));
+v1.use("/progress/:token/documents/:documentId/approve", rateLimit("progress-doc", 20, 3600));
+v1.use("/progress/:token/documents/:documentId/revise", rateLimit("progress-doc", 20, 3600));
 v1.route("/", progress);
 
 app.route("/api/v1", v1);

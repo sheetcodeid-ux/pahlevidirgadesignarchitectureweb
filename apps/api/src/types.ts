@@ -157,12 +157,50 @@ export interface ProjectProgress {
   updates: ProjectProgressUpdate[];
 }
 
+export interface ProjectDocument {
+  id: string;
+  projectId: string;
+  title: string;
+  fileUrl: string;
+  status: string;
+  clientNote?: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectDocumentInput {
+  title?: string;
+  fileKey?: string;
+  status?: string;
+  sortOrder?: number;
+}
+
+/** Dilihat klien lewat link token: hanya field yang boleh dia lihat, tanpa catatan biaya internal. */
+export interface ClientDocument {
+  id: string;
+  title: string;
+  fileUrl: string;
+  status: string;
+  clientNote?: string | null;
+}
+
+export interface ClientInvoice {
+  id: string;
+  label: string;
+  amount: number;
+  status: string;
+  dueDate?: string | null;
+}
+
 /** Dilihat klien lewat link token: tanpa data admin, tanpa token itu sendiri. */
 export interface ClientProgressView {
   projectTitle: string;
   coverImageUrl?: string | null;
   phase: string;
   updates: ProjectProgressUpdate[];
+  documents: ClientDocument[];
+  invoices: ClientInvoice[];
 }
 
 export interface TeamMember {
@@ -304,4 +342,12 @@ export const VALID_COST_CATEGORY = new Set([
   "operasional",
   "prinsipal",
   "lainnya",
+]);
+
+export const VALID_DOCUMENT_STATUS = new Set([
+  "draft",
+  "menunggu_klien",
+  "revisi_diminta",
+  "disetujui",
+  "final",
 ]);
