@@ -10,6 +10,7 @@ import { inquiries } from "./routes/inquiries";
 import { admin } from "./routes/admin";
 import { progress } from "./routes/progress";
 import { settings } from "./routes/settings";
+import { testimonials } from "./routes/testimonials";
 import { rateLimit } from "./middleware/rateLimit";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -35,6 +36,7 @@ app.route("/", health);
 const v1 = new Hono<{ Bindings: Env }>();
 v1.route("/", projects);
 v1.route("/", settings);
+v1.route("/", testimonials);
 
 // Login dibatasi lebih ketat daripada form kontak: sepuluh percobaan per IP
 // per jam cukup untuk orang yang lupa kata sandinya, tapi tidak cukup untuk
@@ -54,6 +56,9 @@ v1.route("/admin", admin);
 v1.use("/progress/:token", rateLimit("progress", 30, 3600));
 v1.use("/progress/:token/documents/:documentId/approve", rateLimit("progress-doc", 20, 3600));
 v1.use("/progress/:token/documents/:documentId/revise", rateLimit("progress-doc", 20, 3600));
+v1.use("/progress/:token/documents/:documentId/comments", rateLimit("progress-doc", 20, 3600));
+v1.use("/progress/:token/brief", rateLimit("progress-doc", 20, 3600));
+v1.use("/progress/:token/testimonial", rateLimit("progress-doc", 10, 3600));
 v1.route("/", progress);
 
 app.route("/api/v1", v1);

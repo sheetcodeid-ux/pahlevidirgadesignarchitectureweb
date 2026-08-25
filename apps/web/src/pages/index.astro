@@ -1,9 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ProjectCard from "../components/ProjectCard.astro";
-import { listProjects } from "../lib/api";
+import { Icon } from "../components/ui/Icon";
+import { listProjects, listTestimonials } from "../lib/api";
 
 const featured = await listProjects({ featured: true, limit: 6 });
+const testimoni = await listTestimonials(true);
 ---
 
 <BaseLayout
@@ -39,6 +41,23 @@ const featured = await listProjects({ featured: true, limit: 6 });
       )
     }
   </section>
+
+  {
+    testimoni.length > 0 && (
+      <section class="section shell">
+        <p class="eyebrow">Kata klien</p>
+        <ul class="testimoni-grid">
+          {testimoni.map((t) => (
+            <li class="testimoni-card">
+              <span class="icon-tile"><Icon name="quote" size={18} /></span>
+              <p class="testimoni-card__quote">{t.quote}</p>
+              <span class="testimoni-card__nama">{t.clientName}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </BaseLayout>
 
 <style>
@@ -55,4 +74,31 @@ const featured = await listProjects({ featured: true, limit: 6 });
     margin-bottom: 2.5rem;
   }
 
+  .testimoni-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: var(--space-5);
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-6);
+  }
+
+  .testimoni-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .testimoni-card__quote {
+    color: var(--text-muted);
+  }
+
+  .testimoni-card__nama {
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
 </style>

@@ -82,3 +82,84 @@ progress.post("/progress/:token/documents/:documentId/revise", async (c) => {
     throw err;
   }
 });
+
+// POST /api/v1/progress/:token/documents/:documentId/comments — klien menambah
+// balasan di thread dokumen, di luar alur setujui/revisi yang sudah ada.
+progress.post("/progress/:token/documents/:documentId/comments", async (c) => {
+  const token = c.req.param("token");
+  if (!/^[0-9a-f]{40}$/.test(token)) {
+    return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
+  }
+
+  type Body = { body?: string };
+  const body = await c.req.json<Body>().catch((): Body => ({}));
+  const isi = (body.body ?? "").trim();
+  if (isi.length < 1 || isi.length > 2000) {
+    return c.json({ error: { status: 422, message: "komentar harus 1-2000 karakter" } }, 422);
+  }
+
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) =>
+      progressRepo.addDocumentComment(sql, token, c.req.param("documentId"), isi),
+    );
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    if (err instanceof progressRepo.DocumentActionError) {
+      return c.json({ error: { status: 422, message: err.message } }, 422);
+    }
+    throw err;
+  }
+});
+
+// POST /api/v1/progress/:token/brief — klien mengisi atau memperbarui briefnya sendiri.
+progress.post("/progress/:token/brief", async (c) => {
+  const token = c.req.param("token");
+  if (!/^[0-9a-f]{40}$/.test(token)) {
+    return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
+  }
+
+  type Body = { budgetRange?: string | null; timeline?: string | null; stylePreference?: string | null; requirements?: string | null };
+  const body = await c.req.json<Body>().catch((): Body => ({}));
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => progressRepo.submitBrief(sql, token, body));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof progressRepo.TokenTidakDitemukan) {
+      return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});
+
+// POST /api/v1/progress/:token/testimonial — selalu masuk sebagai "menunggu"
+// moderasi staf sebelum tampil di situs publik.
+progress.post("/progress/:token/testimonial", async (c) => {
+  const token = c.req.param("token");
+  if (!/^[0-9a-f]{40}$/.test(token)) {
+    return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
+  }
+
+  type Body = { clientName?: string; quote?: string; rating?: number | null };
+  const body = await c.req.json<Body>().catch((): Body => ({}));
+  const clientName = (body.clientName ?? "").trim();
+  const quote = (body.quote ?? "").trim();
+  if (clientName.length < 2 || quote.length < 2) {
+    return c.json({ error: { status: 422, message: "nama dan testimoni wajib diisi" } }, 422);
+  }
+  if (body.rating !== undefined && body.rating !== null && (body.rating < 1 || body.rating > 5)) {
+    return c.json({ error: { status: 422, message: "rating harus 1-5" } }, 422);
+  }
+
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) =>
+      progressRepo.submitTestimonial(sql, token, clientName, quote, body.rating ?? null),
+    );
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    if (err instanceof progressRepo.TokenTidakDitemukan) {
+      return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});

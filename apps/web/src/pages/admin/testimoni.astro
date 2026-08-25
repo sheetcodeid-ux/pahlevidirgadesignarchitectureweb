@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { TestimonialsPanel } from "../../components/admin/TestimonialsPanel";
+---
+
+<AdminLayout title="Testimoni" heading="Testimoni" description="Testimoni yang dikirim klien lewat link progres — setujui untuk menampilkannya di beranda.">
+  <TestimonialsPanel client:load />
+</AdminLayout>

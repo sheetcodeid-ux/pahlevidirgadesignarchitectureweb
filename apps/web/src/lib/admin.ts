@@ -420,3 +420,58 @@ export const ubahKontak = (id: string, patch: Partial<KontakDirektori>) =>
 
 export const hapusKontak = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/directory/${id}`, { method: "DELETE" });
+
+// --- Brief proyek (diisi klien lewat link token) --------------------------
+
+export interface BriefProyek {
+  budgetRange?: string | null;
+  timeline?: string | null;
+  stylePreference?: string | null;
+  requirements?: string | null;
+  internalNotes?: string | null;
+  submittedAt?: string | null;
+}
+
+export const ambilBrief = (projectId: string) => panggil<BriefProyek>(`/admin/projects/${projectId}/brief`);
+
+export const ubahBrief = (projectId: string, patch: Partial<BriefProyek>) =>
+  panggil<{ updated: boolean }>(`/admin/projects/${projectId}/brief`, { method: "PATCH", body: JSON.stringify(patch) });
+
+// --- Komentar dokumen (thread staf + klien) -------------------------------
+
+export interface KomentarDokumen {
+  id: string;
+  documentId: string;
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
+export const daftarKomentarDokumen = (documentId: string) =>
+  panggil<KomentarDokumen[]>(`/admin/documents/${documentId}/comments`);
+
+export const tambahKomentarDokumen = (documentId: string, body: string) =>
+  panggil<{ id: string }>(`/admin/documents/${documentId}/comments`, { method: "POST", body: JSON.stringify({ body }) });
+
+// --- Testimoni (dikirim klien, dimoderasi staf) ---------------------------
+
+export interface TestimoniAdmin {
+  id: string;
+  projectId?: string | null;
+  projectTitle?: string | null;
+  clientName: string;
+  quote: string;
+  rating?: number | null;
+  status: string;
+  isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const daftarTestimoni = () => panggil<TestimoniAdmin[]>("/admin/testimonials");
+
+export const ubahTestimoni = (id: string, patch: Partial<TestimoniAdmin>) =>
+  panggil<{ updated: boolean }>(`/admin/testimonials/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusTestimoni = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/testimonials/${id}`, { method: "DELETE" });

@@ -37,6 +37,7 @@ const NAV: NavItem[] = [
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },
   { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Utama" },
+  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", group: "Utama" },
   {
     label: "Pengaturan",
     icon: "settings",

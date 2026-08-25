@@ -41,7 +41,9 @@ export type IconName =
   | "filter"
   | "close"
   | "document"
-  | "directory";
+  | "directory"
+  | "quote"
+  | "star";
 
 interface Props {
   name: IconName;
@@ -225,6 +227,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M9 17c0-1.7 1.6-3 3.5-3s3.5 1.3 3.5 3" />
     </>
   ),
+  // Tanda kutip — testimoni klien.
+  quote: (
+    <>
+      <path d="M7 8a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h1v-5H6a2 2 0 0 1 2-2V8Z" />
+      <path d="M17 8a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h1v-5h-2a2 2 0 0 1 2-2V8Z" />
+    </>
+  ),
+  star: <path d="m12 3 2.6 5.6 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.6l1.2-6.1L3.2 9.3l6.2-.7Z" />,
 };
 
 export function Icon({ name, size = 20, className }: Props) {

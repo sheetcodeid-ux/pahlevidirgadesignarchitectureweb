@@ -12,6 +12,8 @@ import {
   daftarInvoice, tambahInvoice, ubahInvoice, hapusInvoice, type Invoice,
   daftarBiaya, tambahBiaya, hapusBiaya, type BiayaProyek,
   daftarDokumen, tambahDokumen, ubahDokumen, hapusDokumen, type DokumenProyek,
+  ambilBrief, ubahBrief, type BriefProyek,
+  daftarKomentarDokumen, tambahKomentarDokumen, type KomentarDokumen,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 
@@ -292,6 +294,66 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
   );
 }
 
+function ThreadKomentar({ documentId }: { documentId: string }) {
+  const toast = useToast();
+  const [komentar, setKomentar] = useState<KomentarDokumen[] | null>(null);
+  const [isi, setIsi] = useState("");
+  const [mengirim, setMengirim] = useState(false);
+
+  function muat() {
+    daftarKomentarDokumen(documentId).then(setKomentar).catch(() => setKomentar([]));
+  }
+
+  async function kirim() {
+    const bersih = isi.trim();
+    if (bersih.length < 1) return;
+    setMengirim(true);
+    try {
+      await tambahKomentarDokumen(documentId, bersih);
+      setIsi("");
+      muat();
+    } catch (e) {
+      toast({ judul: "Gagal mengirim komentar", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMengirim(false);
+    }
+  }
+
+  return (
+    <details className="collapsible" onToggle={(e) => {
+      if ((e.target as HTMLDetailsElement).open && komentar === null) muat();
+    }}>
+      <summary>Komentar<span className="collapsible__chevron"><Icon name="chevronDown" size={16} /></span></summary>
+      <div className="collapsible__body stack" style={{ gap: "var(--space-3)" }}>
+        {komentar === null ? (
+          <span className="skeleton" style={{ height: "3rem" }} />
+        ) : komentar.length === 0 ? (
+          <p className="t-muted">Belum ada komentar.</p>
+        ) : (
+          <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
+            {komentar.map((k) => (
+              <li key={k.id}>
+                <span className="t-label">{k.author === "staf" ? "Staf" : "Klien"}</span>
+                <span className="t-muted t-mono" style={{ fontSize: "var(--text-xs)" }}>
+                  {" · "}{new Date(k.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                </span>
+                <p>{k.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="row" style={{ gap: "var(--space-2)" }}>
+          <input className="input" value={isi} onChange={(e) => setIsi(e.target.value)}
+            placeholder="Tulis balasan..." style={{ flex: 1 }} />
+          <button type="button" className="btn btn--secondary btn--sm" disabled={isi.trim().length < 1 || mengirim} onClick={kirim}>
+            Kirim
+          </button>
+        </div>
+      </div>
+    </details>
+  );
+}
+
 function PanelDokumen({ proyek }: { proyek: Proyek }) {
   const toast = useToast();
   const [dokumen, setDokumen] = useState<DokumenProyek[] | null>(null);
@@ -387,29 +449,134 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
       {dokumen.length === 0 ? (
         <p className="t-muted">Belum ada dokumen untuk proyek ini.</p>
       ) : (
-        <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
+        <ul className="stack" style={{ gap: "var(--space-3)", listStyle: "none", padding: 0 }}>
           {dokumen.map((d) => (
-            <li key={d.id} className="item item--bordered">
-              <span className="item__text">
-                <span className="item__title">{d.title}</span>
-                <span className="item__desc">
-                  <a href={d.fileUrl} target="_blank" rel="noreferrer">Lihat berkas</a>
-                  {d.status === "revisi_diminta" && d.clientNote && ` — Catatan klien: ${d.clientNote}`}
+            <li key={d.id} className="stack" style={{ gap: "var(--space-2)" }}>
+              <div className="item item--bordered">
+                <span className="item__text">
+                  <span className="item__title">{d.title}</span>
+                  <span className="item__desc">
+                    <a href={d.fileUrl} target="_blank" rel="noreferrer">Lihat berkas</a>
+                    {d.status === "revisi_diminta" && d.clientNote && ` — Catatan klien: ${d.clientNote}`}
+                  </span>
                 </span>
-              </span>
-              <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
-                value={d.status} onChange={(e) => ubahStatus(d.id, e.target.value)}
-                aria-label={`Ubah status ${d.title}`}>
-                {STATUS_DOKUMEN.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-              <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${d.title}`}
-                onClick={() => hapus(d.id)}>
-                <Icon name="trash" size={15} />
-              </button>
+                <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
+                  value={d.status} onChange={(e) => ubahStatus(d.id, e.target.value)}
+                  aria-label={`Ubah status ${d.title}`}>
+                  {STATUS_DOKUMEN.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+                <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${d.title}`}
+                  onClick={() => hapus(d.id)}>
+                  <Icon name="trash" size={15} />
+                </button>
+              </div>
+              <ThreadKomentar documentId={d.id} />
             </li>
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function PanelBrief({ projectId }: { projectId: string }) {
+  const toast = useToast();
+  const [brief, setBrief] = useState<BriefProyek | null>(null);
+  const [sibuk, setSibuk] = useState(false);
+
+  useEffect(() => {
+    ambilBrief(projectId).then(setBrief).catch(() => setBrief(null));
+  }, [projectId]);
+
+  function set<K extends keyof BriefProyek>(kunci: K, nilai: BriefProyek[K]) {
+    setBrief((b) => (b ? { ...b, [kunci]: nilai } : b));
+  }
+
+  async function simpan() {
+    if (!brief) return;
+    setSibuk(true);
+    try {
+      await ubahBrief(projectId, {
+        budgetRange: brief.budgetRange,
+        timeline: brief.timeline,
+        stylePreference: brief.stylePreference,
+        requirements: brief.requirements,
+        internalNotes: brief.internalNotes,
+      });
+      toast({ judul: "Brief disimpan", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal menyimpan", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  if (!brief) {
+    return <span className="skeleton" style={{ height: "10rem" }} />;
+  }
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="edit" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Kebutuhan awal klien</span>
+            <span className="t-muted">
+              {brief.submittedAt
+                ? `Terakhir dikirim klien ${new Date(brief.submittedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`
+                : "Klien belum mengisi brief lewat link progres — staf bisa mengisikannya di sini."}
+            </span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="stack">
+            <div className="spec-grid">
+              <div className="field">
+                <label className="field__label" htmlFor="brief-budget">Kisaran anggaran</label>
+                <input id="brief-budget" className="input" value={brief.budgetRange ?? ""}
+                  onChange={(e) => set("budgetRange", e.target.value)} placeholder="Contoh: 300-500jt" />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="brief-waktu">Target waktu</label>
+                <input id="brief-waktu" className="input" value={brief.timeline ?? ""}
+                  onChange={(e) => set("timeline", e.target.value)} placeholder="Contoh: mulai konstruksi Q1 2027" />
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="brief-gaya">Preferensi gaya</label>
+                <input id="brief-gaya" className="input" value={brief.stylePreference ?? ""}
+                  onChange={(e) => set("stylePreference", e.target.value)} placeholder="Contoh: tropis modern" />
+              </div>
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="brief-kebutuhan">Kebutuhan ruang/fungsi</label>
+              <textarea id="brief-kebutuhan" className="input input--area" value={brief.requirements ?? ""}
+                onChange={(e) => set("requirements", e.target.value)} placeholder="Contoh: 3 kamar tidur, ruang kerja, carport 2 mobil" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card__header">
+          <span className="card__titles">
+            <span className="t-subheading">Catatan internal</span>
+            <span className="t-muted">Hanya terlihat staf — tidak pernah dikirim ke klien.</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <textarea className="input input--area" value={brief.internalNotes ?? ""}
+            onChange={(e) => set("internalNotes", e.target.value)}
+            placeholder="Contoh: sudah ditelepon, minta contoh referensi tambahan" />
+        </div>
+      </div>
+
+      <div className="row row--end">
+        <button type="button" className="btn btn--primary" disabled={sibuk} onClick={simpan}>
+          {sibuk && <span className="spinner spinner--sm spinner--on-action" />}
+          Simpan brief
+        </button>
+      </div>
     </div>
   );
 }
@@ -1009,6 +1176,7 @@ function Isi() {
       <Tabs
         items={[
           { id: "detail", label: "Detail", content: detail },
+          { id: "brief", label: "Brief", content: <PanelBrief projectId={asli.id} /> },
           { id: "galeri", label: "Galeri", content: galeri },
           { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
           { id: "dokumen", label: "Dokumen", content: <PanelDokumen proyek={asli} /> },

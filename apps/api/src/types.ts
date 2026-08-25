@@ -183,6 +183,7 @@ export interface ClientDocument {
   fileUrl: string;
   status: string;
   clientNote?: string | null;
+  comments: DocumentComment[];
 }
 
 export interface ClientInvoice {
@@ -193,6 +194,79 @@ export interface ClientInvoice {
   dueDate?: string | null;
 }
 
+/** Dilihat staf: termasuk internalNotes yang tidak pernah sampai ke klien. */
+export interface ProjectBrief {
+  budgetRange?: string | null;
+  timeline?: string | null;
+  stylePreference?: string | null;
+  requirements?: string | null;
+  internalNotes?: string | null;
+  submittedAt?: string | null;
+}
+
+/** Field yang boleh diubah staf — mencakup internalNotes. undefined = jangan diubah. */
+export interface ProjectBriefInput {
+  budgetRange?: string | null;
+  timeline?: string | null;
+  stylePreference?: string | null;
+  requirements?: string | null;
+  internalNotes?: string | null;
+}
+
+/** Field yang boleh dikirim klien lewat portal token — tanpa internalNotes. */
+export interface ClientBriefInput {
+  budgetRange?: string | null;
+  timeline?: string | null;
+  stylePreference?: string | null;
+  requirements?: string | null;
+}
+
+/** Dilihat klien: sama seperti ProjectBrief tapi tanpa internalNotes. */
+export interface ClientBrief {
+  budgetRange?: string | null;
+  timeline?: string | null;
+  stylePreference?: string | null;
+  requirements?: string | null;
+  submittedAt?: string | null;
+}
+
+export interface DocumentComment {
+  id: string;
+  documentId: string;
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface Testimonial {
+  id: string;
+  projectId?: string | null;
+  projectTitle?: string | null;
+  clientName: string;
+  quote: string;
+  rating?: number | null;
+  status: string;
+  isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TestimonialInput {
+  projectId?: string | null;
+  clientName?: string;
+  quote?: string;
+  rating?: number | null;
+  status?: string;
+  isFeatured?: boolean;
+}
+
+/** Ditampilkan di situs publik — hanya testimoni berstatus disetujui. */
+export interface PublicTestimonial {
+  clientName: string;
+  quote: string;
+  rating?: number | null;
+}
+
 /** Dilihat klien lewat link token: tanpa data admin, tanpa token itu sendiri. */
 export interface ClientProgressView {
   projectTitle: string;
@@ -201,6 +275,7 @@ export interface ClientProgressView {
   updates: ProjectProgressUpdate[];
   documents: ClientDocument[];
   invoices: ClientInvoice[];
+  brief: ClientBrief;
 }
 
 export interface TeamMember {
@@ -378,4 +453,10 @@ export const VALID_CONTACT_CATEGORY = new Set([
   "kontraktor",
   "supplier",
   "lainnya",
+]);
+
+export const VALID_TESTIMONIAL_STATUS = new Set([
+  "menunggu",
+  "disetujui",
+  "ditolak",
 ]);

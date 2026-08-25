@@ -1,8 +1,12 @@
 import type { Sql } from "postgres";
 import type {
   ProjectProgress, ProjectProgressUpdate, ClientProgressView, ClientDocument, ClientInvoice,
+  ClientBriefInput, DocumentComment,
 } from "../types";
 import { NotFoundError } from "./projects";
+import * as briefRepo from "./brief";
+import * as commentsRepo from "./documentComments";
+import * as testimonialsRepo from "./testimonials";
 
 function url(assetBase: string, key: string | null): string | null {
   if (!key) return null;
@@ -103,13 +107,14 @@ interface DocumentRow {
   client_note: string | null;
 }
 
-function rowToClientDocument(row: DocumentRow, assetBase: string): ClientDocument {
+function rowToClientDocument(row: DocumentRow, assetBase: string, comments: DocumentComment[]): ClientDocument {
   return {
     id: row.id,
     title: row.title,
     fileUrl: `${assetBase.replace(/\/$/, "")}/${row.file_key.replace(/^\//, "")}`,
     status: row.status,
     clientNote: row.client_note,
+    comments,
   };
 }
 
@@ -158,20 +163,66 @@ export async function getByToken(sql: Sql, assetBase: string, token: string): Pr
     where project_id = ${projectID}::uuid
     order by sort_order, created_at`;
 
+  const documentsWithComments: ClientDocument[] = [];
+  for (const d of documents) {
+    const comments = await commentsRepo.listForDocument(sql, d.id);
+    documentsWithComments.push(rowToClientDocument(d, assetBase, comments));
+  }
+
   const invoices = await sql<InvoiceRow[]>`
     select id, label, amount, status, due_date
     from public.invoices
     where project_id = ${projectID}::uuid
     order by sort_order, created_at`;
 
+  const brief = await briefRepo.getByProjectID(sql, projectID);
+
   return {
     projectTitle: rows[0].title,
     coverImageUrl: url(assetBase, rows[0].cover_image_key),
     phase: rows[0].phase,
     updates: updates.map((r) => rowToUpdate(r, assetBase)),
-    documents: documents.map((r) => rowToClientDocument(r, assetBase)),
+    documents: documentsWithComments,
     invoices: invoices.map(rowToClientInvoice),
+    brief,
   };
+}
+
+/** Resolve project_id dari token — dipakai submisi klien (brief, testimoni, komentar). */
+async function resolveProjectID(sql: Sql, token: string): Promise<string | null> {
+  const rows = await sql<{ project_id: string }[]>`
+    select project_id from public.project_progress where access_token = ${token}`;
+  return rows[0]?.project_id ?? null;
+}
+
+export class TokenTidakDitemukan extends Error {}
+
+export async function submitBrief(sql: Sql, token: string, input: ClientBriefInput): Promise<void> {
+  const projectID = await resolveProjectID(sql, token);
+  if (!projectID) throw new TokenTidakDitemukan();
+  await briefRepo.submitByProjectID(sql, projectID, input);
+}
+
+export async function submitTestimonial(
+  sql: Sql, token: string, clientName: string, quote: string, rating: number | null,
+): Promise<string> {
+  const projectID = await resolveProjectID(sql, token);
+  if (!projectID) throw new TokenTidakDitemukan();
+  return testimonialsRepo.submitByProjectID(sql, projectID, clientName, quote, rating);
+}
+
+/**
+ * Sama seperti approve/revise: kepemilikan dokumen atas token dicek langsung
+ * lewat subquery project_id, bukan query terpisah.
+ */
+export async function addDocumentComment(sql: Sql, token: string, documentID: string, body: string): Promise<string> {
+  const rows = await sql<{ id: string }[]>`
+    select d.id from public.project_documents d
+    where d.id = ${documentID}::uuid
+      and d.project_id = (select project_id from public.project_progress where access_token = ${token})`;
+  if (!rows[0]) throw new DocumentActionError("dokumen tidak ditemukan");
+
+  return commentsRepo.create(sql, documentID, "klien", body);
 }
 
 export class DocumentActionError extends Error {}

@@ -566,6 +566,194 @@ begin
 end;
 $$;
 
+-- project_briefs ------------------------------------------------------
+--
+-- Sama seperti project_progress: murni data internal, tidak ada policy
+-- anon. Klien mengisi lewat endpoint backend yang memvalidasi token.
+
+do $$
+declare pid uuid;
+begin
+  select id into pid from public.projects where slug = 'tes-published';
+  insert into public.project_briefs (project_id, budget_range, requirements)
+  values (pid, '50-100jt', 'Rumah 2 lantai, 3 kamar');
+end;
+$$;
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.project_briefs;
+    raise exception 'GAGAL: anon berhasil membaca project_briefs';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca project_briefs';
+  end;
+
+  begin
+    update public.project_briefs set budget_range = 'diubah anon';
+    raise exception 'GAGAL: anon berhasil mengubah project_briefs';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak mengubah project_briefs';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.project_briefs;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun project_briefs');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.project_briefs;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat project_briefs');
+
+  update public.project_briefs set internal_notes = 'sudah ditelepon' where budget_range = '50-100jt';
+  perform pg_temp.tolak(false, 'staf dapat mengubah catatan internal brief');
+
+  reset role;
+end;
+$$;
+
+-- document_comments ---------------------------------------------------
+--
+-- Thread komentar per dokumen — pola akses sama dengan project_documents
+-- induknya: murni internal, klien menulis lewat endpoint backend.
+
+do $$
+declare did uuid;
+begin
+  select id into did from public.project_documents where title = 'DED Set A';
+  insert into public.document_comments (document_id, author, body)
+  values (did, 'staf', 'Ini revisi pertama, mohon dicek bagian dapur.');
+end;
+$$;
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.document_comments;
+    raise exception 'GAGAL: anon berhasil membaca document_comments';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca document_comments';
+  end;
+
+  begin
+    insert into public.document_comments (document_id, author, body)
+    values ((select id from public.project_documents where title = 'DED Set A'), 'klien', 'anon nyelip');
+    raise exception 'GAGAL: anon berhasil menulis document_comments';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis document_comments';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.document_comments;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun document_comments');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.document_comments;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat document_comments');
+
+  insert into public.document_comments (document_id, author, body)
+  values ((select id from public.project_documents where title = 'DED Set A'), 'staf', 'balasan staf');
+  perform pg_temp.tolak(false, 'staf dapat menambah komentar dokumen');
+
+  reset role;
+end;
+$$;
+
+-- testimonials --------------------------------------------------------
+--
+-- Berbeda dari dua tabel di atas: begitu disetujui, testimoni untuk publik.
+-- anon boleh SELECT tapi RLS membatasi hanya baris status='disetujui'.
+
+insert into public.testimonials (client_name, quote, status)
+values ('Bu Sinta', 'Prosesnya rapi dan hasilnya sesuai ekspektasi.', 'disetujui'),
+       ('Pak Andi', 'Masih menunggu approval, jangan tampil dulu.', 'menunggu');
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_anon();
+
+  select count(*) into terlihat from public.testimonials;
+  perform pg_temp.tolak(terlihat <> 1, 'anon hanya melihat testimoni berstatus disetujui');
+
+  begin
+    insert into public.testimonials (client_name, quote) values ('anon', 'nyelip');
+    raise exception 'GAGAL: anon berhasil menulis testimonials';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis testimonials';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+declare terkena int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.testimonials;
+  perform pg_temp.tolak(terlihat <> 1, 'non-staf hanya melihat testimoni berstatus disetujui, sama seperti anon');
+
+  update public.testimonials set is_featured = true where client_name = 'Bu Sinta';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0, 'non-staf tidak bisa mengubah testimoni (RLS memfilter, 0 baris)');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.testimonials;
+  perform pg_temp.tolak(terlihat <> 2, 'staf melihat seluruh testimoni termasuk yang menunggu');
+
+  update public.testimonials set status = 'disetujui', is_featured = true where client_name = 'Pak Andi';
+  perform pg_temp.tolak(false, 'staf dapat menyetujui dan menonjolkan testimoni');
+
+  reset role;
+end;
+$$;
+
 -- Bawaan tabel baru -----------------------------------------------------
 --
 -- Menjaga migrasi 20260824000003. Tabel yang dibuat tanpa GRANT eksplisit

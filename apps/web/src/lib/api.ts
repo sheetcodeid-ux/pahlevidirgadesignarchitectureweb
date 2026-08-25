@@ -136,6 +136,16 @@ export interface InquiryPayload {
   website?: string;
 }
 
+export interface PublicTestimonial {
+  clientName: string;
+  quote: string;
+  rating?: number | null;
+}
+
+export function listTestimonials(featuredOnly = false): Promise<PublicTestimonial[]> {
+  return safely<PublicTestimonial[]>(`/api/v1/testimonials${featuredOnly ? "?featured=true" : ""}`, []);
+}
+
 export async function submitInquiry(payload: InquiryPayload): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/v1/inquiries`, {
     method: "POST",

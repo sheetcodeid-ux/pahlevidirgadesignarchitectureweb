@@ -21,12 +21,20 @@ interface Update {
   createdAt: string;
 }
 
+interface Komentar {
+  id: string;
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
 interface Dokumen {
   id: string;
   title: string;
   fileUrl: string;
   status: string;
   clientNote?: string | null;
+  comments: Komentar[];
 }
 
 interface Tagihan {
@@ -37,6 +45,14 @@ interface Tagihan {
   dueDate?: string | null;
 }
 
+interface Brief {
+  budgetRange?: string | null;
+  timeline?: string | null;
+  stylePreference?: string | null;
+  requirements?: string | null;
+  submittedAt?: string | null;
+}
+
 interface View {
   projectTitle: string;
   coverImageUrl?: string | null;
@@ -44,6 +60,7 @@ interface View {
   updates: Update[];
   documents: Dokumen[];
   invoices: Tagihan[];
+  brief: Brief;
 }
 
 const BADGE_DOKUMEN: Record<string, string> = {
@@ -73,6 +90,63 @@ const LABEL_TAGIHAN: Record<string, string> = {
   terbit: "Menunggu pembayaran",
   lunas: "Lunas",
 };
+
+/** Thread komentar per dokumen — di luar alur setujui/minta-revisi, untuk tanya-jawab bebas. */
+function ThreadKomentarKlien({ dokumen, token }: { dokumen: Dokumen; token: string }) {
+  const [komentar, setKomentar] = useState<Komentar[]>(dokumen.comments);
+  const [isi, setIsi] = useState("");
+  const [mengirim, setMengirim] = useState(false);
+
+  async function kirim() {
+    const bersih = isi.trim();
+    if (bersih.length < 1) return;
+    setMengirim(true);
+    try {
+      const res = await fetch(`${API}/api/v1/progress/${token}/documents/${dokumen.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: bersih }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error?.message ?? "gagal mengirim komentar");
+      const { data } = await res.json();
+      setKomentar((k) => [...k, { id: data.id, author: "klien", body: bersih, createdAt: new Date().toISOString() }]);
+      setIsi("");
+    } catch {
+      // Diamkan — pengguna bisa coba lagi lewat tombol yang sama.
+    } finally {
+      setMengirim(false);
+    }
+  }
+
+  return (
+    <details className="collapsible">
+      <summary>Komentar{komentar.length > 0 && ` (${komentar.length})`}
+        <span className="collapsible__chevron"><Icon name="chevronDown" size={16} /></span>
+      </summary>
+      <div className="collapsible__body stack" style={{ gap: "var(--space-3)" }}>
+        {komentar.length === 0 ? (
+          <p className="t-muted">Belum ada komentar.</p>
+        ) : (
+          <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
+            {komentar.map((k) => (
+              <li key={k.id}>
+                <span className="t-label">{k.author === "staf" ? "Studio" : "Anda"}</span>
+                <p>{k.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="row" style={{ gap: "var(--space-2)" }}>
+          <input className="input" value={isi} onChange={(e) => setIsi(e.target.value)}
+            placeholder="Tulis pertanyaan atau catatan..." style={{ flex: 1 }} />
+          <button type="button" className="btn btn--secondary btn--sm" disabled={isi.trim().length < 1 || mengirim} onClick={kirim}>
+            Kirim
+          </button>
+        </div>
+      </div>
+    </details>
+  );
+}
 
 /** Satu dokumen dengan aksi setujui/minta-revisi — form revisi baru muncul saat ditekan. */
 function BarisDokumen({ dokumen, token, onBerubah }: { dokumen: Dokumen; token: string; onBerubah: () => void }) {
@@ -163,8 +237,165 @@ function BarisDokumen({ dokumen, token, onBerubah }: { dokumen: Dokumen; token: 
         )}
 
         {galat && <p className="field__error">{galat}</p>}
+
+        <ThreadKomentarKlien dokumen={dokumen} token={token} />
       </div>
     </li>
+  );
+}
+
+/** Klien mengisi atau memperbarui brief awal proyeknya sendiri. */
+function FormBrief({ brief, token }: { brief: Brief; token: string }) {
+  const [budgetRange, setBudgetRange] = useState(brief.budgetRange ?? "");
+  const [timeline, setTimeline] = useState(brief.timeline ?? "");
+  const [stylePreference, setStylePreference] = useState(brief.stylePreference ?? "");
+  const [requirements, setRequirements] = useState(brief.requirements ?? "");
+  const [sibuk, setSibuk] = useState(false);
+  const [terkirim, setTerkirim] = useState(false);
+  const [galat, setGalat] = useState<string | null>(null);
+
+  async function kirim() {
+    setSibuk(true);
+    setGalat(null);
+    try {
+      const res = await fetch(`${API}/api/v1/progress/${token}/brief`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ budgetRange, timeline, stylePreference, requirements }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error?.message ?? "gagal mengirim brief");
+      setTerkirim(true);
+    } catch (e) {
+      setGalat((e as Error).message);
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  return (
+    <details className="collapsible" open={!brief.submittedAt}>
+      <summary>{brief.submittedAt ? "Ubah kebutuhan awal" : "Ceritakan kebutuhan Anda"}
+        <span className="collapsible__chevron"><Icon name="chevronDown" size={16} /></span>
+      </summary>
+      <div className="collapsible__body stack" style={{ gap: "var(--space-3)" }}>
+        <p className="t-muted">
+          Semakin lengkap informasinya, semakin cepat studio menyusun konsep awal.
+        </p>
+        <div className="field">
+          <label className="field__label" htmlFor="brief-budget">Kisaran anggaran</label>
+          <input id="brief-budget" className="input" value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)}
+            placeholder="Contoh: 300-500jt" />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="brief-waktu">Target waktu</label>
+          <input id="brief-waktu" className="input" value={timeline} onChange={(e) => setTimeline(e.target.value)}
+            placeholder="Contoh: mulai konstruksi awal tahun depan" />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="brief-gaya">Preferensi gaya</label>
+          <input id="brief-gaya" className="input" value={stylePreference} onChange={(e) => setStylePreference(e.target.value)}
+            placeholder="Contoh: tropis modern" />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="brief-kebutuhan">Kebutuhan ruang/fungsi</label>
+          <textarea id="brief-kebutuhan" className="input input--area" value={requirements}
+            onChange={(e) => setRequirements(e.target.value)} placeholder="Contoh: 3 kamar tidur, ruang kerja, carport 2 mobil" />
+        </div>
+        <div className="row" style={{ gap: "var(--space-2)", alignItems: "center" }}>
+          <button type="button" className="btn btn--primary btn--sm" disabled={sibuk} onClick={kirim}>
+            {sibuk && <span className="spinner spinner--sm spinner--on-action" />}
+            Kirim ke studio
+          </button>
+          {terkirim && <span className="t-muted">Tersimpan.</span>}
+        </div>
+        {galat && <p className="field__error">{galat}</p>}
+      </div>
+    </details>
+  );
+}
+
+/** Bintang rating yang bisa diklik, 1-5. */
+function PemilihBintang({ nilai, onUbah }: { nilai: number; onUbah: (n: number) => void }) {
+  return (
+    <div className="row" style={{ gap: "var(--space-1)" }}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button key={n} type="button" className="btn btn--ghost btn--icon" aria-label={`${n} bintang`}
+          onClick={() => onUbah(n)} style={{ color: n <= nilai ? "var(--text)" : "var(--text-faint)" }}>
+          <Icon name="star" size={18} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Klien mengirim testimoni — selalu masuk sebagai "menunggu" moderasi studio. */
+function FormTestimoni({ token }: { token: string }) {
+  const [nama, setNama] = useState("");
+  const [kutipan, setKutipan] = useState("");
+  const [rating, setRating] = useState(0);
+  const [sibuk, setSibuk] = useState(false);
+  const [terkirim, setTerkirim] = useState(false);
+  const [galat, setGalat] = useState<string | null>(null);
+
+  async function kirim() {
+    if (nama.trim().length < 2 || kutipan.trim().length < 2) return;
+    setSibuk(true);
+    setGalat(null);
+    try {
+      const res = await fetch(`${API}/api/v1/progress/${token}/testimonial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientName: nama.trim(), quote: kutipan.trim(), rating: rating || null }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error?.message ?? "gagal mengirim testimoni");
+      setTerkirim(true);
+    } catch (e) {
+      setGalat((e as Error).message);
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  if (terkirim) {
+    return (
+      <div className="empty empty--sm">
+        <span className="icon-tile"><Icon name="quote" size={20} /></span>
+        <span className="t-subheading">Terima kasih!</span>
+        <p className="t-muted">Testimoni Anda akan tampil di situs setelah ditinjau studio.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card">
+      <div className="card__header">
+        <span className="icon-tile"><Icon name="quote" size={20} /></span>
+        <span className="card__titles">
+          <span className="t-subheading">Bagikan pengalaman Anda</span>
+          <span className="t-muted">Testimoni ditinjau studio dulu sebelum tampil di situs.</span>
+        </span>
+      </div>
+      <div className="card__body stack">
+        <PemilihBintang nilai={rating} onUbah={setRating} />
+        <div className="field">
+          <label className="field__label" htmlFor="test-nama">Nama Anda</label>
+          <input id="test-nama" className="input" value={nama} onChange={(e) => setNama(e.target.value)} />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="test-kutipan">Testimoni</label>
+          <textarea id="test-kutipan" className="input input--area" value={kutipan}
+            onChange={(e) => setKutipan(e.target.value)} placeholder="Bagaimana pengalaman Anda bekerja sama dengan studio?" />
+        </div>
+        <div className="row row--end">
+          <button type="button" className="btn btn--primary" disabled={nama.trim().length < 2 || kutipan.trim().length < 2 || sibuk}
+            onClick={kirim}>
+            {sibuk && <span className="spinner spinner--sm spinner--on-action" />}
+            Kirim testimoni
+          </button>
+        </div>
+        {galat && <p className="field__error">{galat}</p>}
+      </div>
+    </div>
   );
 }
 
@@ -230,6 +461,8 @@ export function ClientProgressView() {
         <p className="eyebrow">Progres proyek</p>
         <h1>{data.projectTitle}</h1>
       </div>
+
+      <FormBrief brief={data.brief} token={token} />
 
       <ol className="progres-stepper">
         {FASE.map(([nilai, label], i) => (
@@ -303,6 +536,8 @@ export function ClientProgressView() {
           </ul>
         </div>
       )}
+
+      <FormTestimoni token={token} />
     </div>
   );
 }

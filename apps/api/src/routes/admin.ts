@@ -14,16 +14,21 @@ import * as costsRepo from "../repository/costs";
 import * as financeRepo from "../repository/finance";
 import * as documentsRepo from "../repository/documents";
 import * as directoryRepo from "../repository/directory";
+import * as briefRepo from "../repository/brief";
+import * as commentsRepo from "../repository/documentComments";
+import * as testimonialsRepo from "../repository/testimonials";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload } from "../lib/r2";
 import { checkProjectInput, ValidationError } from "../lib/validate";
 import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
   InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput,
+  ProjectBriefInput, TestimonialInput,
 } from "../types";
 import {
   VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
   VALID_INVOICE_STATUS, VALID_COST_CATEGORY, VALID_DOCUMENT_STATUS, VALID_CONTACT_CATEGORY,
+  VALID_TESTIMONIAL_STATUS,
 } from "../types";
 
 type Vars = { userID: string; userEmail?: string; accessToken: string };
@@ -457,6 +462,67 @@ admin.delete("/directory/:id", async (c) => {
     return c.json({ data: { deleted: true } });
   } catch (err) {
     if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "kontak tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+// GET /api/v1/admin/projects/:id/brief
+admin.get("/projects/:id/brief", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => briefRepo.getForAdmin(sql, c.req.param("id")));
+  return c.json({ data });
+});
+
+admin.patch("/projects/:id/brief", async (c) => {
+  const input = await c.req.json<ProjectBriefInput>().catch(() => ({}) as ProjectBriefInput);
+  await withDb(c.env, c.executionCtx, (sql) => briefRepo.update(sql, c.req.param("id"), input));
+  return c.json({ data: { updated: true } });
+});
+
+// GET /api/v1/admin/documents/:id/comments
+admin.get("/documents/:id/comments", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => commentsRepo.listForDocument(sql, c.req.param("id")));
+  return c.json({ data });
+});
+
+admin.post("/documents/:id/comments", async (c) => {
+  const body = await c.req.json<{ body?: string }>().catch((): { body?: string } => ({}));
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) =>
+      commentsRepo.create(sql, c.req.param("id"), "staf", body.body ?? ""),
+    );
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+// GET /api/v1/admin/testimonials — termasuk yang menunggu moderasi.
+admin.get("/testimonials", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => testimonialsRepo.listAll(sql));
+  return c.json({ data });
+});
+
+admin.patch("/testimonials/:id", async (c) => {
+  const input = await c.req.json<TestimonialInput>().catch(() => ({}) as TestimonialInput);
+  if (input.status !== undefined && !VALID_TESTIMONIAL_STATUS.has(input.status)) {
+    return c.json({ error: { status: 422, message: "status testimoni tidak dikenal" } }, 422);
+  }
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => testimonialsRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "testimoni tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+admin.delete("/testimonials/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => testimonialsRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "testimoni tidak ditemukan" } }, 404);
     throw err;
   }
 });
