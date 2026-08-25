@@ -13,7 +13,7 @@ interface Props {
 
 const {
   title,
-  description = "Studio arsitektur yang merancang ruang tinggal dan komersial di Indonesia.",
+  description = "Studio arsitektur di Pontianak yang merancang ruang hospitality dan rumah tropis dengan pendekatan iklim khatulistiwa.",
   image,
   noindex = false,
 } = Astro.props;
@@ -68,7 +68,13 @@ const studioName = "Dirga Pahlevi Architecture";
         "@type": "ArchitecturalService",
         name: studioName,
         url: Astro.site?.href,
-        areaServed: "ID",
+        areaServed: "Pontianak, Kalimantan Barat",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Pontianak",
+          addressRegion: "Kalimantan Barat",
+          addressCountry: "ID",
+        },
       })}
     />
   </head>
