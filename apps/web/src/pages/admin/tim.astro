@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { TeamPanel } from "../../components/admin/TeamPanel";
+---
+
+<AdminLayout title="Tim & Freelancer" heading="Tim & Freelancer" description="Roster staf dan freelancer yang bisa ditugaskan ke pekerjaan proyek.">
+  <TeamPanel client:load />
+</AdminLayout>

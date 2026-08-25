@@ -307,6 +307,75 @@ begin
 end;
 $$;
 
+-- team_members & project_tasks --------------------------------------------
+--
+-- Sama seperti project_progress: internal murni, tidak ada policy anon.
+
+do $$
+declare tid uuid; pid uuid;
+begin
+  insert into public.team_members (name, role) values ('Rian Saputra', 'Drafter DED') returning id into tid;
+  select id into pid from public.projects where slug = 'tes-published';
+  insert into public.project_tasks (project_id, title, assignee_id, stage)
+  values (pid, 'Gambar kerja denah', tid, 'desain_1');
+end;
+$$;
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.team_members;
+    raise exception 'GAGAL: anon berhasil membaca team_members';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca team_members';
+  end;
+
+  begin
+    perform count(*) from public.project_tasks;
+    raise exception 'GAGAL: anon berhasil membaca project_tasks';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca project_tasks';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.team_members;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun team_members');
+
+  select count(*) into terlihat from public.project_tasks;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun project_tasks');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.team_members;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat team_members');
+
+  select count(*) into terlihat from public.project_tasks;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat project_tasks');
+
+  update public.project_tasks set status = 'selesai' where title = 'Gambar kerja denah';
+  perform pg_temp.tolak(false, 'staf dapat mengubah status tugas');
+
+  reset role;
+end;
+$$;
+
 -- Bawaan tabel baru -----------------------------------------------------
 --
 -- Menjaga migrasi 20260824000003. Tabel yang dibuat tanpa GRANT eksplisit

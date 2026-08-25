@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { TaskBoard } from "../../components/admin/TaskBoard";
+---
+
+<AdminLayout title="List Kerjaan" heading="List Kerjaan" description="Tugas aktif lintas proyek, dikelompokkan per tahap kerja.">
+  <TaskBoard client:load />
+</AdminLayout>

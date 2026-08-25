@@ -27,6 +27,7 @@ interface AdminRow {
   seo_title: string | null;
   seo_description: string | null;
   published_at: string | null;
+  pipeline_stage: string;
 }
 
 function rowToProject(row: AdminRow, assetBase: string): Project {
@@ -50,6 +51,7 @@ function rowToProject(row: AdminRow, assetBase: string): Project {
     seoTitle: row.seo_title,
     seoDescription: row.seo_description,
     publishedAt: row.published_at,
+    pipelineStage: row.pipeline_stage,
   };
 }
 
@@ -58,7 +60,8 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
   const rows = await sql<AdminRow[]>`
     select id, slug, title, subtitle, summary, description, category, status,
            location, city, year, client, area_sqm, lead_architect,
-           cover_image_key, is_featured, seo_title, seo_description, published_at
+           cover_image_key, is_featured, seo_title, seo_description, published_at,
+           pipeline_stage
     from public.projects
     order by sort_order, created_at desc`;
   return rows.map((r) => rowToProject(r, assetBase));
@@ -130,6 +133,9 @@ export async function update(sql: Sql, id: string, input: ProjectInput): Promise
   }
   if (input.status !== undefined && input.status !== null) {
     fragments.push(sql`status = ${input.status}::public.project_status`);
+  }
+  if (input.pipelineStage !== undefined && input.pipelineStage !== null) {
+    fragments.push(sql`pipeline_stage = ${input.pipelineStage}::public.pipeline_stage`);
   }
   if (input.status === "published") {
     fragments.push(sql`published_at = coalesce(published_at, now())`);
