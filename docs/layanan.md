@@ -22,9 +22,9 @@ Subdomain yang akan dipakai:
 
 | Host | Menunjuk ke |
 | --- | --- |
-| `pahlevidirga.com` | Worker situs statis (`pahlevidirgadesignarchitectureweb`) |
-| `api.pahlevidirga.com` | Worker API (`pahlevidirga-api`), lewat Custom Domains |
-| `media.pahlevidirga.com` | bucket R2 |
+| `pahlevidirgaarchitecture.com` | Worker situs statis (`pahlevidirgadesignarchitectureweb`) |
+| `api.pahlevidirgaarchitecture.com` | Worker API (`pahlevidirga-api`), lewat Custom Domains |
+| `media.pahlevidirgaarchitecture.com` | bucket R2 |
 
 Tidak ada akun Google Cloud yang perlu disiapkan — API sekarang jalan di
 Cloudflare Workers yang sama dengan situs statis, bukan Cloud Run. Satu
@@ -41,7 +41,7 @@ sebelum bucket bisa dibuat, walaupun pemakaiannya di bawah kuota gratis.
 
 Yang perlu dibuat:
 
-- bucket `pahlevidirga-media`, sambungkan custom domain `media.pahlevidirga.com`
+- bucket `pahlevidirga-media`, sambungkan custom domain `media.pahlevidirgaarchitecture.com`
 - bucket `pahlevidirga-backup` untuk dump database harian
 - API token R2 dengan izin Object Read & Write
 
@@ -62,7 +62,7 @@ dan rate limit-nya sangat ketat.
 
 ### 5. Cloudflare Email Routing — disarankan
 
-Gratis, dan membuat `studio@pahlevidirga.com` diteruskan ke Gmail tanpa perlu
+Gratis, dan membuat `studio@pahlevidirgaarchitecture.com` diteruskan ke Gmail tanpa perlu
 berlangganan Google Workspace.
 
 ### 6. Sentry — disarankan

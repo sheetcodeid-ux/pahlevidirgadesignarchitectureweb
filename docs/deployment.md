@@ -37,7 +37,7 @@ values ('<uuid-user>', 'Nama Staf', 'admin');
 ## 2. Cloudflare R2
 
 1. R2 → Create bucket: `pahlevidirga-media` dan `pahlevidirga-backup`
-2. Pada bucket media: Settings → Custom Domain → `media.pahlevidirga.com`
+2. Pada bucket media: Settings → Custom Domain → `media.pahlevidirgaarchitecture.com`
 3. R2 → Manage API Tokens → buat token Object Read & Write
 
 Setelah token dibuat, isi lewat `wrangler secret put` (langkah 3) lalu coba
@@ -46,7 +46,7 @@ itu jalur yang dipakai panel admin, browser mengunggah langsung ke R2 tanpa
 melewati Worker API.
 
 Aktifkan juga cache rule agar gambar disimpan lama di edge:
-Caching → Cache Rules, hostname `media.pahlevidirga.com`, Edge TTL 1 tahun.
+Caching → Cache Rules, hostname `media.pahlevidirgaarchitecture.com`, Edge TTL 1 tahun.
 Nama file mengandung suffix acak, jadi versi baru tidak akan tertahan cache.
 
 ## 3. API (Cloudflare Workers)
@@ -97,7 +97,7 @@ Ringkasannya:
    Push ke `main` yang menyentuh `apps/api/**` akan men-deploy otomatis
    lewat `.github/workflows/deploy-api.yml`.
 
-Terakhir, arahkan `api.pahlevidirga.com` ke Worker ini lewat **Custom
+Terakhir, arahkan `api.pahlevidirgaarchitecture.com` ke Worker ini lewat **Custom
 Domains** di dashboard Worker (bukan CNAME manual) — Cloudflare yang
 mengurus sertifikat dan routing-nya.
 
@@ -127,8 +127,8 @@ setelan ini `dist` tidak pernah dibuat dan deploy gagal dengan
 Build variables:
 
 ```
-PUBLIC_API_BASE_URL=https://api.pahlevidirga.com
-PUBLIC_SITE_URL=https://pahlevidirga.com
+PUBLIC_API_BASE_URL=https://api.pahlevidirgaarchitecture.com
+PUBLIC_SITE_URL=https://pahlevidirgaarchitecture.com
 PUBLIC_TURNSTILE_SITE_KEY=<site key>
 ```
 
@@ -145,5 +145,5 @@ konten berubah — dari panel admin nanti, atau manual untuk sekarang.
 - Kirim satu pesan uji lewat `/kontak`, pastikan email notifikasi masuk
 - Jalankan workflow **Backup database** secara manual sekali untuk memastikan
   kredensialnya benar, jangan tunggu insiden untuk mengetahuinya
-- Daftarkan `https://pahlevidirga.com/sitemap-index.xml` di Google Search Console
+- Daftarkan `https://pahlevidirgaarchitecture.com/sitemap-index.xml` di Google Search Console
 - Aktifkan Cloudflare Web Analytics untuk domain

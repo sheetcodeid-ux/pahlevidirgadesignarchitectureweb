@@ -221,7 +221,7 @@ export function Sidebar({ currentPath, isMasterAdmin = false }: Props) {
           <a href="/" className="sidebar__site">
             <span className="sidebar__site-text">
               <span className="t-label">Situs publik</span>
-              <span className="sidebar__site-name">pahlevidirga.com</span>
+              <span className="sidebar__site-name">pahlevidirgaarchitecture.com</span>
             </span>
             <Icon name="external" size={16} />
           </a>
