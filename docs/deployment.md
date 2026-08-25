@@ -93,15 +93,13 @@ Ringkasannya:
    curl https://pahlevidirga-api.<subdomain-akun>.workers.dev/healthz
    ```
 
-4. **Deploy otomatis dari GitHub Actions** butuh dua secret di repo:
-
-   | Secret | Isi |
-   | --- | --- |
-   | `CLOUDFLARE_API_TOKEN` | token dengan izin Edit Workers (dashboard → My Profile → API Tokens) |
-   | `CLOUDFLARE_ACCOUNT_ID` | `cf6a6bde45d3fd8a93463e6cc7e71aa1` |
-
-   Push ke `main` yang menyentuh `apps/api/**` akan men-deploy otomatis
-   lewat `.github/workflows/deploy-api.yml`.
+4. **Deploy otomatis** jalan lewat Git integration bawaan Cloudflare
+   (Workers Builds), disetel dari **Workers & Pages → Create → Import a
+   repository** — bukan GitHub Actions. Root directory `apps/api`, Build
+   command kosong, Deploy command `npx wrangler deploy`. Push ke branch
+   produksi yang menyentuh `apps/api/**` otomatis rebuild dan deploy;
+   tidak perlu secret tambahan di GitHub karena Cloudflare yang jalankan
+   build-nya sendiri, bukan runner GitHub Actions.
 
 Terakhir, arahkan `api.pahlevidirgaarchitecture.com` ke Worker ini lewat **Custom
 Domains** di dashboard Worker (bukan CNAME manual) — Cloudflare yang
