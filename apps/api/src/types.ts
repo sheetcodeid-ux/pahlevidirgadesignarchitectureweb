@@ -285,6 +285,27 @@ export interface FinanceOverview {
   proyek: FinanceOverviewRow[];
 }
 
+export interface DirectoryContact {
+  id: string;
+  name: string;
+  category: string;
+  company?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DirectoryContactInput {
+  name?: string;
+  category?: string;
+  company?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  note?: string | null;
+}
+
 export interface InquiryRecord {
   id: string;
   name: string;
@@ -350,4 +371,11 @@ export const VALID_DOCUMENT_STATUS = new Set([
   "revisi_diminta",
   "disetujui",
   "final",
+]);
+
+export const VALID_CONTACT_CATEGORY = new Set([
+  "klien",
+  "kontraktor",
+  "supplier",
+  "lainnya",
 ]);

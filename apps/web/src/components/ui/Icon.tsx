@@ -40,7 +40,8 @@ export type IconName =
   | "copy"
   | "filter"
   | "close"
-  | "document";
+  | "document"
+  | "directory";
 
 interface Props {
   name: IconName;
@@ -213,6 +214,15 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
       <path d="M14 2v6h6" />
       <path d="M9 13h6M9 17h6" />
+    </>
+  ),
+  // Kartu kontak dengan pengait buku alamat — direktori klien/kontraktor/supplier.
+  directory: (
+    <>
+      <rect x="4" y="4" width="16" height="17" rx="2" />
+      <path d="M4 9h2M4 14h2" />
+      <circle cx="12.5" cy="11" r="2" />
+      <path d="M9 17c0-1.7 1.6-3 3.5-3s3.5 1.3 3.5 3" />
     </>
   ),
 };

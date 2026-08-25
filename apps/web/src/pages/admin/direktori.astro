@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { DirectoryPanel } from "../../components/admin/DirectoryPanel";
+---
+
+<AdminLayout title="Direktori" heading="Direktori" description="Klien, kontraktor, dan supplier yang dipakai berulang lintas proyek.">
+  <DirectoryPanel client:load />
+</AdminLayout>

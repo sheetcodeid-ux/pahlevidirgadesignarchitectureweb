@@ -509,6 +509,63 @@ begin
 end;
 $$;
 
+-- directory_contacts -------------------------------------------------------
+--
+-- Direktori klien/kontraktor/supplier: murni data internal, sama seperti
+-- team_members — tidak ada alasan untuk anon atau non-staf menyentuhnya.
+
+insert into public.directory_contacts (name, category, company, phone)
+values ('Toko Bangunan Jaya', 'supplier', 'CV Jaya Makmur', '0812xxxxxxx');
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.directory_contacts;
+    raise exception 'GAGAL: anon berhasil membaca directory_contacts';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca directory_contacts';
+  end;
+
+  begin
+    update public.directory_contacts set name = 'diubah anon';
+    raise exception 'GAGAL: anon berhasil mengubah directory_contacts';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak mengubah directory_contacts';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.directory_contacts;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun directory_contacts');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.directory_contacts;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat directory_contacts');
+
+  update public.directory_contacts set note = 'dihubungi minggu ini' where name = 'Toko Bangunan Jaya';
+  perform pg_temp.tolak(false, 'staf dapat mengubah catatan kontak');
+
+  reset role;
+end;
+$$;
+
 -- Bawaan tabel baru -----------------------------------------------------
 --
 -- Menjaga migrasi 20260824000003. Tabel yang dibuat tanpa GRANT eksplisit

@@ -394,3 +394,29 @@ export const ubahDokumen = (id: string, patch: { title?: string; status?: string
 
 export const hapusDokumen = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/documents/${id}`, { method: "DELETE" });
+
+// --- Direktori (klien, kontraktor, supplier) ------------------------------
+
+export interface KontakDirektori {
+  id: string;
+  name: string;
+  category: string;
+  company?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const daftarKontak = () => panggil<KontakDirektori[]>("/admin/directory");
+
+export const tambahKontak = (input: {
+  name: string; category: string; company?: string | null; phone?: string | null; email?: string | null; note?: string | null;
+}) => panggil<{ id: string }>("/admin/directory", { method: "POST", body: JSON.stringify(input) });
+
+export const ubahKontak = (id: string, patch: Partial<KontakDirektori>) =>
+  panggil<{ updated: boolean }>(`/admin/directory/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusKontak = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/directory/${id}`, { method: "DELETE" });
