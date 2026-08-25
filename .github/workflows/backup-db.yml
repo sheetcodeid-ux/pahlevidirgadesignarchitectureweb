@@ -29,7 +29,12 @@ jobs:
           # pooler (port 6543) yang memutus session per-transaksi.
           DATABASE_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
         run: |
-          pg_dump "$DATABASE_URL" \
+          # Path eksplisit ke binary v17 — runner ubuntu-latest sudah punya
+          # /usr/bin/pg_dump versi 16 bawaan image, dan itu lebih dulu
+          # ditemukan di PATH daripada versi 17 yang baru diinstal di atas.
+          # Server Supabase ada di v17, dan pg_dump menolak dump dari server
+          # yang versinya lebih baru dari client-nya.
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" \
             --format=custom \
             --no-owner \
             --no-privileges \
