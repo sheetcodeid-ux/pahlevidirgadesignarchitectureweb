@@ -7,6 +7,8 @@ import {
   daftarProyek, simpanProyek, mintaUrlUnggah, type Proyek,
   ambilProgress, ubahFaseProgress, buatUlangTokenProgress,
   tambahCatatanProgress, hapusCatatanProgress, type ProjectProgress,
+  daftarTim, daftarTugasProyek, tambahTugas, ubahTugas, hapusTugas,
+  type AnggotaTim, type Tugas,
 } from "../../lib/admin";
 
 const KATEGORI: Record<string, string> = {
@@ -22,6 +24,138 @@ const FASE: [string, string][] = [
   ["konstruksi", "Konstruksi"],
   ["selesai", "Selesai"],
 ];
+
+const PIPELINE: [string, string][] = [
+  ["proposal", "Proposal"],
+  ["deal_kontrak", "Deal & Kontrak"],
+  ["dp_50", "DP 50%"],
+  ["desain_1", "Desain 1"],
+  ["desain_2", "Desain 2"],
+  ["finish", "Finish"],
+  ["pelunasan", "Pelunasan"],
+];
+
+const STATUS_TUGAS: [string, string][] = [
+  ["belum_mulai", "Belum mulai"],
+  ["berjalan", "Berjalan"],
+  ["review_internal", "Review internal"],
+  ["menunggu_klien", "Menunggu klien"],
+  ["selesai", "Selesai"],
+];
+
+function PanelTugas({ projectId }: { projectId: string }) {
+  const toast = useToast();
+  const [tugas, setTugas] = useState<Tugas[] | null>(null);
+  const [tim, setTim] = useState<AnggotaTim[]>([]);
+  const [judulBaru, setJudulBaru] = useState("");
+  const [penanggungJawab, setPenanggungJawab] = useState("");
+  const [sibuk, setSibuk] = useState(false);
+
+  function muat() {
+    daftarTugasProyek(projectId).then(setTugas).catch(() => setTugas([]));
+  }
+
+  useEffect(() => {
+    muat();
+    daftarTim().then(setTim).catch(() => setTim([]));
+  }, [projectId]);
+
+  async function tambah() {
+    const judul = judulBaru.trim();
+    if (judul.length < 2) return;
+    setSibuk(true);
+    try {
+      await tambahTugas(projectId, { title: judul, assigneeId: penanggungJawab || null });
+      setJudulBaru("");
+      setPenanggungJawab("");
+      muat();
+      toast({ judul: "Tugas ditambahkan", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal menambah tugas", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function ubahStatusTugas(id: string, status: string) {
+    if (!tugas) return;
+    const sebelum = tugas;
+    setTugas(tugas.map((t) => (t.id === id ? { ...t, status } : t)));
+    try {
+      await ubahTugas(id, { status });
+    } catch (e) {
+      setTugas(sebelum);
+      toast({ judul: "Gagal mengubah status", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function hapus(id: string) {
+    if (!tugas) return;
+    try {
+      await hapusTugas(id);
+      setTugas(tugas.filter((t) => t.id !== id));
+    } catch (e) {
+      toast({ judul: "Gagal menghapus tugas", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  if (!tugas) {
+    return <span className="skeleton" style={{ height: "6rem" }} />;
+  }
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="card">
+        <div className="card__body">
+          <div className="spec-grid">
+            <div className="field">
+              <label className="field__label" htmlFor="tug-judul">Tugas baru</label>
+              <input id="tug-judul" className="input" value={judulBaru}
+                onChange={(e) => setJudulBaru(e.target.value)} placeholder="Contoh: Gambar kerja denah" />
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="tug-pic">Penanggung jawab</label>
+              <select id="tug-pic" className="input" value={penanggungJawab}
+                onChange={(e) => setPenanggungJawab(e.target.value)}>
+                <option value="">Belum ditentukan</option>
+                {tim.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="row row--end" style={{ marginTop: "var(--space-4)" }}>
+            <button type="button" className="btn btn--primary" disabled={judulBaru.trim().length < 2 || sibuk} onClick={tambah}>
+              <Icon name="plus" size={15} />Tambah tugas
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {tugas.length === 0 ? (
+        <p className="t-muted">Belum ada tugas untuk proyek ini.</p>
+      ) : (
+        <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
+          {tugas.map((t) => (
+            <li key={t.id} className="item item--bordered">
+              <span className="item__text">
+                <span className="item__title">{t.title}</span>
+                <span className="item__desc">{t.assigneeName ?? "Belum ditentukan"}</span>
+              </span>
+              <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
+                value={t.status} onChange={(e) => ubahStatusTugas(t.id, e.target.value)}
+                aria-label={`Ubah status ${t.title}`}>
+                {STATUS_TUGAS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+              <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${t.title}`}
+                onClick={() => hapus(t.id)}>
+                <Icon name="trash" size={15} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function PanelProgres({ projectId }: { projectId: string }) {
   const toast = useToast();
@@ -466,10 +600,46 @@ function Isi() {
         </div>
       </div>
 
+      <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="dashboard" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Tahap pipeline</span>
+            <span className="t-muted">Alur kerja internal studio — beda dari status terbit di atas.</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="segmented" role="group" aria-label="Tahap pipeline">
+            {PIPELINE.map(([tahap, label]) => (
+              <button
+                key={tahap}
+                type="button"
+                className="segmented__opt"
+                aria-pressed={nilai("pipelineStage") === tahap}
+                onClick={async () => {
+                  const sebelum = nilai("pipelineStage");
+                  set("pipelineStage" as keyof Proyek, tahap as never);
+                  try {
+                    await simpanProyek(asli.id, { pipelineStage: tahap });
+                    setAsli((a) => (a ? { ...a, pipelineStage: tahap } : a));
+                  } catch (e) {
+                    set("pipelineStage" as keyof Proyek, sebelum as never);
+                    toast({ judul: "Gagal mengubah tahap", keterangan: (e as Error).message, nada: "gagal" });
+                  }
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <Tabs
         items={[
           { id: "detail", label: "Detail", content: detail },
           { id: "galeri", label: "Galeri", content: galeri },
+          { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
           { id: "progres", label: "Progres", content: <PanelProgres projectId={asli.id} /> },
           { id: "seo", label: "SEO", content: seo },
         ]}

@@ -1,4 +1,4 @@
-import { VALID_CATEGORIES, VALID_PROJECT_STATUS } from "../types";
+import { VALID_CATEGORIES, VALID_PROJECT_STATUS, VALID_PIPELINE_STAGE } from "../types";
 import type { ProjectInput } from "../types";
 
 /** Slug hanya huruf kecil, angka, dan tanda hubung — aman dipakai di URL. */
@@ -31,6 +31,9 @@ export function checkProjectInput(input: ProjectInput, isNew: boolean): void {
   }
   if (input.status !== undefined && !VALID_PROJECT_STATUS.has(input.status)) {
     throw new ValidationError("status tidak dikenal");
+  }
+  if (input.pipelineStage !== undefined && !VALID_PIPELINE_STAGE.has(input.pipelineStage)) {
+    throw new ValidationError("tahap pipeline tidak dikenal");
   }
   if (input.slug !== undefined && !isValidSlug(input.slug)) {
     throw new ValidationError("slug hanya boleh huruf kecil, angka, dan tanda hubung");

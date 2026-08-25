@@ -139,6 +139,7 @@ export interface Proyek {
   seoTitle?: string;
   seoDescription?: string;
   publishedAt?: string;
+  pipelineStage?: string;
 }
 
 export const daftarProyek = () => panggil<Proyek[]>("/admin/projects");
@@ -250,3 +251,52 @@ export const tambahCatatanProgress = (projectId: string, title: string, note: st
 
 export const hapusCatatanProgress = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/progress-updates/${id}`, { method: "DELETE" });
+
+// --- Tim & freelancer -----------------------------------------------------
+
+export interface AnggotaTim {
+  id: string;
+  name: string;
+  role?: string | null;
+}
+
+export const daftarTim = () => panggil<AnggotaTim[]>("/admin/team");
+
+export const tambahAnggotaTim = (name: string, role: string | null) =>
+  panggil<{ id: string }>("/admin/team", { method: "POST", body: JSON.stringify({ name, role }) });
+
+export const ubahAnggotaTim = (id: string, patch: Partial<AnggotaTim>) =>
+  panggil<{ updated: boolean }>(`/admin/team/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusAnggotaTim = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/team/${id}`, { method: "DELETE" });
+
+// --- List Kerjaan (tugas) ---------------------------------------------------
+
+export interface Tugas {
+  id: string;
+  projectId: string;
+  projectTitle?: string;
+  title: string;
+  stage?: string | null;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
+  status: string;
+  dueDate?: string | null;
+  sortOrder: number;
+}
+
+export const daftarTugas = () => panggil<Tugas[]>("/admin/tasks");
+
+export const daftarTugasProyek = (projectId: string) => panggil<Tugas[]>(`/admin/projects/${projectId}/tasks`);
+
+export const tambahTugas = (
+  projectId: string,
+  input: { title: string; stage?: string | null; assigneeId?: string | null; dueDate?: string | null },
+) => panggil<{ id: string }>(`/admin/projects/${projectId}/tasks`, { method: "POST", body: JSON.stringify(input) });
+
+export const ubahTugas = (id: string, patch: Partial<Tugas>) =>
+  panggil<{ updated: boolean }>(`/admin/tasks/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusTugas = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/tasks/${id}`, { method: "DELETE" });

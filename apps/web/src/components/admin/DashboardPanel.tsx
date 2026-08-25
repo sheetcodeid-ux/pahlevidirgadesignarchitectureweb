@@ -1,22 +1,36 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
-import { daftarProyek, daftarPesan } from "../../lib/admin";
+import { daftarProyek, daftarPesan, type Proyek } from "../../lib/admin";
+
+const PIPELINE: [string, string][] = [
+  ["proposal", "Proposal"],
+  ["deal_kontrak", "Deal & Kontrak"],
+  ["dp_50", "DP 50%"],
+  ["desain_1", "Desain 1"],
+  ["desain_2", "Desain 2"],
+  ["finish", "Finish"],
+  ["pelunasan", "Pelunasan"],
+];
 
 function Isi() {
   const [angka, setAngka] = useState<{ terbit: number; draf: number; baru: number } | null>(null);
+  const [proyek, setProyek] = useState<Proyek[] | null>(null);
 
   useEffect(() => {
     Promise.all([daftarProyek(), daftarPesan()])
-      .then(([p, q]) =>
+      .then(([p, q]) => {
+        setProyek(p);
         setAngka({
           terbit: p.filter((x) => x.status === "published").length,
           draf: p.filter((x) => x.status === "draft").length,
           baru: q.filter((x) => x.status === "new").length,
-        }),
-      )
+        });
+      })
       .catch(() => setAngka({ terbit: 0, draf: 0, baru: 0 }));
   }, []);
+
+  const proyekAktif = (proyek ?? []).filter((p) => p.pipelineStage && p.pipelineStage !== "pelunasan");
 
   // Urutan langkah mengikuti ketergantungannya: tidak ada gunanya menerbitkan
   // proyek sebelum ada proyek, dan tidak ada gunanya menunggu pesan sebelum
@@ -85,6 +99,38 @@ function Isi() {
           </div>
         </div>
       </div>
+
+      {proyekAktif.length > 0 && (
+        <div className="card">
+          <div className="card__header">
+            <span className="card__titles">
+              <span className="t-heading">Alur Proyek</span>
+              <span className="t-muted">{proyekAktif.length} proyek berjalan, dikelompokkan per tahap.</span>
+            </span>
+          </div>
+          <div className="card__body">
+            <div className="spec-grid">
+              {PIPELINE.filter(([tahap]) => tahap !== "pelunasan").map(([tahap, label]) => {
+                const isi = proyekAktif.filter((p) => p.pipelineStage === tahap);
+                if (isi.length === 0) return null;
+                return (
+                  <div key={tahap} className="stack" style={{ gap: "var(--space-2)" }}>
+                    <span className="t-label">{label} · {isi.length}</span>
+                    {isi.map((p) => (
+                      <a key={p.id} href={`/admin/proyek/edit?id=${p.id}`} className="item item--bordered" style={{ textDecoration: "none" }}>
+                        <span className="item__text">
+                          <span className="item__title">{p.title}</span>
+                          {p.city && <span className="item__desc">{p.city}</span>}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

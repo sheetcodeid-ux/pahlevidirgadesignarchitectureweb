@@ -54,6 +54,8 @@ export interface Project {
   seoDescription?: string | null;
   publishedAt?: string | null;
   images?: Image[];
+  /** Tahap alur kerja internal studio — beda dari status (draft/published/archived). */
+  pipelineStage?: string;
 }
 
 export interface Image {
@@ -93,6 +95,7 @@ export interface ProjectInput {
   isFeatured?: boolean;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  pipelineStage?: string;
 }
 
 export interface ImageInput {
@@ -160,6 +163,39 @@ export interface ClientProgressView {
   updates: ProjectProgressUpdate[];
 }
 
+export interface TeamMember {
+  id: string;
+  name: string;
+  role?: string | null;
+}
+
+export interface TeamMemberInput {
+  name?: string;
+  role?: string | null;
+}
+
+export interface ProjectTask {
+  id: string;
+  projectId: string;
+  projectTitle?: string;
+  title: string;
+  stage?: string | null;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
+  status: string;
+  dueDate?: string | null;
+  sortOrder: number;
+}
+
+export interface ProjectTaskInput {
+  title?: string;
+  stage?: string | null;
+  assigneeId?: string | null;
+  status?: string;
+  dueDate?: string | null;
+  sortOrder?: number;
+}
+
 export interface InquiryRecord {
   id: string;
   name: string;
@@ -189,5 +225,23 @@ export const VALID_PROJECT_PHASE = new Set([
   "ded",
   "perizinan",
   "konstruksi",
+  "selesai",
+]);
+
+export const VALID_PIPELINE_STAGE = new Set([
+  "proposal",
+  "deal_kontrak",
+  "dp_50",
+  "desain_1",
+  "desain_2",
+  "finish",
+  "pelunasan",
+]);
+
+export const VALID_TASK_STATUS = new Set([
+  "belum_mulai",
+  "berjalan",
+  "review_internal",
+  "menunggu_klien",
   "selesai",
 ]);

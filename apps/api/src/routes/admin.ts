@@ -7,11 +7,13 @@ import { role } from "../repository/profile";
 import * as adminRepo from "../repository/admin";
 import * as settingsRepo from "../repository/settings";
 import * as progressRepo from "../repository/progress";
+import * as teamRepo from "../repository/team";
+import * as tasksRepo from "../repository/tasks";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload } from "../lib/r2";
 import { checkProjectInput, ValidationError } from "../lib/validate";
-import type { ProjectInput, ImageInput, StudioSettingsInput } from "../types";
-import { VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE } from "../types";
+import type { ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput } from "../types";
+import { VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE } from "../types";
 
 type Vars = { userID: string; userEmail?: string; accessToken: string };
 
@@ -190,6 +192,97 @@ admin.patch("/account/password", async (c) => {
   }
 
   return c.json({ data: { updated: true } });
+});
+
+// GET /api/v1/admin/team
+admin.get("/team", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => teamRepo.list(sql));
+  return c.json({ data });
+});
+
+admin.post("/team", async (c) => {
+  const input = await c.req.json<TeamMemberInput>().catch(() => ({}) as TeamMemberInput);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => teamRepo.create(sql, input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.patch("/team/:id", async (c) => {
+  const input = await c.req.json<TeamMemberInput>().catch(() => ({}) as TeamMemberInput);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => teamRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "anggota tim tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+admin.delete("/team/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => teamRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "anggota tim tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+// GET /api/v1/admin/tasks — seluruh tugas lintas proyek, untuk List Kerjaan.
+admin.get("/tasks", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => tasksRepo.listAll(sql));
+  return c.json({ data });
+});
+
+admin.patch("/tasks/:id", async (c) => {
+  const input = await c.req.json<ProjectTaskInput>().catch(() => ({}) as ProjectTaskInput);
+  if (input.status !== undefined && !VALID_TASK_STATUS.has(input.status)) {
+    return c.json({ error: { status: 422, message: "status tugas tidak dikenal" } }, 422);
+  }
+  if (input.stage !== undefined && input.stage !== null && !VALID_PIPELINE_STAGE.has(input.stage)) {
+    return c.json({ error: { status: 422, message: "tahap pipeline tidak dikenal" } }, 422);
+  }
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => tasksRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "tugas tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+admin.delete("/tasks/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => tasksRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "tugas tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+// GET /api/v1/admin/projects/:id/tasks
+admin.get("/projects/:id/tasks", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => tasksRepo.listForProject(sql, c.req.param("id")));
+  return c.json({ data });
+});
+
+admin.post("/projects/:id/tasks", async (c) => {
+  const input = await c.req.json<ProjectTaskInput>().catch(() => ({}) as ProjectTaskInput);
+  if (input.stage !== undefined && input.stage !== null && !VALID_PIPELINE_STAGE.has(input.stage)) {
+    return c.json({ error: { status: 422, message: "tahap pipeline tidak dikenal" } }, 422);
+  }
+
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => tasksRepo.create(sql, c.req.param("id"), input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
 });
 
 // GET /api/v1/admin/settings
