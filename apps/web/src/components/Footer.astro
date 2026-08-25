@@ -1,17 +1,23 @@
 ---
+import { getSettings } from "../lib/api";
+
 const year = new Date().getFullYear();
+const settings = await getSettings();
+const keterangan = settings.tagline || (settings.city ? `Arsitektur & Interior — ${settings.city}` : "Arsitektur & Interior — Indonesia");
 ---
 
 <footer class="site-footer">
   <div class="shell footer-inner">
     <div>
-      <p class="footer-name">Dirga Pahlevi Architecture</p>
-      <p class="footer-note">Arsitektur &amp; Interior — Indonesia</p>
+      <p class="footer-name">{settings.studioName}</p>
+      <p class="footer-note">{keterangan}</p>
     </div>
     <div>
-      <p class="footer-note">
-        <a href="mailto:studio@pahlevidirgaarchitecture.com">studio@pahlevidirgaarchitecture.com</a>
-      </p>
+      {settings.email && (
+        <p class="footer-note">
+          <a href={`mailto:${settings.email}`}>{settings.email}</a>
+        </p>
+      )}
       <p class="footer-note">&copy; {year}</p>
     </div>
   </div>

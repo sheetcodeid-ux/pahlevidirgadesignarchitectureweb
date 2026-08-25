@@ -8,6 +8,8 @@ import { projects } from "./routes/projects";
 import { auth } from "./routes/auth";
 import { inquiries } from "./routes/inquiries";
 import { admin } from "./routes/admin";
+import { progress } from "./routes/progress";
+import { settings } from "./routes/settings";
 import { rateLimit } from "./middleware/rateLimit";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -32,6 +34,7 @@ app.route("/", health);
 
 const v1 = new Hono<{ Bindings: Env }>();
 v1.route("/", projects);
+v1.route("/", settings);
 
 // Login dibatasi lebih ketat daripada form kontak: sepuluh percobaan per IP
 // per jam cukup untuk orang yang lupa kata sandinya, tapi tidak cukup untuk
@@ -44,6 +47,12 @@ v1.use("/inquiries", rateLimit("inquiry", 5, 3600));
 v1.route("/", inquiries);
 
 v1.route("/admin", admin);
+
+// Link progres klien: bukan lewat Turnstile (klien tidak dianggap mengisi
+// form), tapi tokennya sendiri 160-bit — rate limit di sini cuma jaga-jaga
+// dari percobaan enumerasi kasar, bukan pertahanan utama.
+v1.use("/progress/:token", rateLimit("progress", 30, 3600));
+v1.route("/", progress);
 
 app.route("/api/v1", v1);
 

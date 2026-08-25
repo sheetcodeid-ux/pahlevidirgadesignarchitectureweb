@@ -3,12 +3,217 @@ import { Icon } from "../ui/Icon";
 import { Tabs } from "../ui/misc/Nav";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarProyek, simpanProyek, mintaUrlUnggah, type Proyek } from "../../lib/admin";
+import {
+  daftarProyek, simpanProyek, mintaUrlUnggah, type Proyek,
+  ambilProgress, ubahFaseProgress, buatUlangTokenProgress,
+  tambahCatatanProgress, hapusCatatanProgress, type ProjectProgress,
+} from "../../lib/admin";
 
 const KATEGORI: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
   landscape: "Lanskap", masterplan: "Masterplan", renovation: "Renovasi",
 };
+
+const FASE: [string, string][] = [
+  ["konsultasi", "Konsultasi"],
+  ["konsep", "Konsep"],
+  ["ded", "DED"],
+  ["perizinan", "Perizinan"],
+  ["konstruksi", "Konstruksi"],
+  ["selesai", "Selesai"],
+];
+
+function PanelProgres({ projectId }: { projectId: string }) {
+  const toast = useToast();
+  const [progres, setProgres] = useState<ProjectProgress | null>(null);
+  const [judulBaru, setJudulBaru] = useState("");
+  const [catatanBaru, setCatatanBaru] = useState("");
+  const [sibuk, setSibuk] = useState(false);
+
+  useEffect(() => {
+    ambilProgress(projectId).then(setProgres).catch(() => setProgres(null));
+  }, [projectId]);
+
+  const linkKlien = progres
+    ? `${import.meta.env.PUBLIC_SITE_URL ?? ""}/progres?t=${progres.accessToken}`
+    : "";
+
+  async function ubahFase(fase: string) {
+    if (!progres) return;
+    const sebelum = progres.phase;
+    setProgres({ ...progres, phase: fase });
+    try {
+      await ubahFaseProgress(projectId, fase);
+    } catch (e) {
+      setProgres({ ...progres, phase: sebelum });
+      toast({ judul: "Gagal mengubah fase", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function salinLink() {
+    try {
+      await navigator.clipboard.writeText(linkKlien);
+      toast({ judul: "Link disalin", nada: "sukses" });
+    } catch {
+      toast({ judul: "Tidak bisa menyalin otomatis", keterangan: linkKlien, nada: "netral" });
+    }
+  }
+
+  async function buatUlangLink() {
+    if (!progres) return;
+    setSibuk(true);
+    try {
+      const { accessToken } = await buatUlangTokenProgress(projectId);
+      setProgres({ ...progres, accessToken });
+      toast({ judul: "Link baru dibuat", keterangan: "Link lama tidak berlaku lagi.", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal membuat link baru", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function tambahCatatan() {
+    const judul = judulBaru.trim();
+    if (judul.length < 2 || !progres) return;
+    setSibuk(true);
+    try {
+      await tambahCatatanProgress(projectId, judul, catatanBaru.trim() || null);
+      setJudulBaru("");
+      setCatatanBaru("");
+      const ulang = await ambilProgress(projectId);
+      setProgres(ulang);
+      toast({ judul: "Catatan ditambahkan", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal menambah catatan", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function hapusCatatan(id: string) {
+    if (!progres) return;
+    try {
+      await hapusCatatanProgress(id);
+      setProgres({ ...progres, updates: progres.updates.filter((u) => u.id !== id) });
+    } catch (e) {
+      toast({ judul: "Gagal menghapus catatan", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  if (!progres) {
+    return <span className="skeleton" style={{ height: "6rem" }} />;
+  }
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="calendar" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Fase proyek</span>
+            <span className="t-muted">Ditampilkan ke klien lewat link progres.</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="segmented" role="group" aria-label="Fase proyek">
+            {FASE.map(([nilai, label]) => (
+              <button
+                key={nilai}
+                type="button"
+                className="segmented__opt"
+                aria-pressed={progres.phase === nilai}
+                onClick={() => ubahFase(nilai)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="external" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Link untuk klien</span>
+            <span className="t-muted">Tanpa login — bagikan lewat WhatsApp atau email.</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="stack">
+            <div className="row" style={{ gap: "var(--space-2)" }}>
+              <input className="input input--mono" readOnly value={linkKlien} style={{ flex: 1 }} />
+              <button type="button" className="btn btn--secondary btn--icon" aria-label="Salin link" onClick={salinLink}>
+                <Icon name="copy" size={16} />
+              </button>
+            </div>
+            <div className="row row--end">
+              <button type="button" className="btn btn--ghost btn--sm" disabled={sibuk} onClick={buatUlangLink}>
+                Buat ulang link
+              </button>
+            </div>
+            <p className="field__help">
+              Membuat ulang link membuat link lama berhenti berfungsi — pakai kalau link lama terlanjur tersebar ke pihak yang salah.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="edit" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Linimasa</span>
+            <span className="t-muted">Catatan singkat yang dilihat klien, terbaru di atas.</span>
+          </span>
+        </div>
+        <div className="card__body">
+          <div className="stack">
+            <div className="field">
+              <label className="field__label" htmlFor="prog-judul">Judul catatan</label>
+              <input id="prog-judul" className="input" value={judulBaru}
+                onChange={(e) => setJudulBaru(e.target.value)} placeholder="Contoh: Fondasi selesai" />
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="prog-catatan">Catatan (opsional)</label>
+              <textarea id="prog-catatan" className="input input--area" value={catatanBaru}
+                onChange={(e) => setCatatanBaru(e.target.value)} />
+            </div>
+            <div className="row row--end">
+              <button type="button" className="btn btn--primary" disabled={judulBaru.trim().length < 2 || sibuk}
+                onClick={tambahCatatan}>
+                Tambah ke linimasa
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {progres.updates.length > 0 && (
+        <ol className="stack" style={{ gap: "var(--space-3)", listStyle: "none", padding: 0 }}>
+          {progres.updates.map((u) => (
+            <li key={u.id} className="card">
+              <div className="card__body row row--between" style={{ alignItems: "flex-start" }}>
+                <span className="stack" style={{ gap: "var(--space-1)" }}>
+                  <span className="t-subheading">{u.title}</span>
+                  {u.note && <span className="t-muted">{u.note}</span>}
+                  <span className="t-mono t-muted" style={{ fontSize: "var(--text-xs)" }}>
+                    {new Date(u.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                  </span>
+                </span>
+                <button type="button" className="btn btn--ghost btn--icon" aria-label="Hapus catatan"
+                  onClick={() => hapusCatatan(u.id)}>
+                  <Icon name="trash" size={15} />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
 
 type Draf = Partial<Proyek>;
 
@@ -265,6 +470,7 @@ function Isi() {
         items={[
           { id: "detail", label: "Detail", content: detail },
           { id: "galeri", label: "Galeri", content: galeri },
+          { id: "progres", label: "Progres", content: <PanelProgres projectId={asli.id} /> },
           { id: "seo", label: "SEO", content: seo },
         ]}
       />

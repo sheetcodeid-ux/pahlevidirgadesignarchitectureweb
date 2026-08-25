@@ -125,6 +125,48 @@ export function MiscShowcase() {
           </div>
           <Questionnaire />
         </div>
+
+        <div className="spec-demo">
+          <div className="spec-demo__name">
+            <span className="t-subheading">Stepper</span>
+            <code className="swatch__name">.progres-stepper</code>
+          </div>
+          <ol className="progres-stepper">
+            {["Konsultasi", "Konsep", "DED", "Perizinan", "Konstruksi", "Selesai"].map((label, i) => (
+              <li key={label} className="progres-stepper__step" data-done={i < 3 || undefined} data-current={i === 3 || undefined}>
+                <span className="progres-stepper__dot" aria-hidden="true">
+                  {i < 3 ? <Icon name="check" size={12} /> : null}
+                </span>
+                <span className="progres-stepper__label">{label}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="field__help">
+            Dipakai di halaman progres proyek yang dilihat klien lewat link token — bukan panel admin.
+          </p>
+        </div>
+
+        <div className="spec-demo">
+          <div className="spec-demo__name">
+            <span className="t-subheading">Timeline</span>
+            <code className="swatch__name">.progres-timeline</code>
+          </div>
+          <ol className="progres-timeline">
+            {[
+              { t: "Fondasi selesai", d: "Cor fondasi rampung, lanjut struktur kolom.", tgl: "12 Agustus 2026" },
+              { t: "Mulai konstruksi", d: "Kontraktor mulai pekerjaan tanah.", tgl: "1 Agustus 2026" },
+            ].map((item) => (
+              <li key={item.t} className="progres-timeline__item">
+                <span className="progres-timeline__dot" aria-hidden="true" />
+                <div className="progres-timeline__body">
+                  <span className="t-mono t-muted progres-timeline__date">{item.tgl}</span>
+                  <span className="t-subheading">{item.t}</span>
+                  <p className="t-muted" style={{ margin: 0 }}>{item.d}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </div>
   );

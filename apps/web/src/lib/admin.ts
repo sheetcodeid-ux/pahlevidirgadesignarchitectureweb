@@ -188,3 +188,65 @@ export const mintaUrlUnggah = (projectSlug: string, contentType: string) =>
     method: "POST",
     body: JSON.stringify({ projectSlug, contentType }),
   });
+
+// --- Info studio ------------------------------------------------------
+
+export interface StudioSettings {
+  studioName: string;
+  tagline?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  instagramUrl?: string | null;
+}
+
+export const ambilSettings = () => panggil<StudioSettings>("/admin/settings");
+
+export const simpanSettings = (patch: Partial<StudioSettings>) =>
+  panggil<{ updated: boolean }>("/admin/settings", { method: "PATCH", body: JSON.stringify(patch) });
+
+// --- Akun ---------------------------------------------------------------
+
+export const ubahPassword = (newPassword: string) =>
+  panggil<{ updated: boolean }>("/admin/account/password", {
+    method: "PATCH",
+    body: JSON.stringify({ newPassword }),
+  });
+
+// --- Progres proyek (dilihat klien lewat link token) --------------------
+
+export interface ProgressUpdate {
+  id: string;
+  title: string;
+  note?: string | null;
+  photoUrl?: string | null;
+  createdAt: string;
+}
+
+export interface ProjectProgress {
+  phase: string;
+  accessToken: string;
+  updates: ProgressUpdate[];
+}
+
+export const ambilProgress = (projectId: string) =>
+  panggil<ProjectProgress>(`/admin/projects/${projectId}/progress`);
+
+export const ubahFaseProgress = (projectId: string, phase: string) =>
+  panggil<{ updated: boolean }>(`/admin/projects/${projectId}/progress`, {
+    method: "PATCH",
+    body: JSON.stringify({ phase }),
+  });
+
+export const buatUlangTokenProgress = (projectId: string) =>
+  panggil<{ accessToken: string }>(`/admin/projects/${projectId}/progress/token`, { method: "POST" });
+
+export const tambahCatatanProgress = (projectId: string, title: string, note: string | null) =>
+  panggil<{ id: string }>(`/admin/projects/${projectId}/progress/updates`, {
+    method: "POST",
+    body: JSON.stringify({ title, note }),
+  });
+
+export const hapusCatatanProgress = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/progress-updates/${id}`, { method: "DELETE" });

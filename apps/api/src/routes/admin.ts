@@ -5,13 +5,15 @@ import { requireSupabaseAuth } from "../middleware/auth";
 import { requireStaff } from "../middleware/staff";
 import { role } from "../repository/profile";
 import * as adminRepo from "../repository/admin";
+import * as settingsRepo from "../repository/settings";
+import * as progressRepo from "../repository/progress";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload } from "../lib/r2";
 import { checkProjectInput, ValidationError } from "../lib/validate";
-import type { ProjectInput, ImageInput } from "../types";
-import { VALID_INQUIRY_STATUS } from "../types";
+import type { ProjectInput, ImageInput, StudioSettingsInput } from "../types";
+import { VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE } from "../types";
 
-type Vars = { userID: string; userEmail?: string };
+type Vars = { userID: string; userEmail?: string; accessToken: string };
 
 export const admin = new Hono<{ Bindings: Env; Variables: Vars }>();
 
@@ -156,6 +158,100 @@ admin.patch("/inquiries/:id", async (c) => {
     return c.json({ data: { updated: true } });
   } catch (err) {
     if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "pesan tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+// PATCH /api/v1/admin/account/password
+//
+// Meneruskan ke Supabase Auth dengan token akses milik pemanggil sendiri
+// (bukan service_role) — GoTrue yang memverifikasi sesi itu benar-benar sah
+// sebelum mengganti password, kita tidak perlu menduplikasi logika itu.
+admin.patch("/account/password", async (c) => {
+  const body = await c.req.json<{ newPassword?: string }>().catch((): { newPassword?: string } => ({}));
+  const newPassword = body.newPassword ?? "";
+  if (newPassword.length < 8) {
+    return c.json({ error: { status: 422, message: "kata sandi minimal 8 karakter" } }, 422);
+  }
+
+  const supabaseUrl = (c.env.SUPABASE_URL ?? "").replace(/\/$/, "");
+  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: c.env.SUPABASE_ANON_KEY ?? "",
+      Authorization: `Bearer ${c.get("accessToken")}`,
+    },
+    body: JSON.stringify({ password: newPassword }),
+  });
+
+  if (!res.ok) {
+    return c.json({ error: { status: 422, message: "gagal mengubah kata sandi" } }, 422);
+  }
+
+  return c.json({ data: { updated: true } });
+});
+
+// GET /api/v1/admin/settings
+admin.get("/settings", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => settingsRepo.get(sql));
+  return c.json({ data });
+});
+
+admin.patch("/settings", async (c) => {
+  const input = await c.req.json<StudioSettingsInput>().catch(() => ({}) as StudioSettingsInput);
+  await withDb(c.env, c.executionCtx, (sql) => settingsRepo.update(sql, input));
+  return c.json({ data: { updated: true } });
+});
+
+// GET /api/v1/admin/projects/:id/progress — fase, link klien, dan linimasa.
+admin.get("/projects/:id/progress", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    progressRepo.getForAdmin(sql, assetBase(c.env), c.req.param("id")),
+  );
+  return c.json({ data });
+});
+
+admin.patch("/projects/:id/progress", async (c) => {
+  const body = await c.req.json<{ phase?: string }>().catch((): { phase?: string } => ({}));
+  const phase = body.phase ?? "";
+  if (!VALID_PROJECT_PHASE.has(phase)) {
+    return c.json({ error: { status: 422, message: "fase tidak dikenal" } }, 422);
+  }
+
+  await withDb(c.env, c.executionCtx, (sql) => progressRepo.setPhase(sql, c.req.param("id"), phase));
+  return c.json({ data: { updated: true } });
+});
+
+// POST /api/v1/admin/projects/:id/progress/token — buat ulang link klien,
+// misalnya kalau link lama sudah terlanjur tersebar ke pihak yang salah.
+admin.post("/projects/:id/progress/token", async (c) => {
+  const accessToken = await withDb(c.env, c.executionCtx, (sql) =>
+    progressRepo.regenerateToken(sql, c.req.param("id")),
+  );
+  return c.json({ data: { accessToken } });
+});
+
+admin.post("/projects/:id/progress/updates", async (c) => {
+  type Body = { title?: string; note?: string | null; photoKey?: string | null };
+  const body = await c.req.json<Body>().catch((): Body => ({}));
+  const title = (body.title ?? "").trim();
+  if (title.length < 2 || title.length > 160) {
+    return c.json({ error: { status: 422, message: "judul catatan harus 2-160 karakter" } }, 422);
+  }
+
+  const id = await withDb(c.env, c.executionCtx, (sql) =>
+    progressRepo.addUpdate(sql, c.req.param("id"), title, body.note ?? null, body.photoKey ?? null),
+  );
+  return c.json({ data: { id } }, 201);
+});
+
+admin.delete("/progress-updates/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => progressRepo.removeUpdate(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "catatan tidak ditemukan" } }, 404);
     throw err;
   }
 });
