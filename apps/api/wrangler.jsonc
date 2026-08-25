@@ -19,7 +19,7 @@
     // di Resend. Ganti ke website@pahlevidirgaarchitecture.com begitu domain aktif dan
     // diverifikasi (lihat docs/deployment.md §2 Resend).
     "INQUIRY_FROM": "onboarding@resend.dev",
-    "ALLOWED_ORIGINS": "https://pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev",
+    "ALLOWED_ORIGINS": "https://pahlevidirgaarchitecture.com,https://www.pahlevidirgaarchitecture.com,https://pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev",
     "SUPABASE_URL": "https://ddzuzokkqofrpkpokcfa.supabase.co",
     "R2_ACCOUNT_ID": "cf6a6bde45d3fd8a93463e6cc7e71aa1",
     "R2_BUCKET": "pahlevidirga-media",
