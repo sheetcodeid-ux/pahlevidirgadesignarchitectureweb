@@ -82,7 +82,7 @@ supabase db reset          # jalankan migrasi + seed
 # 2. Backend
 cd apps/api
 npm install
-cp .dev.vars.example .dev.vars   # isi SUPABASE_JWT_SECRET dkk.
+cp .dev.vars.example .dev.vars   # isi SUPABASE_SERVICE_ROLE_KEY dkk.
 npm run dev                      # http://localhost:8787
 
 # 3. Frontend

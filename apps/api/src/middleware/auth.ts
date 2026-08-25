@@ -1,15 +1,30 @@
-import { jwtVerify } from "jose";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { MiddlewareHandler } from "hono";
 import type { Env } from "../types";
 
 /**
  * Memverifikasi access token yang diterbitkan Supabase Auth.
  *
- * Ini mengasumsikan project memakai JWT secret simetris (HS256) — default
- * Supabase. Kalau nanti signing key diganti asimetris (ES256/RS256),
- * verifikasi harus diganti ke pengambilan JWKS dari
- * {SUPABASE_URL}/auth/v1/.well-known/jwks.json.
+ * Supabase menandatangani token lewat JWT Signing Keys (ES256, kunci publik
+ * via JWKS) — bukan lagi JWT secret simetris (HS256) yang dulu jadi default.
+ * Legacy HS256 secret cuma tersisa untuk memverifikasi token lama yang belum
+ * expired, jadi verifikasi di sini pakai JWKS supaya otomatis ikut kunci
+ * mana pun yang sedang aktif di Supabase.
+ *
+ * JWKSet di-cache per-URL di scope modul supaya tidak fetch ulang tiap
+ * request dalam isolate yang sama.
  */
+const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
+
+function getJWKS(supabaseUrl: string) {
+  let jwks = jwksCache.get(supabaseUrl);
+  if (!jwks) {
+    jwks = createRemoteJWKSet(new URL(`${supabaseUrl.replace(/\/$/, "")}/auth/v1/.well-known/jwks.json`));
+    jwksCache.set(supabaseUrl, jwks);
+  }
+  return jwks;
+}
+
 export function requireSupabaseAuth(): MiddlewareHandler<{ Bindings: Env; Variables: { userID: string; userEmail?: string } }> {
   return async (c, next) => {
     const raw = c.req.header("Authorization")?.trim() ?? "";
@@ -18,11 +33,10 @@ export function requireSupabaseAuth(): MiddlewareHandler<{ Bindings: Env; Variab
     }
 
     const token = raw.slice("bearer ".length).trim();
-    const secret = new TextEncoder().encode(c.env.SUPABASE_JWT_SECRET);
 
     try {
-      const { payload } = await jwtVerify(token, secret, {
-        algorithms: ["HS256"],
+      const jwks = getJWKS(c.env.SUPABASE_URL ?? "");
+      const { payload } = await jwtVerify(token, jwks, {
         audience: "authenticated",
         requiredClaims: ["exp"],
       });
