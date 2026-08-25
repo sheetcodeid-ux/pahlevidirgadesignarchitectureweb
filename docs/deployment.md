@@ -19,8 +19,14 @@ Catat dari **Project Settings**:
 | JWT secret | API → JWT Settings |
 | Service role key | API → Project API keys |
 
-Backend memakai **pooler**; workflow backup memakai koneksi **langsung**
-karena `pg_dump` butuh session penuh.
+Backend memakai **session pooler** (port 5432 di `*.pooler.supabase.com`).
+Workflow backup **juga** memakai session pooler yang sama, walau nama
+secret-nya `SUPABASE_DIRECT_URL` — bukan koneksi langsung sungguhan. Direct
+connection Supabase Free hanya menerima IPv6, dan runner GitHub Actions
+tidak punya rute IPv6 keluar sama sekali, jadi selalu gagal dengan "Network
+is unreachable". Session pooler tetap mempertahankan session penuh yang
+dibutuhkan `pg_dump` — beda dari transaction pooler (port 6543) yang memutus
+session per-transaksi.
 
 Buat akun staf lewat **Authentication → Users → Invite**, lalu daftarkan ke
 tabel `profiles` supaya lolos RLS:

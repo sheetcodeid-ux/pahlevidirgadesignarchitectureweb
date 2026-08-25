@@ -20,8 +20,13 @@ jobs:
 
       - name: Dump database
         env:
-          # Pakai koneksi langsung (port 5432), bukan pooler — pg_dump butuh
-          # session penuh dan prepared statement.
+          # Isinya session pooler (port 5432 di *.pooler.supabase.com), BUKAN
+          # direct connection literal — meski nama secret-nya "DIRECT_URL".
+          # Direct connection Supabase Free hanya IPv6, dan runner GitHub
+          # Actions tidak punya rute IPv6 keluar sama sekali (gagal dengan
+          # "Network is unreachable"). Session pooler tetap mempertahankan
+          # session penuh yang dibutuhkan pg_dump — beda dari transaction
+          # pooler (port 6543) yang memutus session per-transaksi.
           DATABASE_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
         run: |
           pg_dump "$DATABASE_URL" \
