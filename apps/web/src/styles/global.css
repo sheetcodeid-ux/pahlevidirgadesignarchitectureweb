@@ -10,6 +10,10 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Android Chrome menyorot elemen yang ditekan dengan overlay biru bawaan
+     kalau tidak dimatikan — bentrok dengan tema gelap situs ini. Umpan balik
+     tekan tetap ada lewat :hover/:active masing-masing komponen. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
