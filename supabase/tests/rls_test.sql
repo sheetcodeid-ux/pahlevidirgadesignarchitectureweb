@@ -376,6 +376,76 @@ begin
 end;
 $$;
 
+-- invoices & project_costs --------------------------------------------------
+--
+-- Sama seperti project_tasks: murni data internal, tidak ada policy anon.
+
+do $$
+declare pid uuid;
+begin
+  select id into pid from public.projects where slug = 'tes-published';
+  insert into public.invoices (project_id, label, amount, status)
+  values (pid, 'DP 50%', 34000000, 'lunas');
+  insert into public.project_costs (project_id, label, category, amount)
+  values (pid, 'Fee freelancer DED', 'freelancer', 7200000);
+end;
+$$;
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.invoices;
+    raise exception 'GAGAL: anon berhasil membaca invoices';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca invoices';
+  end;
+
+  begin
+    perform count(*) from public.project_costs;
+    raise exception 'GAGAL: anon berhasil membaca project_costs';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca project_costs';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.invoices;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun invoice');
+
+  select count(*) into terlihat from public.project_costs;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun biaya proyek');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.invoices;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat invoice');
+
+  select count(*) into terlihat from public.project_costs;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat biaya proyek');
+
+  update public.invoices set status = 'terbit' where label = 'DP 50%';
+  perform pg_temp.tolak(false, 'staf dapat mengubah status invoice');
+
+  reset role;
+end;
+$$;
+
 -- Bawaan tabel baru -----------------------------------------------------
 --
 -- Menjaga migrasi 20260824000003. Tabel yang dibuat tanpa GRANT eksplisit

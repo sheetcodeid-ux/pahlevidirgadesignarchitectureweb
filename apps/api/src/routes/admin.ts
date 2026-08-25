@@ -9,11 +9,20 @@ import * as settingsRepo from "../repository/settings";
 import * as progressRepo from "../repository/progress";
 import * as teamRepo from "../repository/team";
 import * as tasksRepo from "../repository/tasks";
+import * as invoicesRepo from "../repository/invoices";
+import * as costsRepo from "../repository/costs";
+import * as financeRepo from "../repository/finance";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload } from "../lib/r2";
 import { checkProjectInput, ValidationError } from "../lib/validate";
-import type { ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput } from "../types";
-import { VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE } from "../types";
+import type {
+  ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
+  InvoiceInput, ProjectCostInput,
+} from "../types";
+import {
+  VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
+  VALID_INVOICE_STATUS, VALID_COST_CATEGORY,
+} from "../types";
 
 type Vars = { userID: string; userEmail?: string; accessToken: string };
 
@@ -282,6 +291,83 @@ admin.post("/projects/:id/tasks", async (c) => {
     return c.json({ data: { id } }, 201);
   } catch (err) {
     return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+// GET /api/v1/admin/finance/overview
+admin.get("/finance/overview", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => financeRepo.overview(sql));
+  return c.json({ data });
+});
+
+// GET /api/v1/admin/projects/:id/invoices
+admin.get("/projects/:id/invoices", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => invoicesRepo.listForProject(sql, c.req.param("id")));
+  return c.json({ data });
+});
+
+admin.post("/projects/:id/invoices", async (c) => {
+  const input = await c.req.json<InvoiceInput>().catch(() => ({}) as InvoiceInput);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => invoicesRepo.create(sql, c.req.param("id"), input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.patch("/invoices/:id", async (c) => {
+  const input = await c.req.json<InvoiceInput>().catch(() => ({}) as InvoiceInput);
+  if (input.status !== undefined && !VALID_INVOICE_STATUS.has(input.status)) {
+    return c.json({ error: { status: 422, message: "status invoice tidak dikenal" } }, 422);
+  }
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => invoicesRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "invoice tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+admin.delete("/invoices/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => invoicesRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "invoice tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+// GET /api/v1/admin/projects/:id/costs
+admin.get("/projects/:id/costs", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => costsRepo.listForProject(sql, c.req.param("id")));
+  return c.json({ data });
+});
+
+admin.post("/projects/:id/costs", async (c) => {
+  const input = await c.req.json<ProjectCostInput>().catch(() => ({}) as ProjectCostInput);
+  if (input.category !== undefined && !VALID_COST_CATEGORY.has(input.category)) {
+    return c.json({ error: { status: 422, message: "kategori biaya tidak dikenal" } }, 422);
+  }
+
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => costsRepo.create(sql, c.req.param("id"), input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.delete("/costs/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => costsRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "biaya tidak ditemukan" } }, 404);
+    throw err;
   }
 });
 

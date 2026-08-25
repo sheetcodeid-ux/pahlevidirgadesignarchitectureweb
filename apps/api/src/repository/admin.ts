@@ -28,6 +28,7 @@ interface AdminRow {
   seo_description: string | null;
   published_at: string | null;
   pipeline_stage: string;
+  contract_value: string | null;
 }
 
 function rowToProject(row: AdminRow, assetBase: string): Project {
@@ -52,6 +53,7 @@ function rowToProject(row: AdminRow, assetBase: string): Project {
     seoDescription: row.seo_description,
     publishedAt: row.published_at,
     pipelineStage: row.pipeline_stage,
+    contractValue: row.contract_value !== null ? Number(row.contract_value) : null,
   };
 }
 
@@ -61,7 +63,7 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
     select id, slug, title, subtitle, summary, description, category, status,
            location, city, year, client, area_sqm, lead_architect,
            cover_image_key, is_featured, seo_title, seo_description, published_at,
-           pipeline_stage
+           pipeline_stage, contract_value
     from public.projects
     order by sort_order, created_at desc`;
   return rows.map((r) => rowToProject(r, assetBase));
@@ -100,6 +102,7 @@ const PLAIN_COLUMNS: [string, keyof ProjectInput][] = [
   ["is_featured", "isFeatured"],
   ["seo_title", "seoTitle"],
   ["seo_description", "seoDescription"],
+  ["contract_value", "contractValue"],
 ];
 
 /** Menulis hanya field yang dikirim. published_at diisi otomatis saat proyek pertama kali diterbitkan. */
@@ -125,6 +128,7 @@ export async function update(sql: Sql, id: string, input: ProjectInput): Promise
       case "is_featured": fragments.push(sql`is_featured = ${value as boolean}`); break;
       case "seo_title": fragments.push(sql`seo_title = ${value as string}`); break;
       case "seo_description": fragments.push(sql`seo_description = ${value as string}`); break;
+      case "contract_value": fragments.push(sql`contract_value = ${value as number}`); break;
     }
   }
 
