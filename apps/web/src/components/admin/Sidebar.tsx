@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { Icon, type IconName } from "../ui/Icon";
+import { profilTersimpan } from "../../lib/admin";
 
 interface SubItem {
   label: string;
@@ -48,13 +49,21 @@ const NAV: NavItem[] = [
 interface Props {
   /** Path aktif, dipakai untuk menandai item dan membuka grup yang relevan. */
   currentPath: string;
-  isMasterAdmin?: boolean;
 }
 
-export function Sidebar({ currentPath, isMasterAdmin = false }: Props) {
+export function Sidebar({ currentPath }: Props) {
   const [terbuka, setTerbuka] = useState(false); // drawer di layar kecil
   const [ciut, setCiut] = useState(false); // rail sempit di layar besar
   const drawerId = useId();
+
+  // Situs ini statis, jadi peran pengguna tidak bisa diketahui saat build —
+  // dibaca dari profil yang disimpan localStorage saat masuk, sama seperti
+  // TopbarUser. Cuma menentukan tampilan menu, bukan penjagaan (lihat
+  // catatan di MasterGuard).
+  const [isMasterAdmin, setIsMasterAdmin] = useState(false);
+  useEffect(() => {
+    setIsMasterAdmin(Boolean(profilTersimpan()?.isMasterAdmin));
+  }, []);
 
   const items = NAV.filter((item) => !item.masterOnly || isMasterAdmin);
 
