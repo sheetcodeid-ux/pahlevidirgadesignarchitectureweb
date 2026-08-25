@@ -95,7 +95,9 @@ inquiries.post("/inquiries", async (c) => {
         projectType: body.projectType,
         budgetRange: body.budgetRange,
         message: req.message,
-      }).catch((err) => console.error("notifikasi inquiry gagal dikirim", err)),
+      }).catch((err) =>
+        console.error(`notifikasi inquiry gagal dikirim: ${err instanceof Error ? err.message : String(err)}`),
+      ),
     );
   }
 

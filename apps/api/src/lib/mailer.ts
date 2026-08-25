@@ -58,6 +58,7 @@ export async function sendInquiryNotification(
   });
 
   if (!res.ok) {
-    throw new Error(`resend menolak email: status ${res.status}`);
+    const body = await res.text().catch(() => "");
+    throw new Error(`resend menolak email: status ${res.status} — ${body}`);
   }
 }
