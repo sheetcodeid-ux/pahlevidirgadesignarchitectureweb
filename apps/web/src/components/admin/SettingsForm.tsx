@@ -125,7 +125,7 @@ function Isi() {
         <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start" }}>
           <span className="icon-tile"><Icon name="image" size={20} /></span>
           <span className="card__titles">
-            <span className="t-subheading">Logo studio</span>
+            <span className="t-subheading">Logo Studio</span>
             <span className="t-muted">Ditampilkan di sidebar admin dan situs publik.</span>
           </span>
         </div>
@@ -135,8 +135,8 @@ function Isi() {
             <img src={logoSrc} alt="Logo studio" />
           ) : (
             <>
-              <Icon name="image" size={26} />
-              <span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>Belum ada logo</span>
+              <Icon name="camera" size={60} />
+              <span className="t-muted" style={{ fontSize: "var(--text-sm)" }}>Belum ada logo</span>
             </>
           )}
         </div>
@@ -158,16 +158,16 @@ function Isi() {
             if (f) prosesLogo(f);
           }}
         >
-          <span className="logo-dropzone__icon"><Icon name="upload" size={18} /></span>
-          <span className="t-subheading" style={{ fontSize: "var(--text-sm)" }}>Upload Logo Anda</span>
-          <span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>Drag and drop atau klik dan cari logo anda</span>
+          <span className="logo-dropzone__icon"><Icon name="upload" size={32} /></span>
+          <span className="t-subheading" style={{ fontSize: "var(--text-md)" }}>Upload Logo Anda</span>
+          <span className="t-muted" style={{ fontSize: "var(--text-sm)" }}>Drag and drop atau klik dan cari logo anda</span>
           <button
             type="button"
-            className="btn btn--secondary btn--sm"
+            className="btn btn--secondary"
             disabled={mengunggahLogo}
             onClick={(e) => { e.stopPropagation(); fileLogo.current?.click(); }}
           >
-            {mengunggahLogo ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="upload" size={14} />}
+            {mengunggahLogo ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="upload" size={16} />}
             Pilih File
           </button>
           <div className="logo-dropzone__hints">
@@ -193,8 +193,8 @@ function Isi() {
       <div className="settings-split__form">
         <div className="settings-card">
           <div className="settings-card__head">
-            <span className="icon-tile icon-tile--sm"><Icon name="info" size={16} /></span>
-            <span className="t-subheading">Detail studio</span>
+            <span className="icon-tile icon-tile--sm"><Icon name="building" size={16} /></span>
+            <span className="t-subheading">Detail Studio</span>
           </div>
 
           <div className="settings-card__body stack">
