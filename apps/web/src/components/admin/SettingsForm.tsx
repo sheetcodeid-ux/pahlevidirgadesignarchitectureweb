@@ -6,13 +6,16 @@ import { ambilSettings, simpanSettings, type StudioSettings } from "../../lib/ad
 
 type Draf = Partial<StudioSettings>;
 
-const FIELDS: [keyof StudioSettings, string, string?][] = [
-  ["studioName", "Nama studio"],
+/** Pasangan pendek yang ditampilkan berdampingan — dua kolom di layar lebar. */
+const PASANGAN: [keyof StudioSettings, string][][] = [
+  [["studioName", "Nama studio"], ["city", "Kota"]],
+  [["email", "Email"], ["phone", "Telepon/WhatsApp"]],
+];
+
+/** Field selebar penuh, di bawah pasangan di atas. */
+const PENUH: [keyof StudioSettings, string, string?][] = [
   ["tagline", "Tagline", "Ditampilkan sebagai keterangan singkat, kalau diisi."],
-  ["email", "Email"],
-  ["phone", "Telepon/WhatsApp"],
   ["address", "Alamat"],
-  ["city", "Kota"],
   ["instagramUrl", "URL Instagram"],
 ];
 
@@ -68,17 +71,49 @@ function Isi() {
   return (
     <div className="stack" style={{ gap: "var(--space-5)" }}>
       <div className="card">
+        <div className="card__header">
+          <span className="icon-tile"><Icon name="info" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Detail studio</span>
+            <span className="t-muted">Nama, kontak, dan alamat yang tampil di situs publik.</span>
+          </span>
+        </div>
         <div className="card__body">
           <div className="stack">
-            {FIELDS.map(([kunci, label, bantu]) => (
+            {PASANGAN.map((pasangan, i) => (
+              <div className="spec-grid" key={i}>
+                {pasangan.map(([kunci, label]) => (
+                  <div className="field" key={kunci}>
+                    <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
+                    <input
+                      id={`set-${kunci}`}
+                      className="input input--sunken"
+                      value={nilai(kunci)}
+                      onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {PENUH.map(([kunci, label, bantu]) => (
               <div className="field" key={kunci}>
                 <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
-                <input
-                  id={`set-${kunci}`}
-                  className="input"
-                  value={nilai(kunci)}
-                  onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
-                />
+                {kunci === "address" ? (
+                  <textarea
+                    id={`set-${kunci}`}
+                    className="input input--sunken input--area"
+                    value={nilai(kunci)}
+                    onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
+                  />
+                ) : (
+                  <input
+                    id={`set-${kunci}`}
+                    className="input input--sunken"
+                    value={nilai(kunci)}
+                    onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
+                  />
+                )}
                 {bantu && <p className="field__help">{bantu}</p>}
               </div>
             ))}
