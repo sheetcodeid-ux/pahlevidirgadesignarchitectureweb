@@ -42,6 +42,13 @@ const ikon = [
   "alert", "info", "lock", "external", "copy", "filter", "close", "document", "directory",
   "quote", "star",
 ] as const;
+
+// Subset ikon yang punya gambar filled terpisah — dipakai nav sidebar untuk
+// menandai keadaan terpilih. Daftar ini harus tetap sinkron dengan kunci
+// PATHS_FILLED di Icon.tsx.
+const ikonBerpasangan = [
+  "dashboard", "project", "check", "finance", "inquiry", "team", "directory", "quote", "settings", "component",
+] as const;
 ---
 
 <AdminLayout
@@ -263,6 +270,28 @@ const ikon = [
             ikon.map((n) => (
               <div class="swatch" style="align-items:center; text-align:center">
                 <span class="icon-tile"><Icon name={n} size={20} /></span>
+                <span class="swatch__name">{n}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="spec-demo" style="margin-top: var(--space-5)">
+        <p class="t-muted" style="margin: 0 0 var(--space-3)">
+          Sebagian ikon punya varian <strong>filled</strong> — gambar solid yang berbeda dari
+          versi stroke-nya, bukan cuma pewarnaan ulang. Dipakai untuk menandai keadaan
+          terpilih/aktif (mis. item sidebar yang sedang dibuka): <strong>stroke</strong> saat
+          tidak dipilih, <strong>filled</strong> otomatis saat dipilih.
+        </p>
+        <div class="spec-swatches">
+          {
+            ikonBerpasangan.map((n) => (
+              <div class="swatch" style="align-items:center; text-align:center; gap: var(--space-2)">
+                <span class="row" style="gap: var(--space-3)">
+                  <span class="icon-tile"><Icon name={n} size={20} variant="stroke" /></span>
+                  <span class="icon-tile"><Icon name={n} size={20} variant="filled" /></span>
+                </span>
                 <span class="swatch__name">{n}</span>
               </div>
             ))

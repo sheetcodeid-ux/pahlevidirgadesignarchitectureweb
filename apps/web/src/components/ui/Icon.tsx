@@ -50,6 +50,14 @@ interface Props {
   /** Ukuran dalam piksel. Ikon dirancang pada grid 24 dan tetap tajam di 16–32. */
   size?: number;
   className?: string;
+  /**
+   * "stroke" (bawaan): garis luar saja. "filled": bentuk padat berwarna
+   * currentColor — gambar berbeda, bukan sekadar stroke yang ditebalkan,
+   * dipakai untuk menandai keadaan terpilih/aktif (mis. item sidebar yang
+   * sedang dibuka). Ikon yang belum punya gambar filled otomatis jatuh
+   * kembali ke versi stroke, jadi variant ini selalu aman dipakai di ikon apa pun.
+   */
+  variant?: "stroke" | "filled";
 }
 
 // Semua path digambar pada viewBox 24×24 dengan stroke, sehingga ketebalannya
@@ -237,7 +245,85 @@ const PATHS: Record<IconName, React.ReactNode> = {
   star: <path d="m12 3 2.6 5.6 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.6l1.2-6.1L3.2 9.3l6.2-.7Z" />,
 };
 
-export function Icon({ name, size = 20, className }: Props) {
+// Gambar solid untuk sebagian ikon — dipakai lewat variant="filled". Hanya
+// dibuat untuk ikon yang benar-benar dipakai dengan keadaan terpilih/tidak
+// (nav sidebar); ikon lain tidak butuh versi ini karena tidak pernah punya
+// keadaan "aktif". Lubang (mis. celah centang, avatar, roda gigi) dipotong
+// lewat fill-rule evenodd dalam satu path, bukan elemen berlapis — supaya
+// tetap satu warna currentColor tanpa bergantung warna latar di baliknya.
+const PATHS_FILLED: Partial<Record<IconName, React.ReactNode>> = {
+  dashboard: (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </>
+  ),
+  project: (
+    <path d="M12 2.2a1 1 0 0 1 .6.2l8 6A1 1 0 0 1 21 9v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 .4-.8l8-6a1 1 0 0 1 .6-.2Zm-2 18.8v-6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6Z" />
+  ),
+  check: (
+    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.7 7.7-5.4 5.4a1 1 0 0 1-1.4 0l-2.6-2.6a1 1 0 1 1 1.4-1.4l1.9 1.9 4.7-4.7a1 1 0 0 1 1.4 1.4Z" />
+  ),
+  finance: (
+    <>
+      <rect x="4" y="13" width="3.6" height="8" rx="1" />
+      <rect x="10.2" y="8" width="3.6" height="13" rx="1" />
+      <rect x="16.4" y="3" width="3.6" height="18" rx="1" />
+    </>
+  ),
+  inquiry: (
+    <path d="M5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5v-9A2.5 2.5 0 0 1 5.5 5Zm.3 1.6c-.1.1-.1.3-.1.4v.9L12 13.2l6.3-5.3v-.9c0-.1 0-.3-.1-.4L12 12.7Z" />
+  ),
+  team: (
+    <>
+      <circle cx="8.5" cy="7.5" r="3.3" />
+      <circle cx="16.2" cy="8.7" r="2.6" opacity="0.6" />
+      <path d="M2.2 20.5a6.5 6.5 0 0 1 12.6-2.3 5.4 5.4 0 0 1 8.4 3.4c.1.5-.3.9-.8.9H3c-.5 0-.9-.4-.8-.9Z" />
+    </>
+  ),
+  directory: (
+    <path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm11.1 7.5a2.1 2.1 0 1 1-4.2 0 2.1 2.1 0 0 1 4.2 0ZM9.3 18c0-2 1.7-3.5 3.7-3.5s3.7 1.5 3.7 3.5c0 .5-.4.8-.9.8h-5.6c-.5 0-.9-.3-.9-.8ZM5 7.5h2v1.5H5Zm0 4.5h2v1.5H5Z" />
+  ),
+  quote: (
+    <>
+      <path d="M7 8a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h1v-5H6a2 2 0 0 1 2-2V8Z" />
+      <path d="M17 8a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h1v-5h-2a2 2 0 0 1 2-2V8Z" />
+    </>
+  ),
+  settings: (
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+  ),
+  component: (
+    <>
+      <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+      <path d="M2.6 13.3a1 1 0 0 1 1.4-.3L12 17.8l8-4.8a1 1 0 1 1 1 1.7l-8.5 5.1a1 1 0 0 1-1 0l-8.5-5.1a1 1 0 0 1-.4-1.4Z" />
+    </>
+  ),
+};
+
+export function Icon({ name, size = 20, className, variant = "stroke" }: Props) {
+  const filled = variant === "filled" && PATHS_FILLED[name];
+
+  if (filled) {
+    return (
+      <svg
+        className={className}
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        aria-hidden="true"
+        focusable="false"
+      >
+        {PATHS_FILLED[name]}
+      </svg>
+    );
+  }
+
   return (
     <svg
       className={className}

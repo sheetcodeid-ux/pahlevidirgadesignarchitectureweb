@@ -103,7 +103,7 @@
   gap: var(--space-3);
   width: 100%;
   padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-muted);
@@ -112,10 +112,13 @@
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.sidebar__item:hover { border-color: var(--border-strong); color: var(--text-strong); }
+/* Tidak terpilih: polos, tanpa kotak/garis sama sekali. Hover cukup
+   mencerahkan warna ikon+teks — sengaja tidak memakai latar atau border
+   supaya daftar navigasi tidak terasa seperti tumpukan tombol. */
+.sidebar__item:hover { color: var(--text-strong); }
 
 /* Halaman aktif: satu-satunya pill terisi abu-abu terangkat di sidebar pada
    satu waktu, dengan ikon dan teks yang jadi terang penuh — beda dari hover
@@ -123,7 +126,6 @@
    solid tetap khusus untuk tombol aksi, sesuai aturan warna situs ini). */
 .sidebar__item[aria-current="page"] {
   background: var(--surface-raised);
-  border-color: transparent;
   color: var(--text-strong);
   font-weight: 600;
 }
@@ -169,18 +171,17 @@
 .sidebar__subitem {
   display: block;
   padding: 0.45rem 0.75rem;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-pill);
   color: var(--text-faint);
   font-size: var(--text-sm);
   text-decoration: none;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.sidebar__subitem:hover { border-color: var(--border-strong); color: var(--text-body); }
+.sidebar__subitem:hover { color: var(--text-body); }
 .sidebar__subitem[aria-current="page"] {
   background: var(--surface-raised);
-  border-color: transparent;
   color: var(--text-strong);
   font-weight: 600;
 }

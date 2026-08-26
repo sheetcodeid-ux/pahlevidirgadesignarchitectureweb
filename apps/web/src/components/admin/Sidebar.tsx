@@ -196,7 +196,7 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                       aria-current={aktif ? "page" : undefined}
                       title={ciut ? item.label : undefined}
                     >
-                      <Icon name={item.icon} size={18} />
+                      <Icon name={item.icon} size={18} variant={aktif ? "filled" : "stroke"} />
                       <span className="sidebar__label">{item.label}</span>
                     </a>
                   </li>
@@ -216,7 +216,7 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                     onClick={() => toggleGrup(item.label)}
                     title={ciut ? item.label : undefined}
                   >
-                    <Icon name={item.icon} size={18} />
+                    <Icon name={item.icon} size={18} variant={adaAnakAktif ? "filled" : "stroke"} />
                     <span className="sidebar__label">{item.label}</span>
                     <span className="sidebar__chevron" data-open={grupTerbuka || undefined}>
                       <Icon name="chevronDown" size={14} />
