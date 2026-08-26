@@ -1,0 +1,79 @@
+name: Deploy
+
+# Deploy otomatis begitu branch produksi berubah. Sebelumnya deploy harus
+# dijalankan tangan dari mesin yang sudah `wrangler login`, jadi kode yang
+# sudah di-merge bisa menganggur berhari-hari tanpa tayang — dan pernah
+# tayang setengah jalan karena satu Worker ter-deploy dan satunya tidak.
+on:
+  push:
+    branches: [claude/stack-setup-supabase-cloudflare-kdwlkk]
+  # Biar bisa dijalankan ulang dari tab Actions tanpa harus push apa pun.
+  workflow_dispatch:
+
+# Dua deploy berbarengan ke Worker yang sama bisa saling menimpa dengan
+# urutan yang tidak terduga. Push baru membatalkan yang masih berjalan.
+concurrency:
+  group: deploy-produksi
+  cancel-in-progress: true
+
+env:
+  # Dibakar ke berkas statis saat build. Bukan rahasia — URL ini memang
+  # dipanggil dari browser pengunjung. Tanpa ini, situs yang tayang
+  # menunjuk http://localhost:8787 dan semua panggilan API gagal.
+  PUBLIC_API_BASE_URL: https://pahlevidirga-api.pahlevidirgadesignarchitecture.workers.dev
+  PUBLIC_SITE_URL: https://pahlevidirgaarchitecture.com
+
+jobs:
+  api:
+    name: Worker API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+
+      - run: npm ci
+        working-directory: apps/api
+
+      # Gerbang sebelum deploy: yang merah tidak pernah tayang.
+      - run: npm run typecheck
+        working-directory: apps/api
+
+      - run: npm test
+        working-directory: apps/api
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: apps/api
+
+  web:
+    name: Worker situs statis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+        working-directory: apps/web
+
+      - run: npm run check
+        working-directory: apps/web
+
+      - run: npm run build
+        working-directory: apps/web
+
+      # wrangler.jsonc situs statis ada di akar repo, bukan di apps/web —
+      # `assets.directory` di dalamnya menunjuk ./apps/web/dist.
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

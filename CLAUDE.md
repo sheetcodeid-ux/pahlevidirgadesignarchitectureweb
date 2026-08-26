@@ -169,6 +169,12 @@ skrip; jangan sunting hasilnya.
 
 - Branch pengembangan: `claude/stack-setup-supabase-cloudflare-kdwlkk`
 - Jangan buat pull request kecuali diminta
+- **Deploy otomatis lewat GitHub Actions** (`.github/workflows/deploy.yml`)
+  begitu branch produksi berubah — jangan minta pemilik menjalankan
+  `wrangler deploy` tangan. Jaringan sesi Claude memblokir
+  `api.cloudflare.com`, jadi deploy langsung dari sini memang tidak bisa;
+  Actions yang menjembatani. Butuh secret repo `CLOUDFLARE_API_TOKEN`.
+  Pantau hasilnya lewat tab Actions, bukan dengan mengira sudah tayang
 - Verifikasi dengan menjalankan, bukan dengan membaca. Tidak ada Docker di
   container sesi; Postgres 16 tersedia di `/usr/lib/postgresql/16/bin` dan bisa
   dijalankan sebagai user non-root untuk menguji migrasi dan RLS sungguhan
