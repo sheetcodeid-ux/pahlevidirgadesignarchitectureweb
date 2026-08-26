@@ -66,13 +66,12 @@
    membuat baris pertama dan terakhir terlihat terpotong. */
 .input--area { border-radius: var(--radius-md); resize: vertical; min-height: 7.5rem; line-height: 1.6; }
 
-/* Input "turun" (sunken): dipakai saat kartu di sekitarnya sudah memakai
-   --surface, sehingga --surface-raised bawaan (lebih terang dari kartunya di
-   tema gelap) tidak lagi terbaca sebagai lekukan. Border-nya sengaja lebih
-   terang dari border kartu supaya tepinya tetap tegas di atas latar gelap. */
-.input--sunken { background: var(--bg-sunken); border-width: 2px; border-color: var(--border-strong); }
-:root[data-theme="light"] .input--sunken { background: var(--surface-hover); }
-.input--sunken:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
+/* Input di dalam panel gelap: dipakai saat kartu di sekitarnya memakai
+   --bg-sunken (lapis paling gelap), sehingga kotak isiannya justru harus
+   lebih terang dari kartunya supaya terbaca sebagai tempat mengetik.
+   Border 2px --border-strong menyamai tebal border panelnya. */
+.input--panel { background: var(--surface-hover); border-width: 2px; border-color: var(--border-strong); }
+.input--panel:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
 .input--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
 
 .field[data-invalid] .input { border-color: var(--brand); }

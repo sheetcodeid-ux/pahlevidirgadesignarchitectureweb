@@ -208,7 +208,7 @@ function Isi() {
                     </label>
                     <input
                       id={`set-${kunci}`}
-                      className="input input--sunken"
+                      className="input input--panel"
                       required={wajib}
                       aria-invalid={kosong(kunci) || undefined}
                       value={nilai(kunci)}
@@ -225,14 +225,14 @@ function Isi() {
                 {kunci === "address" ? (
                   <textarea
                     id={`set-${kunci}`}
-                    className="input input--sunken input--area"
+                    className="input input--panel input--area"
                     value={nilai(kunci)}
                     onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
                   />
                 ) : (
                   <input
                     id={`set-${kunci}`}
-                    className="input input--sunken"
+                    className="input input--panel"
                     value={nilai(kunci)}
                     onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
                   />
