@@ -383,3 +383,174 @@
   border-radius: 50%;
   background: currentColor;
 }
+
+/* --- Bilah daftar + kartu proyek ------------------------------------------
+   Ditiru dari referensi pemilik (manajemen member Memverr): pencarian,
+   pengalih tampilan, dan tombol utama tidak mengambang sebagai tiga kontrol
+   terpisah, melainkan duduk dalam SATU bilah berbingkai yang dibagi garis
+   vertikal. Barisan saringan menempel di bawahnya dalam bingkai yang sama,
+   jadi seluruh perkakas daftar terbaca sebagai satu benda. */
+.listbar {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.listbar__main {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.listbar__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 14rem;
+}
+
+/* Kotak pencarian sengaja tanpa bingkai sendiri: bingkainya sudah disediakan
+   .listbar, dan dua bingkai bersarang membuat bilahnya terlihat berat. */
+.listbar__search .input {
+  height: 100%;
+  padding: var(--space-4) var(--space-4) var(--space-4) 3.4rem;
+  font-size: var(--text-md);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.listbar__search .input:focus-visible { box-shadow: inset 0 0 0 2px var(--focus); }
+
+.listbar__icon {
+  position: absolute;
+  left: var(--space-5);
+  display: grid;
+  place-items: center;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.listbar__views,
+.listbar__cta {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: var(--space-3) var(--space-4);
+  border-left: 1px solid var(--border);
+}
+
+/* Porsi diukur dari referensi: sel tombol utama memakai ~25% lebar bilah dan
+   tombolnya mengisi penuh sel itu. Tombol yang jauh lebih lebar dari
+   labelnya memang disengaja di sana — itu yang membuatnya terbaca sebagai
+   aksi utama halaman, bukan sekadar tombol lain di deretan perkakas. */
+.listbar__cta { min-width: 22%; }
+.listbar__cta .btn { width: 100%; justify-content: center; }
+
+.listbar__filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Di layar sempit bilahnya jadi bertumpuk, jadi garis pemisahnya harus
+   pindah dari kiri ke atas — kalau tidak, garisnya menggantung di udara. */
+@media (max-width: 47.99rem) {
+  .listbar__views,
+  .listbar__cta {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .listbar__cta { flex: 1; }
+  .listbar__cta .btn { width: 100%; justify-content: center; }
+}
+
+/* Jumlah hasil di kepala tabel, seperti referensi: rata kanan dan lebih
+   redup dari kepala kolom, supaya tidak bersaing dengan datanya. */
+.listcount {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.pcard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  gap: var(--space-5);
+}
+
+.pcard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.pcard__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.pcard__thumb {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.pcard__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  flex: 1;
+  padding: var(--space-4);
+}
+
+.pcard__cell { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.pcard__k { font-size: var(--text-xs); color: var(--text-faint); }
+.pcard__v { font-weight: 600; color: var(--text-strong); overflow-wrap: anywhere; }
+
+/* Aksi kartu dibagi rata selebar kartu dan dipisah garis, bukan dijejer
+   sebagai tombol — persis referensi, dan membuat sasaran sentuhnya lebar. */
+.pcard__foot { display: flex; border-top: 1px solid var(--border); }
+
+.pcard__act {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex: 1;
+  padding: var(--space-3);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.pcard__act:first-child { border-left: 0; }
+.pcard__act:hover { background: var(--surface-hover); color: var(--text-strong); }
+.pcard__act--danger:hover { color: var(--brand); }
