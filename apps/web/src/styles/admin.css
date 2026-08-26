@@ -298,11 +298,11 @@
   color: var(--text-strong);
 }
 
-/* Diukur dari tangkapan penuh referensi: garis tengah lingkarannya 37%
-   lebar-dalam kolom. Dibatasi 20rem supaya tidak jadi raksasa di layar
+/* Referensi mengukur 36,3% lebar-dalam kolom; dinaikkan ke 42% atas
+   permintaan pemilik. Dibatasi 22rem supaya tidak jadi raksasa di layar
    sangat lebar. */
 .logo-preview {
-  width: min(20rem, 37%);
+  width: min(22rem, 42%);
   aspect-ratio: 1;
   height: auto;
   flex: none;
