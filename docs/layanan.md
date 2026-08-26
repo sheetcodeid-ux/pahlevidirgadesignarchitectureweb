@@ -1,88 +1,70 @@
-# Layanan yang perlu disiapkan
+# Layanan yang dipakai
 
-Ringkasan apa yang sudah ada dan apa yang masih kurang sebelum website bisa
-tayang. Semua yang ditandai **wajib** harus beres; sisanya bisa menyusul.
+Keadaan layanan di luar kode: mana yang sudah terpasang dan berjalan, mana
+yang masih menganggur. Situsnya sendiri **sudah tayang** — dokumen ini bukan
+lagi daftar syarat peluncuran, melainkan catatan apa yang hidup dan apa yang
+belum.
 
-## Sudah ada
+Yang belum beres sekarang hampir semuanya **isi**, bukan layanan. Lihat
+bagian terakhir.
 
-| Layanan | Dipakai untuk |
-| --- | --- |
-| Supabase (free) | Postgres, Auth untuk panel admin |
-| GitHub | Repositori + CI/CD lewat Actions |
-| Cloudflare (free) | DNS, Workers (situs statis + API), R2, Turnstile, analytics |
+## Sudah terpasang dan berjalan
 
-## Masih kurang
+| Layanan | Dipakai untuk | Bukti masih hidup |
+| --- | --- | --- |
+| Supabase (Free) | Postgres + Auth panel admin | Migrasi diterapkan otomatis lewat integrasi GitHub |
+| GitHub Actions | CI dan deploy kedua Worker | Tab Actions, workflow `deploy.yml` |
+| Cloudflare Workers | Situs statis + Worker API | Stempel `modified_on` kedua Worker |
+| Cloudflare R2 | `pahlevidirga-media` untuk gambar proyek dan logo studio | Custom domain `media.pahlevidirgaarchitecture.com` |
+| Cloudflare R2 | `pahlevidirga-backup` untuk dump database harian | Workflow `backup-db.yml`, jadwal 02:00 WIB |
+| Cloudflare Turnstile | Anti-bot form kontak | Widget "Form kontak pahlevidirga" |
+| Domain | `pahlevidirgaarchitecture.com` beserta `api.` dan `media.` | Ketiganya resolve |
 
-### 1. Domain — **wajib**
+### Backup — jangan dianggap remeh
 
-Belum ada di daftar. Beli lalu arahkan nameserver ke Cloudflare, atau langsung
-beli di Cloudflare Registrar (dijual at-cost, tanpa markup perpanjangan).
+Supabase Free **tidak** punya backup otomatis maupun PITR. `backup-db.yml`
+adalah satu-satunya jaring pengaman kalau data terhapus. Sempat gagal tiga
+kali pada 25 Agustus sebelum akhirnya hijau — jadi kalau ada perubahan pada
+kredensial database, periksa workflow ini, jangan berasumsi masih jalan.
 
-Subdomain yang akan dipakai:
+Yang belum pernah diuji: **memulihkan** dari dump itu. Punya backup yang tidak
+pernah dicoba dipulihkan sama saja dengan tidak punya backup.
 
-| Host | Menunjuk ke |
-| --- | --- |
-| `pahlevidirgaarchitecture.com` | Worker situs statis (`pahlevidirgadesignarchitectureweb`) |
-| `api.pahlevidirgaarchitecture.com` | Worker API (`pahlevidirga-api`), lewat Custom Domains |
-| `media.pahlevidirgaarchitecture.com` | bucket R2 |
+## Terpasang tapi perlu dipastikan
 
-Tidak ada akun Google Cloud yang perlu disiapkan — API sekarang jalan di
-Cloudflare Workers yang sama dengan situs statis, bukan Cloud Run. Satu
-platform lebih sedikit untuk dikelola.
+### Resend — notifikasi email form kontak
 
-### 2. Cloudflare R2 — **wajib**
+Kodenya sudah ada (`apps/api/src/lib/mailer.ts`). Email hanya terkirim kalau
+**dua** rahasia Worker terisi: `RESEND_API_KEY` dan `INQUIRY_NOTIFY_TO`. Kalau
+salah satu kosong, pesan tetap tersimpan ke database tapi tidak ada
+pemberitahuan yang masuk — dan tidak ada tanda apa pun bahwa itu terjadi.
 
-Bucket untuk foto proyek. 10 GB penyimpanan gratis dan **egress gratis** —
-inilah alasan gambar tidak ditaruh di Supabase Storage, yang free tier-nya
-hanya 1 GB dengan egress 5 GB/bulan.
+Cara memastikan: kirim satu pesan uji dari `/kontak`, lalu lihat apakah
+emailnya masuk. Kalau tidak, setel rahasianya dengan `wrangler secret put`.
 
-Perlu diperhatikan: R2 minta metode pembayaran terpasang di akun Cloudflare
-sebelum bucket bisa dibuat, walaupun pemakaiannya di bawah kuota gratis.
+Domain pengirim perlu record SPF, DKIM, dan DMARC di Cloudflare DNS.
 
-Yang perlu dibuat:
+## Belum dipasang — semuanya opsional
 
-- bucket `pahlevidirga-media`, sambungkan custom domain `media.pahlevidirgaarchitecture.com`
-- bucket `pahlevidirga-backup` untuk dump database harian
-- API token R2 dengan izin Object Read & Write
+| Layanan | Gunanya | Kenapa belum mendesak |
+| --- | --- | --- |
+| Cloudflare Email Routing | `studio@pahlevidirgaarchitecture.com` diteruskan ke Gmail, tanpa langganan Google Workspace | Email studio masih pakai Gmail biasa dan itu berfungsi |
+| Sentry | Melihat error Worker API tanpa harus membuka Workers Logs | Lalu lintasnya masih sangat kecil; error masih bisa ditemukan manual |
+| Cloudflare Web Analytics | Statistik pengunjung tanpa cookie, jadi tidak butuh cookie banner | Belum ada pengunjung yang perlu dihitung sampai proyeknya terisi |
+| Cloudflare Access di depan `/admin/*` | Memindahkan penjagaan panel admin ke edge | **Data**-nya sudah aman — API menolak yang bukan staf di sisi server. Yang terbuka hanya kerangka halamannya, karena situsnya statis |
 
-### 3. Cloudflare Turnstile — **wajib**
+## Yang sebenarnya menghambat sekarang: isi, bukan layanan
 
-Gratis, tanpa kartu. Buat satu widget, ambil site key (untuk frontend) dan
-secret key (untuk backend). Tanpa ini form kontak akan dibanjiri spam bot
-dalam hitungan hari setelah domain terindeks.
+Tidak ada satu pun layanan yang menghalangi. Yang menahan adalah ini:
 
-### 4. Resend — **wajib**
-
-Notifikasi email saat ada calon klien mengisi form. Free tier 3.000
-email/bulan. Perlu verifikasi domain pengirim dengan menambahkan record SPF,
-DKIM, dan DMARC di Cloudflare DNS.
-
-Alasan tidak memakai SMTP bawaan Supabase: layanan itu hanya untuk email auth
-dan rate limit-nya sangat ketat.
-
-### 5. Cloudflare Email Routing — disarankan
-
-Gratis, dan membuat `studio@pahlevidirgaarchitecture.com` diteruskan ke Gmail tanpa perlu
-berlangganan Google Workspace.
-
-### 6. Sentry — disarankan
-
-Error tracking untuk Worker API. Free tier 5.000 error/bulan. Tanpa ini,
-kegagalan hanya terlihat kalau kamu sedang membuka Cloudflare Workers Logs.
-
-### 7. Cloudflare Web Analytics — disarankan
-
-Gratis, tanpa cookie, jadi tidak butuh cookie banner. Cukup aktifkan untuk
-domain di dashboard Cloudflare.
-
-## Bukan layanan, tapi tetap penghambat
-
-Ini yang biasanya membuat peluncuran mundur, bukan urusan teknisnya:
-
-- **Foto proyek resolusi tinggi.** Website arsitektur berdiri atau jatuh di
-  sini. Siapkan minimal 5–8 foto per proyek, sisi terpanjang 2400px — belum
-  ada satu proyek pun yang dipublikasikan.
-- **Deskripsi tiap proyek.** Halaman `/tentang` sudah berisi profil studio
-  sungguhan; yang masih kosong adalah data proyek itu sendiri.
+- **Foto proyek.** Belum ada satu pun gambar galeri di database. Website
+  arsitektur berdiri atau jatuh di sini. Siapkan 5–8 foto per proyek, sisi
+  terpanjang 2400px, unggah lewat panel admin.
+- **Deskripsi proyek.** Satu-satunya proyek yang tayang (`rumah-kaca`) masih
+  berisi teks percobaan sepanjang sepuluh huruf. `/tentang` sudah berisi
+  profil studio sungguhan; yang kosong justru proyeknya.
 - **Halaman kebijakan privasi.** Form kontak mengumpulkan nama, email, dan
-  nomor telepon, jadi halaman ini perlu ada.
+  nomor telepon, jadi halaman ini perlu ada dan ditautkan dari footer.
+- **Testimoni.** Belum ada satu pun. Seksinya di beranda sengaja tidak tampil
+  saat kosong, jadi tidak ada yang rusak — tapi bagian itu memang belum
+  pernah terlihat sungguhan.

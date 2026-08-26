@@ -20,7 +20,14 @@ env:
   # Dibakar ke berkas statis saat build. Bukan rahasia — URL ini memang
   # dipanggil dari browser pengunjung. Tanpa ini, situs yang tayang
   # menunjuk http://localhost:8787 dan semua panggilan API gagal.
-  PUBLIC_API_BASE_URL: https://pahlevidirga-api.pahlevidirgadesignarchitecture.workers.dev
+  #
+  # Pakai custom domain, bukan *.workers.dev bawaan: alamat bawaan itu
+  # punya rate limit tersendiri — hal yang sama sudah pernah menggigit di
+  # R2 dan membuat kami pindah ke media.pahlevidirgaarchitecture.com.
+  # Kalau baris ini salah, seluruh panggilan API gagal sekaligus (login
+  # dan form kontak), jadi pastikan domainnya benar-benar terpasang ke
+  # Worker pahlevidirga-api sebelum mengubahnya.
+  PUBLIC_API_BASE_URL: https://api.pahlevidirgaarchitecture.com
   PUBLIC_SITE_URL: https://pahlevidirgaarchitecture.com
 
 jobs:
