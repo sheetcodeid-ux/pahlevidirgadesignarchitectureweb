@@ -55,10 +55,26 @@ interface Props {
   currentPath: string;
 }
 
-export function Sidebar({ currentPath }: Props) {
+export function Sidebar({ currentPath: currentPathAwal }: Props) {
   const [terbuka, setTerbuka] = useState(false); // drawer di layar kecil
   const [ciut, setCiut] = useState(false); // rail sempit di layar besar
   const drawerId = useId();
+
+  // Situs ini statis, jadi Astro.url.pathname saat build tidak pernah
+  // menyertakan query string (mis. ?status=draft) — item submenu yang
+  // dibedakan lewat query (Semua Proyek vs Draf) baru bisa dicocokkan
+  // dengan benar setelah dibaca ulang dari window di klien.
+  //
+  // Sengaja lewat useState+useEffect, bukan dihitung langsung tiap render:
+  // dihitung langsung membuat pass render pertama di klien (saat hydration)
+  // memakai nilai yang beda dari HTML yang dikirim server, dan React tidak
+  // selalu menimpa atribut yang sudah ter-attach itu saat hydration — jadi
+  // aria-current bisa nyangkut di item yang salah. Lewat setState di effect,
+  // pembaruan itu jadi render sungguhan yang dijamin diterapkan.
+  const [currentPath, setCurrentPath] = useState(currentPathAwal);
+  useEffect(() => {
+    setCurrentPath(window.location.pathname + window.location.search);
+  }, []);
 
   // Situs ini statis, jadi peran pengguna tidak bisa diketahui saat build —
   // dibaca dari profil yang disimpan localStorage saat masuk, sama seperti
@@ -244,8 +260,18 @@ export function Sidebar({ currentPath }: Props) {
   );
 }
 
-/** Cocok jika path sama persis, mengabaikan query dan garis miring penutup. */
+/**
+ * Cocok jika path DAN query sama persis (mengabaikan garis miring penutup di
+ * path). Query ikut dibandingkan — bukan dibuang — supaya item submenu yang
+ * dibedakan lewat query saja (Semua Proyek "/admin/proyek" vs Draf
+ * "/admin/proyek?status=draft") tidak pernah cocok berdua sekaligus.
+ */
 function cocok(href: string, current: string) {
-  const bersih = (s: string) => s.split("?")[0].replace(/\/+$/, "") || "/";
-  return bersih(href) === bersih(current);
+  const pisah = (s: string): [string, string] => {
+    const [path, query = ""] = s.split("?");
+    return [path.replace(/\/+$/, "") || "/", query];
+  };
+  const [hPath, hQuery] = pisah(href);
+  const [cPath, cQuery] = pisah(current);
+  return hPath === cPath && hQuery === cQuery;
 }

@@ -95,7 +95,7 @@
   color: var(--text-faint);
 }
 
-.sidebar__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.sidebar__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 
 .sidebar__item {
   display: flex;
@@ -117,13 +117,14 @@
 
 .sidebar__item:hover { border-color: var(--border-strong); color: var(--text-strong); }
 
-/* Halaman aktif: satu-satunya pill terisi penuh warna aksi utama di sidebar
-   pada satu waktu — bukan abu-abu terangkat seperti hover, supaya "sedang di
-   sini" tidak tertukar dengan "sedang diarahkan ke sini". */
+/* Halaman aktif: satu-satunya pill terisi abu-abu terangkat di sidebar pada
+   satu waktu, dengan ikon dan teks yang jadi terang penuh — beda dari hover
+   lewat kombinasi fill+teks-terang itu, bukan warna aksi utama (putih/hitam
+   solid tetap khusus untuk tombol aksi, sesuai aturan warna situs ini). */
 .sidebar__item[aria-current="page"] {
-  background: var(--action);
-  border-color: var(--action);
-  color: var(--action-ink);
+  background: var(--surface-raised);
+  border-color: transparent;
+  color: var(--text-strong);
   font-weight: 600;
 }
 
@@ -146,11 +147,11 @@
 
 .sidebar__sub {
   list-style: none;
-  margin: 2px 0 var(--space-2);
+  margin: var(--space-2) 0 var(--space-2);
   padding: 0 0 0 1.6rem;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-1);
   position: relative;
 }
 
@@ -169,7 +170,7 @@
   display: block;
   padding: 0.45rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   color: var(--text-faint);
   font-size: var(--text-sm);
   text-decoration: none;
@@ -178,9 +179,9 @@
 
 .sidebar__subitem:hover { border-color: var(--border-strong); color: var(--text-body); }
 .sidebar__subitem[aria-current="page"] {
-  background: var(--action);
-  border-color: var(--action);
-  color: var(--action-ink);
+  background: var(--surface-raised);
+  border-color: transparent;
+  color: var(--text-strong);
   font-weight: 600;
 }
 
