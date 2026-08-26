@@ -203,10 +203,12 @@
   align-items: stretch;
 }
 
-/* Empat lapis warna bergantian gelap–terang, supaya batas tiap bagian
-   terbaca dari warnanya sendiri, bukan cuma dari garis:
-   kolom logo (gelap) → kolom form (terang) → kartu (gelap) → isian (terang).
-   Semua memakai token, jadi urutannya tetap masuk akal di tema terang. */
+/* Dua warna saja, bergantian gelap–terang, supaya batas tiap bagian
+   terbaca dari warnanya sendiri dan bukan cuma dari garis:
+     gelap  (--bg-sunken)     : kolom logo, kartu Detail studio
+     terang (--surface-raised): kolom form, kotak unggah, kotak isian
+   Sengaja SATU token untuk semua yang terang — tiga abu yang beda tipis
+   terbaca seperti ketidaksengajaan, bukan keputusan. */
 .settings-split__logo {
   flex: none;
   display: flex;
@@ -292,10 +294,10 @@
   color: var(--text-strong);
 }
 
-/* Sepadan dengan referensi: kira-kira sepertiga lebar kolomnya, dibatasi
-   16rem supaya tidak jadi raksasa di layar sangat lebar. */
+/* Diukur dari referensi: lingkarannya 31% lebar kolom. Dibatasi 17rem
+   supaya tidak jadi raksasa di layar sangat lebar. */
 .logo-preview {
-  width: min(16rem, 32%);
+  width: min(17rem, 35%);
   aspect-ratio: 1;
   height: auto;
   flex: none;
@@ -314,21 +316,28 @@
 
 .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Area jatuh berkas sengaja lapang seperti referensi — sasaran seret-lepas
-   yang sempit sulit dikenai, dan kolomnya memang punya ruang. */
+/* Diukur dari referensi: lebarnya 86% kolom dengan rasio 1.7:1 — melebar,
+   bukan persegi. Ditulis 96% dengan alasan yang sama seperti lingkaran:
+   persentasenya dihitung dari kotak-dalam kolom, bukan lebar kolom. Rasio dipakai (bukan tinggi tetap atau flex:1) supaya
+   bentuknya ikut skala di layar mana pun. min-height jadi lantai untuk
+   layar sempit, di mana rasio itu akan menghasilkan kotak terlalu pendek
+   untuk memuat isinya. */
 .logo-dropzone {
   display: flex;
-  flex: 1;
+  flex: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
-  min-height: 18rem;
-  padding: var(--space-6);
+  width: 96%;
+  margin-inline: auto;
+  aspect-ratio: 1.7;
+  min-height: 15rem;
+  padding: var(--space-5);
   text-align: center;
   border: 2px dashed var(--border-strong);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--surface-raised);
   cursor: pointer;
   transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }

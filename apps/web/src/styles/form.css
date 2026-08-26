@@ -70,7 +70,7 @@
    --bg-sunken (lapis paling gelap), sehingga kotak isiannya justru harus
    lebih terang dari kartunya supaya terbaca sebagai tempat mengetik.
    Border 2px --border-strong menyamai tebal border panelnya. */
-.input--panel { background: var(--surface-hover); border-width: 2px; border-color: var(--border-strong); }
+.input--panel { background: var(--surface-raised); border-width: 2px; border-color: var(--border-strong); }
 .input--panel:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
 .input--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
 
