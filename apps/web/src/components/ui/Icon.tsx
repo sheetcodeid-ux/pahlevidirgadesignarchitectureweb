@@ -48,6 +48,7 @@ export type IconName =
   | "user"
   | "checklist"
   | "clock"
+  | "camera"
   | "save";
 
 interface Props {
@@ -285,6 +286,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   // Disket — menyimpan. Sudut kanan-atas terpotong seperti disket sungguhan
   // supaya tetap terbaca meski bentuk aslinya sudah jarang dilihat orang.
+  // Kamera — tempat foto yang belum diisi (mis. slot logo kosong).
+  camera: (
+    <>
+      <path d="M3 8.5A2 2 0 0 1 5 6.5h1.9a1 1 0 0 0 .83-.45l.94-1.4a1 1 0 0 1 .83-.45h4.99a1 1 0 0 1 .83.45l.94 1.4a1 1 0 0 0 .83.45H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+      <circle cx="12" cy="13" r="3.2" />
+    </>
+  ),
   save: (
     <>
       <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />

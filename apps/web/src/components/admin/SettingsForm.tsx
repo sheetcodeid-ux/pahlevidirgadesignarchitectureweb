@@ -135,7 +135,7 @@ function Isi() {
             <img src={logoSrc} alt="Logo studio" />
           ) : (
             <>
-              <Icon name="image" size={40} />
+              <Icon name="camera" size={44} />
               <span className="t-muted" style={{ fontSize: "var(--text-sm)" }}>Belum ada logo</span>
             </>
           )}
