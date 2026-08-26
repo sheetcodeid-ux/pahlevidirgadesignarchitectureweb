@@ -115,6 +115,8 @@
 .marker--new .marker__dot { background: var(--brand); }
 .marker--live .marker__dot { background: var(--success); }
 .marker--warn .marker__dot { background: var(--warn); }
+/* Konfirmasi selesai — dipakai dengan ikon centang, bukan titik. */
+.marker--success { color: var(--success); }
 
 /* Titik yang menempel di pojok elemen lain (mis. lonceng notifikasi). */
 .marker-anchor { position: relative; display: inline-flex; }

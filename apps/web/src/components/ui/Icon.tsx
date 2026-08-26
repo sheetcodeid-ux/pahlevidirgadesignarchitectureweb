@@ -47,7 +47,8 @@ export type IconName =
   | "list"
   | "user"
   | "checklist"
-  | "clock";
+  | "clock"
+  | "save";
 
 interface Props {
   name: IconName;
@@ -280,6 +281,15 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3.5 2" />
+    </>
+  ),
+  // Disket — menyimpan. Sudut kanan-atas terpotong seperti disket sungguhan
+  // supaya tetap terbaca meski bentuk aslinya sudah jarang dilihat orang.
+  save: (
+    <>
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+      <path d="M17 21v-8H7v8" />
+      <path d="M7 3v5h8" />
     </>
   ),
 };

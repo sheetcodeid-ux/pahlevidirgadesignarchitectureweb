@@ -9,9 +9,14 @@ type Draf = Partial<StudioSettings>;
 const TIPE_LOGO_DIIZINKAN = new Set(["image/png", "image/jpeg", "image/webp"]);
 const UKURAN_LOGO_MAKS = 2 * 1024 * 1024;
 
-/** Pasangan pendek yang ditampilkan berdampingan — dua kolom di layar lebar. */
-const PASANGAN: [keyof StudioSettings, string][][] = [
-  [["studioName", "Nama studio"], ["city", "Kota"]],
+/**
+ * Pasangan pendek yang ditampilkan berdampingan — dua kolom di layar lebar.
+ * Elemen ketiga menandai field wajib. Hanya studioName yang benar-benar
+ * wajib (kolomnya `not null` di basis data); sisanya boleh kosong, jadi
+ * tidak diberi tanda supaya tandanya tetap berarti.
+ */
+const PASANGAN: [keyof StudioSettings, string, boolean?][][] = [
+  [["studioName", "Nama studio", true], ["city", "Kota"]],
   [["email", "Email"], ["phone", "Telepon/WhatsApp"]],
 ];
 
@@ -180,62 +185,71 @@ function Isi() {
       </div>
 
       <div className="settings-split__form">
-        <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start", marginBottom: "var(--space-5)" }}>
-          <span className="icon-tile"><Icon name="info" size={20} /></span>
-          <span className="card__titles">
+        <div className="settings-card">
+          <div className="settings-card__head">
+            <span className="icon-tile icon-tile--sm"><Icon name="info" size={16} /></span>
             <span className="t-subheading">Detail studio</span>
-            <span className="t-muted">Nama, kontak, dan alamat yang tampil di situs publik.</span>
-          </span>
-        </div>
+          </div>
 
-        <div className="stack">
-          {PASANGAN.map((pasangan, i) => (
-            <div className="spec-grid" key={i}>
-              {pasangan.map(([kunci, label]) => (
-                <div className="field" key={kunci}>
-                  <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
+          <div className="settings-card__body stack">
+            {PASANGAN.map((pasangan, i) => (
+              <div className="spec-grid" key={i}>
+                {pasangan.map(([kunci, label, wajib]) => (
+                  <div className="field" key={kunci}>
+                    <label className="field__label" htmlFor={`set-${kunci}`}>
+                      {label}
+                      {wajib && <span className="field__req" aria-hidden="true">*</span>}
+                    </label>
+                    <input
+                      id={`set-${kunci}`}
+                      className="input input--sunken"
+                      required={wajib}
+                      value={nilai(kunci)}
+                      onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {PENUH.map(([kunci, label, bantu]) => (
+              <div className="field" key={kunci}>
+                <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
+                {kunci === "address" ? (
+                  <textarea
+                    id={`set-${kunci}`}
+                    className="input input--sunken input--area"
+                    value={nilai(kunci)}
+                    onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
+                  />
+                ) : (
                   <input
                     id={`set-${kunci}`}
                     className="input input--sunken"
                     value={nilai(kunci)}
                     onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
                   />
-                </div>
-              ))}
-            </div>
-          ))}
+                )}
+                {bantu && <p className="field__help">{bantu}</p>}
+              </div>
+            ))}
+          </div>
 
-          {PENUH.map(([kunci, label, bantu]) => (
-            <div className="field" key={kunci}>
-              <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
-              {kunci === "address" ? (
-                <textarea
-                  id={`set-${kunci}`}
-                  className="input input--sunken input--area"
-                  value={nilai(kunci)}
-                  onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
-                />
-              ) : (
-                <input
-                  id={`set-${kunci}`}
-                  className="input input--sunken"
-                  value={nilai(kunci)}
-                  onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
-                />
-              )}
-              {bantu && <p className="field__help">{bantu}</p>}
-            </div>
-          ))}
-        </div>
-
-        <div className="row row--between" style={{ marginTop: "var(--space-5)" }}>
-          {adaPerubahan && (
-            <span className="marker marker--warn"><span className="marker__dot" />{berubah.length} perubahan belum disimpan</span>
-          )}
-          <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
-            {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
-            Simpan
-          </button>
+          <div className="settings-card__foot">
+            {adaPerubahan ? (
+              <span className="marker marker--warn">
+                <span className="marker__dot" />{berubah.length} perubahan belum disimpan
+              </span>
+            ) : (
+              <span className="marker marker--success">
+                <Icon name="check" size={14} />Perubahan sudah disimpan
+              </span>
+            )}
+            <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
+              {menyimpan ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="save" size={16} />}
+              Simpan Perubahan
+            </button>
+          </div>
         </div>
       </div>
     </div>
