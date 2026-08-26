@@ -11,7 +11,9 @@ on:
   workflow_dispatch:
 
 # Dua deploy berbarengan ke Worker yang sama bisa saling menimpa dengan
-# urutan yang tidak terduga. Push baru membatalkan yang masih berjalan.
+# urutan yang tidak terduga, jadi run baru membatalkan yang masih berjalan.
+# Itu aman HANYA karena setiap run mengambil ujung branch, bukan commit
+# pemicunya — lihat catatan pada langkah checkout di bawah.
 concurrency:
   group: deploy-produksi
   cancel-in-progress: true
@@ -35,7 +37,17 @@ jobs:
     name: Worker API
     runs-on: ubuntu-latest
     steps:
+      # Ambil ujung branch produksi, bukan commit yang memicu run ini.
+      #
+      # Pernah menggigit: GitHub sempat menahan event push, lalu
+      # mengirimnya tidak berurutan. Run untuk commit LAMA jadi mulai
+      # belakangan, membatalkan run commit baru lewat concurrency di atas,
+      # dan produksi berakhir memakai kode yang lebih lama — padahal
+      # branch-nya sudah maju. Dengan ref di bawah, run mana pun yang
+      # menang tetap men-deploy keadaan terbaru branch.
       - uses: actions/checkout@v4
+        with:
+          ref: claude/stack-setup-supabase-cloudflare-kdwlkk
 
       - uses: actions/setup-node@v4
         with:
@@ -66,7 +78,17 @@ jobs:
     name: Worker situs statis
     runs-on: ubuntu-latest
     steps:
+      # Ambil ujung branch produksi, bukan commit yang memicu run ini.
+      #
+      # Pernah menggigit: GitHub sempat menahan event push, lalu
+      # mengirimnya tidak berurutan. Run untuk commit LAMA jadi mulai
+      # belakangan, membatalkan run commit baru lewat concurrency di atas,
+      # dan produksi berakhir memakai kode yang lebih lama — padahal
+      # branch-nya sudah maju. Dengan ref di bawah, run mana pun yang
+      # menang tetap men-deploy keadaan terbaru branch.
       - uses: actions/checkout@v4
+        with:
+          ref: claude/stack-setup-supabase-cloudflare-kdwlkk
 
       - uses: actions/setup-node@v4
         with:
