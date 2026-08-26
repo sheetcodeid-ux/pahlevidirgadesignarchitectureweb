@@ -129,7 +129,7 @@ function Isi() {
 
   const tombolBaru = (
     <button type="button" className="btn btn--primary btn--lg">
-      <Icon name="plus" size={18} />Proyek baru
+      <Icon name="projectPlus" size={20} />Proyek baru
     </button>
   );
 
@@ -182,7 +182,7 @@ function Isi() {
       <div className="listbar">
         <div className="listbar__main">
           <div className="listbar__search">
-            <span className="listbar__icon"><Icon name="search" size={18} /></span>
+            <span className="listbar__icon"><Icon name="search" size={20} /></span>
             <input
               className="input"
               type="search"
@@ -198,12 +198,12 @@ function Isi() {
               <button type="button" className="viewtoggle__opt"
                 aria-pressed={tampilan === "tabel"} aria-label="Tampilan tabel"
                 onClick={() => setTampilan("tabel")}>
-                <Icon name="list" size={17} />
+                <Icon name="list" size={18} />
               </button>
               <button type="button" className="viewtoggle__opt"
                 aria-pressed={tampilan === "kartu"} aria-label="Tampilan kartu"
                 onClick={() => setTampilan("kartu")}>
-                <Icon name="dashboard" size={17} />
+                <Icon name="dashboard" size={18} />
               </button>
             </div>
           </div>

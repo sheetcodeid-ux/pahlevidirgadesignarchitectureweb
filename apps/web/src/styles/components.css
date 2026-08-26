@@ -45,7 +45,7 @@
 /* Aksi utama: membalik terhadap latar, jadi selalu jadi hal paling terang
    di tema gelap dan paling gelap di tema terang. */
 .btn--primary { background: var(--action); color: var(--action-ink); }
-.btn--primary:hover:not(:disabled) { background: var(--text-body); }
+.btn--primary:hover:not(:disabled) { background: var(--action-hover); color: var(--action-hover-ink); }
 
 .btn--secondary { background: transparent; color: var(--text-strong); border-color: var(--border-strong); }
 .btn--secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--text-faint); }

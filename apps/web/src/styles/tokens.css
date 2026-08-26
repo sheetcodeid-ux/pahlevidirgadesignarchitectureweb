@@ -73,6 +73,11 @@
   /* Aksi utama membalik terhadap latar */
   --action: #fafafa;
   --action-ink: #0a0a0a;
+  /* Warna sentuh aksi utama. Punya nilai sendiri per tema, bukan
+     penggelapan otomatis: di tema gelap tombolnya sudah putih, jadi
+     "lebih gelap" justru terbaca seperti tombol yang mati. */
+  --action-hover: #f2e3a2;
+  --action-hover-ink: #0a0a0a;
 
   --brand: #ef2b26;
   --brand-ink: #ffffff;
@@ -123,6 +128,10 @@
 
   --action: #0d0d0c;
   --action-ink: #ffffff;
+  /* Tema terang memakai merah brand — di atas putih, itu yang paling
+     terbaca sebagai "ini tombol utamanya". */
+  --action-hover: #cf1b17;
+  --action-hover-ink: #ffffff;
 
   --brand: #cf1b17;
   --brand-ink: #ffffff;

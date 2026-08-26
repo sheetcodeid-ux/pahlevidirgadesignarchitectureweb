@@ -50,6 +50,7 @@ export type IconName =
   | "clock"
   | "camera"
   | "building"
+  | "projectPlus"
   | "save";
 
 interface Props {
@@ -303,6 +304,17 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15" />
       <path d="M9 8h2M13 8h2M9 12h2M13 12h2" />
       <path d="M10 21v-4h4v4" />
+    </>
+  ),
+  // Denah bangunan dengan tanda tambah — "buat proyek baru". Bukan tanda
+  // tambah polos: di halaman yang penuh tombol, bentuk bangunannya yang
+  // memberi tahu apa yang akan ditambahkan.
+  projectPlus: (
+    <>
+      <path d="M3 21h12" />
+      <path d="M5 21V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6" />
+      <path d="M8 7h2M8 11h2M8 15h2" />
+      <path d="M18 14v7M14.5 17.5h7" />
     </>
   ),
   save: (
