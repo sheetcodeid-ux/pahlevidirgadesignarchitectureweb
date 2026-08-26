@@ -390,19 +390,19 @@
    terpisah, melainkan duduk dalam SATU bilah berbingkai yang dibagi garis
    vertikal. Barisan saringan menempel di bawahnya dalam bingkai yang sama,
    jadi seluruh perkakas daftar terbaca sebagai satu benda. */
-/* Bilah perkakas: tiap sel HITAM dan dipisah garis vertikal, bukan
-   dijejer dengan jarak. Yang abu justru talang di kiri-kanan (lihat
-   .listpage) — itu yang membuat blok isinya terbaca sebagai satu bidang
-   utuh yang dijepit, persis referensi pemilik. */
-.listbar {
-  background: var(--bg-sunken);
-  border-block: 2px solid var(--border-strong);
-}
+/* Bilah perkakas. Garis MENDATAR menembus talang — .listbar dan
+   .listbar__main selebar halaman penuh, jadi garis atas dan garis
+   pemisahnya tidak terputus di kiri-kanan. Yang bertalang hanya isinya:
+   .listbar__main diberi padding samping berlatar abu, dan sel-selnya
+   sendiri yang hitam berbingkai vertikal. */
+.listbar { border-block: 2px solid var(--border-strong); }
 
 .listbar__main {
   display: flex;
   align-items: stretch;
   flex-wrap: wrap;
+  padding-inline: var(--talang);
+  background: var(--surface-raised);
   border-bottom: 2px solid var(--border-strong);
 }
 
@@ -412,6 +412,8 @@
   align-items: center;
   flex: 1;
   min-width: 14rem;
+  background: var(--bg-sunken);
+  border-left: 2px solid var(--border-strong);
 }
 
 /* Kotak cari sengaja TANPA bingkai dan TANPA sudut membulat: bidang
@@ -443,37 +445,46 @@
   align-items: center;
   flex: none;
   padding: var(--space-3) var(--space-4);
+  background: var(--bg-sunken);
   border-left: 2px solid var(--border-strong);
 }
 
 /* Porsi diukur dari referensi: sel tombol utama memakai ~25% lebar bilah.
    Tombol yang jauh lebih lebar dari labelnya memang disengaja di sana —
    itu yang membuatnya terbaca sebagai aksi utama halaman. */
-.listbar__cta { min-width: 24%; }
-.listbar__cta .btn { width: 100%; height: 3.5rem; justify-content: center; font-size: var(--text-md); }
-
-/* Di layar sempit ketiganya bertumpuk, jadi garis pemisahnya pindah dari
-   kiri ke atas — kalau tidak, garisnya menggantung di udara. */
-@media (max-width: 47.99rem) {
-  .listbar__views,
-  .listbar__cta {
-    border-left: 0;
-    border-top: 2px solid var(--border-strong);
-  }
-  .listbar__cta { flex: 1; }
+.listbar__cta {
+  min-width: 24%;
+  border-right: 2px solid var(--border-strong);
 }
 
+.listbar__cta .btn { width: 100%; height: 3.5rem; justify-content: center; font-size: var(--text-md); }
+
+/* Bayangan keras tanpa blur di belakang tombol utama saat disentuh — gaya
+   Gumroad. Sengaja hanya di sini, bukan di semua .btn--primary: bayangan
+   setebal ini di dalam dialog akan terlihat berlebihan. */
+.listbar__cta .btn--primary:hover:not(:disabled) {
+  box-shadow: 5px 5px 0 var(--action-hover-shadow);
+}
+
+/* Barisan chip dibiarkan LEPAS: selebar halaman penuh, berlatar abu, dan
+   tanpa garis vertikal talang — hanya bagian ini yang begitu, sesuai
+   referensi. Paddingnya menyamai lebar talang supaya chip pertama tetap
+   sejajar dengan tepi kotak cari di atasnya. */
 .listbar__filters {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--talang);
+  background: var(--surface-raised);
 }
 
-/* Di layar sempit ketiganya bertumpuk, bukan berjajar. */
+/* Di layar sempit ketiganya bertumpuk, jadi garis pemisahnya pindah dari
+   kiri ke atas — kalau tidak, garisnya menggantung di udara. */
 @media (max-width: 47.99rem) {
   .listbar__main { flex-direction: column; }
+  .listbar__views,
+  .listbar__cta { border-top: 2px solid var(--border-strong); }
   .listbar__cta { flex: 1; }
 }
 
@@ -682,27 +693,35 @@
   padding: var(--space-7) var(--space-6) var(--space-6);
 }
 
-/* Talang abu di kiri dan kanan. Inilah "bagian abu" di referensi: blok
-   isinya (bilah + tabel) tetap hitam dan dijepit dua kolom abu selebar
-   2.75rem, dengan garis vertikal di antaranya yang menyambung dari bilah
-   sampai baris tabel terakhir. */
+/* Talang abu di kiri dan kanan. Lebarnya satu variabel supaya bilah,
+   barisan chip, dan tabel dijamin sejajar — kalau ditulis tiga kali, cukup
+   satu yang lupa diubah untuk membuat garisnya meleset.
+
+   Garis MENDATAR sengaja menembus talang, garis VERTIKAL hanya ada di
+   bilah dan tabel. Barisan chip dibiarkan lepas tanpa garis vertikal. */
 .listpage {
+  --talang: 2.75rem;
   display: flex;
   flex-direction: column;
-  padding-inline: 2.75rem;
   background: var(--surface-raised);
 }
 
-.listpage .listbar,
 .listpage .table-wrap {
-  border-inline: 2px solid var(--border-strong);
+  padding-inline: var(--talang);
+  background: var(--surface-raised);
+  border: 0;
   border-radius: 0;
-  background: var(--bg-sunken);
+  border-bottom: 2px solid var(--border-strong);
 }
 
-/* Bilah sudah punya garis bawah; tabel yang menempel di bawahnya tidak
-   perlu garis atas sendiri, kalau tidak jadi dua garis berdempetan. */
-.listpage .table-wrap { border-top: 0; border-bottom: 2px solid var(--border-strong); }
+/* Garis vertikal talang pada tabel dipasang di ISINYA, bukan di
+   pembungkusnya — pembungkusnya yang memberi talang, jadi bingkai di sana
+   justru akan menempel ke tepi layar. */
+.listpage .listcount,
+.listpage .table {
+  background: var(--bg-sunken);
+  border-inline: 2px solid var(--border-strong);
+}
 
 /* Isi yang bukan tabel tidak boleh ikut menempel ke tepi — kartu dan
    keadaan kosong butuh napas. */
