@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { Avatar } from "../ui/misc/Avatar";
+import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { daftarTim, tambahAnggotaTim, hapusAnggotaTim, type AnggotaTim } from "../../lib/admin";
@@ -8,6 +9,7 @@ import { daftarTim, tambahAnggotaTim, hapusAnggotaTim, type AnggotaTim } from ".
 function Isi() {
   const toast = useToast();
   const [tim, setTim] = useState<AnggotaTim[] | null>(null);
+  const [dialogTerbuka, setDialogTerbuka] = useState(false);
   const [nama, setNama] = useState("");
   const [peran, setPeran] = useState("");
   const [menambah, setMenambah] = useState(false);
@@ -26,6 +28,7 @@ function Isi() {
       await tambahAnggotaTim(namaBersih, peran.trim() || null);
       setNama("");
       setPeran("");
+      setDialogTerbuka(false);
       muat();
       toast({ judul: "Anggota ditambahkan", nada: "sukses" });
     } catch (e) {
@@ -35,8 +38,7 @@ function Isi() {
     }
   }
 
-  async function hapus(id: string, namaOrang: string) {
-    if (!confirm(`Hapus ${namaOrang} dari tim?`)) return;
+  async function hapus(id: string) {
     try {
       await hapusAnggotaTim(id);
       setTim((t) => t?.filter((x) => x.id !== id) ?? null);
@@ -47,18 +49,26 @@ function Isi() {
 
   return (
     <div className="stack" style={{ gap: "var(--space-5)" }}>
-      <div className="card">
-        <div className="card__header">
-          <span className="icon-tile"><Icon name="team" size={20} /></span>
-          <span className="card__titles">
-            <span className="t-subheading">Tambah anggota</span>
-            <span className="t-muted">Staf tetap maupun freelancer — bukan akun login.</span>
-          </span>
-        </div>
-        <div className="card__body">
-          <div className="spec-grid">
+      <div className="row row--between">
+        <span className="t-muted">Staf tetap maupun freelancer — bukan akun login.</span>
+        <Dialog
+          open={dialogTerbuka}
+          onOpenChange={setDialogTerbuka}
+          trigger={<button type="button" className="btn btn--primary"><Icon name="plus" size={16} />Tambah anggota</button>}
+          title="Tambah anggota"
+          description="Staf tetap maupun freelancer — bukan akun login."
+          footer={
+            <button type="button" className="btn btn--primary" disabled={nama.trim().length < 2 || menambah} onClick={tambah}>
+              {menambah && <span className="spinner spinner--sm spinner--on-action" />}
+              Tambah
+            </button>
+          }
+        >
+          <div className="stack">
             <div className="field">
-              <label className="field__label" htmlFor="tim-nama">Nama</label>
+              <label className="field__label" htmlFor="tim-nama">
+                Nama<span className="field__req" aria-hidden="true">*</span>
+              </label>
               <input id="tim-nama" className="input" value={nama} onChange={(e) => setNama(e.target.value)}
                 placeholder="Contoh: Rian Saputra" />
             </div>
@@ -68,12 +78,7 @@ function Isi() {
                 placeholder="Contoh: Drafter DED" />
             </div>
           </div>
-          <div className="row row--end" style={{ marginTop: "var(--space-4)" }}>
-            <button type="button" className="btn btn--primary" disabled={nama.trim().length < 2 || menambah} onClick={tambah}>
-              <Icon name="plus" size={15} />Tambah
-            </button>
-          </div>
-        </div>
+        </Dialog>
       </div>
 
       {tim === null ? (
@@ -92,10 +97,18 @@ function Isi() {
                 <span className="item__title">{t.name}</span>
                 {t.role && <span className="item__desc">{t.role}</span>}
               </span>
-              <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${t.name}`}
-                onClick={() => hapus(t.id, t.name)}>
-                <Icon name="trash" size={15} />
-              </button>
+              <AlertDialog
+                destructive
+                title={`Hapus ${t.name}?`}
+                description="Anggota ini tidak akan lagi muncul di daftar tim maupun sebagai pilihan PIC tugas."
+                confirmLabel="Ya, hapus"
+                onConfirm={() => hapus(t.id)}
+                trigger={
+                  <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${t.name}`}>
+                    <Icon name="trash" size={15} />
+                  </button>
+                }
+              />
             </li>
           ))}
         </ul>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { BarChart } from "../ui/data/Chart";
 import { RequireAuth } from "./RequireAuth";
 import { ambilRingkasanKeuangan, type FinanceOverview } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
@@ -62,40 +63,63 @@ function Isi() {
           <p className="t-muted">Isi nilai kontrak di tab Keuangan pada halaman tiap proyek.</p>
         </div>
       ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Proyek</th>
-                <th className="table__num">Kontrak</th>
-                <th className="table__num">Diterima</th>
-                <th className="table__num">Biaya (HPP)</th>
-                <th className="table__num">Margin</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.proyek.map((p) => (
-                <tr key={p.projectId}>
-                  <td>
-                    <a href={`/admin/proyek/edit?id=${p.projectId}`} className="item__title" style={{ textDecoration: "none" }}>
-                      {p.projectTitle}
-                    </a>
-                  </td>
-                  <td className="table__num">{p.contractValue !== null ? formatRupiah(p.contractValue) : "—"}</td>
-                  <td className="table__num">{formatRupiah(p.received)}</td>
-                  <td className="table__num">{formatRupiah(p.costsTotal)}</td>
-                  <td className="table__num">
-                    {p.marginPct !== null ? (
-                      <span className={`badge ${p.marginPct >= 35 ? "badge--success" : "badge--warn"}`}>
-                        {p.marginPct.toFixed(0)}%
-                      </span>
-                    ) : "—"}
-                  </td>
+        <>
+          <div className="spec-grid">
+            <div className="spec-demo">
+              <BarChart
+                title="Kas diterima per proyek"
+                unit=" jt"
+                data={data.proyek.map((p) => ({ label: p.projectTitle, value: Math.round(p.received / 1_000_000) }))}
+              />
+            </div>
+            {data.proyek.some((p) => p.marginPct !== null) && (
+              <div className="spec-demo">
+                <BarChart
+                  title="Margin per proyek"
+                  unit="%"
+                  data={data.proyek
+                    .filter((p): p is typeof p & { marginPct: number } => p.marginPct !== null)
+                    .map((p) => ({ label: p.projectTitle, value: Math.round(p.marginPct) }))}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Proyek</th>
+                  <th className="table__num">Kontrak</th>
+                  <th className="table__num">Diterima</th>
+                  <th className="table__num">Biaya (HPP)</th>
+                  <th className="table__num">Margin</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {data.proyek.map((p) => (
+                  <tr key={p.projectId}>
+                    <td>
+                      <a href={`/admin/proyek/edit?id=${p.projectId}`} className="item__title" style={{ textDecoration: "none" }}>
+                        {p.projectTitle}
+                      </a>
+                    </td>
+                    <td className="table__num">{p.contractValue !== null ? formatRupiah(p.contractValue) : "—"}</td>
+                    <td className="table__num">{formatRupiah(p.received)}</td>
+                    <td className="table__num">{formatRupiah(p.costsTotal)}</td>
+                    <td className="table__num">
+                      {p.marginPct !== null ? (
+                        <span className={`badge ${p.marginPct >= 35 ? "badge--success" : "badge--warn"}`}>
+                          {p.marginPct.toFixed(0)}%
+                        </span>
+                      ) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

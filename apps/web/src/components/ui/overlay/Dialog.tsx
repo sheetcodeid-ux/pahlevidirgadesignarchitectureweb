@@ -17,11 +17,14 @@ interface DialogProps {
   description?: string;
   children?: ReactNode;
   footer?: ReactNode;
+  /** Opsional: kendalikan buka/tutup dari luar, misalnya untuk menutup otomatis setelah submit sukses. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function Dialog({ trigger, title, description, children, footer }: DialogProps) {
+export function Dialog({ trigger, title, description, children, footer, open, onOpenChange }: DialogProps) {
   return (
-    <RDialog.Root>
+    <RDialog.Root open={open} onOpenChange={onOpenChange}>
       <RDialog.Trigger asChild>{trigger}</RDialog.Trigger>
       <RDialog.Portal>
         <RDialog.Overlay className="ov-scrim" />

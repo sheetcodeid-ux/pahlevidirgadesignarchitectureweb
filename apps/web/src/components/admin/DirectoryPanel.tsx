@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { Avatar } from "../ui/misc/Avatar";
+import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { daftarKontak, tambahKontak, ubahKontak, hapusKontak, type KontakDirektori } from "../../lib/admin";
@@ -20,6 +21,7 @@ function Isi() {
   const toast = useToast();
   const [kontak, setKontak] = useState<KontakDirektori[] | null>(null);
   const [filter, setFilter] = useState<string>("semua");
+  const [dialogTerbuka, setDialogTerbuka] = useState(false);
 
   const [nama, setNama] = useState("");
   const [kategori, setKategori] = useState("klien");
@@ -47,6 +49,7 @@ function Isi() {
         email: email.trim() || null,
       });
       setNama(""); setPerusahaan(""); setTelepon(""); setEmail("");
+      setDialogTerbuka(false);
       muat();
       toast({ judul: "Kontak ditambahkan", nada: "sukses" });
     } catch (e) {
@@ -68,8 +71,7 @@ function Isi() {
     }
   }
 
-  async function hapus(id: string, namaOrang: string) {
-    if (!confirm(`Hapus ${namaOrang} dari direktori?`)) return;
+  async function hapus(id: string) {
     try {
       await hapusKontak(id);
       setKontak((k) => k?.filter((x) => x.id !== id) ?? null);
@@ -82,26 +84,37 @@ function Isi() {
 
   return (
     <div className="stack" style={{ gap: "var(--space-5)" }}>
-      <div className="card">
-        <div className="card__header">
-          <span className="icon-tile"><Icon name="directory" size={20} /></span>
-          <span className="card__titles">
-            <span className="t-subheading">Tambah kontak</span>
-            <span className="t-muted">Klien, kontraktor, atau supplier yang dipakai berulang.</span>
-          </span>
-        </div>
-        <div className="card__body">
-          <div className="spec-grid">
+      <div className="row row--between">
+        <span className="t-muted">Klien, kontraktor, atau supplier yang dipakai berulang.</span>
+        <Dialog
+          open={dialogTerbuka}
+          onOpenChange={setDialogTerbuka}
+          trigger={<button type="button" className="btn btn--primary"><Icon name="plus" size={16} />Tambah kontak</button>}
+          title="Tambah kontak"
+          description="Klien, kontraktor, atau supplier yang dipakai berulang."
+          footer={
+            <button type="button" className="btn btn--primary" disabled={nama.trim().length < 2 || menambah} onClick={tambah}>
+              {menambah && <span className="spinner spinner--sm spinner--on-action" />}
+              Tambah
+            </button>
+          }
+        >
+          <div className="stack">
             <div className="field">
-              <label className="field__label" htmlFor="dir-nama">Nama</label>
+              <label className="field__label" htmlFor="dir-nama">
+                Nama<span className="field__req" aria-hidden="true">*</span>
+              </label>
               <input id="dir-nama" className="input" value={nama} onChange={(e) => setNama(e.target.value)}
                 placeholder="Contoh: Bu Ratna" />
             </div>
             <div className="field">
               <label className="field__label" htmlFor="dir-kategori">Kategori</label>
-              <select id="dir-kategori" className="input" value={kategori} onChange={(e) => setKategori(e.target.value)}>
-                {KATEGORI.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
+              <span className="select">
+                <select id="dir-kategori" className="input" value={kategori} onChange={(e) => setKategori(e.target.value)}>
+                  {KATEGORI.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+                <span className="select__chevron"><Icon name="chevronDown" size={16} /></span>
+              </span>
             </div>
             <div className="field">
               <label className="field__label" htmlFor="dir-perusahaan">Perusahaan</label>
@@ -119,12 +132,7 @@ function Isi() {
                 placeholder="Opsional" />
             </div>
           </div>
-          <div className="row row--end" style={{ marginTop: "var(--space-4)" }}>
-            <button type="button" className="btn btn--primary" disabled={nama.trim().length < 2 || menambah} onClick={tambah}>
-              <Icon name="plus" size={15} />Tambah
-            </button>
-          </div>
-        </div>
+        </Dialog>
       </div>
 
       <div className="segmented" role="group" aria-label="Filter kategori">
@@ -167,10 +175,18 @@ function Isi() {
                   aria-label={`Catatan untuk ${k.name}`}
                 />
               </span>
-              <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${k.name}`}
-                onClick={() => hapus(k.id, k.name)}>
-                <Icon name="trash" size={15} />
-              </button>
+              <AlertDialog
+                destructive
+                title={`Hapus ${k.name}?`}
+                description="Kontak ini beserta catatannya akan dihapus dari direktori."
+                confirmLabel="Ya, hapus"
+                onConfirm={() => hapus(k.id)}
+                trigger={
+                  <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${k.name}`}>
+                    <Icon name="trash" size={15} />
+                  </button>
+                }
+              />
             </li>
           ))}
         </ul>

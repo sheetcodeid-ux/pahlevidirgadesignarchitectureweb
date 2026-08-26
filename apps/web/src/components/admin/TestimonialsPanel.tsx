@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { daftarTestimoni, ubahTestimoni, hapusTestimoni, type TestimoniAdmin } from "../../lib/admin";
@@ -42,8 +43,7 @@ function Isi() {
     }
   }
 
-  async function hapus(id: string, nama: string) {
-    if (!confirm(`Hapus testimoni dari ${nama}?`)) return;
+  async function hapus(id: string) {
     try {
       await hapusTestimoni(id);
       setTestimoni((t) => t?.filter((x) => x.id !== id) ?? null);
@@ -111,10 +111,18 @@ function Isi() {
                         Tolak
                       </button>
                     )}
-                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus testimoni ${t.clientName}`}
-                      onClick={() => hapus(t.id, t.clientName)}>
-                      <Icon name="trash" size={15} />
-                    </button>
+                    <AlertDialog
+                      destructive
+                      title={`Hapus testimoni dari ${t.clientName}?`}
+                      description="Testimoni ini akan dihapus permanen dan tidak lagi tampil di beranda."
+                      confirmLabel="Ya, hapus"
+                      onConfirm={() => hapus(t.id)}
+                      trigger={
+                        <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus testimoni ${t.clientName}`}>
+                          <Icon name="trash" size={15} />
+                        </button>
+                      }
+                    />
                   </span>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { Tabs } from "../ui/misc/Nav";
+import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import {
@@ -225,10 +226,18 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                       aria-label={`Ubah status ${i.label}`}>
                       {STATUS_INVOICE.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
-                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${i.label}`}
-                      onClick={() => hapusInv(i.id)}>
-                      <Icon name="trash" size={15} />
-                    </button>
+                    <AlertDialog
+                      destructive
+                      title={`Hapus ${i.label}?`}
+                      description="Riwayat tagihan ini akan dihapus permanen."
+                      confirmLabel="Ya, hapus"
+                      onConfirm={() => hapusInv(i.id)}
+                      trigger={
+                        <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${i.label}`}>
+                          <Icon name="trash" size={15} />
+                        </button>
+                      }
+                    />
                   </li>
                 ))}
               </ul>
@@ -279,10 +288,18 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                       <span className="item__title">{b.label}</span>
                       <span className="item__desc">{KATEGORI_BIAYA.find(([v]) => v === b.category)?.[1] ?? b.category} · {formatRupiah(b.amount)}</span>
                     </span>
-                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${b.label}`}
-                      onClick={() => hapusBiayaItem(b.id)}>
-                      <Icon name="trash" size={15} />
-                    </button>
+                    <AlertDialog
+                      destructive
+                      title={`Hapus ${b.label}?`}
+                      description="Biaya ini akan dihapus dari perhitungan margin proyek."
+                      confirmLabel="Ya, hapus"
+                      onConfirm={() => hapusBiayaItem(b.id)}
+                      trigger={
+                        <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${b.label}`}>
+                          <Icon name="trash" size={15} />
+                        </button>
+                      }
+                    />
                   </li>
                 ))}
               </ul>
@@ -465,10 +482,18 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
                   aria-label={`Ubah status ${d.title}`}>
                   {STATUS_DOKUMEN.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
-                <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${d.title}`}
-                  onClick={() => hapus(d.id)}>
-                  <Icon name="trash" size={15} />
-                </button>
+                <AlertDialog
+                  destructive
+                  title={`Hapus ${d.title}?`}
+                  description="Dokumen ini akan hilang dari portal klien beserta seluruh komentarnya."
+                  confirmLabel="Ya, hapus"
+                  onConfirm={() => hapus(d.id)}
+                  trigger={
+                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${d.title}`}>
+                      <Icon name="trash" size={15} />
+                    </button>
+                  }
+                />
               </div>
               <ThreadKomentar documentId={d.id} />
             </li>
@@ -683,10 +708,18 @@ function PanelTugas({ projectId }: { projectId: string }) {
                 aria-label={`Ubah status ${t.title}`}>
                 {STATUS_TUGAS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
-              <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${t.title}`}
-                onClick={() => hapus(t.id)}>
-                <Icon name="trash" size={15} />
-              </button>
+              <AlertDialog
+                destructive
+                title={`Hapus ${t.title}?`}
+                description="Tugas ini akan dihapus dari daftar list kerjaan."
+                confirmLabel="Ya, hapus"
+                onConfirm={() => hapus(t.id)}
+                trigger={
+                  <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${t.title}`}>
+                    <Icon name="trash" size={15} />
+                  </button>
+                }
+              />
             </li>
           ))}
         </ul>
@@ -874,10 +907,18 @@ function PanelProgres({ projectId }: { projectId: string }) {
                     {new Date(u.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
                   </span>
                 </span>
-                <button type="button" className="btn btn--ghost btn--icon" aria-label="Hapus catatan"
-                  onClick={() => hapusCatatan(u.id)}>
-                  <Icon name="trash" size={15} />
-                </button>
+                <AlertDialog
+                  destructive
+                  title={`Hapus "${u.title}"?`}
+                  description="Catatan ini akan hilang dari linimasa yang dilihat klien."
+                  confirmLabel="Ya, hapus"
+                  onConfirm={() => hapusCatatan(u.id)}
+                  trigger={
+                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus catatan ${u.title}`}>
+                      <Icon name="trash" size={15} />
+                    </button>
+                  }
+                />
               </div>
             </li>
           ))}
