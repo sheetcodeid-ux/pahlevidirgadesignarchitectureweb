@@ -16,7 +16,7 @@
   flex-direction: column;
   width: min(var(--sidebar-w), 85vw);
   background: var(--bg-sunken);
-  border-right: 1px solid var(--border);
+  border-right: 2px solid var(--border-strong);
   transform: translateX(-100%);
   transition: transform var(--dur) var(--ease), width var(--dur) var(--ease);
 }
