@@ -213,6 +213,10 @@
   flex: none;
   display: flex;
   flex-direction: column;
+  /* space-between, bukan gap tetap: sisa ruang dibagi rata ke sela-selanya
+     sehingga kotak unggah duduk pas di dasar kolom — tidak ada lagi ruang
+     menganggur di bawahnya. */
+  justify-content: space-between;
   gap: var(--space-5);
   padding: var(--space-6);
   background: var(--bg-sunken);
@@ -297,7 +301,7 @@
 /* Diukur dari referensi: lingkarannya 31% lebar kolom. Dibatasi 17rem
    supaya tidak jadi raksasa di layar sangat lebar. */
 .logo-preview {
-  width: min(17rem, 35%);
+  width: min(22rem, 48%);
   aspect-ratio: 1;
   height: auto;
   flex: none;
@@ -350,8 +354,8 @@
 .logo-dropzone__icon {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 4.125rem;
+  height: 4.125rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface-raised);
