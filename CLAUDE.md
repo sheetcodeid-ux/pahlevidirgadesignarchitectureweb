@@ -148,6 +148,53 @@ nanti ada halaman admin yang memuat data sungguhan, penjagaannya harus pindah
 ke edge (Cloudflare Access di depan `/admin/*`) — jangan mengandalkan
 `MasterGuard`.
 
+## Alur persetujuan tampilan
+
+Aturan pemilik, berlaku untuk **setiap** perubahan yang kelihatan mata:
+
+> Kirim gambarnya dulu. Kalau di-ACC baru deploy; kalau belum, ulangi.
+
+Jadi urutannya selalu: ubah kode → jalankan halamannya di browser → kirim
+tangkapan layarnya lewat lampiran → **tunggu ACC** → baru commit ke branch
+produksi. Boleh commit ke branch kerja sambil menunggu, tapi jangan merge.
+Alasannya bukan formalitas: satu putaran deploy yang salah memakan waktu
+pemilik untuk memeriksa, dan pemilik menjunjung tinggi estetika — dia yang
+menilai, bukan saya.
+
+**Kalau pemilik mengirim gambar referensi, samakan dengan mengukur, bukan
+dengan mengira.** Cara yang terbukti bekerja di sesi sebelumnya:
+
+1. Ukur elemen di gambar referensi sebagai **persentase terhadap wadahnya**
+   (lebar kolom, lebar kartu), bukan piksel — tangkapan layar pemilik dan
+   viewport saya beda skala, jadi angka piksel mentah menyesatkan
+2. Terapkan persentase itu di CSS
+3. Buka halamannya dengan Playwright (`/opt/pw-browsers/chromium`) dan baca
+   `getBoundingClientRect()` serta `getComputedStyle()` — bandingkan angkanya
+   dengan referensi, jangan menilai dari melihat tangkapan layar
+4. Laporkan angkanya ke pemilik bersama gambarnya, termasuk yang meleset
+
+Kalau permintaan pemilik bentrok dengan referensinya sendiri (mis. referensi
+aslinya bisa digulir sementara halaman kita tidak boleh), kerjakan yang paling
+mendekati, lalu **sebutkan bentroknya secara terbuka** dan biar pemilik yang
+memutuskan. Jangan diam-diam memilih salah satu.
+
+## Jebakan yang sudah pernah menggigit
+
+Tiga hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
+
+1. **`:has(> .anak)` tidak pernah cocok untuk komponen island.** Astro
+   membungkus komponen `client:load` dalam `<astro-island>` yang memakai
+   `display: contents`. Tata letaknya berperilaku seolah anaknya langsung,
+   tapi bagi CSS pembungkus itu tetap ada. Tulis `:has(.anak)` tanpa `>`.
+2. **Persentase `padding` dihitung dari lebar-dalam INDUK, bukan elemennya
+   sendiri.** `padding: 0 7%` di kolom selebar 584px yang induknya 1168px
+   menghasilkan 82px, bukan 41px. Untuk padding pakai nilai tetap; persentase
+   lebar anak baru dihitung terhadap kotak-dalam kolom (lebar kolom dikurangi
+   padding-nya).
+3. **`aspect-ratio`, bukan `flex: 1`, kalau bentuknya harus tetap.** `flex: 1`
+   membuat tinggi mengikuti sisa ruang viewport, jadi kotak yang seharusnya
+   melebar berubah jadi hampir persegi di layar pendek.
+
 ## Perintah
 
 | Perintah | Kegunaan |
@@ -157,6 +204,7 @@ ke edge (Cloudflare Access di depan `/admin/*`) — jangan mengandalkan
 | `cd apps/api && npx wrangler deploy --dry-run` | Periksa bundling & binding Worker API tanpa deploy |
 | `cd apps/web && npm run check` | Typecheck Astro |
 | `cd apps/web && npm run build` | Build statis |
+| `cd apps/web && npm run dev` + Playwright | Ukur tampilan di browser sungguhan sebelum minta ACC |
 | `./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"` | Periksa skema, RLS, GRANT, akun staf |
 | `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 13 assertion RLS |
 | `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` |
@@ -167,14 +215,27 @@ skrip; jangan sunting hasilnya.
 
 ## Cara kerja yang diharapkan
 
-- Branch pengembangan: `claude/stack-setup-supabase-cloudflare-kdwlkk`
+- **Branch produksi: `claude/stack-setup-supabase-cloudflare-kdwlkk`.** Push ke
+  sini yang memicu deploy, jadi jangan dipakai untuk coba-coba. Kerjakan di
+  branch sesi, lalu merge ke sini setelah pemilik ACC
 - Jangan buat pull request kecuali diminta
 - **Deploy otomatis lewat GitHub Actions** (`.github/workflows/deploy.yml`)
-  begitu branch produksi berubah — jangan minta pemilik menjalankan
-  `wrangler deploy` tangan. Jaringan sesi Claude memblokir
-  `api.cloudflare.com`, jadi deploy langsung dari sini memang tidak bisa;
-  Actions yang menjembatani. Butuh secret repo `CLOUDFLARE_API_TOKEN`.
-  Pantau hasilnya lewat tab Actions, bukan dengan mengira sudah tayang
+  begitu branch produksi berubah — jangan pernah minta pemilik menjalankan
+  `wrangler deploy` tangan lagi. Butuh secret repo `CLOUDFLARE_API_TOKEN`
+  (sudah terpasang)
+- **Rahasia tidak pernah lewat percakapan.** Kalau butuh token baru, tuntun
+  pemilik menempelkannya langsung ke UI GitHub Secrets. Token yang pernah
+  terkirim ke chat harus dianggap bocor dan dicabut, bukan dipakai
+- **Jaringan sesi ini memblokir Cloudflare sepenuhnya** — `api.cloudflare.com`
+  maupun `*.workers.dev` sama-sama kena 403 dari gateway. Artinya saya tidak
+  bisa membuka situs yang sudah tayang untuk memeriksanya sendiri. Yang bisa
+  dipakai sebagai bukti tayang: status run di tab Actions **dan** stempel
+  `modified_on` kedua Worker lewat konektor Cloudflare (yang read-only).
+  Sebutkan keterbatasan ini ke pemilik, jangan mengaku sudah memeriksa
+- **Mesin pemilik ada dua**: MacBook pribadi (yang dipakai sehari-hari) dan
+  komputer kantor ber-PowerShell. Jangan menulis perintah shell yang
+  mengasumsikan salah satunya — dan sejak deploy otomatis, pemilik memang
+  tidak perlu menjalankan apa pun
 - Verifikasi dengan menjalankan, bukan dengan membaca. Tidak ada Docker di
   container sesi; Postgres 16 tersedia di `/usr/lib/postgresql/16/bin` dan bisa
   dijalankan sebagai user non-root untuk menguji migrasi dan RLS sungguhan
@@ -190,3 +251,6 @@ skrip; jangan sunting hasilnya.
 | Rate limit lewat KV, bukan in-memory | Worker tidak menyimpan state antar-request sama sekali, beda dari instance Cloud Run yang setidaknya bertahan selama masih hangat. KV tersebar di seluruh edge — lebih ketat dari limiter in-memory sebelumnya, dengan trade-off baca-tulis yang tidak atomik dan propagasi hingga ~60 detik. Diterima dengan alasan yang sama seperti sebelumnya: Turnstile penjaga sesungguhnya |
 | Supabase di org Free terpisah | Menggabung ke `operation-gwg` (database operasional GWG yang live) akan berbagi `auth.users`, backup, dan radius kerusakan kredensial |
 | Astro statis, bukan SSR | Pengunjung tidak perlu menunggu backend; Worker API boleh dingin |
+| Deploy lewat GitHub Actions, bukan tangan | Deploy sebelumnya harus dijalankan pemilik dari komputer kantor, jadi kode yang sudah di-merge bisa menganggur berhari-hari — dan pernah tayang setengah jalan karena satu Worker ter-deploy dan satunya tidak. Sesi Claude tidak bisa menggantikannya karena jaringannya memblokir Cloudflare |
+| Kirim pratinjau sebelum deploy, bukan deploy lalu perbaiki | Permintaan eksplisit pemilik setelah beberapa putaran perbaikan yang meleset. Yang menilai estetika adalah pemilik; memeriksa gambar jauh lebih murah baginya ketimbang memeriksa situs yang sudah tayang |
+| Logo studio di R2 dengan folder `studio/`, bukan tabel terpisah | Satu kolom `logo_key` di `studio_settings` sudah cukup untuk satu logo. Folder dipisah dari `projects/` supaya berkas studio tidak ikut terhapus saat proyek dibersihkan |
