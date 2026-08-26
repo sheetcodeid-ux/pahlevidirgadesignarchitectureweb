@@ -320,8 +320,8 @@ function PemilihBintang({ nilai, onUbah }: { nilai: number; onUbah: (n: number) 
     <div className="row" style={{ gap: "var(--space-1)" }}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button key={n} type="button" className="btn btn--ghost btn--icon" aria-label={`${n} bintang`}
-          onClick={() => onUbah(n)} style={{ color: n <= nilai ? "var(--text)" : "var(--text-faint)" }}>
-          <Icon name="star" size={18} />
+          onClick={() => onUbah(n)} style={{ color: n <= nilai ? "var(--text-strong)" : "var(--text-faint)" }}>
+          <Icon name="star" size={18} variant={n <= nilai ? "filled" : "stroke"} />
         </button>
       ))}
     </div>

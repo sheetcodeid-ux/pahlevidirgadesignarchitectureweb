@@ -83,8 +83,8 @@ function Isi() {
                     {t.rating && (
                       <span className="row" style={{ gap: "2px" }}>
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <span key={i} style={{ color: i < t.rating! ? "var(--text)" : "var(--text-faint)" }}>
-                            <Icon name="star" size={13} />
+                          <span key={i} style={{ color: i < t.rating! ? "var(--text-strong)" : "var(--text-faint)" }}>
+                            <Icon name="star" size={13} variant={i < t.rating! ? "filled" : "stroke"} />
                           </span>
                         ))}
                       </span>

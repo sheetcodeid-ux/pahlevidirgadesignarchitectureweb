@@ -40,14 +40,14 @@ const ikon = [
   "logout", "chevronDown", "chevronRight", "chevronLeft", "sun", "moon",
   "check", "plus", "search", "trash", "edit", "upload", "calendar",
   "alert", "info", "lock", "external", "copy", "filter", "close", "document", "directory",
-  "quote", "star", "list", "user", "checklist",
+  "quote", "star", "list", "user", "checklist", "clock",
 ] as const;
 
 // Subset ikon yang punya gambar filled terpisah — dipakai nav sidebar untuk
-// menandai keadaan terpilih. Daftar ini harus tetap sinkron dengan kunci
-// PATHS_FILLED di Icon.tsx.
+// menandai keadaan terpilih, atau widget rating untuk bintang terisi/kosong.
+// Daftar ini harus tetap sinkron dengan kunci PATHS_FILLED di Icon.tsx.
 const ikonBerpasangan = [
-  "dashboard", "project", "check", "finance", "inquiry", "team", "directory", "quote", "settings", "component", "checklist",
+  "dashboard", "project", "check", "finance", "inquiry", "team", "directory", "quote", "settings", "component", "checklist", "star",
 ] as const;
 ---
 

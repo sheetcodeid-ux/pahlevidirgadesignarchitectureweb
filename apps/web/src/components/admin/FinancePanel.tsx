@@ -30,7 +30,7 @@ function Isi() {
       <div className="spec-grid">
         {[
           { label: "Kas masuk", nilai: data.kasMasuk, ikon: "finance" as const },
-          { label: "Piutang", nilai: data.piutang, ikon: "inquiry" as const },
+          { label: "Piutang", nilai: data.piutang, ikon: "clock" as const },
         ].map((s) => (
           <div className="card" key={s.label}>
             <div className="card__header">
