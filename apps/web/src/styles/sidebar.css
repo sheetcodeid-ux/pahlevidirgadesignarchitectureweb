@@ -103,7 +103,7 @@
   gap: var(--space-3);
   width: 100%;
   padding: 0.6rem 0.75rem;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-muted);
@@ -112,15 +112,18 @@
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.sidebar__item:hover { background: var(--surface-raised); color: var(--text-strong); }
+.sidebar__item:hover { border-color: var(--border-strong); color: var(--text-strong); }
 
-/* Halaman aktif: pill terisi penuh — satu-satunya di sidebar pada satu waktu. */
+/* Halaman aktif: satu-satunya pill terisi penuh warna aksi utama di sidebar
+   pada satu waktu — bukan abu-abu terangkat seperti hover, supaya "sedang di
+   sini" tidak tertukar dengan "sedang diarahkan ke sini". */
 .sidebar__item[aria-current="page"] {
-  background: var(--surface-raised);
-  color: var(--text-strong);
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-ink);
   font-weight: 600;
 }
 
@@ -165,15 +168,21 @@
 .sidebar__subitem {
   display: block;
   padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-faint);
   font-size: var(--text-sm);
   text-decoration: none;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.sidebar__subitem:hover { background: var(--surface-raised); color: var(--text-body); }
-.sidebar__subitem[aria-current="page"] { background: var(--surface-raised); color: var(--text-strong); font-weight: 600; }
+.sidebar__subitem:hover { border-color: var(--border-strong); color: var(--text-body); }
+.sidebar__subitem[aria-current="page"] {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-ink);
+  font-weight: 600;
+}
 
 /* --- Kaki ---------------------------------------------------------------- */
 
