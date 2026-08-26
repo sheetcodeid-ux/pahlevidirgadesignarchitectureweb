@@ -70,7 +70,7 @@
    --surface, sehingga --surface-raised bawaan (lebih terang dari kartunya di
    tema gelap) tidak lagi terbaca sebagai lekukan. Border-nya sengaja lebih
    terang dari border kartu supaya tepinya tetap tegas di atas latar gelap. */
-.input--sunken { background: var(--bg-sunken); border-color: var(--border-strong); }
+.input--sunken { background: var(--bg-sunken); border-width: 2px; border-color: var(--border-strong); }
 :root[data-theme="light"] .input--sunken { background: var(--surface-hover); }
 .input--sunken:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
 .input--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }

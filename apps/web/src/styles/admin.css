@@ -61,6 +61,12 @@
   gap: var(--space-6);
 }
 
+/* Halaman yang isinya satu panel penuh-tinggi (mis. Info Studio) tidak
+   butuh jarak besar var(--space-8) di bawah — itu dirancang untuk halaman
+   yang berakhir dengan konten biasa, bukan panel yang sudah mengisi sisa
+   tinggi lewat flex:1. */
+.admin__content:has(> .settings-split) { padding-bottom: clamp(var(--space-5), 4vw, var(--space-7)); }
+
 .page-head { display: flex; flex-direction: column; gap: var(--space-2); }
 .page-head .t-muted { max-width: var(--measure); margin: 0; }
 
@@ -178,7 +184,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border-strong);
   border-radius: var(--radius-lg);
   background: var(--surface);
   overflow: hidden;
@@ -216,7 +222,7 @@
   justify-content: center;
   gap: var(--space-2);
   border-radius: 50%;
-  border: 1px dashed var(--border-strong);
+  border: 2px dashed var(--border-strong);
   background: var(--bg-sunken);
   color: var(--text-faint);
   overflow: hidden;
@@ -231,7 +237,7 @@
   gap: var(--space-3);
   padding: var(--space-5) var(--space-4);
   text-align: center;
-  border: 1px dashed var(--border-strong);
+  border: 2px dashed var(--border-strong);
   border-radius: var(--radius-md);
   background: var(--bg-sunken);
   cursor: pointer;
