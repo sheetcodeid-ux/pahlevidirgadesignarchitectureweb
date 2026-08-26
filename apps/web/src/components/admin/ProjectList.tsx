@@ -128,8 +128,8 @@ function Isi() {
   const judulSah = judulBaru.trim().length >= 2;
 
   const tombolBaru = (
-    <button type="button" className="btn btn--primary">
-      <Icon name="plus" size={16} />Proyek baru
+    <button type="button" className="btn btn--primary btn--lg">
+      <Icon name="plus" size={18} />Proyek baru
     </button>
   );
 
@@ -178,7 +178,7 @@ function Isi() {
   );
 
   return (
-    <div className="stack" style={{ gap: "var(--space-5)" }}>
+    <div className="listpage">
       <div className="listbar">
         <div className="listbar__main">
           <div className="listbar__search">
@@ -234,7 +234,7 @@ function Isi() {
       </div>
 
       {terlihat.length === 0 ? (
-        <div className="empty">
+        <div className="listpage__pad"><div className="empty">
           <span className="icon-tile"><Icon name="project" size={20} /></span>
           <span className="t-subheading">
             {proyek.length === 0
@@ -248,7 +248,7 @@ function Isi() {
               ? "Buat proyek pertama untuk mulai mengisi portfolio."
               : "Coba kata kunci atau status lain."}
           </p>
-        </div>
+        </div></div>
       ) : tampilan === "tabel" ? (
         <div className="table-wrap">
           <div className="listcount">
@@ -310,7 +310,7 @@ function Isi() {
           </table>
         </div>
       ) : (
-        <div className="pcard-grid">
+        <div className="listpage__pad"><div className="pcard-grid">
           {terlihat.map((p) => (
             <article className="pcard" key={p.id}>
               <div className="pcard__head">
@@ -369,7 +369,7 @@ function Isi() {
               </div>
             </article>
           ))}
-        </div>
+        </div></div>
       )}
     </div>
   );

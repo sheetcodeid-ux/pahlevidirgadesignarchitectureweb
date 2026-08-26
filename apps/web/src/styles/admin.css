@@ -644,3 +644,38 @@
 /* Kolom nomor urut: selebar isinya saja, redup, supaya tidak menarik mata
    lebih dulu daripada nama proyeknya. */
 .table__idx { width: 1%; color: var(--text-faint); font-family: var(--font-mono); font-size: var(--text-sm); }
+
+/* Halaman daftar dibuat penuh-lebar: bilah perkakas dan tabelnya menempel
+   ke tepi sidebar tanpa celah dan tanpa sudut membulat, jadi garis
+   pemisahnya menyambung utuh dari sidebar ke tepi kanan layar — persis
+   referensi pemilik. Judul halaman tetap punya padding sendiri supaya
+   tidak ikut menempel ke tepi.
+
+   Selektornya TANPA ">" — Astro membungkus island React dalam
+   <astro-island> yang memakai display:contents, jadi .listpage bukan anak
+   langsung .admin__content meski tata letaknya berperilaku begitu. */
+.admin__content:has(.listpage) {
+  padding: 0;
+  gap: 0;
+  max-width: none;
+}
+
+.admin__content:has(.listpage) .page-head {
+  padding: var(--space-7) var(--space-6) var(--space-6);
+}
+
+.listpage { display: flex; flex-direction: column; }
+
+.listpage .listbar,
+.listpage .table-wrap {
+  border-inline: 0;
+  border-radius: 0;
+}
+
+/* Bilah sudah punya garis bawah; tabel yang menempel di bawahnya tidak
+   perlu garis atas sendiri, kalau tidak jadi dua garis berdempetan. */
+.listpage .table-wrap { border-top: 0; }
+
+/* Isi yang bukan tabel tidak boleh ikut menempel ke tepi — kartu dan
+   keadaan kosong butuh napas. */
+.listpage__pad { padding: var(--space-6); }
