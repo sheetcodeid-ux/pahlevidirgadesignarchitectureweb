@@ -170,10 +170,13 @@
 
 /* --- Settings split (Info Studio) -----------------------------------------
    Dua kolom dalam satu bingkai: kiri tetap (logo), kanan scroll sendiri
-   kalau field-nya panjang — supaya kolom logo tidak ikut terdorong turun. */
+   kalau field-nya panjang — supaya kolom logo tidak ikut terdorong turun.
+   Mengisi sisa tinggi halaman (flex:1 di dalam .admin__content yang sudah
+   flex-column), bukan berhenti di tengah dengan ruang kosong di bawahnya. */
 
 .settings-split {
   display: flex;
+  flex: 1;
   flex-direction: column;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -187,7 +190,7 @@
   flex-direction: column;
   gap: var(--space-5);
   padding: var(--space-5);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border-strong);
 }
 
 .settings-split__form {
@@ -197,8 +200,8 @@
 }
 
 @media (min-width: 48rem) {
-  .settings-split { flex-direction: row; max-height: min(44rem, 75vh); }
-  .settings-split__logo { width: 20rem; border-bottom: 0; border-right: 1px solid var(--border); overflow-y: auto; }
+  .settings-split { flex-direction: row; }
+  .settings-split__logo { width: min(28rem, 40%); border-bottom: 0; border-right: 2px solid var(--border-strong); overflow-y: auto; }
   .settings-split__form { overflow-y: auto; }
 }
 
