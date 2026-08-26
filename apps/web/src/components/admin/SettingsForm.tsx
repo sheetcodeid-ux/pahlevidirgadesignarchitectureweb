@@ -11,14 +11,16 @@ const UKURAN_LOGO_MAKS = 2 * 1024 * 1024;
 
 /**
  * Pasangan pendek yang ditampilkan berdampingan — dua kolom di layar lebar.
- * Elemen ketiga menandai field wajib. Hanya studioName yang benar-benar
- * wajib (kolomnya `not null` di basis data); sisanya boleh kosong, jadi
- * tidak diberi tanda supaya tandanya tetap berarti.
+ * Elemen ketiga menandai field wajib; tandanya bukan sekadar hiasan —
+ * WAJIB di bawah menahan tombol Simpan selama masih ada yang kosong.
  */
 const PASANGAN: [keyof StudioSettings, string, boolean?][][] = [
-  [["studioName", "Nama studio", true], ["city", "Kota"]],
-  [["email", "Email"], ["phone", "Telepon/WhatsApp"]],
+  [["studioName", "Nama studio", true], ["city", "Kota", true]],
+  [["email", "Email", true], ["phone", "Telepon/WhatsApp", true]],
 ];
+
+/** Field yang harus terisi sebelum perubahan boleh disimpan. */
+const WAJIB: (keyof StudioSettings)[] = ["studioName", "city", "email", "phone"];
 
 /** Field selebar penuh, di bawah pasangan di atas. */
 const PENUH: [keyof StudioSettings, string, string?][] = [
@@ -51,8 +53,12 @@ function Isi() {
   const nilai = (kunci: keyof StudioSettings): string =>
     String((kunci in draf ? draf[kunci] : asli?.[kunci]) ?? "");
 
+  const kosong = (kunci: keyof StudioSettings) =>
+    WAJIB.includes(kunci) && nilai(kunci).trim() === "";
+  const adaKosong = WAJIB.some(kosong);
+
   async function simpan() {
-    if (!asli || !adaPerubahan) return;
+    if (!asli || !adaPerubahan || adaKosong) return;
     setMenyimpan(true);
     try {
       const patch: Record<string, unknown> = {};
@@ -195,7 +201,7 @@ function Isi() {
             {PASANGAN.map((pasangan, i) => (
               <div className="spec-grid" key={i}>
                 {pasangan.map(([kunci, label, wajib]) => (
-                  <div className="field" key={kunci}>
+                  <div className="field" key={kunci} data-invalid={kosong(kunci) || undefined}>
                     <label className="field__label" htmlFor={`set-${kunci}`}>
                       {label}
                       {wajib && <span className="field__req" aria-hidden="true">*</span>}
@@ -204,6 +210,7 @@ function Isi() {
                       id={`set-${kunci}`}
                       className="input input--sunken"
                       required={wajib}
+                      aria-invalid={kosong(kunci) || undefined}
                       value={nilai(kunci)}
                       onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
                     />
@@ -236,7 +243,11 @@ function Isi() {
           </div>
 
           <div className="settings-card__foot">
-            {adaPerubahan ? (
+            {adaKosong ? (
+              <span className="marker" style={{ color: "var(--brand)" }}>
+                <Icon name="alert" size={14} />Field bertanda * wajib diisi
+              </span>
+            ) : adaPerubahan ? (
               <span className="marker marker--warn">
                 <span className="marker__dot" />{berubah.length} perubahan belum disimpan
               </span>
@@ -245,7 +256,7 @@ function Isi() {
                 <Icon name="check" size={14} />Perubahan sudah disimpan
               </span>
             )}
-            <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
+            <button type="button" className="btn btn--primary" disabled={!adaPerubahan || adaKosong || menyimpan} onClick={simpan}>
               {menyimpan ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="save" size={16} />}
               Simpan Perubahan
             </button>

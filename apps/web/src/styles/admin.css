@@ -62,10 +62,24 @@
 }
 
 /* Halaman yang isinya satu panel penuh-tinggi (mis. Info Studio) dibuat
-   full-bleed: padding dan lebar maksimum dilepas supaya garis pemisah
-   vertikalnya menyambung dari topbar sampai dasar halaman, sejajar dengan
-   tepi sidebar. Jaraknya pindah ke masing-masing kolom. */
-.admin__content:has(> .settings-split) { padding: 0; max-width: none; }
+   full-bleed dan pas satu layar: padding, lebar maksimum, dan gulir
+   halaman dilepas supaya garis pemisah vertikalnya menyambung utuh dari
+   topbar sampai dasar layar, sejajar dengan tepi sidebar.
+
+   Selektornya TANPA ">" — Astro membungkus island React dalam
+   <astro-island>, jadi .settings-split bukan anak langsung
+   .admin__content meski secara tata letak berperilaku begitu
+   (astro-island memakai display:contents). */
+.admin:has(.settings-split) { height: 100dvh; overflow: hidden; }
+.admin:has(.settings-split) .admin__main { min-height: 0; }
+
+.admin__content:has(.settings-split) {
+  padding: 0;
+  gap: 0;
+  max-width: none;
+  min-height: 0;
+  overflow: hidden;
+}
 
 .page-head { display: flex; flex-direction: column; gap: var(--space-2); }
 .page-head .t-muted { max-width: var(--measure); margin: 0; }
@@ -184,6 +198,7 @@
 .settings-split {
   display: flex;
   flex: 1;
+  min-height: 0;
   flex-direction: column;
   align-items: stretch;
 }
@@ -198,25 +213,31 @@
 }
 
 .settings-split__form {
+  display: flex;
   flex: 1;
   min-width: 0;
+  min-height: 0;
   padding: var(--space-6);
 }
 
 @media (min-width: 48rem) {
   .settings-split { flex-direction: row; }
+  /* Bagi rata dua kolom seperti referensi — bukan kolom logo sempit di
+     kiri, karena itu menyisakan ruang kosong lebar di sekitarnya. */
   .settings-split__logo {
-    width: min(28rem, 40%);
+    width: 50%;
     border-bottom: 0;
     border-right: 2px solid var(--border-strong);
+    overflow-y: auto;
   }
-  .settings-split__form { overflow-y: auto; }
 }
 
 /* Kartu Detail studio: kepala, badan, kaki — masing-masing dipisah garis
    setebal border kartunya, jadi tidak ada garis tipis yang bersaing. */
 .settings-card {
   display: flex;
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   border: 2px solid var(--border-strong);
   border-radius: var(--radius-lg);
@@ -226,16 +247,26 @@
 
 .settings-card__head {
   display: flex;
+  flex: none;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   border-bottom: 2px solid var(--border-strong);
 }
 
-.settings-card__body { padding: var(--space-5); }
+/* Hanya badan kartu yang bergulir kalau field-nya kepanjangan; kepala dan
+   kaki tetap di tempat, jadi tombol simpan selalu terlihat dan halamannya
+   tidak pernah ikut bergulir. */
+.settings-card__body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-5);
+  overflow-y: auto;
+}
 
 .settings-card__foot {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
