@@ -49,6 +49,7 @@ export type IconName =
   | "checklist"
   | "clock"
   | "camera"
+  | "building"
   | "save";
 
 interface Props {
@@ -291,6 +292,17 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M3 8.5A2 2 0 0 1 5 6.5h1.9a1 1 0 0 0 .83-.45l.94-1.4a1 1 0 0 1 .83-.45h4.99a1 1 0 0 1 .83.45l.94 1.4a1 1 0 0 0 .83.45H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
       <circle cx="12" cy="13" r="3.2" />
+    </>
+  ),
+  // Gedung — studio itu sendiri sebagai badan usaha (identitas, alamat,
+  // kontak). Beda dari "project" yang berupa denah, yaitu bangunan yang
+  // sedang dikerjakan untuk klien.
+  building: (
+    <>
+      <path d="M3 21h18" />
+      <path d="M5 21V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15" />
+      <path d="M9 8h2M13 8h2M9 12h2M13 12h2" />
+      <path d="M10 21v-4h4v4" />
     </>
   ),
   save: (
