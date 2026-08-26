@@ -194,18 +194,16 @@ function Isi() {
           </div>
 
           <div className="listbar__views">
-            {/* .segmented, bukan .btn-group: hanya yang pertama punya gaya
-                "sedang aktif" bawaan, dan pengalih tampilan justru butuh itu. */}
-            <div className="segmented" role="group" aria-label="Tampilan daftar">
-              <button type="button" className="segmented__opt"
+            <div className="viewtoggle" role="group" aria-label="Tampilan daftar">
+              <button type="button" className="viewtoggle__opt"
                 aria-pressed={tampilan === "tabel"} aria-label="Tampilan tabel"
                 onClick={() => setTampilan("tabel")}>
-                <Icon name="list" size={16} />
+                <Icon name="list" size={17} />
               </button>
-              <button type="button" className="segmented__opt"
+              <button type="button" className="viewtoggle__opt"
                 aria-pressed={tampilan === "kartu"} aria-label="Tampilan kartu"
                 onClick={() => setTampilan("kartu")}>
-                <Icon name="dashboard" size={16} />
+                <Icon name="dashboard" size={17} />
               </button>
             </div>
           </div>
@@ -214,21 +212,24 @@ function Isi() {
         </div>
 
         <div className="listbar__filters">
-          <div className="segmented" role="group" aria-label="Saring status">
+          <div className="chips" role="group" aria-label="Saring status">
             {SARINGAN.map((s) => (
-              <button key={s.id} type="button" className="segmented__opt"
+              <button key={s.id} type="button" className="chip"
                 aria-pressed={saring === s.id} onClick={() => setSaring(s.id)}>
-                {s.label} <span className="t-mono">{jumlah(s.id)}</span>
+                {s.label}<span className="chip__n">{jumlah(s.id)}</span>
               </button>
             ))}
           </div>
 
-          {(cari || saring !== "semua") && (
-            <button type="button" className="btn btn--ghost btn--sm"
-              onClick={() => { setCari(""); setSaring("semua"); }}>
-              <Icon name="close" size={14} />Bersihkan
-            </button>
-          )}
+          {/* Tombol bersihkan menempati tempat tombol saringan di referensi.
+              Dimatikan, bukan disembunyikan, saat tidak ada yang disaring —
+              kalau ikut hilang, barisan chip melompat setiap kali disaring. */}
+          <button type="button" className="btn btn--secondary btn--icon"
+            aria-label="Bersihkan saringan"
+            disabled={!cari && saring === "semua"}
+            onClick={() => { setCari(""); setSaring("semua"); }}>
+            <Icon name="filter" size={16} />
+          </button>
         </div>
       </div>
 
@@ -251,21 +252,21 @@ function Isi() {
       ) : tampilan === "tabel" ? (
         <div className="table-wrap">
           <div className="listcount">
-            {terlihat.length === proyek.length
-              ? `${proyek.length} proyek`
-              : `${terlihat.length} dari ${proyek.length} proyek`}
+            <strong>1–{terlihat.length}</strong>&nbsp;dari&nbsp;<strong>{proyek.length}</strong>&nbsp;proyek
           </div>
-          <table className="table">
+          <table className="table table--ruled">
             <thead>
               <tr>
+                <th className="table__idx">#</th>
                 <th>Proyek</th><th>Kategori</th><th>Kota</th>
                 <th className="table__num">Tahun</th><th>Status</th>
                 <th className="table__actions">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {terlihat.map((p) => (
+              {terlihat.map((p, i) => (
                 <tr key={p.id}>
+                  <td className="table__idx">{i + 1}</td>
                   <td>
                     <span className="row" style={{ gap: "var(--space-3)", flexWrap: "nowrap" }}>
                       {p.coverImageUrl
@@ -285,8 +286,9 @@ function Isi() {
                   <td><Lencana status={p.status} /></td>
                   <td className="table__actions">
                     <span className="row" style={{ justifyContent: "flex-end", gap: "var(--space-2)" }}>
-                      <a className="btn btn--secondary btn--sm" href={`/admin/proyek/edit?id=${p.id}`}>
-                        <Icon name="edit" size={14} />Sunting
+                      <a className="btn btn--secondary btn--icon btn--boxed" href={`/admin/proyek/edit?id=${p.id}`}
+                        aria-label={`Sunting ${p.title}`}>
+                        <Icon name="edit" size={15} />
                       </a>
                       <AlertDialog
                         destructive
@@ -295,7 +297,7 @@ function Isi() {
                         confirmLabel="Ya, hapus"
                         onConfirm={() => hapus(p)}
                         trigger={
-                          <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${p.title}`}>
+                          <button type="button" className="btn btn--secondary btn--icon btn--boxed" aria-label={`Hapus ${p.title}`}>
                             <Icon name="trash" size={15} />
                           </button>
                         }

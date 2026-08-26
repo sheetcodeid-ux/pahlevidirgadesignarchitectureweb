@@ -66,6 +66,11 @@
 .btn--sm { padding: 0.4rem 0.85rem; font-size: var(--text-xs); }
 .btn--lg { padding: 0.8rem 1.5rem; font-size: var(--text-base); }
 .btn--icon { padding: 0.55rem; border-radius: var(--radius-pill); }
+
+/* Tombol ikon berbentuk kotak-membulat, bukan bundar. Dipakai saat tombolnya
+   berjajar dengan kotak lain yang juga bersudut — di deretan aksi tabel,
+   lingkaran terbaca sebagai benda yang berbeda jenis. */
+.btn--icon.btn--boxed { border-radius: var(--radius-sm); }
 .btn--block { width: 100%; }
 
 /* --- Badge --------------------------------------------------------------- */
