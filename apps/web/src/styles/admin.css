@@ -390,12 +390,12 @@
    terpisah, melainkan duduk dalam SATU bilah berbingkai yang dibagi garis
    vertikal. Barisan saringan menempel di bawahnya dalam bingkai yang sama,
    jadi seluruh perkakas daftar terbaca sebagai satu benda. */
-/* Pita perkakas berlatar ABU, dan kotak isian di dalamnya justru HITAM —
-   berlapis seperti Info Studio. Yang gelap adalah tempat mengetik, yang
-   terang adalah bidang di sekitarnya; itu yang membuat kotak carinya
-   terbaca sebagai lubang, bukan sekadar teks yang menempel di pita. */
+/* Bilah perkakas: tiap sel HITAM dan dipisah garis vertikal, bukan
+   dijejer dengan jarak. Yang abu justru talang di kiri-kanan (lihat
+   .listpage) — itu yang membuat blok isinya terbaca sebagai satu bidang
+   utuh yang dijepit, persis referensi pemilik. */
 .listbar {
-  background: var(--surface-raised);
+  background: var(--bg-sunken);
   border-block: 2px solid var(--border-strong);
 }
 
@@ -403,8 +403,6 @@
   display: flex;
   align-items: stretch;
   flex-wrap: wrap;
-  padding: var(--space-4) var(--space-5);
-  gap: var(--space-4);
   border-bottom: 2px solid var(--border-strong);
 }
 
@@ -416,15 +414,19 @@
   min-width: 14rem;
 }
 
+/* Kotak cari sengaja TANPA bingkai dan TANPA sudut membulat: bidang
+   hitamnya sudah dibatasi garis sel di kiri-kanan, dan kotak bersarang di
+   dalam kotak membuat bilahnya terlihat berat. */
 .listbar__search .input {
-  height: 100%;
-  min-height: 3.75rem;
-  padding: var(--space-4) var(--space-5) var(--space-4) 3.75rem;
+  min-height: 4.25rem;
+  padding: var(--space-4) var(--space-5) var(--space-4) 3.9rem;
   font-size: var(--text-md);
-  background: var(--bg-sunken);
-  border: 2px solid var(--border-strong);
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
+
+.listbar__search .input:focus-visible { box-shadow: inset 0 0 0 2px var(--focus); }
 
 .listbar__icon {
   position: absolute;
@@ -440,14 +442,26 @@
   display: flex;
   align-items: center;
   flex: none;
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--border-strong);
 }
 
-/* Porsi diukur dari referensi: sel tombol utama memakai ~25% lebar bilah dan
-   tombolnya mengisi penuh sel itu. Tombol yang jauh lebih lebar dari
-   labelnya memang disengaja di sana — itu yang membuatnya terbaca sebagai
-   aksi utama halaman, bukan sekadar tombol lain di deretan perkakas. */
-.listbar__cta { min-width: 22%; }
-.listbar__cta .btn { width: 100%; height: 3.75rem; justify-content: center; font-size: var(--text-md); }
+/* Porsi diukur dari referensi: sel tombol utama memakai ~25% lebar bilah.
+   Tombol yang jauh lebih lebar dari labelnya memang disengaja di sana —
+   itu yang membuatnya terbaca sebagai aksi utama halaman. */
+.listbar__cta { min-width: 24%; }
+.listbar__cta .btn { width: 100%; height: 3.5rem; justify-content: center; font-size: var(--text-md); }
+
+/* Di layar sempit ketiganya bertumpuk, jadi garis pemisahnya pindah dari
+   kiri ke atas — kalau tidak, garisnya menggantung di udara. */
+@media (max-width: 47.99rem) {
+  .listbar__views,
+  .listbar__cta {
+    border-left: 0;
+    border-top: 2px solid var(--border-strong);
+  }
+  .listbar__cta { flex: 1; }
+}
 
 .listbar__filters {
   display: flex;
@@ -591,25 +605,29 @@
 
 /* Pengalih tampilan: kotak bergaris dengan opsi aktif berupa kotak-membulat
    terisi — bukan pil, seperti di referensi. */
-/* Wadahnya abu, tiap opsi punya kotaknya sendiri, dan yang AKTIF justru
-   yang paling GELAP — bukan putih. Kebalikan dari .segmented, dan memang
-   disengaja: pengalih ini duduk di atas pita abu, jadi opsi putih akan
-   berteriak lebih keras daripada tombol aksi utama di sebelahnya. */
+/* Wadahnya nampan abu terang, dan opsi yang AKTIF justru yang paling
+   GELAP — kebalikan dari .segmented, dan memang disengaja: pengalih ini
+   duduk di bidang hitam, jadi opsi putih akan berteriak lebih keras
+   daripada tombol aksi utama di sebelahnya.
+
+   Nampannya memakai --border-strong sebagai LATAR, bukan garis. Itu satu-
+   satunya nilai di palet yang cukup terang untuk terbaca sebagai nampan di
+   atas hitam, dan ia ikut membalik dengan benar di tema terang. */
 .viewtoggle {
   display: inline-flex;
-  gap: var(--space-2);
-  padding: 5px;
-  background: var(--surface-hover);
+  gap: 4px;
+  padding: 4px;
+  background: var(--border-strong);
   border-radius: var(--radius-md);
 }
 
 .viewtoggle__opt {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  color: var(--text-muted);
-  background: var(--surface-raised);
+  width: 2.6rem;
+  height: 2.6rem;
+  color: var(--text-body);
+  background: transparent;
   border: 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -664,16 +682,27 @@
   padding: var(--space-7) var(--space-6) var(--space-6);
 }
 
-.listpage { display: flex; flex-direction: column; }
+/* Talang abu di kiri dan kanan. Inilah "bagian abu" di referensi: blok
+   isinya (bilah + tabel) tetap hitam dan dijepit dua kolom abu selebar
+   2.75rem, dengan garis vertikal di antaranya yang menyambung dari bilah
+   sampai baris tabel terakhir. */
+.listpage {
+  display: flex;
+  flex-direction: column;
+  padding-inline: 2.75rem;
+  background: var(--surface-raised);
+}
 
+.listpage .listbar,
 .listpage .table-wrap {
-  border-inline: 0;
+  border-inline: 2px solid var(--border-strong);
   border-radius: 0;
+  background: var(--bg-sunken);
 }
 
 /* Bilah sudah punya garis bawah; tabel yang menempel di bawahnya tidak
    perlu garis atas sendiri, kalau tidak jadi dua garis berdempetan. */
-.listpage .table-wrap { border-top: 0; border-bottom-width: 2px; border-bottom-color: var(--border-strong); }
+.listpage .table-wrap { border-top: 0; border-bottom: 2px solid var(--border-strong); }
 
 /* Isi yang bukan tabel tidak boleh ikut menempel ke tepi — kartu dan
    keadaan kosong butuh napas. */
