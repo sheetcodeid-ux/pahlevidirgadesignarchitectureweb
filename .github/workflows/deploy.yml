@@ -46,10 +46,14 @@ jobs:
       - run: npm test
         working-directory: apps/api
 
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/api
+      # Sengaja memakai wrangler milik repo (devDependency, versi 4.x) lewat
+      # npx, bukan cloudflare/wrangler-action — action itu memasang wrangler
+      # versinya sendiri yang bisa berbeda dari yang dipakai saat
+      # pengembangan.
+      - run: npx wrangler deploy
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
   web:
     name: Worker situs statis
@@ -61,7 +65,6 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: apps/web/package-lock.json
 
       - run: npm ci
         working-directory: apps/web
@@ -72,8 +75,13 @@ jobs:
       - run: npm run build
         working-directory: apps/web
 
-      # wrangler.jsonc situs statis ada di akar repo, bukan di apps/web —
-      # `assets.directory` di dalamnya menunjuk ./apps/web/dist.
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # wrangler.jsonc situs statis ada di akar repo (assets.directory-nya
+      # menunjuk ./apps/web/dist), dan wrangler-nya devDependency di akar
+      # juga — jadi dependensi akar harus dipasang sebelum deploy. Worker
+      # ini murni aset statis tanpa "main"; wrangler v3 menolaknya dengan
+      # "Missing entry-point", jadi versi 4.x dari repo inilah yang dipakai.
+      - run: npm ci
+
+      - run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
