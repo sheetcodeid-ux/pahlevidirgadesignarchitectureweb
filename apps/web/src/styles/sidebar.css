@@ -83,7 +83,13 @@
 
 .sidebar__nav { flex: 1; overflow-y: auto; padding: var(--space-3); }
 
-.sidebar__group + .sidebar__group { margin-top: var(--space-4); }
+/* Pembatas antar kelompok — cuma di atas kelompok kedua dan seterusnya,
+   supaya "UTAMA" yang pertama tidak kebagian garis tanpa alasan. */
+.sidebar__group + .sidebar__group {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
 
 .sidebar__group-label {
   margin: 0 0 var(--space-2);
@@ -125,7 +131,7 @@
    lewat kombinasi fill+teks-terang itu, bukan warna aksi utama (putih/hitam
    solid tetap khusus untuk tombol aksi, sesuai aturan warna situs ini). */
 .sidebar__item[aria-current="page"] {
-  background: var(--surface-raised);
+  background: var(--surface-hover);
   color: var(--text-strong);
   font-weight: 600;
 }
@@ -169,7 +175,9 @@
 }
 
 .sidebar__subitem {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: 0.45rem 0.75rem;
   border: 0;
   border-radius: var(--radius-pill);
@@ -179,9 +187,11 @@
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
+.sidebar__subitem > svg { flex: none; }
+
 .sidebar__subitem:hover { color: var(--text-body); }
 .sidebar__subitem[aria-current="page"] {
-  background: var(--surface-raised);
+  background: var(--surface-hover);
   color: var(--text-strong);
   font-weight: 600;
 }

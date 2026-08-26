@@ -43,7 +43,10 @@ export type IconName =
   | "document"
   | "directory"
   | "quote"
-  | "star";
+  | "star"
+  | "list"
+  | "user"
+  | "checklist";
 
 interface Props {
   name: IconName;
@@ -243,6 +246,34 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   star: <path d="m12 3 2.6 5.6 6.2.7-4.6 4.2 1.2 6.1L12 16.8 6.6 19.6l1.2-6.1L3.2 9.3l6.2-.7Z" />,
+  // Titik + garis bertumpuk — daftar lengkap (submenu "Semua Proyek").
+  list: (
+    <>
+      <circle cx="4" cy="6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="12" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="18" r="1" fill="currentColor" stroke="none" />
+      <path d="M8 6h13M8 12h13M8 18h13" />
+    </>
+  ),
+  // Satu figur — akun milik sendiri, beda dari "team" yang dua figur.
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21v-1a8 8 0 0 1 16 0v1" />
+    </>
+  ),
+  // Papan jalan dengan centang — daftar tugas (List Kerjaan), beda dari
+  // "check" tunggal yang berarti konfirmasi/setuju.
+  checklist: (
+    <>
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 3.5h6a1 1 0 0 1 1 1V6a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z" />
+      <path d="m8.3 12.3 1.4 1.4 2.5-3" />
+      <path d="M14.7 12h2.8" />
+      <path d="m8.3 17.3 1.4 1.4 2.5-3" />
+      <path d="M14.7 17h2.8" />
+    </>
+  ),
 };
 
 // Gambar solid untuk sebagian ikon — dipakai lewat variant="filled". Hanya
@@ -300,6 +331,9 @@ const PATHS_FILLED: Partial<Record<IconName, React.ReactNode>> = {
       <path d="m12 3 9 5-9 5-9-5 9-5Z" />
       <path d="M2.6 13.3a1 1 0 0 1 1.4-.3L12 17.8l8-4.8a1 1 0 1 1 1 1.7l-8.5 5.1a1 1 0 0 1-1 0l-8.5-5.1a1 1 0 0 1-.4-1.4Z" />
     </>
+  ),
+  checklist: (
+    <path d="M7 2a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm2 .8h6a.8.8 0 0 1 .8.8v1a.8.8 0 0 1-.8.8H9a.8.8 0 0 1-.8-.8v-1a.8.8 0 0 1 .8-.8Zm-.6 9.6 1.3 1.3 2.3-2.3.9.9-3.2 3.2-2.2-2.2Zm0 5 1.3 1.3 2.3-2.3.9.9-3.2 3.2-2.2-2.2Z" />
   ),
 };
 

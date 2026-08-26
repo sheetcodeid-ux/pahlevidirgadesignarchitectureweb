@@ -5,6 +5,7 @@ import { profilTersimpan } from "../../lib/admin";
 interface SubItem {
   label: string;
   href: string;
+  icon: IconName;
 }
 
 interface NavItem {
@@ -28,11 +29,11 @@ const NAV: NavItem[] = [
     icon: "project",
     group: "Utama",
     children: [
-      { label: "Semua Proyek", href: "/admin/proyek" },
-      { label: "Draf", href: "/admin/proyek?status=draft" },
+      { label: "Semua Proyek", href: "/admin/proyek", icon: "list" },
+      { label: "Draf", href: "/admin/proyek?status=draft", icon: "edit" },
     ],
   },
-  { label: "List Kerjaan", href: "/admin/list-kerjaan", icon: "check", group: "Utama" },
+  { label: "List Kerjaan", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
   { label: "Keuangan", href: "/admin/keuangan", icon: "finance", group: "Utama" },
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },
@@ -43,8 +44,8 @@ const NAV: NavItem[] = [
     icon: "settings",
     group: "Sistem",
     children: [
-      { label: "Info Studio", href: "/admin/pengaturan" },
-      { label: "Akun", href: "/admin/pengaturan/akun" },
+      { label: "Info Studio", href: "/admin/pengaturan", icon: "info" },
+      { label: "Akun", href: "/admin/pengaturan/akun", icon: "user" },
     ],
   },
   { label: "UI Component", href: "/admin/ui", icon: "component", group: "Sistem", masterOnly: true },
@@ -232,7 +233,8 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                             className="sidebar__subitem"
                             aria-current={cocok(child.href, currentPath) ? "page" : undefined}
                           >
-                            {child.label}
+                            <Icon name={child.icon} size={15} />
+                            <span>{child.label}</span>
                           </a>
                         </li>
                       ))}
