@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { ambilSettings, simpanSettings, type StudioSettings } from "../../lib/admin";
+import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, type StudioSettings } from "../../lib/admin";
 
 type Draf = Partial<StudioSettings>;
+
+const TIPE_LOGO_DIIZINKAN = new Set(["image/png", "image/jpeg", "image/webp"]);
+const UKURAN_LOGO_MAKS = 2 * 1024 * 1024;
 
 /** Pasangan pendek yang ditampilkan berdampingan — dua kolom di layar lebar. */
 const PASANGAN: [keyof StudioSettings, string][][] = [
@@ -25,6 +28,11 @@ function Isi() {
   const [draf, setDraf] = useState<Draf>({});
   const [galat, setGalat] = useState<string | null>(null);
   const [menyimpan, setMenyimpan] = useState(false);
+
+  const [previewLogo, setPreviewLogo] = useState<string | null>(null);
+  const [mengunggahLogo, setMengunggahLogo] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const fileLogo = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     ambilSettings().then(setAsli).catch((e) => setGalat((e as Error).message));
@@ -55,6 +63,36 @@ function Isi() {
     }
   }
 
+  async function prosesLogo(f: File) {
+    if (!TIPE_LOGO_DIIZINKAN.has(f.type)) {
+      toast({ judul: "Format tidak didukung", keterangan: "Pakai PNG, JPG, atau WEBP.", nada: "gagal" });
+      return;
+    }
+    if (f.size > UKURAN_LOGO_MAKS) {
+      toast({ judul: "Berkas terlalu besar", keterangan: "Maksimum 2MB.", nada: "gagal" });
+      return;
+    }
+
+    setMengunggahLogo(true);
+    try {
+      const target = await mintaUrlUnggahLogo(f.type);
+      const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f });
+      if (!res.ok) throw new Error(`Penyimpanan menolak berkas (${res.status})`);
+
+      setDraf((d) => ({ ...d, logoKey: target.key }));
+      setPreviewLogo((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(f); });
+      toast({ judul: "Logo terunggah", keterangan: "Tekan Simpan untuk menerapkannya.", nada: "sukses" });
+    } catch (e) {
+      toast({
+        judul: "Gagal mengunggah",
+        keterangan: `${(e as Error).message}. Penyimpanan R2 mungkin belum dikonfigurasi.`,
+        nada: "gagal",
+      });
+    } finally {
+      setMengunggahLogo(false);
+    }
+  }
+
   if (galat) {
     return (
       <div className="empty">
@@ -68,67 +106,137 @@ function Isi() {
     return <div className="stack">{[0, 1].map((i) => <span key={i} className="skeleton" style={{ height: "4rem" }} />)}</div>;
   }
 
+  const logoSrc = previewLogo ?? asli.logoUrl ?? null;
+
   return (
-    <div className="stack" style={{ gap: "var(--space-5)" }}>
-      <div className="card">
-        <div className="card__header">
+    <div className="settings-split">
+      <div className="settings-split__logo">
+        <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start" }}>
+          <span className="icon-tile"><Icon name="image" size={20} /></span>
+          <span className="card__titles">
+            <span className="t-subheading">Logo studio</span>
+            <span className="t-muted">Ditampilkan di sidebar admin dan situs publik.</span>
+          </span>
+        </div>
+
+        <div className="logo-preview">
+          {logoSrc ? (
+            <img src={logoSrc} alt="Logo studio" />
+          ) : (
+            <>
+              <Icon name="image" size={26} />
+              <span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>Belum ada logo</span>
+            </>
+          )}
+        </div>
+
+        <div
+          className="logo-dropzone"
+          data-dragging={dragging || undefined}
+          role="button"
+          tabIndex={0}
+          aria-label="Upload logo studio"
+          onClick={() => fileLogo.current?.click()}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileLogo.current?.click(); } }}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) prosesLogo(f);
+          }}
+        >
+          <span className="logo-dropzone__icon"><Icon name="upload" size={18} /></span>
+          <span className="t-subheading" style={{ fontSize: "var(--text-sm)" }}>Upload Logo Anda</span>
+          <span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>Drag and drop atau klik dan cari logo anda</span>
+          <button
+            type="button"
+            className="btn btn--secondary btn--sm"
+            disabled={mengunggahLogo}
+            onClick={(e) => { e.stopPropagation(); fileLogo.current?.click(); }}
+          >
+            {mengunggahLogo ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="upload" size={14} />}
+            Pilih File
+          </button>
+          <div className="logo-dropzone__hints">
+            <span>PNG, JPG, WEBP</span>
+            <span>Max 2MB</span>
+            <span>Persegi lebih baik</span>
+          </div>
+        </div>
+
+        <input
+          ref={fileLogo}
+          type="file"
+          className="sr-only"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) prosesLogo(f);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      <div className="settings-split__form">
+        <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start", marginBottom: "var(--space-5)" }}>
           <span className="icon-tile"><Icon name="info" size={20} /></span>
           <span className="card__titles">
             <span className="t-subheading">Detail studio</span>
             <span className="t-muted">Nama, kontak, dan alamat yang tampil di situs publik.</span>
           </span>
         </div>
-        <div className="card__body">
-          <div className="stack">
-            {PASANGAN.map((pasangan, i) => (
-              <div className="spec-grid" key={i}>
-                {pasangan.map(([kunci, label]) => (
-                  <div className="field" key={kunci}>
-                    <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
-                    <input
-                      id={`set-${kunci}`}
-                      className="input input--sunken"
-                      value={nilai(kunci)}
-                      onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
 
-            {PENUH.map(([kunci, label, bantu]) => (
-              <div className="field" key={kunci}>
-                <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
-                {kunci === "address" ? (
-                  <textarea
-                    id={`set-${kunci}`}
-                    className="input input--sunken input--area"
-                    value={nilai(kunci)}
-                    onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
-                  />
-                ) : (
+        <div className="stack">
+          {PASANGAN.map((pasangan, i) => (
+            <div className="spec-grid" key={i}>
+              {pasangan.map(([kunci, label]) => (
+                <div className="field" key={kunci}>
+                  <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
                   <input
                     id={`set-${kunci}`}
                     className="input input--sunken"
                     value={nilai(kunci)}
                     onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
                   />
-                )}
-                {bantu && <p className="field__help">{bantu}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+                </div>
+              ))}
+            </div>
+          ))}
 
-      <div className="row row--between">
-        {adaPerubahan && (
-          <span className="marker marker--warn"><span className="marker__dot" />{berubah.length} perubahan belum disimpan</span>
-        )}
-        <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
-          {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
-          Simpan
-        </button>
+          {PENUH.map(([kunci, label, bantu]) => (
+            <div className="field" key={kunci}>
+              <label className="field__label" htmlFor={`set-${kunci}`}>{label}</label>
+              {kunci === "address" ? (
+                <textarea
+                  id={`set-${kunci}`}
+                  className="input input--sunken input--area"
+                  value={nilai(kunci)}
+                  onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
+                />
+              ) : (
+                <input
+                  id={`set-${kunci}`}
+                  className="input input--sunken"
+                  value={nilai(kunci)}
+                  onChange={(e) => setDraf((d) => ({ ...d, [kunci]: e.target.value }))}
+                />
+              )}
+              {bantu && <p className="field__help">{bantu}</p>}
+            </div>
+          ))}
+        </div>
+
+        <div className="row row--between" style={{ marginTop: "var(--space-5)" }}>
+          {adaPerubahan && (
+            <span className="marker marker--warn"><span className="marker__dot" />{berubah.length} perubahan belum disimpan</span>
+          )}
+          <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
+            {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
+            Simpan
+          </button>
+        </div>
       </div>
     </div>
   );

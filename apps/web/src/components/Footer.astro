@@ -9,7 +9,10 @@ const keterangan = settings.tagline || (settings.city ? `Arsitektur & Interior â
 <footer class="site-footer">
   <div class="shell footer-inner">
     <div>
-      <p class="footer-name">{settings.studioName}</p>
+      <p class="footer-name">
+        {settings.logoUrl && <img src={settings.logoUrl} alt="" class="footer-logo" />}
+        {settings.studioName}
+      </p>
       <p class="footer-note">{keterangan}</p>
     </div>
     <div>
@@ -38,9 +41,20 @@ const keterangan = settings.tagline || (settings.city ? `Arsitektur & Interior â
   }
 
   .footer-name {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     font-family: var(--font-display);
     font-size: 1.25rem;
     margin-bottom: 0.25rem;
+  }
+
+  .footer-logo {
+    width: 1.75rem;
+    height: 1.75rem;
+    flex: none;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
   }
 
   .footer-note {

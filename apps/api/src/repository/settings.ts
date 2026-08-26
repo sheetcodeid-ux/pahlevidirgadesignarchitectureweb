@@ -9,9 +9,15 @@ interface Row {
   address: string | null;
   city: string | null;
   instagram_url: string | null;
+  logo_key: string | null;
 }
 
-function rowToSettings(row: Row): StudioSettings {
+function url(assetBase: string, key: string | null): string | null {
+  if (!key) return null;
+  return `${assetBase.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
+}
+
+function rowToSettings(row: Row, assetBase: string): StudioSettings {
   return {
     studioName: row.studio_name,
     tagline: row.tagline,
@@ -20,16 +26,17 @@ function rowToSettings(row: Row): StudioSettings {
     address: row.address,
     city: row.city,
     instagramUrl: row.instagram_url,
+    logoUrl: url(assetBase, row.logo_key),
   };
 }
 
 /** Baris tunggal (id selalu true) — dibuat lewat migrasi, tidak pernah dihapus. */
-export async function get(sql: Sql): Promise<StudioSettings> {
+export async function get(sql: Sql, assetBase = ""): Promise<StudioSettings> {
   const rows = await sql<Row[]>`
-    select studio_name, tagline, email, phone, address, city, instagram_url
+    select studio_name, tagline, email, phone, address, city, instagram_url, logo_key
     from public.studio_settings
     where id = true`;
-  return rowToSettings(rows[0]);
+  return rowToSettings(rows[0], assetBase);
 }
 
 const PLAIN_COLUMNS: [string, keyof StudioSettingsInput][] = [
@@ -40,6 +47,7 @@ const PLAIN_COLUMNS: [string, keyof StudioSettingsInput][] = [
   ["address", "address"],
   ["city", "city"],
   ["instagram_url", "instagramUrl"],
+  ["logo_key", "logoKey"],
 ];
 
 /** Menulis hanya field yang dikirim. */
@@ -58,6 +66,7 @@ export async function update(sql: Sql, input: StudioSettingsInput): Promise<void
       case "address": fragments.push(sql`address = ${value as string | null}`); break;
       case "city": fragments.push(sql`city = ${value as string | null}`); break;
       case "instagram_url": fragments.push(sql`instagram_url = ${value as string | null}`); break;
+      case "logo_key": fragments.push(sql`logo_key = ${value as string | null}`); break;
     }
   }
 

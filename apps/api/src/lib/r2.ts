@@ -26,13 +26,14 @@ export interface R2Config {
  * tangan S3-compatible (aws4fetch) — R2 tidak beda dari S3 di sisi protokol
  * ini, jadi presigned URL yang sama dipakai browser untuk upload langsung.
  *
- * Key dibentuk di server dari slug proyek + suffix acak, bukan dari nama
- * file kiriman klien, supaya tidak ada path traversal dan tidak ada file
- * yang saling menimpa saat dua orang meng-upload "render-1.jpg".
+ * Key dibentuk di server dari folder (sudah disanitasi pemanggil) + suffix
+ * acak, bukan dari nama file kiriman klien, supaya tidak ada path traversal
+ * dan tidak ada file yang saling menimpa saat dua orang meng-upload
+ * "render-1.jpg".
  */
 export async function presignUpload(
   cfg: R2Config,
-  projectSlug: string,
+  folder: string,
   contentType: string,
 ): Promise<UploadTarget> {
   const ext = ALLOWED_CONTENT_TYPES[contentType];
@@ -41,7 +42,7 @@ export async function presignUpload(
   const suffix = [...crypto.getRandomValues(new Uint8Array(8))]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-  const key = `projects/${sanitizeSlug(projectSlug)}/${suffix}${ext}`;
+  const key = `${folder}/${suffix}${ext}`;
 
   const client = new AwsClient({
     accessKeyId: cfg.accessKeyId,

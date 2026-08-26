@@ -18,7 +18,7 @@ import * as briefRepo from "../repository/brief";
 import * as commentsRepo from "../repository/documentComments";
 import * as testimonialsRepo from "../repository/testimonials";
 import { NotFoundError } from "../repository/projects";
-import { presignUpload } from "../lib/r2";
+import { presignUpload, sanitizeSlug } from "../lib/r2";
 import { checkProjectInput, ValidationError } from "../lib/validate";
 import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
@@ -60,17 +60,25 @@ admin.post("/uploads", async (c) => {
     return c.json({ error: { status: 503, message: "penyimpanan objek belum dikonfigurasi" } }, 503);
   }
 
-  type UploadBody = { projectSlug?: string; contentType?: string };
+  type UploadBody = { projectSlug?: string; scope?: string; contentType?: string };
   const body = await c.req.json<UploadBody>().catch((): UploadBody => ({}));
-  const projectSlug = (body.projectSlug ?? "").trim();
-  if (!projectSlug) {
-    return c.json({ error: { status: 422, message: "projectSlug wajib diisi" } }, 422);
+
+  let folder: string;
+  if (body.scope === "logo") {
+    // Aset tingkat studio, bukan proyek — satu folder tetap, tidak perlu slug.
+    folder = "studio";
+  } else {
+    const projectSlug = (body.projectSlug ?? "").trim();
+    if (!projectSlug) {
+      return c.json({ error: { status: 422, message: "projectSlug wajib diisi" } }, 422);
+    }
+    folder = `projects/${sanitizeSlug(projectSlug)}`;
   }
 
   try {
     const target = await presignUpload(
       { accountId: R2_ACCOUNT_ID, accessKeyId: R2_ACCESS_KEY_ID, secretAccessKey: R2_SECRET_ACCESS_KEY, bucket: R2_BUCKET },
-      projectSlug,
+      folder,
       body.contentType ?? "",
     );
     return c.json({ data: target });
@@ -529,7 +537,7 @@ admin.delete("/testimonials/:id", async (c) => {
 
 // GET /api/v1/admin/settings
 admin.get("/settings", async (c) => {
-  const data = await withDb(c.env, c.executionCtx, (sql) => settingsRepo.get(sql));
+  const data = await withDb(c.env, c.executionCtx, (sql) => settingsRepo.get(sql, assetBase(c.env)));
   return c.json({ data });
 });
 

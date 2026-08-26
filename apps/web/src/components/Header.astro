@@ -1,5 +1,6 @@
 ---
 import { ThemeToggle } from "./ui/ThemeToggle";
+import { getSettings } from "../lib/api";
 
 const links = [
   { href: "/proyek", label: "Proyek" },
@@ -9,12 +10,16 @@ const links = [
 ];
 
 const current = Astro.url.pathname;
+const settings = await getSettings();
 ---
 
 <header class="site-header">
   <div class="shell">
     <div class="header-pill">
-      <a href="/" class="wordmark">Dirga Pahlevi Architecture</a>
+      <a href="/" class="wordmark">
+        {settings.logoUrl && <img src={settings.logoUrl} alt="" class="wordmark__logo" />}
+        {settings.studioName}
+      </a>
 
       <nav class="header-nav" aria-label="Navigasi utama">
         <ul>
@@ -65,11 +70,22 @@ const current = Astro.url.pathname;
   }
 
   .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     font-family: var(--font-display);
     font-size: 1.2rem;
     letter-spacing: 0.02em;
     text-decoration: none;
     flex: none;
+  }
+
+  .wordmark__logo {
+    width: 1.75rem;
+    height: 1.75rem;
+    flex: none;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
   }
 
   .header-nav {

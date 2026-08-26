@@ -114,6 +114,7 @@ export interface StudioSettings {
   address?: string | null;
   city?: string | null;
   instagramUrl?: string | null;
+  logoUrl?: string | null;
 }
 
 const FALLBACK_SETTINGS: StudioSettings = {

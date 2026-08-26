@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from "react";
 import { Icon, type IconName } from "../ui/Icon";
-import { profilTersimpan } from "../../lib/admin";
+import { profilTersimpan, ambilSettings } from "../../lib/admin";
 
 interface SubItem {
   label: string;
@@ -86,6 +86,13 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
     setIsMasterAdmin(Boolean(profilTersimpan()?.isMasterAdmin));
   }, []);
 
+  // Gagal diam-diam kalau sesi belum sah — sidebar tetap tampil dengan
+  // badge inisial, RequireAuth di konten utama yang menangani pengalihan.
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    ambilSettings().then((s) => setLogoUrl(s.logoUrl ?? null)).catch(() => {});
+  }, []);
+
   const items = NAV.filter((item) => !item.masterOnly || isMasterAdmin);
 
   // Object mempertahankan urutan penyisipan kunci string, jadi kelompok
@@ -158,7 +165,11 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
       >
         <div className="sidebar__head">
           <a href="/admin" className="sidebar__brand" aria-label="Dirga Pahlevi Architecture, ke dashboard">
-            <span className="sidebar__mark" aria-hidden="true">DPA</span>
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="sidebar__mark sidebar__mark--img" aria-hidden="true" />
+            ) : (
+              <span className="sidebar__mark" aria-hidden="true">DPA</span>
+            )}
             <span className="sidebar__wordmark">Dirga Pahlevi Architecture</span>
           </a>
 

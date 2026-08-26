@@ -191,6 +191,13 @@ export const mintaUrlUnggah = (projectSlug: string, contentType: string) =>
     body: JSON.stringify({ projectSlug, contentType }),
   });
 
+/** Aset tingkat studio (logo) — bukan milik satu proyek, jadi tanpa slug. */
+export const mintaUrlUnggahLogo = (contentType: string) =>
+  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
+    method: "POST",
+    body: JSON.stringify({ scope: "logo", contentType }),
+  });
+
 // --- Info studio ------------------------------------------------------
 
 export interface StudioSettings {
@@ -201,6 +208,10 @@ export interface StudioSettings {
   address?: string | null;
   city?: string | null;
   instagramUrl?: string | null;
+  /** URL siap-pakai, dibalas server. Bukan yang dikirim balik saat menyimpan. */
+  logoUrl?: string | null;
+  /** Key R2 dari unggahan terbaru — dikirim saat menyimpan, bukan dibaca dari server. */
+  logoKey?: string | null;
 }
 
 export const ambilSettings = () => panggil<StudioSettings>("/admin/settings");

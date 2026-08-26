@@ -68,6 +68,8 @@
   letter-spacing: 0.02em;
 }
 
+.sidebar__mark--img { object-fit: cover; background: var(--surface-raised); }
+
 .sidebar__wordmark {
   font-family: var(--font-display);
   font-size: var(--text-md);

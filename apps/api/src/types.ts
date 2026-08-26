@@ -129,6 +129,7 @@ export interface StudioSettings {
   address?: string | null;
   city?: string | null;
   instagramUrl?: string | null;
+  logoUrl?: string | null;
 }
 
 /** Field yang boleh diubah lewat panel admin. undefined berarti "jangan diubah". */
@@ -140,6 +141,7 @@ export interface StudioSettingsInput {
   address?: string | null;
   city?: string | null;
   instagramUrl?: string | null;
+  logoKey?: string | null;
 }
 
 export interface ProjectProgressUpdate {
