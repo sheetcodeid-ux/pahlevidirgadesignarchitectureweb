@@ -264,6 +264,7 @@ skrip; jangan sunting hasilnya.
 
 | Keputusan | Alasan |
 | --- | --- |
+| Tab Milestone berisi pencapaian tahap PROYEK, bukan lama berlangganan | Dikonfirmasi pemilik. Aplikasi rujukan memakai milestone anggota (1/2/3/6/12/24 bulan) karena bisnisnya berlangganan; studio arsitektur tidak punya anggota berlangganan, dan yang setara maknanya adalah tahap pipeline yang sudah dilewati sebuah proyek |
 | Hono di Cloudflare Workers, bukan Go Fiber di Cloud Run | Dibalik dari keputusan sebelumnya ("Go Fiber, bukan serverless") atas permintaan eksplisit pemilik — satu platform (Cloudflare) untuk frontend, API, R2, dan DNS, tanpa akun Google Cloud terpisah. Konsekuensinya: seluruh backend ditulis ulang dari Go ke TypeScript, bukan sekadar pindah hosting |
 | Hyperdrive, bukan koneksi Postgres langsung dari Worker | Worker tidak bisa membuka pool koneksi jangka panjang seperti pgxpool — Hyperdrive yang menyediakan pooling itu di sisi Cloudflare |
 | Rate limit lewat KV, bukan in-memory | Worker tidak menyimpan state antar-request sama sekali, beda dari instance Cloud Run yang setidaknya bertahan selama masih hangat. KV tersebar di seluruh edge — lebih ketat dari limiter in-memory sebelumnya, dengan trade-off baca-tulis yang tidak atomik dan propagasi hingga ~60 detik. Diterima dengan alasan yang sama seperti sebelumnya: Turnstile penjaga sesungguhnya |
