@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import type { Project, ProjectInput, ImageInput, InquiryRecord } from "../types";
+import type { Project, ProjectInput, ImageInput, ImagePatch, Image, InquiryRecord } from "../types";
 import { NotFoundError } from "./projects";
 
 function url(assetBase: string, key: string | null): string | null {
@@ -166,6 +166,51 @@ export async function addImage(sql: Sql, projectID: string, input: ImageInput): 
     values (${projectID}::uuid, ${input.storageKey}, ${input.altText ?? null}, ${input.caption ?? null}, ${input.width ?? null}, ${input.height ?? null}, ${input.sortOrder})
     returning id`;
   return rows[0].id;
+}
+
+/**
+ * Gambar galeri satu proyek, urut tampil.
+ *
+ * Dipisah dari imagesFor() milik repository publik karena yang ini juga
+ * mengembalikan storageKey — panel admin butuh itu untuk menjadikan salah
+ * satu gambar sebagai cover tanpa mengunggah ulang berkasnya.
+ */
+export async function listImages(sql: Sql, assetBase: string, projectID: string): Promise<(Image & { storageKey: string })[]> {
+  const rows = await sql<
+    { id: string; storage_key: string; alt_text: string | null; caption: string | null;
+      width: number | null; height: number | null; sort_order: number }[]
+  >`
+    select id, storage_key, alt_text, caption, width, height, sort_order
+    from public.project_images
+    where project_id = ${projectID}::uuid
+    order by sort_order, created_at`;
+
+  return rows.map((r) => ({
+    id: r.id,
+    storageKey: r.storage_key,
+    url: url(assetBase, r.storage_key) ?? "",
+    altText: r.alt_text,
+    caption: r.caption,
+    width: r.width,
+    height: r.height,
+    sortOrder: r.sort_order,
+  }));
+}
+
+/**
+ * Ubah keterangan atau urutan satu gambar.
+ *
+ * Setiap kolom ditulis dengan pola "kalau tidak dikirim, pakai nilai lama"
+ * supaya patch sebagian tidak diam-diam mengosongkan kolom lain.
+ */
+export async function updateImage(sql: Sql, id: string, patch: ImagePatch): Promise<void> {
+  const result = await sql`
+    update public.project_images set
+      alt_text   = ${patch.altText === undefined ? sql`alt_text` : patch.altText},
+      caption    = ${patch.caption === undefined ? sql`caption` : patch.caption},
+      sort_order = ${patch.sortOrder === undefined ? sql`sort_order` : patch.sortOrder}
+    where id = ${id}::uuid`;
+  if (result.count === 0) throw new NotFoundError();
 }
 
 export async function removeImage(sql: Sql, id: string): Promise<void> {

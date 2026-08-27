@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import type { Env } from "../types";
+import type { Env, ImagePatch } from "../types";
 import { withDb } from "../db";
 import { requireSupabaseAuth } from "../middleware/auth";
 import { requireStaff } from "../middleware/staff";
@@ -138,6 +138,12 @@ admin.delete("/projects/:id", async (c) => {
   }
 });
 
+admin.get("/projects/:id/images", async (c) => {
+  const list = await withDb(c.env, c.executionCtx, (sql) =>
+    adminRepo.listImages(sql, assetBase(c.env), c.req.param("id")));
+  return c.json({ data: list });
+});
+
 admin.post("/projects/:id/images", async (c) => {
   const input = await c.req.json<ImageInput>().catch(() => ({}) as ImageInput);
   if (!input.storageKey) {
@@ -149,6 +155,17 @@ admin.post("/projects/:id/images", async (c) => {
     return c.json({ data: { id } }, 201);
   } catch (err) {
     return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.patch("/images/:imageId", async (c) => {
+  const patch = await c.req.json<ImagePatch>().catch(() => ({}) as ImagePatch);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => adminRepo.updateImage(sql, c.req.param("imageId"), patch));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "gambar tidak ditemukan" } }, 404);
+    throw err;
   }
 });
 

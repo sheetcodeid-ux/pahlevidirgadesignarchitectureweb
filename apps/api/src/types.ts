@@ -109,6 +109,13 @@ export interface ImageInput {
   sortOrder: number;
 }
 
+/** Patch sebagian untuk satu gambar galeri. */
+export interface ImagePatch {
+  altText?: string | null;
+  caption?: string | null;
+  sortOrder?: number;
+}
+
 export interface InquiryInput {
   name: string;
   email: string;

@@ -15,6 +15,7 @@ import {
   daftarDokumen, tambahDokumen, ubahDokumen, hapusDokumen, type DokumenProyek,
   ambilBrief, ubahBrief, type BriefProyek,
   daftarKomentarDokumen, tambahKomentarDokumen, type KomentarDokumen,
+  daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 
@@ -496,6 +497,200 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
                 />
               </div>
               <ThreadKomentar documentId={d.id} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Galeri proyek — foto yang tampil di halaman publik.
+ *
+ * Sebelumnya tab ini hanya mengurus satu gambar cover, jadi tidak ada cara
+ * sama sekali mengunggah foto galeri lewat panel admin walaupun endpoint dan
+ * tabelnya sudah lama ada. Ini yang menutup celah itu.
+ *
+ * Urutan diatur dengan tombol naik/turun, bukan seret-lepas: seret-lepas butuh
+ * pustaka tambahan dan perilaku sentuh yang harus dirawat sendiri, sementara
+ * satu proyek jarang lebih dari sepuluh foto.
+ */
+function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCover: (key: string) => void }) {
+  const toast = useToast();
+  const [gambar, setGambar] = useState<GambarProyek[] | null>(null);
+  const [mengunggah, setMengunggah] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const berkas = useRef<HTMLInputElement>(null);
+
+  function muat() {
+    daftarGambar(proyek.id).then(setGambar).catch(() => setGambar([]));
+  }
+
+  useEffect(muat, [proyek.id]);
+
+  async function unggahSatu(f: File, urutan: number) {
+    const target = await mintaUrlUnggah(proyek.slug, f.type);
+    const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f });
+    if (!res.ok) throw new Error(`Penyimpanan menolak ${f.name} (${res.status})`);
+    await tambahGambar(proyek.id, target.key, urutan);
+  }
+
+  async function unggahBanyak(files: FileList | File[]) {
+    const daftar = [...files].filter((f) => f.type.startsWith("image/"));
+    if (daftar.length === 0) return;
+
+    setMengunggah(daftar.length);
+    // Berurutan, bukan Promise.all: unggahan paralel dari satu koneksi rumah
+    // justru saling memperlambat, dan urutannya jadi tidak bisa dipastikan.
+    let mulai = (gambar?.length ?? 0);
+    let gagal = 0;
+    for (const f of daftar) {
+      try {
+        await unggahSatu(f, mulai);
+        mulai += 1;
+      } catch (e) {
+        gagal += 1;
+        toast({ judul: "Gagal mengunggah", keterangan: (e as Error).message, nada: "gagal" });
+      } finally {
+        setMengunggah((n) => n - 1);
+      }
+    }
+    muat();
+    const berhasil = daftar.length - gagal;
+    if (berhasil > 0) toast({ judul: `${berhasil} foto terunggah`, nada: "sukses" });
+  }
+
+  async function simpanKeterangan(g: GambarProyek, caption: string) {
+    if ((g.caption ?? "") === caption) return;
+    try {
+      await ubahGambar(g.id, { caption: caption || null });
+      setGambar((a) => a?.map((x) => (x.id === g.id ? { ...x, caption } : x)) ?? a);
+    } catch (e) {
+      toast({ judul: "Gagal menyimpan keterangan", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  /** Menukar posisi satu gambar dengan tetangganya, lalu menulis dua urutan. */
+  async function geser(i: number, arah: -1 | 1) {
+    if (!gambar) return;
+    const j = i + arah;
+    if (j < 0 || j >= gambar.length) return;
+
+    const baru = gambar.slice();
+    [baru[i], baru[j]] = [baru[j], baru[i]];
+    const berurut = baru.map((g, k) => ({ ...g, sortOrder: k }));
+    setGambar(berurut);
+    try {
+      await Promise.all([
+        ubahGambar(berurut[i].id, { sortOrder: i }),
+        ubahGambar(berurut[j].id, { sortOrder: j }),
+      ]);
+    } catch (e) {
+      setGambar(gambar);
+      toast({ judul: "Gagal mengubah urutan", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  async function hapus(g: GambarProyek) {
+    if (!gambar) return;
+    const sebelum = gambar;
+    setGambar(gambar.filter((x) => x.id !== g.id));
+    try {
+      await hapusGambar(g.id);
+    } catch (e) {
+      setGambar(sebelum);
+      toast({ judul: "Gagal menghapus", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  if (!gambar) return <span className="skeleton" style={{ height: "10rem" }} />;
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div
+        className="dropzone"
+        data-dragging={dragging || undefined}
+        role="button"
+        tabIndex={0}
+        aria-label="Unggah foto galeri"
+        onClick={() => berkas.current?.click()}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); berkas.current?.click(); } }}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); unggahBanyak(e.dataTransfer.files); }}
+      >
+        <span className="icon-tile">
+          {mengunggah > 0 ? <span className="spinner spinner--sm" /> : <Icon name="image" size={20} />}
+        </span>
+        <span className="t-subheading">
+          {mengunggah > 0 ? `Mengunggah ${mengunggah} foto…` : "Tarik foto ke sini, atau klik untuk memilih"}
+        </span>
+        <span className="t-muted">Bisa banyak sekaligus. JPG, PNG, WEBP, atau AVIF.</span>
+      </div>
+
+      <input
+        ref={berkas}
+        type="file"
+        multiple
+        className="sr-only"
+        accept="image/jpeg,image/png,image/webp,image/avif"
+        onChange={(e) => { if (e.target.files) unggahBanyak(e.target.files); e.target.value = ""; }}
+      />
+
+      {gambar.length === 0 ? (
+        <div className="empty">
+          <span className="icon-tile"><Icon name="image" size={20} /></span>
+          <span className="t-subheading">Belum ada foto galeri</span>
+          <p className="t-muted">Halaman proyek publik hanya menampilkan seksi galeri kalau ada isinya.</p>
+        </div>
+      ) : (
+        <ul className="galeri-grid">
+          {gambar.map((g, i) => (
+            <li className="galeri-item" key={g.id}>
+              <div className="aspect aspect--4-3">
+                <img src={g.url} alt={g.altText ?? ""} loading="lazy" />
+              </div>
+
+              <div className="galeri-item__body">
+                <label className="sr-only" htmlFor={`cap-${g.id}`}>Keterangan foto {i + 1}</label>
+                <input
+                  id={`cap-${g.id}`}
+                  className="input"
+                  defaultValue={g.caption ?? ""}
+                  placeholder="Keterangan (opsional)"
+                  onBlur={(e) => simpanKeterangan(g, e.target.value.trim())}
+                />
+              </div>
+
+              <div className="galeri-item__foot">
+                <span className="galeri-item__nav">
+                  <button type="button" className="btn btn--ghost btn--icon btn--boxed"
+                    aria-label={`Majukan foto ${i + 1}`} disabled={i === 0} onClick={() => geser(i, -1)}>
+                    <Icon name="chevronLeft" size={15} />
+                  </button>
+                  <button type="button" className="btn btn--ghost btn--icon btn--boxed"
+                    aria-label={`Mundurkan foto ${i + 1}`} disabled={i === gambar.length - 1} onClick={() => geser(i, 1)}>
+                    <Icon name="chevronRight" size={15} />
+                  </button>
+                  <AlertDialog
+                    destructive
+                    title="Hapus foto ini?"
+                    description="Foto hilang dari halaman proyek publik dan tidak bisa dikembalikan."
+                    confirmLabel="Ya, hapus"
+                    onConfirm={() => hapus(g)}
+                    trigger={
+                      <button type="button" className="btn btn--ghost btn--icon btn--boxed" aria-label={`Hapus foto ${i + 1}`}>
+                        <Icon name="trash" size={15} />
+                      </button>
+                    }
+                  />
+                </span>
+                <button type="button" className="btn btn--ghost btn--sm"
+                  onClick={() => { onJadikanCover(g.storageKey); toast({ judul: "Dipakai sebagai cover", keterangan: "Tekan Simpan untuk menerapkannya.", nada: "sukses" }); }}>
+                  <Icon name="star" size={14} />Jadikan cover
+                </button>
+              </div>
             </li>
           ))}
         </ul>
@@ -1101,6 +1296,21 @@ function Isi() {
       <p className="field__help">
         Berkas dikirim langsung ke penyimpanan lewat URL berbatas waktu — tidak melewati server API.
       </p>
+
+      <span className="separator" role="presentation" />
+
+      <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start" }}>
+        <span className="icon-tile"><Icon name="image" size={20} /></span>
+        <span className="card__titles">
+          <span className="t-subheading">Foto galeri</span>
+          <span className="t-muted">Tampil di halaman proyek publik, urut seperti di bawah.</span>
+        </span>
+      </div>
+
+      <PanelGaleri
+        proyek={asli}
+        onJadikanCover={(key) => set("coverImageKey" as keyof Proyek, key as never)}
+      />
     </div>
   );
 

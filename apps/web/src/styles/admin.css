@@ -775,3 +775,46 @@
 /* Isi yang bukan tabel tidak boleh ikut menempel ke tepi — kartu dan
    keadaan kosong butuh napas. */
 .listpage__pad { padding: var(--space-6); }
+
+/* --- Galeri proyek -------------------------------------------------------
+   Petak foto di editor proyek. Kartu foto sengaja tidak memakai .pcard:
+   isinya berbeda (gambar penuh di atas, isian keterangan, lalu deretan
+   aksi), dan memaksakan satu kelas untuk keduanya justru membuat keduanya
+   sulit diubah sendiri-sendiri. */
+.galeri-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.galeri-item {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.galeri-item .aspect { border-bottom: 1px solid var(--border); }
+.galeri-item__body { padding: var(--space-3); }
+
+/* Dua baris, bukan satu yang membungkus: empat kontrol dalam satu baris
+   memaksa tombol hapus turun sendirian di kartu sempit, dan tombol hapus
+   yang berpindah tempat antar-kartu mudah tertekan tanpa sengaja. */
+.galeri-item__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.galeri-item__nav { display: flex; align-items: center; gap: var(--space-2); }
+
+/* Hapus didorong ke ujung kanan, jauh dari tombol urutan yang sering ditekan. */
+.galeri-item__nav > :last-child { margin-left: auto; }
+
+.galeri-item__foot .btn--sm { justify-content: center; }

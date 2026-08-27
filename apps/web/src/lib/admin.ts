@@ -406,6 +406,35 @@ export const ubahDokumen = (id: string, patch: { title?: string; status?: string
 export const hapusDokumen = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/documents/${id}`, { method: "DELETE" });
 
+// --- Galeri proyek --------------------------------------------------------
+
+export interface GambarProyek {
+  id: string;
+  /** Kunci berkas di penyimpanan — dipakai saat menjadikan gambar ini cover. */
+  storageKey: string;
+  url: string;
+  altText?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+  sortOrder: number;
+}
+
+export const daftarGambar = (projectId: string) =>
+  panggil<GambarProyek[]>(`/admin/projects/${projectId}/images`);
+
+export const tambahGambar = (projectId: string, storageKey: string, sortOrder: number) =>
+  panggil<{ id: string }>(`/admin/projects/${projectId}/images`, {
+    method: "POST",
+    body: JSON.stringify({ storageKey, sortOrder }),
+  });
+
+export const ubahGambar = (id: string, patch: { altText?: string | null; caption?: string | null; sortOrder?: number }) =>
+  panggil<{ updated: boolean }>(`/admin/images/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusGambar = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/images/${id}`, { method: "DELETE" });
+
 // --- Direktori (klien, kontraktor, supplier) ------------------------------
 
 export interface KontakDirektori {
