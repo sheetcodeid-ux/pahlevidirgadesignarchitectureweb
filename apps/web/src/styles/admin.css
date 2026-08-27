@@ -42,7 +42,7 @@
    membagi penyusutannya rata menurut lebar masing-masing — dan remah roti
    pun ikut terpotong padahal ia yang paling pendek. Yang boleh mengalah
    hanya dua yang memang punya ellipsis sendiri: combobox dan nama studio. */
-.topbar > *:not(.topbar__batas):not(.topbar__dorong) {
+.topbar > *:not(.topbar__dorong) {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -93,47 +93,55 @@
   font-size: var(--text-xs);
 }
 
-/* --- Combobox proyek ----------------------------------------------------- */
+/* --- Dua pintu pencarian: combobox proyek dan command palette ------------ */
 
+/* Keduanya bidang abu yang sama persis. Sebelumnya hanya combobox yang punya
+   bidang, sementara Perintah polos di sel yang lebih sempit — dua benda yang
+   perannya sama tapi wujudnya berbeda, dan barisnya jadi tidak berirama. */
 .topbar__combo { position: relative; }
+.topbar__sel { justify-content: center; }
 
-.topbar__combo-field {
+.topbar__field {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  width: 10rem;
+  width: 8.5rem;
+  height: 2.125rem;
   min-width: 0;
-  padding: 0.4rem 0.65rem;
+  padding: 0 0.65rem;
   border: 0;
   border-radius: var(--radius-sm);
-  /* Satu perubahan bidang, bukan bingkai. Selnya sendiri sudah dibatasi garis
-     tebal kiri-kanan; menambah bingkai lagi di dalamnya berarti dua kotak
-     untuk satu benda. */
   background: var(--surface-raised);
   color: var(--text-faint);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 /* Di tema terang --surface-raised nyaris putih, jadi bidangnya lenyap di atas
-   topbar yang juga putih dan combobox kehilangan seluruh petunjuk bahwa ia
-   bisa diketik. Abunya diambil dari --tray. */
-:root[data-theme="light"] .topbar__combo-field { background: var(--tray); }
+   topbar yang juga putih dan keduanya kehilangan petunjuk bahwa mereka bisa
+   ditekan. Abunya diambil dari --tray. */
+:root[data-theme="light"] .topbar__field { background: var(--tray); }
 
 /* Fokus tanpa warna: di topbar cincin ungu terbaca sebagai peringatan, bukan
-   sebagai "elemen ini sedang aktif". Bidangnya cukup menaik satu tingkat. */
-.topbar__combo-field:focus-within { background: var(--surface-hover); }
+   sebagai penanda elemen yang sedang aktif. Bidangnya cukup menaik satu
+   tingkat, sama seperti keadaan hover. */
+.topbar__field:focus-within,
+.topbar__field:hover { background: var(--surface-hover); color: var(--text-muted); }
 
-.topbar__combo-input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text-strong);
-  font-family: inherit;
-  font-size: var(--text-sm);
-  outline: none;
+/* Input di dalamnya memakai gaya input command palette dari pustaka, hanya
+   ukurannya diturunkan supaya muat di tinggi topbar. */
+.topbar__field-input { font-size: var(--text-sm); color: var(--text-strong); }
+
+.topbar__perintah {
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.topbar__combo-input::placeholder { color: var(--text-faint); }
+.topbar__perintah:focus-visible { outline: 0; background: var(--surface-hover); color: var(--text-muted); }
+.topbar__perintah-label { flex: 1; min-width: 0; }
+.topbar__kbd { margin-left: 0; }
 
 /* Daftar hasil menggantung di bawah field, di dalam topbar. z-index di atas
    topbar sendiri supaya tidak tertutup garis pemisah di sebelahnya. */
@@ -155,32 +163,6 @@
 
 .topbar__combo-judul { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar__combo-status { font-size: var(--text-xs); color: var(--text-faint); flex: none; }
-
-/* --- Pemanggil command palette -------------------------------------------- */
-
-.topbar__perintah {
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: var(--text-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
-}
-
-.topbar__perintah:hover { color: var(--text-strong); background: var(--surface-hover); }
-.topbar__perintah:focus-visible { outline: 0; background: var(--surface-hover); color: var(--text-strong); }
-
-.topbar__kbd {
-  padding: 0.05rem 0.35rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  background: var(--surface-raised);
-  color: var(--text-faint);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-}
 
 /* --- Lonceng -------------------------------------------------------------- */
 
@@ -404,9 +386,13 @@
   .topbar__hitung { display: none !important; }
 }
 
+/* Perintah menyusut jadi tombol ikon persegi, bukan bidang selebar 8,5rem
+   yang isinya cuma satu ikon — bidang kosong selebar itu terbaca sebagai
+   isian yang gagal memuat. */
 @media (max-width: 76rem) {
   .topbar__perintah-label,
   .topbar__kbd { display: none; }
+  .topbar__perintah { width: 2.125rem; justify-content: center; padding: 0; }
 }
 
 @media (max-width: 71rem) {
@@ -431,6 +417,9 @@
   .topbar__crumb { flex-shrink: 1; }
   .topbar__crumb a,
   .topbar__crumb .breadcrumb__sep { display: none; }
+  /* Tombol laci butuh 3rem di kiri; sisanya dipangkas dari sel tombol ikon. */
+  .topbar__aksi,
+  .topbar__sel { padding-inline: var(--space-1); }
 }
 
 

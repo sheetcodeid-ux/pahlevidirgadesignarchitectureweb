@@ -183,11 +183,11 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
   return (
     <div className="topbar__combo">
       <Cmdk loop shouldFilter>
-        <div className="topbar__combo-field">
+        <div className="topbar__field">
           <Icon name="project" size={15} />
           <Cmdk.Input
-            className="topbar__combo-input"
-            placeholder="Buka proyek…"
+            className="ov-command__input topbar__field-input"
+            placeholder="Cari proyek"
             value={nilai}
             onValueChange={setNilai}
             onFocus={() => setBuka(true)}
@@ -255,10 +255,14 @@ function Perintah({ proyek }: { proyek: Proyek[] | null }) {
   return (
     <RDialog.Root open={buka} onOpenChange={setBuka}>
       <RDialog.Trigger asChild>
-        <button type="button" className="topbar__perintah" aria-label="Perintah cepat">
+        {/* Bentuknya kembar dengan combobox di sebelahnya: bidang abu yang
+            sama, ukuran yang sama, isi yang sejajar. Keduanya sama-sama
+            "kotak untuk mencari sesuatu" — kalau wujudnya berbeda, yang
+            terbaca adalah dua jenis benda, bukan dua pintu ke hal serupa. */}
+        <button type="button" className="topbar__field topbar__perintah" aria-label="Perintah cepat">
           <Icon name="terminal" size={16} />
           <span className="topbar__perintah-label">Perintah</span>
-          <kbd className="topbar__kbd">⌘K</kbd>
+          <kbd className="ov-menu__shortcut topbar__kbd">⌘K</kbd>
         </button>
       </RDialog.Trigger>
 
@@ -342,7 +346,7 @@ export function Topbar({ heading }: { heading: string }) {
         <span className="topbar__pil t-mono">{aktif ?? "—"}</span>
       </span>
       <ComboProyek proyek={proyek} />
-      <Perintah proyek={proyek} />
+      <span className="topbar__sel"><Perintah proyek={proyek} /></span>
 
       {/* Sisi kanan didorong ke ujung; segmen di kiri tetap rapat. */}
       <span className="topbar__dorong" />
