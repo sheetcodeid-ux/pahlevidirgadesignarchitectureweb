@@ -1235,3 +1235,80 @@
 @media (max-width: 45rem) {
   .notiflist__waktu { display: none; }
 }
+
+/* --- Animasi dashboard --------------------------------------------------- */
+
+/* Sapaan diketik huruf demi huruf lalu dihapus, berulang.
+
+   Dua lapis ditumpuk di satu kotak grid: pengukur (kalimat utuh, tak
+   terlihat) yang menetapkan lebar, dan isi (teks yang sedang diketik) yang
+   rata kiri di dalamnya. Lebar h1 jadi tetap, sehingga baris yang rata tengah
+   ini tidak merayap ke kiri tiap huruf bertambah. Tingginya ikut terkunci,
+   jadi kartu di bawahnya tidak naik-turun saat teksnya kosong. */
+.dash-salam {
+  display: inline-grid;
+  min-height: 1.2em;
+  white-space: nowrap;
+}
+
+.dash-salam__ukur,
+.dash-salam__isi { grid-area: 1 / 1; }
+
+.dash-salam__ukur { visibility: hidden; }
+.dash-salam__isi { text-align: left; }
+
+/* Caret balok, bukan garis: bentuk yang sama dipakai terminal, dan itu yang
+   membuat teksnya terbaca sebagai sesuatu yang sedang diketik. */
+.dash-salam__caret {
+  display: inline-block;
+  width: 0.06em;
+  height: 0.82em;
+  margin-left: 0.06em;
+  vertical-align: -0.06em;
+  background: var(--brand);
+  animation: kedip-caret 1s steps(1, end) infinite;
+}
+
+@keyframes kedip-caret {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* Lonceng berayun saat disentuh: sekali dorong lalu mereda, bukan goyangan
+   yang tetap besar. Poros di ujung ATAS ikon — lonceng sungguhan digantung,
+   bukan diputar di tengah badannya. */
+.dash-kartu__aksi--lonceng:hover svg {
+  transform-origin: 50% 12%;
+  animation: ayun-lonceng 800ms var(--ease);
+}
+
+@keyframes ayun-lonceng {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-13deg); }
+  32%  { transform: rotate(11deg); }
+  49%  { transform: rotate(-7deg); }
+  66%  { transform: rotate(4deg); }
+  83%  { transform: rotate(-2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Gerigi berputar satu putaran penuh tiap kali kursor masuk — sekali, tidak
+   berulang. Animasi :hover memang mengulang dari awal setiap kali elemennya
+   disentuh lagi, jadi tidak perlu apa pun di JavaScript. */
+.dash-kartu__aksi--gerigi:hover svg {
+  animation: putar-gerigi 620ms var(--ease);
+}
+
+@keyframes putar-gerigi {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Yang meminta gerakan dikurangi tidak mendapat satu pun dari ketiganya.
+   Sapaan yang diam diurus di komponen, bukan di sini — ia soal teks apa yang
+   dirender, bukan soal gaya. */
+@media (prefers-reduced-motion: reduce) {
+  .dash-salam__caret { animation: none; }
+  .dash-kartu__aksi--lonceng:hover svg,
+  .dash-kartu__aksi--gerigi:hover svg { animation: none; }
+}
