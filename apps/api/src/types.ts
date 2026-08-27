@@ -137,6 +137,8 @@ export interface StudioSettings {
   city?: string | null;
   instagramUrl?: string | null;
   logoUrl?: string | null;
+  /** Nama zona IANA, bukan singkatan. Lihat migrasi 20260902000012. */
+  timezone: string;
 }
 
 /** Field yang boleh diubah lewat panel admin. undefined berarti "jangan diubah". */
@@ -149,6 +151,7 @@ export interface StudioSettingsInput {
   city?: string | null;
   instagramUrl?: string | null;
   logoKey?: string | null;
+  timezone?: string;
 }
 
 export interface ProjectProgressUpdate {

@@ -835,6 +835,46 @@ grant select, insert, update, delete on public.testimonials to authenticated;
 grant all                            on public.testimonials to service_role;
 
 -- ----------------------------------------------------------------------------
+-- 20260901000011_studio_logo.sql
+-- ----------------------------------------------------------------------------
+
+-- Logo studio, diunggah lewat panel Info Studio dan disimpan di R2 (bukan
+-- Supabase Storage, konsisten dengan seluruh gambar lain di aplikasi ini).
+-- Kolom baru di tabel yang sudah ada — GRANT tabel di migrasi
+-- 20260826000005 (select untuk anon, select+update untuk authenticated)
+-- otomatis mencakupnya, tidak perlu GRANT baru.
+
+alter table public.studio_settings
+  add column logo_key text;
+
+-- ----------------------------------------------------------------------------
+-- 20260902000012_zona_waktu_studio.sql
+-- ----------------------------------------------------------------------------
+
+-- Zona waktu studio, dipilih di panel Info Studio dan dipakai topbar admin
+-- untuk menampilkan jam serta tanggal setempat.
+--
+-- Disimpan sebagai nama zona IANA (Asia/Jakarta / Asia/Makassar / Asia/Jayapura),
+-- bukan singkatan WIB/WITA/WIT. Singkatan itu label untuk manusia; yang bisa
+-- dipakai Intl.DateTimeFormat untuk benar-benar menghitung waktu adalah nama
+-- IANA-nya. Menyimpan singkatannya berarti memetakan ulang di setiap tempat
+-- yang membutuhkannya.
+--
+-- Kolom baru di tabel yang sudah ada — GRANT tabel di migrasi 20260826000005
+-- (select untuk anon, select+update untuk authenticated) otomatis mencakupnya,
+-- tidak perlu GRANT baru.
+
+alter table public.studio_settings
+  add column timezone text not null default 'Asia/Jakarta';
+
+-- Nilainya dibatasi ke tiga zona Indonesia. Zona bebas akan membuat topbar
+-- menampilkan waktu yang tidak pernah dimaksudkan siapa pun kalau ada salah
+-- ketik, dan studio ini hanya beroperasi di Indonesia.
+alter table public.studio_settings
+  add constraint studio_settings_timezone_valid
+  check (timezone in ('Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura'));
+
+-- ----------------------------------------------------------------------------
 -- Catat di riwayat migrasi Supabase
 -- ----------------------------------------------------------------------------
 --
@@ -864,7 +904,9 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260828000007', 'keuangan_proyek'),
   ('20260829000008', 'dokumen_proyek'),
   ('20260830000009', 'direktori_kontak'),
-  ('20260831000010', 'brief_feedback_testimoni')
+  ('20260831000010', 'brief_feedback_testimoni'),
+  ('20260901000011', 'studio_logo'),
+  ('20260902000012', 'zona_waktu_studio')
 on conflict (version) do update set name = excluded.name;
 
 commit;

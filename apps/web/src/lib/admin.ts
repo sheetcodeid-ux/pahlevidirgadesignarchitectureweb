@@ -214,6 +214,20 @@ export interface StudioSettings {
   logoKey?: string | null;
   /** Bukan kolom database: keadaan rahasia Worker, dibalas server saja. */
   notifikasiEmailAktif?: boolean;
+  /** Nama zona IANA (Asia/Jakarta | Asia/Makassar | Asia/Jayapura). */
+  timezone?: string;
+}
+
+/** Tiga zona Indonesia beserta singkatan yang dibaca manusia. */
+export const ZONA_WAKTU: { id: string; label: string; nama: string }[] = [
+  { id: "Asia/Jakarta", label: "WIB", nama: "Waktu Indonesia Barat" },
+  { id: "Asia/Makassar", label: "WITA", nama: "Waktu Indonesia Tengah" },
+  { id: "Asia/Jayapura", label: "WIT", nama: "Waktu Indonesia Timur" },
+];
+
+/** Singkatan untuk sebuah nama zona IANA; jatuh ke WIB kalau tidak dikenal. */
+export function singkatanZona(id?: string | null): string {
+  return ZONA_WAKTU.find((z) => z.id === id)?.label ?? "WIB";
 }
 
 export const ambilSettings = () => panggil<StudioSettings>("/admin/settings");

@@ -225,53 +225,46 @@
 .row--between { justify-content: space-between; }
 .grow { flex: 1; min-width: 0; }
 
-/* --- Theme toggle -------------------------------------------------------- */
+/* --- Pengalih tema ------------------------------------------------------- */
 
-.theme-toggle {
-  position: relative;
-  display: inline-grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-  padding: 3px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  background: var(--surface-raised);
-}
-
-/* Penanda yang meluncur antara dua sisi. Transform, bukan left, supaya
-   animasinya berjalan di compositor dan tidak memicu layout. */
-.theme-toggle__thumb {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: calc(50% - 3px);
-  height: calc(100% - 6px);
-  border-radius: var(--radius-pill);
-  background: var(--action);
-  transition: transform var(--dur) var(--ease);
-  will-change: transform;
-}
-
-.theme-toggle[data-theme-state="light"] .theme-toggle__thumb { transform: translateX(100%); }
-
-.theme-toggle__opt {
-  position: relative;
-  z-index: 1;
+/* Satu tombol, bukan dua pilihan bersebelahan: yang tampil adalah tema yang
+   sedang aktif, dan menekannya membalik ke lawannya. */
+.theme-btn {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 1.75rem;
-  border: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  /* Lingkaran bergaris tipis, kembar dengan tombol lonceng di sebelahnya. */
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
   background: transparent;
-  border-radius: var(--radius-pill);
-  color: var(--text-faint);
+  color: var(--text-muted);
   cursor: pointer;
-  transition: color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.theme-toggle__opt[aria-checked="true"] { color: var(--action-ink); }
-.theme-toggle__opt:hover:not([aria-checked="true"]) { color: var(--text-strong); }
+.theme-btn:hover:not(:disabled) { color: var(--text-strong); border-color: var(--text-faint); }
+/* Tanpa cincin berwarna: di topbar cincin ungu terbaca sebagai peringatan,
+   bukan sebagai "elemen ini sedang aktif". */
+.theme-btn:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--text-faint); }
+.theme-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Ikonnya berputar setengah putaran sambil menyusut lalu tumbuh lagi. Animasi
+   dimulai ulang lewat kunci React yang berganti — elemen dengan kunci baru
+   adalah elemen baru, jadi animasinya pasti jalan dari awal. */
+.theme-btn__ikon {
+  display: grid;
+  place-items: center;
+  animation: tema-putar 460ms var(--ease);
+}
+
+@keyframes tema-putar {
+  0%   { transform: rotate(-180deg) scale(0.4); opacity: 0; }
+  55%  { opacity: 1; }
+  100% { transform: rotate(0deg) scale(1); opacity: 1; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .theme-toggle__thumb { transition: none; }
+  .theme-btn__ikon { animation: none; }
 }

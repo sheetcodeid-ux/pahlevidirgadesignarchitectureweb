@@ -562,8 +562,20 @@ admin.get("/settings", async (c) => {
   return c.json({ data: { ...data, notifikasiEmailAktif } });
 });
 
+/** Tiga zona Indonesia, sama persis dengan check constraint di database. */
+const ZONA_SAH = ["Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura"];
+
 admin.patch("/settings", async (c) => {
   const input = await c.req.json<StudioSettingsInput>().catch(() => ({}) as StudioSettingsInput);
+
+  // Diperiksa di sini juga, bukan hanya diserahkan ke check constraint:
+  // constraint yang dilanggar keluar sebagai kegagalan database, dan panel
+  // admin menampilkannya sebagai "Permintaan gagal (500)" — tidak memberi tahu
+  // penggunanya apa yang salah.
+  if (input.timezone !== undefined && !ZONA_SAH.includes(input.timezone)) {
+    return c.json({ error: { status: 422, message: "zona waktu harus salah satu dari WIB, WITA, atau WIT" } }, 422);
+  }
+
   await withDb(c.env, c.executionCtx, (sql) => settingsRepo.update(sql, input));
   return c.json({ data: { updated: true } });
 });

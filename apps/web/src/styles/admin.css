@@ -9,46 +9,443 @@
   flex-direction: column;
 }
 
+/* --- Topbar bersegmen ----------------------------------------------------- */
+
+/* Satu baris rata, tiap bagian dipisah garis TEBAL setinggi topbar. Padding
+   mendatar dilepas: garis pemisah harus menyentuh tepi atas dan bawah, dan
+   itu tidak mungkin kalau segmennya dibungkus padding. Napas kiri-kanan
+   diurus tiap segmen sendiri. */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 40;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  align-items: stretch;
   min-height: var(--topbar-h);
-  padding: var(--space-3) clamp(var(--space-4), 3vw, var(--space-6));
-  padding-left: calc(clamp(var(--space-4), 3vw, var(--space-6)) + 3rem);
+  padding: 0;
+  padding-left: 3rem;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 2px solid var(--border-strong);
 }
 
-.topbar__crumb { min-width: 0; overflow: hidden; }
-.topbar__tools { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+/* Pemisah dibuat sebagai BORDER milik tiap segmen, bukan elemen tersendiri.
+   Sebagai elemen, garisnya tertinggal sebagai garis yatim setiap kali segmen
+   di sebelahnya disembunyikan di layar sempit — dua garis berdempetan tanpa
+   apa pun di antaranya. Sebagai border, ia ikut hilang bersama pemiliknya. */
+.topbar > *:not(.topbar__dorong) { border-left: 2px solid var(--border-strong); }
+.topbar > *:first-child { border-left: 0; }
 
-/* --- Identitas topbar ------------------------------------------------ */
+/* Semua segmen dirata-tengahkan secara vertikal dan diberi napas sendiri.
 
-.topbar-user { display: flex; align-items: center; gap: var(--space-2); }
-
-.topbar-user__id {
+   Bawaannya TIDAK menyusut. Kalau semua segmen boleh menyusut, flexbox
+   membagi penyusutannya rata menurut lebar masing-masing — dan remah roti
+   pun ikut terpotong padahal ia yang paling pendek. Yang boleh mengalah
+   hanya dua yang memang punya ellipsis sendiri: combobox dan nama studio. */
+.topbar > *:not(.topbar__dorong) {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+  padding-inline: var(--space-3);
+  min-width: 0;
+}
+
+/* flex ditulis terpisah dengan kekhususan (0,1,0), setara aturan per-segmen
+   di bawahnya. Sebelumnya nilai ini ikut di aturan umum yang kekhususannya
+   (0,2,0) — dan setiap penyesuaian per-segmen diam-diam kalah. Sudah dua
+   kali menggigit: sekali di padding ponsel, sekali di sini. */
+.topbar > * { flex: 0 0 auto; }
+.topbar__id { flex-shrink: 1; }
+
+/* Ruang pendorong sengaja TIDAK dipakai selama kedua bidang pencarian masih
+   tampil. Ia tidak punya garis, jadi ia menempel ke sel di kirinya dan
+   terbaca sebagai sel yang isinya tidak sampai ujung — bar-nya terlihat
+   setengah jadi. Sisa ruangnya diberikan ke combobox dan Perintah, sehingga
+   setiap piksel topbar dimiliki sebuah sel. */
+.topbar__dorong { display: none; }
+
+.topbar__combo,
+.topbar__sel { flex: 1 1 0; }
+
+/* Sel pembungkus tombol ikon — napasnya sama dengan segmen teks di
+   sebelahnya, jadi seluruh baris berirama sama. */
+.topbar__aksi { justify-content: center; }
+
+.topbar__crumb { overflow: hidden; white-space: nowrap; flex-wrap: nowrap !important; }
+/* Remah roti boleh menyusut sampai judulnya terpotong, tapi tidak boleh pecah
+   dua baris: topbar tingginya tetap, dan baris kedua akan terpotong. */
+.topbar__crumb [aria-current] { overflow: hidden; text-overflow: ellipsis; }
+
+/* Jam: titik hidup, angka mono, singkatan zona redup. */
+.topbar__jam { font-size: var(--text-sm); color: var(--text-strong); white-space: nowrap; }
+.topbar__titik {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+.topbar__zona { font-size: var(--text-xs); color: var(--text-faint); }
+
+.topbar__tanggal { font-size: var(--text-sm); color: var(--text-muted); white-space: nowrap; }
+
+/* Penghitung proyek aktif. Angkanya dalam pil, seperti di referensi. */
+.topbar__hitung { font-size: var(--text-sm); color: var(--text-muted); white-space: nowrap; }
+.topbar__pil {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  padding: 0.1rem 0.5rem;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-strong);
+  font-size: var(--text-xs);
 }
 
-.topbar-user__text { display: flex; flex-direction: column; line-height: 1.2; }
-.topbar-user__nama { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); text-transform: capitalize; }
-.topbar-user__peran { font-size: var(--text-2xs); color: var(--text-faint); }
+/* --- Dua pintu pencarian: combobox proyek dan command palette ------------ */
 
-@media (max-width: 30rem) {
-  .topbar-user__text { display: none; }
-  .topbar-user__id { padding: 0.15rem; border: 0; }
+/* Keduanya bidang abu yang sama persis. Sebelumnya hanya combobox yang punya
+   bidang, sementara Perintah polos di sel yang lebih sempit — dua benda yang
+   perannya sama tapi wujudnya berbeda, dan barisnya jadi tidak berirama. */
+.topbar__combo { position: relative; }
+.topbar__sel { justify-content: center; }
+
+/* cmdk membungkus isinya dalam satu div tanpa lebar. Tanpa dibuat mengisi,
+   lebar 100% pada bidang di dalamnya menunjuk ke lebar-otomatis pembungkus
+   itu — bukan ke lebar selnya — dan hasilnya bidang combobox tidak sama
+   lebar dengan kembarannya. */
+.topbar__combo > * { flex: 1; min-width: 0; }
+
+.topbar__field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 6.5rem;
+  height: 2.125rem;
+  min-width: 0;
+  padding: 0 0.65rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
+
+/* Di tema terang --surface-raised nyaris putih, jadi bidangnya lenyap di atas
+   topbar yang juga putih dan keduanya kehilangan petunjuk bahwa mereka bisa
+   ditekan. Abunya diambil dari --tray. */
+:root[data-theme="light"] .topbar__field { background: var(--tray); }
+
+/* Fokus tanpa warna: di topbar cincin ungu terbaca sebagai peringatan, bukan
+   sebagai penanda elemen yang sedang aktif. Bidangnya cukup menaik satu
+   tingkat, sama seperti keadaan hover. */
+.topbar__field:focus-within,
+.topbar__field:hover { background: var(--surface-hover); color: var(--text-muted); }
+
+/* Input di dalamnya memakai gaya input command palette dari pustaka, hanya
+   ukurannya diturunkan supaya muat di tinggi topbar. */
+.topbar__field-input { font-size: var(--text-sm); color: var(--text-strong); }
+
+.topbar__perintah {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.topbar__perintah:focus-visible { outline: 0; background: var(--surface-hover); color: var(--text-muted); }
+.topbar__perintah-label { flex: 1; min-width: 0; }
+.topbar__kbd { margin-left: 0; }
+
+/* Daftar hasil menggantung di bawah field, di dalam topbar. z-index di atas
+   topbar sendiri supaya tidak tertutup garis pemisah di sebelahnya. */
+.topbar__combo-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  width: 22rem;
+  max-width: 60vw;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.topbar__combo-judul { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar__combo-status { font-size: var(--text-xs); color: var(--text-faint); flex: none; }
+
+/* --- Lonceng -------------------------------------------------------------- */
+
+.topbar__lonceng {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  padding: 0;
+  /* Lingkaran bergaris tipis — bentuk yang sama dengan dua tombol di kartu
+     dashboard. Tanpa bentuk sendiri, tombol ikon di antara sel-sel selebar
+     200px terbaca sebagai sisa ruang, bukan sebagai tombol. */
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.topbar__lonceng:hover,
+.topbar__lonceng[data-state="open"] { color: var(--text-strong); border-color: var(--text-faint); }
+.topbar__lonceng:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--text-faint); }
+
+/* Ayunan yang sama persis dengan lonceng di kartu dashboard — satu gerakan
+   untuk satu benda, di mana pun ia muncul. */
+.topbar__lonceng:hover svg,
+.topbar__lonceng[data-state="open"] svg {
+  transform-origin: 50% 12%;
+  animation: ayun-lonceng 800ms var(--ease);
+}
+
+/* Badge jumlah. Merah karena ia menuntut tindakan, bukan sekadar memberi
+   tahu — merah di sistem ini berarti brand dan destruktif, dan "ada yang
+   belum ditangani" adalah anggota terdekat dari keluarga itu. */
+.topbar__badge {
+  position: absolute;
+  top: -0.2rem;
+  right: -0.2rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding-inline: 0.22rem;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* --- Identitas studio ----------------------------------------------------- */
+
+/* Tanpa rectangle: tidak ada garis maupun bidang, hanya isinya. */
+.topbar__id {
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+  font-family: inherit;
+  cursor: pointer;
+  gap: var(--space-3) !important;
+}
+
+.topbar__id:focus-visible { outline: 0; }
+.topbar__id:focus-visible .topbar__id-nama { color: var(--brand); }
+.topbar__id:hover .topbar__id-nama { color: var(--brand); }
+
+.topbar__id-teks { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0; }
+
+.topbar__id-nama {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-strong);
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease);
+}
+
+/* Mahkota dan teks peran sama-sama merah — satu tanda, bukan dua benda. */
+.topbar__id-peran {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: var(--text-2xs);
+  color: var(--brand);
+}
+
+/* --- Popover lonceng ------------------------------------------------------ */
+
+.notifpop,
+.akunpop {
+  z-index: 60;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.notifpop { width: 24rem; max-width: 92vw; }
+
+.notifpop__kepala {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.notifpop__kepala .t-muted { margin: 0; font-size: var(--text-sm); }
+
+.notifpop__badan { max-height: 22rem; overflow-y: auto; }
+
+.notifpop__kaki {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: 2px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-strong);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color var(--dur) var(--ease);
+}
+
+.notifpop__kaki:hover { background: var(--surface-hover); }
+
+/* --- Panel akun ----------------------------------------------------------- */
+
+.akunpop { width: 20rem; max-width: 92vw; }
+
+.akunpop__kepala {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-5);
+  border-bottom: 2px solid var(--border-strong);
+  text-align: center;
+}
+
+.akunpop__sapa { font-size: var(--text-lg); font-weight: 700; color: var(--text-strong); margin-top: var(--space-2); }
+
+.akunpop__email {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.akunpop__email span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.akunpop__peran {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--brand);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.akunpop__aksi {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+  font-family: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease);
+}
+
+.akunpop__aksi + .akunpop__aksi { border-top: 1px solid var(--border); }
+.akunpop__aksi:hover { background: var(--surface-hover); }
+.akunpop__aksi:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+.akunpop__aksi-teks { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.akunpop__aksi-judul { font-size: var(--text-md); font-weight: 600; color: var(--text-strong); }
+.akunpop__aksi-sub { font-size: var(--text-sm); color: var(--text-muted); }
+
+.akunpop__aksi--keluar { color: var(--brand); }
+.akunpop__aksi--keluar .akunpop__aksi-judul,
+.akunpop__aksi--keluar .akunpop__aksi-sub { color: var(--brand); }
+
+/* Di layar sempit segmen keterangan disembunyikan lebih dulu — jam, tanggal,
+   dan penghitung boleh hilang; navigasi dan identitas tidak. Batas di
+   sebelahnya ikut hilang lewat :has, kalau tidak garisnya menumpuk. */
+/* Ambangnya dihitung dari lebar KOLOM KERJA, bukan viewport: sidebar memakan
+   17rem lebih dulu, jadi ambang yang ditulis dalam ukuran viewport selalu
+   meleset sebesar itu. Label "Proyek aktif" pergi lebih dulu — ikon dan
+   angkanya sudah cukup — lalu tanggal, lalu combobox. */
+@media (max-width: 96rem) {
+  .topbar__hitung-label { display: none; }
+}
+
+@media (max-width: 86rem) {
+  .topbar__tanggal { display: none !important; }
+}
+
+/* Penghitung pergi sebelum combobox: angka proyek aktif bisa dilihat di
+   halaman Proyek, sementara combobox adalah satu-satunya jalan pintas ke
+   sebuah proyek dari halaman mana pun. */
+@media (max-width: 82rem) {
+  .topbar__hitung { display: none !important; }
+}
+
+/* Perintah menyusut jadi tombol ikon persegi, bukan bidang selebar 8,5rem
+   yang isinya cuma satu ikon — bidang kosong selebar itu terbaca sebagai
+   isian yang gagal memuat. */
+@media (max-width: 76rem) {
+  .topbar__perintah-label,
+  .topbar__kbd { display: none; }
+  .topbar__perintah { width: 2.125rem; justify-content: center; padding: 0; }
+  /* Begitu Perintah tinggal ikon, membiarkannya melar berarti satu ikon
+     mengambang di tengah sel selebar setengah layar. Di sini pendorong
+     dipakai lagi — dan tidak apa-apa, karena di layar sempit sisa ruangnya
+     memang tinggal sedikit. */
+  .topbar__combo,
+  .topbar__sel { flex: 0 0 auto; }
+  .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
+}
+
+@media (max-width: 71rem) {
+  .topbar__combo { display: none !important; }
+}
+
+@media (max-width: 52rem) {
+  .topbar__jam { display: none !important; }
+  .topbar__id-teks { display: none !important; }
+}
+
+/* Ponsel sempit: napas tiap segmen dipangkas dan panah identitas dilepas.
+   Yang tersisa cuma yang tidak bisa diwakili apa pun: remah roti, perintah,
+   tema, lonceng, dan avatar. */
+@media (max-width: 34rem) {
+  .topbar > *:not(.topbar__dorong) { padding-inline: var(--space-2); }
+  .topbar__id > svg:last-child { display: none; }
+  /* Di sini remah roti pun boleh mengalah: ia punya ellipsis sendiri, dan
+     ruang 3rem untuk tombol laci tidak bisa diambil dari mana-mana lagi.
+     "Admin /" ikut dilepas — di ponsel jejak satu tingkat tidak memberi tahu
+     apa pun yang tidak sudah diketahui dari sidebar. */
+  .topbar__crumb { flex-shrink: 1; }
+  .topbar__crumb a,
+  .topbar__crumb .breadcrumb__sep { display: none; }
+  /* Tombol laci butuh 3rem di kiri; sisanya dipangkas dari sel tombol ikon. */
+  .topbar__aksi,
+  .topbar__sel { padding-inline: var(--space-1); }
+}
+
 
 .admin__content {
   flex: 1;
@@ -109,8 +506,9 @@
 }
 
 @media (min-width: 60rem) {
-  /* Tombol drawer hilang, jadi ruang kirinya dikembalikan. */
-  .topbar { padding-left: clamp(var(--space-4), 3vw, var(--space-6)); }
+  /* Tombol drawer hilang, jadi ruang kirinya dikembalikan. Nolkan saja:
+     napas kiri remah roti sekarang datang dari padding segmennya sendiri. */
+  .topbar { padding-left: 0; }
 }
 
 /* --- Penjaga akses ------------------------------------------------------- */

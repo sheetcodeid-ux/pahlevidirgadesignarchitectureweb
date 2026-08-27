@@ -8,8 +8,7 @@ import "../styles/misc.css";
 import "../styles/sidebar.css";
 import "../styles/admin.css";
 import { Sidebar } from "../components/admin/Sidebar";
-import { TopbarUser } from "../components/admin/TopbarUser";
-import { ThemeToggle } from "../components/ui/ThemeToggle";
+import { Topbar } from "../components/admin/Topbar";
 import { Icon } from "../components/ui/Icon";
 
 interface Props {
@@ -65,19 +64,7 @@ const currentPath = Astro.url.pathname;
       <Sidebar client:load currentPath={currentPath} />
 
       <div class="admin__main">
-        <header class="topbar">
-          <div class="topbar__crumb">
-            <nav class="breadcrumb" aria-label="Remah roti">
-              <a href="/admin">Admin</a>
-              <span class="breadcrumb__sep" aria-hidden="true">/</span>
-              <span aria-current="page">{heading ?? title}</span>
-            </nav>
-          </div>
-          <div class="topbar__tools">
-            <ThemeToggle client:load />
-            <TopbarUser client:load />
-          </div>
-        </header>
+        <Topbar client:load heading={heading ?? title} />
 
         <main id="konten" class="admin__content">
           {

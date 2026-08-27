@@ -55,7 +55,9 @@ export type IconName =
   | "save"
   | "bell"
   | "bellOff"
-  | "gift";
+  | "gift"
+  | "crown"
+  | "terminal";
 
 interface Props {
   name: IconName;
@@ -336,6 +338,22 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M17 17H3s3-2 3-9a6 6 0 0 1 .7-2.8" />
       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       <path d="m2 2 20 20" />
+    </>
+  ),
+  /* Mahkota: peran tertinggi. Bukan hiasan — hanya dipakai di sebelah label
+     peran, tidak pernah untuk "istimewa" secara umum. */
+  crown: (
+    <>
+      <path d="M3 7l4.5 4L12 4l4.5 7L21 7l-1.6 11H4.6L3 7Z" />
+      <path d="M4.6 18h14.8" />
+    </>
+  ),
+  /* Prompt terminal: pemanggil command palette. */
+  terminal: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="m7 9 3 3-3 3" />
+      <path d="M13 15h4" />
     </>
   ),
   /* Kado: penanda pencapaian. */
