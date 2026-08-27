@@ -1,0 +1,257 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getSettings } from "../lib/api";
+import "../styles/misc.css";
+
+const settings = await getSettings();
+
+// Tanggal berlaku ditulis tetap, bukan dari new Date(): halaman kebijakan
+// yang tanggalnya ikut berubah tiap build membuat pembaca tidak bisa tahu
+// apakah isinya benar-benar berubah. Ubah tangan kalau isinya diperbarui.
+const berlaku = "27 Agustus 2026";
+
+const dikumpulkan = [
+  { apa: "Nama", kenapa: "Menyapa Anda dengan benar saat membalas." },
+  { apa: "Alamat email", kenapa: "Membalas pesan Anda. Ini satu-satunya cara kami menghubungi balik kalau nomor telepon tidak diisi." },
+  { apa: "Nomor telepon", kenapa: "Opsional. Hanya dipakai kalau Anda lebih nyaman dihubungi lewat telepon atau WhatsApp." },
+  { apa: "Jenis proyek dan perkiraan anggaran", kenapa: "Opsional. Membantu kami menyiapkan jawaban yang relevan sebelum konsultasi." },
+  { apa: "Isi pesan", kenapa: "Isi permintaan Anda sendiri." },
+];
+
+const tidakDilakukan = [
+  "Menjual, menyewakan, atau menukar data Anda kepada siapa pun.",
+  "Mengirim buletin atau promosi. Kami hanya membalas pesan yang Anda kirim.",
+  "Memasang cookie pelacak, piksel iklan, atau alat analitik pihak ketiga.",
+  "Membuat profil Anda untuk penargetan iklan.",
+];
+
+const pihakKetiga = [
+  { nama: "Supabase", peran: "Menyimpan isi form kontak di basis data.", lokasi: "Singapura (ap-southeast-1)" },
+  { nama: "Cloudflare", peran: "Menyajikan situs ini, menyimpan gambar proyek, dan menyaring bot lewat Turnstile.", lokasi: "Jaringan global" },
+  { nama: "Resend", peran: "Mengirim pemberitahuan email ke studio saat ada pesan masuk.", lokasi: "Amerika Serikat" },
+];
+---
+
+<BaseLayout
+  title="Kebijakan Privasi"
+  description={`Bagaimana ${settings.studioName} memperlakukan data yang Anda kirim lewat form kontak: apa yang dikumpulkan, kenapa, berapa lama disimpan, dan cara menghapusnya.`}
+>
+  <section class="section shell bg-dots hero-privasi">
+    <p class="eyebrow">Kebijakan Privasi</p>
+    <h1>Data Anda, dan apa yang kami lakukan dengannya</h1>
+    <p class="lede">
+      Halaman ini berlaku untuk form kontak di situs ini. Ditulis sependek mungkin,
+      karena datanya memang sedikit.
+    </p>
+    <p class="t-muted privasi-tanggal">Berlaku sejak {berlaku}</p>
+  </section>
+
+  <section class="section shell privasi-isi">
+    <article>
+      <h2>Yang kami kumpulkan</h2>
+      <p class="t-muted">
+        Hanya yang Anda ketik sendiri di form kontak. Tidak ada yang diambil diam-diam.
+      </p>
+      <dl class="privasi-daftar">
+        {
+          dikumpulkan.map((d) => (
+            <div class="privasi-daftar__baris">
+              <dt>{d.apa}</dt>
+              <dd class="t-muted">{d.kenapa}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </article>
+
+    <article>
+      <h2>Yang tidak kami lakukan</h2>
+      <ul class="privasi-list t-muted">
+        {tidakDilakukan.map((t) => <li>{t}</li>)}
+      </ul>
+    </article>
+
+    <article>
+      <h2>Siapa lagi yang menyentuh data ini</h2>
+      <p class="t-muted">
+        Kami memakai tiga layanan untuk menjalankan situs ini. Masing-masing hanya
+        menerima bagian yang memang dibutuhkannya.
+      </p>
+      <div class="privasi-tabel-bungkus">
+        <table class="table">
+          <thead>
+            <tr><th>Layanan</th><th>Perannya</th><th>Lokasi server</th></tr>
+          </thead>
+          <tbody>
+            {
+              pihakKetiga.map((p) => (
+                <tr>
+                  <td>{p.nama}</td>
+                  <td>{p.peran}</td>
+                  <td>{p.lokasi}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="t-muted">
+        Selain ketiganya, tidak ada pihak lain yang menerima data Anda — kecuali
+        kalau kami diwajibkan menyerahkannya oleh hukum yang berlaku.
+      </p>
+    </article>
+
+    <article>
+      <h2>Berapa lama disimpan</h2>
+      <p class="t-muted">
+        Pesan yang tidak berlanjut jadi proyek kami hapus setelah <strong>dua tahun</strong>.
+        Pesan yang berlanjut jadi proyek disimpan selama proyeknya berjalan, ditambah
+        lima tahun setelahnya — sesuai kebiasaan penyimpanan dokumen perancangan,
+        karena catatan itu sering dibutuhkan lagi saat bangunan direnovasi.
+      </p>
+    </article>
+
+    <article>
+      <h2>Hak Anda</h2>
+      <p class="t-muted">
+        Kapan saja Anda boleh meminta kami menunjukkan data apa yang kami simpan
+        tentang Anda, memperbaikinya kalau ada yang keliru, atau menghapusnya
+        sepenuhnya. Tidak perlu alasan, dan tidak dipungut biaya.
+      </p>
+      <p class="t-muted">
+        Kirim permintaannya ke alamat email di bawah. Kami balas dalam 7 hari kerja.
+        Kalau permintaannya penghapusan, kami konfirmasi setelah datanya benar-benar
+        terhapus — bukan saat permintaannya diterima.
+      </p>
+    </article>
+
+    <article>
+      <h2>Cookie</h2>
+      <p class="t-muted">
+        Situs publik ini tidak memasang cookie sama sekali. Pilihan tema terang atau
+        gelap disimpan di penyimpanan lokal peramban Anda dan tidak pernah dikirim
+        ke mana pun.
+      </p>
+      <p class="t-muted">
+        Cloudflare Turnstile — penyaring bot di form kontak — bisa menaruh penanda
+        sementara di peramban untuk membedakan manusia dari mesin. Penanda itu tidak
+        dipakai untuk melacak Anda antar-situs.
+      </p>
+    </article>
+
+    <article>
+      <h2>Kalau halaman ini berubah</h2>
+      <p class="t-muted">
+        Perubahan berarti akan mengubah tanggal berlaku di atas. Kami tidak
+        memberlakukan perubahan secara surut terhadap data yang sudah terlanjur
+        Anda kirim.
+      </p>
+    </article>
+
+    <article>
+      <h2>Menghubungi kami</h2>
+      <p class="t-muted">
+        {settings.studioName}{settings.city ? ` — ${settings.city}` : ""}
+      </p>
+      {
+        settings.email && (
+          <p class="t-muted">
+            <a href={`mailto:${settings.email}`}>{settings.email}</a>
+          </p>
+        )
+      }
+      {settings.address && <p class="t-muted">{settings.address}</p>}
+    </article>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero-privasi {
+    padding-block: clamp(4rem, 10vw, 7rem) clamp(var(--space-5), 5vw, var(--space-6));
+  }
+
+  .hero-privasi h1 {
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-privasi .lede {
+    max-width: var(--measure);
+  }
+
+  .privasi-tanggal {
+    margin-top: var(--space-4);
+    font-size: var(--text-sm);
+  }
+
+  .privasi-isi {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(var(--space-6), 5vw, var(--space-7));
+    padding-bottom: clamp(var(--space-7), 8vw, var(--space-8));
+  }
+
+  .privasi-isi article {
+    max-width: var(--measure);
+  }
+
+  .privasi-isi h2 {
+    margin-bottom: var(--space-3);
+    font-size: var(--text-xl);
+  }
+
+  .privasi-isi p + p {
+    margin-top: var(--space-3);
+  }
+
+  /* Definisi dua kolom di layar lebar, bertumpuk di ponsel — istilahnya di
+     kiri supaya bisa dipindai cepat tanpa membaca seluruh keterangan. */
+  .privasi-daftar {
+    margin: var(--space-4) 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .privasi-daftar__baris {
+    display: grid;
+    gap: 0.15rem;
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .privasi-daftar__baris:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .privasi-daftar dt {
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+
+  .privasi-daftar dd {
+    margin: 0;
+  }
+
+  .privasi-list {
+    margin: var(--space-4) 0 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  /* Tabel bisa lebih lebar dari kolom teks, jadi dibiarkan menggulir sendiri
+     ketimbang memaksa badan halaman ikut menggulir menyamping. */
+  .privasi-tabel-bungkus {
+    margin: var(--space-4) 0;
+    overflow-x: auto;
+  }
+
+  @media (min-width: 40rem) {
+    .privasi-daftar__baris {
+      grid-template-columns: 14rem 1fr;
+      gap: var(--space-4);
+    }
+  }
+</style>

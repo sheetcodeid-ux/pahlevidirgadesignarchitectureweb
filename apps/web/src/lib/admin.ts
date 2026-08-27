@@ -212,6 +212,8 @@ export interface StudioSettings {
   logoUrl?: string | null;
   /** Key R2 dari unggahan terbaru — dikirim saat menyimpan, bukan dibaca dari server. */
   logoKey?: string | null;
+  /** Bukan kolom database: keadaan rahasia Worker, dibalas server saja. */
+  notifikasiEmailAktif?: boolean;
 }
 
 export const ambilSettings = () => panggil<StudioSettings>("/admin/settings");

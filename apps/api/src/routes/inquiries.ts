@@ -99,6 +99,14 @@ inquiries.post("/inquiries", async (c) => {
         console.error(`notifikasi inquiry gagal dikirim: ${err instanceof Error ? err.message : String(err)}`),
       ),
     );
+  } else {
+    // Cabang ini dulu diam sepenuhnya: pesan tetap tersimpan, tapi tidak ada
+    // pemberitahuan dan tidak ada jejak apa pun bahwa itu terjadi. Panel
+    // Pesan Masuk juga menampilkan peringatannya — log saja tidak cukup,
+    // karena tidak ada yang membuka Workers Logs setiap hari.
+    console.warn(
+      "notifikasi inquiry dilewati: RESEND_API_KEY atau INQUIRY_NOTIFY_TO belum disetel",
+    );
   }
 
   return c.json({ data: { id, received: true } }, 201);

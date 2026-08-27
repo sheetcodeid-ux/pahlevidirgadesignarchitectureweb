@@ -3,7 +3,7 @@ import { Icon } from "../ui/Icon";
 import { Sheet } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarPesan, ubahStatusPesan, type Pesan } from "../../lib/admin";
+import { daftarPesan, ubahStatusPesan, ambilSettings, type Pesan } from "../../lib/admin";
 
 const STATUS: Record<string, { teks: string; kelas: string }> = {
   new: { teks: "Baru", kelas: "badge--brand" },
@@ -26,6 +26,9 @@ function Isi() {
   const [pesan, setPesan] = useState<Pesan[] | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
   const [saring, setSaring] = useState("");
+  // null selama belum diketahui, supaya spanduknya tidak berkedip muncul
+  // lalu hilang setiap kali halaman dibuka.
+  const [notifAktif, setNotifAktif] = useState<boolean | null>(null);
 
   async function muat(status: string) {
     try {
@@ -36,6 +39,12 @@ function Isi() {
   }
 
   useEffect(() => { muat(saring); }, [saring]);
+
+  useEffect(() => {
+    ambilSettings()
+      .then((s) => setNotifAktif(s.notifikasiEmailAktif !== false))
+      .catch(() => setNotifAktif(null));
+  }, []);
 
   async function ubah(p: Pesan, status: string) {
     try {
@@ -65,6 +74,20 @@ function Isi() {
 
   return (
     <div className="stack" style={{ gap: "var(--space-5)" }}>
+      {notifAktif === false && (
+        <div className="alert alert--warn" role="status">
+          <span className="alert__icon"><Icon name="alert" size={18} /></span>
+          <span className="alert__body">
+            <span className="alert__title">Pemberitahuan email mati</span>
+            <span className="alert__text">
+              Pesan masuk tetap tersimpan dan tampil di sini, tapi tidak ada email
+              yang dikirim ke studio. Setel rahasia Worker RESEND_API_KEY dan
+              INQUIRY_NOTIFY_TO untuk menghidupkannya.
+            </span>
+          </span>
+        </div>
+      )}
+
       <div className="segmented" role="group" aria-label="Saring status pesan">
         {[
           { id: "", label: "Semua" },

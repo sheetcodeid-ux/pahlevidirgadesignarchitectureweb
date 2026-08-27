@@ -555,7 +555,11 @@ admin.delete("/testimonials/:id", async (c) => {
 // GET /api/v1/admin/settings
 admin.get("/settings", async (c) => {
   const data = await withDb(c.env, c.executionCtx, (sql) => settingsRepo.get(sql, assetBase(c.env)));
-  return c.json({ data });
+  // Bukan kolom database, melainkan keadaan rahasia Worker: dipakai panel
+  // Pesan Masuk untuk memperingatkan kalau pemberitahuan email mati. Yang
+  // dikirim hanya benar/salah — nilai rahasianya tidak pernah ikut.
+  const notifikasiEmailAktif = Boolean(c.env.RESEND_API_KEY && c.env.INQUIRY_NOTIFY_TO);
+  return c.json({ data: { ...data, notifikasiEmailAktif } });
 });
 
 admin.patch("/settings", async (c) => {
