@@ -52,7 +52,10 @@ export type IconName =
   | "building"
   | "projectPlus"
   | "imagePlus"
-  | "save";
+  | "save"
+  | "bell"
+  | "bellOff"
+  | "gift";
 
 interface Props {
   name: IconName;
@@ -319,6 +322,32 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   // Foto dengan tanda tambah — "tambahkan gambar", bukan "ini gambar".
+  /* Lonceng: badan + pemukul. Dipakai untuk pemberitahuan. */
+  bell: (
+    <>
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </>
+  ),
+  /* Lonceng dicoret — keadaan kosong, bukan tombol matikan suara. */
+  bellOff: (
+    <>
+      <path d="M8.7 3A6 6 0 0 1 18 8c0 2.5.4 4.3.9 5.6" />
+      <path d="M17 17H3s3-2 3-9a6 6 0 0 1 .7-2.8" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      <path d="m2 2 20 20" />
+    </>
+  ),
+  /* Kado: penanda pencapaian. */
+  gift: (
+    <>
+      <path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8" />
+      <path d="M2 8h20v4H2z" />
+      <path d="M12 8v13" />
+      <path d="M12 8H7.5a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8Z" />
+      <path d="M12 8h4.5a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8Z" />
+    </>
+  ),
   imagePlus: (
     <>
       <path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" />

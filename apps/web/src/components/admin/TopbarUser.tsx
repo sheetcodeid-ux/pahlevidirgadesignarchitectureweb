@@ -28,6 +28,13 @@ export function TopbarUser() {
         <Icon name="inquiry" size={18} />
       </a>
 
+      {/* Lonceng dipisah dari amplop: amplop hanya pesan dari form kontak,
+          lonceng mengumpulkan semuanya — pesan, tenggat, testimoni menunggu.
+          Tanpa ini halaman Notifikasi cuma bisa dicapai dari dashboard. */}
+      <a href="/admin/notifikasi" className="btn btn--ghost btn--icon" aria-label="Notifikasi">
+        <Icon name="bell" size={18} />
+      </a>
+
       <div className="topbar-user__id">
         <Avatar name={nama} brand size="sm" />
         <span className="topbar-user__text">
