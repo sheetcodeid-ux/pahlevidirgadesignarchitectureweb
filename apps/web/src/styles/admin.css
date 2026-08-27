@@ -467,42 +467,6 @@
 
 .listbar__cta .btn { width: 100%; height: 3.5rem; justify-content: center; font-size: var(--text-md); }
 
-/* Tombol utama bilah daftar. Keadaan biasa polos — tanpa bayangan, tanpa
-   garis. Saat disentuh ia berubah merah dan terangkat: bayangan keras tanpa
-   blur muncul di belakangnya sementara tombolnya bergeser sedikit ke arah
-   berlawanan, jadi terbaca seperti tombol yang naik dari halaman.
-
-   Lapisan merah yang menggeser naik sudah dibuang — yang diminta adalah
-   tombolnya yang muncul, bukan warnanya yang bergerak.
-
-   Sengaja hanya di sini, bukan di semua .btn--primary: bayangan setebal ini
-   di dalam dialog akan terlihat berlebihan. */
-.listbar__cta .btn--primary {
-  transition:
-    background-color var(--dur) var(--ease),
-    color var(--dur) var(--ease),
-    box-shadow var(--dur) var(--ease),
-    transform var(--dur) var(--ease);
-}
-
-.listbar__cta .btn--primary:hover:not(:disabled) {
-  background: var(--action-hover);
-  color: var(--action-hover-ink);
-  box-shadow: 4px 4px 0 var(--action-hover-shadow);
-  transform: translate(-2px, -2px);
-}
-
-/* Ditekan: tombolnya turun kembali menempel ke halaman. */
-.listbar__cta .btn--primary:active:not(:disabled) {
-  box-shadow: 0 0 0 var(--action-hover-shadow);
-  transform: translate(0, 0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .listbar__cta .btn--primary { transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
-  .listbar__cta .btn--primary:hover:not(:disabled) { transform: none; }
-}
-
 /* Barisan chip dibiarkan LEPAS: selebar halaman penuh, berlatar abu, dan
    tanpa garis vertikal talang — hanya bagian ini yang begitu, sesuai
    referensi. Paddingnya menyamai lebar talang supaya chip pertama tetap

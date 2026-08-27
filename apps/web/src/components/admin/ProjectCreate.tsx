@@ -212,7 +212,7 @@ function Isi() {
       {/* Panel aksi menempel saat halaman digulir — di form panjang, tombol
           simpan yang ikut hilang ke bawah memaksa staf menggulir balik. */}
       <aside className="buatpage__aksi">
-        <button type="button" className="btn btn--primary btn--lg buat-aksi__utama"
+        <button type="button" className="btn btn--primary btn--lg btn--lift buat-aksi__utama"
           disabled={!bisaSimpan} onClick={simpan}>
           {menyimpan ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="projectPlus" size={18} />}
           Tambah Proyek

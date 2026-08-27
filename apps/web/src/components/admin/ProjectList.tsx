@@ -122,7 +122,7 @@ function Isi() {
   const terlihat = saring === "semua" ? terkena : terkena.filter((p) => p.status === saring);
 
   const tombolBaru = (
-    <a className="btn btn--primary btn--lg" href="/admin/proyek/baru">
+    <a className="btn btn--primary btn--lg btn--lift" href="/admin/proyek/baru">
       <Icon name="projectPlus" size={20} />Tambah Proyek
     </a>
   );

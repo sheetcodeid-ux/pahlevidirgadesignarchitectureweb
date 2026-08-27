@@ -63,6 +63,36 @@
 .btn--danger { background: transparent; color: var(--brand); border-color: var(--brand-line); }
 .btn--danger:hover:not(:disabled) { background: var(--brand-soft); }
 
+/* Tombol yang TERANGKAT saat disentuh: bayangan keras tanpa blur muncul di
+   belakangnya sementara tombolnya bergeser ke arah berlawanan, jadi terbaca
+   seperti tombol yang naik dari halaman. Ditekan, ia turun kembali menempel.
+
+   Bukan bawaan .btn--primary: bayangan setebal ini di dalam dialog akan
+   terlihat berlebihan. Dipakai untuk satu aksi utama per halaman — tombol
+   yang memang boleh berteriak. */
+.btn--lift {
+  transition:
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+.btn--lift:hover:not(:disabled) {
+  box-shadow: 4px 4px 0 var(--action-hover-shadow);
+  transform: translate(-2px, -2px);
+}
+
+.btn--lift:active:not(:disabled) {
+  box-shadow: 0 0 0 var(--action-hover-shadow);
+  transform: translate(0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--lift { transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+  .btn--lift:hover:not(:disabled) { transform: none; }
+}
+
 .btn--sm { padding: 0.4rem 0.85rem; font-size: var(--text-xs); }
 .btn--lg { padding: 0.8rem 1.5rem; font-size: var(--text-base); }
 .btn--icon { padding: 0.55rem; border-radius: var(--radius-pill); }
