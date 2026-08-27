@@ -1011,9 +1011,13 @@
   background-position: center;
 }
 
+/* Opacity, bukan warna yang lebih gelap: titiknya harus meredup dengan cara
+   yang sama di tema gelap dan terang, dan menurunkan warnanya per tema berarti
+   dua nilai yang harus dijaga tetap seimbang. */
 .dashdot--dasar {
   background-image: radial-gradient(circle at center, var(--border-strong) 2.5px, transparent 2.7px);
   background-size: 26px 26px;
+  opacity: 0.45;
 }
 
 /* Lapis sorot: titiknya lebih besar dan lebih terang, tapi topeng radial
