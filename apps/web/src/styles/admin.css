@@ -990,6 +990,13 @@
 .dashsplit__kiri,
 .dashsplit__kanan { flex: 1 1 50%; min-width: 0; }
 
+/* Kolom kanan berbidang abu, jadi pembagian dua terbaca dari warnanya
+   sendiri dan bukan cuma dari garis di tengah. Di tema terang
+   --surface-raised nyaris putih; abunya diambil dari --tray, satu-satunya
+   bidang abu lembut yang memang disediakan untuk tema terang. */
+.dashsplit__kanan { background: var(--surface-raised); }
+:root[data-theme="light"] .dashsplit__kanan { background: var(--tray); }
+
 .dashsplit__kiri {
   position: relative;
   overflow: hidden;
@@ -1015,7 +1022,7 @@
    yang sama di tema gelap dan terang, dan menurunkan warnanya per tema berarti
    dua nilai yang harus dijaga tetap seimbang. */
 .dashdot--dasar {
-  background-image: radial-gradient(circle at center, var(--border-strong) 2.5px, transparent 2.7px);
+  background-image: radial-gradient(circle at center, var(--border-strong) 1.75px, transparent 1.95px);
   background-size: 26px 26px;
   opacity: 0.45;
 }
@@ -1024,10 +1031,21 @@
    hanya membiarkan yang dekat kursor terlihat. Jarak pudarnya dibuat panjang
    supaya tepinya tidak terbaca sebagai lingkaran bergaris. */
 .dashdot--sorot {
-  background-image: radial-gradient(circle at center, var(--text-body) 4.5px, transparent 4.7px);
+  background-image: radial-gradient(circle at center, var(--text-body) 3.5px, transparent 3.7px);
   background-size: 26px 26px;
   -webkit-mask-image: radial-gradient(circle 165px at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, 0.8) 45%, rgba(0, 0, 0, 0.25) 75%, transparent 100%);
   mask-image: radial-gradient(circle 165px at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, 0.8) 45%, rgba(0, 0, 0, 0.25) 75%, transparent 100%);
+  /* Sorot hanya hidup selama kursor ada di kolom ini. Dipudarkan lewat
+     opacity, bukan digeser ke luar bidang: menggeser berarti menyeret
+     lingkaran terangnya melintasi seluruh kolom dulu sebelum hilang. */
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+.dashsplit__kiri:hover .dashdot--sorot { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashdot--sorot { transition: none; }
 }
 
 /* Tanpa padding mendatar: lebar kartu di bawah ditulis sebagai persen, dan
@@ -1049,7 +1067,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(2rem, 4.6vw, 2.875rem);
+  font-size: clamp(2rem, 4.6vw, 2.6875rem);
   letter-spacing: -0.01em;
   color: var(--text-strong);
   text-align: center;
@@ -1066,11 +1084,21 @@
   width: 80%;
   max-width: calc(100% - 2 * var(--space-6));
   min-height: 6.125rem;
-  padding: 0 1.25rem 0 1.75rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 2.75rem;
-  background: var(--surface);
+  /* Kiri lebih lapang dari kanan: di sisi kiri yang berdiri adalah ubin
+     ikon persegi, yang tepinya bertabrakan dengan lengkung pill kalau
+     terlalu mepet. Di kanan yang berdiri tombol bundar — bentuknya sendiri
+     sudah mengikuti lengkungnya, jadi tidak butuh sebanyak itu. */
+  padding: 0 1rem 0 2rem;
+  /* Garis tebal dan bidang abu, senada dengan kolom kanan — kartunya jadi
+     satu-satunya benda terang di bidang gelap ini. Radius pill, bukan nilai
+     tetap: ujung kiri-kanannya harus membulat penuh mengikuti tingginya,
+     dan radius tetap berapa pun akan meleset begitu tingginya berubah. */
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
 }
+
+:root[data-theme="light"] .dash-kartu { background: var(--tray); }
 
 .dash-kartu__logo {
   display: grid;
@@ -1094,8 +1122,13 @@
   flex: 1;
 }
 
+/* 15px, bukan 16px seperti referensi. Nama studio ini jauh lebih panjang
+   dari nama usaha di referensi, dan pada 16px ia terpotong ellipsis persis
+   satu huruf sebelum habis. Selisih 1px tidak terbaca; nama studio yang
+   terpenggal terbaca. Ellipsis-nya tetap ada sebagai jaring pengaman kalau
+   suatu saat namanya diganti lebih panjang lagi. */
 .dash-kartu__nama {
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--text-strong);
   overflow: hidden;
