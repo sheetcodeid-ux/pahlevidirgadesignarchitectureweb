@@ -962,3 +962,239 @@
    terbaca berbeda dari isian di atasnya. Abunya diambil dari --tray, satu-
    satunya bidang abu lembut yang memang disediakan untuk tema terang. */
 :root[data-theme="light"] .buat-kartu .input--area { background: var(--tray); }
+
+/* --- Dashboard: bidang bertitik + kolom kanan --------------------------- */
+
+/* Sama seperti .settings-split: halamannya pas satu layar dan full-bleed,
+   supaya garis pemisah vertikalnya menyambung utuh dari bawah topbar sampai
+   dasar layar. Selektornya tanpa ">" — <astro-island> menyisip di antaranya. */
+.admin:has(.dashsplit) { height: 100dvh; overflow: hidden; }
+.admin:has(.dashsplit) .admin__main { min-height: 0; }
+
+.admin__content:has(.dashsplit) {
+  padding: 0;
+  gap: 0;
+  max-width: none;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashsplit {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* Dua kolom sama lebar, dipisah garis setebal garis topbar dan tabel. */
+.dashsplit__kiri,
+.dashsplit__kanan { flex: 1 1 50%; min-width: 0; }
+
+.dashsplit__kiri {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border-right: 2px solid var(--border-strong);
+  /* Nilai awal menaruh sorot titik di luar bidang, jadi sebelum kursor
+     pernah masuk tidak ada lingkaran terang yang menggantung di pojok. */
+  --mx: -999px;
+  --my: -999px;
+}
+
+/* Dua lapis titik pada kisi yang sama persis, jadi lapis sorot jatuh tepat
+   di atas lapis dasar dan tidak terlihat sebagai kisi kedua. */
+.dashdot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-position: center;
+}
+
+.dashdot--dasar {
+  background-image: radial-gradient(circle at center, var(--border-strong) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+
+/* Lapis sorot: titiknya lebih besar dan lebih terang, tapi topeng radial
+   hanya membiarkan yang dekat kursor terlihat. Jarak pudarnya dibuat panjang
+   supaya tepinya tidak terbaca sebagai lingkaran bergaris. */
+.dashdot--sorot {
+  background-image: radial-gradient(circle at center, var(--text-body) 2px, transparent 2.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(circle 115px at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, 0.8) 45%, rgba(0, 0, 0, 0.25) 75%, transparent 100%);
+  mask-image: radial-gradient(circle 115px at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, 0.8) 45%, rgba(0, 0, 0, 0.25) 75%, transparent 100%);
+}
+
+/* Tanpa padding mendatar: lebar kartu di bawah ditulis sebagai persen, dan
+   persen itu dihitung dari kotak-dalam INDUK. Padding di sini akan diam-diam
+   mengecilkan kartunya — 80% dari kolom yang sudah dipotong 2x32px bukan lagi
+   80% dari kolomnya. Napas kiri-kanan diurus masing-masing anaknya. */
+.dashsplit__isi {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-7);
+  padding-block: var(--space-6);
+}
+
+.dash-salam {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4.6vw, 2.875rem);
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+  text-align: center;
+  padding-inline: var(--space-6);
+}
+
+/* Kartu identitas studio. Lebarnya 80% kolom seperti referensi, dengan batas
+   atas supaya bentuknya tidak ikut melar di layar lebar — yang dijaga adalah
+   perbandingannya, bukan kemampuannya memenuhi ruang. */
+.dash-kartu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 80%;
+  max-width: calc(100% - 2 * var(--space-6));
+  min-height: 6.125rem;
+  padding: 0 1.25rem 0 1.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 2.75rem;
+  background: var(--surface);
+}
+
+.dash-kartu__logo {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  color: var(--brand-ink);
+  overflow: hidden;
+}
+
+.dash-kartu__logo img { width: 100%; height: 100%; object-fit: cover; }
+
+.dash-kartu__teks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.dash-kartu__nama {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-kartu__peran { font-size: var(--text-sm); color: var(--text-muted); }
+.dash-kartu__peran strong { color: var(--brand); font-weight: 600; }
+
+.dash-kartu__aksi {
+  display: grid;
+  place-items: center;
+  width: 2.1875rem;
+  height: 2.1875rem;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.dash-kartu__aksi + .dash-kartu__aksi { margin-left: calc(var(--space-2) - var(--space-3)); }
+.dash-kartu__aksi:hover { color: var(--text-strong); border-color: var(--text-faint); }
+.dash-kartu__aksi:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Di layar sempit dua kolom tidak muat: kolom kanan yang masih kosong
+   disembunyikan sepenuhnya — kolom kosong selebar setengah layar terbaca
+   sebagai halaman yang gagal memuat, bukan sebagai ruang yang disediakan. */
+@media (max-width: 60rem) {
+  .admin:has(.dashsplit) { height: auto; overflow: visible; }
+  .admin__content:has(.dashsplit) { overflow: visible; }
+  .dashsplit__kiri { border-right: 0; min-height: 60vh; }
+  .dashsplit__kanan { display: none; }
+  .dash-kartu { width: 100%; padding: var(--space-4) var(--space-5); border-radius: var(--radius-xl); }
+}
+
+/* --- Halaman Notifikasi -------------------------------------------------- */
+
+/* Full-bleed dengan garis pemisah di bawah judul yang benar-benar sampai tepi
+   kiri-kanan, sama seperti halaman form. Selektornya tanpa ">" karena
+   <astro-island> menyisip di antara .admin__content dan .notifpage__isi. */
+.admin__content:has(.notifpage__isi) {
+  padding: 0;
+  gap: 0;
+  max-width: none;
+}
+
+.admin__content:has(.notifpage__isi) .page-head {
+  padding: var(--space-6);
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.notifpage__isi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+/* Kotak isi bergaris 2px senada pemisah di atasnya. Keadaan kosongnya diberi
+   tinggi minimum supaya kotaknya tetap terbaca sebagai wadah, bukan sebagai
+   garis yang mengelilingi tiga baris teks. */
+/* Kelompok tab memeluk isinya. Tanpa ini ia jadi anak flex yang diregangkan
+   selebar kotak di bawahnya — inline-flex tidak menolong, karena yang
+   menentukan lebar anak flex adalah induknya. */
+.notifpage__isi .segmented { align-self: flex-start; }
+
+.notifkotak {
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  min-height: 17rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Daftar isi memakai perataan atas, bukan tengah seperti keadaan kosong. */
+.notifkotak:has(.notiflist) { justify-content: flex-start; }
+
+.notiflist { list-style: none; margin: 0; padding: 0; }
+.notiflist li + li { border-top: 1px solid var(--border); }
+
+.notiflist__baris {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  color: var(--text-body);
+  text-decoration: none;
+  transition: background-color var(--dur) var(--ease);
+}
+
+.notiflist__baris:hover { background: var(--surface-hover); }
+
+.notiflist__teks { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
+.notiflist__judul { font-weight: 600; color: var(--text-strong); }
+.notiflist__detail { font-size: var(--text-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notiflist__waktu { font-size: var(--text-xs); color: var(--text-faint); flex: none; }
+
+@media (max-width: 45rem) {
+  .notiflist__waktu { display: none; }
+}
