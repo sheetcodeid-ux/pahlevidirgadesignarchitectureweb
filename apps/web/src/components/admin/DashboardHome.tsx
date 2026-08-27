@@ -3,44 +3,93 @@ import { Icon } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
 import { ambilSettings, profilTersimpan, type Profil } from "../../lib/admin";
 
+/** Seberapa cepat sorot mengejar kursor tiap frame. Makin kecil makin lembut. */
+const KEJAR = 0.11;
+
 /**
  * Kolom kiri dashboard: bidang bertitik dengan sapaan dan kartu identitas
  * studio di tengahnya.
  *
  * Titik-titiknya dua lapis. Lapis dasar selalu terlihat samar supaya bidangnya
- * tidak terbaca sebagai hitam kosong; lapis sorot lebih terang dan sedikit
- * lebih besar, tapi ditutup topeng radial yang mengikuti kursor sehingga hanya
- * muncul di sekitar penunjuk. Posisi kursor dikirim lewat custom property,
- * bukan lewat state React: mousemove menyala puluhan kali per detik dan
- * render ulang sesering itu tidak ada gunanya untuk sesuatu yang cuma
- * menggeser gradien.
+ * tidak terbaca sebagai hitam kosong; lapis sorot sedikit lebih besar dan
+ * lebih terang, tapi ditutup topeng radial yang mengikuti kursor sehingga
+ * hanya muncul di sekitar penunjuk.
+ *
+ * Dua hal yang tidak sesederhana kelihatannya:
+ *
+ * 1. Sorotnya MENGEJAR kursor, bukan menempel padanya. Tiap frame posisinya
+ *    digeser sebagian jarak ke sasaran, jadi gerakannya menyusul dengan
+ *    lembut alih-alih melompat. Transition CSS tidak bisa dipakai di sini:
+ *    yang berubah adalah posisi di dalam mask-image, dan properti itu tidak
+ *    bisa diinterpolasi browser.
+ * 2. Posisinya dikirim lewat custom property, bukan state React. mousemove
+ *    menyala puluhan kali per detik dan render ulang sesering itu percuma
+ *    untuk sesuatu yang cuma menggeser gradien.
+ *
+ * Sorot hanya hidup selama kursor ada di dalam kolom ini. Begitu keluar ia
+ * dipudarkan lewat CSS (:hover), bukan digeser ke luar layar — menggeser
+ * berarti menyeret lingkaran terang melintasi seluruh bidang dulu.
  */
 function Kiri() {
   const [nama, setNama] = useState<string | null>(null);
-  const [logo, setLogo] = useState<string | null | undefined>();
   const [profil, setProfil] = useState<Profil | null>(null);
   const kolom = useRef<HTMLElement>(null);
+  const sasaran = useRef({ x: -999, y: -999 });
+  const posisi = useRef({ x: -999, y: -999 });
 
   useEffect(() => {
     setProfil(profilTersimpan());
     ambilSettings()
-      .then((s) => {
-        setNama(s.studioName);
-        setLogo(s.logoUrl);
-      })
+      .then((s) => setNama(s.studioName))
       .catch(() => setNama("Dirga Pahlevi Architecture"));
   }, []);
 
-  function gerak(e: React.MouseEvent<HTMLElement>) {
+  useEffect(() => {
     const el = kolom.current;
     if (!el) return;
-    const k = el.getBoundingClientRect();
-    el.style.setProperty("--mx", `${e.clientX - k.left}px`);
-    el.style.setProperty("--my", `${e.clientY - k.top}px`);
+
+    // Yang meminta gerakan dikurangi tidak dapat pengejaran sama sekali:
+    // sorotnya menempel langsung di kursor.
+    const halus = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let hidup = true;
+    let frame = 0;
+
+    function langkah() {
+      if (!hidup) return;
+      const p = posisi.current;
+      const s = sasaran.current;
+      if (halus) {
+        p.x += (s.x - p.x) * KEJAR;
+        p.y += (s.y - p.y) * KEJAR;
+      } else {
+        p.x = s.x;
+        p.y = s.y;
+      }
+      el!.style.setProperty("--mx", `${p.x}px`);
+      el!.style.setProperty("--my", `${p.y}px`);
+      frame = requestAnimationFrame(langkah);
+    }
+
+    frame = requestAnimationFrame(langkah);
+    return () => { hidup = false; cancelAnimationFrame(frame); };
+  }, []);
+
+  function titikKursor(e: React.MouseEvent<HTMLElement>) {
+    const k = kolom.current!.getBoundingClientRect();
+    return { x: e.clientX - k.left, y: e.clientY - k.top };
   }
 
   return (
-    <section className="dashsplit__kiri" ref={kolom} onMouseMove={gerak}>
+    <section
+      className="dashsplit__kiri"
+      ref={kolom}
+      onMouseMove={(e) => { sasaran.current = titikKursor(e); }}
+      /* Saat masuk, posisinya disamakan dulu dengan titik masuk. Tanpa ini
+         sorotnya meluncur dari tempat kursor terakhir keluar. Tidak terlihat
+         karena lapisannya masih tembus pandang saat itu. */
+      onMouseEnter={(e) => { const t = titikKursor(e); sasaran.current = t; posisi.current = { ...t }; }}
+    >
       <span className="dashdot dashdot--dasar" aria-hidden="true" />
       <span className="dashdot dashdot--sorot" aria-hidden="true" />
 
@@ -48,10 +97,12 @@ function Kiri() {
         <h1 className="dash-salam">Selamat Datang.</h1>
 
         <div className="dash-kartu">
+          {/* Sengaja ikon, bukan logo studio: kartu ini menandai "sedang masuk
+              sebagai siapa", dan logo studio sudah berdiri sendiri di sidebar.
+              Dua tempat menampilkan logo yang sama membuat keduanya berebut
+              perhatian. */}
           <span className="dash-kartu__logo">
-            {logo
-              ? <img src={logo} alt="" />
-              : <Icon name="building" size={26} />}
+            <Icon name="building" size={26} />
           </span>
 
           <span className="dash-kartu__teks">
