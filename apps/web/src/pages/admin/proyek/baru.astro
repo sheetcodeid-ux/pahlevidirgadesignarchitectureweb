@@ -1,6 +1,9 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { ProjectCreate } from "../../../components/admin/ProjectCreate";
+import { getSettings } from "../../../lib/api";
+
+const settings = await getSettings();
 ---
 
 <AdminLayout
@@ -8,7 +11,7 @@ import { ProjectCreate } from "../../../components/admin/ProjectCreate";
   heading="Tambah proyek baru"
   back="/admin/proyek"
   backLabel="Kembali ke semua proyek"
-  description="Judul wajib; slug dibuat otomatis. Sisanya bisa diisi belakangan lewat editor proyek."
+  description={settings.studioName}
 >
   <ProjectCreate client:load />
 </AdminLayout>

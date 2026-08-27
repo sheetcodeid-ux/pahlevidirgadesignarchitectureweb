@@ -115,7 +115,7 @@ function Isi() {
               aria-label="Unggah gambar sampul">
               {coverPratinjau
                 ? <img src={coverPratinjau} alt="" />
-                : mengunggah ? <span className="spinner spinner--sm" /> : <Icon name="imagePlus" size={24} />}
+                : mengunggah ? <span className="spinner spinner--sm" /> : <Icon name="imagePlus" size={30} />}
             </button>
             <span className="card__titles">
               <span className="t-subheading">Gambar sampul <span className="t-muted">(opsional)</span></span>

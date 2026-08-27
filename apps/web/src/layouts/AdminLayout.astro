@@ -90,9 +90,11 @@ const currentPath = Astro.url.pathname;
                       <Icon name="chevronLeft" size={18} />
                     </a>
                   )}
-                  <h1 class="t-title">{heading}</h1>
+                  <div class="page-head__teks">
+                    <h1 class="t-title">{heading}</h1>
+                    {description && <p class="t-muted">{description}</p>}
+                  </div>
                 </div>
-                {description && <p class="t-muted">{description}</p>}
               </div>
             )
           }

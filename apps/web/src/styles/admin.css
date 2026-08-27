@@ -81,11 +81,14 @@
   overflow: hidden;
 }
 
-/* Judul halaman. Baris pertamanya bisa memuat panah kembali di kiri judul —
-   panahnya sejajar tengah dengan judul, bukan menempel ke garis dasarnya. */
+/* Judul halaman. Panah kembali berdiri di kiri, dan blok teksnya di kanan —
+   jadi subjudul otomatis sejajar dengan judul, bukan menjorok ke bawah
+   panahnya. Panahnya disejajarkan dengan baris judul, bukan dengan tengah
+   seluruh blok, supaya tidak melayang saat subjudulnya panjang. */
 .page-head { display: flex; flex-direction: column; gap: var(--space-2); }
-.page-head__baris { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
-.page-head__back { flex: none; }
+.page-head__baris { display: flex; align-items: flex-start; gap: var(--space-4); min-width: 0; }
+.page-head__back { flex: none; margin-top: 0.4rem; }
+.page-head__teks { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 .page-head .t-muted { max-width: var(--measure); margin: 0; }
 
 /* Lingkaran bernomor di "Panduan memulai" — cincin berwarna, bukan kotak
@@ -839,12 +842,21 @@
   background: var(--surface-raised);
 }
 
+/* Kepala halaman form berlatar HITAM dan MENEMPEL saat digulir: isi form
+   berhenti di garis pembatasnya, tidak lewat begitu saja di belakang judul.
+   z-index di bawah topbar (40) supaya ia yang tertutup, bukan sebaliknya. */
 .admin__content:has(.buatpage) .page-head {
-  padding: var(--space-7) var(--space-6) var(--space-6);
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 30;
+  padding: var(--space-6);
+  background: var(--bg-sunken);
   border-bottom: 2px solid var(--border-strong);
 }
 
 .buatpage {
+  /* Tinggi kepala form, dipakai panel aksi untuk menempel tepat di bawahnya. */
+  --kepala-form-h: 8.5rem;
   display: grid;
   gap: var(--space-6);
   align-items: start;
@@ -878,12 +890,14 @@
 .buat-cover {
   display: grid;
   place-items: center;
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 5rem;
+  height: 5rem;
   flex: none;
   padding: 0;
   overflow: hidden;
-  color: var(--text-muted);
+  /* Ikonnya ungu — satu-satunya aksen berwarna di form ini, jadi mata
+     langsung menemukan tempat menambahkan foto. Kotaknya tetap abu. */
+  color: var(--upgrade);
   background: var(--surface-raised);
   border: 2px dashed var(--border-strong);
   border-radius: var(--radius-md);
@@ -891,7 +905,7 @@
   transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.buat-cover:hover { border-color: var(--text-faint); color: var(--text-strong); }
+.buat-cover:hover { border-color: var(--upgrade); }
 .buat-cover img { width: 100%; height: 100%; object-fit: cover; }
 
 .buatpage__aksi {
@@ -907,5 +921,8 @@
 
 @media (min-width: 60rem) {
   .buatpage { grid-template-columns: minmax(0, 1fr) 17rem; }
-  .buatpage__aksi { position: sticky; top: var(--space-6); }
+  /* Menempel DI BAWAH kepala yang juga menempel — kalau hanya topbar yang
+     diperhitungkan, panel aksinya menyelinap ke belakang judul. Nilainya
+     diukur di browser, bukan dikira: tinggi kepala + jarak napas. */
+  .buatpage__aksi { position: sticky; top: calc(var(--topbar-h) + var(--kepala-form-h) + var(--space-5)); }
 }
