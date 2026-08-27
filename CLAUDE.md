@@ -218,6 +218,12 @@ skrip; jangan sunting hasilnya.
 - **Branch produksi: `claude/stack-setup-supabase-cloudflare-kdwlkk`.** Push ke
   sini yang memicu deploy, jadi jangan dipakai untuk coba-coba. Kerjakan di
   branch sesi, lalu merge ke sini setelah pemilik ACC
+- **Periksa `git branch --show-current` SEBELUM commit.** Setelah deploy, HEAD
+  tertinggal di branch produksi — dan pekerjaan berikutnya jadi ter-commit di
+  sana, menunggu ACC yang belum ada. Sudah tiga kali begitu. `git push -u
+  origin <branch-kerja>` tidak menyelamatkan: ia mendorong ref branch kerja
+  yang tidak berubah, lalu melapor "Everything up-to-date" seolah beres.
+  Kebiasaan yang benar: `git checkout <branch-kerja>` begitu deploy selesai
 - Jangan buat pull request kecuali diminta
 - **Deploy otomatis lewat GitHub Actions** (`.github/workflows/deploy.yml`)
   begitu branch produksi berubah — jangan pernah minta pemilik menjalankan
