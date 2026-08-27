@@ -285,7 +285,7 @@ function Isi() {
                   <td className="table__num">{p.year ?? "—"}</td>
                   <td><Lencana status={p.status} /></td>
                   <td className="table__actions">
-                    <span className="row" style={{ justifyContent: "flex-end", gap: "var(--space-2)" }}>
+                    <span className="table__act">
                       <a className="btn btn--secondary btn--icon btn--boxed" href={`/admin/proyek/edit?id=${p.id}`}
                         aria-label={`Sunting ${p.title}`}>
                         <Icon name="edit" size={15} />

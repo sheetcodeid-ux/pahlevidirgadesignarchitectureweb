@@ -586,7 +586,7 @@
   padding: 0.5rem 1.1rem;
   font: inherit;
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
   white-space: nowrap;
   background: transparent;
@@ -668,6 +668,18 @@
 }
 
 .table--ruled td { padding: var(--space-4); }
+
+/* Kolom aksi dirata-tengahkan, dan tombolnya dibuat sama ukuran lewat
+   grid — dengan flex, ikon yang lebarnya beda sedikit membuat tombolnya
+   ikut bergeser dan deretannya jadi tidak sejajar antar-baris. */
+.table--ruled .table__actions { text-align: center; }
+
+.table__act {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: var(--space-2);
+  justify-content: center;
+}
 .table--ruled .table__num { text-align: left; }
 
 /* Kolom nomor urut: selebar isinya saja, redup, supaya tidak menarik mata
@@ -700,7 +712,7 @@
    Garis MENDATAR sengaja menembus talang, garis VERTIKAL hanya ada di
    bilah dan tabel. Barisan chip dibiarkan lepas tanpa garis vertikal. */
 .listpage {
-  --talang: 2.75rem;
+  --talang: 2.5rem;
   display: flex;
   flex-direction: column;
   background: var(--surface-raised);
