@@ -86,8 +86,11 @@
    panahnya. Panahnya disejajarkan dengan baris judul, bukan dengan tengah
    seluruh blok, supaya tidak melayang saat subjudulnya panjang. */
 .page-head { display: flex; flex-direction: column; gap: var(--space-2); }
-.page-head__baris { display: flex; align-items: flex-start; gap: var(--space-4); min-width: 0; }
-.page-head__back { flex: none; margin-top: 0.4rem; }
+/* Tombol kembali disejajarkan ke tengah blok teks, bukan ke baris pertamanya.
+   Judul dan nama studio dibaca sebagai satu blok, jadi tombolnya pun duduk di
+   titik tengah blok itu — bukan menggantung di atas sejajar huruf pertama. */
+.page-head__baris { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
+.page-head__back { flex: none; }
 .page-head__teks { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 .page-head .t-muted { max-width: var(--measure); margin: 0; }
 
