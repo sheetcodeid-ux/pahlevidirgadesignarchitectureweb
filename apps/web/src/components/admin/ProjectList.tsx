@@ -5,7 +5,7 @@ import { Popover, Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { Select } from "../ui/overlay/Select";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarProyek, buatProyek, hapusProyek, type Proyek } from "../../lib/admin";
+import { daftarProyek, hapusProyek, type Proyek } from "../../lib/admin";
 
 const LABEL: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
@@ -34,17 +34,6 @@ const URUTAN: { value: string; label: string }[] = [
   { value: "tahun", label: "Tahun terbaru" },
 ];
 
-/** Mengubah judul jadi slug: huruf kecil, tanpa aksen, dipisah tanda hubung. */
-function keSlug(judul: string) {
-  return judul
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120);
-}
-
 function Lencana({ status }: { status: string }) {
   const s = STATUS[status];
   return (
@@ -65,12 +54,6 @@ function Isi() {
   const [urut, setUrut] = useState("baru");
   const [kategori, setKategori] = useState("semua");
 
-  const [judulBaru, setJudulBaru] = useState("");
-  const [slugBaru, setSlugBaru] = useState("");
-  const [slugDisunting, setSlugDisunting] = useState(false);
-  const [kategoriBaru, setKategoriBaru] = useState("residential");
-  const [menyimpan, setMenyimpan] = useState(false);
-
   async function muat() {
     try {
       setProyek(await daftarProyek());
@@ -80,17 +63,6 @@ function Isi() {
   }
 
   useEffect(() => { muat(); }, []);
-
-  async function tambah() {
-    setMenyimpan(true);
-    try {
-      const { id } = await buatProyek(slugBaru || keSlug(judulBaru), judulBaru.trim(), kategoriBaru);
-      window.location.href = `/admin/proyek/edit?id=${id}`;
-    } catch (e) {
-      toast({ judul: "Gagal membuat proyek", keterangan: (e as Error).message, nada: "gagal" });
-      setMenyimpan(false);
-    }
-  }
 
   async function hapus(p: Proyek) {
     try {
@@ -148,56 +120,11 @@ function Isi() {
     });
   const jumlah = (id: string) => (id === "semua" ? terkena.length : terkena.filter((p) => p.status === id).length);
   const terlihat = saring === "semua" ? terkena : terkena.filter((p) => p.status === saring);
-  const judulSah = judulBaru.trim().length >= 2;
 
   const tombolBaru = (
-    <button type="button" className="btn btn--primary btn--lg">
+    <a className="btn btn--primary btn--lg" href="/admin/proyek/baru">
       <Icon name="projectPlus" size={20} />Tambah Proyek
-    </button>
-  );
-
-  const dialogBaru = (
-    <Dialog
-      trigger={tombolBaru}
-      title="Proyek baru"
-      description="Judul dan slug bisa diubah nanti. Proyek dibuat sebagai draf."
-      footer={
-        <button type="button" className="btn btn--primary" disabled={!judulSah || menyimpan} onClick={tambah}>
-          {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
-          Buat &amp; sunting
-        </button>
-      }
-    >
-      <div className="stack">
-        <div className="field">
-          <label className="field__label" htmlFor="np-judul">
-            Judul<span className="field__req" aria-hidden="true">*</span>
-          </label>
-          <input id="np-judul" className="input" value={judulBaru}
-            onChange={(e) => {
-              setJudulBaru(e.target.value);
-              // Slug mengikuti judul sampai staf menyuntingnya sendiri;
-              // setelah itu jangan ditimpa diam-diam.
-              if (!slugDisunting) setSlugBaru(keSlug(e.target.value));
-            }} />
-        </div>
-        <div className="field">
-          <label className="field__label" htmlFor="np-slug">Slug</label>
-          <input id="np-slug" className="input input--mono" value={slugBaru}
-            onChange={(e) => { setSlugDisunting(true); setSlugBaru(e.target.value); }} />
-          <p className="field__help">Muncul di URL: /proyek/{slugBaru || "…"}</p>
-        </div>
-        <div className="field">
-          <label className="field__label" htmlFor="np-kat">Kategori</label>
-          <span className="select">
-            <select id="np-kat" className="input" value={kategoriBaru} onChange={(e) => setKategoriBaru(e.target.value)}>
-              {Object.entries(LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-            <span className="select__chevron"><Icon name="chevronDown" size={16} /></span>
-          </span>
-        </div>
-      </div>
-    </Dialog>
+    </a>
   );
 
   return (
@@ -235,7 +162,7 @@ function Isi() {
             </div>
           </div>
 
-          <div className="listbar__cta">{dialogBaru}</div>
+          <div className="listbar__cta">{tombolBaru}</div>
         </div>
 
         <div className="listbar__filters">

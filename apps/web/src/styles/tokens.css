@@ -82,11 +82,11 @@
      penggelapan otomatis — di tema gelap tombolnya sudah putih, jadi
      "lebih gelap" justru terbaca seperti tombol yang mati.
      --action-hover-shadow adalah bayangan keras tanpa blur di belakangnya.
-     Di tema gelap dipakai putih, bukan hitam: bayangan hitam di atas
-     bidang hitam sama saja dengan tidak ada bayangan. */
+     Tema gelap memakai putih dan tema terang memakai hitam — masing-masing
+     kebalikan latarnya, supaya bayangannya benar-benar terlihat. */
   --action-hover: #ef2b26;
   --action-hover-ink: #ffffff;
-  --action-hover-shadow: #000000;
+  --action-hover-shadow: #fafafa;
 
   --brand: #ef2b26;
   --brand-ink: #ffffff;

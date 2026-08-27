@@ -1,0 +1,12 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { ProjectCreate } from "../../../components/admin/ProjectCreate";
+---
+
+<AdminLayout
+  title="Tambah Proyek"
+  heading="Tambah proyek baru"
+  description="Judul dan slug wajib. Sisanya bisa diisi belakangan lewat editor proyek."
+>
+  <ProjectCreate client:load />
+</AdminLayout>

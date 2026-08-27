@@ -432,6 +432,10 @@
    Kotaknya membentang hampir selebar bilah, jadi cincin selebar itu — warna
    apa pun — mendominasi halaman. Yang menandai fokus di sini cukup kursor
    ketiknya sendiri; tombol dan isian lain tetap punya cincin fokus. */
+/* Placeholder kotak cari sengaja lebih terang dari placeholder biasa: di
+   bidang selebar ini --text-faint nyaris hilang. */
+.listbar__search .input::placeholder { color: var(--text-muted); }
+
 .listbar__search .input:focus { border-color: transparent; box-shadow: none; }
 
 .listbar__icon {
@@ -508,7 +512,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-4) var(--talang);
+  padding: calc(var(--space-4) - 2.5px) var(--talang);
   background: var(--surface-raised);
 }
 
@@ -692,7 +696,7 @@
 .table--ruled td { border-bottom: 2px solid var(--border-strong); }
 
 .table--ruled thead th {
-  padding: calc(var(--space-4) + 2.5px) var(--space-4);
+  padding: calc(var(--space-4) + 5px) var(--space-4);
   font-size: var(--text-base);
   font-weight: 500;
   letter-spacing: 0;
@@ -700,7 +704,7 @@
   color: var(--text-muted);
 }
 
-.table--ruled td { padding: calc(var(--space-4) - 2.5px) var(--space-4); }
+.table--ruled td { padding: calc(var(--space-4) - 5px) var(--space-4); }
 
 /* Kolom aksi dirata-tengahkan, dan tombolnya dibuat sama ukuran lewat
    grid — dengan flex, ikon yang lebarnya beda sedikit membuat tombolnya
@@ -848,4 +852,73 @@
   object-fit: contain;
   border-radius: var(--radius-md);
   background: var(--bg-sunken);
+}
+
+/* --- Halaman Tambah Proyek -----------------------------------------------
+   Dua kolom: isian di kiri, panel aksi menempel di kanan. Ditiru dari
+   referensi pemilik — tombol simpan yang ikut hilang ke bawah saat form
+   panjang digulir memaksa staf menggulir balik hanya untuk menyimpan. */
+.buatpage {
+  display: grid;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.buatpage__utama { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+
+.buat-kartu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+/* Judul kartu memakai huruf kapital kecil ber-tracking seperti referensi —
+   ia label bagian, bukan judul yang bersaing dengan judul halaman. */
+.buat-kartu__judul {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.buat-cover {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: none;
+  padding: 0;
+  overflow: hidden;
+  color: var(--text-faint);
+  background: var(--surface-raised);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.buat-cover:hover { border-color: var(--text-faint); color: var(--text-strong); }
+.buat-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+.buatpage__aksi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.buat-aksi__utama { width: 100%; justify-content: center; }
+.buat-aksi__reset { align-self: center; }
+.buat-aksi__catatan { text-align: center; margin: 0; }
+
+@media (min-width: 60rem) {
+  .buatpage { grid-template-columns: minmax(0, 1fr) 17rem; }
+  .buatpage__aksi { position: sticky; top: var(--space-6); }
 }
