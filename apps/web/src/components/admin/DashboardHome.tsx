@@ -6,6 +6,52 @@ import { ambilSettings, profilTersimpan, type Profil } from "../../lib/admin";
 /** Seberapa cepat sorot mengejar kursor tiap frame. Makin kecil makin lembut. */
 const KEJAR = 0.11;
 
+const SALAM = "Selamat Datang.";
+
+/* Irama ketikan, dalam milidetik. Menghapus dibuat dua kali lebih cepat
+   daripada mengetik: begitulah orang benar-benar menghapus, dan penghapusan
+   selambat pengetikan terasa seperti halaman yang macet. */
+const KETIK = 85;
+const TAHAN_PENUH = 2000;
+const HAPUS = 40;
+const TAHAN_KOSONG = 600;
+
+/**
+ * Mengetik SALAM huruf demi huruf, menahannya sebentar, menghapusnya, lalu
+ * mengulang. Dipakai satu setTimeout berantai, bukan setInterval: tiap tahap
+ * punya jeda sendiri, dan interval tunggal tidak bisa menahan lebih lama di
+ * ujung tanpa menghitung tick — cara yang mudah meleset satu langkah.
+ *
+ * Yang meminta gerakan dikurangi langsung mendapat kalimat utuh yang diam.
+ */
+function useKetikan() {
+  const [n, setN] = useState(0);
+  const [hapus, setHapus] = useState(false);
+  const [diam, setDiam] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setDiam(true);
+  }, []);
+
+  useEffect(() => {
+    if (diam) return;
+
+    const selesaiKetik = n === SALAM.length;
+    const jeda = !hapus ? (selesaiKetik ? TAHAN_PENUH : KETIK) : (n > 0 ? HAPUS : TAHAN_KOSONG);
+
+    const t = setTimeout(() => {
+      if (!hapus && !selesaiKetik) setN(n + 1);
+      else if (!hapus) setHapus(true);
+      else if (n > 0) setN(n - 1);
+      else setHapus(false);
+    }, jeda);
+
+    return () => clearTimeout(t);
+  }, [n, hapus, diam]);
+
+  return diam ? SALAM : SALAM.slice(0, n);
+}
+
 /**
  * Kolom kiri dashboard: bidang bertitik dengan sapaan dan kartu identitas
  * studio di tengahnya.
@@ -36,6 +82,7 @@ function Kiri() {
   const kolom = useRef<HTMLElement>(null);
   const sasaran = useRef({ x: -999, y: -999 });
   const posisi = useRef({ x: -999, y: -999 });
+  const ketikan = useKetikan();
 
   useEffect(() => {
     setProfil(profilTersimpan());
@@ -94,7 +141,25 @@ function Kiri() {
       <span className="dashdot dashdot--sorot" aria-hidden="true" />
 
       <div className="dashsplit__isi">
-        <h1 className="dash-salam">Selamat Datang.</h1>
+        {/* Dua lapis di kotak grid yang sama. Lapis pengukur berisi kalimat
+            UTUH dan tak terlihat — ia yang menetapkan lebar h1, jadi lebarnya
+            tidak berubah selama diketik. Tanpa itu baris yang rata tengah
+            akan bergeser ke kiri setiap satu huruf bertambah, dan seluruh
+            kalimat terlihat merayap.
+
+            Teks ketikannya disembunyikan dari pembaca layar dan digantikan
+            aria-label: kalimat yang tumbuh huruf demi huruf akan dibacakan
+            ulang dari awal setiap kali satu huruf bertambah. */}
+        <h1 className="dash-salam" aria-label={SALAM}>
+          <span className="dash-salam__ukur" aria-hidden="true">
+            {SALAM}
+            <span className="dash-salam__caret" />
+          </span>
+          <span className="dash-salam__isi" aria-hidden="true">
+            {ketikan}
+            <span className="dash-salam__caret" />
+          </span>
+        </h1>
 
         <div className="dash-kartu">
           {/* Sengaja ikon, bukan logo studio: kartu ini menandai "sedang masuk
@@ -114,10 +179,10 @@ function Kiri() {
             </span>
           </span>
 
-          <a className="dash-kartu__aksi" href="/admin/notifikasi" aria-label="Notifikasi">
+          <a className="dash-kartu__aksi dash-kartu__aksi--lonceng" href="/admin/notifikasi" aria-label="Notifikasi">
             <Icon name="bell" size={17} />
           </a>
-          <a className="dash-kartu__aksi" href="/admin/pengaturan" aria-label="Info Studio">
+          <a className="dash-kartu__aksi dash-kartu__aksi--gerigi" href="/admin/pengaturan" aria-label="Info Studio">
             <Icon name="settings" size={17} />
           </a>
         </div>
