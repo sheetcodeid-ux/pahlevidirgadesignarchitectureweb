@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
+import { Popover } from "../ui/overlay/Floating";
+import { Select } from "../ui/overlay/Select";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { daftarProyek, buatProyek, hapusProyek, type Proyek } from "../../lib/admin";
@@ -22,6 +24,14 @@ const SARINGAN: { id: string; label: string }[] = [
   { id: "published", label: "Terbit" },
   { id: "draft", label: "Draf" },
   { id: "archived", label: "Arsip" },
+];
+
+/** Pilihan urutan di panel saringan. */
+const URUTAN: { value: string; label: string }[] = [
+  { value: "baru", label: "Terbaru" },
+  { value: "lama", label: "Terlama" },
+  { value: "judul", label: "Judul A–Z" },
+  { value: "tahun", label: "Tahun terbaru" },
 ];
 
 /** Mengubah judul jadi slug: huruf kecil, tanpa aksen, dipisah tanda hubung. */
@@ -52,6 +62,8 @@ function Isi() {
   const [saring, setSaring] = useState("semua");
   const [cari, setCari] = useState("");
   const [tampilan, setTampilan] = useState<"tabel" | "kartu">("tabel");
+  const [urut, setUrut] = useState("baru");
+  const [kategori, setKategori] = useState("semua");
 
   const [judulBaru, setJudulBaru] = useState("");
   const [slugBaru, setSlugBaru] = useState("");
@@ -122,14 +134,25 @@ function Isi() {
 
   // Hitungan chip mengikuti pencarian yang sedang aktif, bukan seluruh data —
   // kalau tidak, chip menjanjikan hasil yang tidak akan muncul saat diklik.
-  const terkena = proyek.filter(cocokCari);
+  const terkena = proyek
+    .filter(cocokCari)
+    .filter((p) => kategori === "semua" || p.category === kategori)
+    // Disalin dulu: sort mengubah array aslinya, dan array itu datang
+    // langsung dari state.
+    .slice()
+    .sort((a, b) => {
+      if (urut === "judul") return a.title.localeCompare(b.title, "id");
+      if (urut === "tahun") return (b.year ?? 0) - (a.year ?? 0);
+      const arah = urut === "lama" ? 1 : -1;
+      return arah * (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    });
   const jumlah = (id: string) => (id === "semua" ? terkena.length : terkena.filter((p) => p.status === id).length);
   const terlihat = saring === "semua" ? terkena : terkena.filter((p) => p.status === saring);
   const judulSah = judulBaru.trim().length >= 2;
 
   const tombolBaru = (
     <button type="button" className="btn btn--primary btn--lg">
-      <Icon name="projectPlus" size={20} />Proyek baru
+      <Icon name="projectPlus" size={20} />Tambah Proyek
     </button>
   );
 
@@ -221,15 +244,42 @@ function Isi() {
             ))}
           </div>
 
-          {/* Tombol bersihkan menempati tempat tombol saringan di referensi.
-              Dimatikan, bukan disembunyikan, saat tidak ada yang disaring —
-              kalau ikut hilang, barisan chip melompat setiap kali disaring. */}
-          <button type="button" className="btn btn--secondary btn--icon"
-            aria-label="Bersihkan saringan"
-            disabled={!cari && saring === "semua"}
-            onClick={() => { setCari(""); setSaring("semua"); }}>
-            <Icon name="filter" size={16} />
-          </button>
+          {/* Tombol saringan membuka panel berisi urutan dan kategori —
+              keduanya tidak muat sebagai chip, dan chip sudah dipakai untuk
+              status. Tombolnya tetap di tempat yang sama seperti referensi. */}
+          <Popover
+            title="Saringan"
+            trigger={
+              <button type="button" className="btn btn--secondary btn--icon btn--boxed"
+                aria-label="Saringan dan urutan">
+                <Icon name="filter" size={16} />
+              </button>
+            }
+          >
+            <div className="stack" style={{ gap: "var(--space-4)", minWidth: "15rem" }}>
+              <div className="field">
+                <label className="field__label">Urutkan</label>
+                <Select ariaLabel="Urutkan proyek" options={URUTAN} value={urut} onValueChange={setUrut} />
+              </div>
+              <div className="field">
+                <label className="field__label">Kategori</label>
+                <Select
+                  ariaLabel="Saring kategori"
+                  value={kategori}
+                  onValueChange={setKategori}
+                  options={[
+                    { value: "semua", label: "Semua kategori" },
+                    ...Object.entries(LABEL).map(([v, l]) => ({ value: v, label: l })),
+                  ]}
+                />
+              </div>
+              <button type="button" className="btn btn--secondary"
+                disabled={!cari && saring === "semua" && urut === "baru" && kategori === "semua"}
+                onClick={() => { setCari(""); setSaring("semua"); setUrut("baru"); setKategori("semua"); }}>
+                <Icon name="close" size={14} />Bersihkan semua
+              </button>
+            </div>
+          </Popover>
         </div>
       </div>
 

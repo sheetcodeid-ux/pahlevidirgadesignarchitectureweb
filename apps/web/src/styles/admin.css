@@ -428,7 +428,11 @@
   border-radius: 0;
 }
 
-.listbar__search .input:focus-visible { box-shadow: inset 0 0 0 2px var(--focus); }
+/* Fokus kotak cari TIDAK memakai cincin biru --focus: kotaknya membentang
+   hampir selebar bilah, jadi cincin biru selebar itu mendominasi seluruh
+   halaman. Diganti garis tipis warna teks redup — tetap terlihat saat
+   berpindah dengan Tab, tapi tidak berteriak. */
+.listbar__search .input:focus-visible { box-shadow: inset 0 0 0 2px var(--text-faint); }
 
 .listbar__icon {
   position: absolute;
@@ -459,11 +463,39 @@
 
 .listbar__cta .btn { width: 100%; height: 3.5rem; justify-content: center; font-size: var(--text-md); }
 
-/* Bayangan keras tanpa blur di belakang tombol utama saat disentuh — gaya
-   Gumroad. Sengaja hanya di sini, bukan di semua .btn--primary: bayangan
-   setebal ini di dalam dialog akan terlihat berlebihan. */
+/* Tombol utama bilah daftar: dua lapis. Lapis dasarnya tetap diam —
+   warnanya tidak pernah berubah — dan merahnya naik dari bawah sebagai
+   lapisan terpisah di atasnya. Kalau latarnya sendiri yang diganti warna,
+   perubahannya terasa seperti kedipan, bukan gerakan.
+
+   Bayangan kerasnya (gaya Gumroad) sengaja hanya di sini, bukan di semua
+   .btn--primary: setebal ini di dalam dialog akan terlihat berlebihan. */
+.listbar__cta .btn--primary {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.listbar__cta .btn--primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--action-hover);
+  transform: translateY(100%);
+  transition: transform 260ms var(--ease);
+}
+
 .listbar__cta .btn--primary:hover:not(:disabled) {
-  box-shadow: 5px 5px 0 var(--action-hover-shadow);
+  background: var(--action);
+  color: var(--action-hover-ink);
+  box-shadow: 4px 4px 0 var(--action-hover-shadow);
+}
+
+.listbar__cta .btn--primary:hover:not(:disabled)::before { transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .listbar__cta .btn--primary::before { transition: none; }
 }
 
 /* Barisan chip dibiarkan LEPAS: selebar halaman penuh, berlatar abu, dan
@@ -493,9 +525,9 @@
 .listcount {
   display: flex;
   justify-content: flex-end;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-5);
   border-bottom: 2px solid var(--border-strong);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
@@ -508,9 +540,9 @@
 .pcard {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--bg-sunken);
   overflow: hidden;
 }
 
@@ -519,7 +551,7 @@
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border-strong);
 }
 
 .pcard__thumb {
@@ -549,7 +581,7 @@
 
 /* Aksi kartu dibagi rata selebar kartu dan dipisah garis, bukan dijejer
    sebagai tombol — persis referensi, dan membuat sasaran sentuhnya lebar. */
-.pcard__foot { display: flex; border-top: 1px solid var(--border); }
+.pcard__foot { display: flex; border-top: 2px solid var(--border-strong); }
 
 .pcard__act {
   display: flex;
@@ -564,7 +596,7 @@
   text-decoration: none;
   background: transparent;
   border: 0;
-  border-left: 1px solid var(--border);
+  border-left: 2px solid var(--border-strong);
   cursor: pointer;
   transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }
@@ -659,7 +691,7 @@
 .table--ruled td { border-bottom: 2px solid var(--border-strong); }
 
 .table--ruled thead th {
-  padding: var(--space-4);
+  padding: calc(var(--space-4) + 2.5px) var(--space-4);
   font-size: var(--text-base);
   font-weight: 500;
   letter-spacing: 0;
@@ -667,7 +699,7 @@
   color: var(--text-muted);
 }
 
-.table--ruled td { padding: var(--space-4); }
+.table--ruled td { padding: calc(var(--space-4) - 2.5px) var(--space-4); }
 
 /* Kolom aksi dirata-tengahkan, dan tombolnya dibuat sama ukuran lewat
    grid — dengan flex, ikon yang lebarnya beda sedikit membuat tombolnya
@@ -712,7 +744,7 @@
    Garis MENDATAR sengaja menembus talang, garis VERTIKAL hanya ada di
    bilah dan tabel. Barisan chip dibiarkan lepas tanpa garis vertikal. */
 .listpage {
-  --talang: 2.5rem;
+  --talang: 2.1875rem;
   display: flex;
   flex-direction: column;
   background: var(--surface-raised);
@@ -731,9 +763,14 @@
    justru akan menempel ke tepi layar. */
 .listpage .listcount,
 .listpage .table {
-  background: var(--bg-sunken);
   border-inline: 2px solid var(--border-strong);
 }
+
+.listpage .table { background: var(--bg-sunken); }
+
+/* Baris jumlah hasil berlatar abu, bukan hitam — ia keterangan tentang
+   tabelnya, bukan bagian dari datanya. */
+.listpage .listcount { background: var(--surface-raised); }
 
 /* Isi yang bukan tabel tidak boleh ikut menempel ke tepi — kartu dan
    keadaan kosong butuh napas. */
