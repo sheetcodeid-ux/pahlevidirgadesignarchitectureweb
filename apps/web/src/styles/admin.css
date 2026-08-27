@@ -926,3 +926,36 @@
      diukur di browser, bukan dikira: tinggi kepala + jarak napas. */
   .buatpage__aksi { position: sticky; top: calc(var(--topbar-h) + var(--kepala-form-h) + var(--space-5)); }
 }
+
+/* Isian di form pembuatan: latar HITAM seperti kartunya, dan yang
+   mendefinisikan bentuknya cuma bingkai 2px — bukan beda warna. Kotak abu
+   di atas kartu hitam terbaca sebagai lapisan tambahan yang tidak ada
+   artinya; yang benar-benar perlu dibedakan hanya kotak catatan panjang. */
+.buat-kartu .input {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+
+.buat-kartu .input:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
+
+/* Kotak catatan tetap abu — ia satu-satunya isian yang isinya panjang, dan
+   bidang terang membuat batas area mengetiknya terbaca tanpa perlu dibaca. */
+.buat-kartu .input--area { background: var(--surface-raised); }
+
+/* Pemilih kategori mengikuti isian lain, bukan gaya select bawaannya. */
+.buat-kartu .select .input { background: var(--bg-sunken); }
+
+/* Tombol di panel aksi memakai bingkai setebal kartu di sebelahnya. */
+.buatpage__aksi .btn--secondary { border-width: 2px; }
+
+/* Keterangan di dalam kartu dibatasi lebar kartunya, bukan --measure.
+   Aturan global membatasi tiap <p> ke 68ch — ukuran nyaman untuk teks
+   bacaan panjang, tapi di sini justru memaksa satu kalimat pendek pecah
+   jadi dua baris padahal kartunya masih lebar. */
+.buat-kartu p { max-width: none; }
+
+/* Di tema terang --surface-raised nyaris putih, jadi kotak catatan tak
+   terbaca berbeda dari isian di atasnya. Abunya diambil dari --tray, satu-
+   satunya bidang abu lembut yang memang disediakan untuk tema terang. */
+:root[data-theme="light"] .buat-kartu .input--area { background: var(--tray); }
