@@ -35,8 +35,20 @@ ref `ddzuzokkqofrpkpokcfa`, region `ap-southeast-1`. Direct connection hanya
 menerima IPv6 dan plan Free tidak punya add-on IPv4, jadi dari mesin biasa
 pakai **session pooler** port 5432 — bukan transaction pooler 6543, yang tidak
 mempertahankan `set local role` sehingga tes RLS jadi tak berarti.
-Integrasi GitHub aktif, jadi migrasi di `supabase/migrations/` diterapkan
-otomatis begitu branch produksi berubah.
+**Migrasi TIDAK diterapkan otomatis.** Catatan lama di file ini menyebut
+integrasi GitHub menerapkannya begitu branch produksi berubah — itu tidak
+benar, dan sudah sekali membuat produksi rusak: Worker API tayang menanyakan
+kolom yang belum ada di database. Riwayat `list_migrations` membuktikannya —
+semua versinya bertanda waktu saat diterapkan tangan lewat konektor, bukan
+nama file migrasinya.
+
+Jadi setiap kali ada berkas baru di `supabase/migrations/`, urutannya:
+**terapkan migrasi ke produksi LEBIH DULU lewat konektor Supabase
+(`apply_migration`), baru merge ke branch produksi.** Kolom baru selalu
+kompatibel-mundur (API lama tidak menyebutnya), sementara API baru yang
+tayang sebelum kolomnya ada langsung gagal. Setelah menerapkan, buktikan
+kolomnya benar-benar ada lewat `execute_sql` — jangan menganggap berhasil
+karena `apply_migration` membalas success.
 
 Cloudflare: akun **`pahlevidirgadesignarchitecture`**, ID
 `cf6a6bde45d3fd8a93463e6cc7e71aa1`. Worker `pahlevidirgadesignarchitectureweb`
