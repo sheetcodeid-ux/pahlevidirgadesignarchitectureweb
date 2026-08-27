@@ -265,6 +265,24 @@
   100% { transform: rotate(0deg) scale(1); opacity: 1; }
 }
 
+/* Bergerak juga saat disentuh, bukan hanya saat ditekan — sama seperti
+   lonceng dan gerigi di sebelahnya. Ayunannya ditaruh di svg, bukan di
+   pembungkusnya, supaya tidak bertabrakan dengan putaran saat ditekan yang
+   memang berjalan di pembungkus. */
+.theme-btn:hover:not(:disabled) svg {
+  animation: ayun-ikon-tema 700ms var(--ease);
+}
+
+@keyframes ayun-ikon-tema {
+  0%   { transform: rotate(0deg); }
+  20%  { transform: rotate(-18deg); }
+  42%  { transform: rotate(14deg); }
+  63%  { transform: rotate(-8deg); }
+  82%  { transform: rotate(4deg); }
+  100% { transform: rotate(0deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .theme-btn__ikon { animation: none; }
+  .theme-btn:hover:not(:disabled) svg { animation: none; }
 }

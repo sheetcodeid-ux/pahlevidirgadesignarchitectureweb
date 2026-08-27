@@ -30,7 +30,6 @@ const NAV: NavItem[] = [
     group: "Utama",
     children: [
       { label: "Semua Proyek", href: "/admin/proyek", icon: "list" },
-      { label: "Draf", href: "/admin/proyek?status=draft", icon: "edit" },
     ],
   },
   { label: "List Kerjaan", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
@@ -62,9 +61,11 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
   const drawerId = useId();
 
   // Situs ini statis, jadi Astro.url.pathname saat build tidak pernah
-  // menyertakan query string (mis. ?status=draft) — item submenu yang
-  // dibedakan lewat query (Semua Proyek vs Draf) baru bisa dicocokkan
-  // dengan benar setelah dibaca ulang dari window di klien.
+  // menyertakan query string — item nav yang dibedakan lewat query baru bisa
+  // dicocokkan dengan benar setelah dibaca ulang dari window di klien.
+  // Saat ini tidak ada item seperti itu lagi, tapi pembacaan ulangnya
+  // dipertahankan: ia juga yang membuat penanda halaman aktif benar ketika
+  // pengguna berpindah tanpa memuat ulang.
   //
   // Sengaja lewat useState+useEffect, bukan dihitung langsung tiap render:
   // dihitung langsung membuat pass render pertama di klien (saat hydration)
@@ -275,9 +276,8 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
 
 /**
  * Cocok jika path DAN query sama persis (mengabaikan garis miring penutup di
- * path). Query ikut dibandingkan — bukan dibuang — supaya item submenu yang
- * dibedakan lewat query saja (Semua Proyek "/admin/proyek" vs Draf
- * "/admin/proyek?status=draft") tidak pernah cocok berdua sekaligus.
+ * path). Query ikut dibandingkan — bukan dibuang — supaya dua item yang
+ * hanya dibedakan oleh query tidak pernah cocok berdua sekaligus.
  */
 function cocok(href: string, current: string) {
   const pisah = (s: string): [string, string] => {
