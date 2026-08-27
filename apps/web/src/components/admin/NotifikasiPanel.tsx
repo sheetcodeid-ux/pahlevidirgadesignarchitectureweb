@@ -55,10 +55,15 @@ export function IsiNotifikasi({
 
 /** Kelompok tab Notifikasi/Milestone — bentuknya sama di halaman dan popover. */
 export function TabNotifikasi({
-  tab, setTab,
-}: { tab: "notifikasi" | "milestone"; setTab: (t: "notifikasi" | "milestone") => void }) {
+  tab, setTab, blok = false,
+}: {
+  tab: "notifikasi" | "milestone";
+  setTab: (t: "notifikasi" | "milestone") => void;
+  /** Dua tab dibagi rata selebar wadahnya, bukan mengikuti panjang teksnya. */
+  blok?: boolean;
+}) {
   return (
-    <div className="segmented" role="tablist" aria-label="Jenis pemberitahuan">
+    <div className={blok ? "segmented segmented--block" : "segmented"} role="tablist" aria-label="Jenis pemberitahuan">
       {([["notifikasi", "Notifikasi"], ["milestone", "Milestone"]] as const).map(([id, label]) => (
         <button
           key={id}

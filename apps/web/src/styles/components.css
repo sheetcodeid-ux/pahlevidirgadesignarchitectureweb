@@ -235,16 +235,19 @@
   width: 2.25rem;
   height: 2.25rem;
   flex: none;
-  border: 0;
-  border-radius: var(--radius-sm);
+  /* Lingkaran bergaris tipis, kembar dengan tombol lonceng di sebelahnya. */
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.theme-btn:hover:not(:disabled) { color: var(--text-strong); background: var(--surface-hover); }
-.theme-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.theme-btn:hover:not(:disabled) { color: var(--text-strong); border-color: var(--text-faint); }
+/* Tanpa cincin berwarna: di topbar cincin ungu terbaca sebagai peringatan,
+   bukan sebagai "elemen ini sedang aktif". */
+.theme-btn:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--text-faint); }
 .theme-btn:disabled { opacity: 0.5; cursor: default; }
 
 /* Ikonnya berputar setengah putaran sambil menyusut lalu tumbuh lagi. Animasi

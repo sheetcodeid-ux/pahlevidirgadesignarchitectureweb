@@ -96,7 +96,7 @@ function Lonceng({
             <p className="t-muted">
               {jumlah === 0 ? "Semua sudah dibaca" : `${jumlah} belum dibaca`}
             </p>
-            <TabNotifikasi tab={tab} setTab={setTab} />
+            <TabNotifikasi tab={tab} setTab={setTab} blok />
           </div>
 
           <div className="notifpop__badan">
@@ -346,8 +346,15 @@ export function Topbar({ heading }: { heading: string }) {
 
       {/* Sisi kanan didorong ke ujung; segmen di kiri tetap rapat. */}
       <span className="topbar__dorong" />
-      <ThemeToggle />
-      <Lonceng notif={notif} milestone={milestone} />
+
+      {/* Tombol ikon dibungkus selnya sendiri. Tanpa pembungkus, tombolnya
+          ADALAH selnya: lebar tetap 2,25rem sudah termasuk padding, jadi
+          lingkarannya menempel rapat ke garis pemisah di kedua sisi sementara
+          segmen lain punya napas 12px. Itu yang membuat sisi kanan terbaca
+          sesak. */}
+      <span className="topbar__aksi"><ThemeToggle /></span>
+      <span className="topbar__aksi"><Lonceng notif={notif} milestone={milestone} /></span>
+
       <Identitas settings={settings} profil={profil} />
     </header>
   );

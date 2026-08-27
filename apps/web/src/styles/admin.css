@@ -57,6 +57,10 @@
 /* Mendorong segmen sisi kanan ke ujung tanpa ikut punya garis. */
 .topbar__dorong { flex: 1 1 auto; min-width: var(--space-4); }
 
+/* Sel pembungkus tombol ikon — napasnya sama dengan segmen teks di
+   sebelahnya, jadi seluruh baris berirama sama. */
+.topbar__aksi { justify-content: center; }
+
 .topbar__crumb { overflow: hidden; white-space: nowrap; flex-wrap: nowrap !important; }
 /* Remah roti boleh menyusut sampai judulnya terpotong, tapi tidak boleh pecah
    dua baris: topbar tingginya tetap, dan baris kedua akan terpotong. */
@@ -97,16 +101,26 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  width: 9.5rem;
+  width: 10rem;
   min-width: 0;
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--border-strong);
+  padding: 0.4rem 0.65rem;
+  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--bg-sunken);
+  /* Satu perubahan bidang, bukan bingkai. Selnya sendiri sudah dibatasi garis
+     tebal kiri-kanan; menambah bingkai lagi di dalamnya berarti dua kotak
+     untuk satu benda. */
+  background: var(--surface-raised);
   color: var(--text-faint);
 }
 
-.topbar__combo-field:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus); }
+/* Di tema terang --surface-raised nyaris putih, jadi bidangnya lenyap di atas
+   topbar yang juga putih dan combobox kehilangan seluruh petunjuk bahwa ia
+   bisa diketik. Abunya diambil dari --tray. */
+:root[data-theme="light"] .topbar__combo-field { background: var(--tray); }
+
+/* Fokus tanpa warna: di topbar cincin ungu terbaca sebagai peringatan, bukan
+   sebagai "elemen ini sedang aktif". Bidangnya cukup menaik satu tingkat. */
+.topbar__combo-field:focus-within { background: var(--surface-hover); }
 
 .topbar__combo-input {
   flex: 1;
@@ -145,21 +159,18 @@
 /* --- Pemanggil command palette -------------------------------------------- */
 
 .topbar__perintah {
-  border: 1px solid var(--border-strong) !important;
-  border-radius: var(--radius-sm);
-  background: var(--bg-sunken);
+  border: 0;
+  background: transparent;
   color: var(--text-muted);
   font-family: inherit;
   font-size: var(--text-sm);
   cursor: pointer;
-  padding: 0.4rem 0.7rem !important;
-  margin-inline: var(--space-3);
   white-space: nowrap;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }
 
-.topbar__perintah:hover { color: var(--text-strong); border-color: var(--text-faint) !important; }
-.topbar__perintah:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.topbar__perintah:hover { color: var(--text-strong); background: var(--surface-hover); }
+.topbar__perintah:focus-visible { outline: 0; background: var(--surface-hover); color: var(--text-strong); }
 
 .topbar__kbd {
   padding: 0.05rem 0.35rem;
@@ -175,21 +186,26 @@
 
 .topbar__lonceng {
   position: relative;
-  display: grid !important;
+  display: grid;
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  padding: 0 !important;
-  border: 0;
-  border-radius: var(--radius-sm);
+  flex: none;
+  padding: 0;
+  /* Lingkaran bergaris tipis — bentuk yang sama dengan dua tombol di kartu
+     dashboard. Tanpa bentuk sendiri, tombol ikon di antara sel-sel selebar
+     200px terbaca sebagai sisa ruang, bukan sebagai tombol. */
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.topbar__lonceng:hover { color: var(--text-strong); background: var(--surface-hover); }
-.topbar__lonceng:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.topbar__lonceng:hover,
+.topbar__lonceng[data-state="open"] { color: var(--text-strong); border-color: var(--text-faint); }
+.topbar__lonceng:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--text-faint); }
 
 /* Ayunan yang sama persis dengan lonceng di kartu dashboard — satu gerakan
    untuk satu benda, di mana pun ia muncul. */
@@ -204,8 +220,8 @@
    belum ditangani" adalah anggota terdekat dari keluarga itu. */
 .topbar__badge {
   position: absolute;
-  top: 0.1rem;
-  right: 0.05rem;
+  top: -0.2rem;
+  right: -0.2rem;
   display: grid;
   place-items: center;
   min-width: 1.05rem;
@@ -232,7 +248,8 @@
   gap: var(--space-3) !important;
 }
 
-.topbar__id:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+.topbar__id:focus-visible { outline: 0; }
+.topbar__id:focus-visible .topbar__id-nama { color: var(--brand); }
 .topbar__id:hover .topbar__id-nama { color: var(--brand); }
 
 .topbar__id-teks { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0; }
@@ -241,7 +258,7 @@
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--text-strong);
-  max-width: 9rem;
+  max-width: 10rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -380,6 +397,13 @@
   .topbar__tanggal { display: none !important; }
 }
 
+/* Penghitung pergi sebelum combobox: angka proyek aktif bisa dilihat di
+   halaman Proyek, sementara combobox adalah satu-satunya jalan pintas ke
+   sebuah proyek dari halaman mana pun. */
+@media (max-width: 82rem) {
+  .topbar__hitung { display: none !important; }
+}
+
 @media (max-width: 76rem) {
   .topbar__perintah-label,
   .topbar__kbd { display: none; }
@@ -387,7 +411,6 @@
 
 @media (max-width: 71rem) {
   .topbar__combo { display: none !important; }
-  .topbar__hitung { display: none !important; }
 }
 
 @media (max-width: 52rem) {
@@ -400,8 +423,14 @@
    tema, lonceng, dan avatar. */
 @media (max-width: 34rem) {
   .topbar > *:not(.topbar__dorong) { padding-inline: var(--space-2); }
-  .topbar__perintah { margin-inline: var(--space-2); }
   .topbar__id > svg:last-child { display: none; }
+  /* Di sini remah roti pun boleh mengalah: ia punya ellipsis sendiri, dan
+     ruang 3rem untuk tombol laci tidak bisa diambil dari mana-mana lagi.
+     "Admin /" ikut dilepas — di ponsel jejak satu tingkat tidak memberi tahu
+     apa pun yang tidak sudah diketahui dari sidebar. */
+  .topbar__crumb { flex-shrink: 1; }
+  .topbar__crumb a,
+  .topbar__crumb .breadcrumb__sep { display: none; }
 }
 
 
