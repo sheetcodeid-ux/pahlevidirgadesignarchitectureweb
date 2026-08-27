@@ -81,7 +81,11 @@
   overflow: hidden;
 }
 
+/* Judul halaman. Baris pertamanya bisa memuat panah kembali di kiri judul —
+   panahnya sejajar tengah dengan judul, bukan menempel ke garis dasarnya. */
 .page-head { display: flex; flex-direction: column; gap: var(--space-2); }
+.page-head__baris { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
+.page-head__back { flex: none; }
 .page-head .t-muted { max-width: var(--measure); margin: 0; }
 
 /* Lingkaran bernomor di "Panduan memulai" — cincin berwarna, bukan kotak
@@ -822,10 +826,29 @@
    Dua kolom: isian di kiri, panel aksi menempel di kanan. Ditiru dari
    referensi pemilik — tombol simpan yang ikut hilang ke bawah saat form
    panjang digulir memaksa staf menggulir balik hanya untuk menyimpan. */
+/* Halaman form dibuat berlapis seperti halaman daftar: badan halaman ABU,
+   kartu isian HITAM. Yang gelap adalah tempat mengetik, yang terang bidang
+   di sekitarnya. Judulnya dipisah garis tebal dari badan halaman.
+
+   Selektornya TANPA ">" — Astro membungkus island React dalam
+   <astro-island>, jadi .buatpage bukan anak langsung .admin__content. */
+.admin__content:has(.buatpage) {
+  padding: 0;
+  gap: 0;
+  max-width: none;
+  background: var(--surface-raised);
+}
+
+.admin__content:has(.buatpage) .page-head {
+  padding: var(--space-7) var(--space-6) var(--space-6);
+  border-bottom: 2px solid var(--border-strong);
+}
+
 .buatpage {
   display: grid;
   gap: var(--space-6);
   align-items: start;
+  padding: var(--space-6);
 }
 
 .buatpage__utama { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
@@ -837,7 +860,7 @@
   padding: var(--space-5);
   border: 2px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--bg-sunken);
 }
 
 /* Judul kartu memakai huruf kapital kecil ber-tracking seperti referensi —
@@ -860,7 +883,7 @@
   flex: none;
   padding: 0;
   overflow: hidden;
-  color: var(--text-faint);
+  color: var(--text-muted);
   background: var(--surface-raised);
   border: 2px dashed var(--border-strong);
   border-radius: var(--radius-md);
