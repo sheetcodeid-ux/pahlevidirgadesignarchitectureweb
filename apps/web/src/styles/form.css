@@ -53,9 +53,11 @@
 .input::placeholder { color: var(--text-faint); }
 .input:hover:not(:disabled):not([readonly]) { border-color: var(--border-strong); }
 
-.input:focus-visible {
+/* :focus, bukan :focus-visible — cincin ini juga harus muncul saat isian
+   diklik dengan tetikus, bukan hanya saat dicapai dengan Tab. */
+.input:focus {
   outline: none;
-  border-color: var(--text-faint);
+  border-color: var(--focus);
   box-shadow: 0 0 0 2px var(--focus);
 }
 
@@ -75,7 +77,7 @@
 .input--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
 
 .field[data-invalid] .input { border-color: var(--brand); }
-.field[data-invalid] .input:focus-visible { box-shadow: 0 0 0 2px var(--brand); }
+.field[data-invalid] .input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand); }
 
 /* Select: chevron digambar sebagai SVG di markup, bukan background-image,
    supaya warnanya ikut currentColor di kedua tema. */

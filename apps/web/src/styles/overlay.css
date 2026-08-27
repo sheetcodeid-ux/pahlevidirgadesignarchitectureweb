@@ -248,6 +248,14 @@
 }
 
 .ov-select-trigger:hover { border-color: var(--border-strong); }
+
+/* Fokus memakai cincin --focus yang sama dengan .input, supaya isian di
+   dalam panel dan isian di halaman biasa berperilaku identik. */
+.ov-select-trigger:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 2px var(--focus);
+}
 .ov-select-trigger[data-placeholder] { color: var(--text-faint); }
 .ov-select-trigger__icon { color: var(--text-faint); flex: none; }
 

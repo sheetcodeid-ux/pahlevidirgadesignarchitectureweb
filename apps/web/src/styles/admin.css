@@ -428,11 +428,11 @@
   border-radius: 0;
 }
 
-/* Fokus kotak cari TIDAK memakai cincin biru --focus: kotaknya membentang
-   hampir selebar bilah, jadi cincin biru selebar itu mendominasi seluruh
-   halaman. Diganti garis tipis warna teks redup — tetap terlihat saat
-   berpindah dengan Tab, tapi tidak berteriak. */
-.listbar__search .input:focus-visible { box-shadow: inset 0 0 0 2px var(--text-faint); }
+/* Kotak cari sengaja TIDAK memunculkan garis apa pun saat difokus.
+   Kotaknya membentang hampir selebar bilah, jadi cincin selebar itu — warna
+   apa pun — mendominasi halaman. Yang menandai fokus di sini cukup kursor
+   ketiknya sendiri; tombol dan isian lain tetap punya cincin fokus. */
+.listbar__search .input:focus { border-color: transparent; box-shadow: none; }
 
 .listbar__icon {
   position: absolute;
@@ -463,39 +463,40 @@
 
 .listbar__cta .btn { width: 100%; height: 3.5rem; justify-content: center; font-size: var(--text-md); }
 
-/* Tombol utama bilah daftar: dua lapis. Lapis dasarnya tetap diam —
-   warnanya tidak pernah berubah — dan merahnya naik dari bawah sebagai
-   lapisan terpisah di atasnya. Kalau latarnya sendiri yang diganti warna,
-   perubahannya terasa seperti kedipan, bukan gerakan.
+/* Tombol utama bilah daftar. Keadaan biasa polos — tanpa bayangan, tanpa
+   garis. Saat disentuh ia berubah merah dan terangkat: bayangan keras tanpa
+   blur muncul di belakangnya sementara tombolnya bergeser sedikit ke arah
+   berlawanan, jadi terbaca seperti tombol yang naik dari halaman.
 
-   Bayangan kerasnya (gaya Gumroad) sengaja hanya di sini, bukan di semua
-   .btn--primary: setebal ini di dalam dialog akan terlihat berlebihan. */
+   Lapisan merah yang menggeser naik sudah dibuang — yang diminta adalah
+   tombolnya yang muncul, bukan warnanya yang bergerak.
+
+   Sengaja hanya di sini, bukan di semua .btn--primary: bayangan setebal ini
+   di dalam dialog akan terlihat berlebihan. */
 .listbar__cta .btn--primary {
-  position: relative;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.listbar__cta .btn--primary::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--action-hover);
-  transform: translateY(100%);
-  transition: transform 260ms var(--ease);
+  transition:
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 
 .listbar__cta .btn--primary:hover:not(:disabled) {
-  background: var(--action);
+  background: var(--action-hover);
   color: var(--action-hover-ink);
   box-shadow: 4px 4px 0 var(--action-hover-shadow);
+  transform: translate(-2px, -2px);
 }
 
-.listbar__cta .btn--primary:hover:not(:disabled)::before { transform: translateY(0); }
+/* Ditekan: tombolnya turun kembali menempel ke halaman. */
+.listbar__cta .btn--primary:active:not(:disabled) {
+  box-shadow: 0 0 0 var(--action-hover-shadow);
+  transform: translate(0, 0);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .listbar__cta .btn--primary::before { transition: none; }
+  .listbar__cta .btn--primary { transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+  .listbar__cta .btn--primary:hover:not(:disabled) { transform: none; }
 }
 
 /* Barisan chip dibiarkan LEPAS: selebar halaman penuh, berlatar abu, dan
@@ -653,14 +654,14 @@
    duduk di bidang hitam, jadi opsi putih akan berteriak lebih keras
    daripada tombol aksi utama di sebelahnya.
 
-   Nampannya memakai --border-strong sebagai LATAR, bukan garis. Itu satu-
-   satunya nilai di palet yang cukup terang untuk terbaca sebagai nampan di
-   atas hitam, dan ia ikut membalik dengan benar di tema terang. */
+   Nampannya memakai token --tray, bukan --border-strong seperti sebelumnya:
+   nilai border di tema terang terlalu gelap untuk sebuah bidang, jadi
+   nampan butuh nilainya sendiri per tema. */
 .viewtoggle {
   display: inline-flex;
   gap: 4px;
   padding: 4px;
-  background: var(--border-strong);
+  background: var(--tray);
   border-radius: var(--radius-md);
 }
 
@@ -818,3 +819,33 @@
 .galeri-item__nav > :last-child { margin-left: auto; }
 
 .galeri-item__foot .btn--sm { justify-content: center; }
+
+/* Panel saringan memakai bingkai tebal seperti bilah dan tabel di
+   belakangnya — panel mengambang dengan garis 1px terlihat seperti benda
+   dari sistem lain saat menutupi tabel bergaris 2px. */
+.ov-floating.ov-panel { border: 2px solid var(--border-strong); }
+
+/* Gambar sampul di kolom pertama bisa diklik untuk melihatnya besar.
+   Tombol, bukan div ber-onClick: keyboard dan pembaca layar hanya mengenali
+   yang pertama sebagai sesuatu yang bisa ditekan. */
+.thumb-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  border-radius: var(--radius-md);
+  line-height: 0;
+}
+
+.thumb-btn:hover .pcard__thumb { outline: 2px solid var(--text-faint); }
+
+/* Lihat-foto: gambarnya sendiri yang jadi isi dialog, tanpa kartu pembungkus
+   tambahan — yang ingin dilihat adalah fotonya, bukan bingkainya. */
+.lihat-foto {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+}

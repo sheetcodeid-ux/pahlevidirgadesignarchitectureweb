@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
-import { Popover } from "../ui/overlay/Floating";
+import { Popover, Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { Select } from "../ui/overlay/Select";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
@@ -218,16 +218,20 @@ function Isi() {
 
           <div className="listbar__views">
             <div className="viewtoggle" role="group" aria-label="Tampilan daftar">
-              <button type="button" className="viewtoggle__opt"
-                aria-pressed={tampilan === "tabel"} aria-label="Tampilan tabel"
-                onClick={() => setTampilan("tabel")}>
-                <Icon name="list" size={18} />
-              </button>
-              <button type="button" className="viewtoggle__opt"
-                aria-pressed={tampilan === "kartu"} aria-label="Tampilan kartu"
-                onClick={() => setTampilan("kartu")}>
-                <Icon name="dashboard" size={18} />
-              </button>
+              <Tooltip label="Tampilan tabel">
+                <button type="button" className="viewtoggle__opt"
+                  aria-pressed={tampilan === "tabel"} aria-label="Tampilan tabel"
+                  onClick={() => setTampilan("tabel")}>
+                  <Icon name="list" size={18} />
+                </button>
+              </Tooltip>
+              <Tooltip label="Tampilan kartu">
+                <button type="button" className="viewtoggle__opt"
+                  aria-pressed={tampilan === "kartu"} aria-label="Tampilan kartu"
+                  onClick={() => setTampilan("kartu")}>
+                  <Icon name="dashboard" size={18} />
+                </button>
+              </Tooltip>
             </div>
           </div>
 
@@ -319,9 +323,21 @@ function Isi() {
                   <td className="table__idx">{i + 1}</td>
                   <td>
                     <span className="row" style={{ gap: "var(--space-3)", flexWrap: "nowrap" }}>
-                      {p.coverImageUrl
-                        ? <img className="pcard__thumb" src={p.coverImageUrl} alt="" />
-                        : <span className="pcard__thumb"><Icon name="image" size={18} /></span>}
+                      {p.coverImageUrl ? (
+                        <Dialog
+                          title={p.title}
+                          description="Gambar sampul proyek."
+                          trigger={
+                            <button type="button" className="thumb-btn" aria-label={`Lihat sampul ${p.title}`}>
+                              <img className="pcard__thumb" src={p.coverImageUrl} alt="" />
+                            </button>
+                          }
+                        >
+                          <img className="lihat-foto" src={p.coverImageUrl} alt={`Sampul ${p.title}`} />
+                        </Dialog>
+                      ) : (
+                        <span className="pcard__thumb"><Icon name="image" size={18} /></span>
+                      )}
                       <span style={{ minWidth: 0 }}>
                         <a href={`/admin/proyek/edit?id=${p.id}`} className="item__title" style={{ textDecoration: "none" }}>
                           {p.title}
@@ -428,7 +444,7 @@ function Isi() {
 export function ProjectList() {
   return (
     <RequireAuth>
-      <ToastProvider><Isi /></ToastProvider>
+      <ToastProvider><TooltipProvider><Isi /></TooltipProvider></ToastProvider>
     </RequireAuth>
   );
 }

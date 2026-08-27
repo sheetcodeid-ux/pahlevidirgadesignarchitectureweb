@@ -56,7 +56,7 @@
   --dur-slow: 420ms;
 
   /* --- Warna: tema GELAP (bawaan) --------------------------------------- */
-  --bg: #0a0a0a;
+  --bg: #000000;
   --bg-sunken: #000000;
   --surface: #141414;
   --surface-raised: #1c1c1c;
@@ -64,6 +64,11 @@
 
   --border: #272727;
   --border-strong: #3a3a3a;
+  /* Nampan: bidang terangkat kecil yang menampung pilihan, seperti pengalih
+     tampilan. Punya token sendiri karena nilainya tidak mengikuti --surface
+     mana pun — di tema gelap ia harus lebih terang dari semuanya, di tema
+     terang justru harus nyaris menyatu dengan halaman. */
+  --tray: #3a3a3a;
 
   --text-strong: #fafafa;
   --text-body: #e4e4e4;
@@ -81,7 +86,7 @@
      bidang hitam sama saja dengan tidak ada bayangan. */
   --action-hover: #ef2b26;
   --action-hover-ink: #ffffff;
-  --action-hover-shadow: #fafafa;
+  --action-hover-shadow: #000000;
 
   --brand: #ef2b26;
   --brand-ink: #ffffff;
@@ -103,7 +108,7 @@
   --info: #4a8ef0;
   --info-soft: #0e1c30;
 
-  --focus: #7fb2ff;
+  --focus: #8b5cf6;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
@@ -116,14 +121,15 @@
 /* Nilai aksen sengaja digelapkan; amber dan hijau versi gelap tidak cukup
    kontras di atas putih. */
 :root[data-theme="light"] {
-  --bg: #f7f7f5;
+  --bg: #ffffff;
   --bg-sunken: #ffffff;
   --surface: #ffffff;
-  --surface-raised: #f1f1ef;
+  --surface-raised: #fdfdfd;
   --surface-hover: #e8e8e5;
 
   --border: #e2e2de;
   --border-strong: #c9c9c3;
+  --tray: #eeeeec;
 
   --text-strong: #0d0d0c;
   --text-body: #262624;
@@ -156,7 +162,7 @@
   --info: #1d5fc4;
   --info-soft: #e8f0fd;
 
-  --focus: #1d5fc4;
+  --focus: #6d34d6;
 
   --shadow-sm: 0 1px 2px rgba(13, 13, 12, 0.07);
   --shadow-md: 0 8px 24px rgba(13, 13, 12, 0.1);
