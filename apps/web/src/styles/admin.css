@@ -46,16 +46,26 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex: 0 0 auto;
   padding-inline: var(--space-3);
   min-width: 0;
 }
 
-.topbar__combo,
+/* flex ditulis terpisah dengan kekhususan (0,1,0), setara aturan per-segmen
+   di bawahnya. Sebelumnya nilai ini ikut di aturan umum yang kekhususannya
+   (0,2,0) — dan setiap penyesuaian per-segmen diam-diam kalah. Sudah dua
+   kali menggigit: sekali di padding ponsel, sekali di sini. */
+.topbar > * { flex: 0 0 auto; }
 .topbar__id { flex-shrink: 1; }
 
-/* Mendorong segmen sisi kanan ke ujung tanpa ikut punya garis. */
-.topbar__dorong { flex: 1 1 auto; min-width: var(--space-4); }
+/* Ruang pendorong sengaja TIDAK dipakai selama kedua bidang pencarian masih
+   tampil. Ia tidak punya garis, jadi ia menempel ke sel di kirinya dan
+   terbaca sebagai sel yang isinya tidak sampai ujung — bar-nya terlihat
+   setengah jadi. Sisa ruangnya diberikan ke combobox dan Perintah, sehingga
+   setiap piksel topbar dimiliki sebuah sel. */
+.topbar__dorong { display: none; }
+
+.topbar__combo,
+.topbar__sel { flex: 1 1 0; }
 
 /* Sel pembungkus tombol ikon — napasnya sama dengan segmen teks di
    sebelahnya, jadi seluruh baris berirama sama. */
@@ -101,11 +111,18 @@
 .topbar__combo { position: relative; }
 .topbar__sel { justify-content: center; }
 
+/* cmdk membungkus isinya dalam satu div tanpa lebar. Tanpa dibuat mengisi,
+   lebar 100% pada bidang di dalamnya menunjuk ke lebar-otomatis pembungkus
+   itu — bukan ke lebar selnya — dan hasilnya bidang combobox tidak sama
+   lebar dengan kembarannya. */
+.topbar__combo > * { flex: 1; min-width: 0; }
+
 .topbar__field {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  width: 8.5rem;
+  width: 100%;
+  min-width: 6.5rem;
   height: 2.125rem;
   min-width: 0;
   padding: 0 0.65rem;
@@ -393,6 +410,13 @@
   .topbar__perintah-label,
   .topbar__kbd { display: none; }
   .topbar__perintah { width: 2.125rem; justify-content: center; padding: 0; }
+  /* Begitu Perintah tinggal ikon, membiarkannya melar berarti satu ikon
+     mengambang di tengah sel selebar setengah layar. Di sini pendorong
+     dipakai lagi — dan tidak apa-apa, karena di layar sempit sisa ruangnya
+     memang tinggal sedikit. */
+  .topbar__combo,
+  .topbar__sel { flex: 0 0 auto; }
+  .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
 }
 
 @media (max-width: 71rem) {
