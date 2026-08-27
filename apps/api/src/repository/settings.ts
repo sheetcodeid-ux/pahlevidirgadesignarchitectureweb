@@ -10,6 +10,7 @@ interface Row {
   city: string | null;
   instagram_url: string | null;
   logo_key: string | null;
+  timezone: string;
 }
 
 function url(assetBase: string, key: string | null): string | null {
@@ -27,13 +28,14 @@ function rowToSettings(row: Row, assetBase: string): StudioSettings {
     city: row.city,
     instagramUrl: row.instagram_url,
     logoUrl: url(assetBase, row.logo_key),
+    timezone: row.timezone,
   };
 }
 
 /** Baris tunggal (id selalu true) — dibuat lewat migrasi, tidak pernah dihapus. */
 export async function get(sql: Sql, assetBase = ""): Promise<StudioSettings> {
   const rows = await sql<Row[]>`
-    select studio_name, tagline, email, phone, address, city, instagram_url, logo_key
+    select studio_name, tagline, email, phone, address, city, instagram_url, logo_key, timezone
     from public.studio_settings
     where id = true`;
   return rowToSettings(rows[0], assetBase);
@@ -48,6 +50,7 @@ const PLAIN_COLUMNS: [string, keyof StudioSettingsInput][] = [
   ["city", "city"],
   ["instagram_url", "instagramUrl"],
   ["logo_key", "logoKey"],
+  ["timezone", "timezone"],
 ];
 
 /** Menulis hanya field yang dikirim. */
@@ -67,6 +70,7 @@ export async function update(sql: Sql, input: StudioSettingsInput): Promise<void
       case "city": fragments.push(sql`city = ${value as string | null}`); break;
       case "instagram_url": fragments.push(sql`instagram_url = ${value as string | null}`); break;
       case "logo_key": fragments.push(sql`logo_key = ${value as string | null}`); break;
+      case "timezone": fragments.push(sql`timezone = ${value as string}`); break;
     }
   }
 

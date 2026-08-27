@@ -4,15 +4,27 @@ import { Icon } from "./Icon";
 type Theme = "dark" | "light";
 
 /**
- * Pengalih tema siang/malam.
+ * Pengalih tema siang/malam — SATU tombol, bukan dua pilihan bersebelahan.
  *
- * Pemasangan kelas .theme-switching sesaat sebelum atribut diganti membuat
- * seluruh halaman meluncur antar-warna, bukan berkedip. Kelasnya dilepas lagi
- * setelah transisi selesai supaya interaksi lain (hover, fokus) tetap gesit.
+ * Yang tampil selalu tema yang sedang aktif, dan menekannya membalik ke
+ * lawannya. Bentuk dua-pilihan sebelumnya memakan lebar dua kali lipat untuk
+ * menyampaikan satu bit yang sama.
+ *
+ * Dua gerakan yang berbeda dan sengaja dipisah:
+ *
+ * 1. Ikonnya berputar setengah putaran sambil menyusut lalu tumbuh lagi, tiap
+ *    kali ditekan. Dijalankan lewat kunci React yang berganti, bukan lewat
+ *    kelas yang ditambah-lepas: elemen dengan kunci baru adalah elemen baru
+ *    bagi React, jadi animasinya pasti mulai dari awal — sementara kelas yang
+ *    dipasang ulang pada elemen yang sama tidak selalu memulai ulang animasi.
+ * 2. Seluruh halaman meluncur antar-warna lewat kelas .theme-switching yang
+ *    dipasang sesaat sebelum atribut tema diganti, lalu dilepas lagi supaya
+ *    hover dan fokus tetap gesit.
  */
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [siap, setSiap] = useState(false);
+  const [putaran, setPutaran] = useState(0);
 
   // Nilai awal dibaca dari DOM, bukan dari localStorage: skrip anti-kedip di
   // <head> sudah menetapkannya lebih dulu, dan itulah kebenarannya.
@@ -22,15 +34,15 @@ export function ThemeToggle() {
     setSiap(true);
   }, []);
 
-  function ganti(baru: Theme) {
-    if (baru === theme) return;
-
+  function balik() {
+    const baru: Theme = theme === "dark" ? "light" : "dark";
     const root = document.documentElement;
     const diamGerak = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (!diamGerak) {
       root.classList.add("theme-switching");
       window.setTimeout(() => root.classList.remove("theme-switching"), 460);
+      setPutaran((n) => n + 1);
     }
 
     root.setAttribute("data-theme", baru);
@@ -46,38 +58,17 @@ export function ThemeToggle() {
   const gelap = theme === "dark";
 
   return (
-    <div
-      className="theme-toggle"
-      role="radiogroup"
-      aria-label="Tema tampilan"
-      data-theme-state={theme}
+    <button
+      type="button"
+      className="theme-btn"
+      onClick={balik}
+      disabled={!siap}
+      aria-label={gelap ? "Ganti ke tema terang" : "Ganti ke tema gelap"}
+      title={gelap ? "Tema gelap" : "Tema terang"}
     >
-      {/* Penanda geser; posisinya mengikuti data-theme-state pada induk. */}
-      <span className="theme-toggle__thumb" aria-hidden="true" />
-
-      <button
-        type="button"
-        role="radio"
-        aria-checked={gelap}
-        aria-label="Tema gelap"
-        className="theme-toggle__opt"
-        onClick={() => ganti("dark")}
-        disabled={!siap}
-      >
-        <Icon name="moon" size={16} />
-      </button>
-
-      <button
-        type="button"
-        role="radio"
-        aria-checked={!gelap}
-        aria-label="Tema terang"
-        className="theme-toggle__opt"
-        onClick={() => ganti("light")}
-        disabled={!siap}
-      >
-        <Icon name="sun" size={16} />
-      </button>
-    </div>
+      <span className="theme-btn__ikon" key={putaran}>
+        <Icon name={gelap ? "moon" : "sun"} size={17} />
+      </span>
+    </button>
   );
 }

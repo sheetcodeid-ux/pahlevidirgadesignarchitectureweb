@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, type StudioSettings } from "../../lib/admin";
+import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, ZONA_WAKTU, type StudioSettings } from "../../lib/admin";
 
 type Draf = Partial<StudioSettings>;
 
@@ -218,6 +218,27 @@ function Isi() {
                 ))}
               </div>
             ))}
+
+            {/* Zona waktu berdiri sendiri, bukan ikut PENUH: ia satu-satunya
+                field pilihan, dan yang disimpan (nama IANA) beda dari yang
+                dibaca pengguna (singkatan). */}
+            <div className="field">
+              <label className="field__label" htmlFor="set-timezone">Zona waktu</label>
+              <span className="select">
+                <select
+                  id="set-timezone"
+                  className="input input--panel"
+                  value={nilai("timezone") || "Asia/Jakarta"}
+                  onChange={(e) => setDraf((d) => ({ ...d, timezone: e.target.value }))}
+                >
+                  {ZONA_WAKTU.map((z) => (
+                    <option key={z.id} value={z.id}>{z.label} — {z.nama}</option>
+                  ))}
+                </select>
+                <span className="select__chevron"><Icon name="chevronDown" size={16} /></span>
+              </span>
+              <p className="field__help">Menentukan jam dan tanggal yang tampil di topbar panel admin.</p>
+            </div>
 
             {PENUH.map(([kunci, label, bantu]) => (
               <div className="field" key={kunci}>
