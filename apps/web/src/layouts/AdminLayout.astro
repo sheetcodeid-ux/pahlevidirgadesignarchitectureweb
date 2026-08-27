@@ -10,15 +10,19 @@ import "../styles/admin.css";
 import { Sidebar } from "../components/admin/Sidebar";
 import { TopbarUser } from "../components/admin/TopbarUser";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
+import { Icon } from "../components/ui/Icon";
 
 interface Props {
   title: string;
   /** Ditampilkan sebagai judul halaman besar. Kosongkan untuk halaman khusus. */
   heading?: string;
   description?: string;
+  /** Tautan kembali. Kalau diisi, panah muncul di kiri judul. */
+  back?: string;
+  backLabel?: string;
 }
 
-const { title, heading, description } = Astro.props;
+const { title, heading, description, back, backLabel } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
 
@@ -79,8 +83,18 @@ const currentPath = Astro.url.pathname;
           {
             heading && (
               <div class="page-head">
-                <h1 class="t-title">{heading}</h1>
-                {description && <p class="t-muted">{description}</p>}
+                <div class="page-head__baris">
+                  {back && (
+                    <a class="btn btn--secondary btn--icon btn--boxed page-head__back" href={back}
+                      aria-label={backLabel ?? "Kembali"}>
+                      <Icon name="chevronLeft" size={18} />
+                    </a>
+                  )}
+                  <div class="page-head__teks">
+                    <h1 class="t-title">{heading}</h1>
+                    {description && <p class="t-muted">{description}</p>}
+                  </div>
+                </div>
               </div>
             )
           }

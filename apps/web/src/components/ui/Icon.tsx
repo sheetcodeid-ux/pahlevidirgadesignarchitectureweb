@@ -51,6 +51,7 @@ export type IconName =
   | "camera"
   | "building"
   | "projectPlus"
+  | "imagePlus"
   | "save";
 
 interface Props {
@@ -315,6 +316,15 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M5 21V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6" />
       <path d="M8 7h2M8 11h2M8 15h2" />
       <path d="M18 14v7M14.5 17.5h7" />
+    </>
+  ),
+  // Foto dengan tanda tambah — "tambahkan gambar", bukan "ini gambar".
+  imagePlus: (
+    <>
+      <path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="m21 14-4.5-4.5L7 19" />
+      <path d="M18 15v6M15 18h6" />
     </>
   ),
   save: (

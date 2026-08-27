@@ -28,7 +28,6 @@ const KOSONG = {
 function Isi() {
   const toast = useToast();
   const [f, setF] = useState({ ...KOSONG });
-  const [slugDisunting, setSlugDisunting] = useState(false);
   const [coverKey, setCoverKey] = useState<string | null>(null);
   const [coverPratinjau, setCoverPratinjau] = useState<string | null>(null);
   const [mengunggah, setMengunggah] = useState(false);
@@ -40,13 +39,15 @@ function Isi() {
   const slugSah = f.slug.trim().length >= 2;
   const bisaSimpan = judulSah && slugSah && !menyimpan;
 
+  // Slug selalu ikut judul dan tidak bisa disunting sendiri. Slug yang boleh
+  // menyimpang dari judul cuma menambah satu hal yang bisa keliru, sementara
+  // ia sudah terlanjur jadi URL publik begitu proyeknya terbit.
   function ubahJudul(v: string) {
-    setF((x) => ({ ...x, title: v, slug: slugDisunting ? x.slug : keSlug(v) }));
+    setF((x) => ({ ...x, title: v, slug: keSlug(v) }));
   }
 
   function reset() {
     setF({ ...KOSONG });
-    setSlugDisunting(false);
     setCoverKey(null);
     setCoverPratinjau((p) => { if (p) URL.revokeObjectURL(p); return null; });
   }
@@ -114,7 +115,7 @@ function Isi() {
               aria-label="Unggah gambar sampul">
               {coverPratinjau
                 ? <img src={coverPratinjau} alt="" />
-                : mengunggah ? <span className="spinner spinner--sm" /> : <Icon name="image" size={22} />}
+                : mengunggah ? <span className="spinner spinner--sm" /> : <Icon name="imagePlus" size={30} />}
             </button>
             <span className="card__titles">
               <span className="t-subheading">Gambar sampul <span className="t-muted">(opsional)</span></span>
@@ -137,12 +138,12 @@ function Isi() {
           </div>
 
           <div className="field">
-            <label className="field__label" htmlFor="b-slug">
-              Slug<span className="field__req" aria-hidden="true">*</span>
-            </label>
-            <input id="b-slug" className="input input--mono" value={f.slug}
-              onChange={(e) => { setSlugDisunting(true); set("slug", e.target.value); }} />
-            <p className="field__help">Muncul di URL: /proyek/{f.slug || "…"}</p>
+            <label className="field__label" htmlFor="b-slug">Slug</label>
+            <input id="b-slug" className="input input--mono" value={f.slug} readOnly
+              placeholder="terisi otomatis dari judul" />
+            <p className="field__help">
+              Dibuat otomatis dari judul. Muncul di URL: /proyek/{f.slug || "…"}
+            </p>
           </div>
 
           <div className="field">
@@ -226,7 +227,7 @@ function Isi() {
           <Icon name="clock" size={14} />Reset form
         </button>
 
-        {!judulSah && <p className="field__help buat-aksi__catatan">Judul minimal 2 huruf.</p>}
+        {!judulSah && <p className="field__help buat-aksi__catatan">Isi judul dulu, minimal 2 huruf.</p>}
       </aside>
     </div>
   );
