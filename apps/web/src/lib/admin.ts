@@ -219,10 +219,10 @@ export interface StudioSettings {
 }
 
 /** Tiga zona Indonesia beserta singkatan yang dibaca manusia. */
-export const ZONA_WAKTU: { id: string; label: string; nama: string }[] = [
-  { id: "Asia/Jakarta", label: "WIB", nama: "Waktu Indonesia Barat" },
-  { id: "Asia/Makassar", label: "WITA", nama: "Waktu Indonesia Tengah" },
-  { id: "Asia/Jayapura", label: "WIT", nama: "Waktu Indonesia Timur" },
+export const ZONA_WAKTU: { id: string; label: string; nama: string; utc: string }[] = [
+  { id: "Asia/Jakarta", label: "WIB", nama: "Waktu Indonesia Barat", utc: "UTC+7" },
+  { id: "Asia/Makassar", label: "WITA", nama: "Waktu Indonesia Tengah", utc: "UTC+8" },
+  { id: "Asia/Jayapura", label: "WIT", nama: "Waktu Indonesia Timur", utc: "UTC+9" },
 ];
 
 /** Singkatan untuk sebuah nama zona IANA; jatuh ke WIB kalau tidak dikenal. */

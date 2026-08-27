@@ -221,22 +221,36 @@ function Isi() {
 
             {/* Zona waktu berdiri sendiri, bukan ikut PENUH: ia satu-satunya
                 field pilihan, dan yang disimpan (nama IANA) beda dari yang
-                dibaca pengguna (singkatan). */}
+                dibaca pengguna (singkatan).
+
+                Tiga kartu berdampingan, bukan dropdown: pilihannya hanya tiga
+                dan tidak akan pernah bertambah, jadi menyembunyikan dua di
+                balik dropdown tidak menghemat apa pun sementara membandingkan
+                ketiganya jadi butuh dua klik. */}
             <div className="field">
-              <label className="field__label" htmlFor="set-timezone">Zona waktu</label>
-              <span className="select">
-                <select
-                  id="set-timezone"
-                  className="input input--panel"
-                  value={nilai("timezone") || "Asia/Jakarta"}
-                  onChange={(e) => setDraf((d) => ({ ...d, timezone: e.target.value }))}
-                >
-                  {ZONA_WAKTU.map((z) => (
-                    <option key={z.id} value={z.id}>{z.label} — {z.nama}</option>
-                  ))}
-                </select>
-                <span className="select__chevron"><Icon name="chevronDown" size={16} /></span>
+              <span className="field__label" id="label-zona">
+                <Icon name="globe" size={15} />Zona Waktu
               </span>
+              <div className="zonapilih" role="radiogroup" aria-labelledby="label-zona">
+                {ZONA_WAKTU.map((z) => {
+                  const dipilih = (nilai("timezone") || "Asia/Jakarta") === z.id;
+                  return (
+                    <button
+                      key={z.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={dipilih}
+                      className="zonapilih__kartu"
+                      onClick={() => setDraf((d) => ({ ...d, timezone: z.id }))}
+                    >
+                      <span className="zonapilih__label">{z.label}</span>
+                      <span className="zonapilih__nama">{z.nama}</span>
+                      <span className="zonapilih__utc t-mono">{z.utc}</span>
+                      {dipilih && <span className="zonapilih__titik" aria-hidden="true" />}
+                    </button>
+                  );
+                })}
+              </div>
               <p className="field__help">Menentukan jam dan tanggal yang tampil di topbar panel admin.</p>
             </div>
 

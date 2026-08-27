@@ -57,7 +57,8 @@ export type IconName =
   | "bellOff"
   | "gift"
   | "crown"
-  | "terminal";
+  | "terminal"
+  | "globe";
 
 interface Props {
   name: IconName;
@@ -346,6 +347,15 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M3 7l4.5 4L12 4l4.5 7L21 7l-1.6 11H4.6L3 7Z" />
       <path d="M4.6 18h14.8" />
+    </>
+  ),
+  /* Bola dunia bergaris bujur: zona waktu. Bukan jam — yang dipilih adalah
+     WILAYAH-nya, dan jamnya yang mengikuti. */
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18Z" />
     </>
   ),
   /* Prompt terminal: pemanggil command palette. */
