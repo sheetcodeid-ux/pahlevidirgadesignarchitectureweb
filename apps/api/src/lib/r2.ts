@@ -6,6 +6,15 @@ const ALLOWED_CONTENT_TYPES: Record<string, string> = {
   "image/webp": ".webp",
   "image/avif": ".avif",
   "application/pdf": ".pdf",
+  /* Voice note dari staf ke klien. Empat tipe karena tiap platform merekam
+     dengan wadah berbeda: Safari/iOS mengirim audio/mp4, Chrome dan Firefox
+     audio/webm, perekam bawaan Android sering audio/ogg, dan berkas yang
+     diambil dari galeri biasanya audio/mpeg. Menerima satu saja berarti
+     menolak sebagian pengguna tanpa alasan yang bisa mereka pahami. */
+  "audio/mpeg": ".mp3",
+  "audio/mp4": ".m4a",
+  "audio/webm": ".webm",
+  "audio/ogg": ".ogg",
 };
 
 export interface UploadTarget {

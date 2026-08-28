@@ -286,7 +286,11 @@
 
 .segmented::-webkit-scrollbar { display: none; }
 .segmented--block { display: flex; width: 100%; }
-.segmented--block .segmented__opt { flex: 1; }
+.segmented--block .segmented__opt { flex: 1; min-width: 0; }
+
+/* Varian bergaris tebal, senada kartu dan isian di sekitarnya. Bilah 1px di
+   antara kartu berbingkai 2px terbaca seperti benda dari sistem lain. */
+.segmented--tebal { border-width: 2px; border-color: var(--border-strong); }
 
 .segmented__opt {
   display: inline-flex;

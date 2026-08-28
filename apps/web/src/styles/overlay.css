@@ -257,6 +257,18 @@
   box-shadow: 0 0 0 2px var(--focus);
 }
 .ov-select-trigger[data-placeholder] { color: var(--text-faint); }
+.ov-select-trigger:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Versi ringkas untuk dipasang di dalam baris daftar: selebar isinya, bukan
+   selebar baris. Pemilih status di sebelah judul tidak boleh lebih besar
+   daripada judulnya sendiri. */
+.ov-select-trigger--ringkas {
+  width: auto;
+  flex: none;
+  padding: 0.35rem 0.8rem;
+  font-size: var(--text-sm);
+  background: transparent;
+}
 .ov-select-trigger__icon { color: var(--text-faint); flex: none; }
 
 .ov-select-content {

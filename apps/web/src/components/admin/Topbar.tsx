@@ -7,7 +7,7 @@ import { Avatar } from "../ui/misc/Avatar";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { IsiNotifikasi, TabNotifikasi } from "./NotifikasiPanel";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
-import { bukaProyek } from "../../lib/proyekAktif";
+import { bukaProyek, proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import {
   ambilSettings, profilTersimpan, hapusSesi, singkatanZona,
   type Profil, type Proyek, type StudioSettings,
@@ -118,6 +118,15 @@ function Lonceng({
         </button>
       </RPopover.Trigger>
 
+      {/* Jangkar, bukan tombolnya sendiri. Dengan align="end" pada tombol,
+          tepi kanan popover berhenti di tepi kanan lonceng — sementara panel
+          akun berhenti di tepi kanan topbar, karena ia segmen terakhir.
+          Keduanya jadi tidak sejajar. Jangkar ini menempel ke tepi kanan
+          topbar, jadi kedua panel berangkat dari garis yang sama persis. */}
+      <RPopover.Anchor asChild>
+        <span className="topbar__jangkar" aria-hidden="true" />
+      </RPopover.Anchor>
+
       <RPopover.Portal>
         <RPopover.Content className="notifpop" sideOffset={10} align="end" collisionPadding={12}>
           <div className="notifpop__kepala">
@@ -211,6 +220,21 @@ function Identitas({ settings, profil }: { settings: StudioSettings | null; prof
 function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
   const [buka, setBuka] = useState(false);
   const [nilai, setNilai] = useState("");
+  const [aktif, setAktif] = useState<string | null>(null);
+
+  // Dibaca setelah mount: HTML yang dikirim server tidak tahu isi
+  // localStorage, dan membacanya saat render membuat pass hidrasi pertama
+  // berbeda dari HTML-nya.
+  useEffect(() => {
+    setAktif(proyekAktif());
+    return onProyekAktif(setAktif);
+  }, []);
+
+  // Kotak ini punya dua pekerjaan: menampilkan proyek yang sedang dibuka, dan
+  // mencari yang lain. Judul proyek aktif dipasang sebagai placeholder, bukan
+  // sebagai value — kalau jadi value, staf harus menghapusnya dulu setiap
+  // kali ingin mencari, padahal mencari justru alasan kotak ini ada.
+  const judulAktif = proyek?.find((p) => p.id === aktif)?.title ?? null;
 
   return (
     <div className="topbar__combo">
@@ -219,7 +243,11 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
           <Icon name="project" size={15} />
           <Cmdk.Input
             className="ov-command__input topbar__field-input"
-            placeholder="Cari proyek"
+            /* Placeholder judul proyek bukan teks bantuan, melainkan isi —
+               jadi ia diberi warna teks penuh, bukan warna redup. */
+            data-terpilih={judulAktif && !nilai ? "" : undefined}
+            placeholder={judulAktif ?? "Cari proyek"}
+            title={judulAktif ?? undefined}
             value={nilai}
             onValueChange={setNilai}
             onFocus={() => setBuka(true)}
@@ -243,7 +271,13 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
                    salah satu halaman proyek, yang berganti isinya — bukan
                    halamannya. Itu yang membuat combobox ini terasa seperti
                    pengalih konteks, bukan seperti daftar tautan. */
-                onSelect={() => bukaProyek(p.id)}
+                onSelect={() => {
+                  // Kotaknya dikosongkan supaya judul proyek yang baru
+                  // dipilih langsung terbaca di placeholder.
+                  setNilai("");
+                  setBuka(false);
+                  bukaProyek(p.id);
+                }}
               >
                 <Icon name="project" size={15} />
                 <TeksGeser>{p.title}</TeksGeser>

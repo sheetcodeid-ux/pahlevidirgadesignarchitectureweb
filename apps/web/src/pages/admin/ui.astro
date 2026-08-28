@@ -1,7 +1,7 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { MasterGuard } from "../../components/admin/MasterGuard";
-import { FormShowcase } from "../../components/admin/FormShowcase";
+import { FormShowcase, InputRupiahDemo } from "../../components/admin/FormShowcase";
 import { OverlayShowcase } from "../../components/admin/OverlayShowcase";
 import { DataShowcase } from "../../components/admin/DataShowcase";
 import { MiscShowcase } from "../../components/admin/MiscShowcase";
@@ -365,7 +365,7 @@ const ikonBerpasangan = [
             </div>
 
             <div class="field">
-              <label class="field__label" for="d-kat">Kategori</label>
+              <label class="field__label" for="d-kat">Kategori (native)</label>
               <span class="select">
                 <select id="d-kat" class="input">
                   <option>Hunian</option>
@@ -375,6 +375,26 @@ const ikonBerpasangan = [
                 </select>
                 <span class="select__chevron"><Icon name="chevronDown" size={16} /></span>
               </span>
+              <p class="field__help">
+                Daftar pilihannya digambar sistem operasi, jadi tampilannya di luar
+                kendali tema. Di panel admin dipakai Select di bawah ini.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Input Rupiah</span>
+            <code class="swatch__name">&lt;InputRupiah&gt;</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <div class="field">
+              <label class="field__label" for="d-rupiah">Nilai kontrak</label>
+              <InputRupiahDemo client:visible />
+              <p class="field__help">
+                Ketik angkanya saja — pemisah ribuan dan awalan Rp dipasang sambil mengetik.
+              </p>
             </div>
           </div>
         </div>

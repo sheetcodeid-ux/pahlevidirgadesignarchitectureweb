@@ -3,6 +3,7 @@ import { Icon } from "../ui/Icon";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { buatProyek, simpanProyek, mintaUrlUnggah, type Proyek } from "../../lib/admin";
+import { Select } from "../ui/overlay/Select";
 
 const KATEGORI: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
@@ -148,12 +149,13 @@ function Isi() {
 
           <div className="field">
             <label className="field__label" htmlFor="b-kat">Kategori</label>
-            <span className="select">
-              <select id="b-kat" className="input" value={f.category} onChange={(e) => set("category", e.target.value)}>
-                {Object.entries(KATEGORI).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-              <span className="select__chevron"><Icon name="chevronDown" size={16} /></span>
-            </span>
+            <Select
+              id="b-kat"
+              ariaLabel="Kategori proyek"
+              value={f.category}
+              onValueChange={(v) => set("category", v)}
+              options={Object.entries(KATEGORI).map(([value, label]) => ({ value, label }))}
+            />
           </div>
         </section>
 
@@ -163,7 +165,11 @@ function Isi() {
             Semuanya opsional dan bisa diisi belakangan. Yang terisi langsung tampil di halaman publik.
           </p>
 
-          <div className="spec-grid">
+          {/* Satu grid untuk keempatnya, bukan dua grid berisi dua. Dua grid
+              memaksa dua baris berapa pun lebar kartunya — dan begitu kartu
+              cukup lebar untuk tiga atau empat kolom, baris kedua menyisakan
+              ruang kosong menganggur di kanannya. */}
+          <div className="spec-grid spec-grid--rapat">
             <div className="field">
               <label className="field__label" htmlFor="b-kota">Kota</label>
               <input id="b-kota" className="input" value={f.city} placeholder="mis. Pontianak"
@@ -175,9 +181,6 @@ function Isi() {
                 min={1900} max={2200} value={f.year} placeholder="2026"
                 onChange={(e) => set("year", e.target.value)} />
             </div>
-          </div>
-
-          <div className="spec-grid">
             <div className="field">
               <label className="field__label" htmlFor="b-klien">Klien</label>
               <input id="b-klien" className="input" value={f.client} placeholder="mis. Keluarga Wijaya"

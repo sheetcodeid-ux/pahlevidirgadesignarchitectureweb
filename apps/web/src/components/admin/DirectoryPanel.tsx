@@ -5,6 +5,7 @@ import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { daftarKontak, tambahKontak, ubahKontak, hapusKontak, type KontakDirektori } from "../../lib/admin";
+import { Select } from "../ui/overlay/Select";
 
 const KATEGORI: [string, string][] = [
   ["klien", "Klien"],
@@ -109,12 +110,13 @@ function Isi() {
             </div>
             <div className="field">
               <label className="field__label" htmlFor="dir-kategori">Kategori</label>
-              <span className="select">
-                <select id="dir-kategori" className="input" value={kategori} onChange={(e) => setKategori(e.target.value)}>
-                  {KATEGORI.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-                <span className="select__chevron"><Icon name="chevronDown" size={16} /></span>
-              </span>
+              <Select
+                id="dir-kategori"
+                ariaLabel="Kategori kontak"
+                value={kategori}
+                onValueChange={setKategori}
+                options={KATEGORI.map(([value, label]) => ({ value, label }))}
+              />
             </div>
             <div className="field">
               <label className="field__label" htmlFor="dir-perusahaan">Perusahaan</label>

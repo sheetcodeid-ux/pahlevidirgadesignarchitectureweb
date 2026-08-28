@@ -77,6 +77,27 @@
 .topbar__crumb [aria-current] { overflow: hidden; text-overflow: ellipsis; }
 
 /* Jam: titik hidup, angka mono, singkatan zona redup. */
+/* Jangkar popover lonceng: lebar nol, menempel ke tepi kanan topbar dan
+   setinggi topbar. .topbar sudah position:sticky, yang juga membentuk blok
+   penampung untuk anak absolut — jadi tidak perlu position:relative
+   tambahan. padding-right topbar nol, jadi right:0 tepat sama dengan tepi
+   kanan segmen identitas. */
+.topbar__jangkar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* 12px, sama dengan collisionPadding kedua popover. Segmen identitas
+     berhenti persis di tepi kanan layar, jadi panel akun SELALU kena
+     pantulan tepi dan berhenti 12px dari tepi. Jangkar yang ditaruh di
+     tepi (right:0) tidak kena pantulan itu, dan panel lonceng berhenti
+     12px lebih kanan — cukup untuk terlihat tidak sejajar. Ditaruh langsung
+     di titik yang sama, keduanya berhenti di garis yang sama tanpa
+     bergantung pada pembulatan sub-piksel. */
+  right: 12px;
+  width: 0;
+  pointer-events: none;
+}
+
 .topbar__jam { font-size: var(--text-sm); color: var(--text-strong); white-space: nowrap; }
 .topbar__titik {
   width: 0.4rem;
@@ -150,6 +171,14 @@
 /* Input di dalamnya memakai gaya input command palette dari pustaka, hanya
    ukurannya diturunkan supaya muat di tinggi topbar. */
 .topbar__field-input { font-size: var(--text-sm); color: var(--text-strong); }
+
+/* Judul proyek yang sedang dibuka dipasang sebagai placeholder, jadi ia
+   perlu warna teks penuh — placeholder redup akan membuat proyek aktif
+   terbaca seperti kotak yang masih kosong. */
+.topbar__field-input[data-terpilih]::placeholder {
+  color: var(--text-strong);
+  opacity: 1;
+}
 
 .topbar__perintah {
   cursor: pointer;
@@ -536,6 +565,15 @@
 .admin:has(.settings-split) { height: 100dvh; overflow: hidden; }
 .admin:has(.settings-split) .admin__main { min-height: 0; }
 
+/* Di bawah 68rem kedua kolom bertumpuk, dan dua kolom yang ditumpuk tidak
+   akan pernah muat dalam satu layar. Kuncian 100dvh dilepas supaya halaman
+   bergulir seperti halaman biasa — yang dikunci tetap kolom logo: ia tidak
+   punya guliran sendiri, ia ikut halaman. */
+@media (max-width: 67.9375rem) {
+  .admin:has(.settings-split) { height: auto; overflow: visible; }
+  .admin__content:has(.settings-split) { overflow: visible; }
+}
+
 .admin__content:has(.settings-split) {
   padding: 0;
   gap: 0;
@@ -630,6 +668,28 @@
   gap: var(--space-4);
 }
 
+/* Varian untuk isian pendek — kota, tahun, klien, luas. Ambang 18rem terlalu
+   lebar untuk mereka: di kartu selebar 60rem ia berhenti di dua kolom dan
+   menyisakan separuh baris kosong. Dengan auto-fit (bukan auto-fill) kolom
+   yang tidak terpakai runtuh, jadi barisnya selalu terisi penuh. */
+/* Empat kolom begitu kartunya cukup lebar, dua kalau tidak — tidak pernah
+   tiga, karena empat isian dalam tiga kolom menyisakan dua sel kosong di
+   baris kedua. Diukur terhadap KARTUNYA (container query), bukan terhadap
+   lebar layar: kartu yang sama menyempit sendiri saat panel kanan muncul,
+   dan media query tidak tahu itu. */
+.buat-kartu,
+.proyek-kartu { container-type: inline-size; }
+
+.spec-grid--rapat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@container (min-width: 40rem) {
+  .spec-grid--rapat { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@container (max-width: 20rem) {
+  .spec-grid--rapat { grid-template-columns: 1fr; }
+}
+
 .spec-demo {
   display: flex;
   flex-direction: column;
@@ -687,6 +747,9 @@
   flex: none;
   display: flex;
   flex-direction: column;
+  /* Wadah query, dipakai kotak unggah untuk menghitung tingginya sendiri
+     dari lebar kolom ini — lihat .logo-dropzone. */
+  container-type: inline-size;
   /* space-between, bukan gap tetap: sisa ruang dibagi rata ke sela-selanya
      sehingga kotak unggah duduk pas di dasar kolom — tidak ada lagi ruang
      menganggur di bawahnya. */
@@ -706,7 +769,7 @@
   background: var(--surface-raised);
 }
 
-@media (min-width: 48rem) {
+@media (min-width: 68rem) {
   .settings-split { flex-direction: row; }
   /* Bagi rata dua kolom seperti referensi — bukan kolom logo sempit di
      kiri, karena itu menyisakan ruang kosong lebar di sekitarnya. */
@@ -714,7 +777,10 @@
     width: 50%;
     border-bottom: 0;
     border-right: 2px solid var(--border-strong);
-    overflow-y: auto;
+    /* TIDAK bergulir. Kolom yang isinya cuma logo dan satu kotak unggah
+       tidak punya alasan menyimpan apa pun di luar layar — kalau isinya
+       tidak muat, yang salah ukurannya, bukan kurang gulirannya. */
+    overflow: hidden;
   }
 }
 
@@ -802,14 +868,20 @@
    menghasilkan kotak terlalu pendek untuk memuat isinya. */
 .logo-dropzone {
   display: flex;
-  flex: none;
+  /* Boleh menyusut kalau layarnya pendek — kolomnya tidak bergulir, jadi
+     kotak yang menolak mengecil akan terpotong diam-diam. */
+  flex: 0 1 auto;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
   width: 100%;
-  aspect-ratio: 1.56;
-  min-height: 15rem;
+  /* Di ponsel kedua kolom bertumpuk dan halamannya bergulir, jadi kotak ini
+     tumbuh mengikuti isinya — dipaksa setinggi rasio, teksnya justru
+     tumpah keluar kotak. Bentuk tetapnya diberlakukan mulai 68rem, di mana
+     kolomnya memang tidak bergulir. */
+  height: auto;
+  min-height: 14.375rem;
   padding: var(--space-5);
   text-align: center;
   border: 2px dashed var(--border-strong);
@@ -817,6 +889,25 @@
   background: var(--surface-raised);
   cursor: pointer;
   transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+/* Bentuk tetapnya baru berlaku sejak dua kolom berdampingan. Ditulis di
+   SINI, sesudah aturan dasarnya — bukan di media query kolom di atas:
+   kekhususannya sama (0,1,0), jadi yang menang adalah yang belakangan, dan
+   sempat membuat tinggi ini kalah diam-diam oleh height:auto.
+
+   Tingginya dihitung dari lebar kolom (100cqw), bukan dari aspect-ratio,
+   supaya pengurangan 10px yang diminta benar-benar 10px di setiap lebar.
+   Dengan aspect-ratio, satu-satunya cara mengurangi tinggi adalah menggeser
+   rasionya — dan pengurangannya lalu berbeda-beda tiap lebar layar. */
+@media (min-width: 68rem) {
+  .logo-dropzone {
+    height: calc(100cqw / 1.56 - 10px);
+    /* Lantainya adalah tinggi isinya sendiri, bukan angka tetap: di kolom
+       yang sempit rasio 1.56 menghasilkan kotak lebih pendek daripada
+       isinya, dan tanpa lantai ini teks petunjuknya tumpah keluar kotak. */
+    min-height: fit-content;
+  }
 }
 
 .logo-dropzone:hover, .logo-dropzone[data-dragging] {
@@ -1461,12 +1552,89 @@
   border-bottom: 2px solid var(--border-strong);
 }
 
-.proyekpage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-6);
+/* Pembungkus tanpa tata letak sendiri: isinya .buatpage yang sudah membawa
+   grid dua kolom dan paddingnya. Kalau .proyekpage ikut memberi padding,
+   keduanya bertumpuk dan kartunya menjorok dua kali. */
+.proyekpage { display: flex; flex-direction: column; min-width: 0; }
+
+/* Keadaan kosong, galat, dan rangka muat berdiri sendiri tanpa .buatpage,
+   jadi napasnya diberikan di sini. */
+.proyekpage > .empty,
+.proyekpage > .stack { margin: var(--space-6); }
+
+/* Kartu di dalam halaman proyek memakai idiom Tambah Proyek: judulnya label
+   bagian berhuruf kapital kecil, bukan judul yang bersaing dengan judul
+   halaman. Diterapkan lewat CSS, bukan dengan menulis ulang belasan kartu
+   satu per satu — kartu yang ditambahkan nanti ikut tanpa perlu diingat. */
+.proyekpage .card__header {
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) 0;
 }
+
+/* Ikon tetap ada — aturan proyek ini mewajibkan ikon cocok maknanya dengan
+   label di sebelahnya — hanya diperkecil supaya tidak lebih besar daripada
+   label yang ditemaninya. */
+.proyekpage .card__header .icon-tile {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: var(--radius-sm);
+}
+.proyekpage .card__header .icon-tile svg { width: 15px; height: 15px; }
+
+.proyekpage .card__header .t-subheading {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.proyekpage .card__header .t-muted { font-size: var(--text-sm); }
+.proyekpage .card__body { padding-top: var(--space-4); }
+.proyekpage .card p { max-width: none; }
+
+/* --- Panel kanan halaman proyek ---------------------------------------- */
+
+.sisi-proyek { gap: var(--space-4); }
+
+.sisi-proyek__kepala {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sisi-proyek__sampul {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+}
+
+.sisi-proyek__sampul img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Daftar fakta, bukan tabel: dua baris label–nilai yang dibaca sekilas.
+   dl dipakai karena hubungannya memang istilah dan penjelasannya. */
+.sisi-proyek__fakta { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; }
+.sisi-proyek__fakta > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.sisi-proyek__fakta dt {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.sisi-proyek__fakta dd { margin: 0; }
+
+.sisi-proyek__tautan { align-self: flex-start; }
 
 /* Kartu bawaan (.card) di dalam halaman ini disamakan dengan .buat-kartu:
    hitam, bingkai 2px. Tanpa ini kartu Status terbit dan Tahap pipeline
@@ -1475,6 +1643,18 @@
   background: var(--bg-sunken);
   border: 2px solid var(--border-strong);
 }
+
+/* Select UI Component ikut aturan isian: hitam, bingkai 2px. Versi ringkas
+   di dalam baris daftar tetap tanpa latar — ia menempel pada barisnya. */
+.proyekpage .ov-select-trigger,
+.buat-kartu .ov-select-trigger {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+
+.proyekpage .ov-select-trigger--ringkas,
+.buat-kartu .ov-select-trigger--ringkas { background: transparent; }
 
 /* Bilah tab dan pemilih tahap: hitam berbingkai tebal, sejajar dengan
    isian di bawahnya. Ia perkakas, jadi ikut aturan yang sama. */

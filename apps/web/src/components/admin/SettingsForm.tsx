@@ -168,7 +168,7 @@ function Isi() {
             onClick={(e) => { e.stopPropagation(); fileLogo.current?.click(); }}
           >
             {mengunggahLogo ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="upload" size={16} />}
-            Pilih File
+            Pilih berkas
           </button>
           <div className="logo-dropzone__hints">
             <span>PNG, JPG, WEBP</span>
