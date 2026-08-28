@@ -7,6 +7,7 @@ import { Avatar } from "../ui/misc/Avatar";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { IsiNotifikasi, TabNotifikasi } from "./NotifikasiPanel";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
+import { bukaProyek } from "../../lib/proyekAktif";
 import {
   ambilSettings, profilTersimpan, hapusSesi, singkatanZona,
   type Profil, type Proyek, type StudioSettings,
@@ -238,7 +239,11 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
                 key={p.id}
                 value={`${p.title} ${p.category} ${p.city ?? ""}`}
                 className="ov-command__item"
-                onSelect={() => { window.location.href = `/admin/proyek/edit?id=${p.id}`; }}
+                /* bukaProyek, bukan pindah halaman: kalau sedang berada di
+                   salah satu halaman proyek, yang berganti isinya — bukan
+                   halamannya. Itu yang membuat combobox ini terasa seperti
+                   pengalih konteks, bukan seperti daftar tautan. */
+                onSelect={() => bukaProyek(p.id)}
               >
                 <Icon name="project" size={15} />
                 <TeksGeser>{p.title}</TeksGeser>
@@ -324,7 +329,7 @@ function Perintah({ proyek }: { proyek: Proyek[] | null }) {
                 <Cmdk.Group heading="Proyek" className="ov-command__group">
                   {(proyek ?? []).map((p) => (
                     <Cmdk.Item key={p.id} value={`${p.title} ${p.category}`} className="ov-command__item"
-                      onSelect={() => { window.location.href = `/admin/proyek/edit?id=${p.id}`; }}>
+                      onSelect={() => bukaProyek(p.id)}>
                       <Icon name="project" size={16} />{p.title}
                     </Cmdk.Item>
                   ))}

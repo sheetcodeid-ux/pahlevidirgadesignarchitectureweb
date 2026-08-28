@@ -1,8 +1,23 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { ProjectEditor } from "../../../components/admin/ProjectEditor";
 ---
 
-<AdminLayout title="Sunting proyek">
-  <ProjectEditor client:load />
+<!-- Alamat lama. Tombol Sunting sudah tidak ada — tiga halaman proyek di
+     sidebar menggantikannya — tapi tautan lama yang masih tersimpan di
+     riwayat browser atau di-bookmark tidak boleh berakhir di halaman kosong.
+     Yang dibawanya (?id=) dipakai sekali untuk menetapkan proyek aktif, lalu
+     dialihkan ke halaman pertama. -->
+<AdminLayout title="Membuka proyek">
+  <div class="empty">
+    <span class="spinner"></span>
+    <p class="t-muted">Membuka proyek…</p>
+  </div>
 </AdminLayout>
+
+<script>
+  import { setProyekAktif, HALAMAN_PROYEK } from "../../../lib/proyekAktif";
+
+  const id = new URLSearchParams(location.search).get("id");
+  if (id) setProyekAktif(id);
+  location.replace(HALAMAN_PROYEK[0]);
+</script>

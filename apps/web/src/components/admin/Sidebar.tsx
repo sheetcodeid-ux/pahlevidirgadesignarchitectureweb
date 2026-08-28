@@ -30,6 +30,11 @@ const NAV: NavItem[] = [
     group: "Utama",
     children: [
       { label: "Semua Proyek", href: "/admin/proyek", icon: "list" },
+      // Ketiganya mengikuti proyek yang dipilih di combobox topbar. Semua
+      // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
+      { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "image" },
+      { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document" },
+      { label: "Kerja Internal", href: "/admin/proyek/internal", icon: "checklist" },
     ],
   },
   { label: "List Kerjaan", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
