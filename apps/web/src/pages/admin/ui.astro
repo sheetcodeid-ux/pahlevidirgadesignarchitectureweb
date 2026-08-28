@@ -6,6 +6,7 @@ import { OverlayShowcase } from "../../components/admin/OverlayShowcase";
 import { DataShowcase } from "../../components/admin/DataShowcase";
 import { MiscShowcase } from "../../components/admin/MiscShowcase";
 import { Icon } from "../../components/ui/Icon";
+import { SkeletonKartu, SkeletonIsian, SkeletonKotak } from "../../components/ui/Skeleton";
 
 // Warna ditampilkan lewat variabel CSS-nya, bukan nilai heksa yang disalin.
 // Dengan begitu petak warna di halaman ini ikut berubah saat tema diganti,
@@ -621,6 +622,24 @@ const ikonBerpasangan = [
             </div>
             <span class="skeleton" style="height:6rem"></span>
           </div>
+        </div>
+
+        <div class="spec-demo">
+          <div class="spec-demo__name">
+            <span class="t-subheading">Skeleton berbentuk</span>
+            <code class="swatch__name">SkeletonDaftar / SkeletonKartu / SkeletonIsian / SkeletonKotak</code>
+          </div>
+          <div class="spec-demo__stage spec-demo__stage--stack">
+            <SkeletonKartu client:visible ikon="document" />
+            <SkeletonIsian client:visible jumlah={2} />
+            <SkeletonKotak client:visible jumlah={3} />
+          </div>
+          <p class="field__help">
+            Memakai kelas markup yang sama dengan komponen aslinya — .card, .item, .field —
+            lalu mengganti isinya dengan balok. Tinggi, jarak, dan radiusnya ikut sendiri
+            saat komponen aslinya berubah, jadi placeholder tidak pernah meleset dari isi
+            yang menggantikannya.
+          </p>
         </div>
 
         <div class="spec-demo">

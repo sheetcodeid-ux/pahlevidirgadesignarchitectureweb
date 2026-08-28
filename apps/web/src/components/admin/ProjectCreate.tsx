@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
+import { SkeletonKartu, SkeletonIsian } from "../ui/Skeleton";
 import { buatProyek, simpanProyek, mintaUrlUnggah, type Proyek } from "../../lib/admin";
 import { Select } from "../ui/overlay/Select";
 
@@ -238,7 +239,12 @@ function Isi() {
 
 export function ProjectCreate() {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <SkeletonKartu ikon="project" anak={<SkeletonIsian jumlah={3} />} />
+        <SkeletonKartu ikon="list" anak={<SkeletonIsian jumlah={4} />} />
+      </div>
+    }>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

@@ -6,6 +6,9 @@ import { Carousel } from "../ui/data/Carousel";
 import { DatePicker } from "../ui/data/DatePicker";
 import { Tabs } from "../ui/misc/Nav";
 import { PerekamSuara, PemutarSuara, formatDurasi } from "../ui/misc/VoiceNote";
+import {
+  SkeletonDaftar, SkeletonKartu, SkeletonIsian, SkeletonKotak, SkeletonTeks, Balok,
+} from "../ui/Skeleton";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
@@ -481,7 +484,7 @@ function ThreadKomentar({ documentId }: { documentId: string }) {
       <summary>Komentar<span className="collapsible__chevron"><Icon name="chevronDown" size={16} /></span></summary>
       <div className="collapsible__body stack" style={{ gap: "var(--space-3)" }}>
         {komentar === null ? (
-          <span className="skeleton" style={{ height: "3rem" }} />
+          <SkeletonTeks baris={2} />
         ) : komentar.length === 0 ? (
           <p className="t-muted">Belum ada komentar.</p>
         ) : (
@@ -638,7 +641,12 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
   }
 
   if (!dokumen) {
-    return <span className="skeleton" style={{ height: "6rem" }} />;
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <SkeletonKartu ikon="document" anak={<SkeletonIsian jumlah={1} />} />
+        <SkeletonDaftar jumlah={3} aksi={2} />
+      </div>
+    );
   }
 
   const mengunggah = antre !== null;
@@ -889,7 +897,7 @@ function PanelGaleri({
     }
   }
 
-  if (!gambar) return <span className="skeleton" style={{ height: "10rem" }} />;
+  if (!gambar) return <SkeletonKotak jumlah={4} />;
 
   return (
     <div className="stack" style={{ gap: "var(--space-5)" }}>
@@ -1028,7 +1036,12 @@ function PanelBrief({ projectId }: { projectId: string }) {
   }
 
   if (!brief) {
-    return <span className="skeleton" style={{ height: "10rem" }} />;
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <SkeletonKartu ikon="quote" anak={<SkeletonIsian jumlah={4} />} />
+        <SkeletonKartu ikon="edit" anak={<SkeletonTeks baris={3} />} />
+      </div>
+    );
   }
 
   return (
@@ -1177,7 +1190,7 @@ function PanelTugas({ projectId }: { projectId: string }) {
   }
 
   if (!tugas) {
-    return <span className="skeleton" style={{ height: "6rem" }} />;
+    return <SkeletonKartu ikon="checklist" anak={<SkeletonDaftar jumlah={3} aksi={2} />} />;
   }
 
   return (
@@ -1332,7 +1345,12 @@ function PanelProgres({ projectId }: { projectId: string }) {
   }
 
   if (!progres) {
-    return <span className="skeleton" style={{ height: "6rem" }} />;
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <SkeletonKartu ikon="clock" anak={<SkeletonIsian jumlah={2} />} />
+        <SkeletonDaftar jumlah={3} aksi={1} />
+      </div>
+    );
   }
 
   return (
@@ -1588,7 +1606,13 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   }
 
   if (!asli) {
-    return <div className="stack">{[0, 1].map((i) => <span key={i} className="skeleton" style={{ height: "8rem" }} />)}</div>;
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <Balok tinggi="3rem" style={{ borderRadius: "var(--radius-pill)" }} />
+        <SkeletonKartu ikon="project" anak={<SkeletonIsian jumlah={4} />} />
+        <SkeletonDaftar jumlah={2} aksi={2} />
+      </div>
+    );
   }
 
   const detail = (
@@ -1970,7 +1994,13 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
  */
 export function ProyekPanel({ halaman }: { halaman: HalamanProyek }) {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <Balok tinggi="3rem" style={{ borderRadius: "var(--radius-pill)" }} />
+        <SkeletonKartu ikon="project" anak={<SkeletonIsian jumlah={4} />} />
+        <SkeletonDaftar jumlah={2} aksi={2} />
+      </div>
+    }>
       {/* Pembungkus .proyekpage yang membuat halaman ini memakai bahasa visual
           yang sama dengan Tambah Proyek: badan halaman ABU, kartu dan isian
           HITAM berbingkai tebal, judul dipisah garis tebal dari isinya. */}

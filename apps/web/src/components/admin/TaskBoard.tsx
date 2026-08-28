@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { SkeletonDaftar, SkeletonKartu } from "../ui/Skeleton";
 import { Avatar } from "../ui/misc/Avatar";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
@@ -53,7 +54,13 @@ function Isi() {
   }
 
   if (tugas === null) {
-    return <div className="stack">{[0, 1, 2].map((i) => <span key={i} className="skeleton" style={{ height: "8rem" }} />)}</div>;
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        {[0, 1, 2].map((i) => (
+          <SkeletonKartu key={i} ikon="checklist" anak={<SkeletonDaftar jumlah={2} aksi={2} />} />
+        ))}
+      </div>
+    );
   }
 
   const aktif = tersaring.filter((t) => t.status !== "selesai");
@@ -140,7 +147,13 @@ function Isi() {
 
 export function TaskBoard() {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        {[0, 1, 2].map((i) => (
+          <SkeletonKartu key={i} ikon="checklist" anak={<SkeletonDaftar jumlah={2} aksi={2} />} />
+        ))}
+      </div>
+    }>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

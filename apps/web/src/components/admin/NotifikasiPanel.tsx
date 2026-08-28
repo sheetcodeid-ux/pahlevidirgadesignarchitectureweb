@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
+import { SkeletonDaftar } from "../ui/Skeleton";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
 
 /** Daftar dan keadaan kosong, dipakai halaman ini DAN popover lonceng. */
@@ -104,5 +105,5 @@ function Isi() {
 }
 
 export function NotifikasiPanel() {
-  return <RequireAuth><Isi /></RequireAuth>;
+  return <RequireAuth kerangka={<SkeletonDaftar jumlah={4} aksi={0} />}><Isi /></RequireAuth>;
 }

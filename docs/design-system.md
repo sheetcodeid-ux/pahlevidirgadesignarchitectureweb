@@ -37,7 +37,7 @@ keputusan pemilik, bukan keputusan teknis murni.
 
 ### Tampilan statis — CSS saja
 
-Typography · Separator · Aspect Ratio · Skeleton · Spinner · Badge · Kbd ·
+Typography · Separator · Aspect Ratio · Skeleton (+ varian berbentuk) · Spinner · Badge · Kbd ·
 Avatar · Card · Empty · Item · Label · Marker · Progress · Alert · Bubble ·
 Message
 
@@ -68,6 +68,23 @@ Resizable · Message Scroller · Questionnaire · Attachment · Voice Note
 ### Utilitas
 
 Direction (konteks LTR/RTL)
+
+### Skeleton berbentuk
+
+`apps/web/src/components/ui/Skeleton.tsx` — `SkeletonBaris`, `SkeletonDaftar`,
+`SkeletonKartu`, `SkeletonStat`, `SkeletonIsian`, `SkeletonKotak`,
+`SkeletonTeks`, `Balok`.
+
+Aturannya satu dan itu yang membuatnya tidak lekang: **placeholder memakai
+kelas markup yang sama dengan komponen aslinya** (`.card`, `.item`, `.field`,
+`.spec-grid`), lalu isinya diganti balok. Tinggi, jarak, dan radiusnya ikut
+sendiri saat komponen aslinya berubah — tidak ada angka yang perlu
+diselaraskan tangan. Karena itu komponen di sana **tidak menerima ukuran
+piksel**: begitu pemanggil boleh menentukan tinggi baris, jaminan itu hilang.
+
+`RequireAuth` menerima prop `kerangka`. Tiap panel mengirim bentuk halamannya
+sendiri — bentuk yang sama yang ia pakai saat menunggu datanya — supaya
+halaman tersusun sekali, bukan spinner dulu lalu kerangka lalu isi.
 
 ## Status
 

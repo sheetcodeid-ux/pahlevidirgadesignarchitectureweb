@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { BarChart } from "../ui/data/Chart";
 import { RequireAuth } from "./RequireAuth";
 import { ambilRingkasanKeuangan, type FinanceOverview } from "../../lib/admin";
@@ -23,7 +24,12 @@ function Isi() {
   }
 
   if (!data) {
-    return <div className="stack">{[0, 1].map((i) => <span key={i} className="skeleton" style={{ height: "6rem" }} />)}</div>;
+    return (
+      <div className="stack" style={{ gap: "var(--space-6)" }}>
+        <SkeletonStat jumlah={3} />
+        <SkeletonKartu ikon="finance" />
+      </div>
+    );
   }
 
   return (
@@ -126,5 +132,10 @@ function Isi() {
 }
 
 export function FinancePanel() {
-  return <RequireAuth><Isi /></RequireAuth>;
+  return <RequireAuth kerangka={
+      <div className="stack" style={{ gap: "var(--space-6)" }}>
+        <SkeletonStat jumlah={3} />
+        <SkeletonKartu ikon="finance" />
+      </div>
+    }><Isi /></RequireAuth>;
 }

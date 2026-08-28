@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { Balok, SkeletonIsian } from "../ui/Skeleton";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, ZONA_WAKTU, type StudioSettings } from "../../lib/admin";
@@ -28,6 +29,43 @@ const PENUH: [keyof StudioSettings, string, string?][] = [
   ["address", "Alamat"],
   ["instagramUrl", "URL Instagram"],
 ];
+
+/**
+ * Kerangka Info Studio: dua kolom — logo di kiri, kartu isian di kanan —
+ * memakai kelas .settings-split yang sama dengan formnya, jadi lebar
+ * kolomnya identik dan halaman tidak melompat saat datanya tiba.
+ */
+function KerangkaSettings() {
+  return (
+    <div className="settings-split" aria-hidden="true">
+      <div className="settings-split__logo">
+        <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start" }}>
+          <span className="icon-tile" style={{ opacity: 0.4 }}><Icon name="image" size={20} /></span>
+          <span className="card__titles">
+            <Balok lebar="60%" tinggi="1rem" />
+            <Balok lebar="90%" style={{ marginTop: "0.35rem" }} />
+          </span>
+        </div>
+        <div className="logo-preview">
+          <Balok bulat tinggi="100%" style={{ width: "100%" }} />
+        </div>
+        <Balok tinggi="7rem" style={{ borderRadius: "var(--radius-lg)" }} />
+      </div>
+
+      <div className="settings-split__form">
+        <div className="settings-card">
+          <div className="settings-card__head">
+            <span className="icon-tile icon-tile--sm" style={{ opacity: 0.4 }}><Icon name="building" size={16} /></span>
+            <Balok lebar="8rem" tinggi="1rem" />
+          </div>
+          <div className="settings-card__body stack">
+            <SkeletonIsian jumlah={6} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Isi() {
   const toast = useToast();
@@ -114,7 +152,7 @@ function Isi() {
   }
 
   if (!asli) {
-    return <div className="stack">{[0, 1].map((i) => <span key={i} className="skeleton" style={{ height: "4rem" }} />)}</div>;
+    return <KerangkaSettings />;
   }
 
   const logoSrc = previewLogo ?? asli.logoUrl ?? null;
@@ -324,7 +362,7 @@ function Isi() {
 
 export function SettingsForm() {
   return (
-    <RequireAuth masterOnly>
+    <RequireAuth masterOnly kerangka={<KerangkaSettings />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

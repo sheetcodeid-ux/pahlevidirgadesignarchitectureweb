@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { SkeletonDaftar } from "../ui/Skeleton";
 import { Sheet } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
@@ -69,7 +70,7 @@ function Isi() {
   }
 
   if (!pesan) {
-    return <div className="stack">{[0, 1, 2].map((i) => <span key={i} className="skeleton" style={{ height: "4.5rem" }} />)}</div>;
+    return <div className="stack"><SkeletonDaftar jumlah={4} /></div>;
   }
 
   return (
@@ -179,7 +180,7 @@ function Isi() {
 
 export function InquiryList() {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={<SkeletonDaftar jumlah={4} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );
