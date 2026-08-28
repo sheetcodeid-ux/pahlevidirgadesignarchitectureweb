@@ -690,6 +690,13 @@
   .spec-grid--rapat { grid-template-columns: 1fr; }
 }
 
+/* Varian tiga kolom untuk isian yang memang berjumlah tiga (Label, Kategori,
+   Nominal). Tanpa ini mereka ikut pola empat kolom dan yang ketiga berdiri
+   sendiri dengan satu sel kosong di sebelahnya. */
+@container (min-width: 34rem) {
+  .spec-grid--tiga { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 .spec-demo {
   display: flex;
   flex-direction: column;
@@ -842,6 +849,8 @@
    permintaan pemilik. Dibatasi 22rem supaya tidak jadi raksasa di layar
    sangat lebar. */
 .logo-preview {
+  /* Penampung untuk tombol hapus yang menempel di tepinya. */
+  position: relative;
   width: min(22rem, 42%);
   aspect-ratio: 1;
   height: auto;
@@ -860,6 +869,34 @@
 }
 
 .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Tombol hapus duduk di tepi lingkaran, bukan di tengahnya: di tengah ia
+   menutupi logo yang sedang dinilai. Merah karena destruktif — warna di
+   sistem ini punya makna tetap. */
+.logo-preview__hapus {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
+}
+
+.logo-preview__hapus:hover,
+.logo-preview__hapus:focus-visible {
+  color: var(--brand);
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 14%, var(--bg-sunken));
+}
 
 /* Diukur dari tangkapan penuh referensi: kotaknya memenuhi lebar-dalam
    kolom dengan rasio 1.56:1 — melebar, bukan persegi. Rasio dipakai (bukan
@@ -1310,6 +1347,43 @@
    keadaan kosong butuh napas. */
 .listpage__pad { padding: var(--space-6); }
 
+/* --- Baris cover proyek --------------------------------------------------
+   Pratinjau kecil + keterangan + satu tombol, dalam satu baris. Cover
+   selebar kartu memakan tinggi yang dibutuhkan galeri di bawahnya, padahal
+   pertanyaannya cuma "yang mana yang jadi cover". */
+.cover-baris {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-sunken);
+}
+
+.cover-baris__gambar {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  aspect-ratio: 16 / 10;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+}
+
+.cover-baris__gambar img { width: 100%; height: 100%; object-fit: cover; }
+.cover-baris__catatan { font-size: var(--text-2xs); color: var(--text-faint); text-align: center; padding: 0 0.25rem; }
+.cover-baris__teks { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
+.cover-baris__aksi { flex: none; }
+
+@media (max-width: 30rem) {
+  .cover-baris { flex-wrap: wrap; }
+  .cover-baris__aksi { width: 100%; justify-content: center; }
+}
+
 /* --- Galeri proyek -------------------------------------------------------
    Petak foto di editor proyek. Kartu foto sengaja tidak memakai .pcard:
    isinya berbeda (gambar penuh di atas, isian keterangan, lalu deretan
@@ -1327,10 +1401,18 @@
 .galeri-item {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--bg-sunken);
   overflow: hidden;
+}
+
+/* Di dalam carousel kartunya berlebar tetap dan lebih sempit daripada slide
+   bawaan (18rem): sepuluh foto yang harus ditelusuri lebih enak dilihat
+   kalau tiga-empat muat sekaligus, bukan satu setengah. */
+.carousel__track .galeri-item {
+  flex: 0 0 min(13.5rem, 78%);
+  scroll-snap-align: start;
 }
 
 .galeri-item .aspect { border-bottom: 1px solid var(--border); }
@@ -1594,6 +1676,52 @@
 .proyekpage .card__header .t-muted { font-size: var(--text-sm); }
 .proyekpage .card__body { padding-top: var(--space-4); }
 .proyekpage .card p { max-width: none; }
+
+/* --- Pemilih status terbit ---------------------------------------------- */
+
+/* Tiga kartu berjajar. auto-fit dengan ambang rendah supaya di kartu sempit
+   ia turun jadi satu kolom sendiri, bukan memaksa tiga kolom yang isinya
+   terpotong. */
+.statuspilih {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  gap: var(--space-3);
+}
+
+/* Ikon di atas, teks di bawah — bukan bersebelahan: dalam kolom selebar
+   sepertiga kartu, ikon di kiri memakan ruang yang dibutuhkan judulnya. */
+.statuspilih__kartu {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+/* Penanda centang bawaan .radio-card dilepas di sini: dengan tiga kartu
+   berjajar, yang terpilih sudah ditandai bingkai merah dan ikon merah —
+   lingkaran centang di pojok cuma menambah benda. */
+.statuspilih__kartu .radio-card__mark { display: none; }
+
+.statuspilih__ikon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  border: 2px solid var(--border-strong);
+  color: var(--text-muted);
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.statuspilih__kartu:has(input:checked) .statuspilih__ikon {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+/* Terbit yang belum boleh dipilih (cover belum ada) harus terlihat mati,
+   bukan sekadar tidak bereaksi saat diklik. */
+.statuspilih__kartu:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
 
 /* --- Panel kanan halaman proyek ---------------------------------------- */
 

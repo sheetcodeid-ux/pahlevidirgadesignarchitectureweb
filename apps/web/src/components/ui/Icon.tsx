@@ -11,6 +11,7 @@
  */
 
 export type IconName =
+  | "archive"
   | "dashboard"
   | "project"
   | "image"
@@ -367,6 +368,16 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   /* Kado: penanda pencapaian. */
+  /* Kotak arsip: tutup di atas, badan di bawah, satu tarikan pegangan.
+     Dipakai untuk status "Arsip" — disimpan, tidak dibuang. */
+  archive: (
+    <>
+      <path d="M3 4h18v4H3z" />
+      <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
+      <path d="M10 12h4" />
+    </>
+  ),
+
   gift: (
     <>
       <path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8" />

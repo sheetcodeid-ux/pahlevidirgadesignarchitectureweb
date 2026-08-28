@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "../ui/Icon";
 import { Select } from "../ui/overlay/Select";
 import { InputRupiah } from "../ui/InputRupiah";
+import { Carousel } from "../ui/data/Carousel";
 import { Tabs } from "../ui/misc/Nav";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
@@ -25,6 +26,12 @@ import { formatRupiah } from "../../lib/format";
 /* Radix Select menolak value string kosong — itu nilai cadangan untuk
    "belum ada pilihan". Jadi "belum ditentukan" perlu nilai sendiri. */
 const TANPA_PIC = "__tanpa__";
+
+/* Batas foto per proyek, dipakai galeri maupun material. Angkanya keputusan
+   pemilik, bukan batas teknis: sepuluh foto sudah lebih dari cukup untuk satu
+   proyek, dan galeri yang tak terbatas membuat halaman publik lambat tanpa
+   ada yang menyadari penyebabnya. */
+const MAKS_FOTO = 10;
 
 const LABEL_STATUS: Record<string, string> = {
   draft: "Draf", published: "Terbit", archived: "Arsip",
@@ -287,7 +294,11 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
         </div>
         <div className="card__body">
           <div className="stack">
-            <div className="spec-grid">
+            {/* --rapat: ambang .spec-grid biasa (18rem) memaksa Nominal turun
+                sendirian ke baris kedua di kartu selebar ini. Ketiganya isian
+                pendek dan dibaca sebagai satu kalimat — label, jenisnya,
+                berapa — jadi harus sebaris. */}
+            <div className="spec-grid spec-grid--rapat spec-grid--tiga">
               <div className="field">
                 <label className="field__label" htmlFor="biaya-label">Label</label>
                 <input id="biaya-label" className="input" value={labelBiaya} onChange={(e) => setLabelBiaya(e.target.value)}
@@ -581,8 +592,25 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
   }
 
   async function unggahBanyak(files: FileList | File[]) {
-    const daftar = [...files].filter((f) => f.type.startsWith("image/"));
-    if (daftar.length === 0) return;
+    const semua = [...files].filter((f) => f.type.startsWith("image/"));
+    if (semua.length === 0) return;
+
+    // Batas 10 foto per proyek. Dipotong di sini, bukan ditolak seluruhnya:
+    // menolak sepuluh berkas karena yang kesebelas kelebihan membuang
+    // sembilan unggahan yang sebenarnya sah.
+    const sisa = MAKS_FOTO - (gambar?.length ?? 0);
+    if (sisa <= 0) {
+      toast({ judul: "Galeri penuh", keterangan: `Maksimum ${MAKS_FOTO} foto per proyek.`, nada: "gagal" });
+      return;
+    }
+    const daftar = semua.slice(0, sisa);
+    if (semua.length > sisa) {
+      toast({
+        judul: `${daftar.length} foto diunggah`,
+        keterangan: `Sisanya dilewati — maksimum ${MAKS_FOTO} foto per proyek.`,
+        nada: "gagal",
+      });
+    }
 
     setMengunggah(daftar.length);
     // Berurutan, bukan Promise.all: unggahan paralel dari satu koneksi rumah
@@ -670,7 +698,10 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
         <span className="t-subheading">
           {mengunggah > 0 ? `Mengunggah ${mengunggah} foto…` : "Tarik foto ke sini, atau klik untuk memilih"}
         </span>
-        <span className="t-muted">Bisa banyak sekaligus. JPG, PNG, WEBP, atau AVIF.</span>
+        <span className="t-muted">
+          JPG, PNG, WEBP, atau AVIF — maksimum {MAKS_FOTO} foto per proyek
+          ({gambar.length}/{MAKS_FOTO} terpakai).
+        </span>
       </div>
 
       <input
@@ -689,9 +720,12 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
           <p className="t-muted">Halaman proyek publik hanya menampilkan seksi galeri kalau ada isinya.</p>
         </div>
       ) : (
-        <ul className="galeri-grid">
+        // Carousel, bukan petak: sepuluh foto dalam petak mendorong sisa
+        // halaman jauh ke bawah, sementara yang dilakukan staf di sini adalah
+        // menelusuri satu per satu. Komponennya diambil dari UI Component.
+        <Carousel label="Foto galeri proyek">
           {gambar.map((g, i) => (
-            <li className="galeri-item" key={g.id}>
+            <div className="galeri-item carousel__slide" key={g.id}>
               <div className="aspect aspect--4-3">
                 <img src={g.url} alt={g.altText ?? ""} loading="lazy" />
               </div>
@@ -735,9 +769,9 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
                   <Icon name="star" size={14} />Jadikan cover
                 </button>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </Carousel>
       )}
     </div>
   );
@@ -1071,7 +1105,10 @@ function PanelProgres({ projectId }: { projectId: string }) {
           </span>
         </div>
         <div className="card__body">
-          <div className="segmented" role="group" aria-label="Fase proyek">
+          {/* --block: fase dibaca sebagai perjalanan dari kiri ke kanan, jadi
+              bilahnya harus penuh sampai ujung — bukan menggerombol di kiri
+              dengan ruang kosong di kanan. */}
+          <div className="segmented segmented--block segmented--tebal" role="group" aria-label="Fase proyek">
             {FASE.map(([nilai, label]) => (
               <button
                 key={nilai}
@@ -1351,33 +1388,39 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
 
   const galeri = (
     <div className="stack proyek-kartu">
-      {nilai("coverImageUrl") || nilai("coverImageKey" as keyof Proyek) ? (
-        <div className="aspect aspect--16-9">
+      {/* Cover dipasang sebagai pratinjau kecil di samping keterangannya,
+          bukan gambar selebar kartu: yang perlu dilihat di sini cuma "cover-
+          nya yang mana", dan gambar 16:9 selebar kartu mendorong seluruh
+          galeri keluar layar sebelum sempat terlihat. */}
+      <div className="cover-baris">
+        <div className="cover-baris__gambar">
           {nilai("coverImageUrl") ? (
             <img src={String(nilai("coverImageUrl"))} alt={`Cover ${asli.title}`} />
+          ) : nilai("coverImageKey" as keyof Proyek) ? (
+            <span className="cover-baris__catatan">Belum disimpan</span>
           ) : (
-            <div style={{ display: "grid", placeItems: "center", color: "var(--text-faint)" }}>
-              Cover baru tersimpan — tekan Simpan untuk menerapkannya
-            </div>
+            <Icon name="image" size={22} />
           )}
         </div>
-      ) : (
-        <div className="dropzone">
-          <span className="icon-tile"><Icon name="image" size={20} /></span>
-          <span className="t-subheading">Belum ada cover</span>
-          <span className="t-muted">Proyek tidak bisa diterbitkan tanpa cover.</span>
-        </div>
-      )}
 
-      <input ref={berkas} type="file" className="sr-only"
-        accept="image/jpeg,image/png,image/webp,image/avif"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) unggah(f); }} />
-      <button type="button" className="btn btn--secondary" onClick={() => berkas.current?.click()}>
-        <Icon name="upload" size={15} />Unggah cover
-      </button>
-      <p className="field__help">
-        Berkas dikirim langsung ke penyimpanan lewat URL berbatas waktu — tidak melewati server API.
-      </p>
+        <div className="cover-baris__teks">
+          <span className="t-subheading">Gambar sampul</span>
+          <span className="t-muted">
+            {nilai("coverImageUrl") || nilai("coverImageKey" as keyof Proyek)
+              ? "Dipakai sebagai gambar utama proyek di situs publik."
+              : "Proyek tidak bisa diterbitkan tanpa cover."}
+          </span>
+        </div>
+
+        <input ref={berkas} type="file" className="sr-only"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) unggah(f); }} />
+        <button type="button" className="btn btn--secondary btn--sm cover-baris__aksi"
+          onClick={() => berkas.current?.click()}>
+          <Icon name="upload" size={15} />
+          {nilai("coverImageUrl") || nilai("coverImageKey" as keyof Proyek) ? "Ganti" : "Unggah"}
+        </button>
+      </div>
 
       <span className="separator" role="presentation" />
 
@@ -1477,32 +1520,41 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
                 ? "Proyek siap diterbitkan."
                 : "Unggah cover dulu sebelum menerbitkan."}
             </p>
-            <div className="stack" style={{ gap: "var(--space-2)" }}>
+            {/* Menyamping, bukan bertumpuk: ketiganya saling meniadakan dan
+                sama pentingnya, jadi berjajar membuat perbandingannya terbaca
+                sekali lihat. Ikonnya dipilih supaya cocok maknanya dengan
+                labelnya — pensil untuk yang masih ditulis, bola dunia untuk
+                yang sudah dilihat orang, kotak arsip untuk yang disimpan. */}
+            <div className="statuspilih">
               {[
-                { v: "draft", t: "Draf", d: "Hanya terlihat oleh staf studio." },
-                { v: "published", t: "Terbit", d: "Tampil di situs setelah build berikutnya." },
-                { v: "archived", t: "Arsip", d: "Disembunyikan tanpa dihapus." },
+                { v: "draft", t: "Draf", d: "Hanya terlihat oleh staf studio.", i: "edit" as const },
+                { v: "published", t: "Terbit", d: "Tampil di situs setelah build berikutnya.", i: "globe" as const },
+                { v: "archived", t: "Arsip", d: "Disembunyikan tanpa dihapus.", i: "archive" as const },
               ].map((s) => (
-                <label className="radio-card" key={s.v}>
+                <label className="radio-card statuspilih__kartu" key={s.v}>
                   <input type="radio" name="ed-status" checked={nilai("status") === s.v}
                     disabled={s.v === "published" && !bisaTerbit}
                     onChange={() => set("status", s.v)} />
-                  <span className="radio-card__mark"><Icon name="check" size={14} /></span>
+                  <span className="statuspilih__ikon"><Icon name={s.i} size={18} /></span>
                   <span className="radio-card__body">
                     <span className="radio-card__title">{s.t}</span>
                     <span className="radio-card__desc">{s.d}</span>
                   </span>
                 </label>
               ))}
-              <label className="choice" style={{ marginTop: "var(--space-2)" }}>
-                <input type="checkbox" checked={Boolean(nilai("isFeatured"))}
-                  onChange={(e) => set("isFeatured", e.target.checked)} />
-                <span className="choice__text">
-                  <span>Tampilkan di beranda</span>
-                  <span className="choice__desc">Proyek unggulan muncul di halaman depan.</span>
-                </span>
-              </label>
             </div>
+
+            {/* Di LUAR grid status: ini pilihan lain yang berdiri sendiri —
+                sebuah proyek bisa terbit tanpa jadi unggulan. Di dalam grid
+                ia jadi kolom keempat yang seolah bagian dari pilihan status. */}
+            <label className="choice" style={{ marginTop: "var(--space-4)" }}>
+              <input type="checkbox" checked={Boolean(nilai("isFeatured"))}
+                onChange={(e) => set("isFeatured", e.target.checked)} />
+              <span className="choice__text">
+                <span>Tampilkan di beranda</span>
+                <span className="choice__desc">Proyek unggulan muncul di halaman depan.</span>
+              </span>
+            </label>
           </section>
 
           <Tabs

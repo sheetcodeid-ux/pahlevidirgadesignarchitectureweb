@@ -132,7 +132,27 @@ function Isi() {
 
         <div className="logo-preview">
           {logoSrc ? (
-            <img src={logoSrc} alt="Logo studio" />
+            <>
+              <img src={logoSrc} alt="Logo studio" />
+              {/* Tombol hapus menempel di lingkarannya, bukan di bawah kotak
+                  unggah: yang dihapus adalah logo yang sedang terlihat, jadi
+                  tombolnya harus berada pada benda itu. logoKey dikosongkan,
+                  bukan langsung dihapus dari penyimpanan — perubahannya baru
+                  berlaku setelah Simpan, sama seperti isian lain di halaman
+                  ini, sehingga masih bisa dibatalkan dengan memuat ulang. */}
+              <button
+                type="button"
+                className="logo-preview__hapus"
+                aria-label="Hapus logo studio"
+                onClick={() => {
+                  setPreviewLogo((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
+                  setDraf((d) => ({ ...d, logoKey: null }));
+                  toast({ judul: "Logo dilepas", keterangan: "Tekan Simpan untuk menerapkannya.", nada: "sukses" });
+                }}
+              >
+                <Icon name="trash" size={16} />
+              </button>
+            </>
           ) : (
             <>
               <Icon name="camera" size={60} />
