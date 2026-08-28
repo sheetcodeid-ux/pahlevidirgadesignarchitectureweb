@@ -214,6 +214,8 @@ export interface StudioSettings {
   logoKey?: string | null;
   /** Bukan kolom database: keadaan rahasia Worker, dibalas server saja. */
   notifikasiEmailAktif?: boolean;
+  /** Apakah Worker punya token GitHub untuk memicu build ulang situs. */
+  terbitSitusAktif?: boolean;
   /** Nama zona IANA (Asia/Jakarta | Asia/Makassar | Asia/Jayapura). */
   timezone?: string;
 }
@@ -347,6 +349,15 @@ export interface FinanceOverview {
   proyek: FinanceOverviewRow[];
 }
 
+/**
+ * Memicu build ulang situs statis.
+ *
+ * Halaman proyek publik dibekukan saat build, jadi menerbitkan proyek di
+ * panel admin tidak mengubah situs sampai ini dijalankan. Tokennya hidup di
+ * Worker API — halaman ini tidak pernah memegangnya.
+ */
+export const terbitkanSitus = () => panggil<{ dimulai: boolean }>("/admin/publish", { method: "POST" });
+
 export const ambilRingkasanKeuangan = () => panggil<FinanceOverview>("/admin/finance/overview");
 
 export interface Invoice {
@@ -436,13 +447,21 @@ export interface GambarProyek {
   sortOrder: number;
 }
 
-export const daftarGambar = (projectId: string) =>
-  panggil<GambarProyek[]>(`/admin/projects/${projectId}/images`);
+/** Foto galeri dan foto material tinggal di tabel yang sama, dibedakan kind. */
+export type JenisGambar = "galeri" | "material";
 
-export const tambahGambar = (projectId: string, storageKey: string, sortOrder: number) =>
+export const daftarGambar = (projectId: string, kind: JenisGambar = "galeri") =>
+  panggil<GambarProyek[]>(`/admin/projects/${projectId}/images?kind=${kind}`);
+
+export const tambahGambar = (
+  projectId: string,
+  storageKey: string,
+  sortOrder: number,
+  kind: JenisGambar = "galeri",
+) =>
   panggil<{ id: string }>(`/admin/projects/${projectId}/images`, {
     method: "POST",
-    body: JSON.stringify({ storageKey, sortOrder }),
+    body: JSON.stringify({ storageKey, sortOrder, kind }),
   });
 
 export const ubahGambar = (id: string, patch: { altText?: string | null; caption?: string | null; sortOrder?: number }) =>
@@ -480,7 +499,13 @@ export const hapusKontak = (id: string) =>
 // --- Brief proyek (diisi klien lewat link token) --------------------------
 
 export interface BriefProyek {
+  /* budgetRange dan timeline peninggalan bentuk lama (teks bebas). Masih
+     dikirim API, tapi form memakai tiga field di bawahnya. */
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  /** Format ISO yyyy-mm-dd, sama dengan <input type="date">. */
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;

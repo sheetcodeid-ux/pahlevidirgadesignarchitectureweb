@@ -80,16 +80,29 @@ export async function getBySlug(sql: Sql, assetBase: string, slug: string): Prom
   project.seoTitle = row.seo_title;
   project.seoDescription = row.seo_description;
   project.images = await imagesFor(sql, assetBase, row.id);
+  project.materials = await imagesFor(sql, assetBase, row.id, "material");
   return project;
 }
 
-async function imagesFor(sql: Sql, assetBase: string, projectID: string): Promise<Image[]> {
+/**
+ * Foto galeri saja — foto material sengaja TIDAK ikut.
+ *
+ * Keduanya tinggal di tabel yang sama, jadi tanpa penyaring ini seluruh
+ * foto material bocor ke galeri halaman proyek publik begitu ada yang
+ * mengunggahnya. Materialnya punya seksinya sendiri (materialsFor).
+ */
+async function imagesFor(
+  sql: Sql,
+  assetBase: string,
+  projectID: string,
+  kind: "galeri" | "material" = "galeri",
+): Promise<Image[]> {
   const rows = await sql<
     { id: string; storage_key: string; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
   >`
     select id, storage_key, alt_text, caption, width, height, blur_data_url, sort_order
     from public.project_images
-    where project_id = ${projectID}
+    where project_id = ${projectID} and kind = ${kind}
     order by sort_order, created_at`;
 
   return rows.map((r) => ({

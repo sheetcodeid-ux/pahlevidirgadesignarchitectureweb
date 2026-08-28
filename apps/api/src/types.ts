@@ -21,6 +21,15 @@ export interface Env {
   RESEND_API_KEY?: string;
   INQUIRY_NOTIFY_TO?: string;
 
+  /* Token GitHub untuk memicu build ulang situs statis dari panel admin.
+     Cakupannya cukup "actions: write" pada satu repo ini saja — bukan token
+     serba bisa. Kalau kosong, tombol Terbitkan situs mengatakan dirinya
+     belum dikonfigurasi, bukan diam-diam gagal. */
+  GITHUB_DISPATCH_TOKEN?: string;
+  GITHUB_REPO?: string;
+  GITHUB_WORKFLOW?: string;
+  GITHUB_BRANCH?: string;
+
   // Bindings
   DB: Hyperdrive;
   RATE_LIMIT: KVNamespace;
@@ -54,6 +63,8 @@ export interface Project {
   seoDescription?: string | null;
   publishedAt?: string | null;
   images?: Image[];
+  /** Foto material yang dipakai proyek — seksi tersendiri, bukan galeri. */
+  materials?: Image[];
   /** Tahap alur kerja internal studio — beda dari status (draft/published/archived). */
   pipelineStage?: string;
   contractValue?: number | null;
@@ -100,6 +111,9 @@ export interface ProjectInput {
   contractValue?: number | null;
 }
 
+/** Foto galeri dan foto material tinggal di tabel yang sama, dibedakan kind. */
+export type ImageKind = "galeri" | "material";
+
 export interface ImageInput {
   storageKey: string;
   altText?: string | null;
@@ -107,6 +121,7 @@ export interface ImageInput {
   width?: number | null;
   height?: number | null;
   sortOrder: number;
+  kind?: ImageKind;
 }
 
 /** Patch sebagian untuk satu gambar galeri. */
@@ -208,7 +223,13 @@ export interface ClientInvoice {
 
 /** Dilihat staf: termasuk internalNotes yang tidak pernah sampai ke klien. */
 export interface ProjectBrief {
+  /* budgetRange dan timeline peninggalan bentuk lama (teks bebas). Tetap
+     dikirim supaya klien lama tidak pecah; yang dipakai form sekarang
+     budgetAmount, startDate, dan endDate. */
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;
@@ -219,6 +240,9 @@ export interface ProjectBrief {
 /** Field yang boleh diubah staf — mencakup internalNotes. undefined = jangan diubah. */
 export interface ProjectBriefInput {
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;
