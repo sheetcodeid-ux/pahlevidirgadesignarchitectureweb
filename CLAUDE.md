@@ -50,6 +50,16 @@ tayang sebelum kolomnya ada langsung gagal. Setelah menerapkan, buktikan
 kolomnya benar-benar ada lewat `execute_sql` — jangan menganggap berhasil
 karena `apply_migration` membalas success.
 
+**Cache query Hyperdrive HARUS mati.** Bawaannya menyala (60 detik) dan itu
+sudah menggigit: foto yang baru diunggah tidak muncul, cover yang baru
+dipilih tidak berubah, dan refresh browser tidak menolong karena cache-nya
+di edge. Setelannya di dashboard Cloudflare → Hyperdrive → `pahlevidirga-db`
+→ Caching. Langkah otomatis di workflow deploy sudah dicoba dan dilepas:
+`CLOUDFLARE_API_TOKEN` ditolak di endpoint Hyperdrive (Authentication error
+10000). Kalau token itu nanti diberi izin **Hyperdrive: Edit**, langkahnya
+bisa dikembalikan supaya setelan ini tidak bisa diam-diam berubah lagi.
+Kalau ada laporan "data lama" lagi, periksa setelan ini lebih dulu.
+
 Cloudflare: akun **`pahlevidirgadesignarchitecture`**, ID
 `cf6a6bde45d3fd8a93463e6cc7e71aa1`. Worker `pahlevidirgadesignarchitectureweb`
 menyajikan situs statis dari `apps/web/dist` lewat `wrangler.jsonc` di akar,
