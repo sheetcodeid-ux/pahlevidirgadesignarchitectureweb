@@ -63,6 +63,8 @@ export interface Project {
   seoDescription?: string | null;
   publishedAt?: string | null;
   images?: Image[];
+  /** Foto material yang dipakai proyek — seksi tersendiri, bukan galeri. */
+  materials?: Image[];
   /** Tahap alur kerja internal studio — beda dari status (draft/published/archived). */
   pipelineStage?: string;
   contractValue?: number | null;
@@ -109,6 +111,9 @@ export interface ProjectInput {
   contractValue?: number | null;
 }
 
+/** Foto galeri dan foto material tinggal di tabel yang sama, dibedakan kind. */
+export type ImageKind = "galeri" | "material";
+
 export interface ImageInput {
   storageKey: string;
   altText?: string | null;
@@ -116,6 +121,7 @@ export interface ImageInput {
   width?: number | null;
   height?: number | null;
   sortOrder: number;
+  kind?: ImageKind;
 }
 
 /** Patch sebagian untuk satu gambar galeri. */

@@ -138,9 +138,21 @@ admin.delete("/projects/:id", async (c) => {
   }
 });
 
+/**
+ * GET /api/v1/admin/projects/:id/images?kind=galeri|material
+ *
+ * Satu endpoint untuk dua jenis, bukan dua endpoint: yang berbeda cuma
+ * penyaringnya, dan dua endpoint berarti dua tempat yang harus diingat
+ * setiap kali bentuk gambar berubah. Nilai selain kedua itu ditolak, bukan
+ * diam-diam dianggap galeri.
+ */
 admin.get("/projects/:id/images", async (c) => {
+  const kind = c.req.query("kind") ?? "galeri";
+  if (kind !== "galeri" && kind !== "material") {
+    return c.json({ error: { status: 422, message: "kind harus galeri atau material" } }, 422);
+  }
   const list = await withDb(c.env, c.executionCtx, (sql) =>
-    adminRepo.listImages(sql, assetBase(c.env), c.req.param("id")));
+    adminRepo.listImages(sql, assetBase(c.env), c.req.param("id"), kind));
   return c.json({ data: list });
 });
 
@@ -148,6 +160,9 @@ admin.post("/projects/:id/images", async (c) => {
   const input = await c.req.json<ImageInput>().catch(() => ({}) as ImageInput);
   if (!input.storageKey) {
     return c.json({ error: { status: 422, message: "storageKey wajib diisi" } }, 422);
+  }
+  if (input.kind !== undefined && input.kind !== "galeri" && input.kind !== "material") {
+    return c.json({ error: { status: 422, message: "kind harus galeri atau material" } }, 422);
   }
 
   try {

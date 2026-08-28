@@ -21,7 +21,7 @@ import {
   ambilBrief, ubahBrief, type BriefProyek,
   daftarKomentarDokumen, tambahKomentarDokumen, type KomentarDokumen,
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
-  terbitkanSitus,
+  terbitkanSitus, type JenisGambar,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 
@@ -573,7 +573,37 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
  * pustaka tambahan dan perilaku sentuh yang harus dirawat sendiri, sementara
  * satu proyek jarang lebih dari sepuluh foto.
  */
-function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCover: (key: string) => void }) {
+/* Kata-kata yang berbeda antara galeri dan material. Dipisah ke satu tempat
+   supaya panelnya tetap satu — yang berbeda cuma isi kalimat dan satu tombol,
+   bukan cara kerjanya. Menyalin panelnya berarti merawat dua salinan dari
+   unggah berurutan, batas sepuluh, urutan, dan penghapusan. */
+const KATA_GAMBAR = {
+  galeri: {
+    judul: "Foto galeri",
+    ket: "Tampil di halaman proyek publik, urut seperti di bawah.",
+    kosong: "Belum ada foto galeri",
+    kosongKet: "Halaman proyek publik hanya menampilkan seksi galeri kalau ada isinya.",
+    seret: "Tarik foto ke sini, atau klik untuk memilih",
+    label: "Keterangan (opsional)",
+  },
+  material: {
+    judul: "Material yang dipakai",
+    ket: "Bahan yang membentuk proyek ini — beri nama tiap fotonya.",
+    kosong: "Belum ada foto material",
+    kosongKet: "Contoh: batu alam, kayu jati, beton ekspos, genteng tanah liat.",
+    seret: "Tarik foto material ke sini, atau klik untuk memilih",
+    label: "Nama material",
+  },
+} as const;
+
+function PanelGaleri({
+  proyek, jenis = "galeri", onJadikanCover,
+}: {
+  proyek: Proyek;
+  jenis?: JenisGambar;
+  onJadikanCover?: (key: string) => void;
+}) {
+  const kata = KATA_GAMBAR[jenis];
   const toast = useToast();
   const [gambar, setGambar] = useState<GambarProyek[] | null>(null);
   const [mengunggah, setMengunggah] = useState(0);
@@ -581,16 +611,18 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
   const berkas = useRef<HTMLInputElement>(null);
 
   function muat() {
-    daftarGambar(proyek.id).then(setGambar).catch(() => setGambar([]));
+    daftarGambar(proyek.id, jenis).then(setGambar).catch(() => setGambar([]));
   }
 
-  useEffect(muat, [proyek.id]);
+  // jenis ikut jadi dependensi: satu komponen ini dipakai dua kali di halaman
+  // yang sama, dan tanpa itu panel material akan menampilkan foto galeri.
+  useEffect(muat, [proyek.id, jenis]);
 
   async function unggahSatu(f: File, urutan: number) {
     const target = await mintaUrlUnggah(proyek.slug, f.type);
     const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f });
     if (!res.ok) throw new Error(`Penyimpanan menolak ${f.name} (${res.status})`);
-    await tambahGambar(proyek.id, target.key, urutan);
+    await tambahGambar(proyek.id, target.key, urutan, jenis);
   }
 
   async function unggahBanyak(files: FileList | File[]) {
@@ -602,7 +634,7 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
     // sembilan unggahan yang sebenarnya sah.
     const sisa = MAKS_FOTO - (gambar?.length ?? 0);
     if (sisa <= 0) {
-      toast({ judul: "Galeri penuh", keterangan: `Maksimum ${MAKS_FOTO} foto per proyek.`, nada: "gagal" });
+      toast({ judul: `${kata.judul} penuh`, keterangan: `Maksimum ${MAKS_FOTO} foto per proyek.`, nada: "gagal" });
       return;
     }
     const daftar = semua.slice(0, sisa);
@@ -698,7 +730,7 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
           {mengunggah > 0 ? <span className="spinner spinner--sm" /> : <Icon name="image" size={20} />}
         </span>
         <span className="t-subheading">
-          {mengunggah > 0 ? `Mengunggah ${mengunggah} foto…` : "Tarik foto ke sini, atau klik untuk memilih"}
+          {mengunggah > 0 ? `Mengunggah ${mengunggah} foto…` : kata.seret}
         </span>
         <span className="t-muted">
           JPG, PNG, WEBP, atau AVIF — maksimum {MAKS_FOTO} foto per proyek
@@ -718,14 +750,14 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
       {gambar.length === 0 ? (
         <div className="empty">
           <span className="icon-tile"><Icon name="image" size={20} /></span>
-          <span className="t-subheading">Belum ada foto galeri</span>
-          <p className="t-muted">Halaman proyek publik hanya menampilkan seksi galeri kalau ada isinya.</p>
+          <span className="t-subheading">{kata.kosong}</span>
+          <p className="t-muted">{kata.kosongKet}</p>
         </div>
       ) : (
         // Carousel, bukan petak: sepuluh foto dalam petak mendorong sisa
         // halaman jauh ke bawah, sementara yang dilakukan staf di sini adalah
         // menelusuri satu per satu. Komponennya diambil dari UI Component.
-        <Carousel label="Foto galeri proyek">
+        <Carousel label={`${kata.judul} proyek`}>
           {gambar.map((g, i) => (
             <div className="galeri-item carousel__slide" key={g.id}>
               <div className="aspect aspect--4-3">
@@ -733,12 +765,12 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
               </div>
 
               <div className="galeri-item__body">
-                <label className="sr-only" htmlFor={`cap-${g.id}`}>Keterangan foto {i + 1}</label>
+                <label className="sr-only" htmlFor={`cap-${g.id}`}>{kata.label} {i + 1}</label>
                 <input
                   id={`cap-${g.id}`}
                   className="input"
                   defaultValue={g.caption ?? ""}
-                  placeholder="Keterangan (opsional)"
+                  placeholder={kata.label}
                   onBlur={(e) => simpanKeterangan(g, e.target.value.trim())}
                 />
               </div>
@@ -766,10 +798,15 @@ function PanelGaleri({ proyek, onJadikanCover }: { proyek: Proyek; onJadikanCove
                     }
                   />
                 </span>
-                <button type="button" className="btn btn--ghost btn--sm"
-                  onClick={() => { onJadikanCover(g.storageKey); toast({ judul: "Dipakai sebagai cover", keterangan: "Tekan Simpan untuk menerapkannya.", nada: "sukses" }); }}>
-                  <Icon name="star" size={14} />Jadikan cover
-                </button>
+                {/* Hanya foto galeri yang bisa jadi cover. Foto material
+                    bukan potret proyeknya, jadi tombolnya tidak ada di sana
+                    sama sekali — bukan ada tapi tidak berfungsi. */}
+                {onJadikanCover && (
+                  <button type="button" className="btn btn--ghost btn--sm"
+                    onClick={() => { onJadikanCover(g.storageKey); toast({ judul: "Dipakai sebagai cover", keterangan: "Tekan Simpan untuk menerapkannya.", nada: "sukses" }); }}>
+                    <Icon name="star" size={14} />Jadikan cover
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -1480,6 +1517,21 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
         proyek={asli}
         onJadikanCover={(key) => set("coverImageKey" as keyof Proyek, key as never)}
       />
+
+      <span className="separator" role="presentation" />
+
+      {/* Material di kartu yang sama dengan galeri, bukan tab tersendiri:
+          keduanya foto proyek yang diunggah berurutan dalam satu duduk, dan
+          tab keempat memaksa staf mengingat bahwa material ada. */}
+      <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start" }}>
+        <span className="icon-tile"><Icon name="component" size={20} /></span>
+        <span className="card__titles">
+          <span className="t-subheading">Material yang dipakai</span>
+          <span className="t-muted">Bahan yang membentuk proyek ini — beri nama tiap fotonya.</span>
+        </span>
+      </div>
+
+      <PanelGaleri proyek={asli} jenis="material" />
     </div>
   );
 

@@ -161,9 +161,12 @@ export async function remove(sql: Sql, id: string): Promise<void> {
 
 /** Mencatat gambar yang berkasnya sudah sampai di R2. */
 export async function addImage(sql: Sql, projectID: string, input: ImageInput): Promise<string> {
+  // Bawaannya 'galeri' — sama dengan default kolomnya, jadi pemanggil lama
+  // yang tidak menyebut kind tetap berperilaku persis seperti sebelumnya.
+  const kind = input.kind === "material" ? "material" : "galeri";
   const rows = await sql<{ id: string }[]>`
-    insert into public.project_images (project_id, storage_key, alt_text, caption, width, height, sort_order)
-    values (${projectID}::uuid, ${input.storageKey}, ${input.altText ?? null}, ${input.caption ?? null}, ${input.width ?? null}, ${input.height ?? null}, ${input.sortOrder})
+    insert into public.project_images (project_id, storage_key, alt_text, caption, width, height, sort_order, kind)
+    values (${projectID}::uuid, ${input.storageKey}, ${input.altText ?? null}, ${input.caption ?? null}, ${input.width ?? null}, ${input.height ?? null}, ${input.sortOrder}, ${kind})
     returning id`;
   return rows[0].id;
 }
@@ -175,14 +178,19 @@ export async function addImage(sql: Sql, projectID: string, input: ImageInput): 
  * mengembalikan storageKey — panel admin butuh itu untuk menjadikan salah
  * satu gambar sebagai cover tanpa mengunggah ulang berkasnya.
  */
-export async function listImages(sql: Sql, assetBase: string, projectID: string): Promise<(Image & { storageKey: string })[]> {
+export async function listImages(
+  sql: Sql,
+  assetBase: string,
+  projectID: string,
+  kind: "galeri" | "material" = "galeri",
+): Promise<(Image & { storageKey: string })[]> {
   const rows = await sql<
     { id: string; storage_key: string; alt_text: string | null; caption: string | null;
       width: number | null; height: number | null; sort_order: number }[]
   >`
     select id, storage_key, alt_text, caption, width, height, sort_order
     from public.project_images
-    where project_id = ${projectID}::uuid
+    where project_id = ${projectID}::uuid and kind = ${kind}
     order by sort_order, created_at`;
 
   return rows.map((r) => ({

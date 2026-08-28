@@ -447,13 +447,21 @@ export interface GambarProyek {
   sortOrder: number;
 }
 
-export const daftarGambar = (projectId: string) =>
-  panggil<GambarProyek[]>(`/admin/projects/${projectId}/images`);
+/** Foto galeri dan foto material tinggal di tabel yang sama, dibedakan kind. */
+export type JenisGambar = "galeri" | "material";
 
-export const tambahGambar = (projectId: string, storageKey: string, sortOrder: number) =>
+export const daftarGambar = (projectId: string, kind: JenisGambar = "galeri") =>
+  panggil<GambarProyek[]>(`/admin/projects/${projectId}/images?kind=${kind}`);
+
+export const tambahGambar = (
+  projectId: string,
+  storageKey: string,
+  sortOrder: number,
+  kind: JenisGambar = "galeri",
+) =>
   panggil<{ id: string }>(`/admin/projects/${projectId}/images`, {
     method: "POST",
-    body: JSON.stringify({ storageKey, sortOrder }),
+    body: JSON.stringify({ storageKey, sortOrder, kind }),
   });
 
 export const ubahGambar = (id: string, patch: { altText?: string | null; caption?: string | null; sortOrder?: number }) =>
