@@ -185,6 +185,49 @@ begin
 end;
 $$;
 
+-- touch_updated_at() — jebakan PUBLIC yang sama, objek berbeda.
+--
+-- Fungsi trigger. Mencabut EXECUTE darinya tidak boleh mematikan triggernya:
+-- Postgres memeriksa hak eksekusi saat CREATE TRIGGER, bukan saat trigger
+-- menyala. Dua assertion di bawah menjaga kedua sisi itu sekaligus — kalau
+-- suatu saat pemeriksaannya berubah, yang kedua yang jatuh lebih dulu.
+
+do $$
+declare sesudah timestamptz;
+begin
+  perform pg_temp.jadi_anon();
+  begin
+    perform public.touch_updated_at();
+    raise exception 'GAGAL: anon boleh memanggil touch_updated_at()';
+  exception
+    when insufficient_privilege then
+      raise notice 'ok: anon ditolak memanggil touch_updated_at()';
+    when others then
+      -- Sampai ke sini berarti pemeriksaan hak sudah DILEWATI dan Postgres
+      -- baru menolak karena alasan lain ("trigger functions can only be
+      -- called as triggers"). Itu tetap kegagalan: yang diuji hak akses,
+      -- bukan keberuntungan bahwa fungsinya kebetulan tidak bisa dipanggil.
+      raise exception 'GAGAL: anon lolos pemeriksaan hak touch_updated_at() (%)', sqlerrm;
+  end;
+  reset role;
+
+  -- Dimundurkan dulu; di dalam satu transaksi now() beku, jadi tanpa ini
+  -- perbandingannya tidak membuktikan apa pun.
+  update public.projects set updated_at = now() - interval '3 days'
+  where slug = 'tes-published';
+
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  update public.projects set title = 'Proyek Tes Published' where slug = 'tes-published';
+  reset role;
+
+  select updated_at into sesudah from public.projects where slug = 'tes-published';
+  if sesudah < now() - interval '1 minute' then
+    raise exception 'GAGAL: trigger touch_updated_at berhenti jalan setelah EXECUTE dicabut';
+  end if;
+  raise notice 'ok: trigger touch_updated_at tetap jalan walau EXECUTE dicabut';
+end;
+$$;
+
 -- studio_settings ---------------------------------------------------------
 
 do $$

@@ -875,6 +875,192 @@ alter table public.studio_settings
   check (timezone in ('Asia/Jakarta', 'Asia/Makassar', 'Asia/Jayapura'));
 
 -- ----------------------------------------------------------------------------
+-- 20260903000013_brief_tanggal_dan_foto_material.sql
+-- ----------------------------------------------------------------------------
+
+-- Dua perubahan yang diminta pemilik, keduanya HANYA menambah kolom.
+--
+-- Menambah, bukan mengganti: API yang sedang tayang tidak menyebut kolom
+-- baru sama sekali, jadi migrasi ini bisa diterapkan lebih dulu tanpa
+-- merusak apa pun — urutan yang diwajibkan CLAUDE.md setelah sekali
+-- membuat produksi rusak.
+--
+-- Kolom lama (budget_range, timeline) sengaja TIDAK dihapus. Menghapusnya
+-- akan langsung mematikan API yang masih tayang saat migrasi berjalan.
+-- Membiarkannya kosong tidak merugikan siapa pun.
+
+-- 1. Brief: anggaran jadi angka, target waktu jadi dua tanggal ----------
+--
+-- budget_amount bigint, bukan numeric: rupiah tidak punya pecahan yang
+-- dipakai di sini, dan bigint memuat sampai sembilan kuadriliun — jauh di
+-- atas nilai kontrak mana pun.
+alter table public.project_briefs
+  add column if not exists budget_amount bigint,
+  add column if not exists start_date    date,
+  add column if not exists end_date      date;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'project_briefs_budget_amount_positif'
+  ) then
+    alter table public.project_briefs
+      add constraint project_briefs_budget_amount_positif
+      check (budget_amount is null or budget_amount >= 0);
+  end if;
+
+  -- Selesai tidak boleh mendahului mulai. Dijaga di database, bukan cuma di
+  -- form: form bisa dilewati, database tidak.
+  if not exists (
+    select 1 from pg_constraint where conname = 'project_briefs_tanggal_berurutan'
+  ) then
+    alter table public.project_briefs
+      add constraint project_briefs_tanggal_berurutan
+      check (start_date is null or end_date is null or end_date >= start_date);
+  end if;
+end $$;
+
+-- 2. Foto material menumpang tabel gambar yang sudah ada ----------------
+--
+-- Satu kolom pembeda, bukan tabel kedua: isinya identik (kunci penyimpanan,
+-- keterangan, urutan) dan seluruh perkakas yang sudah ada — presigned
+-- upload, penghapusan ikut proyek, indeks urutan — langsung berlaku.
+-- Tabel kedua berarti menyalin semuanya dan merawat dua salinan.
+--
+-- default 'galeri' membuat seluruh baris lama tetap benar tanpa disentuh.
+alter table public.project_images
+  add column if not exists kind text not null default 'galeri';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'project_images_kind_sah'
+  ) then
+    alter table public.project_images
+      add constraint project_images_kind_sah
+      check (kind in ('galeri', 'material'));
+  end if;
+end $$;
+
+-- Indeks lama (project_id, sort_order) tidak lagi cukup: tiap query kini
+-- menyaring jenisnya juga, dan tanpa kind di indeks Postgres membaca
+-- seluruh gambar proyek lalu membuang separuhnya.
+create index if not exists project_images_jenis_idx
+  on public.project_images (project_id, kind, sort_order);
+
+-- ----------------------------------------------------------------------------
+-- 20260904000014_dokumen_suara_dan_berkas.sql
+-- ----------------------------------------------------------------------------
+
+-- Dokumen proyek: pesan suara dan metadata berkas.
+--
+-- Seperti migrasi sebelumnya, ini HANYA menambah kolom — API yang sedang
+-- tayang tidak menyebut satupun di antaranya, jadi aman diterapkan lebih
+-- dulu sesuai urutan yang diwajibkan CLAUDE.md.
+
+-- 1. Pesan suara menumpang tabel dokumen, bukan tabel sendiri -------------
+--
+-- Alasannya sama dengan foto material: isinya identik (kunci penyimpanan,
+-- urutan, thread komentar klien, hak akses lewat token progres) dan seluruh
+-- perkakas yang sudah ada langsung berlaku. Yang beda cuma cara
+-- menampilkannya — pemutar audio, bukan tautan "Lihat berkas".
+--
+-- default 'berkas' membuat seluruh baris lama tetap benar tanpa disentuh.
+alter table public.project_documents
+  add column if not exists kind text not null default 'berkas';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'project_documents_kind_sah'
+  ) then
+    alter table public.project_documents
+      add constraint project_documents_kind_sah
+      check (kind in ('berkas', 'suara'));
+  end if;
+end $$;
+
+-- 2. Metadata berkas -----------------------------------------------------
+--
+-- Dibutuhkan sejak unggahan jadi banyak-berkas sekaligus: nama asli dipakai
+-- sebagai judul otomatis (staf tidak mungkin mengetik judul satu per satu
+-- untuk sepuluh berkas), ukuran ditampilkan ke klien supaya dia tahu apa
+-- yang akan dia unduh, dan tipe menentukan berkas ini dibuka sebagai apa.
+--
+-- duration_ms hanya terisi untuk pesan suara: durasi harus tampil SEBELUM
+-- audionya diunduh, dan satu-satunya pihak yang tahu durasinya tanpa
+-- mengunduh adalah perekam di sisi staf.
+alter table public.project_documents
+  add column if not exists file_name   text,
+  add column if not exists file_size   bigint,
+  add column if not exists mime_type   text,
+  add column if not exists duration_ms integer;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'project_documents_file_size_wajar'
+  ) then
+    -- 100 MB per berkas, angka yang sama yang dijaga di form dan di API.
+    -- Dijaga di database juga karena form bisa dilewati, database tidak.
+    alter table public.project_documents
+      add constraint project_documents_file_size_wajar
+      check (file_size is null or (file_size > 0 and file_size <= 104857600));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'project_documents_durasi_wajar'
+  ) then
+    alter table public.project_documents
+      add constraint project_documents_durasi_wajar
+      check (duration_ms is null or duration_ms > 0);
+  end if;
+end $$;
+
+-- ----------------------------------------------------------------------------
+-- 20260905000015_cabut_execute_public.sql
+-- ----------------------------------------------------------------------------
+
+-- Menutup EXECUTE yang diberikan Postgres kepada PUBLIC.
+--
+-- Jebakan yang persis sama sudah tercatat di CLAUDE.md dan pernah menggigit
+-- sekali di is_staff(): Postgres memberi `execute` pada fungsi baru kepada
+-- **PUBLIC**, bukan kepada `anon`. Mencabut dari `anon` tidak menutup apa
+-- pun. Migrasi 20260824000004 memperbaiki is_staff() tapi tidak menyentuh
+-- fungsi lain, dan sisanya lolos.
+--
+-- is_staff() sengaja TIDAK disentuh di sini. Haknya sudah benar (postgres +
+-- authenticated saja), dan `authenticated` memang harus bisa memanggilnya:
+-- kebijakan RLS-lah yang memanggil fungsi itu.
+
+-- 1. touch_updated_at() — milik kita sendiri --------------------------------
+--
+-- Fungsi trigger; mengembalikan tipe `trigger`, jadi PostgREST tidak bisa
+-- memanggilnya sebagai RPC sama sekali. Tetap dicabut: permukaan yang tidak
+-- dipakai siapa pun tidak punya alasan untuk tetap terbuka.
+revoke execute on function public.touch_updated_at() from public;
+revoke execute on function public.touch_updated_at() from anon, authenticated;
+
+-- 2. rls_auto_enable() — milik platform Supabase ----------------------------
+--
+-- Bukan buatan kita: Supabase yang membuatnya di proyek terkelola, jadi ia
+-- TIDAK ada di database Postgres polos tempat migrasi ini diuji. Karena itu
+-- dibungkus pemeriksaan keberadaan — tanpa itu seluruh migrasi gagal di
+-- mesin lokal dan bootstrap.sql ikut rusak.
+--
+-- Yang ditandai advisor: fungsinya SECURITY DEFINER dan terbuka untuk anon
+-- lewat /rest/v1/rpc/. Dampak sebenarnya kecil — ia mengembalikan tipe
+-- event_trigger dan menolak dijalankan di luar konteks event trigger — tapi
+-- aturannya sudah jelas dan ini satu baris.
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    execute 'revoke execute on function public.rls_auto_enable() from public';
+    execute 'revoke execute on function public.rls_auto_enable() from anon, authenticated';
+  end if;
+end $$;
+
+-- ----------------------------------------------------------------------------
 -- Catat di riwayat migrasi Supabase
 -- ----------------------------------------------------------------------------
 --
@@ -906,7 +1092,10 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260830000009', 'direktori_kontak'),
   ('20260831000010', 'brief_feedback_testimoni'),
   ('20260901000011', 'studio_logo'),
-  ('20260902000012', 'zona_waktu_studio')
+  ('20260902000012', 'zona_waktu_studio'),
+  ('20260903000013', 'brief_tanggal_dan_foto_material'),
+  ('20260904000014', 'dokumen_suara_dan_berkas'),
+  ('20260905000015', 'cabut_execute_public')
 on conflict (version) do update set name = excluded.name;
 
 commit;
