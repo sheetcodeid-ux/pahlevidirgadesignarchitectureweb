@@ -19,7 +19,19 @@ export function useProfil() {
  * diarahkan ke halaman masuk beserta tujuan semula, supaya setelah masuk ia
  * kembali ke tempat yang ia tuju.
  */
-export function RequireAuth({ children, masterOnly = false }: { children: ReactNode; masterOnly?: boolean }) {
+export function RequireAuth({ children, masterOnly = false, kerangka }: {
+  children: ReactNode;
+  masterOnly?: boolean;
+  /**
+   * Yang ditampilkan selama sesi diperiksa. Tiap panel mengirimkan kerangka
+   * halamannya sendiri — bentuk yang sama yang ia pakai saat menunggu
+   * datanya — sehingga halaman tersusun SEKALI, bukan spinner dulu lalu
+   * kerangka lalu isi. Tanpa ini, hal pertama yang dilihat staf di setiap
+   * halaman admin adalah spinner yang sama, dan bentuk halamannya baru
+   * muncul belakangan.
+   */
+  kerangka?: ReactNode;
+}) {
   const [profil, setProfil] = useState<Profil | null>(null);
   const [status, setStatus] = useState<"memeriksa" | "siap" | "ditolak">("memeriksa");
 
@@ -50,6 +62,12 @@ export function RequireAuth({ children, masterOnly = false }: { children: ReactN
   }, [masterOnly]);
 
   if (status === "memeriksa") {
+    // aria-busy, bukan spinner yang dibacakan: pembaca layar diberi tahu
+    // bahwa daerah ini sedang diisi, sementara mata melihat bentuk
+    // halamannya. Kerangkanya sendiri aria-hidden.
+    if (kerangka) {
+      return <div role="status" aria-busy="true" aria-label="Memuat halaman">{kerangka}</div>;
+    }
     return (
       <div className="guard" role="status" aria-live="polite">
         <span className="spinner" />

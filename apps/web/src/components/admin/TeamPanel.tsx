@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { SkeletonDaftar } from "../ui/Skeleton";
 import { Avatar } from "../ui/misc/Avatar";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
@@ -82,7 +83,7 @@ function Isi() {
       </div>
 
       {tim === null ? (
-        <div className="stack">{[0, 1, 2].map((i) => <span key={i} className="skeleton" style={{ height: "4rem" }} />)}</div>
+        <SkeletonDaftar jumlah={3} aksi={2} />
       ) : tim.length === 0 ? (
         <div className="empty empty--sm">
           <span className="icon-tile"><Icon name="team" size={20} /></span>
@@ -119,7 +120,7 @@ function Isi() {
 
 export function TeamPanel() {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={<SkeletonDaftar jumlah={3} aksi={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

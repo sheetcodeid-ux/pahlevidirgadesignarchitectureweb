@@ -3,6 +3,7 @@ import { Icon } from "../ui/Icon";
 import { Avatar } from "../ui/misc/Avatar";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth, useProfil } from "./RequireAuth";
+import { SkeletonKartu, SkeletonIsian } from "../ui/Skeleton";
 import { ubahPassword } from "../../lib/admin";
 
 function Isi() {
@@ -81,7 +82,7 @@ function Isi() {
 
 export function AccountPanel() {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={<SkeletonKartu ikon="user" anak={<SkeletonIsian jumlah={2} />} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

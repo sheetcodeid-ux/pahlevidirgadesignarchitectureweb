@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
+import { SkeletonKartu, SkeletonStat, SkeletonTeks } from "../ui/Skeleton";
 import { ambilSettings, profilTersimpan, type Profil } from "../../lib/admin";
 
 /** Seberapa cepat sorot mengejar kursor tiap frame. Makin kecil makin lembut. */
@@ -193,7 +194,12 @@ function Kiri() {
 
 export function DashboardHome() {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={
+      <div className="stack" style={{ gap: "var(--space-6)" }}>
+        <SkeletonKartu ikon="dashboard" anak={<SkeletonTeks baris={2} />} />
+        <SkeletonStat jumlah={3} />
+      </div>
+    }>
       <div className="dashsplit">
         <Kiri />
         {/* Kolom kanan sengaja kosong dulu — isinya menyusul. Elemennya tetap

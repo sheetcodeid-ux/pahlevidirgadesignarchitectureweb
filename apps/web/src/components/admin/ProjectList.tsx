@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { SkeletonDaftar } from "../ui/Skeleton";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { Popover, Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { Select } from "../ui/overlay/Select";
@@ -99,7 +100,7 @@ function Isi() {
   if (!proyek) {
     return (
       <div className="stack">
-        {[0, 1, 2].map((i) => <span key={i} className="skeleton" style={{ height: "4rem" }} />)}
+        <SkeletonDaftar jumlah={4} aksi={2} />
       </div>
     );
   }
@@ -370,7 +371,7 @@ function Isi() {
 
 export function ProjectList() {
   return (
-    <RequireAuth>
+    <RequireAuth kerangka={<SkeletonDaftar jumlah={4} aksi={2} />}>
       <ToastProvider><TooltipProvider><Isi /></TooltipProvider></ToastProvider>
     </RequireAuth>
   );

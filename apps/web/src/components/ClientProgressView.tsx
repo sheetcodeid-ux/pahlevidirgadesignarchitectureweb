@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "./ui/Icon";
 import { PemutarSuara } from "./ui/misc/VoiceNote";
+import { Balok, SkeletonKartu, SkeletonIsian, SkeletonDaftar } from "./ui/Skeleton";
 import { formatRupiah } from "../lib/format";
 
 const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787").replace(/\/$/, "");
@@ -438,9 +439,17 @@ export function ClientProgressView() {
 
   if (status === "memuat") {
     return (
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
-        <span className="skeleton" style={{ height: "16rem", borderRadius: "var(--radius-lg)" }} />
-        <span className="skeleton" style={{ height: "4rem" }} />
+      /* Mengikuti urutan halaman sungguhannya: judul proyek, form brief,
+         stepper fase, lalu kartu dokumen. Klien melihat kerangka halaman
+         yang sama persis dengan yang sebentar lagi terisi. */
+      <div className="stack" style={{ gap: "var(--space-7)" }}>
+        <div className="stack" style={{ gap: "var(--space-2)" }}>
+          <Balok lebar="8rem" tinggi="0.7rem" />
+          <Balok lebar="70%" tinggi="2.5rem" />
+        </div>
+        <SkeletonKartu ikon="quote" anak={<SkeletonIsian jumlah={4} />} />
+        <Balok tinggi="3rem" style={{ borderRadius: "var(--radius-pill)" }} />
+        <SkeletonKartu ikon="document" anak={<SkeletonDaftar jumlah={2} aksi={0} />} />
       </div>
     );
   }

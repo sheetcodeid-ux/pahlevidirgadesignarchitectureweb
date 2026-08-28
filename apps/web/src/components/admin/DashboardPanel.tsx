@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
+import { SkeletonStat, SkeletonKartu } from "../ui/Skeleton";
 import { daftarProyek, daftarPesan, type Proyek } from "../../lib/admin";
 
 const PIPELINE: [string, string][] = [
@@ -136,5 +137,10 @@ function Isi() {
 }
 
 export function DashboardPanel() {
-  return <RequireAuth><Isi /></RequireAuth>;
+  return <RequireAuth kerangka={
+      <div className="stack" style={{ gap: "var(--space-6)" }}>
+        <SkeletonStat jumlah={3} />
+        <SkeletonKartu ikon="checklist" />
+      </div>
+    }><Isi /></RequireAuth>;
 }
