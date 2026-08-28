@@ -13,7 +13,7 @@ konsisten.
 Astro tetap jadi kerangka situs; komponen interaktif dimuat sebagai island
 React. Alasannya bukan preferensi, tapi hitung-hitungan:
 
-Dari 64 komponen, sekitar 20 bergantung pada perilaku yang tidak terlihat mata
+Dari 65 komponen, sekitar 20 bergantung pada perilaku yang tidak terlihat mata
 namun mudah salah — focus trap, roving tabindex, hubungan ARIA, penempatan yang
 sadar tepi layar, pengembalian fokus saat overlay tertutup. Dialog, Combobox,
 Command, Select, Context Menu, dan Menubar semuanya masuk kelompok ini.
@@ -33,7 +33,7 @@ keputusan pemilik, bukan keputusan teknis murni.
 
 ## Inventaris
 
-64 komponen, dikelompokkan menurut apa yang dibutuhkan untuk membangunnya.
+65 komponen, dikelompokkan menurut apa yang dibutuhkan untuk membangunnya.
 
 ### Tampilan statis — CSS saja
 
@@ -43,9 +43,9 @@ Message
 
 ### Form
 
-Button · Button Group · Input · Input Group · Textarea · Checkbox ·
-Radio Group · Switch · Native Select · Field · Slider · Input OTP · Toggle ·
-Toggle Group
+Button · Button Group · Input · Input Group · Input Rupiah · Textarea ·
+Checkbox · Radio Group · Switch · Native Select · Field · Slider · Input OTP ·
+Toggle · Toggle Group
 
 ### Overlay — butuh focus trap dan penempatan
 
@@ -71,7 +71,7 @@ Direction (konteks LTR/RTL)
 
 ## Status
 
-Seluruh 64 komponen selesai dan terdaftar di halaman UI Component
+Seluruh 65 komponen selesai dan terdaftar di halaman UI Component
 (`/admin/ui`). Fitur baru mengambil dari sana.
 
 ## Urutan pengerjaan

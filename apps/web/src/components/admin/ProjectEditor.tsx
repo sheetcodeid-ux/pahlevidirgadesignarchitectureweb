@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "../ui/Icon";
+import { Select } from "../ui/overlay/Select";
+import { InputRupiah } from "../ui/InputRupiah";
 import { Tabs } from "../ui/misc/Nav";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
@@ -19,6 +21,30 @@ import {
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
+
+/* Radix Select menolak value string kosong — itu nilai cadangan untuk
+   "belum ada pilihan". Jadi "belum ditentukan" perlu nilai sendiri. */
+const TANPA_PIC = "__tanpa__";
+
+const LABEL_STATUS: Record<string, string> = {
+  draft: "Draf", published: "Terbit", archived: "Arsip",
+};
+
+/* Warna punya makna tetap: hijau = hidup, amber = belum lengkap atau
+   tertahan, netral = disimpan tanpa dihapus. */
+const BADGE_STATUS: Record<string, string> = {
+  draft: "badge--warn", published: "badge--success", archived: "",
+};
+
+
+/* Sama persis dengan allowlist R2 di Worker API. Kalau keduanya berbeda,
+   staf bisa memilih berkas yang lalu ditolak saat diunggah — dan pesan
+   penolakannya datang dari penyimpanan, bukan dari halaman ini. */
+const TIPE_DOKUMEN = [
+  "application/pdf",
+  "image/jpeg", "image/png", "image/webp", "image/avif",
+  "audio/mpeg", "audio/mp4", "audio/webm", "audio/ogg",
+].join(",");
 
 const KATEGORI: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
@@ -77,14 +103,14 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
   const toast = useToast();
   const [invoice, setInvoice] = useState<Invoice[] | null>(null);
   const [biaya, setBiaya] = useState<BiayaProyek[] | null>(null);
-  const [kontrakInput, setKontrakInput] = useState(String(proyek.contractValue ?? ""));
+  const [kontrakInput, setKontrakInput] = useState<number | null>(proyek.contractValue ?? null);
 
   const [labelInv, setLabelInv] = useState("");
-  const [nominalInv, setNominalInv] = useState("");
+  const [nominalInv, setNominalInv] = useState<number | null>(null);
 
   const [labelBiaya, setLabelBiaya] = useState("");
   const [kategoriBiaya, setKategoriBiaya] = useState("lainnya");
-  const [nominalBiaya, setNominalBiaya] = useState("");
+  const [nominalBiaya, setNominalBiaya] = useState<number | null>(null);
 
   function muat() {
     daftarInvoice(proyek.id).then(setInvoice).catch(() => setInvoice([]));
@@ -94,8 +120,8 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
   useEffect(muat, [proyek.id]);
 
   async function simpanKontrak() {
-    const angka = Number(kontrakInput);
-    if (!kontrakInput || Number.isNaN(angka) || angka <= 0) return;
+    const angka = kontrakInput;
+    if (angka === null || angka <= 0) return;
     try {
       await simpanProyek(proyek.id, { contractValue: angka });
       onUbahKontrak(angka);
@@ -107,12 +133,12 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
 
   async function tambahInv() {
     const label = labelInv.trim();
-    const nominal = Number(nominalInv);
-    if (label.length < 2 || !nominal || nominal <= 0) return;
+    const nominal = nominalInv;
+    if (label.length < 2 || nominal === null || nominal <= 0) return;
     try {
       await tambahInvoice(proyek.id, label, nominal, null);
       setLabelInv("");
-      setNominalInv("");
+      setNominalInv(null);
       muat();
     } catch (e) {
       toast({ judul: "Gagal menambah invoice", keterangan: (e as Error).message, nada: "gagal" });
@@ -143,12 +169,12 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
 
   async function tambahBiayaBaru() {
     const label = labelBiaya.trim();
-    const nominal = Number(nominalBiaya);
-    if (label.length < 2 || !nominal || nominal <= 0) return;
+    const nominal = nominalBiaya;
+    if (label.length < 2 || nominal === null || nominal <= 0) return;
     try {
       await tambahBiaya(proyek.id, label, kategoriBiaya, nominal);
       setLabelBiaya("");
-      setNominalBiaya("");
+      setNominalBiaya(null);
       muat();
     } catch (e) {
       toast({ judul: "Gagal menambah biaya", keterangan: (e as Error).message, nada: "gagal" });
@@ -180,10 +206,11 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
           </span>
         </div>
         <div className="card__body">
-          <div className="row" style={{ gap: "var(--space-2)" }}>
-            <input className="input" type="number" value={kontrakInput}
-              onChange={(e) => setKontrakInput(e.target.value)} placeholder="Contoh: 68000000" style={{ flex: 1 }} />
-            <button type="button" className="btn btn--secondary" onClick={simpanKontrak}>Simpan</button>
+          <div className="input-group">
+            <InputRupiah value={kontrakInput} onChange={setKontrakInput}
+              ariaLabel="Nilai kontrak" placeholder="Rp0" />
+            <button type="button" className="btn btn--secondary" disabled={kontrakInput === null || kontrakInput <= 0}
+              onClick={simpanKontrak}>Simpan</button>
           </div>
         </div>
       </div>
@@ -204,13 +231,14 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                   placeholder="Contoh: DP 50%" />
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="inv-nominal">Nominal (Rp)</label>
-                <input id="inv-nominal" className="input" type="number" value={nominalInv}
-                  onChange={(e) => setNominalInv(e.target.value)} />
+                <label className="field__label" htmlFor="inv-nominal">Nominal</label>
+                <InputRupiah id="inv-nominal" value={nominalInv} onChange={setNominalInv} />
               </div>
             </div>
             <div className="row row--end">
-              <button type="button" className="btn btn--secondary btn--sm" onClick={tambahInv}>
+              <button type="button" className="btn btn--secondary btn--sm"
+                disabled={labelInv.trim().length < 2 || nominalInv === null || nominalInv <= 0}
+                onClick={tambahInv}>
                 <Icon name="plus" size={14} />Tambah invoice
               </button>
             </div>
@@ -223,11 +251,13 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                       <span className="item__title">{i.label}</span>
                       <span className="item__desc">{formatRupiah(i.amount)}</span>
                     </span>
-                    <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
-                      value={i.status} onChange={(e) => ubahStatusInv(i.id, e.target.value)}
-                      aria-label={`Ubah status ${i.label}`}>
-                      {STATUS_INVOICE.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                    </select>
+                    <Select
+                      ringkas
+                      ariaLabel={`Ubah status ${i.label}`}
+                      value={i.status}
+                      onValueChange={(v) => ubahStatusInv(i.id, v)}
+                      options={STATUS_INVOICE.map(([value, label]) => ({ value, label }))}
+                    />
                     <AlertDialog
                       destructive
                       title={`Hapus ${i.label}?`}
@@ -265,19 +295,23 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
               </div>
               <div className="field">
                 <label className="field__label" htmlFor="biaya-kategori">Kategori</label>
-                <select id="biaya-kategori" className="input" value={kategoriBiaya}
-                  onChange={(e) => setKategoriBiaya(e.target.value)}>
-                  {KATEGORI_BIAYA.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
+                <Select
+                  id="biaya-kategori"
+                  ariaLabel="Kategori biaya"
+                  value={kategoriBiaya}
+                  onValueChange={setKategoriBiaya}
+                  options={KATEGORI_BIAYA.map(([value, label]) => ({ value, label }))}
+                />
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="biaya-nominal">Nominal (Rp)</label>
-                <input id="biaya-nominal" className="input" type="number" value={nominalBiaya}
-                  onChange={(e) => setNominalBiaya(e.target.value)} />
+                <label className="field__label" htmlFor="biaya-nominal">Nominal</label>
+                <InputRupiah id="biaya-nominal" value={nominalBiaya} onChange={setNominalBiaya} />
               </div>
             </div>
             <div className="row row--end">
-              <button type="button" className="btn btn--secondary btn--sm" onClick={tambahBiayaBaru}>
+              <button type="button" className="btn btn--secondary btn--sm"
+                disabled={labelBiaya.trim().length < 2 || nominalBiaya === null || nominalBiaya <= 0}
+                onClick={tambahBiayaBaru}>
                 <Icon name="plus" size={14} />Tambah biaya
               </button>
             </div>
@@ -442,7 +476,7 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
           <span className="icon-tile"><Icon name="document" size={20} /></span>
           <span className="card__titles">
             <span className="t-subheading">Unggah dokumen</span>
-            <span className="t-muted">PDF gambar kerja, RAB, atau dokumen lain untuk dilihat klien.</span>
+            <span className="t-muted">Gambar kerja, RAB, foto, atau pesan suara untuk dilihat klien.</span>
           </span>
         </div>
         <div className="card__body">
@@ -452,13 +486,16 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
               <input id="dok-judul" className="input" value={judulBaru}
                 onChange={(e) => setJudulBaru(e.target.value)} placeholder="Contoh: DED Rev.2" />
             </div>
-            <input ref={berkas} type="file" className="sr-only" accept="application/pdf"
+            <input ref={berkas} type="file" className="sr-only" accept={TIPE_DOKUMEN}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) unggahDanTambah(f); }} />
-            <div className="row row--end">
+            <div className="row row--between">
+              <p className="field__help" style={{ margin: 0 }}>
+                Format yang didukung: PDF, JPG, PNG, dan pesan suara.
+              </p>
               <button type="button" className="btn btn--secondary" disabled={judulBaru.trim().length < 2 || mengunggah}
                 onClick={() => berkas.current?.click()}>
                 {mengunggah && <span className="spinner spinner--sm spinner--on-action" />}
-                <Icon name="upload" size={15} />Pilih berkas PDF
+                <Icon name="upload" size={15} />Pilih berkas
               </button>
             </div>
           </div>
@@ -466,7 +503,11 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
       </div>
 
       {dokumen.length === 0 ? (
-        <p className="t-muted">Belum ada dokumen untuk proyek ini.</p>
+        <div className="empty empty--sm buat-kartu">
+          <span className="icon-tile"><Icon name="document" size={20} /></span>
+          <span className="t-subheading">Belum ada dokumen</span>
+          <p className="t-muted">Berkas yang diunggah di sini langsung terlihat di portal klien.</p>
+        </div>
       ) : (
         <ul className="stack" style={{ gap: "var(--space-3)", listStyle: "none", padding: 0 }}>
           {dokumen.map((d) => (
@@ -479,11 +520,13 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
                     {d.status === "revisi_diminta" && d.clientNote && ` — Catatan klien: ${d.clientNote}`}
                   </span>
                 </span>
-                <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
-                  value={d.status} onChange={(e) => ubahStatus(d.id, e.target.value)}
-                  aria-label={`Ubah status ${d.title}`}>
-                  {STATUS_DOKUMEN.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
+                <Select
+                  ringkas
+                  ariaLabel={`Ubah status ${d.title}`}
+                  value={d.status}
+                  onValueChange={(v) => ubahStatus(d.id, v)}
+                  options={STATUS_DOKUMEN.map(([value, label]) => ({ value, label }))}
+                />
                 <AlertDialog
                   destructive
                   title={`Hapus ${d.title}?`}
@@ -874,11 +917,16 @@ function PanelTugas({ projectId }: { projectId: string }) {
             </div>
             <div className="field">
               <label className="field__label" htmlFor="tug-pic">Penanggung jawab</label>
-              <select id="tug-pic" className="input" value={penanggungJawab}
-                onChange={(e) => setPenanggungJawab(e.target.value)}>
-                <option value="">Belum ditentukan</option>
-                {tim.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
+              <Select
+                id="tug-pic"
+                ariaLabel="Penanggung jawab"
+                value={penanggungJawab || TANPA_PIC}
+                onValueChange={(v) => setPenanggungJawab(v === TANPA_PIC ? "" : v)}
+                options={[
+                  { value: TANPA_PIC, label: "Belum ditentukan" },
+                  ...tim.map((t) => ({ value: t.id, label: t.name })),
+                ]}
+              />
             </div>
           </div>
           <div className="row row--end" style={{ marginTop: "var(--space-4)" }}>
@@ -890,7 +938,11 @@ function PanelTugas({ projectId }: { projectId: string }) {
       </div>
 
       {tugas.length === 0 ? (
-        <p className="t-muted">Belum ada tugas untuk proyek ini.</p>
+        <div className="empty empty--sm buat-kartu">
+          <span className="icon-tile"><Icon name="check" size={20} /></span>
+          <span className="t-subheading">Belum ada tugas</span>
+          <p className="t-muted">Tugas yang ditambahkan di sini juga muncul di List Kerjaan.</p>
+        </div>
       ) : (
         <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
           {tugas.map((t) => (
@@ -899,11 +951,13 @@ function PanelTugas({ projectId }: { projectId: string }) {
                 <span className="item__title">{t.title}</span>
                 <span className="item__desc">{t.assigneeName ?? "Belum ditentukan"}</span>
               </span>
-              <select className="input" style={{ width: "auto", fontSize: "var(--text-sm)" }}
-                value={t.status} onChange={(e) => ubahStatusTugas(t.id, e.target.value)}
-                aria-label={`Ubah status ${t.title}`}>
-                {STATUS_TUGAS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
+              <Select
+                ringkas
+                ariaLabel={`Ubah status ${t.title}`}
+                value={t.status}
+                onValueChange={(v) => ubahStatusTugas(t.id, v)}
+                options={STATUS_TUGAS.map(([value, label]) => ({ value, label }))}
+              />
               <AlertDialog
                 destructive
                 title={`Hapus ${t.title}?`}
@@ -1270,7 +1324,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
         <textarea id="ed-desc" className="input input--area" style={{ minHeight: "10rem" }}
           value={String(nilai("description") ?? "")} onChange={(e) => set("description", e.target.value)} />
       </div>
-      <div className="spec-grid">
+      <div className="spec-grid spec-grid--rapat">
         <div className="field">
           <label className="field__label" htmlFor="ed-kota">Kota</label>
           <input id="ed-kota" className="input" value={String(nilai("city") ?? "")}
@@ -1360,107 +1414,158 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
 
   const bisaTerbit = Boolean(nilai("coverImageUrl") || nilai("coverImageKey" as keyof Proyek));
 
-  /* Hanya halaman Publik yang menyunting field lewat draf; halaman lain
-     menyimpan sendiri seketika, jadi bilah simpan di sana tidak pernah
-     berguna dan hanya menambah barang yang harus diabaikan. */
-  const bilahSimpan = halaman === "publik" && (
-    <div className="row row--between proyekpage__bilah">
-      <span className="t-muted">{String(nilai("title") ?? "")}</span>
-      <span className="row" style={{ gap: "var(--space-2)" }}>
-        {adaPerubahan && (
-          <span className="marker marker--warn"><span className="marker__dot" />{berubah.length} perubahan belum disimpan</span>
+  /* Panel kanan yang menempel, sama seperti di halaman Tambah Proyek. Isinya
+     menjawab satu pertanyaan yang sebelumnya tidak dijawab di mana pun:
+     "proyek mana yang sedang saya ubah?" — dan di halaman Klien serta
+     Internal, itu satu-satunya tempat jawabannya bisa dibaca. */
+  const sisi = (aksi?: ReactNode) => (
+    <aside className="buatpage__aksi">
+      <section className="buat-kartu sisi-proyek">
+        <h2 className="buat-kartu__judul">Proyek yang dibuka</h2>
+        <div className="sisi-proyek__kepala">
+          <span className="sisi-proyek__sampul">
+            {asli.coverImageUrl
+              ? <img src={asli.coverImageUrl} alt="" />
+              : <Icon name="image" size={18} />}
+          </span>
+          <span className="card__titles">
+            <span className="t-subheading">{asli.title}</span>
+            <span className="t-muted">{KATEGORI[String(asli.category)] ?? asli.category}</span>
+          </span>
+        </div>
+
+        <dl className="sisi-proyek__fakta">
+          <div>
+            <dt>Status terbit</dt>
+            <dd>
+              <span className={`badge ${BADGE_STATUS[String(nilai("status"))] ?? ""}`}>
+                <span className="badge__dot" />
+                {LABEL_STATUS[String(nilai("status"))] ?? String(nilai("status"))}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>Tahap pipeline</dt>
+            <dd>
+              <span className="badge badge--info">
+                {PIPELINE.find(([t]) => t === nilai("pipelineStage"))?.[1] ?? "Belum ditentukan"}
+              </span>
+            </dd>
+          </div>
+        </dl>
+
+        {nilai("status") === "published" && (
+          <a className="btn btn--ghost btn--sm sisi-proyek__tautan"
+            href={`/proyek/${asli.slug}`} target="_blank" rel="noreferrer">
+            <Icon name="globe" size={15} />Lihat di situs
+          </a>
         )}
-        <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
-          {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
-          Simpan
-        </button>
-      </span>
-    </div>
+      </section>
+
+      {aksi}
+    </aside>
   );
 
   if (halaman === "publik") {
     return (
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
-        {bilahSimpan}
-      <div className="card">
-        <div className="card__header">
-          <span className="icon-tile"><Icon name="project" size={20} /></span>
-          <span className="card__titles">
-            <span className="t-subheading">Status terbit</span>
-            <span className="t-muted">
-              {bisaTerbit ? "Proyek siap diterbitkan." : "Unggah cover dulu sebelum menerbitkan."}
-            </span>
-          </span>
-        </div>
-        <div className="card__body">
-          <div className="stack" style={{ gap: "var(--space-2)" }}>
-            {[
-              { v: "draft", t: "Draf", d: "Hanya terlihat oleh staf studio." },
-              { v: "published", t: "Terbit", d: "Tampil di situs setelah build berikutnya." },
-              { v: "archived", t: "Arsip", d: "Disembunyikan tanpa dihapus." },
-            ].map((s) => (
-              <label className="radio-card" key={s.v}>
-                <input type="radio" name="ed-status" checked={nilai("status") === s.v}
-                  disabled={s.v === "published" && !bisaTerbit}
-                  onChange={() => set("status", s.v)} />
-                <span className="radio-card__mark"><Icon name="check" size={14} /></span>
-                <span className="radio-card__body">
-                  <span className="radio-card__title">{s.t}</span>
-                  <span className="radio-card__desc">{s.d}</span>
+      <div className="buatpage">
+        <div className="buatpage__utama">
+          <section className="buat-kartu">
+            <h2 className="buat-kartu__judul">Status terbit</h2>
+            <p className="t-muted" style={{ margin: 0, fontSize: "var(--text-sm)" }}>
+              {bisaTerbit
+                ? "Proyek siap diterbitkan."
+                : "Unggah cover dulu sebelum menerbitkan."}
+            </p>
+            <div className="stack" style={{ gap: "var(--space-2)" }}>
+              {[
+                { v: "draft", t: "Draf", d: "Hanya terlihat oleh staf studio." },
+                { v: "published", t: "Terbit", d: "Tampil di situs setelah build berikutnya." },
+                { v: "archived", t: "Arsip", d: "Disembunyikan tanpa dihapus." },
+              ].map((s) => (
+                <label className="radio-card" key={s.v}>
+                  <input type="radio" name="ed-status" checked={nilai("status") === s.v}
+                    disabled={s.v === "published" && !bisaTerbit}
+                    onChange={() => set("status", s.v)} />
+                  <span className="radio-card__mark"><Icon name="check" size={14} /></span>
+                  <span className="radio-card__body">
+                    <span className="radio-card__title">{s.t}</span>
+                    <span className="radio-card__desc">{s.d}</span>
+                  </span>
+                </label>
+              ))}
+              <label className="choice" style={{ marginTop: "var(--space-2)" }}>
+                <input type="checkbox" checked={Boolean(nilai("isFeatured"))}
+                  onChange={(e) => set("isFeatured", e.target.checked)} />
+                <span className="choice__text">
+                  <span>Tampilkan di beranda</span>
+                  <span className="choice__desc">Proyek unggulan muncul di halaman depan.</span>
                 </span>
               </label>
-            ))}
-            <label className="choice" style={{ marginTop: "var(--space-2)" }}>
-              <input type="checkbox" checked={Boolean(nilai("isFeatured"))}
-                onChange={(e) => set("isFeatured", e.target.checked)} />
-              <span className="choice__text">
-                <span>Tampilkan di beranda</span>
-                <span className="choice__desc">Proyek unggulan muncul di halaman depan.</span>
-              </span>
-            </label>
-          </div>
+            </div>
+          </section>
+
+          <Tabs
+            items={[
+              { id: "detail", label: "Detail", content: detail },
+              { id: "galeri", label: "Galeri", content: galeri },
+              { id: "seo", label: "SEO", content: seo },
+            ]}
+          />
         </div>
-      </div>
-        <Tabs
-          items={[
-            { id: "detail", label: "Detail", content: detail },
-            { id: "galeri", label: "Galeri", content: galeri },
-            { id: "seo", label: "SEO", content: seo },
-          ]}
-        />
-        <p className="field__help">
-          Kategori: {KATEGORI[String(nilai("category"))] ?? nilai("category")}
-        </p>
+
+        {sisi(
+          <>
+            <button type="button" className="btn btn--primary btn--lift buat-aksi__utama"
+              disabled={!adaPerubahan || menyimpan} onClick={simpan}>
+              {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
+              <Icon name="check" size={16} />Simpan perubahan
+            </button>
+            {adaPerubahan ? (
+              <span className="marker marker--warn buat-aksi__reset">
+                <span className="marker__dot" />{berubah.length} perubahan belum disimpan
+              </span>
+            ) : (
+              <span className="marker marker--success buat-aksi__reset">
+                <span className="marker__dot" />Semua perubahan tersimpan
+              </span>
+            )}
+          </>,
+        )}
       </div>
     );
   }
 
   if (halaman === "klien") {
     return (
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
-        <Tabs
-          items={[
-            { id: "brief", label: "Brief", content: <PanelBrief projectId={asli.id} /> },
-            { id: "dokumen", label: "Dokumen", content: <PanelDokumen proyek={asli} /> },
-            { id: "progres", label: "Progres", content: <PanelProgres projectId={asli.id} /> },
-          ]}
-        />
+      <div className="buatpage">
+        <div className="buatpage__utama">
+          <Tabs
+            items={[
+              { id: "brief", label: "Brief", content: <PanelBrief projectId={asli.id} /> },
+              { id: "dokumen", label: "Dokumen", content: <PanelDokumen proyek={asli} /> },
+              { id: "progres", label: "Progres", content: <PanelProgres projectId={asli.id} /> },
+            ]}
+          />
+        </div>
+        {sisi(
+          <p className="t-muted buat-aksi__catatan">
+            Semua isian di halaman ini tersimpan seketika — tidak ada tombol simpan.
+          </p>,
+        )}
       </div>
     );
   }
 
   return (
-    <div className="stack" style={{ gap: "var(--space-5)" }}>
-      <div className="card">
-        <div className="card__header">
-          <span className="icon-tile"><Icon name="dashboard" size={20} /></span>
-          <span className="card__titles">
-            <span className="t-subheading">Tahap pipeline</span>
-            <span className="t-muted">Alur kerja internal studio — beda dari status terbit di atas.</span>
-          </span>
-        </div>
-        <div className="card__body">
-          <div className="segmented" role="group" aria-label="Tahap pipeline">
+    <div className="buatpage">
+      <div className="buatpage__utama">
+        <section className="buat-kartu">
+          <h2 className="buat-kartu__judul">Tahap pipeline</h2>
+          <p className="t-muted" style={{ margin: 0, fontSize: "var(--text-sm)" }}>
+            Alur kerja internal studio — beda dari status terbit di Halaman Publik.
+          </p>
+          <div className="segmented segmented--block segmented--tebal" role="group" aria-label="Tahap pipeline">
             {PIPELINE.map(([tahap, label]) => (
               <button
                 key={tahap}
@@ -1483,23 +1588,29 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
               </button>
             ))}
           </div>
-        </div>
+        </section>
+
+        <Tabs
+          items={[
+            { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
+            {
+              id: "keuangan",
+              label: "Keuangan",
+              content: (
+                <PanelKeuangan
+                  proyek={asli}
+                  onUbahKontrak={(v) => setAsli((a) => (a ? { ...a, contractValue: v } : a))}
+                />
+              ),
+            },
+          ]}
+        />
       </div>
-      <Tabs
-        items={[
-          { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
-          {
-            id: "keuangan",
-            label: "Keuangan",
-            content: (
-              <PanelKeuangan
-                proyek={asli}
-                onUbahKontrak={(nilai) => setAsli((a) => (a ? { ...a, contractValue: nilai } : a))}
-              />
-            ),
-          },
-        ]}
-      />
+      {sisi(
+        <p className="t-muted buat-aksi__catatan">
+          Tahap, tugas, dan angka keuangan tersimpan seketika saat diubah.
+        </p>,
+      )}
     </div>
   );
 }

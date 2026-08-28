@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Icon } from "../ui/Icon";
 import { InputOTP } from "../ui/InputOTP";
 import { PasswordInput } from "../ui/PasswordInput";
+import { InputRupiah } from "../ui/InputRupiah";
 
 /**
  * Bagian interaktif dari galeri Form.
@@ -145,4 +146,10 @@ export function FormShowcase() {
       </div>
     </div>
   );
+}
+
+/** Demo isian rupiah untuk galeri UI Component. */
+export function InputRupiahDemo() {
+  const [nilai, setNilai] = useState<number | null>(10000000);
+  return <InputRupiah id="d-rupiah" value={nilai} onChange={setNilai} ariaLabel="Nilai kontrak" />;
 }

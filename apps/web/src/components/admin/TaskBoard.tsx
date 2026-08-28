@@ -4,6 +4,7 @@ import { Avatar } from "../ui/misc/Avatar";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { daftarTugas, ubahTugas, type Tugas } from "../../lib/admin";
+import { Select } from "../ui/overlay/Select";
 
 const KOLOM: [string, string][] = [
   ["belum_mulai", "Belum mulai"],
@@ -106,17 +107,15 @@ function Isi() {
                               </span>
                             )}
                           </span>
-                          <select
-                            className="input"
-                            style={{ width: "auto", fontSize: "var(--text-xs)", padding: "0.3rem 0.5rem" }}
+                          <Select
+                            ringkas
+                            ariaLabel={`Ubah status ${t.title}`}
                             value={t.status}
-                            onChange={(e) => ubahStatus(t.id, e.target.value)}
-                            aria-label={`Ubah status ${t.title}`}
-                          >
-                            {[...KOLOM, ["selesai", "Selesai"]].map(([v, l]) => (
-                              <option key={v} value={v}>{l}</option>
-                            ))}
-                          </select>
+                            onValueChange={(v) => ubahStatus(t.id, v)}
+                            options={[...KOLOM, ["selesai", "Selesai"] as const].map(
+                              ([value, label]) => ({ value, label }),
+                            )}
+                          />
                         </div>
                       </li>
                     ))}

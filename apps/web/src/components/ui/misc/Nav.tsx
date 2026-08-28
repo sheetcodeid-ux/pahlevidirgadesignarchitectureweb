@@ -7,7 +7,10 @@ import { Icon } from "../Icon";
 export function Tabs({ items }: { items: { id: string; label: string; content: ReactNode }[] }) {
   return (
     <RTabs.Root className="tabs" defaultValue={items[0].id}>
-      <RTabs.List className="segmented" aria-label="Contoh tab">
+      {/* --block, bukan lebar-isi: bilah tab yang membentang penuh tapi
+          opsinya menggerombol di kiri menyisakan ruang kosong yang tidak
+          dimiliki siapa pun. Tiap opsi mengambil bagian yang sama. */}
+      <RTabs.List className="segmented segmented--block segmented--tebal" aria-label="Contoh tab">
         {items.map((t) => (
           <RTabs.Trigger key={t.id} value={t.id} className="segmented__opt">
             {t.label}

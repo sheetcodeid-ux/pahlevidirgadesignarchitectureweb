@@ -12,6 +12,11 @@ interface Props {
   placeholder?: string;
   onValueChange?: (v: string) => void;
   ariaLabel: string;
+  /** Dipakai kalau ada <label htmlFor> yang menunjuk ke sini. */
+  id?: string;
+  /** Versi sempit selebar isinya, untuk dipasang di dalam baris daftar. */
+  ringkas?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -22,10 +27,16 @@ interface Props {
  * saat daftarnya perlu tampil seragam di semua platform atau butuh isi yang
  * lebih dari sekadar teks.
  */
-export function Select({ options, value, placeholder = "Pilih…", onValueChange, ariaLabel }: Props) {
+export function Select({
+  options, value, placeholder = "Pilih…", onValueChange, ariaLabel, id, ringkas = false, disabled = false,
+}: Props) {
   return (
-    <RSelect.Root value={value} onValueChange={onValueChange}>
-      <RSelect.Trigger className="ov-select-trigger" aria-label={ariaLabel}>
+    <RSelect.Root value={value} onValueChange={onValueChange} disabled={disabled}>
+      <RSelect.Trigger
+        id={id}
+        className={`ov-select-trigger${ringkas ? " ov-select-trigger--ringkas" : ""}`}
+        aria-label={ariaLabel}
+      >
         <RSelect.Value placeholder={placeholder} />
         <RSelect.Icon className="ov-select-trigger__icon">
           <Icon name="chevronDown" size={16} />
