@@ -4,6 +4,7 @@ import { Tabs } from "../ui/misc/Nav";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
+import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import {
   daftarProyek, simpanProyek, mintaUrlUnggah, type Proyek,
   ambilProgress, ubahFaseProgress, buatUlangTokenProgress,
@@ -1125,26 +1126,39 @@ function PanelProgres({ projectId }: { projectId: string }) {
 
 type Draf = Partial<Proyek>;
 
-function Isi() {
+export type HalamanProyek = "publik" | "klien" | "internal";
+
+function Isi({ halaman }: { halaman: HalamanProyek }) {
   const toast = useToast();
   const [asli, setAsli] = useState<Proyek | null>(null);
   const [draf, setDraf] = useState<Draf>({});
   const [galat, setGalat] = useState<string | null>(null);
   const [menyimpan, setMenyimpan] = useState(false);
+  const [id, setId] = useState<string | null>(null);
+  const [siapId, setSiapId] = useState(false);
   const berkas = useRef<HTMLInputElement>(null);
 
-  const id = typeof window !== "undefined" ? new URLSearchParams(location.search).get("id") : null;
+  // Proyek yang sedang dibuka dibaca setelah mount, bukan saat render: di
+  // situs statis, HTML yang dikirim server tidak tahu isi localStorage, dan
+  // membacanya saat render membuat pass hidrasi pertama berbeda dari HTML-nya.
+  useEffect(() => {
+    setId(proyekAktif());
+    setSiapId(true);
+    // Combobox di topbar menulis ke tempat yang sama. Berlangganan membuat
+    // halaman ini ikut berganti isi tanpa dimuat ulang.
+    return onProyekAktif((baru) => { setId(baru); setDraf({}); setAsli(null); setGalat(null); });
+  }, []);
 
   useEffect(() => {
-    if (!id) { setGalat("Tidak ada proyek yang dipilih."); return; }
+    if (!siapId || !id) return;
     daftarProyek()
       .then((semua) => {
         const p = semua.find((x) => x.id === id);
-        if (!p) { setGalat("Proyek tidak ditemukan."); return; }
+        if (!p) { setGalat("Proyek tidak ditemukan. Mungkin sudah dihapus."); return; }
         setAsli(p);
       })
       .catch((e) => setGalat((e as Error).message));
-  }, [id]);
+  }, [id, siapId]);
 
   // Hanya field yang benar-benar berubah yang dikirim. Selain lebih hemat, ini
   // menghindarkan dua orang yang menyunting bersamaan saling menimpa kolom
@@ -1198,6 +1212,20 @@ function Isi() {
     }
   }
 
+  if (siapId && !id) {
+    return (
+      <div className="empty">
+        <span className="icon-tile"><Icon name="project" size={22} /></span>
+        <h2 className="t-heading">Belum ada proyek yang dibuka</h2>
+        <p className="t-muted">
+          Pilih satu lewat kotak <strong>Cari proyek</strong> di bilah atas, atau dari daftar
+          semua proyek. Halaman ini lalu mengikuti proyek itu sampai Anda memilih yang lain.
+        </p>
+        <a className="btn btn--primary" href="/admin/proyek">Buka daftar proyek</a>
+      </div>
+    );
+  }
+
   if (galat) {
     return (
       <div className="empty">
@@ -1213,7 +1241,7 @@ function Isi() {
   }
 
   const detail = (
-    <div className="stack">
+    <div className="stack proyek-kartu">
       <div className="field">
         <label className="field__label" htmlFor="ed-judul">Judul</label>
         <input id="ed-judul" className="input" value={String(nilai("title") ?? "")}
@@ -1268,7 +1296,7 @@ function Isi() {
   );
 
   const galeri = (
-    <div className="stack">
+    <div className="stack proyek-kartu">
       {nilai("coverImageUrl") || nilai("coverImageKey" as keyof Proyek) ? (
         <div className="aspect aspect--16-9">
           {nilai("coverImageUrl") ? (
@@ -1315,7 +1343,7 @@ function Isi() {
   );
 
   const seo = (
-    <div className="stack">
+    <div className="stack proyek-kartu">
       <div className="field">
         <label className="field__label" htmlFor="ed-seot">Judul SEO</label>
         <input id="ed-seot" className="input" value={String(nilai("seoTitle") ?? "")}
@@ -1332,23 +1360,28 @@ function Isi() {
 
   const bisaTerbit = Boolean(nilai("coverImageUrl") || nilai("coverImageKey" as keyof Proyek));
 
-  return (
-    <div className="stack" style={{ gap: "var(--space-5)" }}>
-      <div className="row row--between">
-        <a className="btn btn--ghost btn--sm" href="/admin/proyek">
-          <Icon name="chevronLeft" size={15} />Semua proyek
-        </a>
-        <span className="row" style={{ gap: "var(--space-2)" }}>
-          {adaPerubahan && (
-            <span className="marker marker--warn"><span className="marker__dot" />{berubah.length} perubahan belum disimpan</span>
-          )}
-          <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
-            {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
-            Simpan
-          </button>
-        </span>
-      </div>
+  /* Hanya halaman Publik yang menyunting field lewat draf; halaman lain
+     menyimpan sendiri seketika, jadi bilah simpan di sana tidak pernah
+     berguna dan hanya menambah barang yang harus diabaikan. */
+  const bilahSimpan = halaman === "publik" && (
+    <div className="row row--between proyekpage__bilah">
+      <span className="t-muted">{String(nilai("title") ?? "")}</span>
+      <span className="row" style={{ gap: "var(--space-2)" }}>
+        {adaPerubahan && (
+          <span className="marker marker--warn"><span className="marker__dot" />{berubah.length} perubahan belum disimpan</span>
+        )}
+        <button type="button" className="btn btn--primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
+          {menyimpan && <span className="spinner spinner--sm spinner--on-action" />}
+          Simpan
+        </button>
+      </span>
+    </div>
+  );
 
+  if (halaman === "publik") {
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        {bilahSimpan}
       <div className="card">
         <div className="card__header">
           <span className="icon-tile"><Icon name="project" size={20} /></span>
@@ -1388,7 +1421,36 @@ function Isi() {
           </div>
         </div>
       </div>
+        <Tabs
+          items={[
+            { id: "detail", label: "Detail", content: detail },
+            { id: "galeri", label: "Galeri", content: galeri },
+            { id: "seo", label: "SEO", content: seo },
+          ]}
+        />
+        <p className="field__help">
+          Kategori: {KATEGORI[String(nilai("category"))] ?? nilai("category")}
+        </p>
+      </div>
+    );
+  }
 
+  if (halaman === "klien") {
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <Tabs
+          items={[
+            { id: "brief", label: "Brief", content: <PanelBrief projectId={asli.id} /> },
+            { id: "dokumen", label: "Dokumen", content: <PanelDokumen proyek={asli} /> },
+            { id: "progres", label: "Progres", content: <PanelProgres projectId={asli.id} /> },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
       <div className="card">
         <div className="card__header">
           <span className="icon-tile"><Icon name="dashboard" size={20} /></span>
@@ -1423,14 +1485,9 @@ function Isi() {
           </div>
         </div>
       </div>
-
       <Tabs
         items={[
-          { id: "detail", label: "Detail", content: detail },
-          { id: "brief", label: "Brief", content: <PanelBrief projectId={asli.id} /> },
-          { id: "galeri", label: "Galeri", content: galeri },
           { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
-          { id: "dokumen", label: "Dokumen", content: <PanelDokumen proyek={asli} /> },
           {
             id: "keuangan",
             label: "Keuangan",
@@ -1441,22 +1498,30 @@ function Isi() {
               />
             ),
           },
-          { id: "progres", label: "Progres", content: <PanelProgres projectId={asli.id} /> },
-          { id: "seo", label: "SEO", content: seo },
         ]}
       />
-
-      <p className="field__help">
-        Kategori: {KATEGORI[String(nilai("category"))] ?? nilai("category")}
-      </p>
     </div>
   );
 }
 
-export function ProjectEditor() {
+/**
+ * Satu panel, tiga halaman. Pembagiannya menurut SIAPA yang melihat hasilnya:
+ *
+ *   publik   — Detail, Galeri, SEO, status terbit: yang dilihat pengunjung situs
+ *   klien    — Brief, Dokumen, Progres: yang dilihat klien proyek ini
+ *   internal — Tahap pipeline, Tugas, Keuangan: yang hanya dilihat studio
+ *
+ * Bukan dibagi menurut jenis datanya, karena pertanyaan yang benar-benar
+ * muncul saat mengubah sesuatu adalah "kalau saya ubah ini, siapa yang
+ * lihat?" — dan pembagian ini yang menjawabnya tanpa perlu diingat.
+ */
+export function ProyekPanel({ halaman }: { halaman: HalamanProyek }) {
   return (
     <RequireAuth>
-      <ToastProvider><Isi /></ToastProvider>
+      {/* Pembungkus .proyekpage yang membuat halaman ini memakai bahasa visual
+          yang sama dengan Tambah Proyek: badan halaman ABU, kartu dan isian
+          HITAM berbingkai tebal, judul dipisah garis tebal dari isinya. */}
+      <ToastProvider><div className="proyekpage"><Isi halaman={halaman} /></div></ToastProvider>
     </RequireAuth>
   );
 }

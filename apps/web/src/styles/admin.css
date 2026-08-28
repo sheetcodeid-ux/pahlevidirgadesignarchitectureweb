@@ -163,23 +163,56 @@
 /* Daftar hasil menggantung di bawah field, di dalam topbar. z-index di atas
    topbar sendiri supaya tidak tertutup garis pemisah di sebelahnya. */
 .topbar__combo-list {
+/* Lebarnya dipatok ke BIDANG di atasnya, bukan nilai tetap: daftar yang lebih
+   lebar dari pemicunya terbaca sebagai panel yang salah tempat. Judul yang
+   tidak muat diurus TeksGeser, bukan dengan melebarkan daftarnya. */
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  left: var(--space-3);
+  right: var(--space-3);
   z-index: 50;
-  width: 22rem;
-  max-width: 60vw;
-  max-height: 18rem;
+  max-height: 15rem;
   overflow-y: auto;
-  padding: var(--space-2);
+  padding: var(--space-1);
   border: 2px solid var(--border-strong);
   border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow-md);
 }
 
-.topbar__combo-judul { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.topbar__combo-status { font-size: var(--text-xs); color: var(--text-faint); flex: none; }
+.topbar__combo-list .ov-command__item { gap: var(--space-2); padding: 0.4rem 0.5rem; font-size: var(--text-sm); }
+.topbar__combo-status { font-size: var(--text-2xs); color: var(--text-faint); flex: none; }
+
+/* --- Teks yang menggeser sendiri ----------------------------------------- */
+
+.geser { flex: 1; min-width: 0; overflow: hidden; }
+.geser__isi { display: inline-block; white-space: nowrap; }
+
+/* Tepi kanan yang memudar hanya pada yang memang terpotong. Tanpa itu judul
+   panjang berhenti di tengah huruf dan terbaca sebagai render yang rusak,
+   bukan sebagai teks yang masih ada lanjutannya. */
+.geser[data-panjang] {
+  -webkit-mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+}
+
+/* Hanya yang ditandai panjang yang bergerak, dan hanya saat barisnya disentuh
+   atau dipilih dengan panah — teks yang bergerak terus-menerus di daftar
+   membuat seluruh daftar sulit dibaca. */
+.geser[data-panjang] .geser__isi { animation: geser-teks 7s linear infinite; animation-play-state: paused; }
+.ov-command__item:hover .geser[data-panjang] .geser__isi,
+.ov-command__item[data-selected="true"] .geser[data-panjang] .geser__isi { animation-play-state: running; }
+
+@keyframes geser-teks {
+  0%, 12%   { transform: translateX(0); }
+  50%, 62%  { transform: translateX(calc(-100% + 100px)); }
+  100%      { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .geser[data-panjang] .geser__isi { animation: none; }
+  .geser__isi { text-overflow: ellipsis; overflow: hidden; max-width: 100%; }
+}
 
 /* --- Lonceng -------------------------------------------------------------- */
 
@@ -285,30 +318,47 @@
   overflow: hidden;
 }
 
-.notifpop { width: 24rem; max-width: 92vw; }
+.notifpop { width: 21rem; max-width: 92vw; }
 
 .notifpop__kepala {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-5);
+  padding: var(--space-4);
   border-bottom: 2px solid var(--border-strong);
 }
 
-.notifpop__kepala .t-muted { margin: 0; font-size: var(--text-sm); }
+.notifpop__kepala .t-subheading { font-size: var(--text-md); }
+.notifpop__kepala .t-muted { margin: 0; font-size: var(--text-xs); }
+.notifpop__kepala .segmented__opt { padding: 0.3rem 0.7rem; font-size: var(--text-xs); }
 
-.notifpop__badan { max-height: 22rem; overflow-y: auto; }
+/* Empat baris terlihat, sisanya digulir. Tinggi barisnya diukur di browser
+   (66px: dua baris teks + padding vertikal 2x12px + garis), bukan ditebak —
+   versi pertama memakai 60px dan hasilnya 3,64 baris: baris keempat
+   terpotong separuh, yang justru lebih buruk daripada tiga baris utuh. */
+.notifpop__badan {
+  --notif-baris: 4.125rem;
+  max-height: calc(4 * var(--notif-baris));
+  overflow-y: auto;
+}
+
+.notifpop .notiflist__baris { padding: var(--space-3) var(--space-4); gap: var(--space-3); }
+.notifpop .notiflist__judul { font-size: var(--text-sm); }
+.notifpop .notiflist__detail { font-size: var(--text-xs); }
+.notifpop .empty { padding: var(--space-6) var(--space-4); }
+.notifpop .empty .t-heading { font-size: var(--text-md); }
+.notifpop .empty .t-muted { font-size: var(--text-xs); }
 
 .notifpop__kaki {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-4);
+  padding: var(--space-3);
   border-top: 2px solid var(--border-strong);
   background: var(--surface-raised);
   color: var(--text-strong);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: 600;
   text-decoration: none;
   transition: background-color var(--dur) var(--ease);
@@ -318,19 +368,19 @@
 
 /* --- Panel akun ----------------------------------------------------------- */
 
-.akunpop { width: 20rem; max-width: 92vw; }
+.akunpop { width: 16.5rem; max-width: 92vw; }
 
 .akunpop__kepala {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-6) var(--space-5);
+  gap: 0.15rem;
+  padding: var(--space-4) var(--space-4);
   border-bottom: 2px solid var(--border-strong);
   text-align: center;
 }
 
-.akunpop__sapa { font-size: var(--text-lg); font-weight: 700; color: var(--text-strong); margin-top: var(--space-2); }
+.akunpop__sapa { font-size: var(--text-md); font-weight: 700; color: var(--text-strong); margin-top: var(--space-2); }
 
 .akunpop__email {
   display: inline-flex;
@@ -339,7 +389,7 @@
   max-width: 100%;
   min-width: 0;
   color: var(--text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
 }
 
 .akunpop__email span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -349,16 +399,16 @@
   align-items: center;
   gap: 0.25rem;
   color: var(--brand);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
 .akunpop__aksi {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   width: 100%;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-4);
   border: 0;
   background: transparent;
   color: var(--text-body);
@@ -374,12 +424,21 @@
 .akunpop__aksi:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
 .akunpop__aksi-teks { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.akunpop__aksi-judul { font-size: var(--text-md); font-weight: 600; color: var(--text-strong); }
-.akunpop__aksi-sub { font-size: var(--text-sm); color: var(--text-muted); }
+.akunpop__aksi-judul { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
+.akunpop__aksi-sub { font-size: var(--text-xs); color: var(--text-muted); }
 
 .akunpop__aksi--keluar { color: var(--brand); }
 .akunpop__aksi--keluar .akunpop__aksi-judul,
 .akunpop__aksi--keluar .akunpop__aksi-sub { color: var(--brand); }
+
+/* Keluar disorot merah tipis, bukan abu seperti Pengaturan: warnanya sudah
+   merah, dan latar abu di bawah teks merah membuat keduanya berebut.
+   Opacity rendah supaya tetap terbaca sebagai sorotan, bukan sebagai
+   peringatan yang sudah terjadi. */
+.akunpop__aksi--keluar:hover,
+.akunpop__aksi--keluar:focus-visible {
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
 
 /* Di layar sempit segmen keterangan disembunyikan lebih dulu — jam, tanggal,
    dan penghitung boleh hilang; navigasi dan identitas tidak. Batas di
@@ -438,12 +497,19 @@
      ruang 3rem untuk tombol laci tidak bisa diambil dari mana-mana lagi.
      "Admin /" ikut dilepas — di ponsel jejak satu tingkat tidak memberi tahu
      apa pun yang tidak sudah diketahui dari sidebar. */
-  .topbar__crumb { flex-shrink: 1; }
+  /* min-width:0 bukan hiasan: tanpa itu remah roti tidak pernah menyusut di
+     bawah lebar isinya, jadi sisa lebar yang tak muat justru mendorong avatar
+     keluar layar dan membuat badan halaman bisa digulir mendatar. */
+  .topbar__crumb { flex-shrink: 1; min-width: 0; }
   .topbar__crumb a,
   .topbar__crumb .breadcrumb__sep { display: none; }
   /* Tombol laci butuh 3rem di kiri; sisanya dipangkas dari sel tombol ikon. */
   .topbar__aksi,
   .topbar__sel { padding-inline: var(--space-1); }
+  /* Di lebar ini identitas tinggal avatar — tidak ada teks yang bisa
+     dipendekkan, jadi menyusutkannya cuma mendorong avatar keluar layar.
+     Seluruh penyusutan dibebankan ke remah roti, yang memang punya ellipsis. */
+  .topbar__id { flex-shrink: 0; }
 }
 
 
@@ -1266,7 +1332,8 @@
 
 .buatpage__utama { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
 
-.buat-kartu {
+.buat-kartu,
+.proyek-kartu {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -1332,20 +1399,24 @@
    mendefinisikan bentuknya cuma bingkai 2px — bukan beda warna. Kotak abu
    di atas kartu hitam terbaca sebagai lapisan tambahan yang tidak ada
    artinya; yang benar-benar perlu dibedakan hanya kotak catatan panjang. */
-.buat-kartu .input {
+.buat-kartu .input,
+.proyekpage .input {
   background: var(--bg-sunken);
   border-width: 2px;
   border-color: var(--border-strong);
 }
 
-.buat-kartu .input:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
+.buat-kartu .input:hover:not(:disabled):not([readonly]),
+.proyekpage .input:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
 
 /* Kotak catatan tetap abu — ia satu-satunya isian yang isinya panjang, dan
    bidang terang membuat batas area mengetiknya terbaca tanpa perlu dibaca. */
-.buat-kartu .input--area { background: var(--surface-raised); }
+.buat-kartu .input--area,
+.proyekpage .input--area { background: var(--surface-raised); }
 
 /* Pemilih kategori mengikuti isian lain, bukan gaya select bawaannya. */
-.buat-kartu .select .input { background: var(--bg-sunken); }
+.buat-kartu .select .input,
+.proyekpage .select .input { background: var(--bg-sunken); }
 
 /* Tombol di panel aksi memakai bingkai setebal kartu di sebelahnya. */
 .buatpage__aksi .btn--secondary { border-width: 2px; }
@@ -1354,12 +1425,111 @@
    Aturan global membatasi tiap <p> ke 68ch — ukuran nyaman untuk teks
    bacaan panjang, tapi di sini justru memaksa satu kalimat pendek pecah
    jadi dua baris padahal kartunya masih lebar. */
-.buat-kartu p { max-width: none; }
+.buat-kartu p,
+.proyek-kartu p { max-width: none; }
 
 /* Di tema terang --surface-raised nyaris putih, jadi kotak catatan tak
    terbaca berbeda dari isian di atasnya. Abunya diambil dari --tray, satu-
    satunya bidang abu lembut yang memang disediakan untuk tema terang. */
-:root[data-theme="light"] .buat-kartu .input--area { background: var(--tray); }
+:root[data-theme="light"] .buat-kartu .input--area,
+:root[data-theme="light"] .proyekpage .input--area { background: var(--tray); }
+
+/* --- Halaman proyek (Publik / Klien / Internal) ---------------------------
+   Bahasa visualnya diambil bulat-bulat dari halaman Tambah Proyek, bukan
+   ditulis ulang: badan halaman ABU, kartu dan isian HITAM berbingkai 2px,
+   dan judul halaman dipisah garis tebal dari isinya. Tiga halaman ini
+   menyunting proyek yang sama seperti form pembuatan, jadi terlihat berbeda
+   dari form itu hanya akan membuat staf mengira ia sedang di tempat lain.
+
+   Selektornya TANPA ">" — <astro-island> menyisip di antara .admin__content
+   dan .proyekpage, jadi ia bukan anak langsung meski tata letaknya begitu. */
+.admin__content:has(.proyekpage) {
+  padding: 0;
+  gap: 0;
+  max-width: none;
+  background: var(--surface-raised);
+}
+
+/* Kepala halaman HITAM dan menempel saat digulir, dengan garis tebal sebagai
+   batasnya. z-index di bawah topbar (40) supaya ia yang tertutup. */
+.admin__content:has(.proyekpage) .page-head {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 30;
+  padding: var(--space-6);
+  background: var(--bg-sunken);
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.proyekpage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+/* Kartu bawaan (.card) di dalam halaman ini disamakan dengan .buat-kartu:
+   hitam, bingkai 2px. Tanpa ini kartu Status terbit dan Tahap pipeline
+   tampak sebagai lapisan abu yang lebih terang di atas badan abu. */
+.proyekpage .card {
+  background: var(--bg-sunken);
+  border: 2px solid var(--border-strong);
+}
+
+/* Bilah tab dan pemilih tahap: hitam berbingkai tebal, sejajar dengan
+   isian di bawahnya. Ia perkakas, jadi ikut aturan yang sama. */
+.proyekpage .segmented {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+
+/* Kartu pilihan, baris berbingkai, dan panel lipat memakai bingkai setebal
+   kartunya. Latarnya hitam seperti kartu — yang membedakannya bingkai,
+   bukan beda warna, persis alasan yang sama seperti di form pembuatan. */
+.proyekpage .radio-card,
+.proyekpage .item--bordered,
+.proyekpage .collapsible {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+
+/* Kartu terpilih tetap merah — warna punya makna tetap, dan bingkai tebal
+   tidak boleh menghapus tanda "ini yang aktif". */
+.proyekpage .radio-card:has(input:checked) {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+/* Bidang unggah tetap bergaris putus-putus, hanya ikut menebal. */
+.proyekpage .dropzone {
+  background: var(--bg-sunken);
+  border-width: 2px;
+}
+
+/* Tombol sekunder di halaman ini bersanding langsung dengan isian
+   berbingkai 2px, jadi bingkainya disamakan supaya tidak terlihat tipis
+   sendirian. */
+.proyekpage .btn--secondary { border-width: 2px; }
+
+/* Bilah simpan ikut berkartu hitam. Dibiarkan telanjang di atas badan abu ia
+   satu-satunya benda yang melayang tanpa batas, dan judul proyek di kirinya
+   terbaca seolah bagian dari judul halaman, bukan dari isinya. */
+.proyekpage__bilah {
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-sunken);
+}
+
+/* Keadaan kosong dan galat berdiri sendiri di badan abu — diberi kartu
+   hitam supaya tidak melayang tanpa batas di tengah halaman. */
+.proyekpage > .empty {
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-sunken);
+}
 
 /* --- Dashboard: bidang bertitik + kolom kanan --------------------------- */
 
@@ -1709,4 +1879,71 @@
   .dash-salam__caret { animation: none; }
   .dash-kartu__aksi--lonceng:hover svg,
   .dash-kartu__aksi--gerigi:hover svg { animation: none; }
+}
+
+/* --- Pemilih zona waktu --------------------------------------------------- */
+
+/* Tiga kartu berdampingan, bukan dropdown. Pilihannya hanya tiga dan tidak
+   akan pernah bertambah — menyembunyikan dua di balik dropdown tidak
+   menghemat apa pun, sementara membandingkan ketiganya jadi butuh dua klik. */
+.zonapilih {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.zonapilih__kartu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: var(--space-4) var(--space-2);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.zonapilih__kartu:hover { border-color: var(--text-faint); }
+.zonapilih__kartu:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Yang terpilih ditandai MERAH — warna brand, dan zona waktu adalah pilihan
+   yang cuma satu yang benar, bukan satu dari sekian yang boleh menyala. */
+.zonapilih__kartu[aria-checked="true"] {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, var(--bg-sunken));
+}
+
+.zonapilih__label { font-size: var(--text-lg); font-weight: 700; color: var(--text-strong); }
+.zonapilih__kartu[aria-checked="true"] .zonapilih__label { color: var(--brand); }
+
+.zonapilih__nama { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.3; }
+
+.zonapilih__utc { font-size: var(--text-xs); color: var(--text-faint); margin-top: 0.15rem; }
+.zonapilih__kartu[aria-checked="true"] .zonapilih__utc { color: var(--brand); }
+
+/* Titik di pojok — penanda kedua selain warna, supaya pilihannya tetap
+   terbaca oleh yang tidak bisa membedakan merah dari abu. */
+.zonapilih__titik {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+/* Label berikon, sejajar dengan label field lain di sekitarnya. */
+.field__label { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+@media (max-width: 30rem) {
+  .zonapilih { grid-template-columns: 1fr; }
+  .zonapilih__kartu { flex-direction: row; justify-content: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+  .zonapilih__nama { flex: 1; text-align: left; }
 }

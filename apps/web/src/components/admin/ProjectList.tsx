@@ -280,7 +280,7 @@ function Isi() {
                   <td className="table__actions">
                     <span className="table__act">
                       <a className="btn btn--secondary btn--icon btn--boxed" href={`/admin/proyek/edit?id=${p.id}`}
-                        aria-label={`Sunting ${p.title}`}>
+                        aria-label={`Buka ${p.title}`}>
                         <Icon name="edit" size={15} />
                       </a>
                       <AlertDialog
@@ -342,7 +342,7 @@ function Isi() {
 
               <div className="pcard__foot">
                 <a className="pcard__act" href={`/admin/proyek/edit?id=${p.id}`}>
-                  <Icon name="edit" size={15} />Sunting
+                  <Icon name="external" size={15} />Buka
                 </a>
                 <a className="pcard__act" href={`/proyek/${p.slug}`} target="_blank" rel="noreferrer">
                   <Icon name="external" size={15} />Lihat

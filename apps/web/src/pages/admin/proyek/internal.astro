@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { ProyekPanel } from "../../../components/admin/ProjectEditor";
+---
+
+<AdminLayout title="Kerja Internal" heading="Kerja Internal" description="Tahap pipeline, tugas, dan keuangan — hanya untuk studio.">
+  <ProyekPanel client:load halaman="internal" />
+</AdminLayout>

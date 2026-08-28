@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as RPopover from "@radix-ui/react-popover";
 import { Command as Cmdk } from "cmdk";
 import * as RDialog from "@radix-ui/react-dialog";
@@ -7,6 +7,7 @@ import { Avatar } from "../ui/misc/Avatar";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { IsiNotifikasi, TabNotifikasi } from "./NotifikasiPanel";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
+import { bukaProyek } from "../../lib/proyekAktif";
 import {
   ambilSettings, profilTersimpan, hapusSesi, singkatanZona,
   type Profil, type Proyek, type StudioSettings,
@@ -64,6 +65,34 @@ function Tanggal({ zona }: { zona: string }) {
   }).format(kini);
 
   return <span className="topbar__tanggal">{teks}</span>;
+}
+
+/**
+ * Teks yang menggeser sendiri kalau tidak muat, dan diam kalau muat.
+ *
+ * Overflow tidak bisa dideteksi CSS, jadi diukur sekali setelah render lalu
+ * ditandai lewat atribut — animasinya sendiri tetap CSS. Alternatifnya
+ * melebarkan daftar mengikuti judul terpanjang, dan itu membuat lebar daftar
+ * berubah-ubah mengikuti isi proyek: hal yang tidak bisa diperkirakan
+ * siapa pun yang memakainya.
+ */
+function TeksGeser({ children }: { children: string }) {
+  const luar = useRef<HTMLSpanElement>(null);
+  const [panjang, setPanjang] = useState(false);
+
+  useEffect(() => {
+    const el = luar.current;
+    if (!el) return;
+    const dalam = el.firstElementChild as HTMLElement | null;
+    if (!dalam) return;
+    setPanjang(dalam.scrollWidth > el.clientWidth + 1);
+  }, [children]);
+
+  return (
+    <span className="geser" ref={luar} data-panjang={panjang || undefined} title={children}>
+      <span className="geser__isi">{children}</span>
+    </span>
+  );
 }
 
 /** Lonceng dengan badge berangka dan popover berisi daftar yang sama. */
@@ -139,7 +168,10 @@ function Identitas({ settings, profil }: { settings: StudioSettings | null; prof
       <RPopover.Portal>
         <RPopover.Content className="akunpop" sideOffset={10} align="end" collisionPadding={12}>
           <div className="akunpop__kepala">
-            <Avatar name={nama} src={settings?.logoUrl ?? undefined} brand size="lg" />
+            {/* md, bukan lg: panel ini keterangan akun, bukan halaman profil.
+                Avatar sebesar lg mengambil sepertiga tinggi panel untuk
+                menyampaikan hal yang sudah disampaikan namanya. */}
+            <Avatar name={nama} src={settings?.logoUrl ?? undefined} brand size="md" />
             <span className="akunpop__sapa">Halo, {sapaan}.</span>
             <span className="akunpop__email">
               <Icon name="inquiry" size={14} />
@@ -207,10 +239,14 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
                 key={p.id}
                 value={`${p.title} ${p.category} ${p.city ?? ""}`}
                 className="ov-command__item"
-                onSelect={() => { window.location.href = `/admin/proyek/edit?id=${p.id}`; }}
+                /* bukaProyek, bukan pindah halaman: kalau sedang berada di
+                   salah satu halaman proyek, yang berganti isinya — bukan
+                   halamannya. Itu yang membuat combobox ini terasa seperti
+                   pengalih konteks, bukan seperti daftar tautan. */
+                onSelect={() => bukaProyek(p.id)}
               >
                 <Icon name="project" size={15} />
-                <span className="topbar__combo-judul">{p.title}</span>
+                <TeksGeser>{p.title}</TeksGeser>
                 <span className="topbar__combo-status">
                   {p.status === "published" ? "Terbit" : p.status === "draft" ? "Draf" : "Arsip"}
                 </span>
@@ -293,7 +329,7 @@ function Perintah({ proyek }: { proyek: Proyek[] | null }) {
                 <Cmdk.Group heading="Proyek" className="ov-command__group">
                   {(proyek ?? []).map((p) => (
                     <Cmdk.Item key={p.id} value={`${p.title} ${p.category}`} className="ov-command__item"
-                      onSelect={() => { window.location.href = `/admin/proyek/edit?id=${p.id}`; }}>
+                      onSelect={() => bukaProyek(p.id)}>
                       <Icon name="project" size={16} />{p.title}
                     </Cmdk.Item>
                   ))}
