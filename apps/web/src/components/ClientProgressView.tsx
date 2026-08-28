@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Icon } from "./ui/Icon";
 import { PemutarSuara } from "./ui/misc/VoiceNote";
 import { Balok, SkeletonKartu, SkeletonIsian, SkeletonDaftar } from "./ui/Skeleton";
+import { InputRupiah } from "./ui/InputRupiah";
+import { DatePicker } from "./ui/data/DatePicker";
 import { formatRupiah } from "../lib/format";
 
 const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787").replace(/\/$/, "");
@@ -54,6 +56,9 @@ interface Tagihan {
 
 interface Brief {
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;
@@ -257,8 +262,9 @@ function BarisDokumen({ dokumen, token, onBerubah }: { dokumen: Dokumen; token: 
 
 /** Klien mengisi atau memperbarui brief awal proyeknya sendiri. */
 function FormBrief({ brief, token }: { brief: Brief; token: string }) {
-  const [budgetRange, setBudgetRange] = useState(brief.budgetRange ?? "");
-  const [timeline, setTimeline] = useState(brief.timeline ?? "");
+  const [budgetAmount, setBudgetAmount] = useState<number | null>(brief.budgetAmount ?? null);
+  const [startDate, setStartDate] = useState(brief.startDate ?? "");
+  const [endDate, setEndDate] = useState(brief.endDate ?? "");
   const [stylePreference, setStylePreference] = useState(brief.stylePreference ?? "");
   const [requirements, setRequirements] = useState(brief.requirements ?? "");
   const [sibuk, setSibuk] = useState(false);
@@ -272,7 +278,13 @@ function FormBrief({ brief, token }: { brief: Brief; token: string }) {
       const res = await fetch(`${API}/api/v1/progress/${token}/brief`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ budgetRange, timeline, stylePreference, requirements }),
+        body: JSON.stringify({
+          budgetAmount,
+          startDate: startDate || null,
+          endDate: endDate || null,
+          stylePreference,
+          requirements,
+        }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => null))?.error?.message ?? "gagal mengirim brief");
       setTerkirim(true);
@@ -292,20 +304,24 @@ function FormBrief({ brief, token }: { brief: Brief; token: string }) {
         <p className="t-muted">
           Semakin lengkap informasinya, semakin cepat studio menyusun konsep awal.
         </p>
-        <div className="field">
-          <label className="field__label" htmlFor="brief-budget">Kisaran anggaran</label>
-          <input id="brief-budget" className="input" value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)}
-            placeholder="Contoh: 300-500jt" />
-        </div>
-        <div className="field">
-          <label className="field__label" htmlFor="brief-waktu">Target waktu</label>
-          <input id="brief-waktu" className="input" value={timeline} onChange={(e) => setTimeline(e.target.value)}
-            placeholder="Contoh: mulai konstruksi awal tahun depan" />
-        </div>
-        <div className="field">
-          <label className="field__label" htmlFor="brief-gaya">Preferensi gaya</label>
-          <input id="brief-gaya" className="input" value={stylePreference} onChange={(e) => setStylePreference(e.target.value)}
-            placeholder="Contoh: tropis modern" />
+        {/* Susunan yang sama persis dengan tab Brief di panel admin: baris
+            pertama anggaran + gaya, baris kedua dua tanggal. Sebelumnya
+            halaman ini masih memakai isian teks bebas yang lama, jadi klien
+            dan staf mengisi dua bentuk berbeda untuk data yang sama. */}
+        <div className="spec-grid spec-grid--rapat spec-grid--dua">
+          <div className="field">
+            <label className="field__label" htmlFor="brief-anggaran">Kisaran anggaran</label>
+            <InputRupiah id="brief-anggaran" value={budgetAmount} onChange={setBudgetAmount}
+              ariaLabel="Kisaran anggaran" placeholder="Rp0" />
+          </div>
+          <div className="field">
+            <label className="field__label" htmlFor="brief-gaya">Preferensi gaya</label>
+            <input id="brief-gaya" className="input" value={stylePreference} onChange={(e) => setStylePreference(e.target.value)}
+              placeholder="Contoh: tropis modern" />
+          </div>
+          <DatePicker label="Tanggal mulai" value={startDate} onChange={(iso) => setStartDate(iso ?? "")} id="brief-mulai" />
+          <DatePicker label="Tanggal selesai" value={endDate} onChange={(iso) => setEndDate(iso ?? "")} id="brief-selesai"
+            minDate={startDate ? new Date(startDate) : undefined} />
         </div>
         <div className="field">
           <label className="field__label" htmlFor="brief-kebutuhan">Kebutuhan ruang/fungsi</label>

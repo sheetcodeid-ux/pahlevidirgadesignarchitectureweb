@@ -272,9 +272,17 @@ export interface ProjectBriefInput {
   internalNotes?: string | null;
 }
 
-/** Field yang boleh dikirim klien lewat portal token — tanpa internalNotes. */
+/** Field yang boleh dikirim klien lewat portal token — tanpa internalNotes.
+ *
+ *  budgetRange dan timeline masih diterima: keduanya kolom lama yang isinya
+ *  belum tentu kosong, dan menolaknya akan membuat portal klien yang belum
+ *  ter-deploy ulang gagal menyimpan. Yang dikirim form sekarang budgetAmount,
+ *  startDate, dan endDate. */
 export interface ClientBriefInput {
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;
@@ -283,6 +291,9 @@ export interface ClientBriefInput {
 /** Dilihat klien: sama seperti ProjectBrief tapi tanpa internalNotes. */
 export interface ClientBrief {
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;

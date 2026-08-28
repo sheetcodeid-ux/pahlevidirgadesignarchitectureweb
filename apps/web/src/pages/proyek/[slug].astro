@@ -97,6 +97,30 @@ const facts = [
       )
     }
 
+    {
+      project.materials && project.materials.length > 0 && (
+        <section class="shell section materials">
+          <h2 class="materials__judul">Dibuat dengan</h2>
+          <p class="materials__ket">Bahan utama yang dipakai di proyek ini.</p>
+          <ul class="materials__grid">
+            {project.materials.map((material) => (
+              <li class="materials__item">
+                <img
+                  src={material.url}
+                  alt={material.altText ?? `Material proyek ${project.title}`}
+                  width={material.width}
+                  height={material.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+                {material.caption && <span class="materials__nama">{material.caption}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
     <nav class="shell back">
       <a href="/proyek">← Semua proyek</a>
     </nav>
@@ -167,6 +191,54 @@ const facts = [
     font-size: 0.85rem;
     color: var(--text-faint);
     padding-top: 0.75rem;
+  }
+
+  /* Material — deretan kecil, sengaja berbeda dari galeri.
+     
+     Galeri memakai foto selebar kolom karena isinya karya yang harus
+     dinikmati. Material bukan itu: yang dibaca pengunjung adalah NAMANYA
+     ("batu andesit", "kayu jati"), fotonya cuma penunjuk rupa. Menampilkan
+     keduanya sebesar galeri akan membuat contoh batu setara dengan foto
+     bangunannya. */
+  .materials__judul {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin: 0;
+  }
+
+  .materials__ket {
+    color: var(--text-muted);
+    margin: 0.35rem 0 clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .materials__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr));
+    gap: clamp(1rem, 2.5vw, 1.75rem);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .materials__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  /* aspect-ratio, bukan tinggi tetap: kotaknya harus tetap persegi di lebar
+     kolom mana pun — jebakan yang sudah tercatat di CLAUDE.md. */
+  .materials__item img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+  }
+
+  .materials__nama {
+    font-size: 0.85rem;
+    color: var(--text-body);
   }
 
   .back {

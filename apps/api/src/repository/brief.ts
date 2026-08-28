@@ -75,24 +75,46 @@ export async function update(sql: Sql, projectID: string, input: ProjectBriefInp
 /** Dilihat klien lewat token: object kosong (semua null) kalau proyek belum pernah punya brief. */
 export async function getByProjectID(sql: Sql, projectID: string): Promise<ClientBrief> {
   const rows = await sql<Row[]>`
-    select budget_range, timeline, style_preference, requirements, internal_notes, submitted_at
+    select budget_range, budget_amount, start_date, end_date, timeline,
+           style_preference, requirements, internal_notes, submitted_at
     from public.project_briefs
     where project_id = ${projectID}::uuid`;
 
   if (!rows[0]) {
-    return { budgetRange: null, timeline: null, stylePreference: null, requirements: null, submittedAt: null };
+    return {
+      budgetRange: null, budgetAmount: null, startDate: null, endDate: null,
+      timeline: null, stylePreference: null, requirements: null, submittedAt: null,
+    };
   }
   const { internalNotes: _internalNotes, ...clientFields } = rowToBrief(rows[0]);
   return clientFields;
 }
 
-/** Klien mengisi/mengubah briefnya sendiri — internal_notes tidak pernah disentuh jalur ini. */
+/**
+ * Klien mengisi/mengubah briefnya sendiri — internal_notes tidak pernah
+ * disentuh jalur ini.
+ *
+ * budget_range dan timeline ikut ditulis walau formnya sudah pindah ke
+ * budget_amount + dua tanggal: kolom lamanya masih bisa berisi kalimat yang
+ * pernah diketik klien, dan membiarkannya nyangkut berarti staf melihat
+ * anggaran lama di satu tempat dan anggaran baru di tempat lain. Jalur ini
+ * mengirim null untuk keduanya, jadi yang lama tersapu bersih saat klien
+ * menyimpan lewat form baru.
+ */
 export async function submitByProjectID(sql: Sql, projectID: string, input: ClientBriefInput): Promise<void> {
   await sql`
-    insert into public.project_briefs (project_id, budget_range, timeline, style_preference, requirements, submitted_at)
-    values (${projectID}::uuid, ${input.budgetRange ?? null}, ${input.timeline ?? null}, ${input.stylePreference ?? null}, ${input.requirements ?? null}, now())
+    insert into public.project_briefs
+      (project_id, budget_range, budget_amount, start_date, end_date, timeline,
+       style_preference, requirements, submitted_at)
+    values
+      (${projectID}::uuid, ${input.budgetRange ?? null}, ${input.budgetAmount ?? null},
+       ${input.startDate ?? null}, ${input.endDate ?? null}, ${input.timeline ?? null},
+       ${input.stylePreference ?? null}, ${input.requirements ?? null}, now())
     on conflict (project_id) do update set
       budget_range     = ${input.budgetRange ?? null},
+      budget_amount    = ${input.budgetAmount ?? null},
+      start_date       = ${input.startDate ?? null},
+      end_date         = ${input.endDate ?? null},
       timeline         = ${input.timeline ?? null},
       style_preference = ${input.stylePreference ?? null},
       requirements     = ${input.requirements ?? null},

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import type { Env } from "../types";
+import type { ClientBriefInput, Env } from "../types";
 import { withDb } from "../db";
 import * as progressRepo from "../repository/progress";
 
@@ -118,8 +118,18 @@ progress.post("/progress/:token/brief", async (c) => {
     return c.json({ error: { status: 404, message: "link tidak ditemukan" } }, 404);
   }
 
-  type Body = { budgetRange?: string | null; timeline?: string | null; stylePreference?: string | null; requirements?: string | null };
-  const body = await c.req.json<Body>().catch((): Body => ({}));
+  const body = await c.req.json<ClientBriefInput>().catch((): ClientBriefInput => ({}));
+
+  // Validasi yang sama dengan jalur staf. Endpoint ini terbuka untuk siapa
+  // pun yang memegang token, jadi ia tidak boleh lebih longgar dari panel
+  // admin — constraint database memang menjaganya, tapi galat Postgres
+  // mentah bukan sesuatu yang boleh sampai ke layar klien.
+  if (body.budgetAmount != null && (!Number.isFinite(body.budgetAmount) || body.budgetAmount < 0)) {
+    return c.json({ error: { status: 422, message: "anggaran tidak boleh negatif" } }, 422);
+  }
+  if (body.startDate && body.endDate && body.endDate < body.startDate) {
+    return c.json({ error: { status: 422, message: "tanggal selesai tidak boleh mendahului tanggal mulai" } }, 422);
+  }
 
   try {
     await withDb(c.env, c.executionCtx, (sql) => progressRepo.submitBrief(sql, token, body));
