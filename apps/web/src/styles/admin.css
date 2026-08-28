@@ -691,10 +691,20 @@
 }
 
 /* Varian tiga kolom untuk isian yang memang berjumlah tiga (Label, Kategori,
-   Nominal). Tanpa ini mereka ikut pola empat kolom dan yang ketiga berdiri
-   sendiri dengan satu sel kosong di sebelahnya. */
-@container (min-width: 34rem) {
-  .spec-grid--tiga { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+   Nominal).
+   
+   TANPA container query, beda dari --rapat di atasnya, dan itu perbaikan
+   bug bukan gaya bebas: @container hanya cocok kalau ADA leluhur yang
+   menyatakan container-type. Wadah yang ada — .buat-kartu dan .proyek-kartu
+   — tidak pernah membungkus isi tab, jadi aturan ini tidak pernah menyala
+   di panel Keuangan dan Nominal turun sendirian ke baris kedua. Persis yang
+   diminta pemilik untuk tidak terjadi.
+   
+   auto-fit dengan ambang 11rem memberi tiga kolom di kartu selebar apa pun
+   yang masuk akal (mulai ~35rem) dan runtuh sendiri di ponsel — tanpa
+   bergantung pada siapa leluhurnya. */
+.spec-grid--tiga {
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
 }
 
 /* Dikunci dua kolom bahkan di kartu lebar: isinya empat isian yang membentuk

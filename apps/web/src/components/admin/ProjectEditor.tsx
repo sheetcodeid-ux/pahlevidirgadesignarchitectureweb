@@ -24,7 +24,9 @@ import {
   daftarKomentarDokumen, tambahKomentarDokumen, type KomentarDokumen,
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
   terbitkanSitus, type JenisGambar,
+  ambilSettings, type StudioSettings,
 } from "../../lib/admin";
+import { unduhPdf } from "../../lib/pdf";
 import { formatRupiah } from "../../lib/format";
 
 /* Radix Select menolak value string kosong — itu nilai cadangan untuk
@@ -123,12 +125,19 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
   const [kategoriBiaya, setKategoriBiaya] = useState("lainnya");
   const [nominalBiaya, setNominalBiaya] = useState<number | null>(null);
 
+  /* Kop PDF diambil dari Info Studio. Dimuat sekali bersama panelnya, bukan
+     saat tombol ditekan: kalau permintaannya gagal, tombolnya mati dengan
+     alasan yang jelas ketimbang menggantung setelah diklik. */
+  const [studio, setStudio] = useState<StudioSettings | null>(null);
+  const [membuatPdf, setMembuatPdf] = useState<"biaya" | "invoice" | null>(null);
+
   function muat() {
     daftarInvoice(proyek.id).then(setInvoice).catch(() => setInvoice([]));
     daftarBiaya(proyek.id).then(setBiaya).catch(() => setBiaya([]));
   }
 
   useEffect(muat, [proyek.id]);
+  useEffect(() => { ambilSettings().then(setStudio).catch(() => setStudio(null)); }, []);
 
   async function simpanKontrak() {
     const angka = kontrakInput;
@@ -205,6 +214,68 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
   const totalBiaya = (biaya ?? []).reduce((s, b) => s + b.amount, 0);
   const kontrak = proyek.contractValue ?? 0;
   const marginPct = kontrak > 0 ? ((kontrak - totalBiaya) / kontrak) * 100 : null;
+  const totalInvoice = (invoice ?? []).reduce((s, i) => s + i.amount, 0);
+  const totalLunas = (invoice ?? []).filter((i) => i.status === "lunas").reduce((s, i) => s + i.amount, 0);
+
+  async function unduhBiaya() {
+    if (!studio || !biaya) return;
+    setMembuatPdf("biaya");
+    try {
+      const nama = await unduhPdf({
+        judul: "Rincian Biaya Proyek",
+        namaProyek: proyek.title,
+        kolomTengah: "Kategori",
+        baris: biaya.map((b) => ({
+          label: b.label,
+          keterangan: KATEGORI_BIAYA.find(([v]) => v === b.category)?.[1] ?? b.category,
+          nominal: b.amount,
+        })),
+        ringkasan: [
+          ...(kontrak > 0 ? [{ label: "Nilai kontrak", nilai: formatRupiah(kontrak) }] : []),
+          { label: "Total biaya", nilai: formatRupiah(totalBiaya), tebal: true },
+          ...(marginPct !== null
+            ? [{ label: "Margin", nilai: `${formatRupiah(kontrak - totalBiaya)} (${marginPct.toFixed(0)}%)` }]
+            : []),
+        ],
+        catatan: "Dokumen internal studio. Berisi biaya dan margin — tidak untuk dibagikan ke klien.",
+      }, studio);
+      toast({ judul: "PDF diunduh", keterangan: nama, nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal membuat PDF", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMembuatPdf(null);
+    }
+  }
+
+  async function unduhInvoice() {
+    if (!studio || !invoice) return;
+    setMembuatPdf("invoice");
+    try {
+      const nama = await unduhPdf({
+        judul: "Daftar Tagihan",
+        namaProyek: proyek.title,
+        kolomTengah: "Status",
+        baris: invoice.map((i) => ({
+          label: i.label,
+          keterangan: STATUS_INVOICE.find(([v]) => v === i.status)?.[1] ?? i.status,
+          nominal: i.amount,
+        })),
+        ringkasan: [
+          { label: "Total tagihan", nilai: formatRupiah(totalInvoice), tebal: true },
+          { label: "Sudah dibayar", nilai: formatRupiah(totalLunas) },
+          { label: "Sisa", nilai: formatRupiah(totalInvoice - totalLunas) },
+        ],
+        catatan: studio.phone
+          ? `Pembayaran dan pertanyaan tagihan: ${studio.phone}`
+          : undefined,
+      }, studio);
+      toast({ judul: "PDF diunduh", keterangan: nama, nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal membuat PDF", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMembuatPdf(null);
+    }
+  }
 
   return (
     <div className="stack" style={{ gap: "var(--space-5)" }}>
@@ -232,6 +303,14 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
             <span className="t-subheading">Invoice</span>
             <span className="t-muted">DP, pelunasan, atau tagihan lain untuk proyek ini.</span>
           </span>
+          <button type="button" className="btn btn--ghost btn--sm"
+            disabled={!studio || !invoice || invoice.length === 0 || membuatPdf !== null}
+            onClick={unduhInvoice}>
+            {membuatPdf === "invoice"
+              ? <span className="spinner spinner--sm" />
+              : <Icon name="download" size={14} />}
+            Unduh PDF
+          </button>
         </div>
         <div className="card__body">
           <div className="stack">
@@ -295,6 +374,14 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
             <span className="t-subheading">Biaya (HPP)</span>
             <span className="t-muted">Fee freelancer, operasional, dan bagian prinsipal. Total: {formatRupiah(totalBiaya)}</span>
           </span>
+          <button type="button" className="btn btn--ghost btn--sm"
+            disabled={!studio || !biaya || biaya.length === 0 || membuatPdf !== null}
+            onClick={unduhBiaya}>
+            {membuatPdf === "biaya"
+              ? <span className="spinner spinner--sm" />
+              : <Icon name="download" size={14} />}
+            Unduh PDF
+          </button>
         </div>
         <div className="card__body">
           <div className="stack">

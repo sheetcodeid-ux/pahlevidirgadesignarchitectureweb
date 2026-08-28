@@ -32,6 +32,20 @@ function rowToSettings(row: Row, assetBase: string): StudioSettings {
   };
 }
 
+/**
+ * Kunci penyimpanan logo, mentah — bukan URL publiknya.
+ *
+ * Dipakai satu-satunya oleh endpoint yang menyajikan bita logo untuk kop
+ * PDF, yang membaca bucket lewat binding R2. Fungsi sendiri, bukan
+ * memanggil get() dengan assetBase kosong lalu mengupas garis miringnya:
+ * yang kedua bekerja, tapi baru masuk akal setelah membaca tiga fungsi.
+ */
+export async function logoKey(sql: Sql): Promise<string | null> {
+  const rows = await sql<{ logo_key: string | null }[]>`
+    select logo_key from public.studio_settings where id = true`;
+  return rows[0]?.logo_key ?? null;
+}
+
 /** Baris tunggal (id selalu true) — dibuat lewat migrasi, tidak pernah dihapus. */
 export async function get(sql: Sql, assetBase = ""): Promise<StudioSettings> {
   const rows = await sql<Row[]>`

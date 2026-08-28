@@ -237,6 +237,31 @@ export const ambilSettings = () => panggil<StudioSettings>("/admin/settings");
 export const simpanSettings = (patch: Partial<StudioSettings>) =>
   panggil<{ updated: boolean }>("/admin/settings", { method: "PATCH", body: JSON.stringify(patch) });
 
+/**
+ * Bita logo studio untuk kop PDF, lewat Worker API — bukan langsung dari
+ * media.pahlevidirga... Pustaka PDF butuh berkasnya, dan mengambilnya
+ * langsung dari bucket berarti bergantung pada aturan CORS yang disetel
+ * untuk keperluan lain.
+ *
+ * Membalas null kalau studio belum punya logo; itu keadaan wajar, bukan
+ * kesalahan — PDF-nya tetap terbit dengan kop tanpa gambar.
+ */
+export async function ambilLogoStudio(): Promise<{ bita: Uint8Array; tipe: string } | null> {
+  const token = baca(KUNCI_AKSES);
+  if (!token) throw new GagalAuth("belum masuk");
+
+  const res = await fetch(`${API}/api/v1/admin/settings/logo`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+
+  return {
+    bita: new Uint8Array(await res.arrayBuffer()),
+    tipe: res.headers.get("content-type") ?? "",
+  };
+}
+
 // --- Akun ---------------------------------------------------------------
 
 export const ubahPassword = (newPassword: string) =>

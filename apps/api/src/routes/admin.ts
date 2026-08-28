@@ -591,6 +591,36 @@ admin.get("/settings", async (c) => {
 });
 
 /**
+ * GET /api/v1/admin/settings/logo — bita logo studio, dibaca dari binding R2.
+ *
+ * Kop PDF butuh logonya sebagai bita, bukan sebagai URL: pustaka PDF harus
+ * menyisipkan berkasnya. Mengambilnya langsung dari media.pahlevidirga...
+ * di browser berarti bergantung pada aturan CORS bucket, yang disetel untuk
+ * unggahan presigned dan bisa berubah tanpa ada yang sadar sampai kop PDF
+ * mendadak kosong.
+ *
+ * Lewat sini tidak ada CORS baru yang perlu dipikirkan — Worker ini sudah
+ * punya ALLOWED_ORIGINS untuk panel admin, dan bucket dibaca lewat binding,
+ * bukan lewat jaringan.
+ */
+admin.get("/settings/logo", async (c) => {
+  const key = await withDb(c.env, c.executionCtx, (sql) => settingsRepo.logoKey(sql));
+  if (!key) return c.json({ error: { status: 404, message: "studio belum punya logo" } }, 404);
+
+  const objek = await c.env.MEDIA.get(key);
+  if (!objek) return c.json({ error: { status: 404, message: "berkas logo tidak ada di penyimpanan" } }, 404);
+
+  const header = new Headers();
+  objek.writeHttpMetadata(header);
+  header.set("etag", objek.httpEtag);
+  // Tanpa cache: logo bisa diganti kapan saja dari Info Studio, dan satu-
+  // satunya pemakainya adalah pembuatan PDF yang jarang dijalankan.
+  header.set("cache-control", "no-store");
+  if (!header.has("content-type")) header.set("content-type", "application/octet-stream");
+  return new Response(objek.body, { headers: header });
+});
+
+/**
  * POST /api/v1/admin/publish — memicu build ulang situs statis.
  *
  * Halaman proyek publik dibekukan saat build (getStaticPaths), jadi
