@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "./ui/Icon";
+import { PemutarSuara } from "./ui/misc/VoiceNote";
 import { formatRupiah } from "../lib/format";
 
 const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787").replace(/\/$/, "");
@@ -32,8 +33,13 @@ interface Dokumen {
   id: string;
   title: string;
   fileUrl: string;
+  /** 'suara' = pesan suara dari studio; ditampilkan sebagai pemutar, bukan tautan. */
+  kind: "berkas" | "suara";
   status: string;
   clientNote?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  durationMs?: number | null;
   comments: Komentar[];
 }
 
@@ -196,9 +202,13 @@ function BarisDokumen({ dokumen, token, onBerubah }: { dokumen: Dokumen; token: 
         <div className="row row--between" style={{ alignItems: "flex-start" }}>
           <span className="stack" style={{ gap: "var(--space-1)" }}>
             <span className="t-subheading">{dokumen.title}</span>
-            <a href={dokumen.fileUrl} target="_blank" rel="noreferrer" className="row" style={{ gap: "var(--space-1)", alignItems: "center" }}>
-              <Icon name="document" size={14} />Lihat / unduh
-            </a>
+            {dokumen.kind === "suara" ? (
+              <PemutarSuara url={dokumen.fileUrl} durationMs={dokumen.durationMs} label={dokumen.title} />
+            ) : (
+              <a href={dokumen.fileUrl} target="_blank" rel="noreferrer" className="row" style={{ gap: "var(--space-1)", alignItems: "center" }}>
+                <Icon name="document" size={14} />Lihat / unduh
+              </a>
+            )}
           </span>
           <span className={`badge ${BADGE_DOKUMEN[dokumen.status] ?? "badge--info"}`}>
             <span className="badge__dot" />{LABEL_DOKUMEN[dokumen.status] ?? dokumen.status}

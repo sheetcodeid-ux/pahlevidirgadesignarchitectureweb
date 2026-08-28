@@ -1,6 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ContactForm from "../components/ContactForm.astro";
+/* Form kontak memakai .field/.input dari form.css; BaseLayout tidak
+   memuatnya, jadi halaman ini harus memintanya sendiri. */
+import "../styles/form.css";
 ---
 
 <BaseLayout

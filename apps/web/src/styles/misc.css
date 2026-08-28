@@ -455,3 +455,116 @@ details[open] > summary .collapsible__chevron { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) {
   .navmenu__viewport { transition: none; }
 }
+
+/* --- Pesan suara ------------------------------------------------------- */
+/*
+ * Dua bentuk dari satu bahasa: .vn adalah gelembung pemutar (dipakai staf
+ * maupun klien), .vn-rekam adalah bilah perekam yang hanya dilihat staf.
+ * Keduanya memakai .vn__gelombang yang sama supaya rekaman terlihat serupa
+ * saat sedang direkam dan saat sudah jadi.
+ */
+
+.vn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+}
+
+.vn[data-main] { border-color: var(--border-strong); }
+
+.vn__tombol {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--action);
+  color: var(--action-ink);
+  cursor: pointer;
+  transition: background var(--dur), color var(--dur);
+}
+
+.vn__tombol:hover { background: var(--action-hover); color: var(--action-hover-ink); }
+.vn__tombol:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
+
+/* Tinggi tetap, bukan aspect-ratio: batangnya melar mengikuti lebar tersedia
+   sementara tingginya harus tetap supaya gelembungnya tidak ikut tumbuh. */
+.vn__gelombang {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  height: 1.75rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Lebar batang dikunci 3px, bukan dibagi rata selebar wadah: batang selebar
+   tingginya berhenti terbaca sebagai gelombang dan berubah jadi deretan
+   titik. Jarak antar-batang yang menyesuaikan lebar, bukan batangnya. */
+.vn__batang {
+  flex: 0 0 3px;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+  transition: background var(--dur), height 90ms linear;
+}
+
+/* Bagian yang sudah lewat: kontras penuh, seperti kepala progres. */
+.vn__batang[data-lewat] { background: var(--text-body); }
+
+.vn__waktu {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.vn-rekam {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.vn-rekam > .vn { flex: 1 1 14rem; min-width: 0; }
+.vn-rekam__aksi { display: flex; gap: var(--space-2); margin-left: auto; }
+
+.vn-rekam--aktif { border-color: var(--brand-line); background: var(--brand-soft); }
+.vn-rekam--aktif .vn__gelombang { flex: 1 1 8rem; }
+
+.vn-rekam--tolak { border-color: var(--warn-line, var(--border-strong)); align-items: flex-start; }
+
+/* Titik merah berdenyut: penanda "sedang merekam" yang sama dikenali di mana
+   pun. Denyutnya opacity, bukan ukuran — pergerakan tata letak di bilah
+   sesempit ini membuat angka waktunya ikut bergoyang. */
+.vn-rekam__titik {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--brand);
+  animation: vn-denyut 1.1s ease-in-out infinite;
+}
+
+@keyframes vn-denyut {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vn-rekam__titik { animation: none; }
+  .vn__batang { transition: background var(--dur); }
+}

@@ -118,7 +118,7 @@ function Isi() {
                       confirmLabel="Ya, hapus"
                       onConfirm={() => hapus(t.id)}
                       trigger={
-                        <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus testimoni ${t.clientName}`}>
+                        <button type="button" className="btn btn--ghost btn--icon btn--hapus" aria-label={`Hapus testimoni ${t.clientName}`}>
                           <Icon name="trash" size={15} />
                         </button>
                       }

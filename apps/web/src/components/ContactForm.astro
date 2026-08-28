@@ -6,41 +6,50 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
 <form id="contact-form" novalidate>
   <div class="field">
-    <label for="name">Nama</label>
-    <input id="name" name="name" type="text" required minlength="2" maxlength="120" autocomplete="name" />
+    <label class="field__label" for="name">Nama</label>
+    <input class="input" id="name" name="name" type="text" required minlength="2" maxlength="120" autocomplete="name" />
   </div>
 
   <div class="field">
-    <label for="email">Email</label>
-    <input id="email" name="email" type="email" required autocomplete="email" />
+    <label class="field__label" for="email">Email</label>
+    <input class="input" id="email" name="email" type="email" required autocomplete="email" />
   </div>
 
   <div class="field">
-    <label for="phone">Telepon / WhatsApp (opsional)</label>
-    <input id="phone" name="phone" type="tel" maxlength="32" autocomplete="tel" />
+    <label class="field__label" for="phone">Telepon / WhatsApp (opsional)</label>
+    <input class="input" id="phone" name="phone" type="tel" maxlength="32" autocomplete="tel" />
   </div>
 
   <div class="field">
-    <label for="projectType">Jenis proyek</label>
-    <select id="projectType" name="projectType">
-      <option value="">Belum ditentukan</option>
-      <option value="residential">Hunian</option>
-      <option value="commercial">Komersial</option>
-      <option value="interior">Interior</option>
-      <option value="landscape">Lanskap</option>
-      <option value="masterplan">Masterplan</option>
-      <option value="renovation">Renovasi</option>
-    </select>
+    <label class="field__label" for="projectType">Jenis proyek</label>
+    {/* Select bawaan, bukan komponen Select berbasis React: halaman ini
+        statis tanpa satu pun island, dan menambahkannya di sini berarti
+        mengirim React ke setiap pengunjung demi satu daftar enam baris. */}
+    <span class="select">
+      <select class="input" id="projectType" name="projectType">
+        <option value="">Belum ditentukan</option>
+        <option value="residential">Hunian</option>
+        <option value="commercial">Komersial</option>
+        <option value="interior">Interior</option>
+        <option value="landscape">Lanskap</option>
+        <option value="masterplan">Masterplan</option>
+        <option value="renovation">Renovasi</option>
+      </select>
+      <svg class="select__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    </span>
   </div>
 
   <div class="field">
-    <label for="budgetRange">Perkiraan anggaran (opsional)</label>
-    <input id="budgetRange" name="budgetRange" type="text" maxlength="80" placeholder="mis. 500 juta – 1 miliar" />
+    <label class="field__label" for="budgetRange">Perkiraan anggaran (opsional)</label>
+    <input class="input" id="budgetRange" name="budgetRange" type="text" maxlength="80" placeholder="mis. 500 juta – 1 miliar" />
   </div>
 
   <div class="field">
-    <label for="message">Ceritakan rencana Anda</label>
-    <textarea id="message" name="message" required minlength="10" maxlength="5000"></textarea>
+    <label class="field__label" for="message">Ceritakan rencana Anda</label>
+    <textarea class="input input--area" id="message" name="message" required minlength="10" maxlength="5000"></textarea>
   </div>
 
   <div class="honeypot" aria-hidden="true">
@@ -117,6 +126,9 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
 <style>
   form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
     max-width: 34rem;
   }
 
