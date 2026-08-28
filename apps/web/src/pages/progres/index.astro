@@ -1,6 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { ClientProgressView } from "../../components/ClientProgressView";
+/* Stepper fase, timeline progres, dan pemutar pesan suara semuanya hidup di
+   misc.css — BaseLayout tidak memuatnya, jadi halaman ini harus memintanya
+   sendiri, sama seperti /faq dan /tentang. */
+import "../../styles/misc.css";
+/* Form brief dan form testimoni di halaman ini memakai .field/.input, yang
+   hidup di form.css. Tanpa ini keduanya tampil sebagai isian mentah bawaan
+   browser — label sebaris dengan kotak, tanpa border, tanpa radius. */
+import "../../styles/form.css";
 ---
 
 <BaseLayout

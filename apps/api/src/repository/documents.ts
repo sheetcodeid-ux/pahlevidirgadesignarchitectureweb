@@ -1,5 +1,6 @@
 import type { Sql } from "postgres";
-import type { ProjectDocument, ProjectDocumentInput } from "../types";
+import type { DocumentKind, ProjectDocument, ProjectDocumentInput } from "../types";
+import { MAX_DOCUMENT_BYTES, VALID_DOCUMENT_KIND } from "../types";
 import { NotFoundError } from "./projects";
 
 function url(assetBase: string, key: string): string {
@@ -11,8 +12,13 @@ interface Row {
   project_id: string;
   title: string;
   file_key: string;
+  kind: string;
   status: string;
   client_note: string | null;
+  file_name: string | null;
+  file_size: string | null;
+  mime_type: string | null;
+  duration_ms: number | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -24,8 +30,15 @@ function rowToDocument(row: Row, assetBase: string): ProjectDocument {
     projectId: row.project_id,
     title: row.title,
     fileUrl: url(assetBase, row.file_key),
+    kind: row.kind as DocumentKind,
     status: row.status,
     clientNote: row.client_note,
+    fileName: row.file_name,
+    // bigint kembali sebagai string dari driver — Number() di sini supaya
+    // sisi JSON tidak perlu tahu bedanya.
+    fileSize: row.file_size === null ? null : Number(row.file_size),
+    mimeType: row.mime_type,
+    durationMs: row.duration_ms,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -34,7 +47,8 @@ function rowToDocument(row: Row, assetBase: string): ProjectDocument {
 
 export async function listForProject(sql: Sql, assetBase: string, projectID: string): Promise<ProjectDocument[]> {
   const rows = await sql<Row[]>`
-    select id, project_id, title, file_key, status, client_note, sort_order, created_at, updated_at
+    select id, project_id, title, file_key, kind, status, client_note,
+           file_name, file_size, mime_type, duration_ms, sort_order, created_at, updated_at
     from public.project_documents
     where project_id = ${projectID}::uuid
     order by sort_order, created_at`;
@@ -46,9 +60,29 @@ export async function create(sql: Sql, projectID: string, input: ProjectDocument
   if (title.length < 2) throw new Error("judul dokumen wajib diisi");
   if (!input.fileKey) throw new Error("berkas dokumen wajib diunggah");
 
+  const kind = input.kind ?? "berkas";
+  if (!VALID_DOCUMENT_KIND.has(kind)) throw new Error("jenis dokumen tidak dikenal");
+
+  // Ukuran diperiksa di sini walau CHECK di database juga menjaganya: pesan
+  // "berkas maksimal 100 MB" jauh lebih berarti bagi staf daripada pesan
+  // pelanggaran constraint yang bocor apa adanya.
+  const fileSize = input.fileSize ?? null;
+  if (fileSize !== null) {
+    if (!Number.isInteger(fileSize) || fileSize <= 0) throw new Error("ukuran berkas tidak masuk akal");
+    if (fileSize > MAX_DOCUMENT_BYTES) throw new Error("berkas maksimal 100 MB");
+  }
+
+  const durationMs = input.durationMs ?? null;
+  if (durationMs !== null && (!Number.isInteger(durationMs) || durationMs <= 0)) {
+    throw new Error("durasi rekaman tidak masuk akal");
+  }
+
   const rows = await sql<{ id: string }[]>`
-    insert into public.project_documents (project_id, title, file_key, sort_order)
-    values (${projectID}::uuid, ${title}, ${input.fileKey}, ${input.sortOrder ?? 0})
+    insert into public.project_documents
+      (project_id, title, file_key, kind, sort_order, file_name, file_size, mime_type, duration_ms)
+    values
+      (${projectID}::uuid, ${title}, ${input.fileKey}, ${kind}, ${input.sortOrder ?? 0},
+       ${input.fileName ?? null}, ${fileSize}, ${input.mimeType ?? null}, ${durationMs})
     returning id`;
   return rows[0].id;
 }

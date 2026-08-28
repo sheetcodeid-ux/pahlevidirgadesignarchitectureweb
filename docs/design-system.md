@@ -63,7 +63,7 @@ Accordion · Collapsible
 ### Data dan konten
 
 Table · Data Table · Chart · Calendar · Date Picker · Carousel · Scroll Area ·
-Resizable · Message Scroller · Questionnaire · Attachment
+Resizable · Message Scroller · Questionnaire · Attachment · Voice Note
 
 ### Utilitas
 
@@ -71,7 +71,7 @@ Direction (konteks LTR/RTL)
 
 ## Status
 
-Seluruh 65 komponen selesai dan terdaftar di halaman UI Component
+Seluruh 66 komponen selesai dan terdaftar di halaman UI Component
 (`/admin/ui`). Fitur baru mengambil dari sana.
 
 ## Urutan pengerjaan

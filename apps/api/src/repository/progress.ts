@@ -1,7 +1,7 @@
 import type { Sql } from "postgres";
 import type {
   ProjectProgress, ProjectProgressUpdate, ClientProgressView, ClientDocument, ClientInvoice,
-  ClientBriefInput, DocumentComment,
+  ClientBriefInput, DocumentComment, DocumentKind,
 } from "../types";
 import { NotFoundError } from "./projects";
 import * as briefRepo from "./brief";
@@ -103,8 +103,12 @@ interface DocumentRow {
   id: string;
   title: string;
   file_key: string;
+  kind: string;
   status: string;
   client_note: string | null;
+  file_size: string | null;
+  mime_type: string | null;
+  duration_ms: number | null;
 }
 
 function rowToClientDocument(row: DocumentRow, assetBase: string, comments: DocumentComment[]): ClientDocument {
@@ -112,8 +116,12 @@ function rowToClientDocument(row: DocumentRow, assetBase: string, comments: Docu
     id: row.id,
     title: row.title,
     fileUrl: `${assetBase.replace(/\/$/, "")}/${row.file_key.replace(/^\//, "")}`,
+    kind: row.kind as DocumentKind,
     status: row.status,
     clientNote: row.client_note,
+    fileSize: row.file_size === null ? null : Number(row.file_size),
+    mimeType: row.mime_type,
+    durationMs: row.duration_ms,
     comments,
   };
 }
@@ -158,7 +166,7 @@ export async function getByToken(sql: Sql, assetBase: string, token: string): Pr
     order by created_at desc`;
 
   const documents = await sql<DocumentRow[]>`
-    select id, title, file_key, status, client_note
+    select id, title, file_key, kind, status, client_note, file_size, mime_type, duration_ms
     from public.project_documents
     where project_id = ${projectID}::uuid
     order by sort_order, created_at`;

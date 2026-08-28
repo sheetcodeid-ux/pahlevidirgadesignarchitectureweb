@@ -63,6 +63,18 @@
 .btn--danger { background: transparent; color: var(--brand); border-color: var(--brand-line); }
 .btn--danger:hover:not(:disabled) { background: var(--brand-soft); }
 
+/* Tombol hapus ikon: diam saat tidak disentuh, merah begitu kursor mendekat.
+   Merah = brand DAN destruktif di sistem warna ini, jadi warnanya sudah
+   berarti "hati-hati" tanpa perlu ikon tambahan. Sengaja tidak merah
+   permanen: satu daftar berisi sepuluh baris akan penuh titik merah yang
+   berteriak padahal tidak ada yang salah. */
+.btn--hapus:hover:not(:disabled),
+.btn--hapus:focus-visible:not(:disabled) {
+  color: var(--brand);
+  border-color: var(--brand-line);
+  background: var(--brand-soft);
+}
+
 /* Tombol yang TERANGKAT saat disentuh: bayangan keras tanpa blur muncul di
    belakangnya sementara tombolnya bergeser ke arah berlawanan, jadi terbaca
    seperti tombol yang naik dari halaman. Ditekan, ia turun kembali menempel.

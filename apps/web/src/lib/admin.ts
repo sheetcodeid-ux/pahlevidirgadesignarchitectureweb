@@ -406,25 +406,47 @@ export const hapusBiaya = (id: string) =>
 
 // --- Dokumen proyek (dilihat & disetujui klien lewat link token) ----------
 
+/** 'berkas' = lampiran biasa, 'suara' = pesan suara rekaman staf. */
+export type JenisDokumen = "berkas" | "suara";
+
+/** 100 MB per berkas — angka yang sama dijaga di API dan di CHECK database. */
+export const MAKS_BYTE_DOKUMEN = 104857600;
+
 export interface DokumenProyek {
   id: string;
   projectId: string;
   title: string;
   fileUrl: string;
+  kind: JenisDokumen;
   status: string;
   clientNote?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  /** Hanya terisi untuk pesan suara. */
+  durationMs?: number | null;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface DokumenBaru {
+  title: string;
+  fileKey: string;
+  kind?: JenisDokumen;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  durationMs?: number;
+}
+
 export const daftarDokumen = (projectId: string) =>
   panggil<DokumenProyek[]>(`/admin/projects/${projectId}/documents`);
 
-export const tambahDokumen = (projectId: string, title: string, fileKey: string) =>
+export const tambahDokumen = (projectId: string, dokumen: DokumenBaru) =>
   panggil<{ id: string }>(`/admin/projects/${projectId}/documents`, {
     method: "POST",
-    body: JSON.stringify({ title, fileKey }),
+    body: JSON.stringify(dokumen),
   });
 
 export const ubahDokumen = (id: string, patch: { title?: string; status?: string; fileKey?: string }) =>

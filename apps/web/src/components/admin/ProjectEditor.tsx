@@ -5,6 +5,7 @@ import { InputRupiah } from "../ui/InputRupiah";
 import { Carousel } from "../ui/data/Carousel";
 import { DatePicker } from "../ui/data/DatePicker";
 import { Tabs } from "../ui/misc/Nav";
+import { PerekamSuara, PemutarSuara, formatDurasi } from "../ui/misc/VoiceNote";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
@@ -18,6 +19,7 @@ import {
   daftarInvoice, tambahInvoice, ubahInvoice, hapusInvoice, type Invoice,
   daftarBiaya, tambahBiaya, hapusBiaya, type BiayaProyek,
   daftarDokumen, tambahDokumen, ubahDokumen, hapusDokumen, type DokumenProyek,
+  MAKS_BYTE_DOKUMEN,
   ambilBrief, ubahBrief, type BriefProyek,
   daftarKomentarDokumen, tambahKomentarDokumen, type KomentarDokumen,
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
@@ -274,7 +276,7 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                       confirmLabel="Ya, hapus"
                       onConfirm={() => hapusInv(i.id)}
                       trigger={
-                        <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${i.label}`}>
+                        <button type="button" className="btn btn--ghost btn--icon btn--hapus" aria-label={`Hapus ${i.label}`}>
                           <Icon name="trash" size={15} />
                         </button>
                       }
@@ -344,7 +346,7 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                       confirmLabel="Ya, hapus"
                       onConfirm={() => hapusBiayaItem(b.id)}
                       trigger={
-                        <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${b.label}`}>
+                        <button type="button" className="btn btn--ghost btn--icon btn--hapus" aria-label={`Hapus ${b.label}`}>
                           <Icon name="trash" size={15} />
                         </button>
                       }
@@ -420,11 +422,24 @@ function ThreadKomentar({ documentId }: { documentId: string }) {
   );
 }
 
+function ukuranBerkas(b: number): string {
+  if (b >= 1_048_576) return `${(b / 1_048_576).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(b / 1024))} KB`;
+}
+
+/** "DED Rev.2.pdf" → "DED Rev.2". Dipakai saat staf mengunggah banyak berkas
+ *  sekaligus: mengetik judul sepuluh kali bukan alur yang masuk akal. */
+function judulDariNama(nama: string): string {
+  const titik = nama.lastIndexOf(".");
+  const dasar = titik > 0 ? nama.slice(0, titik) : nama;
+  return dasar.trim().slice(0, 120) || nama;
+}
+
 function PanelDokumen({ proyek }: { proyek: Proyek }) {
   const toast = useToast();
   const [dokumen, setDokumen] = useState<DokumenProyek[] | null>(null);
   const [judulBaru, setJudulBaru] = useState("");
-  const [mengunggah, setMengunggah] = useState(false);
+  const [antre, setAntre] = useState<{ selesai: number; total: number } | null>(null);
   const berkas = useRef<HTMLInputElement>(null);
 
   function muat() {
@@ -433,26 +448,83 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
 
   useEffect(muat, [proyek.id]);
 
-  async function unggahDanTambah(f: File) {
-    const judul = judulBaru.trim();
-    if (judul.length < 2) {
-      toast({ judul: "Isi judul dokumen dulu", nada: "netral" });
-      return;
-    }
-    setMengunggah(true);
-    try {
-      const target = await mintaUrlUnggah(proyek.slug, f.type);
-      const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f });
-      if (!res.ok) throw new Error(`Penyimpanan menolak berkas (${res.status})`);
+  /** Satu berkas: presign → PUT ke R2 → catat barisnya. */
+  async function unggahSatu(f: File, judul: string) {
+    const target = await mintaUrlUnggah(proyek.slug, f.type);
+    const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f });
+    if (!res.ok) throw new Error(`Penyimpanan menolak berkas (${res.status})`);
+    await tambahDokumen(proyek.id, {
+      title: judul,
+      fileKey: target.key,
+      kind: "berkas",
+      fileName: f.name,
+      fileSize: f.size,
+      mimeType: f.type,
+    });
+  }
 
-      await tambahDokumen(proyek.id, judul, target.key);
-      setJudulBaru("");
+  async function unggahBanyak(list: FileList) {
+    const dipilih = [...list];
+    if (dipilih.length === 0) return;
+
+    // Berkas kebesaran disaring lebih dulu, bukan membatalkan seluruh
+    // antrean: kalau sembilan dari sepuluh berkas sah, sembilan itu tetap
+    // naik dan staf hanya mengulang yang satu.
+    const kebesaran = dipilih.filter((f) => f.size > MAKS_BYTE_DOKUMEN);
+    const sah = dipilih.filter((f) => f.size <= MAKS_BYTE_DOKUMEN);
+    if (kebesaran.length > 0) {
+      toast({
+        judul: kebesaran.length === 1 ? `"${kebesaran[0].name}" lebih dari 100 MB` : `${kebesaran.length} berkas lebih dari 100 MB`,
+        keterangan: "Berkas sebesar itu dilewati. Batasnya 100 MB per berkas.",
+        nada: "gagal",
+      });
+    }
+    if (sah.length === 0) return;
+
+    // Judul yang diketik hanya dipakai kalau berkasnya satu. Untuk banyak
+    // berkas, nama berkasnya sendiri yang jadi judul — bisa diubah setelahnya.
+    const judulManual = judulBaru.trim();
+    const pakaiManual = sah.length === 1 && judulManual.length >= 2;
+
+    setAntre({ selesai: 0, total: sah.length });
+    let gagal = 0;
+    for (let i = 0; i < sah.length; i++) {
+      const f = sah[i];
+      try {
+        await unggahSatu(f, pakaiManual ? judulManual : judulDariNama(f.name));
+      } catch (e) {
+        gagal++;
+        toast({ judul: `Gagal mengunggah ${f.name}`, keterangan: (e as Error).message, nada: "gagal" });
+      }
+      setAntre({ selesai: i + 1, total: sah.length });
+    }
+    setAntre(null);
+    setJudulBaru("");
+    muat();
+
+    const berhasil = sah.length - gagal;
+    if (berhasil > 0) {
+      toast({ judul: berhasil === 1 ? "Dokumen diunggah" : `${berhasil} dokumen diunggah`, nada: "sukses" });
+    }
+  }
+
+  async function kirimSuara(blob: Blob, durasiMs: number, mime: string) {
+    try {
+      const target = await mintaUrlUnggah(proyek.slug, mime);
+      const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": mime }, body: blob });
+      if (!res.ok) throw new Error(`Penyimpanan menolak rekaman (${res.status})`);
+      await tambahDokumen(proyek.id, {
+        title: `Pesan suara ${formatDurasi(durasiMs)}`,
+        fileKey: target.key,
+        kind: "suara",
+        fileSize: blob.size,
+        mimeType: mime,
+        durationMs: Math.round(durasiMs),
+      });
       muat();
-      toast({ judul: "Dokumen diunggah", nada: "sukses" });
+      toast({ judul: "Pesan suara terkirim", nada: "sukses" });
     } catch (e) {
-      toast({ judul: "Gagal mengunggah dokumen", keterangan: (e as Error).message, nada: "gagal" });
-    } finally {
-      setMengunggah(false);
+      toast({ judul: "Gagal mengirim pesan suara", keterangan: (e as Error).message, nada: "gagal" });
     }
   }
 
@@ -482,6 +554,8 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
     return <span className="skeleton" style={{ height: "6rem" }} />;
   }
 
+  const mengunggah = antre !== null;
+
   return (
     <div className="stack" style={{ gap: "var(--space-5)" }}>
       <div className="card">
@@ -489,31 +563,42 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
           <span className="icon-tile"><Icon name="document" size={20} /></span>
           <span className="card__titles">
             <span className="t-subheading">Unggah dokumen</span>
-            <span className="t-muted">Gambar kerja, RAB, foto, atau pesan suara untuk dilihat klien.</span>
+            <span className="t-muted">Gambar kerja, RAB, atau foto untuk dilihat klien.</span>
           </span>
         </div>
         <div className="card__body">
           <div className="stack">
             <div className="field">
-              <label className="field__label" htmlFor="dok-judul">Judul dokumen</label>
-              <input id="dok-judul" className="input" value={judulBaru}
+              <label className="field__label" htmlFor="dok-judul">Judul dokumen <span className="t-muted">(opsional)</span></label>
+              <input id="dok-judul" className="input" value={judulBaru} disabled={mengunggah}
                 onChange={(e) => setJudulBaru(e.target.value)} placeholder="Contoh: DED Rev.2" />
+              <p className="field__help">
+                Dikosongkan atau memilih lebih dari satu berkas: nama berkasnya yang dipakai sebagai judul.
+              </p>
             </div>
-            <input ref={berkas} type="file" className="sr-only" accept={TIPE_DOKUMEN}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) unggahDanTambah(f); }} />
+            <input ref={berkas} type="file" multiple className="sr-only" accept={TIPE_DOKUMEN}
+              onChange={(e) => {
+                const list = e.target.files;
+                if (list && list.length > 0) void unggahBanyak(list);
+                // Direset supaya memilih berkas yang sama dua kali tetap memicu onChange.
+                e.target.value = "";
+              }} />
             <div className="row row--between">
               <p className="field__help" style={{ margin: 0 }}>
-                Format yang didukung: PDF, JPG, PNG, dan pesan suara.
+                PDF, JPG, PNG — maks 100 MB per berkas, boleh beberapa sekaligus.
               </p>
-              <button type="button" className="btn btn--secondary" disabled={judulBaru.trim().length < 2 || mengunggah}
+              <button type="button" className="btn btn--secondary" disabled={mengunggah}
                 onClick={() => berkas.current?.click()}>
                 {mengunggah && <span className="spinner spinner--sm spinner--on-action" />}
-                <Icon name="upload" size={15} />Pilih berkas
+                <Icon name="upload" size={15} />
+                {antre ? `Mengunggah ${antre.selesai}/${antre.total}` : "Pilih berkas"}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <PerekamSuara onKirim={kirimSuara} disabled={mengunggah} />
 
       {dokumen.length === 0 ? (
         <div className="empty empty--sm buat-kartu">
@@ -528,10 +613,17 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
               <div className="item item--bordered">
                 <span className="item__text">
                   <span className="item__title">{d.title}</span>
-                  <span className="item__desc">
-                    <a href={d.fileUrl} target="_blank" rel="noreferrer">Lihat berkas</a>
-                    {d.status === "revisi_diminta" && d.clientNote && ` — Catatan klien: ${d.clientNote}`}
-                  </span>
+                  {d.kind === "suara" ? (
+                    <PemutarSuara url={d.fileUrl} durationMs={d.durationMs} label={d.title} />
+                  ) : (
+                    <span className="item__desc">
+                      <a href={d.fileUrl} target="_blank" rel="noreferrer">Lihat berkas</a>
+                      {typeof d.fileSize === "number" && ` — ${ukuranBerkas(d.fileSize)}`}
+                    </span>
+                  )}
+                  {d.status === "revisi_diminta" && d.clientNote && (
+                    <span className="item__desc">Catatan klien: {d.clientNote}</span>
+                  )}
                 </span>
                 <Select
                   ringkas
@@ -547,7 +639,7 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
                   confirmLabel="Ya, hapus"
                   onConfirm={() => hapus(d.id)}
                   trigger={
-                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${d.title}`}>
+                    <button type="button" className="btn btn--ghost btn--icon btn--hapus" aria-label={`Hapus ${d.title}`}>
                       <Icon name="trash" size={15} />
                     </button>
                   }
@@ -792,7 +884,7 @@ function PanelGaleri({
                     confirmLabel="Ya, hapus"
                     onConfirm={() => hapus(g)}
                     trigger={
-                      <button type="button" className="btn btn--ghost btn--icon btn--boxed" aria-label={`Hapus foto ${i + 1}`}>
+                      <button type="button" className="btn btn--ghost btn--icon btn--boxed btn--hapus" aria-label={`Hapus foto ${i + 1}`}>
                         <Icon name="trash" size={15} />
                       </button>
                     }
@@ -1061,7 +1153,7 @@ function PanelTugas({ projectId }: { projectId: string }) {
                 confirmLabel="Ya, hapus"
                 onConfirm={() => hapus(t.id)}
                 trigger={
-                  <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus ${t.title}`}>
+                  <button type="button" className="btn btn--ghost btn--icon btn--hapus" aria-label={`Hapus ${t.title}`}>
                     <Icon name="trash" size={15} />
                   </button>
                 }
@@ -1263,7 +1355,7 @@ function PanelProgres({ projectId }: { projectId: string }) {
                   confirmLabel="Ya, hapus"
                   onConfirm={() => hapusCatatan(u.id)}
                   trigger={
-                    <button type="button" className="btn btn--ghost btn--icon" aria-label={`Hapus catatan ${u.title}`}>
+                    <button type="button" className="btn btn--ghost btn--icon btn--hapus" aria-label={`Hapus catatan ${u.title}`}>
                       <Icon name="trash" size={15} />
                     </button>
                   }

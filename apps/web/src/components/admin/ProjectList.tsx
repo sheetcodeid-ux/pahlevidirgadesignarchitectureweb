@@ -290,7 +290,7 @@ function Isi() {
                         confirmLabel="Ya, hapus"
                         onConfirm={() => hapus(p)}
                         trigger={
-                          <button type="button" className="btn btn--secondary btn--icon btn--boxed" aria-label={`Hapus ${p.title}`}>
+                          <button type="button" className="btn btn--secondary btn--icon btn--boxed btn--hapus" aria-label={`Hapus ${p.title}`}>
                             <Icon name="trash" size={15} />
                           </button>
                         }

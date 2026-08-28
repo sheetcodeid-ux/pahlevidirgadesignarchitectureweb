@@ -59,7 +59,13 @@ export type IconName =
   | "gift"
   | "crown"
   | "terminal"
-  | "globe";
+  | "globe"
+  | "mic"
+  | "micOff"
+  | "play"
+  | "pause"
+  | "stop"
+  | "download";
 
 interface Props {
   name: IconName;
@@ -365,6 +371,52 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <rect x="3" y="4" width="18" height="16" rx="2" />
       <path d="m7 9 3 3-3 3" />
       <path d="M13 15h4" />
+    </>
+  ),
+  /* Mikrofon: merekam pesan suara untuk klien. Kapsul + busur penangkap +
+     tiang, bentuk yang sama dikenali di WhatsApp maupun perekam mana pun. */
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <path d="M12 18v3" />
+    </>
+  ),
+  /* Mikrofon tercoret: perangkat menolak izin merekam. */
+  micOff: (
+    <>
+      <path d="M9 9v2a3 3 0 0 0 4.6 2.55" />
+      <path d="M15 11.5V6a3 3 0 0 0-5.9-.75" />
+      <path d="M5 11a7 7 0 0 0 10.4 6.1M19 11a6.9 6.9 0 0 1-.6 2.8" />
+      <path d="M12 18v3" />
+      <path d="m3 3 18 18" />
+    </>
+  ),
+  /* Segitiga putar. Sudutnya dibulatkan sedikit supaya tidak setajam
+     ikon sistem — sama seperti ikon lain di set ini. */
+  play: (
+    <>
+      <path d="M8 5.5a1 1 0 0 1 1.53-.85l9 6.5a1 1 0 0 1 0 1.7l-9 6.5A1 1 0 0 1 8 18.5Z" />
+    </>
+  ),
+  pause: (
+    <>
+      <path d="M9.5 4.5h-2a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-13a1 1 0 0 0-1-1Z" />
+      <path d="M16.5 4.5h-2a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-13a1 1 0 0 0-1-1Z" />
+    </>
+  ),
+  stop: (
+    <>
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </>
+  ),
+  /* Panah turun ke garis: mengunduh berkas. Kebalikan arah dari "upload",
+     sengaja digambar simetris supaya sepasang. */
+  download: (
+    <>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M4 20h16" />
     </>
   ),
   /* Kado: penanda pencapaian. */

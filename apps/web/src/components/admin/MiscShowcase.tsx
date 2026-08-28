@@ -4,6 +4,7 @@ import { Icon } from "../ui/Icon";
 import { Avatar } from "../ui/misc/Avatar";
 import { Pagination } from "../ui/misc/Pagination";
 import { Attachment } from "../ui/misc/Attachment";
+import { PerekamSuara, PemutarSuara } from "../ui/misc/VoiceNote";
 import { MessageScroller } from "../ui/misc/Chat";
 import { Questionnaire } from "../ui/misc/Questionnaire";
 import { Tabs, NavigationMenu } from "../ui/misc/Nav";
@@ -116,6 +117,22 @@ export function MiscShowcase() {
             <code className="swatch__name">Attachment</code>
           </div>
           <Attachment />
+        </div>
+
+        <div className="spec-demo">
+          <div className="spec-demo__name">
+            <span className="t-subheading">Voice Note</span>
+            <code className="swatch__name">PerekamSuara / PemutarSuara</code>
+          </div>
+          <div className="stack">
+            <PerekamSuara onKirim={() => {}} />
+            <PemutarSuara url="" durationMs={42000} label="contoh pesan suara" />
+          </div>
+          <p className="field__help">
+            Perekam meminta izin mikrofon sungguhan; batangnya bergerak mengikuti suara yang
+            tertangkap. Pemutar di bawahnya memakai URL kosong, jadi tombolnya tidak berbunyi —
+            yang ditampilkan bentuk dan tata letaknya.
+          </p>
         </div>
 
         <div className="spec-demo">

@@ -184,13 +184,27 @@ export interface ProjectProgress {
   updates: ProjectProgressUpdate[];
 }
 
+/** 'berkas' = lampiran biasa, 'suara' = pesan suara rekaman staf. */
+export type DocumentKind = "berkas" | "suara";
+
+export const VALID_DOCUMENT_KIND: ReadonlySet<string> = new Set(["berkas", "suara"]);
+
+/** 100 MB per berkas — angka yang sama dijaga di form, di sini, dan di CHECK database. */
+export const MAX_DOCUMENT_BYTES = 104857600;
+
 export interface ProjectDocument {
   id: string;
   projectId: string;
   title: string;
   fileUrl: string;
+  kind: DocumentKind;
   status: string;
   clientNote?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  /** Hanya terisi untuk pesan suara — durasi harus tampil sebelum audionya diunduh. */
+  durationMs?: number | null;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -199,8 +213,13 @@ export interface ProjectDocument {
 export interface ProjectDocumentInput {
   title?: string;
   fileKey?: string;
+  kind?: string;
   status?: string;
   sortOrder?: number;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  durationMs?: number;
 }
 
 /** Dilihat klien lewat link token: hanya field yang boleh dia lihat, tanpa catatan biaya internal. */
@@ -208,8 +227,12 @@ export interface ClientDocument {
   id: string;
   title: string;
   fileUrl: string;
+  kind: DocumentKind;
   status: string;
   clientNote?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  durationMs?: number | null;
   comments: DocumentComment[];
 }
 
