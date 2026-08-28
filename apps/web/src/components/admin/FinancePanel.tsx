@@ -132,7 +132,7 @@ function Isi() {
 }
 
 export function FinancePanel() {
-  return <RequireAuth kerangka={
+  return <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-6)" }}>
         <SkeletonStat jumlah={3} />
         <SkeletonKartu ikon="finance" />

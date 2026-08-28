@@ -200,7 +200,7 @@ function Isi() {
 
 export function DirectoryPanel() {
   return (
-    <RequireAuth kerangka={<SkeletonDaftar jumlah={3} aksi={2} />}>
+    <RequireAuth skeleton={<SkeletonDaftar jumlah={3} aksi={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

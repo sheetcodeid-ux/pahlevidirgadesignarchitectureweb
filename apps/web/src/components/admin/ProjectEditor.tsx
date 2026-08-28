@@ -1506,7 +1506,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
    * useLayoutEffect menyelesaikan keduanya: ia berjalan setelah hidrasi tapi
    * SEBELUM browser melukis, jadi frame pertama yang sampai ke mata sudah
    * berisi proyeknya. Dengan useEffect biasa, halaman ini sempat melukis
-   * kerangka dulu — terukur 10 dari 26 frame pada kunjungan kedua, padahal
+   * skeleton dulu — terukur 10 dari 26 frame pada kunjungan kedua, padahal
    * datanya sudah ada di cache. */
   useEfekTataLetak(() => {
     const aktif = proyekAktif();
@@ -2036,7 +2036,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
  */
 export function ProyekPanel({ halaman }: { halaman: HalamanProyek }) {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-5)" }}>
         <Balok tinggi="3rem" style={{ borderRadius: "var(--radius-pill)" }} />
         <SkeletonKartu ikon="project" anak={<SkeletonIsian jumlah={4} />} />

@@ -198,7 +198,7 @@ function Kiri() {
 
 export function DashboardHome() {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-6)" }}>
         <SkeletonKartu ikon="dashboard" anak={<SkeletonTeks baris={2} />} />
         <SkeletonStat jumlah={3} />

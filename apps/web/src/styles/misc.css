@@ -33,27 +33,27 @@
   .skeleton { animation: none; opacity: 0.7; }
 }
 
-/* Kerangka baru muncul kalau memang ADA yang perlu ditunggu.
+/* Skeleton baru muncul kalau memang ADA yang perlu ditunggu.
  *
- * Astro memanggang hasil render awal island ke HTML, jadi kerangkanya sudah
+ * Astro memanggang hasil render awal island ke HTML, jadi skeleton-nya sudah
  * terlukis browser sebelum React sempat berjalan — cache secepat apa pun
  * tidak bisa mencegahnya. Terukur: 5 dari 5 frame pertama menampilkan
- * kerangka pada halaman yang datanya sudah tersimpan.
+ * skeleton pada halaman yang datanya sudah tersimpan.
  *
- * Kedipan 80 milidetik itu justru lebih buruk daripada tidak ada kerangka
+ * Kedipan 80 milidetik itu justru lebih buruk daripada tidak ada skeleton
  * sama sekali — ia terbaca seperti halaman yang rusak sekejap. Jadi
- * kerangkanya ditahan 180 ms: kalau isinya tiba lebih dulu (dan dengan cache
- * itu yang biasa terjadi), kerangka tidak pernah sampai ke mata. Kalau
+ * skeleton-nya ditahan 180 ms: kalau isinya tiba lebih dulu (dan dengan cache
+ * itu yang biasa terjadi), skeleton tidak pernah sampai ke mata. Kalau
  * memang lambat, ia muncul seperti biasa.
  *
  * Murni CSS, bukan timer JavaScript: yang perlu ditahan adalah HTML yang
  * sudah ada sebelum satu baris JS pun dieksekusi. */
-.kerangka-tunda {
+.skeleton--tunda {
   visibility: hidden;
-  animation: kerangka-tampil 0s linear 180ms forwards;
+  animation: skeleton-tampil 0s linear 180ms forwards;
 }
 
-@keyframes kerangka-tampil { to { visibility: visible; } }
+@keyframes skeleton-tampil { to { visibility: visible; } }
 
 /* --- Spinner -------------------------------------------------------------- */
 

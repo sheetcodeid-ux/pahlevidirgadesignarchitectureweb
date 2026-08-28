@@ -250,11 +250,11 @@ Tiga hal yang menahannya, dan ketiganya harus tetap ada:
 2. **Profil tersimpan dipakai lebih dulu di `RequireAuth`**, dipromosikan di
    `useLayoutEffect` supaya jadi sebelum paint. Yang dipercepat cuma
    tampilannya: data tetap diambil dengan token yang divalidasi backend.
-3. **Kerangka ditahan 180 ms** (`.kerangka-tunda`).
+3. **Skeleton ditahan 180 ms** (`.skeleton--tunda`).
 
 Terukur pada build sungguhan dengan latensi API 350 ms: kunjungan pertama
-590 ms dengan kerangka, kunjungan berikutnya 123–167 ms **tanpa satu frame
-kerangka pun**. Kalau angka itu memburuk, periksa ketiga hal di atas dulu.
+590 ms dengan skeleton, kunjungan berikutnya 123–167 ms **tanpa satu frame
+skeleton pun**. Kalau angka itu memburuk, periksa ketiga hal di atas dulu.
 
 Mengukurnya: jalankan `npm run build`, sajikan `dist` (dev server
 mengompilasi per-permintaan, angkanya tidak berarti), lalu **gagalkan

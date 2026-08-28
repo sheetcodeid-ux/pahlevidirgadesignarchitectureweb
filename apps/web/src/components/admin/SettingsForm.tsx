@@ -31,11 +31,11 @@ const PENUH: [keyof StudioSettings, string, string?][] = [
 ];
 
 /**
- * Kerangka Info Studio: dua kolom — logo di kiri, kartu isian di kanan —
+ * Skeleton Info Studio: dua kolom — logo di kiri, kartu isian di kanan —
  * memakai kelas .settings-split yang sama dengan formnya, jadi lebar
  * kolomnya identik dan halaman tidak melompat saat datanya tiba.
  */
-function KerangkaSettings() {
+function SkeletonSettings() {
   return (
     <div className="settings-split" aria-hidden="true">
       <div className="settings-split__logo">
@@ -152,7 +152,7 @@ function Isi() {
   }
 
   if (!asli) {
-    return <KerangkaSettings />;
+    return <SkeletonSettings />;
   }
 
   const logoSrc = previewLogo ?? asli.logoUrl ?? null;
@@ -362,7 +362,7 @@ function Isi() {
 
 export function SettingsForm() {
   return (
-    <RequireAuth masterOnly kerangka={<KerangkaSettings />}>
+    <RequireAuth masterOnly skeleton={<SkeletonSettings />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

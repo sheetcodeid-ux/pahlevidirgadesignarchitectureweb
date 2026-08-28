@@ -239,7 +239,7 @@ function Isi() {
 
 export function ProjectCreate() {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-5)" }}>
         <SkeletonKartu ikon="project" anak={<SkeletonIsian jumlah={3} />} />
         <SkeletonKartu ikon="list" anak={<SkeletonIsian jumlah={4} />} />

@@ -456,7 +456,7 @@ export function ClientProgressView() {
   if (status === "memuat") {
     return (
       /* Mengikuti urutan halaman sungguhannya: judul proyek, form brief,
-         stepper fase, lalu kartu dokumen. Klien melihat kerangka halaman
+         stepper fase, lalu kartu dokumen. Klien melihat skeleton halaman
          yang sama persis dengan yang sebentar lagi terisi. */
       <div className="stack" style={{ gap: "var(--space-7)" }}>
         <div className="stack" style={{ gap: "var(--space-2)" }}>

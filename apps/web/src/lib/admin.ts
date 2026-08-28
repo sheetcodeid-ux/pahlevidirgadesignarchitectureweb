@@ -54,7 +54,7 @@ export function profilTersimpan(): Profil | null {
  * adalah muat-halaman penuh, dan konteks JS-nya mati total. Artinya tanpa
  * cache, setiap kali staf berpindah halaman — bahkan kembali ke halaman yang
  * baru saja dibuka — sesinya diperiksa ulang dan datanya diambil ulang dari
- * nol. Itu sebabnya kerangka halaman muncul lagi dan lagi.
+ * nol. Itu sebabnya skeleton halaman muncul lagi dan lagi.
  *
  * Cache-nya sessionStorage, bukan memori: memori tidak selamat dari muat
  * ulang. sessionStorage, bukan localStorage: isinya data proyek dan

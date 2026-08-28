@@ -40,7 +40,7 @@ export function Balok({ lebar, tinggi, bulat, style }: BalokProps) {
 /** Beberapa baris teks dengan lebar berbeda — untuk paragraf dan keterangan. */
 export function SkeletonTeks({ baris = 3 }: { baris?: number }) {
   return (
-    <span className="stack kerangka-tunda" style={{ gap: "var(--space-2)" }}>
+    <span className="stack skeleton--tunda" style={{ gap: "var(--space-2)" }}>
       {Array.from({ length: baris }, (_, i) => (
         <Balok key={i} lebar={LEBAR[i % LEBAR.length]} />
       ))}
@@ -54,7 +54,7 @@ export function SkeletonTeks({ baris = 3 }: { baris?: number }) {
  */
 export function SkeletonBaris({ aksi = 1 }: { aksi?: number }) {
   return (
-    <div className="item item--bordered kerangka-tunda" aria-hidden="true">
+    <div className="item item--bordered skeleton--tunda" aria-hidden="true">
       <span className="item__text">
         <Balok lebar="52%" tinggi="1rem" />
         <Balok lebar="34%" style={{ marginTop: "0.35rem" }} />
@@ -84,7 +84,7 @@ export function SkeletonKartu({
   ikon = "list", judul = true, anak,
 }: { ikon?: Parameters<typeof Icon>[0]["name"]; judul?: boolean; anak?: ReactNode }) {
   return (
-    <div className="card kerangka-tunda" aria-hidden="true">
+    <div className="card skeleton--tunda" aria-hidden="true">
       <div className="card__header">
         <span className="icon-tile" style={{ opacity: 0.4 }}><Icon name={ikon} size={20} /></span>
         {judul && (
@@ -102,7 +102,7 @@ export function SkeletonKartu({
 /** Deretan ubin angka — bentuk kepala Dashboard dan halaman Keuangan. */
 export function SkeletonStat({ jumlah = 3 }: { jumlah?: number }) {
   return (
-    <div className="spec-grid kerangka-tunda" aria-hidden="true">
+    <div className="spec-grid skeleton--tunda" aria-hidden="true">
       {Array.from({ length: jumlah }, (_, i) => (
         <div className="card" key={i}>
           <div className="card__header">
@@ -121,7 +121,7 @@ export function SkeletonStat({ jumlah = 3 }: { jumlah?: number }) {
 /** Pasangan label + isian, memakai .spec-grid yang sama dengan formnya. */
 export function SkeletonIsian({ jumlah = 4 }: { jumlah?: number }) {
   return (
-    <div className="spec-grid kerangka-tunda" aria-hidden="true">
+    <div className="spec-grid skeleton--tunda" aria-hidden="true">
       {Array.from({ length: jumlah }, (_, i) => (
         <div className="field" key={i}>
           <Balok lebar="35%" tinggi="0.6rem" />
@@ -137,7 +137,7 @@ export function SkeletonIsian({ jumlah = 4 }: { jumlah?: number }) {
 /** Deretan kotak gambar — galeri, material, dan lampiran foto. */
 export function SkeletonKotak({ jumlah = 4, rasio = "4 / 3" }: { jumlah?: number; rasio?: string }) {
   return (
-    <div className="row kerangka-tunda" style={{ gap: "var(--space-3)", overflow: "hidden" }} aria-hidden="true">
+    <div className="row skeleton--tunda" style={{ gap: "var(--space-3)", overflow: "hidden" }} aria-hidden="true">
       {Array.from({ length: jumlah }, (_, i) => (
         <span key={i} className="skeleton"
           style={{ flex: "0 0 min(13.5rem, 45%)", aspectRatio: rasio, borderRadius: "var(--radius-md)" }} />
@@ -152,8 +152,8 @@ export function SkeletonKotak({ jumlah = 4, rasio = "4 / 3" }: { jumlah?: number
  * Label kolom tidak bergantung pada data: "Proyek", "Kategori", "Kota" sudah
  * pasti begitu sebelum permintaan apa pun dikirim. Menyembunyikannya di balik
  * balok abu membuang informasi yang sudah dimiliki halaman, dan membuat
- * kerangkanya terbaca lebih kosong daripada keadaan sebenarnya. Ini yang
- * membedakan kerangka yang terasa "sudah setengah jadi" dari kerangka yang
+ * skeleton-nya terbaca lebih kosong daripada keadaan sebenarnya. Ini yang
+ * membedakan skeleton yang terasa "sudah setengah jadi" dari skeleton yang
  * terasa "belum apa-apa".
  *
  * Memakai <table> sungguhan dengan kelas .table yang sama, jadi tinggi baris,
@@ -174,7 +174,7 @@ export function SkeletonTabel({
   baris?: number;
 }) {
   return (
-    <table className="table table--ruled kerangka-tunda" aria-hidden="true">
+    <table className="table table--ruled skeleton--tunda" aria-hidden="true">
       <thead>
         <tr>{kolom.map((k) => <th key={k.label} className={k.kelas}>{k.label}</th>)}</tr>
       </thead>
@@ -213,7 +213,7 @@ export function SkeletonKartuDaftar({
   jumlah = 3, ikon = "list", teks = 0,
 }: { jumlah?: number; ikon?: Parameters<typeof Icon>[0]["name"]; teks?: number }) {
   return (
-    <div className="stack kerangka-tunda" style={{ gap: "var(--space-3)" }} aria-hidden="true">
+    <div className="stack skeleton--tunda" style={{ gap: "var(--space-3)" }} aria-hidden="true">
       {Array.from({ length: jumlah }, (_, i) => (
         <div className="card" key={i}>
           <div className="card__header">

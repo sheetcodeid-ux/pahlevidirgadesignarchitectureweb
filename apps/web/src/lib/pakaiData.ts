@@ -7,9 +7,9 @@ import { bacaCache, tulisCache } from "./admin";
  * Tiga keadaan yang dibedakan, dan bedanya penting:
  *
  * - `data === null` — belum ada apa pun, bahkan di cache. HANYA di sini
- *   kerangka halaman ditampilkan. Ini terjadi sekali saja per tab.
+ *   skeleton halaman ditampilkan. Ini terjadi sekali saja per tab.
  * - `data` terisi dari cache — halaman langsung tampil penuh sementara
- *   permintaan segar jalan di belakang. Tidak ada kerangka, tidak ada kedip.
+ *   permintaan segar jalan di belakang. Tidak ada skeleton, tidak ada kedip.
  * - `menyegarkan` — permintaan latar sedang jalan. Dipakai kalau panel mau
  *   memberi tanda halus; tidak pernah untuk menyembunyikan isinya.
  *

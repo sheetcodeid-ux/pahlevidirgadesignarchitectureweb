@@ -190,7 +190,7 @@ function Isi() {
 
 export function InquiryList() {
   return (
-    <RequireAuth kerangka={<SkeletonKartuDaftar jumlah={4} ikon="inquiry" />}>
+    <RequireAuth skeleton={<SkeletonKartuDaftar jumlah={4} ikon="inquiry" />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

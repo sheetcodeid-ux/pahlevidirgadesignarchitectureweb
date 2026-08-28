@@ -120,7 +120,7 @@ function Isi() {
 
 export function TeamPanel() {
   return (
-    <RequireAuth kerangka={<SkeletonDaftar jumlah={3} aksi={2} />}>
+    <RequireAuth skeleton={<SkeletonDaftar jumlah={3} aksi={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

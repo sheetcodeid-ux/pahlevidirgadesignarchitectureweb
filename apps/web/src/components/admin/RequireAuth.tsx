@@ -8,8 +8,8 @@ const Ctx = createContext<Profil | null>(null);
  * useLayoutEffect di browser, useEffect di server.
  *
  * Bedanya menentukan di sini: useLayoutEffect berjalan SEBELUM paint, jadi
- * profil tersimpan sempat dipasang tanpa kerangka pernah terlihat sekejap
- * pun. useEffect berjalan setelah paint — satu frame kerangka lolos ke layar,
+ * profil tersimpan sempat dipasang tanpa skeleton pernah terlihat sekejap
+ * pun. useEffect berjalan setelah paint — satu frame skeleton lolos ke layar,
  * dan pada halaman yang datanya sudah ada di cache, kedipan itu justru yang
  * paling terlihat.
  *
@@ -33,18 +33,18 @@ export function useProfil() {
  * diarahkan ke halaman masuk beserta tujuan semula, supaya setelah masuk ia
  * kembali ke tempat yang ia tuju.
  */
-export function RequireAuth({ children, masterOnly = false, kerangka }: {
+export function RequireAuth({ children, masterOnly = false, skeleton }: {
   children: ReactNode;
   masterOnly?: boolean;
   /**
-   * Yang ditampilkan selama sesi diperiksa. Tiap panel mengirimkan kerangka
+   * Yang ditampilkan selama sesi diperiksa. Tiap panel mengirimkan skeleton
    * halamannya sendiri — bentuk yang sama yang ia pakai saat menunggu
    * datanya — sehingga halaman tersusun SEKALI, bukan spinner dulu lalu
-   * kerangka lalu isi. Tanpa ini, hal pertama yang dilihat staf di setiap
+   * skeleton lalu isi. Tanpa ini, hal pertama yang dilihat staf di setiap
    * halaman admin adalah spinner yang sama, dan bentuk halamannya baru
    * muncul belakangan.
    */
-  kerangka?: ReactNode;
+  skeleton?: ReactNode;
 }) {
   const [profil, setProfil] = useState<Profil | null>(null);
   const [status, setStatus] = useState<"memeriksa" | "siap" | "ditolak">("memeriksa");
@@ -55,17 +55,17 @@ export function RequireAuth({ children, masterOnly = false, kerangka }: {
    * Sebelumnya setiap halaman admin menunggu satu putaran jaringan penuh
    * sebelum menampilkan apa pun — dan karena situs ini statis tanpa router
    * klien, penantian itu terulang di SETIAP klik menu. Itu yang membuat
-   * panelnya terasa lambat, bukan kerangkanya.
+   * panelnya terasa lambat, bukan skeleton-nya.
    *
    * Dipromosikan di effect, bukan di nilai awal useState: nilai awal juga
    * dipakai saat Astro merender island ini di server, di mana localStorage
    * tidak ada — dan bedanya akan jadi ketidakcocokan hidrasi. Satu frame
-   * kerangka tidak terlihat mata; satu putaran jaringan terlihat jelas.
+   * skeleton tidak terlihat mata; satu putaran jaringan terlihat jelas.
    *
    * Yang dipercepat cuma tampilannya, bukan haknya: setiap data tetap
    * diambil dengan token yang divalidasi backend, dan pemeriksaan latar di
    * bawah tetap melempar keluar sesi yang sudah dicabut. Menampilkan
-   * kerangka panel lebih dulu tidak membocorkan apa pun — situs ini statis,
+   * skeleton panel lebih dulu tidak membocorkan apa pun — situs ini statis,
    * jadi markupnya sudah sampai di browser sebelum pemeriksaan mana pun
    * berjalan. Catatan yang sama sudah ada di CLAUDE.md soal MasterGuard. */
   useEfekTataLetak(() => {
@@ -109,11 +109,11 @@ export function RequireAuth({ children, masterOnly = false, kerangka }: {
     // aria-busy, bukan spinner yang dibacakan: pembaca layar diberi tahu
     // bahwa daerah ini sedang diisi, sementara mata melihat bentuk
     // halamannya. Kerangkanya sendiri aria-hidden.
-    if (kerangka) {
-      return <div className="kerangka-tunda" role="status" aria-busy="true" aria-label="Memuat halaman">{kerangka}</div>;
+    if (skeleton) {
+      return <div className="skeleton--tunda" role="status" aria-busy="true" aria-label="Memuat halaman">{skeleton}</div>;
     }
     return (
-      <div className="guard kerangka-tunda" role="status" aria-live="polite">
+      <div className="guard skeleton--tunda" role="status" aria-live="polite">
         <span className="spinner" />
         <p className="t-muted">Memeriksa sesi…</p>
       </div>

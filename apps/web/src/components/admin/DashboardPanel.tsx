@@ -145,7 +145,7 @@ function Isi() {
 }
 
 export function DashboardPanel() {
-  return <RequireAuth kerangka={
+  return <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-6)" }}>
         <SkeletonStat jumlah={3} />
         <SkeletonKartu ikon="checklist" />

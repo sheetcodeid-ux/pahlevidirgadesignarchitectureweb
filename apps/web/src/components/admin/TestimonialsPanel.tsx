@@ -137,7 +137,7 @@ function Isi() {
 
 export function TestimonialsPanel() {
   return (
-    <RequireAuth kerangka={<SkeletonKartuDaftar jumlah={3} ikon="quote" teks={2} />}>
+    <RequireAuth skeleton={<SkeletonKartuDaftar jumlah={3} ikon="quote" teks={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

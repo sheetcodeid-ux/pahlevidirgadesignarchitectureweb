@@ -147,7 +147,7 @@ function Isi() {
 
 export function TaskBoard() {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-5)" }}>
         {[0, 1, 2].map((i) => (
           <SkeletonKartu key={i} ikon="checklist" anak={<SkeletonDaftar jumlah={2} aksi={2} />} />

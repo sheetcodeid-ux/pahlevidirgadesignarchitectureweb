@@ -388,7 +388,7 @@ function Isi() {
 
 export function ProjectList() {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="listpage">
         <div className="listpage__pad">
           <SkeletonTabel
