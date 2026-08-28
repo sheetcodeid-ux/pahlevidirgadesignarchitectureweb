@@ -491,7 +491,13 @@ export const hapusKontak = (id: string) =>
 // --- Brief proyek (diisi klien lewat link token) --------------------------
 
 export interface BriefProyek {
+  /* budgetRange dan timeline peninggalan bentuk lama (teks bebas). Masih
+     dikirim API, tapi form memakai tiga field di bawahnya. */
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  /** Format ISO yyyy-mm-dd, sama dengan <input type="date">. */
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;

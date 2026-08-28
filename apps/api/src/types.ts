@@ -217,7 +217,13 @@ export interface ClientInvoice {
 
 /** Dilihat staf: termasuk internalNotes yang tidak pernah sampai ke klien. */
 export interface ProjectBrief {
+  /* budgetRange dan timeline peninggalan bentuk lama (teks bebas). Tetap
+     dikirim supaya klien lama tidak pecah; yang dipakai form sekarang
+     budgetAmount, startDate, dan endDate. */
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;
@@ -228,6 +234,9 @@ export interface ProjectBrief {
 /** Field yang boleh diubah staf — mencakup internalNotes. undefined = jangan diubah. */
 export interface ProjectBriefInput {
   budgetRange?: string | null;
+  budgetAmount?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
   timeline?: string | null;
   stylePreference?: string | null;
   requirements?: string | null;

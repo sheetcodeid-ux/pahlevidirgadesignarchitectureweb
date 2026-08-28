@@ -3,6 +3,7 @@ import { Icon } from "../ui/Icon";
 import { Select } from "../ui/overlay/Select";
 import { InputRupiah } from "../ui/InputRupiah";
 import { Carousel } from "../ui/data/Carousel";
+import { DatePicker } from "../ui/data/DatePicker";
 import { Tabs } from "../ui/misc/Nav";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
@@ -830,22 +831,45 @@ function PanelBrief({ projectId }: { projectId: string }) {
         </div>
         <div className="card__body">
           <div className="stack">
-            <div className="spec-grid">
+            {/* Dua baris berisi dua, bukan tiga sejajar: anggaran dan gaya
+                sama-sama sifat proyek, sementara dua tanggal adalah satu
+                rentang yang harus dibaca berpasangan. Tiga kolom memisahkan
+                pasangan itu. */}
+            <div className="spec-grid spec-grid--rapat spec-grid--dua">
               <div className="field">
                 <label className="field__label" htmlFor="brief-budget">Kisaran anggaran</label>
-                <input id="brief-budget" className="input" value={brief.budgetRange ?? ""}
-                  onChange={(e) => set("budgetRange", e.target.value)} placeholder="Contoh: 300-500jt" />
-              </div>
-              <div className="field">
-                <label className="field__label" htmlFor="brief-waktu">Target waktu</label>
-                <input id="brief-waktu" className="input" value={brief.timeline ?? ""}
-                  onChange={(e) => set("timeline", e.target.value)} placeholder="Contoh: mulai konstruksi Q1 2027" />
+                <InputRupiah id="brief-budget" value={brief.budgetAmount ?? null}
+                  onChange={(n) => set("budgetAmount", n)} />
               </div>
               <div className="field">
                 <label className="field__label" htmlFor="brief-gaya">Preferensi gaya</label>
                 <input id="brief-gaya" className="input" value={brief.stylePreference ?? ""}
                   onChange={(e) => set("stylePreference", e.target.value)} placeholder="Contoh: tropis modern" />
               </div>
+              {/* DatePicker, bukan <input type="date">: kolom tanggal bawaan
+                  digambar sistem operasi dan mengikuti locale BROWSER, jadi
+                  1 September bisa terbaca 09/01/2026 — urutan terbalik yang
+                  tidak disadari sampai salah. Di sini bulannya bernama. */}
+              <DatePicker
+                id="brief-mulai"
+                label="Tanggal mulai"
+                value={brief.startDate ?? null}
+                onChange={(iso) => set("startDate", iso)}
+              />
+              <DatePicker
+                id="brief-selesai"
+                label="Tanggal selesai"
+                value={brief.endDate ?? null}
+                /* Tanggal sebelum mulai tidak bisa dipilih sama sekali.
+                   Dijaga juga di API dan database — ini lapis pertama, bukan
+                   satu-satunya. */
+                minDate={brief.startDate ? new Date(
+                  Number(brief.startDate.slice(0, 4)),
+                  Number(brief.startDate.slice(5, 7)) - 1,
+                  Number(brief.startDate.slice(8, 10)),
+                ) : undefined}
+                onChange={(iso) => set("endDate", iso)}
+              />
             </div>
             <div className="field">
               <label className="field__label" htmlFor="brief-kebutuhan">Kebutuhan ruang/fungsi</label>

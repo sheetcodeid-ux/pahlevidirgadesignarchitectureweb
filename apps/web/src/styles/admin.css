@@ -697,6 +697,13 @@
   .spec-grid--tiga { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* Dikunci dua kolom bahkan di kartu lebar: isinya empat isian yang membentuk
+   DUA pasangan, dan empat kolom memisahkan pasangan yang harus dibaca
+   bersama (tanggal mulai dengan tanggal selesai). */
+@container (min-width: 28rem) {
+  .spec-grid--dua { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 .spec-demo {
   display: flex;
   flex-direction: column;

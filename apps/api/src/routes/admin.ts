@@ -499,6 +499,16 @@ admin.get("/projects/:id/brief", async (c) => {
 
 admin.patch("/projects/:id/brief", async (c) => {
   const input = await c.req.json<ProjectBriefInput>().catch(() => ({}) as ProjectBriefInput);
+
+  // Divalidasi di sini juga, bukan cuma di database: constraint database
+  // membalas galat Postgres mentah yang tidak bisa ditampilkan ke staf.
+  if (input.budgetAmount != null && (!Number.isFinite(input.budgetAmount) || input.budgetAmount < 0)) {
+    return c.json({ error: { status: 422, message: "anggaran tidak boleh negatif" } }, 422);
+  }
+  if (input.startDate && input.endDate && input.endDate < input.startDate) {
+    return c.json({ error: { status: 422, message: "tanggal selesai tidak boleh mendahului tanggal mulai" } }, 422);
+  }
+
   await withDb(c.env, c.executionCtx, (sql) => briefRepo.update(sql, c.req.param("id"), input));
   return c.json({ data: { updated: true } });
 });

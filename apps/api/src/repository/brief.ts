@@ -3,6 +3,9 @@ import type { ProjectBrief, ProjectBriefInput, ClientBrief, ClientBriefInput } f
 
 interface Row {
   budget_range: string | null;
+  budget_amount: string | number | null;
+  start_date: string | null;
+  end_date: string | null;
   timeline: string | null;
   style_preference: string | null;
   requirements: string | null;
@@ -13,6 +16,12 @@ interface Row {
 function rowToBrief(row: Row): ProjectBrief {
   return {
     budgetRange: row.budget_range,
+    // bigint dibaca driver sebagai string supaya angka di atas 2^53 tidak
+    // kehilangan presisi. Rupiah di sini jauh di bawah itu, jadi aman
+    // dikembalikan sebagai number — tapi konversinya tetap eksplisit.
+    budgetAmount: row.budget_amount === null ? null : Number(row.budget_amount),
+    startDate: row.start_date,
+    endDate: row.end_date,
     timeline: row.timeline,
     stylePreference: row.style_preference,
     requirements: row.requirements,
@@ -30,7 +39,8 @@ export async function getForAdmin(sql: Sql, projectID: string): Promise<ProjectB
     insert into public.project_briefs (project_id)
     values (${projectID}::uuid)
     on conflict (project_id) do update set project_id = excluded.project_id
-    returning budget_range, timeline, style_preference, requirements, internal_notes, submitted_at`;
+    returning budget_range, budget_amount, start_date, end_date, timeline,
+              style_preference, requirements, internal_notes, submitted_at`;
   return rowToBrief(rows[0]);
 }
 
@@ -40,6 +50,9 @@ export async function update(sql: Sql, projectID: string, input: ProjectBriefInp
   const fragments: Fragment[] = [];
 
   if (input.budgetRange !== undefined) fragments.push(sql`budget_range = ${input.budgetRange}`);
+  if (input.budgetAmount !== undefined) fragments.push(sql`budget_amount = ${input.budgetAmount}`);
+  if (input.startDate !== undefined) fragments.push(sql`start_date = ${input.startDate}`);
+  if (input.endDate !== undefined) fragments.push(sql`end_date = ${input.endDate}`);
   if (input.timeline !== undefined) fragments.push(sql`timeline = ${input.timeline}`);
   if (input.stylePreference !== undefined) fragments.push(sql`style_preference = ${input.stylePreference}`);
   if (input.requirements !== undefined) fragments.push(sql`requirements = ${input.requirements}`);
