@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
 import { SkeletonStat, SkeletonKartu } from "../ui/Skeleton";
-import { daftarProyek, daftarPesan, type Proyek } from "../../lib/admin";
+import { daftarProyek, daftarPesan, type Proyek, bacaCache, tulisCache} from "../../lib/admin";
 
 const PIPELINE: [string, string][] = [
   ["proposal", "Proposal"],
@@ -15,20 +15,28 @@ const PIPELINE: [string, string][] = [
 ];
 
 function Isi() {
-  const [angka, setAngka] = useState<{ terbit: number; draf: number; baru: number } | null>(null);
-  const [proyek, setProyek] = useState<Proyek[] | null>(null);
+  const [angka, setAngka] = useState<{ terbit: number; draf: number; baru: number } | null>(
+    () => bacaCache("dashboard-angka"),
+  );
+  const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
 
   useEffect(() => {
     Promise.all([daftarProyek(), daftarPesan()])
       .then(([p, q]) => {
-        setProyek(p);
-        setAngka({
+        const hitung = {
           terbit: p.filter((x) => x.status === "published").length,
           draf: p.filter((x) => x.status === "draft").length,
           baru: q.filter((x) => x.status === "new").length,
-        });
+        };
+        // Kunci "proyek" sengaja sama dengan yang dipakai halaman Semua
+        // Proyek: datanya memang daftar yang sama, jadi membuka Dashboard
+        // lebih dulu membuat halaman itu ikut tampil seketika.
+        tulisCache("proyek", p);
+        tulisCache("dashboard-angka", hitung);
+        setProyek(p);
+        setAngka(hitung);
       })
-      .catch(() => setAngka({ terbit: 0, draf: 0, baru: 0 }));
+      .catch(() => setAngka((lama) => lama ?? { terbit: 0, draf: 0, baru: 0 }));
   }, []);
 
   const proyekAktif = (proyek ?? []).filter((p) => p.pipelineStage && p.pipelineStage !== "pelunasan");

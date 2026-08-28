@@ -86,6 +86,19 @@ piksel**: begitu pemanggil boleh menentukan tinggi baris, jaminan itu hilang.
 sendiri — bentuk yang sama yang ia pakai saat menunggu datanya — supaya
 halaman tersusun sekali, bukan spinner dulu lalu kerangka lalu isi.
 
+**Kerangka ditahan 180 ms** lewat kelas `.kerangka-tunda`. Astro memanggang
+hasil render awal island ke HTML, jadi kerangkanya sudah terlukis browser
+sebelum React sempat berjalan — cache secepat apa pun tidak mencegah itu, dan
+terukur 5 dari 5 frame pertama menampilkannya pada halaman yang datanya sudah
+tersimpan. Kedipan 80 ms terbaca seperti halaman rusak sekejap, lebih buruk
+daripada tidak ada kerangka sama sekali. Penahannya murni CSS, bukan timer
+JavaScript, justru karena yang perlu ditahan adalah HTML yang sudah ada
+sebelum satu baris JS pun dieksekusi.
+
+**Bentuknya diukur, bukan dikira.** Baris tabel kerangka di Semua Proyek harus
+setinggi baris sungguhannya — 68 px lawan 68 px, bukan 38 lawan 68. Bandingkan
+`getBoundingClientRect()` kerangka dengan isinya sebelum menganggap selesai.
+
 ## Status
 
 Seluruh 66 komponen selesai dan terdaftar di halaman UI Component

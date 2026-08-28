@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
-import { SkeletonDaftar } from "../ui/Skeleton";
+import { SkeletonKartuDaftar } from "../ui/Skeleton";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarTestimoni, ubahTestimoni, hapusTestimoni, type TestimoniAdmin } from "../../lib/admin";
+import { daftarTestimoni, ubahTestimoni, hapusTestimoni, type TestimoniAdmin, bacaCache, tulisCache} from "../../lib/admin";
 
 const LABEL_STATUS: Record<string, string> = { menunggu: "Menunggu", disetujui: "Disetujui", ditolak: "Ditolak" };
 const BADGE_STATUS: Record<string, string> = { menunggu: "badge--warn", disetujui: "badge--success", ditolak: "badge--info" };
 
 function Isi() {
   const toast = useToast();
-  const [testimoni, setTestimoni] = useState<TestimoniAdmin[] | null>(null);
+  const [testimoni, setTestimoni] = useState<TestimoniAdmin[] | null>(() => bacaCache<TestimoniAdmin[]>("testimoni"));
   const [filter, setFilter] = useState<string>("semua");
 
   function muat() {
-    daftarTestimoni().then(setTestimoni).catch(() => setTestimoni([]));
+    daftarTestimoni().then((d) => { tulisCache("testimoni", d); setTestimoni(d); }).catch(() => setTestimoni((l) => l ?? []));
   }
 
   useEffect(muat, []);
@@ -66,7 +66,7 @@ function Isi() {
       </div>
 
       {testimoni === null ? (
-        <SkeletonDaftar jumlah={3} aksi={2} />
+        <SkeletonKartuDaftar jumlah={3} ikon="quote" teks={2} />
       ) : terfilter.length === 0 ? (
         <div className="empty empty--sm">
           <span className="icon-tile"><Icon name="quote" size={20} /></span>
@@ -137,7 +137,7 @@ function Isi() {
 
 export function TestimonialsPanel() {
   return (
-    <RequireAuth kerangka={<SkeletonDaftar jumlah={3} aksi={2} />}>
+    <RequireAuth kerangka={<SkeletonKartuDaftar jumlah={3} ikon="quote" teks={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

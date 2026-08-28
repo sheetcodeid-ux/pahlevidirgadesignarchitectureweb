@@ -4,7 +4,7 @@ import { SkeletonDaftar, SkeletonKartu } from "../ui/Skeleton";
 import { Avatar } from "../ui/misc/Avatar";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarTugas, ubahTugas, type Tugas } from "../../lib/admin";
+import { daftarTugas, ubahTugas, type Tugas, bacaCache, tulisCache} from "../../lib/admin";
 import { Select } from "../ui/overlay/Select";
 
 const KOLOM: [string, string][] = [
@@ -21,11 +21,11 @@ function formatTanggal(iso: string | null | undefined): string | null {
 
 function Isi() {
   const toast = useToast();
-  const [tugas, setTugas] = useState<Tugas[] | null>(null);
+  const [tugas, setTugas] = useState<Tugas[] | null>(() => bacaCache<Tugas[]>("tugas"));
   const [pic, setPic] = useState("semua");
 
   function muat() {
-    daftarTugas().then(setTugas).catch(() => setTugas([]));
+    daftarTugas().then((d) => { tulisCache("tugas", d); setTugas(d); }).catch(() => setTugas((l) => l ?? []));
   }
 
   useEffect(muat, []);

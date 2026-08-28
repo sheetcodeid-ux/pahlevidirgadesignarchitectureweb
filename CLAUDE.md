@@ -233,6 +233,35 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
    tanpa satu pun galat. Sudah menggigit tiga halaman sekaligus.
    **Periksa dengan menjalankan halamannya, bukan dengan membaca komponennya.**
 
+## Kecepatan panel admin
+
+Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu
+adalah muat-halaman penuh dan konteks JS mati total. Tanpa penangkal, itu
+berarti sesi diperiksa ulang dan seluruh data diambil ulang setiap kali staf
+berpindah halaman — bahkan kembali ke halaman yang baru saja dibuka.
+
+Tiga hal yang menahannya, dan ketiganya harus tetap ada:
+
+1. **Cache sessionStorage stale-while-revalidate** (`bacaCache`/`tulisCache`
+   di `lib/admin.ts`). Nilai awal `useState` dibaca dari cache, permintaan
+   segar tetap jalan di belakang. Setiap penulisan (metode non-GET)
+   membatalkan seluruh cache — menebak kunci mana yang terpengaruh adalah
+   cara paling mudah menampilkan angka basi.
+2. **Profil tersimpan dipakai lebih dulu di `RequireAuth`**, dipromosikan di
+   `useLayoutEffect` supaya jadi sebelum paint. Yang dipercepat cuma
+   tampilannya: data tetap diambil dengan token yang divalidasi backend.
+3. **Kerangka ditahan 180 ms** (`.kerangka-tunda`).
+
+Terukur pada build sungguhan dengan latensi API 350 ms: kunjungan pertama
+590 ms dengan kerangka, kunjungan berikutnya 123–167 ms **tanpa satu frame
+kerangka pun**. Kalau angka itu memburuk, periksa ketiga hal di atas dulu.
+
+Mengukurnya: jalankan `npm run build`, sajikan `dist` (dev server
+mengompilasi per-permintaan, angkanya tidak berarti), lalu **gagalkan
+permintaan ke fonts.googleapis.com** — jaringan sesi ini memblokirnya dan
+permintaan yang menggantung menahan DOMContentLoaded belasan detik, angka
+yang sama sekali bukan milik aplikasi.
+
 ## Perintah
 
 | Perintah | Kegunaan |

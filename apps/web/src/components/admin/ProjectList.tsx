@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../ui/Icon";
-import { SkeletonDaftar } from "../ui/Skeleton";
+import { SkeletonTabel } from "../ui/Skeleton";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { Popover, Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { Select } from "../ui/overlay/Select";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarProyek, hapusProyek, type Proyek } from "../../lib/admin";
+import { daftarProyek, hapusProyek, type Proyek, bacaCache, tulisCache} from "../../lib/admin";
 
 const LABEL: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
@@ -47,7 +47,7 @@ function Lencana({ status }: { status: string }) {
 
 function Isi() {
   const toast = useToast();
-  const [proyek, setProyek] = useState<Proyek[] | null>(null);
+  const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [galat, setGalat] = useState<string | null>(null);
   const [saring, setSaring] = useState("semua");
   const [cari, setCari] = useState("");
@@ -57,7 +57,9 @@ function Isi() {
 
   async function muat() {
     try {
-      setProyek(await daftarProyek());
+      const daftar = await daftarProyek();
+      tulisCache("proyek", daftar);
+      setProyek(daftar);
     } catch (e) {
       setGalat((e as Error).message);
     }
@@ -98,9 +100,24 @@ function Isi() {
   }
 
   if (!proyek) {
+    // Kolomnya persis kolom tabel di bawah — termasuk kelas .table__idx dan
+    // .table__num, supaya lebar dan perataan tiap sel sama.
     return (
-      <div className="stack">
-        <SkeletonDaftar jumlah={4} aksi={2} />
+      <div className="listpage">
+        <div className="listpage__pad">
+          <SkeletonTabel
+            baris={6}
+            kolom={[
+              { label: "#", kelas: "table__idx", lebar: "1rem" },
+              { label: "Proyek", gambar: true },
+              { label: "Kategori", lebar: "5rem" },
+              { label: "Kota", lebar: "4.5rem" },
+              { label: "Tahun", kelas: "table__num", lebar: "2.5rem" },
+              { label: "Status", lebar: "4rem" },
+              { label: "Aksi", kelas: "table__actions", lebar: "3.5rem" },
+            ]}
+          />
+        </div>
       </div>
     );
   }
@@ -371,7 +388,24 @@ function Isi() {
 
 export function ProjectList() {
   return (
-    <RequireAuth kerangka={<SkeletonDaftar jumlah={4} aksi={2} />}>
+    <RequireAuth kerangka={
+      <div className="listpage">
+        <div className="listpage__pad">
+          <SkeletonTabel
+            baris={6}
+            kolom={[
+              { label: "#", kelas: "table__idx", lebar: "1rem" },
+              { label: "Proyek", gambar: true },
+              { label: "Kategori", lebar: "5rem" },
+              { label: "Kota", lebar: "4.5rem" },
+              { label: "Tahun", kelas: "table__num", lebar: "2.5rem" },
+              { label: "Status", lebar: "4rem" },
+              { label: "Aksi", kelas: "table__actions", lebar: "3.5rem" },
+            ]}
+          />
+        </div>
+      </div>
+    }>
       <ToastProvider><TooltipProvider><Isi /></TooltipProvider></ToastProvider>
     </RequireAuth>
   );

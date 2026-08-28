@@ -1,8 +1,22 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { Icon } from "../ui/Icon";
-import { ambilProfil, GagalAuth, hapusSesi, type Profil } from "../../lib/admin";
+import { ambilProfil, GagalAuth, hapusSesi, profilTersimpan, type Profil } from "../../lib/admin";
 
 const Ctx = createContext<Profil | null>(null);
+
+/**
+ * useLayoutEffect di browser, useEffect di server.
+ *
+ * Bedanya menentukan di sini: useLayoutEffect berjalan SEBELUM paint, jadi
+ * profil tersimpan sempat dipasang tanpa kerangka pernah terlihat sekejap
+ * pun. useEffect berjalan setelah paint — satu frame kerangka lolos ke layar,
+ * dan pada halaman yang datanya sudah ada di cache, kedipan itu justru yang
+ * paling terlihat.
+ *
+ * Astro merender island ini di server juga, dan React memperingatkan kalau
+ * useLayoutEffect dipakai di sana. Karena itu ditukar, bukan dipaksakan.
+ */
+const useEfekTataLetak = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /** Profil staf yang sedang masuk. Hanya bisa dipanggil di dalam RequireAuth. */
 export function useProfil() {
@@ -35,6 +49,33 @@ export function RequireAuth({ children, masterOnly = false, kerangka }: {
   const [profil, setProfil] = useState<Profil | null>(null);
   const [status, setStatus] = useState<"memeriksa" | "siap" | "ditolak">("memeriksa");
 
+  /* Profil yang tersimpan sejak masuk dipakai lebih dulu, dan pemeriksaan ke
+   * backend jalan di belakangnya.
+   *
+   * Sebelumnya setiap halaman admin menunggu satu putaran jaringan penuh
+   * sebelum menampilkan apa pun — dan karena situs ini statis tanpa router
+   * klien, penantian itu terulang di SETIAP klik menu. Itu yang membuat
+   * panelnya terasa lambat, bukan kerangkanya.
+   *
+   * Dipromosikan di effect, bukan di nilai awal useState: nilai awal juga
+   * dipakai saat Astro merender island ini di server, di mana localStorage
+   * tidak ada — dan bedanya akan jadi ketidakcocokan hidrasi. Satu frame
+   * kerangka tidak terlihat mata; satu putaran jaringan terlihat jelas.
+   *
+   * Yang dipercepat cuma tampilannya, bukan haknya: setiap data tetap
+   * diambil dengan token yang divalidasi backend, dan pemeriksaan latar di
+   * bawah tetap melempar keluar sesi yang sudah dicabut. Menampilkan
+   * kerangka panel lebih dulu tidak membocorkan apa pun — situs ini statis,
+   * jadi markupnya sudah sampai di browser sebelum pemeriksaan mana pun
+   * berjalan. Catatan yang sama sudah ada di CLAUDE.md soal MasterGuard. */
+  useEfekTataLetak(() => {
+    const tersimpan = profilTersimpan();
+    if (tersimpan && (!masterOnly || tersimpan.isMasterAdmin)) {
+      setProfil(tersimpan);
+      setStatus("siap");
+    }
+  }, [masterOnly]);
+
   useEffect(() => {
     let batal = false;
 
@@ -55,7 +96,10 @@ export function RequireAuth({ children, masterOnly = false, kerangka }: {
           window.location.replace(`/admin/masuk?dari=${encodeURIComponent(location.pathname + location.search)}`);
           return;
         }
-        setStatus("ditolak");
+        // Jaringan putus sesaat tidak boleh merobohkan panel yang sudah
+        // tampil dari profil tersimpan. Yang belum menampilkan apa pun tetap
+        // diberi tahu bahwa backend tidak bisa dihubungi.
+        setStatus((sekarang) => (sekarang === "siap" ? "siap" : "ditolak"));
       });
 
     return () => { batal = true; };
@@ -66,10 +110,10 @@ export function RequireAuth({ children, masterOnly = false, kerangka }: {
     // bahwa daerah ini sedang diisi, sementara mata melihat bentuk
     // halamannya. Kerangkanya sendiri aria-hidden.
     if (kerangka) {
-      return <div role="status" aria-busy="true" aria-label="Memuat halaman">{kerangka}</div>;
+      return <div className="kerangka-tunda" role="status" aria-busy="true" aria-label="Memuat halaman">{kerangka}</div>;
     }
     return (
-      <div className="guard" role="status" aria-live="polite">
+      <div className="guard kerangka-tunda" role="status" aria-live="polite">
         <span className="spinner" />
         <p className="t-muted">Memeriksa sesi…</p>
       </div>

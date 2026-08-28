@@ -3,7 +3,7 @@ import { Icon } from "../ui/Icon";
 import { Balok, SkeletonIsian } from "../ui/Skeleton";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, ZONA_WAKTU, type StudioSettings } from "../../lib/admin";
+import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, ZONA_WAKTU, type StudioSettings, bacaCache, tulisCache} from "../../lib/admin";
 
 type Draf = Partial<StudioSettings>;
 
@@ -69,7 +69,7 @@ function KerangkaSettings() {
 
 function Isi() {
   const toast = useToast();
-  const [asli, setAsli] = useState<StudioSettings | null>(null);
+  const [asli, setAsli] = useState<StudioSettings | null>(() => bacaCache<StudioSettings>("settings"));
   const [draf, setDraf] = useState<Draf>({});
   const [galat, setGalat] = useState<string | null>(null);
   const [menyimpan, setMenyimpan] = useState(false);
@@ -80,7 +80,7 @@ function Isi() {
   const fileLogo = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    ambilSettings().then(setAsli).catch((e) => setGalat((e as Error).message));
+    ambilSettings().then((d) => { tulisCache("settings", d); setAsli(d); }).catch((e) => setGalat((e as Error).message));
   }, []);
 
   const berubah = Object.keys(draf).filter(
