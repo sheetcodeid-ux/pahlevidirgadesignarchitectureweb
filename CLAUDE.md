@@ -202,7 +202,7 @@ memutuskan. Jangan diam-diam memilih salah satu.
 
 ## Jebakan yang sudah pernah menggigit
 
-Tiga hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
+Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
 
 1. **`:has(> .anak)` tidak pernah cocok untuk komponen island.** Astro
    membungkus komponen `client:load` dalam `<astro-island>` yang memakai
@@ -216,6 +216,22 @@ Tiga hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
 3. **`aspect-ratio`, bukan `flex: 1`, kalau bentuknya harus tetap.** `flex: 1`
    membuat tinggi mengikuti sisa ruang viewport, jadi kotak yang seharusnya
    melebar berubah jadi hampir persegi di layar pendek.
+4. **`@container` diam saja kalau tidak ada leluhur ber-`container-type`.**
+   Bukan galat, bukan peringatan — aturannya sekadar tidak pernah menyala,
+   dan yang tampil adalah aturan dasarnya. Wadah query yang ada
+   (`.buat-kartu`, `.proyek-kartu`) **tidak membungkus isi tab**, jadi setiap
+   `@container` untuk `.spec-grid` di dalam tab tidak pernah berlaku. Ini yang
+   membuat "Label, Kategori, Nominal sebaris" tampak selesai padahal tidak,
+   dan lolos sekali dari ACC. Kalau tata letak harus benar di mana pun,
+   pakai `auto-fit`/`repeat()` atau media query — jangan container query.
+5. **Setiap stylesheet diimpor per-layout, dan `BaseLayout` cuma memuat
+   `global.css` + `components.css`.** Halaman publik — termasuk `/kontak` dan
+   `/progres` yang dilihat klien — tidak memuat `form.css`, `misc.css`,
+   maupun `admin.css` kecuali halamannya meminta sendiri. Kelas yang dipakai
+   di halaman publik harus hidup di stylesheet yang halaman itu muat; kalau
+   tidak, markupnya benar tapi tampil sebagai elemen mentah bawaan browser
+   tanpa satu pun galat. Sudah menggigit tiga halaman sekaligus.
+   **Periksa dengan menjalankan halamannya, bukan dengan membaca komponennya.**
 
 ## Perintah
 
