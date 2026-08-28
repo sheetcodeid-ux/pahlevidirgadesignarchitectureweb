@@ -74,21 +74,25 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      # Hyperdrive MENYIMPAN hasil query di edge (bawaannya 60 detik) dan
-      # itu sudah menggigit sungguhan: foto yang baru diunggah tidak muncul,
-      # cover yang baru dipilih tidak berubah, dan refresh browser tidak
-      # menolong karena cache-nya bukan di browser. Untuk studio sebesar ini
-      # tidak ada satu pun keuntungan dari cache itu — bebannya nol — jadi
-      # dimatikan.
+      # CATATAN — cache query Hyperdrive.
       #
-      # Dijalankan tiap deploy, bukan sekali di dashboard: setelan yang
-      # hanya diklik sekali bisa diam-diam berubah lagi tanpa ada yang tahu,
-      # dan gejalanya berupa "data lama" yang paling sulit dilacak.
-      - name: Pastikan cache query Hyperdrive tetap mati
-        run: npx wrangler hyperdrive update a6e312cc6ef14b0eb6e7553ad20e2029 --caching-disabled
-        working-directory: apps/api
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # Hyperdrive menyimpan hasil query di edge (bawaannya 60 detik) dan itu
+      # sudah menggigit sungguhan: foto yang baru diunggah tidak muncul, cover
+      # yang baru dipilih tidak berubah, dan refresh browser tidak menolong
+      # karena cache-nya bukan di browser. Untuk studio sebesar ini cache itu
+      # tidak memberi keuntungan apa pun — bebannya nol.
+      #
+      # Langkah otomatis untuk mematikannya SEMPAT ADA di sini, tapi dilepas:
+      # CLOUDFLARE_API_TOKEN bisa men-deploy Worker namun ditolak saat
+      # menyentuh endpoint Hyperdrive (Authentication error 10000, run #26).
+      # Membiarkannya membuat SETIAP deploy merah padahal Worker-nya sudah
+      # tayang — dan deploy yang merah terus-menerus melatih orang
+      # mengabaikan merah, persis saat merah itu akhirnya berarti sesuatu.
+      #
+      # Jadi setelannya dimatikan sekali lewat dashboard Cloudflare
+      # (Hyperdrive > pahlevidirga-db > Caching > Disable). Kalau nanti token
+      # diberi izin "Hyperdrive: Edit", langkah otomatisnya bisa dikembalikan
+      # supaya setelan ini tidak bisa diam-diam berubah lagi.
 
   web:
     name: Worker situs statis
