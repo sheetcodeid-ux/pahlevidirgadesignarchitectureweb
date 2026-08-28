@@ -56,6 +56,9 @@ export interface Project {
   seoDescription?: string;
   publishedAt?: string;
   images?: ProjectImage[];
+  /** Bahan yang dipakai di proyek ini. Tabel yang sama dengan images,
+   *  dibedakan kolom kind — lihat repository/projects.ts di API. */
+  materials?: ProjectImage[];
 }
 
 interface Envelope<T> {

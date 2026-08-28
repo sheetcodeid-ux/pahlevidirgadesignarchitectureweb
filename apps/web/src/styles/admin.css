@@ -662,57 +662,17 @@
   flex-wrap: wrap;
 }
 
-.spec-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
-  gap: var(--space-4);
-}
-
-/* Varian untuk isian pendek — kota, tahun, klien, luas. Ambang 18rem terlalu
-   lebar untuk mereka: di kartu selebar 60rem ia berhenti di dua kolom dan
-   menyisakan separuh baris kosong. Dengan auto-fit (bukan auto-fill) kolom
-   yang tidak terpakai runtuh, jadi barisnya selalu terisi penuh. */
 /* Empat kolom begitu kartunya cukup lebar, dua kalau tidak — tidak pernah
    tiga, karena empat isian dalam tiga kolom menyisakan dua sel kosong di
    baris kedua. Diukur terhadap KARTUNYA (container query), bukan terhadap
    lebar layar: kartu yang sama menyempit sendiri saat panel kanan muncul,
-   dan media query tidak tahu itu. */
+   dan media query tidak tahu itu.
+
+   Wadah querynya di sini, di admin.css, karena .buat-kartu dan
+   .proyek-kartu memang cuma ada di panel admin. Grid-nya sendiri pindah ke
+   form.css — lihat catatan di sana. */
 .buat-kartu,
 .proyek-kartu { container-type: inline-size; }
-
-.spec-grid--rapat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-@container (min-width: 40rem) {
-  .spec-grid--rapat { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-
-@container (max-width: 20rem) {
-  .spec-grid--rapat { grid-template-columns: 1fr; }
-}
-
-/* Varian tiga kolom untuk isian yang memang berjumlah tiga (Label, Kategori,
-   Nominal).
-   
-   TANPA container query, beda dari --rapat di atasnya, dan itu perbaikan
-   bug bukan gaya bebas: @container hanya cocok kalau ADA leluhur yang
-   menyatakan container-type. Wadah yang ada — .buat-kartu dan .proyek-kartu
-   — tidak pernah membungkus isi tab, jadi aturan ini tidak pernah menyala
-   di panel Keuangan dan Nominal turun sendirian ke baris kedua. Persis yang
-   diminta pemilik untuk tidak terjadi.
-   
-   auto-fit dengan ambang 11rem memberi tiga kolom di kartu selebar apa pun
-   yang masuk akal (mulai ~35rem) dan runtuh sendiri di ponsel — tanpa
-   bergantung pada siapa leluhurnya. */
-.spec-grid--tiga {
-  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
-}
-
-/* Dikunci dua kolom bahkan di kartu lebar: isinya empat isian yang membentuk
-   DUA pasangan, dan empat kolom memisahkan pasangan yang harus dibaca
-   bersama (tanggal mulai dengan tanggal selesai). */
-@container (min-width: 28rem) {
-  .spec-grid--dua { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 
 .spec-demo {
   display: flex;
