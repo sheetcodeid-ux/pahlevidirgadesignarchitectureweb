@@ -559,7 +559,64 @@ admin.get("/settings", async (c) => {
   // Pesan Masuk untuk memperingatkan kalau pemberitahuan email mati. Yang
   // dikirim hanya benar/salah — nilai rahasianya tidak pernah ikut.
   const notifikasiEmailAktif = Boolean(c.env.RESEND_API_KEY && c.env.INQUIRY_NOTIFY_TO);
-  return c.json({ data: { ...data, notifikasiEmailAktif } });
+  // Sama alasannya: panel perlu tahu apakah tombol "Terbitkan situs" ada
+  // gunanya, tanpa pernah melihat tokennya.
+  const terbitSitusAktif = Boolean(c.env.GITHUB_DISPATCH_TOKEN);
+  return c.json({ data: { ...data, notifikasiEmailAktif, terbitSitusAktif } });
+});
+
+/**
+ * POST /api/v1/admin/publish — memicu build ulang situs statis.
+ *
+ * Halaman proyek publik dibekukan saat build (getStaticPaths), jadi
+ * menerbitkan proyek di panel ini tidak mengubah situs sampai ada build
+ * ulang. Itu keputusan yang disengaja — pengunjung tidak pernah menunggu
+ * Worker API — tapi selama ini tidak ada cara memicunya dari panel, dan
+ * staf tidak punya alasan untuk tahu soal GitHub Actions.
+ *
+ * Tokennya hidup di Worker, TIDAK pernah sampai ke browser. Itu sebabnya
+ * ini endpoint sendiri, bukan panggilan langsung dari frontend ke GitHub.
+ */
+admin.post("/publish", async (c) => {
+  const token = c.env.GITHUB_DISPATCH_TOKEN;
+  if (!token) {
+    return c.json({
+      error: { status: 503, message: "tombol terbitkan situs belum dikonfigurasi" },
+    }, 503);
+  }
+
+  const repo = c.env.GITHUB_REPO ?? "sheetcodeid-ux/pahlevidirgadesignarchitectureweb";
+  const workflow = c.env.GITHUB_WORKFLOW ?? "deploy.yml";
+  const branch = c.env.GITHUB_BRANCH ?? "claude/stack-setup-supabase-cloudflare-kdwlkk";
+
+  const res = await fetch(
+    `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        // GitHub menolak permintaan tanpa User-Agent dengan 403 yang
+        // pesannya tidak menyebut sebabnya sama sekali.
+        "User-Agent": "pahlevidirga-api",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ref: branch }),
+    },
+  );
+
+  // 204 = diterima. Isi badan galatnya diteruskan apa adanya supaya staf
+  // melihat sebab yang sebenarnya (token kedaluwarsa, cakupan kurang),
+  // bukan "gagal" tanpa keterangan.
+  if (res.status !== 204) {
+    const teks = await res.text().catch(() => "");
+    return c.json({
+      error: { status: 502, message: `GitHub menolak permintaan build (${res.status}) ${teks}`.trim() },
+    }, 502);
+  }
+
+  return c.json({ data: { dimulai: true } });
 });
 
 /** Tiga zona Indonesia, sama persis dengan check constraint di database. */

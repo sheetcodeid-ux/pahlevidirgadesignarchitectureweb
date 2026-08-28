@@ -20,6 +20,7 @@ import {
   ambilBrief, ubahBrief, type BriefProyek,
   daftarKomentarDokumen, tambahKomentarDokumen, type KomentarDokumen,
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
+  terbitkanSitus,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 
@@ -1225,6 +1226,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   const [draf, setDraf] = useState<Draf>({});
   const [galat, setGalat] = useState<string | null>(null);
   const [menyimpan, setMenyimpan] = useState(false);
+  const [menerbitkan, setMenerbitkan] = useState(false);
   const [id, setId] = useState<string | null>(null);
   const [siapId, setSiapId] = useState(false);
   const berkas = useRef<HTMLInputElement>(null);
@@ -1278,6 +1280,24 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       toast({ judul: "Gagal menyimpan", keterangan: (e as Error).message, nada: "gagal" });
     } finally {
       setMenyimpan(false);
+    }
+  }
+
+  /* Situs publik dibekukan saat build, jadi menerbitkan proyek di sini tidak
+     mengubah apa pun sampai ada build ulang. Ini tombolnya. */
+  async function bangunUlangSitus() {
+    setMenerbitkan(true);
+    try {
+      await terbitkanSitus();
+      toast({
+        judul: "Situs sedang dibangun ulang",
+        keterangan: "Sekitar satu menit lagi perubahan tampil di situs publik.",
+        nada: "sukses",
+      });
+    } catch (e) {
+      toast({ judul: "Gagal menerbitkan", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMenerbitkan(false);
     }
   }
 
@@ -1582,6 +1602,21 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
                 <span className="marker__dot" />Semua perubahan tersimpan
               </span>
             )}
+
+            <span className="separator" role="presentation" />
+
+            {/* Menyimpan menulis ke database; MENERBITKAN membangun ulang
+                situs publik. Dua hal berbeda, jadi dua tombol berbeda —
+                dipisah garis supaya tidak terbaca sebagai satu urutan. */}
+            <button type="button" className="btn btn--secondary buat-aksi__utama"
+              disabled={menerbitkan} onClick={bangunUlangSitus}>
+              {menerbitkan && <span className="spinner spinner--sm" />}
+              <Icon name="globe" size={16} />Terbitkan situs
+            </button>
+            <p className="t-muted buat-aksi__catatan">
+              Halaman publik dibekukan saat dibangun. Tekan ini setelah selesai
+              mengubah konten — sekitar satu menit sampai tampil.
+            </p>
           </>,
         )}
       </div>

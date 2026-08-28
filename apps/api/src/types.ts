@@ -21,6 +21,15 @@ export interface Env {
   RESEND_API_KEY?: string;
   INQUIRY_NOTIFY_TO?: string;
 
+  /* Token GitHub untuk memicu build ulang situs statis dari panel admin.
+     Cakupannya cukup "actions: write" pada satu repo ini saja — bukan token
+     serba bisa. Kalau kosong, tombol Terbitkan situs mengatakan dirinya
+     belum dikonfigurasi, bukan diam-diam gagal. */
+  GITHUB_DISPATCH_TOKEN?: string;
+  GITHUB_REPO?: string;
+  GITHUB_WORKFLOW?: string;
+  GITHUB_BRANCH?: string;
+
   // Bindings
   DB: Hyperdrive;
   RATE_LIMIT: KVNamespace;

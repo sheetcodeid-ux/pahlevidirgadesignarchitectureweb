@@ -214,6 +214,8 @@ export interface StudioSettings {
   logoKey?: string | null;
   /** Bukan kolom database: keadaan rahasia Worker, dibalas server saja. */
   notifikasiEmailAktif?: boolean;
+  /** Apakah Worker punya token GitHub untuk memicu build ulang situs. */
+  terbitSitusAktif?: boolean;
   /** Nama zona IANA (Asia/Jakarta | Asia/Makassar | Asia/Jayapura). */
   timezone?: string;
 }
@@ -346,6 +348,15 @@ export interface FinanceOverview {
   marginRataRata: number | null;
   proyek: FinanceOverviewRow[];
 }
+
+/**
+ * Memicu build ulang situs statis.
+ *
+ * Halaman proyek publik dibekukan saat build, jadi menerbitkan proyek di
+ * panel admin tidak mengubah situs sampai ini dijalankan. Tokennya hidup di
+ * Worker API — halaman ini tidak pernah memegangnya.
+ */
+export const terbitkanSitus = () => panggil<{ dimulai: boolean }>("/admin/publish", { method: "POST" });
 
 export const ambilRingkasanKeuangan = () => panggil<FinanceOverview>("/admin/finance/overview");
 
