@@ -1241,7 +1241,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   }
 
   const detail = (
-    <div className="stack">
+    <div className="stack proyek-kartu">
       <div className="field">
         <label className="field__label" htmlFor="ed-judul">Judul</label>
         <input id="ed-judul" className="input" value={String(nilai("title") ?? "")}
@@ -1296,7 +1296,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   );
 
   const galeri = (
-    <div className="stack">
+    <div className="stack proyek-kartu">
       {nilai("coverImageUrl") || nilai("coverImageKey" as keyof Proyek) ? (
         <div className="aspect aspect--16-9">
           {nilai("coverImageUrl") ? (
@@ -1343,7 +1343,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   );
 
   const seo = (
-    <div className="stack">
+    <div className="stack proyek-kartu">
       <div className="field">
         <label className="field__label" htmlFor="ed-seot">Judul SEO</label>
         <input id="ed-seot" className="input" value={String(nilai("seoTitle") ?? "")}
@@ -1364,7 +1364,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
      menyimpan sendiri seketika, jadi bilah simpan di sana tidak pernah
      berguna dan hanya menambah barang yang harus diabaikan. */
   const bilahSimpan = halaman === "publik" && (
-    <div className="row row--between">
+    <div className="row row--between proyekpage__bilah">
       <span className="t-muted">{String(nilai("title") ?? "")}</span>
       <span className="row" style={{ gap: "var(--space-2)" }}>
         {adaPerubahan && (
@@ -1518,7 +1518,10 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
 export function ProyekPanel({ halaman }: { halaman: HalamanProyek }) {
   return (
     <RequireAuth>
-      <ToastProvider><Isi halaman={halaman} /></ToastProvider>
+      {/* Pembungkus .proyekpage yang membuat halaman ini memakai bahasa visual
+          yang sama dengan Tambah Proyek: badan halaman ABU, kartu dan isian
+          HITAM berbingkai tebal, judul dipisah garis tebal dari isinya. */}
+      <ToastProvider><div className="proyekpage"><Isi halaman={halaman} /></div></ToastProvider>
     </RequireAuth>
   );
 }

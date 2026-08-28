@@ -497,12 +497,19 @@
      ruang 3rem untuk tombol laci tidak bisa diambil dari mana-mana lagi.
      "Admin /" ikut dilepas — di ponsel jejak satu tingkat tidak memberi tahu
      apa pun yang tidak sudah diketahui dari sidebar. */
-  .topbar__crumb { flex-shrink: 1; }
+  /* min-width:0 bukan hiasan: tanpa itu remah roti tidak pernah menyusut di
+     bawah lebar isinya, jadi sisa lebar yang tak muat justru mendorong avatar
+     keluar layar dan membuat badan halaman bisa digulir mendatar. */
+  .topbar__crumb { flex-shrink: 1; min-width: 0; }
   .topbar__crumb a,
   .topbar__crumb .breadcrumb__sep { display: none; }
   /* Tombol laci butuh 3rem di kiri; sisanya dipangkas dari sel tombol ikon. */
   .topbar__aksi,
   .topbar__sel { padding-inline: var(--space-1); }
+  /* Di lebar ini identitas tinggal avatar — tidak ada teks yang bisa
+     dipendekkan, jadi menyusutkannya cuma mendorong avatar keluar layar.
+     Seluruh penyusutan dibebankan ke remah roti, yang memang punya ellipsis. */
+  .topbar__id { flex-shrink: 0; }
 }
 
 
@@ -1325,7 +1332,8 @@
 
 .buatpage__utama { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
 
-.buat-kartu {
+.buat-kartu,
+.proyek-kartu {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -1391,20 +1399,24 @@
    mendefinisikan bentuknya cuma bingkai 2px — bukan beda warna. Kotak abu
    di atas kartu hitam terbaca sebagai lapisan tambahan yang tidak ada
    artinya; yang benar-benar perlu dibedakan hanya kotak catatan panjang. */
-.buat-kartu .input {
+.buat-kartu .input,
+.proyekpage .input {
   background: var(--bg-sunken);
   border-width: 2px;
   border-color: var(--border-strong);
 }
 
-.buat-kartu .input:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
+.buat-kartu .input:hover:not(:disabled):not([readonly]),
+.proyekpage .input:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
 
 /* Kotak catatan tetap abu — ia satu-satunya isian yang isinya panjang, dan
    bidang terang membuat batas area mengetiknya terbaca tanpa perlu dibaca. */
-.buat-kartu .input--area { background: var(--surface-raised); }
+.buat-kartu .input--area,
+.proyekpage .input--area { background: var(--surface-raised); }
 
 /* Pemilih kategori mengikuti isian lain, bukan gaya select bawaannya. */
-.buat-kartu .select .input { background: var(--bg-sunken); }
+.buat-kartu .select .input,
+.proyekpage .select .input { background: var(--bg-sunken); }
 
 /* Tombol di panel aksi memakai bingkai setebal kartu di sebelahnya. */
 .buatpage__aksi .btn--secondary { border-width: 2px; }
@@ -1413,12 +1425,111 @@
    Aturan global membatasi tiap <p> ke 68ch — ukuran nyaman untuk teks
    bacaan panjang, tapi di sini justru memaksa satu kalimat pendek pecah
    jadi dua baris padahal kartunya masih lebar. */
-.buat-kartu p { max-width: none; }
+.buat-kartu p,
+.proyek-kartu p { max-width: none; }
 
 /* Di tema terang --surface-raised nyaris putih, jadi kotak catatan tak
    terbaca berbeda dari isian di atasnya. Abunya diambil dari --tray, satu-
    satunya bidang abu lembut yang memang disediakan untuk tema terang. */
-:root[data-theme="light"] .buat-kartu .input--area { background: var(--tray); }
+:root[data-theme="light"] .buat-kartu .input--area,
+:root[data-theme="light"] .proyekpage .input--area { background: var(--tray); }
+
+/* --- Halaman proyek (Publik / Klien / Internal) ---------------------------
+   Bahasa visualnya diambil bulat-bulat dari halaman Tambah Proyek, bukan
+   ditulis ulang: badan halaman ABU, kartu dan isian HITAM berbingkai 2px,
+   dan judul halaman dipisah garis tebal dari isinya. Tiga halaman ini
+   menyunting proyek yang sama seperti form pembuatan, jadi terlihat berbeda
+   dari form itu hanya akan membuat staf mengira ia sedang di tempat lain.
+
+   Selektornya TANPA ">" — <astro-island> menyisip di antara .admin__content
+   dan .proyekpage, jadi ia bukan anak langsung meski tata letaknya begitu. */
+.admin__content:has(.proyekpage) {
+  padding: 0;
+  gap: 0;
+  max-width: none;
+  background: var(--surface-raised);
+}
+
+/* Kepala halaman HITAM dan menempel saat digulir, dengan garis tebal sebagai
+   batasnya. z-index di bawah topbar (40) supaya ia yang tertutup. */
+.admin__content:has(.proyekpage) .page-head {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 30;
+  padding: var(--space-6);
+  background: var(--bg-sunken);
+  border-bottom: 2px solid var(--border-strong);
+}
+
+.proyekpage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+/* Kartu bawaan (.card) di dalam halaman ini disamakan dengan .buat-kartu:
+   hitam, bingkai 2px. Tanpa ini kartu Status terbit dan Tahap pipeline
+   tampak sebagai lapisan abu yang lebih terang di atas badan abu. */
+.proyekpage .card {
+  background: var(--bg-sunken);
+  border: 2px solid var(--border-strong);
+}
+
+/* Bilah tab dan pemilih tahap: hitam berbingkai tebal, sejajar dengan
+   isian di bawahnya. Ia perkakas, jadi ikut aturan yang sama. */
+.proyekpage .segmented {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+
+/* Kartu pilihan, baris berbingkai, dan panel lipat memakai bingkai setebal
+   kartunya. Latarnya hitam seperti kartu — yang membedakannya bingkai,
+   bukan beda warna, persis alasan yang sama seperti di form pembuatan. */
+.proyekpage .radio-card,
+.proyekpage .item--bordered,
+.proyekpage .collapsible {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+
+/* Kartu terpilih tetap merah — warna punya makna tetap, dan bingkai tebal
+   tidak boleh menghapus tanda "ini yang aktif". */
+.proyekpage .radio-card:has(input:checked) {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+/* Bidang unggah tetap bergaris putus-putus, hanya ikut menebal. */
+.proyekpage .dropzone {
+  background: var(--bg-sunken);
+  border-width: 2px;
+}
+
+/* Tombol sekunder di halaman ini bersanding langsung dengan isian
+   berbingkai 2px, jadi bingkainya disamakan supaya tidak terlihat tipis
+   sendirian. */
+.proyekpage .btn--secondary { border-width: 2px; }
+
+/* Bilah simpan ikut berkartu hitam. Dibiarkan telanjang di atas badan abu ia
+   satu-satunya benda yang melayang tanpa batas, dan judul proyek di kirinya
+   terbaca seolah bagian dari judul halaman, bukan dari isinya. */
+.proyekpage__bilah {
+  padding: var(--space-4) var(--space-5);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-sunken);
+}
+
+/* Keadaan kosong dan galat berdiri sendiri di badan abu — diberi kartu
+   hitam supaya tidak melayang tanpa batas di tengah halaman. */
+.proyekpage > .empty {
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-sunken);
+}
 
 /* --- Dashboard: bidang bertitik + kolom kanan --------------------------- */
 
