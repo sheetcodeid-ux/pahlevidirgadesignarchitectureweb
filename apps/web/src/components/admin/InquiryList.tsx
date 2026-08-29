@@ -4,7 +4,7 @@ import { SkeletonKartuDaftar } from "../ui/Skeleton";
 import { Sheet } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarPesan, ubahStatusPesan, ambilSettings, type Pesan, bacaCache, tulisCache} from "../../lib/admin";
+import { daftarPesan, ubahStatusPesan, ambilSettings, type Pesan, bacaCache, tulisCache, jumlahDiingat} from "../../lib/admin";
 
 const STATUS: Record<string, { teks: string; kelas: string }> = {
   new: { teks: "Baru", kelas: "badge--brand" },
@@ -80,7 +80,7 @@ function Isi() {
   }
 
   if (!pesan) {
-    return <SkeletonKartuDaftar jumlah={4} ikon="inquiry" />;
+    return <SkeletonKartuDaftar jumlah={jumlahDiingat(`pesan:${saring}`, 4)} ikon="inquiry" />;
   }
 
   return (
@@ -190,7 +190,7 @@ function Isi() {
 
 export function InquiryList() {
   return (
-    <RequireAuth skeleton={<SkeletonKartuDaftar jumlah={4} ikon="inquiry" />}>
+    <RequireAuth skeleton={<SkeletonKartuDaftar jumlah={jumlahDiingat("pesan:", 4)} ikon="inquiry" />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

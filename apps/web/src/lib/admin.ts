@@ -83,6 +83,35 @@ export function tulisCache(kunci: string, nilai: unknown) {
   } catch {
     /* Kuota penuh atau penyimpanan diblokir — cache memang boleh gagal. */
   }
+  // Panjang daftar diingat terpisah — lihat jumlahDiingat().
+  if (Array.isArray(nilai)) {
+    try { localStorage.setItem(PREFIKS_JUMLAH + kunci, String(nilai.length)); } catch { /* abaikan */ }
+  }
+}
+
+/* --- Jumlah baris yang diingat --------------------------------------------
+ *
+ * Skeleton menggambar sejumlah baris tetap, dan angka itu tebakan. Studio ini
+ * punya dua proyek: menggambar enam baris lalu menyusut jadi dua membuat
+ * halaman melompat persis saat isinya tiba — kebalikan dari gunanya skeleton.
+ *
+ * Panjang daftar terakhir disimpan di localStorage, BUKAN sessionStorage
+ * seperti cache datanya. Bedanya disengaja: cache data ikut hilang saat tab
+ * ditutup karena isinya data proyek dan keuangan, sementara yang ini cuma
+ * satu angka — dan justru pada tab yang baru dibuka, saat cache datanya
+ * kosong dan skeleton pasti tampil, angka itu paling dibutuhkan.
+ */
+const PREFIKS_JUMLAH = "pd-jumlah:";
+
+export function jumlahDiingat(kunci: string, bawaan: number): number {
+  try {
+    const n = Number(localStorage.getItem(PREFIKS_JUMLAH + kunci));
+    // Dibatasi 1..8: daftar kosong tetap butuh satu baris supaya bentuknya
+    // terbaca, dan daftar panjang tidak perlu digambar seluruhnya — yang
+    // terlihat sebelum digulir cuma beberapa baris pertama.
+    if (Number.isFinite(n) && n > 0) return Math.min(8, Math.max(1, n));
+  } catch { /* abaikan */ }
+  return bawaan;
 }
 
 /**
@@ -91,6 +120,21 @@ export function tulisCache(kunci: string, nilai: unknown) {
  * tidak menampilkan angka sebelum perubahan.
  */
 export function buangCache(awalan?: string) {
+  // Angka jumlah baris ikut dibuang hanya saat SELURUH cache dibuang, yaitu
+  // saat keluar. Pada pembatalan biasa (setelah menulis) ia justru harus
+  // bertahan — panjang daftarnya nyaris tidak berubah, dan menebak ulang
+  // dari nol berarti lompatan yang barusan diperbaiki muncul lagi.
+  if (!awalan) {
+    try {
+      const buang: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(PREFIKS_JUMLAH)) buang.push(k);
+      }
+      buang.forEach((k) => localStorage.removeItem(k));
+    } catch { /* abaikan */ }
+  }
+
   try {
     const buang: string[] = [];
     for (let i = 0; i < sessionStorage.length; i++) {

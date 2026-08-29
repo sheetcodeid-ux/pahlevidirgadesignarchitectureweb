@@ -6,7 +6,7 @@ import { Popover, Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { Select } from "../ui/overlay/Select";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarProyek, hapusProyek, type Proyek, bacaCache, tulisCache} from "../../lib/admin";
+import { daftarProyek, hapusProyek, type Proyek, bacaCache, tulisCache, jumlahDiingat} from "../../lib/admin";
 
 const LABEL: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
@@ -106,7 +106,7 @@ function Isi() {
       <div className="listpage">
         <div className="listpage__pad">
           <SkeletonTabel
-            baris={6}
+            baris={jumlahDiingat("proyek", 6)}
             kolom={[
               { label: "#", kelas: "table__idx", lebar: "1rem" },
               { label: "Proyek", gambar: true },
@@ -392,7 +392,7 @@ export function ProjectList() {
       <div className="listpage">
         <div className="listpage__pad">
           <SkeletonTabel
-            baris={6}
+            baris={jumlahDiingat("proyek", 6)}
             kolom={[
               { label: "#", kelas: "table__idx", lebar: "1rem" },
               { label: "Proyek", gambar: true },

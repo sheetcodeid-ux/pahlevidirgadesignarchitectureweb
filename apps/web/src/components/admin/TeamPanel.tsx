@@ -5,7 +5,7 @@ import { Avatar } from "../ui/misc/Avatar";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarTim, tambahAnggotaTim, hapusAnggotaTim, type AnggotaTim, bacaCache, tulisCache} from "../../lib/admin";
+import { daftarTim, tambahAnggotaTim, hapusAnggotaTim, type AnggotaTim, bacaCache, tulisCache, jumlahDiingat} from "../../lib/admin";
 
 function Isi() {
   const toast = useToast();
@@ -83,7 +83,7 @@ function Isi() {
       </div>
 
       {tim === null ? (
-        <SkeletonDaftar jumlah={3} aksi={2} />
+        <SkeletonDaftar jumlah={jumlahDiingat("tim", 3)} aksi={2} />
       ) : tim.length === 0 ? (
         <div className="empty empty--sm">
           <span className="icon-tile"><Icon name="team" size={20} /></span>
@@ -120,7 +120,7 @@ function Isi() {
 
 export function TeamPanel() {
   return (
-    <RequireAuth skeleton={<SkeletonDaftar jumlah={3} aksi={2} />}>
+    <RequireAuth skeleton={<SkeletonDaftar jumlah={jumlahDiingat("tim", 3)} aksi={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );
