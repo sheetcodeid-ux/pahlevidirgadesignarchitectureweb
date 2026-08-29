@@ -4,6 +4,7 @@ import { Balok, SkeletonIsian } from "../ui/Skeleton";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, ZONA_WAKTU, type StudioSettings, bacaCache, tulisCache} from "../../lib/admin";
+import { useCegahPindah } from "../../lib/cegahPindah";
 
 type Draf = Partial<StudioSettings>;
 
@@ -87,6 +88,9 @@ function Isi() {
     (k) => draf[k as keyof Draf] !== asli?.[k as keyof StudioSettings],
   );
   const adaPerubahan = berubah.length > 0;
+
+  // Menahan perpindahan selama masih ada yang belum disimpan.
+  useCegahPindah(adaPerubahan);
 
   const nilai = (kunci: keyof StudioSettings): string =>
     String((kunci in draf ? draf[kunci] : asli?.[kunci]) ?? "");

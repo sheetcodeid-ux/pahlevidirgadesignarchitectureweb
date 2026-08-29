@@ -30,6 +30,7 @@ import {
   ambilSettings, type StudioSettings,
   bacaCache, tulisCache,
 } from "../../lib/admin";
+import { useCegahPindah } from "../../lib/cegahPindah";
 import { unduhPdf } from "../../lib/pdf";
 import { formatRupiah } from "../../lib/format";
 
@@ -1558,6 +1559,9 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   // yang tidak mereka sentuh.
   const berubah = Object.keys(draf).filter((k) => draf[k as keyof Draf] !== asli?.[k as keyof Proyek]);
   const adaPerubahan = berubah.length > 0;
+
+  // Menahan perpindahan selama masih ada yang belum disimpan.
+  useCegahPindah(adaPerubahan);
 
   function set<K extends keyof Proyek>(kunci: K, nilai: Proyek[K]) {
     setDraf((d) => ({ ...d, [kunci]: nilai }));
