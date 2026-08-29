@@ -37,12 +37,72 @@ export function hapusSesi() {
   [KUNCI_AKSES, KUNCI_SEGAR, KUNCI_PROFIL].forEach((k) => {
     try { localStorage.removeItem(k); } catch { /* abaikan */ }
   });
+  // Data proyek dan keuangan tidak boleh tertinggal untuk akun berikutnya
+  // yang masuk di tab yang sama.
+  buangCache();
 }
 
 export function profilTersimpan(): Profil | null {
   const raw = baca(KUNCI_PROFIL);
   if (!raw) return null;
   try { return JSON.parse(raw) as Profil; } catch { return null; }
+}
+
+/* --- Cache antar-halaman ---------------------------------------------------
+ *
+ * Panel admin adalah situs STATIS tanpa router sisi klien: tiap klik menu
+ * adalah muat-halaman penuh, dan konteks JS-nya mati total. Artinya tanpa
+ * cache, setiap kali staf berpindah halaman — bahkan kembali ke halaman yang
+ * baru saja dibuka — sesinya diperiksa ulang dan datanya diambil ulang dari
+ * nol. Itu sebabnya skeleton halaman muncul lagi dan lagi.
+ *
+ * Cache-nya sessionStorage, bukan memori: memori tidak selamat dari muat
+ * ulang. sessionStorage, bukan localStorage: isinya data proyek dan
+ * keuangan, jadi ia ikut hilang begitu tab ditutup.
+ *
+ * Polanya stale-while-revalidate. Yang tersimpan ditampilkan SEKETIKA, lalu
+ * permintaan segar tetap jalan di belakang dan menimpanya begitu tiba. Jadi
+ * halaman kedua yang dibuka tidak pernah kosong, dan angkanya tetap benar
+ * satu putaran jaringan kemudian.
+ */
+
+const PREFIKS_CACHE = "pd-cache:";
+
+export function bacaCache<T>(kunci: string): T | null {
+  try {
+    const raw = sessionStorage.getItem(PREFIKS_CACHE + kunci);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function tulisCache(kunci: string, nilai: unknown) {
+  try {
+    sessionStorage.setItem(PREFIKS_CACHE + kunci, JSON.stringify(nilai));
+  } catch {
+    /* Kuota penuh atau penyimpanan diblokir — cache memang boleh gagal. */
+  }
+}
+
+/**
+ * Membuang cache. Tanpa argumen: semuanya (dipakai saat keluar). Dengan
+ * awalan: hanya yang cocok — dipakai setelah menulis, supaya halaman lain
+ * tidak menampilkan angka sebelum perubahan.
+ */
+export function buangCache(awalan?: string) {
+  try {
+    const buang: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (!k || !k.startsWith(PREFIKS_CACHE)) continue;
+      if (awalan && !k.startsWith(PREFIKS_CACHE + awalan)) continue;
+      buang.push(k);
+    }
+    buang.forEach((k) => sessionStorage.removeItem(k));
+  } catch {
+    /* abaikan */
+  }
 }
 
 export class GagalAuth extends Error {}
@@ -94,6 +154,17 @@ async function panggil<T>(path: string, init: RequestInit = {}, ulang = true): P
     const body = await res.json().catch(() => null);
     throw new Error(body?.error?.message ?? `Permintaan gagal (${res.status})`);
   }
+
+  // Setiap penulisan membatalkan SELURUH cache, bukan cuma kunci yang
+  // kelihatan berkaitan. Alasannya: satu perubahan sering merembet ke
+  // beberapa daftar sekaligus — menerbitkan proyek mengubah daftar proyek,
+  // angka Dashboard, dan lonceng notifikasi. Menebak mana yang terpengaruh
+  // adalah cara paling mudah menampilkan angka basi tanpa sadar.
+  //
+  // Biayanya kecil dan sepadan: studio ini menulis beberapa kali sehari dan
+  // membaca puluhan kali, jadi yang dikorbankan cuma satu kali muat setelah
+  // menyimpan — bukan setiap kali berpindah halaman.
+  if (init.method && init.method !== "GET") buangCache();
 
   const body = await res.json();
   return body.data as T;

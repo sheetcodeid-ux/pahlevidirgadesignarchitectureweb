@@ -202,7 +202,7 @@ memutuskan. Jangan diam-diam memilih salah satu.
 
 ## Jebakan yang sudah pernah menggigit
 
-Tiga hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
+Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
 
 1. **`:has(> .anak)` tidak pernah cocok untuk komponen island.** Astro
    membungkus komponen `client:load` dalam `<astro-island>` yang memakai
@@ -216,6 +216,75 @@ Tiga hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
 3. **`aspect-ratio`, bukan `flex: 1`, kalau bentuknya harus tetap.** `flex: 1`
    membuat tinggi mengikuti sisa ruang viewport, jadi kotak yang seharusnya
    melebar berubah jadi hampir persegi di layar pendek.
+4. **`@container` diam saja kalau tidak ada leluhur ber-`container-type`.**
+   Bukan galat, bukan peringatan — aturannya sekadar tidak pernah menyala,
+   dan yang tampil adalah aturan dasarnya. Wadah query yang ada
+   (`.buat-kartu`, `.proyek-kartu`) **tidak membungkus isi tab**, jadi setiap
+   `@container` untuk `.spec-grid` di dalam tab tidak pernah berlaku. Ini yang
+   membuat "Label, Kategori, Nominal sebaris" tampak selesai padahal tidak,
+   dan lolos sekali dari ACC. Kalau tata letak harus benar di mana pun,
+   pakai `auto-fit`/`repeat()` atau media query — jangan container query.
+5. **Setiap stylesheet diimpor per-layout, dan `BaseLayout` cuma memuat
+   `global.css` + `components.css`.** Halaman publik — termasuk `/kontak` dan
+   `/progres` yang dilihat klien — tidak memuat `form.css`, `misc.css`,
+   maupun `admin.css` kecuali halamannya meminta sendiri. Kelas yang dipakai
+   di halaman publik harus hidup di stylesheet yang halaman itu muat; kalau
+   tidak, markupnya benar tapi tampil sebagai elemen mentah bawaan browser
+   tanpa satu pun galat. Sudah menggigit tiga halaman sekaligus.
+   **Periksa dengan menjalankan halamannya, bukan dengan membaca komponennya.**
+
+## Kecepatan panel admin
+
+Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu
+adalah muat-halaman penuh dan konteks JS mati total. Tanpa penangkal, itu
+berarti sesi diperiksa ulang dan seluruh data diambil ulang setiap kali staf
+berpindah halaman — bahkan kembali ke halaman yang baru saja dibuka.
+
+Tiga hal yang menahannya, dan ketiganya harus tetap ada:
+
+1. **Cache sessionStorage stale-while-revalidate** (`bacaCache`/`tulisCache`
+   di `lib/admin.ts`). Nilai awal `useState` dibaca dari cache, permintaan
+   segar tetap jalan di belakang. Setiap penulisan (metode non-GET)
+   membatalkan seluruh cache — menebak kunci mana yang terpengaruh adalah
+   cara paling mudah menampilkan angka basi.
+2. **Profil tersimpan dipakai lebih dulu di `RequireAuth`**, dipromosikan di
+   `useLayoutEffect` supaya jadi sebelum paint. Yang dipercepat cuma
+   tampilannya: data tetap diambil dengan token yang divalidasi backend.
+3. **Skeleton ditahan 180 ms** (`.skeleton--tunda`).
+
+Terukur pada build sungguhan dengan latensi API 350 ms: kunjungan pertama
+590 ms dengan skeleton, kunjungan berikutnya 123–167 ms **tanpa satu frame
+skeleton pun**. Kalau angka itu memburuk, periksa ketiga hal di atas dulu.
+
+Sejak gelombang berikutnya ada penahan keempat: **router sisi klien**
+(`ClientRouter` di `AdminLayout`), dengan sidebar dan topbar ber-
+`transition:persist`. Konsekuensinya, keduanya tidak pernah dipasang ulang —
+jadi apa pun yang dulu ikut disegarkan cuma-cuma oleh muat-ulang halaman
+sekarang harus diminta sendiri lewat `astro:page-load` /
+`astro:before-preparation`. Yang sudah ketahuan dan sudah dipasang: penanda
+menu aktif, judul di topbar, menu geser ponsel yang harus menutup, atribut
+tema di `<html>`, dan overlay yang sedang terbuka. Kalau menambah sesuatu
+yang bergantung pada "halaman baru dimuat", periksa daftar itu dulu.
+
+Mengukurnya: jalankan `npm run build`, sajikan `dist` (dev server
+mengompilasi per-permintaan, angkanya tidak berarti), lalu **gagalkan
+permintaan ke fonts.googleapis.com** — jaringan sesi ini memblokirnya dan
+permintaan yang menggantung menahan DOMContentLoaded belasan detik, angka
+yang sama sekali bukan milik aplikasi.
+
+**Dan beri latensi pada dokumen serta asetnya, bukan cuma pada API.**
+Localhost punya RTT nol — keadaan yang tidak pernah dialami siapa pun, dan
+yang diam-diam menguntungkan muat-ulang penuh. Terukur pada perpindahan
+halaman yang datanya sudah tersimpan:
+
+| | RTT 0 (localhost polos) | RTT 120 ms (wajar) |
+| --- | --- | --- |
+| Muat ulang penuh | 188 ms | 981 ms, 8 frame skeleton |
+| Router sisi klien | 257 ms | **323 ms, 0 frame skeleton** |
+
+Diukur cuma di localhost, kesimpulannya terbalik: router sisi klien tampak
+memperlambat 70 ms, padahal di jaringan sungguhan ia tiga kali lebih cepat.
+Selalu ukur dengan RTT.
 
 ## Perintah
 

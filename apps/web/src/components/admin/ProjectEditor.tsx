@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "../ui/Icon";
 import { Select } from "../ui/overlay/Select";
 import { InputRupiah } from "../ui/InputRupiah";
@@ -28,9 +28,17 @@ import {
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
   terbitkanSitus, type JenisGambar,
   ambilSettings, type StudioSettings,
+  bacaCache, tulisCache,
 } from "../../lib/admin";
+import { useCegahPindah } from "../../lib/cegahPindah";
 import { unduhPdf } from "../../lib/pdf";
 import { formatRupiah } from "../../lib/format";
+
+/* useLayoutEffect di browser, useEffect di server — sama seperti di
+   RequireAuth. Yang dibutuhkan di sini: menjalankan pembacaan penyimpanan
+   sebelum browser melukis frame pertama, tanpa memicu peringatan React saat
+   Astro merender island ini di server. */
+const useEfekTataLetak = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /* Radix Select menolak value string kosong — itu nilai cadangan untuk
    "belum ada pilihan". Jadi "belum ditentukan" perlu nilai sendiri. */
@@ -117,8 +125,8 @@ const STATUS_DOKUMEN: [string, string][] = [
 
 function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontrak: (nilai: number | null) => void }) {
   const toast = useToast();
-  const [invoice, setInvoice] = useState<Invoice[] | null>(null);
-  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(null);
+  const [invoice, setInvoice] = useState<Invoice[] | null>(() => bacaCache<Invoice[]>(`invoice:${proyek.id}`));
+  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() => bacaCache<BiayaProyek[]>(`biaya:${proyek.id}`));
   const [kontrakInput, setKontrakInput] = useState<number | null>(proyek.contractValue ?? null);
 
   const [labelInv, setLabelInv] = useState("");
@@ -135,8 +143,8 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
   const [membuatPdf, setMembuatPdf] = useState<"biaya" | "invoice" | null>(null);
 
   function muat() {
-    daftarInvoice(proyek.id).then(setInvoice).catch(() => setInvoice([]));
-    daftarBiaya(proyek.id).then(setBiaya).catch(() => setBiaya([]));
+    daftarInvoice(proyek.id).then((d) => { tulisCache(`invoice:${proyek.id}`, d); setInvoice(d); }).catch(() => setInvoice((l) => l ?? []));
+    daftarBiaya(proyek.id).then((d) => { tulisCache(`biaya:${proyek.id}`, d); setBiaya(d); }).catch(() => setBiaya((l) => l ?? []));
   }
 
   useEffect(muat, [proyek.id]);
@@ -527,13 +535,13 @@ function judulDariNama(nama: string): string {
 
 function PanelDokumen({ proyek }: { proyek: Proyek }) {
   const toast = useToast();
-  const [dokumen, setDokumen] = useState<DokumenProyek[] | null>(null);
+  const [dokumen, setDokumen] = useState<DokumenProyek[] | null>(() => bacaCache<DokumenProyek[]>(`dokumen:${proyek.id}`));
   const [judulBaru, setJudulBaru] = useState("");
   const [antre, setAntre] = useState<{ selesai: number; total: number } | null>(null);
   const berkas = useRef<HTMLInputElement>(null);
 
   function muat() {
-    daftarDokumen(proyek.id).then(setDokumen).catch(() => setDokumen([]));
+    daftarDokumen(proyek.id).then((d) => { tulisCache(`dokumen:${proyek.id}`, d); setDokumen(d); }).catch(() => setDokumen((l) => l ?? []));
   }
 
   useEffect(muat, [proyek.id]);
@@ -792,13 +800,13 @@ function PanelGaleri({
 }) {
   const kata = KATA_GAMBAR[jenis];
   const toast = useToast();
-  const [gambar, setGambar] = useState<GambarProyek[] | null>(null);
+  const [gambar, setGambar] = useState<GambarProyek[] | null>(() => bacaCache<GambarProyek[]>(`gambar:${jenis}:${proyek.id}`));
   const [mengunggah, setMengunggah] = useState(0);
   const [dragging, setDragging] = useState(false);
   const berkas = useRef<HTMLInputElement>(null);
 
   function muat() {
-    daftarGambar(proyek.id, jenis).then(setGambar).catch(() => setGambar([]));
+    daftarGambar(proyek.id, jenis).then((d) => { tulisCache(`gambar:${jenis}:${proyek.id}`, d); setGambar(d); }).catch(() => setGambar((l) => l ?? []));
   }
 
   // jenis ikut jadi dependensi: satu komponen ini dipakai dua kali di halaman
@@ -1005,11 +1013,11 @@ function PanelGaleri({
 
 function PanelBrief({ projectId }: { projectId: string }) {
   const toast = useToast();
-  const [brief, setBrief] = useState<BriefProyek | null>(null);
+  const [brief, setBrief] = useState<BriefProyek | null>(() => bacaCache<BriefProyek>(`brief:${projectId}`));
   const [sibuk, setSibuk] = useState(false);
 
   useEffect(() => {
-    ambilBrief(projectId).then(setBrief).catch(() => setBrief(null));
+    ambilBrief(projectId).then((d) => { tulisCache(`brief:${projectId}`, d); setBrief(d); }).catch(() => setBrief((l) => l));
   }, [projectId]);
 
   function set<K extends keyof BriefProyek>(kunci: K, nilai: BriefProyek[K]) {
@@ -1135,14 +1143,14 @@ function PanelBrief({ projectId }: { projectId: string }) {
 
 function PanelTugas({ projectId }: { projectId: string }) {
   const toast = useToast();
-  const [tugas, setTugas] = useState<Tugas[] | null>(null);
+  const [tugas, setTugas] = useState<Tugas[] | null>(() => bacaCache<Tugas[]>(`tugasproyek:${projectId}`));
   const [tim, setTim] = useState<AnggotaTim[]>([]);
   const [judulBaru, setJudulBaru] = useState("");
   const [penanggungJawab, setPenanggungJawab] = useState("");
   const [sibuk, setSibuk] = useState(false);
 
   function muat() {
-    daftarTugasProyek(projectId).then(setTugas).catch(() => setTugas([]));
+    daftarTugasProyek(projectId).then((d) => { tulisCache(`tugasproyek:${projectId}`, d); setTugas(d); }).catch(() => setTugas((l) => l ?? []));
   }
 
   useEffect(() => {
@@ -1268,13 +1276,13 @@ function PanelTugas({ projectId }: { projectId: string }) {
 
 function PanelProgres({ projectId }: { projectId: string }) {
   const toast = useToast();
-  const [progres, setProgres] = useState<ProjectProgress | null>(null);
+  const [progres, setProgres] = useState<ProjectProgress | null>(() => bacaCache<ProjectProgress>(`progres:${projectId}`));
   const [judulBaru, setJudulBaru] = useState("");
   const [catatanBaru, setCatatanBaru] = useState("");
   const [sibuk, setSibuk] = useState(false);
 
   useEffect(() => {
-    ambilProgress(projectId).then(setProgres).catch(() => setProgres(null));
+    ambilProgress(projectId).then((d) => { tulisCache(`progres:${projectId}`, d); setProgres(d); }).catch(() => setProgres((l) => l));
   }, [projectId]);
 
   const linkKlien = progres
@@ -1489,26 +1497,61 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   const [siapId, setSiapId] = useState(false);
   const berkas = useRef<HTMLInputElement>(null);
 
-  // Proyek yang sedang dibuka dibaca setelah mount, bukan saat render: di
-  // situs statis, HTML yang dikirim server tidak tahu isi localStorage, dan
-  // membacanya saat render membuat pass hidrasi pertama berbeda dari HTML-nya.
-  useEffect(() => {
-    setId(proyekAktif());
+  /* Proyek yang sedang dibuka dibaca SEBELUM paint pertama, bukan sesudah.
+   *
+   * Dua-duanya cuma bisa dilakukan di browser — proyekAktif() membaca
+   * localStorage dan cache-nya sessionStorage — jadi keduanya tidak boleh
+   * masuk ke nilai awal useState: HTML yang dipanggang Astro tidak tahu isi
+   * penyimpanan, dan bedanya akan jadi ketidakcocokan hidrasi.
+   *
+   * useLayoutEffect menyelesaikan keduanya: ia berjalan setelah hidrasi tapi
+   * SEBELUM browser melukis, jadi frame pertama yang sampai ke mata sudah
+   * berisi proyeknya. Dengan useEffect biasa, halaman ini sempat melukis
+   * skeleton dulu — terukur 10 dari 26 frame pada kunjungan kedua, padahal
+   * datanya sudah ada di cache. */
+  useEfekTataLetak(() => {
+    const aktif = proyekAktif();
+    setId(aktif);
     setSiapId(true);
+
+    // Daftar proyek yang tersimpan dipakai langsung — kunci "proyek" yang
+    // sama dengan halaman Semua Proyek dan Dashboard, karena memang daftar
+    // yang sama.
+    if (aktif) {
+      const dariCache = bacaCache<Proyek[]>("proyek")?.find((x) => x.id === aktif);
+      if (dariCache) setAsli(dariCache);
+    }
+
     // Combobox di topbar menulis ke tempat yang sama. Berlangganan membuat
     // halaman ini ikut berganti isi tanpa dimuat ulang.
-    return onProyekAktif((baru) => { setId(baru); setDraf({}); setAsli(null); setGalat(null); });
+    return onProyekAktif((baru) => {
+      setId(baru);
+      setDraf({});
+      setGalat(null);
+      const dariCache = bacaCache<Proyek[]>("proyek")?.find((x) => x.id === baru);
+      setAsli(dariCache ?? null);
+    });
   }, []);
 
   useEffect(() => {
     if (!siapId || !id) return;
+    let batal = false;
+
     daftarProyek()
       .then((semua) => {
+        if (batal) return;
+        tulisCache("proyek", semua);
         const p = semua.find((x) => x.id === id);
         if (!p) { setGalat("Proyek tidak ditemukan. Mungkin sudah dihapus."); return; }
         setAsli(p);
       })
-      .catch((e) => setGalat((e as Error).message));
+      .catch((e) => {
+        // Yang sudah tampil dari cache dibiarkan: jaringan putus sesaat tidak
+        // boleh mengganti halaman yang sudah terisi dengan pesan galat.
+        if (!batal) setAsli((lama) => { if (!lama) setGalat((e as Error).message); return lama; });
+      });
+
+    return () => { batal = true; };
   }, [id, siapId]);
 
   // Hanya field yang benar-benar berubah yang dikirim. Selain lebih hemat, ini
@@ -1516,6 +1559,9 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   // yang tidak mereka sentuh.
   const berubah = Object.keys(draf).filter((k) => draf[k as keyof Draf] !== asli?.[k as keyof Proyek]);
   const adaPerubahan = berubah.length > 0;
+
+  // Menahan perpindahan selama masih ada yang belum disimpan.
+  useCegahPindah(adaPerubahan);
 
   function set<K extends keyof Proyek>(kunci: K, nilai: Proyek[K]) {
     setDraf((d) => ({ ...d, [kunci]: nilai }));
@@ -1994,7 +2040,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
  */
 export function ProyekPanel({ halaman }: { halaman: HalamanProyek }) {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-5)" }}>
         <Balok tinggi="3rem" style={{ borderRadius: "var(--radius-pill)" }} />
         <SkeletonKartu ikon="project" anak={<SkeletonIsian jumlah={4} />} />

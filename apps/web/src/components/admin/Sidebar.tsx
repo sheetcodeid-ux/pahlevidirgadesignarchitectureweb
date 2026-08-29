@@ -80,7 +80,28 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
   // pembaruan itu jadi render sungguhan yang dijamin diterapkan.
   const [currentPath, setCurrentPath] = useState(currentPathAwal);
   useEffect(() => {
-    setCurrentPath(window.location.pathname + window.location.search);
+    const perbarui = () => setCurrentPath(window.location.pathname + window.location.search);
+    perbarui();
+    // Sidebar memakai transition:persist, jadi ia TIDAK dipasang ulang saat
+    // pindah halaman — tanpa pendengar ini, penanda menu aktif akan nyangkut
+    // selamanya di halaman tempat panel pertama kali dibuka.
+    document.addEventListener("astro:page-load", perbarui);
+
+    // Menu geser di layar kecil harus menutup sendiri begitu satu menu
+    // dipilih. Dulu itu terjadi cuma-cuma karena halamannya dimuat ulang;
+    // sekarang tidak, jadi harus diminta. Ditutup di before-preparation,
+    // bukan page-load, supaya menutupnya terasa seketika saat diklik —
+    // bukan setelah halaman barunya siap.
+    //
+    // Rail sempit (ciut) sengaja TIDAK ikut ditutup: itu preferensi yang
+    // dipilih staf, bukan keadaan sesaat.
+    const tutup = () => setTerbuka(false);
+    document.addEventListener("astro:before-preparation", tutup);
+
+    return () => {
+      document.removeEventListener("astro:page-load", perbarui);
+      document.removeEventListener("astro:before-preparation", tutup);
+    };
   }, []);
 
   // Situs ini statis, jadi peran pengguna tidak bisa diketahui saat build —

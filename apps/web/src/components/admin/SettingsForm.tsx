@@ -3,7 +3,8 @@ import { Icon } from "../ui/Icon";
 import { Balok, SkeletonIsian } from "../ui/Skeleton";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, ZONA_WAKTU, type StudioSettings } from "../../lib/admin";
+import { ambilSettings, simpanSettings, mintaUrlUnggahLogo, ZONA_WAKTU, type StudioSettings, bacaCache, tulisCache} from "../../lib/admin";
+import { useCegahPindah } from "../../lib/cegahPindah";
 
 type Draf = Partial<StudioSettings>;
 
@@ -31,11 +32,11 @@ const PENUH: [keyof StudioSettings, string, string?][] = [
 ];
 
 /**
- * Kerangka Info Studio: dua kolom — logo di kiri, kartu isian di kanan —
+ * Skeleton Info Studio: dua kolom — logo di kiri, kartu isian di kanan —
  * memakai kelas .settings-split yang sama dengan formnya, jadi lebar
  * kolomnya identik dan halaman tidak melompat saat datanya tiba.
  */
-function KerangkaSettings() {
+function SkeletonSettings() {
   return (
     <div className="settings-split" aria-hidden="true">
       <div className="settings-split__logo">
@@ -69,7 +70,7 @@ function KerangkaSettings() {
 
 function Isi() {
   const toast = useToast();
-  const [asli, setAsli] = useState<StudioSettings | null>(null);
+  const [asli, setAsli] = useState<StudioSettings | null>(() => bacaCache<StudioSettings>("settings"));
   const [draf, setDraf] = useState<Draf>({});
   const [galat, setGalat] = useState<string | null>(null);
   const [menyimpan, setMenyimpan] = useState(false);
@@ -80,13 +81,16 @@ function Isi() {
   const fileLogo = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    ambilSettings().then(setAsli).catch((e) => setGalat((e as Error).message));
+    ambilSettings().then((d) => { tulisCache("settings", d); setAsli(d); }).catch((e) => setGalat((e as Error).message));
   }, []);
 
   const berubah = Object.keys(draf).filter(
     (k) => draf[k as keyof Draf] !== asli?.[k as keyof StudioSettings],
   );
   const adaPerubahan = berubah.length > 0;
+
+  // Menahan perpindahan selama masih ada yang belum disimpan.
+  useCegahPindah(adaPerubahan);
 
   const nilai = (kunci: keyof StudioSettings): string =>
     String((kunci in draf ? draf[kunci] : asli?.[kunci]) ?? "");
@@ -152,7 +156,7 @@ function Isi() {
   }
 
   if (!asli) {
-    return <KerangkaSettings />;
+    return <SkeletonSettings />;
   }
 
   const logoSrc = previewLogo ?? asli.logoUrl ?? null;
@@ -362,7 +366,7 @@ function Isi() {
 
 export function SettingsForm() {
   return (
-    <RequireAuth masterOnly kerangka={<KerangkaSettings />}>
+    <RequireAuth masterOnly skeleton={<SkeletonSettings />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

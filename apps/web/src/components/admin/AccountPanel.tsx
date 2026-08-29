@@ -82,7 +82,7 @@ function Isi() {
 
 export function AccountPanel() {
   return (
-    <RequireAuth kerangka={<SkeletonKartu ikon="user" anak={<SkeletonIsian jumlah={2} />} />}>
+    <RequireAuth skeleton={<SkeletonKartu ikon="user" anak={<SkeletonIsian jumlah={2} />} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

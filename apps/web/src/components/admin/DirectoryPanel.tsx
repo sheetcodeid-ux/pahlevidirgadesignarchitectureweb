@@ -5,7 +5,7 @@ import { Avatar } from "../ui/misc/Avatar";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarKontak, tambahKontak, ubahKontak, hapusKontak, type KontakDirektori } from "../../lib/admin";
+import { daftarKontak, tambahKontak, ubahKontak, hapusKontak, type KontakDirektori, bacaCache, tulisCache} from "../../lib/admin";
 import { Select } from "../ui/overlay/Select";
 
 const KATEGORI: [string, string][] = [
@@ -21,7 +21,7 @@ function labelKategori(v: string): string {
 
 function Isi() {
   const toast = useToast();
-  const [kontak, setKontak] = useState<KontakDirektori[] | null>(null);
+  const [kontak, setKontak] = useState<KontakDirektori[] | null>(() => bacaCache<KontakDirektori[]>("direktori"));
   const [filter, setFilter] = useState<string>("semua");
   const [dialogTerbuka, setDialogTerbuka] = useState(false);
 
@@ -33,7 +33,7 @@ function Isi() {
   const [menambah, setMenambah] = useState(false);
 
   function muat() {
-    daftarKontak().then(setKontak).catch(() => setKontak([]));
+    daftarKontak().then((d) => { tulisCache("direktori", d); setKontak(d); }).catch(() => setKontak((l) => l ?? []));
   }
 
   useEffect(muat, []);
@@ -200,7 +200,7 @@ function Isi() {
 
 export function DirectoryPanel() {
   return (
-    <RequireAuth kerangka={<SkeletonDaftar jumlah={3} aksi={2} />}>
+    <RequireAuth skeleton={<SkeletonDaftar jumlah={3} aksi={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

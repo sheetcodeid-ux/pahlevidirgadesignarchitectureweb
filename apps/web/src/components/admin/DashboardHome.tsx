@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
 import { SkeletonKartu, SkeletonStat, SkeletonTeks } from "../ui/Skeleton";
-import { ambilSettings, profilTersimpan, type Profil } from "../../lib/admin";
+import { ambilSettings, profilTersimpan, type Profil, bacaCache, tulisCache} from "../../lib/admin";
 
 /** Seberapa cepat sorot mengejar kursor tiap frame. Makin kecil makin lembut. */
 const KEJAR = 0.11;
@@ -78,7 +78,11 @@ function useKetikan() {
  * berarti menyeret lingkaran terang melintasi seluruh bidang dulu.
  */
 function Kiri() {
-  const [nama, setNama] = useState<string | null>(null);
+  // Nama studio hampir tidak pernah berubah, dan ia satu-satunya alasan
+  // kartu sambutan menunggu jaringan. Diambil dari cache dulu.
+  const [nama, setNama] = useState<string | null>(
+    () => bacaCache<{ studioName?: string }>("settings")?.studioName ?? null,
+  );
   const [profil, setProfil] = useState<Profil | null>(null);
   const kolom = useRef<HTMLElement>(null);
   const sasaran = useRef({ x: -999, y: -999 });
@@ -88,8 +92,8 @@ function Kiri() {
   useEffect(() => {
     setProfil(profilTersimpan());
     ambilSettings()
-      .then((s) => setNama(s.studioName))
-      .catch(() => setNama("Dirga Pahlevi Architecture"));
+      .then((s) => { tulisCache("settings", s); setNama(s.studioName); })
+      .catch(() => setNama((l) => l ?? "Dirga Pahlevi Architecture"));
   }, []);
 
   useEffect(() => {
@@ -194,7 +198,7 @@ function Kiri() {
 
 export function DashboardHome() {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-6)" }}>
         <SkeletonKartu ikon="dashboard" anak={<SkeletonTeks baris={2} />} />
         <SkeletonStat jumlah={3} />

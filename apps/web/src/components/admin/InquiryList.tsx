@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
-import { SkeletonDaftar } from "../ui/Skeleton";
+import { SkeletonKartuDaftar } from "../ui/Skeleton";
 import { Sheet } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarPesan, ubahStatusPesan, ambilSettings, type Pesan } from "../../lib/admin";
+import { daftarPesan, ubahStatusPesan, ambilSettings, type Pesan, bacaCache, tulisCache} from "../../lib/admin";
 
 const STATUS: Record<string, { teks: string; kelas: string }> = {
   new: { teks: "Baru", kelas: "badge--brand" },
@@ -24,7 +24,10 @@ function tanggal(iso: string) {
 
 function Isi() {
   const toast = useToast();
-  const [pesan, setPesan] = useState<Pesan[] | null>(null);
+  // Kunci cache ikut penyaringnya: "semua" dan "belum dibaca" adalah dua
+  // daftar berbeda, dan menyatukannya akan menampilkan hasil saringan lama
+  // sepersekian detik sebelum yang benar tiba.
+  const [pesan, setPesan] = useState<Pesan[] | null>(() => bacaCache<Pesan[]>("pesan:"));
   const [galat, setGalat] = useState<string | null>(null);
   const [saring, setSaring] = useState("");
   // null selama belum diketahui, supaya spanduknya tidak berkedip muncul
@@ -33,13 +36,20 @@ function Isi() {
 
   async function muat(status: string) {
     try {
-      setPesan(await daftarPesan(status));
+      const daftar = await daftarPesan(status);
+      tulisCache(`pesan:${status}`, daftar);
+      setPesan(daftar);
     } catch (e) {
       setGalat((e as Error).message);
     }
   }
 
-  useEffect(() => { muat(saring); }, [saring]);
+  useEffect(() => {
+    // Tampilkan dulu yang tersimpan untuk saringan ini, baru segarkan.
+    const tersimpan = bacaCache<Pesan[]>(`pesan:${saring}`);
+    if (tersimpan) setPesan(tersimpan);
+    muat(saring);
+  }, [saring]);
 
   useEffect(() => {
     ambilSettings()
@@ -70,7 +80,7 @@ function Isi() {
   }
 
   if (!pesan) {
-    return <div className="stack"><SkeletonDaftar jumlah={4} /></div>;
+    return <SkeletonKartuDaftar jumlah={4} ikon="inquiry" />;
   }
 
   return (
@@ -180,7 +190,7 @@ function Isi() {
 
 export function InquiryList() {
   return (
-    <RequireAuth kerangka={<SkeletonDaftar jumlah={4} />}>
+    <RequireAuth skeleton={<SkeletonKartuDaftar jumlah={4} ikon="inquiry" />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

@@ -4,6 +4,7 @@ import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { SkeletonKartu, SkeletonIsian } from "../ui/Skeleton";
 import { buatProyek, simpanProyek, mintaUrlUnggah, type Proyek } from "../../lib/admin";
+import { useCegahPindah } from "../../lib/cegahPindah";
 import { Select } from "../ui/overlay/Select";
 
 const KATEGORI: Record<string, string> = {
@@ -34,6 +35,13 @@ function Isi() {
   const [coverPratinjau, setCoverPratinjau] = useState<string | null>(null);
   const [mengunggah, setMengunggah] = useState(false);
   const [menyimpan, setMenyimpan] = useState(false);
+
+  // Form proyek baru: apa pun yang sudah diketik berarti ada yang bisa hilang.
+  // Dibandingkan dengan KOSONG, bukan sekadar cek satu field, supaya sampul
+  // yang sudah diunggah pun ikut terhitung.
+  const adaIsian =
+    coverKey !== null || Object.keys(KOSONG).some((k) => f[k as keyof typeof KOSONG] !== KOSONG[k as keyof typeof KOSONG]);
+  useCegahPindah(adaIsian && !menyimpan);
   const berkas = useRef<HTMLInputElement>(null);
 
   const set = (k: keyof typeof KOSONG, v: string) => setF((x) => ({ ...x, [k]: v }));
@@ -239,7 +247,7 @@ function Isi() {
 
 export function ProjectCreate() {
   return (
-    <RequireAuth kerangka={
+    <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-5)" }}>
         <SkeletonKartu ikon="project" anak={<SkeletonIsian jumlah={3} />} />
         <SkeletonKartu ikon="list" anak={<SkeletonIsian jumlah={4} />} />

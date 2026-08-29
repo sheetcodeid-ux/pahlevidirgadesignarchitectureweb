@@ -3,15 +3,15 @@ import { Icon } from "../ui/Icon";
 import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { BarChart } from "../ui/data/Chart";
 import { RequireAuth } from "./RequireAuth";
-import { ambilRingkasanKeuangan, type FinanceOverview } from "../../lib/admin";
+import { ambilRingkasanKeuangan, type FinanceOverview, bacaCache, tulisCache} from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 
 function Isi() {
-  const [data, setData] = useState<FinanceOverview | null>(null);
+  const [data, setData] = useState<FinanceOverview | null>(() => bacaCache<FinanceOverview>("keuangan"));
   const [galat, setGalat] = useState<string | null>(null);
 
   useEffect(() => {
-    ambilRingkasanKeuangan().then(setData).catch((e) => setGalat((e as Error).message));
+    ambilRingkasanKeuangan().then((d) => { tulisCache("keuangan", d); setData(d); }).catch((e) => setGalat((e as Error).message));
   }, []);
 
   if (galat) {
@@ -132,7 +132,7 @@ function Isi() {
 }
 
 export function FinancePanel() {
-  return <RequireAuth kerangka={
+  return <RequireAuth skeleton={
       <div className="stack" style={{ gap: "var(--space-6)" }}>
         <SkeletonStat jumlah={3} />
         <SkeletonKartu ikon="finance" />

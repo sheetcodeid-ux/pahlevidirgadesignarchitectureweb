@@ -105,5 +105,5 @@ function Isi() {
 }
 
 export function NotifikasiPanel() {
-  return <RequireAuth kerangka={<SkeletonDaftar jumlah={4} aksi={0} />}><Isi /></RequireAuth>;
+  return <RequireAuth skeleton={<SkeletonDaftar jumlah={4} aksi={0} />}><Isi /></RequireAuth>;
 }

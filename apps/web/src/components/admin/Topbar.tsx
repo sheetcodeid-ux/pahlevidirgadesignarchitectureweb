@@ -377,7 +377,23 @@ function Perintah({ proyek }: { proyek: Proyek[] | null }) {
   );
 }
 
-export function Topbar({ heading }: { heading: string }) {
+export function Topbar({ heading: headingAwal }: { heading: string }) {
+  /* Topbar memakai transition:persist, jadi prop heading-nya beku di halaman
+   * tempat panel pertama kali dibuka. Judulnya dibaca ulang dari
+   * data-heading milik <main> setiap kali halaman berganti — satu-satunya
+   * sumber yang ikut berganti bersama isinya. */
+  const [heading, setHeading] = useState(headingAwal);
+  useEffect(() => {
+    const perbarui = () => {
+      const utama = document.getElementById("konten");
+      const judul = utama?.dataset.heading;
+      if (judul) setHeading(judul);
+    };
+    perbarui();
+    document.addEventListener("astro:page-load", perbarui);
+    return () => document.removeEventListener("astro:page-load", perbarui);
+  }, []);
+
   const [settings, setSettings] = useState<StudioSettings | null>(null);
   const [profil, setProfil] = useState<Profil | null>(null);
   const [notif, setNotif] = useState<BarisNotifikasi[] | null>(null);

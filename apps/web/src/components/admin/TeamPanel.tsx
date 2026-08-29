@@ -5,18 +5,18 @@ import { Avatar } from "../ui/misc/Avatar";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarTim, tambahAnggotaTim, hapusAnggotaTim, type AnggotaTim } from "../../lib/admin";
+import { daftarTim, tambahAnggotaTim, hapusAnggotaTim, type AnggotaTim, bacaCache, tulisCache} from "../../lib/admin";
 
 function Isi() {
   const toast = useToast();
-  const [tim, setTim] = useState<AnggotaTim[] | null>(null);
+  const [tim, setTim] = useState<AnggotaTim[] | null>(() => bacaCache<AnggotaTim[]>("tim"));
   const [dialogTerbuka, setDialogTerbuka] = useState(false);
   const [nama, setNama] = useState("");
   const [peran, setPeran] = useState("");
   const [menambah, setMenambah] = useState(false);
 
   function muat() {
-    daftarTim().then(setTim).catch(() => setTim([]));
+    daftarTim().then((d) => { tulisCache("tim", d); setTim(d); }).catch(() => setTim((l) => l ?? []));
   }
 
   useEffect(muat, []);
@@ -120,7 +120,7 @@ function Isi() {
 
 export function TeamPanel() {
   return (
-    <RequireAuth kerangka={<SkeletonDaftar jumlah={3} aksi={2} />}>
+    <RequireAuth skeleton={<SkeletonDaftar jumlah={3} aksi={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );

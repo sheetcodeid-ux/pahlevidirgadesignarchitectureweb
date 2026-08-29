@@ -10,6 +10,7 @@ import "../styles/admin.css";
 import { Sidebar } from "../components/admin/Sidebar";
 import { Topbar } from "../components/admin/Topbar";
 import { Icon } from "../components/ui/Icon";
+import { ClientRouter } from "astro:transitions";
 
 interface Props {
   title: string;
@@ -40,6 +41,19 @@ const currentPath = Astro.url.pathname;
       href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
     />
 
+    <!-- Navigasi tanpa memuat ulang dokumen.
+         
+         Panel ini dulu situs statis murni: tiap klik menu mematikan seluruh
+         konteks JS, jadi sesi diperiksa ulang dan semua data diambil ulang.
+         ClientRouter mengganti isi halaman tanpa membuang konteksnya, jadi
+         sidebar dan topbar tidak pernah dipasang ulang dan data yang sudah
+         ada di memori tetap ada.
+         
+         fallback="none": browser tanpa View Transition API tetap berpindah
+         halaman seperti biasa, bukan diberi animasi tiruan yang justru
+         menambah jeda. -->
+    <ClientRouter fallback="none" />
+
     <!-- Menetapkan tema sebelum paint pertama. Tanpa ini halaman berkedip
          terang lalu gelap pada pemuatan pertama tiap sesi. -->
     <script is:inline>
@@ -55,18 +69,68 @@ const currentPath = Astro.url.pathname;
         }
       })();
     </script>
+
+    <!-- Tiga hal yang HARUS diurus sendiri begitu navigasi tidak lagi memuat
+         ulang dokumen. Ketiganya rusak diam-diam kalau dilewatkan. -->
+    <script is:inline>
+      (function () {
+        // 1. Tema. Astro menyalin atribut <html> dari dokumen baru, dan
+        //    dokumen baru selalu berisi data-theme="dark" hasil build. Tanpa
+        //    ini, satu klik menu mengembalikan tema terang ke gelap.
+        document.addEventListener("astro:before-swap", function (e) {
+          var tema = document.documentElement.getAttribute("data-theme");
+          if (tema) e.newDocument.documentElement.setAttribute("data-theme", tema);
+        });
+
+        // 2. Overlay yang sedang terbuka. Popover dan dropdown menempel di
+        //    <body> lewat portal, di luar bagian yang ikut ditukar — kalau
+        //    dibiarkan, ia tertinggal menggantung setelah halamannya berganti.
+        //    Escape adalah cara komponennya sendiri menutup, jadi tidak ada
+        //    keadaan internal yang perlu ditebak dari luar.
+        document.addEventListener("astro:before-preparation", function () {
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        });
+
+        // 3. Fokus. Setelah isi halaman ditukar, fokus masih tertinggal di
+        //    tautan menu yang barusan diklik. Pembaca layar perlu diberi tahu
+        //    halamannya sudah berganti.
+        document.addEventListener("astro:after-swap", function () {
+          var utama = document.getElementById("konten");
+          if (utama) utama.setAttribute("tabindex", "-1");
+        });
+      })();
+    </script>
   </head>
 
   <body>
     <a href="#konten" class="sr-only">Lewati ke konten</a>
 
     <div class="admin">
-      <Sidebar client:load currentPath={currentPath} />
+      {/* transition:persist — sidebar dan topbar TIDAK dipasang ulang saat
+          pindah halaman. Keduanya memegang keadaan yang mahal dibangun ulang
+          (notifikasi, daftar proyek, menu yang sedang terbuka) dan tidak ada
+          alasan membuangnya cuma karena isi halamannya berganti.
+          
+          Konsekuensinya: keduanya tidak lagi menerima prop baru, jadi jalur
+          apa pun yang bergantung pada prop harus pindah ke pendengar
+          astro:page-load. Sidebar sudah membaca location.pathname sendiri;
+          topbar membaca judul dari data-heading di bawah. */}
+      <Sidebar client:load transition:persist currentPath={currentPath} />
 
       <div class="admin__main">
-        <Topbar client:load heading={heading ?? title} />
+        <Topbar client:load transition:persist heading={heading ?? title} />
 
-        <main id="konten" class="admin__content">
+        {/* transition:animate="none" — pertukaran isinya seketika, tanpa
+            lintas-pudar bawaan.
+            
+            Animasi bawaannya sekitar 200 ms, dan itu murni tambahan di atas
+            waktu yang sudah dipakai mengambil halaman. Untuk perkakas yang
+            dipakai berpindah-pindah puluhan kali sehari, jeda yang terlihat
+            halus pada kunjungan pertama berubah jadi lambat pada kunjungan
+            kedua puluh. Sidebar dan topbar tidak ikut ditukar sama sekali,
+            jadi tidak ada yang berkedip. */}
+        <main id="konten" class="admin__content" data-heading={heading ?? title}
+          transition:animate="none">
           {
             heading && (
               <div class="page-head">
