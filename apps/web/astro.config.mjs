@@ -19,6 +19,22 @@ export default defineConfig({
     react(),
   ],
 
+  /* Halaman berikutnya diambil SEBELUM diklik.
+   *
+   * Panel admin memakai ClientRouter, jadi pindah halaman berarti mengambil
+   * HTML halaman tujuan lalu menukarnya. Tanpa prefetch, pengambilan itu baru
+   * mulai saat menu diklik — terukur menambah sekitar 250 ms pada tiap
+   * perpindahan, padahal datanya sendiri sudah ada di cache.
+   *
+   * Strategi "hover": diambil begitu kursor menyentuh menunya, biasanya
+   * beberapa ratus milidetik sebelum kliknya terjadi. Bukan "viewport", yang
+   * akan menarik SELURUH halaman admin sekaligus begitu sidebar tampil —
+   * boros untuk panel yang cuma dipakai dua orang. */
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "hover",
+  },
+
   build: {
     inlineStylesheets: "auto",
   },

@@ -256,11 +256,35 @@ Terukur pada build sungguhan dengan latensi API 350 ms: kunjungan pertama
 590 ms dengan skeleton, kunjungan berikutnya 123–167 ms **tanpa satu frame
 skeleton pun**. Kalau angka itu memburuk, periksa ketiga hal di atas dulu.
 
+Sejak gelombang berikutnya ada penahan keempat: **router sisi klien**
+(`ClientRouter` di `AdminLayout`), dengan sidebar dan topbar ber-
+`transition:persist`. Konsekuensinya, keduanya tidak pernah dipasang ulang —
+jadi apa pun yang dulu ikut disegarkan cuma-cuma oleh muat-ulang halaman
+sekarang harus diminta sendiri lewat `astro:page-load` /
+`astro:before-preparation`. Yang sudah ketahuan dan sudah dipasang: penanda
+menu aktif, judul di topbar, menu geser ponsel yang harus menutup, atribut
+tema di `<html>`, dan overlay yang sedang terbuka. Kalau menambah sesuatu
+yang bergantung pada "halaman baru dimuat", periksa daftar itu dulu.
+
 Mengukurnya: jalankan `npm run build`, sajikan `dist` (dev server
 mengompilasi per-permintaan, angkanya tidak berarti), lalu **gagalkan
 permintaan ke fonts.googleapis.com** — jaringan sesi ini memblokirnya dan
 permintaan yang menggantung menahan DOMContentLoaded belasan detik, angka
 yang sama sekali bukan milik aplikasi.
+
+**Dan beri latensi pada dokumen serta asetnya, bukan cuma pada API.**
+Localhost punya RTT nol — keadaan yang tidak pernah dialami siapa pun, dan
+yang diam-diam menguntungkan muat-ulang penuh. Terukur pada perpindahan
+halaman yang datanya sudah tersimpan:
+
+| | RTT 0 (localhost polos) | RTT 120 ms (wajar) |
+| --- | --- | --- |
+| Muat ulang penuh | 188 ms | 981 ms, 8 frame skeleton |
+| Router sisi klien | 257 ms | **323 ms, 0 frame skeleton** |
+
+Diukur cuma di localhost, kesimpulannya terbalik: router sisi klien tampak
+memperlambat 70 ms, padahal di jaringan sungguhan ia tiga kali lebih cepat.
+Selalu ukur dengan RTT.
 
 ## Perintah
 
