@@ -4,7 +4,7 @@ import { SkeletonKartuDaftar } from "../ui/Skeleton";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarTestimoni, ubahTestimoni, hapusTestimoni, type TestimoniAdmin, bacaCache, tulisCache} from "../../lib/admin";
+import { daftarTestimoni, ubahTestimoni, hapusTestimoni, type TestimoniAdmin, bacaCache, tulisCache, jumlahDiingat} from "../../lib/admin";
 
 const LABEL_STATUS: Record<string, string> = { menunggu: "Menunggu", disetujui: "Disetujui", ditolak: "Ditolak" };
 const BADGE_STATUS: Record<string, string> = { menunggu: "badge--warn", disetujui: "badge--success", ditolak: "badge--info" };
@@ -66,7 +66,7 @@ function Isi() {
       </div>
 
       {testimoni === null ? (
-        <SkeletonKartuDaftar jumlah={3} ikon="quote" teks={2} />
+        <SkeletonKartuDaftar jumlah={jumlahDiingat("testimoni", 3)} ikon="quote" teks={2} />
       ) : terfilter.length === 0 ? (
         <div className="empty empty--sm">
           <span className="icon-tile"><Icon name="quote" size={20} /></span>
@@ -137,7 +137,7 @@ function Isi() {
 
 export function TestimonialsPanel() {
   return (
-    <RequireAuth skeleton={<SkeletonKartuDaftar jumlah={3} ikon="quote" teks={2} />}>
+    <RequireAuth skeleton={<SkeletonKartuDaftar jumlah={jumlahDiingat("testimoni", 3)} ikon="quote" teks={2} />}>
       <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );
