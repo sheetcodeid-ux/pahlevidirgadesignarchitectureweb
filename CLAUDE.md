@@ -67,17 +67,39 @@ di edge. Setelannya di dashboard Cloudflare → Hyperdrive → `pahlevidirga-db`
 
 Langkah otomatis untuk menguncinya sempat ada di workflow deploy lalu
 dilepas: `npx wrangler hyperdrive update ... --caching-disabled` ditolak
-dengan Authentication error 10000 (run #26). Catatan lama di file ini
-menyimpulkan penyebabnya token kekurangan izin **Hyperdrive: Edit** —
-**itu keliru.** Pemilik memeriksa tokennya langsung (2 September 2026):
-`pahlevidirgadesignarchitectureweb build token` sudah punya
-`Account · Hyperdrive · Edit`, dan juga `Account Settings: Read`,
-`User Details: Read`, `User Memberships: Read`. Jadi penyebab 10000 masih
-belum diketahui. Dugaan yang belum diuji: login pemilik memuat dua akun,
-dan perintahnya tidak menyebut account ID Dirga secara eksplisit — jebakan
-yang sama seperti pada konektor. Menguji ini butuh deploy sungguhan;
-jaringan sesi Claude memblokir `api.cloudflare.com`, jadi tidak bisa
-dibuktikan dari sini.
+dengan Authentication error 10000 (run #26). **Jangan mencoba
+mengembalikannya tanpa mengganti token lebih dulu** — sudah diselidiki
+sampai habis, dan hasilnya ada di bawah.
+
+Penyelidikan itu dijalankan lewat workflow terpisah
+`.github/workflows/hyperdrive-cache.yml`, yang hanya jalan kalau
+dijalankan tangan sehingga boleh merah tanpa menakut-nakuti siapa pun.
+Run #1, 2 September 2026:
+
+| Langkah | Hasil |
+| --- | --- |
+| `wrangler whoami` | hijau — token hidup, hanya melihat SATU akun: `pahlevidirgadesignarchitecture` |
+| `wrangler hyperdrive list` (baca) | **merah**, error 10000 |
+| `wrangler hyperdrive update` (tulis) | **merah**, error 10000 |
+
+Dua kesimpulan, keduanya membatalkan catatan yang lebih lama di sini:
+
+1. **Bukan soal dua akun.** Token hanya melihat akun Dirga, dan menyebut
+   `CLOUDFLARE_ACCOUNT_ID` eksplisit tidak mengubah apa pun.
+2. **Bukan cuma izin tulis.** MEMBACA daftar Hyperdrive saja sudah
+   ditolak. Jadi token yang dipakai GitHub Actions tidak punya izin
+   Hyperdrive sama sekali — padahal pemilik memeriksa
+   `pahlevidirgadesignarchitectureweb build token` dan token itu memang
+   memuat `Account · Hyperdrive · Edit`. Kemungkinan paling masuk akal:
+   rahasia `CLOUDFLARE_API_TOKEN` di GitHub berisi token yang **berbeda**
+   dari yang diperiksa. Tidak bisa dipastikan — nilai rahasianya tidak
+   bisa dibaca, dan memang tidak boleh.
+
+Dihentikan di situ dengan sengaja: yang dikunci cuma setelan yang sudah
+mati, sementara menerbitkan token baru berarti pemilik harus membuat dan
+menempelkannya ulang ke GitHub. Kalau tokennya suatu saat diganti karena
+alasan lain, jalankan workflow itu sekali dari tab Actions; kalau hijau,
+pindahkan langkah terakhirnya ke `deploy.yml`.
 
 Cloudflare: akun **`pahlevidirgadesignarchitecture`**, ID
 `cf6a6bde45d3fd8a93463e6cc7e71aa1`. Worker `pahlevidirgadesignarchitectureweb`
