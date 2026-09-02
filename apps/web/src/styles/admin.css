@@ -76,6 +76,19 @@
    sama yang sudah dicatat dua kali di berkas ini, dan ini kali ketiga. */
 .topbar > .topbar__id::before { content: none; }
 
+/* Garis miring BERHENTI setelah penghitung proyek. Permintaan pemilik, dan
+   alasannya terbaca sendiri di bilahnya: kelompok kiri adalah satu kalimat
+   keadaan — di mana kita, jam berapa, tanggal berapa, berapa proyek — dan
+   garis miring adalah tanda baca kalimat itu. Combobox dan tombol di kanan
+   bukan bagian dari kalimat itu; mereka perkakas. Memberi mereka tanda baca
+   yang sama menyambung dua hal yang tidak bersambung.
+
+   Ditulis `.topbar > .x` supaya kekhususannya (0,2,0), setara aturan umum di
+   atas. Dengan `.x::before` saja aturan umum menang — jebakan yang sudah
+   tercatat di CLAUDE.md. */
+.topbar > .topbar__combo::before,
+.topbar > .topbar__aksi::before { content: none; }
+
 /* Semua segmen dirata-tengahkan secara vertikal dan diberi napas sendiri.
 
    Bawaannya TIDAK menyusut. Kalau semua segmen boleh menyusut, flexbox
@@ -102,22 +115,25 @@
    terbaca sebagai sel yang isinya tidak sampai ujung — bar-nya terlihat
    setengah jadi. Sisa ruangnya diberikan ke combobox dan Perintah, sehingga
    setiap piksel topbar dimiliki sebuah sel. */
-/* Ruang pendorong SEKARANG dipakai. Sebelumnya ia disembunyikan dan sisa
-   ruang dibagikan ke combobox supaya tiap piksel topbar dimiliki sebuah sel —
-   itu masuk akal selama pemisahnya garis tegak setinggi bar, karena sel yang
-   isinya tidak sampai ujung terbaca sebagai kotak setengah jadi.
+/* Ruang pendorong tidak dipakai di layar lebar: sisa ruang diberikan ke
+   combobox, jadi tidak ada celah kosong menganga di tengah bilah. Permintaan
+   pemilik setelah melihat versi yang combobox-nya selebar isinya sendiri —
+   ruang kosong di tengah membuat bilahnya terlihat belum selesai. */
+.topbar__dorong { display: none; }
 
-   Dengan pemisah garis miring tidak ada lagi kotak, jadi tidak ada yang
-   terlihat setengah jadi — dan referensi pemilik memang menaruh kelompok
-   kiri rapat lalu membiarkan sisanya kosong. Combobox kembali selebar
-   isinya. */
-.topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
-
-.topbar__combo { flex: 0 1 15rem; }
+.topbar__combo { flex: 1 1 0; }
 
 /* Sel pembungkus tombol ikon — napasnya sama dengan segmen teks di
    sebelahnya, jadi seluruh baris berirama sama. */
 .topbar__aksi { justify-content: center; }
+
+/* Lonceng: satu-satunya segmen yang masih dikurung garis tegak. Bukan
+   inkonsistensi — ia satu-satunya yang isinya berubah sendiri tanpa
+   disentuh siapa pun, jadi ia harus terbaca sebagai benda yang berdiri
+   sendiri, bukan ikon di antara ikon. */
+.topbar__aksi--lonceng {
+  border-inline: 2px solid var(--border-strong);
+}
 
 .topbar__crumb { overflow: hidden; white-space: nowrap; flex-wrap: nowrap !important; }
 /* Remah roti boleh menyusut sampai judulnya terpotong, tapi tidak boleh pecah
@@ -553,6 +569,7 @@
      dipakai lagi — dan tidak apa-apa, karena di layar sempit sisa ruangnya
      memang tinggal sedikit. */
   .topbar__combo { flex: 0 0 auto; }
+  .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
 }
 
 @media (max-width: 71rem) {

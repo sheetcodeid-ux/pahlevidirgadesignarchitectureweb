@@ -450,7 +450,13 @@ export function Topbar({ heading: headingAwal }: { heading: string }) {
           segmen lain punya napas 12px. Itu yang membuat sisi kanan terbaca
           sesak. */}
       <span className="topbar__aksi"><ThemeToggle /></span>
-      <span className="topbar__aksi"><Lonceng notif={notif} milestone={milestone} /></span>
+      {/* Satu-satunya segmen yang masih berbingkai garis. Pemilik memilih
+          lonceng, dan itu masuk akal: ia satu-satunya yang isinya berubah
+          sendiri tanpa disentuh, jadi ia perlu terbaca sebagai benda, bukan
+          sebagai ikon di antara ikon. */}
+      <span className="topbar__aksi topbar__aksi--lonceng">
+        <Lonceng notif={notif} milestone={milestone} />
+      </span>
 
       <Identitas settings={settings} profil={profil} />
 
