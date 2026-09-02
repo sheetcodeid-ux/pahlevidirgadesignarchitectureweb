@@ -29,12 +29,52 @@
   border-bottom: 2px solid var(--border-strong);
 }
 
-/* Pemisah dibuat sebagai BORDER milik tiap segmen, bukan elemen tersendiri.
-   Sebagai elemen, garisnya tertinggal sebagai garis yatim setiap kali segmen
-   di sebelahnya disembunyikan di layar sempit — dua garis berdempetan tanpa
-   apa pun di antaranya. Sebagai border, ia ikut hilang bersama pemiliknya. */
-.topbar > *:not(.topbar__dorong) { border-left: 2px solid var(--border-strong); }
-.topbar > *:first-child { border-left: 0; }
+/* Pemisah antar-segmen: GARIS MIRING, bukan garis tegak setinggi topbar.
+   Alasannya bukan hiasan — garis setinggi bar memotong topbar jadi kotak-kotak
+   yang bobotnya sama dengan bilah itu sendiri, dan mata membaca tiap kotak
+   sebagai benda terpisah. Garis miring cuma tanda baca: segmennya tetap
+   terbaca sebagai satu baris.
+
+   Tetap milik segmennya sendiri (::before), bukan elemen tersendiri — alasan
+   yang sama seperti border dulu: di layar sempit sebagian segmen
+   disembunyikan, dan pemisah yang berdiri sendiri akan tertinggal sebagai
+   tanda yatim di antara dua ruang kosong. Sebagai ::before, ia ikut hilang
+   bersama pemiliknya.
+
+   Diposisikan absolut, bukan sebagai item flex: .topbar__aksi
+   merata-tengahkan isinya, jadi satu item tambahan akan menggeser ikonnya
+   keluar dari tengah. Dengan left:0 dan translate -50%, titik tengah garis
+   miring jatuh tepat di tepi segmen — yaitu tengah-tengah celah, karena
+   celahnya adalah padding kanan segmen sebelumnya ditambah padding kiri
+   segmen ini. */
+.topbar > *:not(.topbar__dorong) { position: relative; }
+
+.topbar > *:not(.topbar__dorong)::before {
+  content: "/";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: -50% -50%;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.topbar > *:first-child::before { content: none; }
+
+/* Panel akun sengaja TIDAK ikut: permintaan pemilik, bagian owner dibiarkan
+   persis seperti semula. Dan "semula" di sini berarti TANPA pemisah apa pun —
+   aturan .topbar__id di bawah menyetel `border: 0` untuk mematikan bingkai
+   bawaan <button>, dan karena ia datang belakangan, panel akun memang tidak
+   pernah punya garis kiri sekalipun aturan umum di atas dulu memberinya satu.
+
+   Selektornya ditulis `.topbar > .topbar__id` supaya kekhususannya (0,2,0)
+   sama dengan aturan umum di atas. Dengan `.topbar__id::before` saja — (0,1,0)
+   — aturan umum menang dan garis miringnya tetap tergambar. Ini jebakan yang
+   sama yang sudah dicatat dua kali di berkas ini, dan ini kali ketiga. */
+.topbar > .topbar__id::before { content: none; }
 
 /* Semua segmen dirata-tengahkan secara vertikal dan diberi napas sendiri.
 
