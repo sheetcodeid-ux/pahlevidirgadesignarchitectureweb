@@ -3,12 +3,15 @@ import "../styles/global.css";
 import "../styles/components.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import { gambarBagikan, getSettings } from "../lib/api";
 
 interface Props {
   title: string;
   description?: string;
   image?: string;
   noindex?: boolean;
+  /** Data terstruktur tambahan khusus halaman ini (proyek, remah roti). */
+  jsonLd?: unknown[];
 }
 
 const {
@@ -16,11 +19,64 @@ const {
   description = "Studio arsitektur di Pontianak yang merancang ruang hospitality dan rumah tropis dengan pendekatan iklim khatulistiwa.",
   image,
   noindex = false,
+  jsonLd = [],
 } = Astro.props;
 
+const settings = await getSettings();
+const fotoCadangan = await gambarBagikan();
+
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = image ? new URL(image, Astro.site).href : undefined;
-const studioName = "Dirga Pahlevi Architecture";
+const studioName = settings.studioName || "Dirga Pahlevi Architecture";
+
+// Gambar kartu bagikan, berjenjang: yang diminta halaman dulu, lalu foto
+// proyek unggulan, baru logo studio. Foto sengaja didahulukan dari logo —
+// yang membuat orang membuka tautan di WhatsApp adalah bangunannya, bukan
+// lambangnya. Gambar dari R2 sudah absolut dan tidak boleh diubah; `new URL`
+// dengan basis situs justru merusaknya. Yang perlu dijadikan absolut hanya
+// path relatif milik situs sendiri.
+const absolut = (u: string) => (/^https?:\/\//.test(u) ? u : new URL(u, Astro.site).href);
+const kandidatGambar = image ?? fotoCadangan ?? settings.logoUrl ?? undefined;
+const ogImage = kandidatGambar ? absolut(kandidatGambar) : undefined;
+
+// Profil studio untuk mesin pencari. Kolom yang belum diisi pemilik
+// dihilangkan, bukan dikirim kosong — field kosong lebih buruk daripada
+// tidak ada field, karena mesin pencari menganggapnya jawaban.
+// Mesin pencari membaca nomor dalam format internasional. Nomor Indonesia
+// ditulis pemilik dengan 0 di depan; itu diubah ke +62 hanya untuk data
+// terstruktur — yang tampil di halaman tetap seperti yang dia ketik.
+const telepon = (nomor: string) => {
+  const angka = nomor.replace(/[^\d+]/g, "");
+  return angka.startsWith("0") ? `+62${angka.slice(1)}` : angka;
+};
+
+// addressRegion tidak ada di setelan studio, jadi ia ditulis tangan di sini.
+// Karena itu ia hanya boleh ikut selama kotanya masih Pontianak — kalau
+// pemilik pindah kota, provinsi tebakan lebih buruk daripada tidak ada.
+const kota = settings.city ?? "Pontianak";
+const provinsi = kota.toLowerCase() === "pontianak" ? { addressRegion: "Kalimantan Barat" } : {};
+
+const kontakStudio = {
+  "@context": "https://schema.org",
+  "@type": "ArchitecturalService",
+  "@id": new URL("/#studio", Astro.site).href,
+  name: studioName,
+  url: Astro.site?.href,
+  areaServed: settings.city ?? "Pontianak, Kalimantan Barat",
+  ...(settings.tagline ? { description: settings.tagline } : {}),
+  ...(settings.email ? { email: settings.email } : {}),
+  ...(settings.phone ? { telephone: telepon(settings.phone) } : {}),
+  ...(settings.logoUrl ? { logo: absolut(settings.logoUrl), image: absolut(settings.logoUrl) } : {}),
+  ...(settings.instagramUrl ? { sameAs: [settings.instagramUrl] } : {}),
+  address: {
+    "@type": "PostalAddress",
+    ...(settings.address ? { streetAddress: settings.address } : {}),
+    addressLocality: kota,
+    ...provinsi,
+    addressCountry: "ID",
+  },
+};
+
+const dataTerstruktur = [kontakStudio, ...jsonLd];
 ---
 
 <!doctype html>
@@ -39,7 +95,14 @@ const studioName = "Dirga Pahlevi Architecture";
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
     {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta property="og:locale" content="id_ID" />
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -60,23 +123,11 @@ const studioName = "Dirga Pahlevi Architecture";
       })();
     </script>
 
-    <script
-      is:inline
-      type="application/ld+json"
-      set:html={JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "ArchitecturalService",
-        name: studioName,
-        url: Astro.site?.href,
-        areaServed: "Pontianak, Kalimantan Barat",
-        address: {
-          "@type": "PostalAddress",
-          addressLocality: "Pontianak",
-          addressRegion: "Kalimantan Barat",
-          addressCountry: "ID",
-        },
-      })}
-    />
+    {
+      dataTerstruktur.map((data) => (
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(data)} />
+      ))
+    }
   </head>
 
   <body>
