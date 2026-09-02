@@ -60,8 +60,11 @@ function Tanggal({ zona }: { zona: string }) {
 
   if (!kini) return <span className="topbar__tanggal" />;
 
+  // Tanpa tahun. Topbar dilihat puluhan kali sehari oleh orang yang tahu
+  // sekarang tahun berapa; angka tahun cuma menambah lebar tanpa menambah
+  // keterangan. Sesuai referensi pemilik.
   const teks = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric", month: "short", year: "numeric", timeZone: zona,
+    day: "numeric", month: "short", timeZone: zona,
   }).format(kini);
 
   return <span className="topbar__tanggal">{teks}</span>;
@@ -294,7 +297,7 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
 }
 
 /** Command palette: perintah cepat, dibuka lewat tombol atau Ctrl/Cmd+K. */
-function Perintah({ proyek }: { proyek: Proyek[] | null }) {
+function Perintah({ proyek, tanpaTombol }: { proyek: Proyek[] | null; tanpaTombol?: boolean }) {
   const [buka, setBuka] = useState(false);
 
   useEffect(() => {
@@ -324,6 +327,10 @@ function Perintah({ proyek }: { proyek: Proyek[] | null }) {
 
   return (
     <RDialog.Root open={buka} onOpenChange={setBuka}>
+      {/* Tanpa tombol, komponennya tidak menghasilkan elemen apa pun di
+          topbar — pintasan Cmd+K tetap terpasang karena Root-nya tetap
+          dirender. Tombolnya pindah ke sidebar pada tahap berikutnya. */}
+      {!tanpaTombol && (
       <RDialog.Trigger asChild>
         {/* Bentuknya kembar dengan combobox di sebelahnya: bidang abu yang
             sama, ukuran yang sama, isi yang sejajar. Keduanya sama-sama
@@ -335,6 +342,7 @@ function Perintah({ proyek }: { proyek: Proyek[] | null }) {
           <kbd className="ov-menu__shortcut topbar__kbd">⌘K</kbd>
         </button>
       </RDialog.Trigger>
+      )}
 
       <RDialog.Portal>
         <RDialog.Overlay className="ov-scrim" />
@@ -428,11 +436,10 @@ export function Topbar({ heading: headingAwal }: { heading: string }) {
 
       <span className="topbar__hitung">
         <Icon name="project" size={15} />
-        <span className="topbar__hitung-label">Proyek aktif</span>
+        <span className="topbar__hitung-label">Proyek :</span>
         <span className="topbar__pil t-mono">{aktif ?? "—"}</span>
       </span>
       <ComboProyek proyek={proyek} />
-      <span className="topbar__sel"><Perintah proyek={proyek} /></span>
 
       {/* Sisi kanan didorong ke ujung; segmen di kiri tetap rapat. */}
       <span className="topbar__dorong" />
@@ -446,6 +453,10 @@ export function Topbar({ heading: headingAwal }: { heading: string }) {
       <span className="topbar__aksi"><Lonceng notif={notif} milestone={milestone} /></span>
 
       <Identitas settings={settings} profil={profil} />
+
+      {/* Tidak menghasilkan markup; hanya menjaga pintasan Cmd+K tetap
+          terpasang selama tombolnya belum pindah ke sidebar. */}
+      <Perintah proyek={proyek} tanpaTombol />
     </header>
   );
 }

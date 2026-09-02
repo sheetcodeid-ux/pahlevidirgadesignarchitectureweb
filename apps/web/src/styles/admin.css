@@ -102,10 +102,18 @@
    terbaca sebagai sel yang isinya tidak sampai ujung — bar-nya terlihat
    setengah jadi. Sisa ruangnya diberikan ke combobox dan Perintah, sehingga
    setiap piksel topbar dimiliki sebuah sel. */
-.topbar__dorong { display: none; }
+/* Ruang pendorong SEKARANG dipakai. Sebelumnya ia disembunyikan dan sisa
+   ruang dibagikan ke combobox supaya tiap piksel topbar dimiliki sebuah sel —
+   itu masuk akal selama pemisahnya garis tegak setinggi bar, karena sel yang
+   isinya tidak sampai ujung terbaca sebagai kotak setengah jadi.
 
-.topbar__combo,
-.topbar__sel { flex: 1 1 0; }
+   Dengan pemisah garis miring tidak ada lagi kotak, jadi tidak ada yang
+   terlihat setengah jadi — dan referensi pemilik memang menaruh kelompok
+   kiri rapat lalu membiarkan sisanya kosong. Combobox kembali selebar
+   isinya. */
+.topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
+
+.topbar__combo { flex: 0 1 15rem; }
 
 /* Sel pembungkus tombol ikon — napasnya sama dengan segmen teks di
    sebelahnya, jadi seluruh baris berirama sama. */
@@ -293,10 +301,12 @@
   height: 2.25rem;
   flex: none;
   padding: 0;
-  /* Lingkaran bergaris tipis — bentuk yang sama dengan dua tombol di kartu
-     dashboard. Tanpa bentuk sendiri, tombol ikon di antara sel-sel selebar
-     200px terbaca sebagai sisa ruang, bukan sebagai tombol. */
-  border: 1px solid var(--border-strong);
+  /* Tanpa lingkaran. Alasan lingkaran dulu: tombol ikon di antara sel-sel
+     selebar 200px terbaca sebagai sisa ruang. Setelah bidang pencarian
+     keluar dari topbar, tetangganya jadi teks pendek — ikon telanjang sudah
+     terbaca sebagai tombol, dan dua lingkaran di ujung kanan cuma menambah
+     dua benda yang tidak menyampaikan apa pun. Sesuai referensi pemilik. */
+  border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
@@ -305,8 +315,8 @@
 }
 
 .topbar__lonceng:hover,
-.topbar__lonceng[data-state="open"] { color: var(--text-strong); border-color: var(--text-faint); }
-.topbar__lonceng:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--text-faint); }
+.topbar__lonceng[data-state="open"] { color: var(--text-strong); }
+.topbar__lonceng:focus-visible { outline: 0; color: var(--text-strong); }
 
 /* Ayunan yang sama persis dengan lonceng di kartu dashboard — satu gerakan
    untuk satu benda, di mana pun ia muncul. */
@@ -516,7 +526,7 @@
    17rem lebih dulu, jadi ambang yang ditulis dalam ukuran viewport selalu
    meleset sebesar itu. Label "Proyek aktif" pergi lebih dulu — ikon dan
    angkanya sudah cukup — lalu tanggal, lalu combobox. */
-@media (max-width: 96rem) {
+@media (max-width: 72rem) {
   .topbar__hitung-label { display: none; }
 }
 
@@ -542,9 +552,7 @@
      mengambang di tengah sel selebar setengah layar. Di sini pendorong
      dipakai lagi — dan tidak apa-apa, karena di layar sempit sisa ruangnya
      memang tinggal sedikit. */
-  .topbar__combo,
-  .topbar__sel { flex: 0 0 auto; }
-  .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
+  .topbar__combo { flex: 0 0 auto; }
 }
 
 @media (max-width: 71rem) {
