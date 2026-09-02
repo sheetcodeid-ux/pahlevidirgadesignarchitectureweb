@@ -29,12 +29,65 @@
   border-bottom: 2px solid var(--border-strong);
 }
 
-/* Pemisah dibuat sebagai BORDER milik tiap segmen, bukan elemen tersendiri.
-   Sebagai elemen, garisnya tertinggal sebagai garis yatim setiap kali segmen
-   di sebelahnya disembunyikan di layar sempit — dua garis berdempetan tanpa
-   apa pun di antaranya. Sebagai border, ia ikut hilang bersama pemiliknya. */
-.topbar > *:not(.topbar__dorong) { border-left: 2px solid var(--border-strong); }
-.topbar > *:first-child { border-left: 0; }
+/* Pemisah antar-segmen: GARIS MIRING, bukan garis tegak setinggi topbar.
+   Alasannya bukan hiasan — garis setinggi bar memotong topbar jadi kotak-kotak
+   yang bobotnya sama dengan bilah itu sendiri, dan mata membaca tiap kotak
+   sebagai benda terpisah. Garis miring cuma tanda baca: segmennya tetap
+   terbaca sebagai satu baris.
+
+   Tetap milik segmennya sendiri (::before), bukan elemen tersendiri — alasan
+   yang sama seperti border dulu: di layar sempit sebagian segmen
+   disembunyikan, dan pemisah yang berdiri sendiri akan tertinggal sebagai
+   tanda yatim di antara dua ruang kosong. Sebagai ::before, ia ikut hilang
+   bersama pemiliknya.
+
+   Diposisikan absolut, bukan sebagai item flex: .topbar__aksi
+   merata-tengahkan isinya, jadi satu item tambahan akan menggeser ikonnya
+   keluar dari tengah. Dengan left:0 dan translate -50%, titik tengah garis
+   miring jatuh tepat di tepi segmen — yaitu tengah-tengah celah, karena
+   celahnya adalah padding kanan segmen sebelumnya ditambah padding kiri
+   segmen ini. */
+.topbar > *:not(.topbar__dorong) { position: relative; }
+
+.topbar > *:not(.topbar__dorong)::before {
+  content: "/";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: -50% -50%;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.topbar > *:first-child::before { content: none; }
+
+/* Panel akun sengaja TIDAK ikut: permintaan pemilik, bagian owner dibiarkan
+   persis seperti semula. Dan "semula" di sini berarti TANPA pemisah apa pun —
+   aturan .topbar__id di bawah menyetel `border: 0` untuk mematikan bingkai
+   bawaan <button>, dan karena ia datang belakangan, panel akun memang tidak
+   pernah punya garis kiri sekalipun aturan umum di atas dulu memberinya satu.
+
+   Selektornya ditulis `.topbar > .topbar__id` supaya kekhususannya (0,2,0)
+   sama dengan aturan umum di atas. Dengan `.topbar__id::before` saja — (0,1,0)
+   — aturan umum menang dan garis miringnya tetap tergambar. Ini jebakan yang
+   sama yang sudah dicatat dua kali di berkas ini, dan ini kali ketiga. */
+.topbar > .topbar__id::before { content: none; }
+
+/* Garis miring BERHENTI setelah penghitung proyek. Permintaan pemilik, dan
+   alasannya terbaca sendiri di bilahnya: kelompok kiri adalah satu kalimat
+   keadaan — di mana kita, jam berapa, tanggal berapa, berapa proyek — dan
+   garis miring adalah tanda baca kalimat itu. Combobox dan tombol di kanan
+   bukan bagian dari kalimat itu; mereka perkakas. Memberi mereka tanda baca
+   yang sama menyambung dua hal yang tidak bersambung.
+
+   Ditulis `.topbar > .x` supaya kekhususannya (0,2,0), setara aturan umum di
+   atas. Dengan `.x::before` saja aturan umum menang — jebakan yang sudah
+   tercatat di CLAUDE.md. */
+.topbar > .topbar__combo::before,
+.topbar > .topbar__aksi::before { content: none; }
 
 /* Semua segmen dirata-tengahkan secara vertikal dan diberi napas sendiri.
 
@@ -62,14 +115,25 @@
    terbaca sebagai sel yang isinya tidak sampai ujung — bar-nya terlihat
    setengah jadi. Sisa ruangnya diberikan ke combobox dan Perintah, sehingga
    setiap piksel topbar dimiliki sebuah sel. */
+/* Ruang pendorong tidak dipakai di layar lebar: sisa ruang diberikan ke
+   combobox, jadi tidak ada celah kosong menganga di tengah bilah. Permintaan
+   pemilik setelah melihat versi yang combobox-nya selebar isinya sendiri —
+   ruang kosong di tengah membuat bilahnya terlihat belum selesai. */
 .topbar__dorong { display: none; }
 
-.topbar__combo,
-.topbar__sel { flex: 1 1 0; }
+.topbar__combo { flex: 1 1 0; }
 
 /* Sel pembungkus tombol ikon — napasnya sama dengan segmen teks di
    sebelahnya, jadi seluruh baris berirama sama. */
 .topbar__aksi { justify-content: center; }
+
+/* Lonceng: satu-satunya segmen yang masih dikurung garis tegak. Bukan
+   inkonsistensi — ia satu-satunya yang isinya berubah sendiri tanpa
+   disentuh siapa pun, jadi ia harus terbaca sebagai benda yang berdiri
+   sendiri, bukan ikon di antara ikon. */
+.topbar__aksi--lonceng {
+  border-inline: 2px solid var(--border-strong);
+}
 
 .topbar__crumb { overflow: hidden; white-space: nowrap; flex-wrap: nowrap !important; }
 /* Remah roti boleh menyusut sampai judulnya terpotong, tapi tidak boleh pecah
@@ -253,10 +317,12 @@
   height: 2.25rem;
   flex: none;
   padding: 0;
-  /* Lingkaran bergaris tipis — bentuk yang sama dengan dua tombol di kartu
-     dashboard. Tanpa bentuk sendiri, tombol ikon di antara sel-sel selebar
-     200px terbaca sebagai sisa ruang, bukan sebagai tombol. */
-  border: 1px solid var(--border-strong);
+  /* Tanpa lingkaran. Alasan lingkaran dulu: tombol ikon di antara sel-sel
+     selebar 200px terbaca sebagai sisa ruang. Setelah bidang pencarian
+     keluar dari topbar, tetangganya jadi teks pendek — ikon telanjang sudah
+     terbaca sebagai tombol, dan dua lingkaran di ujung kanan cuma menambah
+     dua benda yang tidak menyampaikan apa pun. Sesuai referensi pemilik. */
+  border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
@@ -265,8 +331,8 @@
 }
 
 .topbar__lonceng:hover,
-.topbar__lonceng[data-state="open"] { color: var(--text-strong); border-color: var(--text-faint); }
-.topbar__lonceng:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--text-faint); }
+.topbar__lonceng[data-state="open"] { color: var(--text-strong); }
+.topbar__lonceng:focus-visible { outline: 0; color: var(--text-strong); }
 
 /* Ayunan yang sama persis dengan lonceng di kartu dashboard — satu gerakan
    untuk satu benda, di mana pun ia muncul. */
@@ -476,7 +542,7 @@
    17rem lebih dulu, jadi ambang yang ditulis dalam ukuran viewport selalu
    meleset sebesar itu. Label "Proyek aktif" pergi lebih dulu — ikon dan
    angkanya sudah cukup — lalu tanggal, lalu combobox. */
-@media (max-width: 96rem) {
+@media (max-width: 72rem) {
   .topbar__hitung-label { display: none; }
 }
 
@@ -502,8 +568,7 @@
      mengambang di tengah sel selebar setengah layar. Di sini pendorong
      dipakai lagi — dan tidak apa-apa, karena di layar sempit sisa ruangnya
      memang tinggal sedikit. */
-  .topbar__combo,
-  .topbar__sel { flex: 0 0 auto; }
+  .topbar__combo { flex: 0 0 auto; }
   .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
 }
 

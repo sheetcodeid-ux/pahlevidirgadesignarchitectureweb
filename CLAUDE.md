@@ -269,6 +269,14 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
    membuat "Label, Kategori, Nominal sebaris" tampak selesai padahal tidak,
    dan lolos sekali dari ACC. Kalau tata letak harus benar di mana pun,
    pakai `auto-fit`/`repeat()` atau media query — jangan container query.
+6. **Aturan `.topbar > *:not(...)` berkekhususan (0,2,0) — pengecualian
+   per-segmen harus ditulis `.topbar > .segmen`, bukan `.segmen` saja.**
+   `:not()` menyumbang kekhususan argumennya, jadi aturan umum topbar
+   mengalahkan setiap aturan berkelas tunggal betapa pun ia ditulis
+   belakangan. Sudah menggigit **tiga kali**: padding ponsel, `flex`, dan
+   pemisah garis miring. Gejalanya selalu sama — aturannya terlihat benar di
+   berkas, dan diam-diam tidak pernah menyala.
+
 5. **Setiap stylesheet diimpor per-layout, dan `BaseLayout` cuma memuat
    `global.css` + `components.css`.** Halaman publik — termasuk `/kontak` dan
    `/progres` yang dilihat klien — tidak memuat `form.css`, `misc.css`,

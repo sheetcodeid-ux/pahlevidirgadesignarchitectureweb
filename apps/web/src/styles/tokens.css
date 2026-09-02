@@ -46,7 +46,11 @@
   --space-8: 4rem;
 
   --sidebar-w: 17rem;
-  --topbar-h: 4.25rem;
+  /* 3,25rem (52px). Referensi pemilik jauh lebih padat dari 4,25rem yang
+     dipakai sebelumnya: bilahnya kira-kira empat kali tinggi teksnya, bukan
+     lima. Token ini juga dipakai sebagai offset sticky di beberapa tempat,
+     jadi mengubahnya di sini menggeser semuanya sekaligus. */
+  --topbar-h: 3.25rem;
   --measure: 68ch;
 
   /* --- Gerak ------------------------------------------------------------ */

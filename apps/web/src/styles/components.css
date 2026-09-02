@@ -247,8 +247,9 @@
   width: 2.25rem;
   height: 2.25rem;
   flex: none;
-  /* Lingkaran bergaris tipis, kembar dengan tombol lonceng di sebelahnya. */
-  border: 1px solid var(--border-strong);
+  /* Ikon telanjang, kembar dengan tombol lonceng di sebelahnya — keduanya
+     kehilangan lingkarannya bersamaan, lihat .topbar__lonceng. */
+  border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
