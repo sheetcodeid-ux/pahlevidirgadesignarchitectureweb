@@ -1336,6 +1336,28 @@
    lebih dulu daripada nama proyeknya. */
 .table__idx { width: 1%; color: var(--text-faint); font-family: var(--font-mono); font-size: var(--text-sm); }
 
+/* Sel yang isinya kalimat panjang — kutipan testimoni, catatan — dipotong
+   satu baris. Tanpa ini tinggi tiap baris ditentukan oleh kalimat terpanjang,
+   dan tabelnya tidak bisa dipindai dengan mata. */
+.sel-potong {
+  display: block;
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Kartu tugas di tampilan kanban. Sebelumnya gayanya ditulis sebagai style
+   sebaris di komponennya — termasuk nilai bingkai dan radiusnya. */
+.tugas-kartu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
 /* Halaman daftar dibuat penuh-lebar: bilah perkakas dan tabelnya menempel
    ke tepi sidebar tanpa celah dan tanpa sudut membulat, jadi garis
    pemisahnya menyambung utuh dari sidebar ke tepi kanan layar — persis
