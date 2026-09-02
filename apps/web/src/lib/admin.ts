@@ -151,7 +151,33 @@ export function buangCache(awalan?: string) {
 
 export class GagalAuth extends Error {}
 
-async function segarkan(): Promise<boolean> {
+/* Penyegaran yang sedang berjalan, kalau ada.
+ *
+ * Satu halaman admin memuat beberapa panel sekaligus, dan begitu token
+ * kedaluwarsa SEMUANYA menerima 401 dalam milidetik yang sama. Tanpa
+ * penampung ini masing-masing menembak /auth/refresh sendiri dengan refresh
+ * token YANG SAMA. Sudah terlihat di log produksi: tiga POST berbarengan
+ * dalam rentang 45 milidetik dari satu perangkat.
+ *
+ * Ketiganya kebetulan berhasil karena Supabase memberi tenggang beberapa
+ * detik untuk pemakaian ulang. Di luar tenggang itu, refresh token yang
+ * dipakai dua kali dibaca sebagai token dicuri dan SELURUH sesi dicabut —
+ * gejalanya "tiba-tiba logout sendiri" yang nyaris mustahil dilacak.
+ *
+ * Jadi yang bersamaan ikut menunggu permintaan yang sudah jalan, bukan
+ * memulai permintaan kedua. */
+let penyegaranJalan: Promise<boolean> | null = null;
+
+function segarkan(): Promise<boolean> {
+  if (!penyegaranJalan) {
+    penyegaranJalan = jalankanPenyegaran().finally(() => {
+      penyegaranJalan = null;
+    });
+  }
+  return penyegaranJalan;
+}
+
+async function jalankanPenyegaran(): Promise<boolean> {
   const refreshToken = baca(KUNCI_SEGAR);
   if (!refreshToken) return false;
 
