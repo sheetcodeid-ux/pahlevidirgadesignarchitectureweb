@@ -226,31 +226,39 @@
 
 .delta--baik  { color: var(--success); }
 .delta--buruk { color: var(--brand); }
+
+/* Chip berlatar untuk delta di sebelah angka utama — di referensi ia memang
+   kotak berwarna lembut, bukan teks telanjang. */
+.papan__nilai .delta {
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+}
+.papan__nilai .delta--baik  { background: var(--success-soft); }
+.papan__nilai .delta--buruk { background: var(--brand-soft); }
 .delta--kosong { color: var(--text-faint); font-family: var(--font-sans); }
 
 /* --- Strip metrik --------------------------------------------------------- */
 
-/* Satu bilah, bukan empat kartu: bingkai per angka membuatnya terbaca sebagai
-   empat benda terpisah, padahal keempatnya dibaca sekali sapu. */
+/* Kartu terpisah berjarak, bukan satu bilah — sesuai referensi. Yang penting
+   di sini KEPADATANNYA: label 11px, angka 18px, delta 12px, tinggi kartu di
+   bawah 80px. Versi sebelumnya memakai angka 22px dan tinggi 106px, dan
+   pemiliknya benar: itu terbaca boros, bukan padat. */
 .metrik-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  overflow: hidden;
+  gap: var(--space-3);
 }
 
 .metrik {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: var(--space-4);
+  gap: 0.3rem;
+  padding: var(--space-3) var(--space-4);
   min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
-
-/* Garis pemisah antar-metrik, bukan bingkai penuh. */
-.metrik + .metrik { border-left: 1px solid var(--border); }
 
 .metrik__label {
   font-size: var(--text-2xs);
@@ -258,32 +266,22 @@
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .metrik__nilai {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
-@media (max-width: 68rem) {
-  .metrik-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* Di dua kolom, pemisahnya tidak boleh mengikuti urutan DOM lagi: yang
-     butuh garis kiri adalah kolom kanan, dan yang butuh garis atas adalah
-     baris kedua. */
-  .metrik + .metrik { border-left: 0; }
-  .metrik:nth-child(even) { border-left: 1px solid var(--border); }
-  .metrik:nth-child(n + 3) { border-top: 1px solid var(--border); }
-}
-
-@media (max-width: 34rem) {
-  .metrik-strip { grid-template-columns: 1fr; }
-  .metrik:nth-child(even) { border-left: 0; }
-  .metrik + .metrik { border-top: 1px solid var(--border); }
-}
+@media (max-width: 68rem) { .metrik-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 34rem) { .metrik-strip { grid-template-columns: 1fr; } }
 
 /* --- Bilah kemajuan ------------------------------------------------------- */
 
@@ -318,13 +316,13 @@
 /* --- Gauge ---------------------------------------------------------------- */
 
 .gauge { display: grid; place-items: center; }
-.gauge__svg { width: min(14rem, 100%); height: auto; }
+.gauge__svg { width: min(11rem, 100%); height: auto; }
 
 .gauge__angka {
   fill: var(--text-strong);
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 30px;
+  font-size: 32px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -336,8 +334,8 @@
 
 /* --- Sparkline ------------------------------------------------------------ */
 
-.spark { width: 100%; height: 4rem; display: block; }
-.spark--kosong { display: grid; place-items: center; height: 4rem; color: var(--text-faint); font-size: var(--text-sm); }
+.spark { width: 100%; height: 3.25rem; display: block; }
+.spark--kosong { display: grid; place-items: center; height: 3.25rem; color: var(--text-faint); font-size: var(--text-sm); }
 
 /* --- Grafik bidang & batang bertumpuk ------------------------------------- */
 
@@ -374,7 +372,7 @@
 .papan {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -389,7 +387,7 @@
   gap: 0.35rem;
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   color: var(--text-strong);
   text-decoration: none;
 }
@@ -397,9 +395,21 @@
 a.papan__judul:hover { color: var(--brand); }
 
 .papan__nilai { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
-.papan__nilai .t-numeral { font-size: var(--text-2xl); }
+/* Satu-satunya angka besar di halaman. Sisanya 18px. */
+.papan__nilai .t-numeral { font-size: var(--text-2xl); line-height: 1.1; }
 
 .papan__isi { min-width: 0; }
+
+/* Isi kartu berdampingan: gambar di kiri, angka pendampingnya di kanan. */
+.papan__sisi {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.papan__sisi > .gauge { flex: none; }
+.papan__sisi > .statbar { flex: 1; min-width: 10rem; flex-direction: column; gap: var(--space-3); }
 
 /* Tab di KAKI kartu, seperti referensi — bukan di kepala. Yang dipilih di
    sini mengganti isi grafik di atasnya, jadi tempatnya memang di bawahnya. */
@@ -411,8 +421,8 @@ a.papan__judul:hover { color: var(--brand); }
 .mini {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: var(--space-4);
+  gap: 0.25rem;
+  padding: var(--space-3) var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -423,7 +433,7 @@ a.papan__judul:hover { color: var(--brand); }
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-body);
   text-decoration: none;
@@ -436,7 +446,7 @@ a.mini__judul:hover { color: var(--brand); }
 .mini__nilai {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
   line-height: 1.15;
@@ -453,7 +463,7 @@ a.mini__judul:hover { color: var(--brand); }
   align-items: center;
   gap: var(--space-3);
   flex-wrap: wrap;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
@@ -462,3 +472,26 @@ a.mini__judul:hover { color: var(--brand); }
 .lingkup__nama { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-sm); }
 .lingkup__nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-md); color: var(--text-strong); }
 .lingkup__dorong { margin-inline-start: auto; }
+
+/* --- Statistik sebaris di kepala kartu (gaya pelacak ETF di referensi) ----- */
+
+.statbar { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); }
+
+.statbar__item { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+
+.statbar__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.statbar__nilai {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--text-base);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}

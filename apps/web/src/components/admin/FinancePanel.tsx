@@ -3,7 +3,7 @@ import { Icon } from "../ui/Icon";
 import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
 import {
-  AreaChart, Delta, Gauge, KartuMini, KartuPapan, Sparkline, StripMetrik,
+  AreaChart, Delta, Gauge, KartuMini, KartuPapan, Sparkline, StatSebaris, StripMetrik,
   bandingkan, type Metrik, type Perubahan,
 } from "../ui/data/Dashboard";
 import { RequireAuth } from "./RequireAuth";
@@ -126,7 +126,7 @@ function Isi() {
 
   if (!data) {
     return (
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="stack" style={{ gap: "var(--space-4)" }}>
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
@@ -164,7 +164,7 @@ function Isi() {
   const rasioTertagih = data.totalKontrak > 0 ? (data.kasMasuk / data.totalKontrak) * 100 : 0;
 
   return (
-    <div className="stack" style={{ gap: "var(--space-5)" }}>
+    <div className="stack" style={{ gap: "var(--space-4)" }}>
       {/* Pil lingkup menggantikan spanduk peringatan: lingkup bukan
           peringatan, ia keadaan — dan keadaan ditulis sebaris, bukan dalam
           kotak biru yang menuntut perhatian setiap kali halaman dibuka. */}
@@ -176,7 +176,7 @@ function Isi() {
         <span className="lingkup__nilai">{rupiah(data.labaBersih)}</span>
         <Delta ubah={delta(bulan, (b) => b.labaBersih)} format={rupiahRingkas} />
         <span className="lingkup__dorong t-muted" style={{ fontSize: "var(--text-xs)" }}>
-          Ganti lewat pemilih proyek di bilah atas
+          {data.proyek.length} proyek berkontrak
         </span>
       </div>
 
@@ -213,16 +213,25 @@ function Isi() {
       />
 
       <div className="spec-grid spec-grid--dua">
+        {/* Gauge ditemani angkanya sendiri di sebelah kanan. Sendirian, ia
+            meninggalkan separuh kartu kosong di layar selebar ini — dan kartu
+            yang setengahnya udara adalah persis yang membuat halaman ini
+            terasa boros sebelumnya. */}
         <KartuPapan
           judul="Margin proyeksi"
+          kanan={<span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>kalau kontrak dibayar penuh</span>}
           anak={
-            <>
+            <div className="papan__sisi">
               <Gauge nilai={margin ?? 0} judul="Margin proyeksi"
                 keterangan={margin === null ? "—" : margin >= 35 ? "Sehat" : margin >= 20 ? "Tipis" : "Rugi"} />
-              <p className="field__help" style={{ textAlign: "center" }}>
-                Berapa untungnya kalau seluruh kontrak dibayar penuh — janji, bukan kas.
-              </p>
-            </>
+              <StatSebaris
+                stat={[
+                  { label: "Nilai kontrak", nilai: formatRupiah(data.totalKontrak) },
+                  { label: "Biaya tercatat", nilai: formatRupiah(data.totalBiaya) },
+                  { label: "Selisihnya", nilai: rupiah(data.totalKontrak - data.totalBiaya), minus: data.totalKontrak - data.totalBiaya < 0 },
+                ]}
+              />
+            </div>
           }
         />
 
@@ -231,12 +240,21 @@ function Isi() {
           nilai={rupiah((bulan ?? []).reduce((s, b) => s + b.labaBersih, 0))}
           delta={delta(bulan, (b) => b.labaBersih)}
           deltaFormat={rupiahRingkas}
+          kanan={<span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>12 bulan</span>}
           anak={
             <>
               <Sparkline titik={(bulan ?? []).map((b) => b.labaBersih)} label="Laba bersih per bulan" />
-              <p className="field__help">
-                Bentuknya yang bercerita, bukan angkanya. Angka per bulan ada di Analisis Bulanan.
-              </p>
+              <StatSebaris
+                stat={[
+                  { label: "Bulan berdata", nilai: String((bulan ?? []).length) },
+                  { label: "Bulan rugi", nilai: String((bulan ?? []).filter((b) => b.labaBersih < 0).length) },
+                  {
+                    label: "Rata-rata per bulan",
+                    nilai: rupiah(Math.round(((bulan ?? []).reduce((s, b) => s + b.labaBersih, 0) / Math.max((bulan ?? []).length, 1)) / 1000) * 1000),
+                    minus: (bulan ?? []).reduce((s, b) => s + b.labaBersih, 0) < 0,
+                  },
+                ]}
+              />
             </>
           }
         />
@@ -298,7 +316,7 @@ function BilahTerkumpul({ nilai, maks }: { nilai: number; maks: number }) {
 
 export function FinancePanel() {
   return <RequireAuth skeleton={
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="stack" style={{ gap: "var(--space-4)" }}>
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>

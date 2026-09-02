@@ -3,7 +3,7 @@ import { Icon } from "../ui/Icon";
 import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
 import {
-  AreaChart, KartuMini, KartuPapan, StackedBarChart, StripMetrik,
+  AreaChart, KartuMini, KartuPapan, StackedBarChart, StatSebaris, StripMetrik,
   bandingkan, type DeretTumpuk, type Metrik, type Perubahan,
 } from "../ui/data/Dashboard";
 import { RequireAuth } from "./RequireAuth";
@@ -89,7 +89,7 @@ function Isi() {
 
   if (!data) {
     return (
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="stack" style={{ gap: "var(--space-4)" }}>
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
@@ -139,7 +139,7 @@ function Isi() {
 
   if (data.length === 0) {
     return (
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="stack" style={{ gap: "var(--space-4)" }}>
         <div className="row row--between" style={{ flexWrap: "wrap", gap: "var(--space-3)" }}>
           <span className="t-muted">{aktif ? "Hanya proyek yang dipilih di bilah atas." : "Seluruh proyek studio."}</span>
           {tabRentang}
@@ -156,7 +156,7 @@ function Isi() {
   }
 
   return (
-    <div className="stack" style={{ gap: "var(--space-5)" }}>
+    <div className="stack" style={{ gap: "var(--space-4)" }}>
       <div className="lingkup">
         <span className="lingkup__nama">
           <Icon name={aktif ? "project" : "dashboard"} size={15} />
@@ -170,19 +170,19 @@ function Isi() {
 
       <KartuPapan
         judul="Uang masuk dan keluar"
-        nilai={rupiah(data[data.length - 1].labaBersih)}
-        delta={delta(data, (b) => b.labaBersih)}
-        deltaFormat={rupiahRingkas}
-        kanan={
-          <span className="chart__legend">
-            {deret.map((d) => (
-              <span className="chart__legend-item" key={d.nama}>
-                <span className="chart__swatch" style={{ background: d.warna }} />{d.nama}
-              </span>
-            ))}
-          </span>
+        kanan={<span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>{label[label.length - 1]}</span>}
+        anak={
+          <>
+            <StatSebaris
+              stat={[
+                { label: "Laba bersih bulan terakhir", nilai: rupiah(data[data.length - 1].labaBersih), minus: data[data.length - 1].labaBersih < 0 },
+                { label: "Kas masuk", nilai: rupiah(data[data.length - 1].kasMasuk), warna: "var(--chart-1)" },
+                { label: "Biaya", nilai: rupiah(data[data.length - 1].biaya), warna: "var(--chart-2)" },
+              ]}
+            />
+            <StackedBarChart deret={deret} label={label} format={rupiahRingkas} />
+          </>
         }
-        anak={<StackedBarChart deret={deret} label={label} format={rupiahRingkas} />}
       />
 
       <div className="spec-grid spec-grid--dua">
@@ -253,7 +253,7 @@ function Isi() {
 
 export function MonthlyPanel() {
   return <RequireAuth skeleton={
-      <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="stack" style={{ gap: "var(--space-4)" }}>
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>

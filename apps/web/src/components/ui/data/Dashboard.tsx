@@ -137,10 +137,10 @@ export function BilahKemajuan({ nilai, maks, label }: { nilai: number; maks: num
 /* --- Gauge (busur berjarum) ----------------------------------------------- */
 
 const GW = 200;
-const GH = 128;
-const GR = 74;
+const GH = 118;
+const GR = 72;
 const GCX = GW / 2;
-const GCY = 104;
+const GCY = 98;
 
 /** Titik pada busur untuk sudut t (0 = kiri, 1 = kanan). */
 function titikBusur(t: number, r = GR) {
@@ -224,11 +224,14 @@ export function Sparkline({ titik, label }: { titik: number[]; label: string }) 
 
 /* --- Grafik bidang besar (hero) ------------------------------------------- */
 
-const AW = 720;
-const AH = 260;
+// Rasio lebar:tinggi menentukan tinggi grafik saat lebarnya 100%. 760x170
+// memberi ~250px di kartu selebar panel — sebelumnya 410px, dan itu yang
+// membuat halamannya terasa boros.
+const AW = 760;
+const AH = 170;
 // Kiri 44: label sumbu waktu pertama dirata-tengahkan, jadi separuhnya
 // menggantung ke kiri dan terpotong tepi kartu kalau paddingnya nol.
-const AP = { atas: 24, kanan: 62, bawah: 26, kiri: 44 };
+const AP = { atas: 20, kanan: 58, bawah: 22, kiri: 40 };
 
 /**
  * Grafik bidang selebar kartu, dengan garis putus-putus di nilai tertinggi
@@ -291,9 +294,9 @@ export function AreaChart({
         {/* Garis putus-putus di puncak, dengan pil bernilai di pangkalnya. */}
         <line className="area__puncak" x1={AP.kiri} x2={AW - AP.kanan} y1={y(maks)} y2={y(maks)} />
         <g transform={`translate(${AP.kiri}, ${y(maks)})`}>
-          <rect x="0" y="-11" rx="6" width={Math.max(format(maks).length * 7.4 + 14, 44)} height="22"
+          <rect x="0" y="-9" rx="5" width={Math.max(format(maks).length * 6.2 + 12, 38)} height="18"
             fill="var(--surface-hover)" />
-          <text className="area__puncak-teks" x="7" y="4">{format(maks)}</text>
+          <text className="area__puncak-teks" x="6" y="3.5">{format(maks)}</text>
         </g>
 
         <path d={bidang} fill={`url(#${id}-f)`} />
@@ -333,9 +336,9 @@ export function AreaChart({
 
 /* --- Batang bertumpuk yang berani minus ----------------------------------- */
 
-const SW = 720;
-const SH = 250;
-const SP = { atas: 18, kanan: 62, bawah: 28, kiri: 20 };
+const SW = 760;
+const SH = 190;
+const SP = { atas: 14, kanan: 58, bawah: 22, kiri: 18 };
 
 export interface DeretTumpuk { nama: string; warna: string; nilai: number[]; }
 
@@ -502,6 +505,33 @@ export function KartuMini({
       <span className={`mini__nilai${minus ? " angka-minus" : ""}`}>{nilai}</span>
       {sisipan}
       {badge && <span className={`badge ${badgeKelas ?? ""}`}>{badge}</span>}
+    </div>
+  );
+}
+
+/* --- Statistik sebaris ---------------------------------------------------- */
+
+export interface StatSebaris { label: string; nilai: string; warna?: string; minus?: boolean; }
+
+/**
+ * Deret angka sebaris di kepala kartu, dengan titik warna yang menautkannya
+ * ke deret di grafik — bentuk kepala pelacak ETF di referensi.
+ *
+ * Ini sekaligus legendanya. Legenda terpisah yang cuma menyebut nama tanpa
+ * angka menghabiskan satu baris untuk informasi yang setengah.
+ */
+export function StatSebaris({ stat }: { stat: StatSebaris[] }) {
+  return (
+    <div className="statbar">
+      {stat.map((s) => (
+        <div className="statbar__item" key={s.label}>
+          <span className="statbar__label">
+            {s.warna && <span className="chart__swatch" style={{ background: s.warna }} />}
+            {s.label}
+          </span>
+          <span className={`statbar__nilai${s.minus ? " angka-minus" : ""}`}>{s.nilai}</span>
+        </div>
+      ))}
     </div>
   );
 }
