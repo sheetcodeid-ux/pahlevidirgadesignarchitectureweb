@@ -10,9 +10,35 @@ name: Kunci cache Hyperdrive
 # persis saat merah itu akhirnya berarti sesuatu.
 #
 # Jadi sebabnya diselidiki di sini dulu, di tempat yang boleh merah tanpa
-# menakut-nakuti siapa pun. Kalau run ini hijau, langkahnya baru
-# dikembalikan ke deploy.yml. Kalau merah, lognya memberi tahu sebab
-# sebenarnya — yang sampai sekarang belum diketahui.
+# menakut-nakuti siapa pun.
+#
+# HASIL RUN #1 (2 September 2026) — merah, dan itu menjawab pertanyaannya:
+#
+#   - `whoami` HIJAU. Tokennya hidup dan hanya melihat SATU akun:
+#     pahlevidirgadesignarchitecture / cf6a6bde... Jadi dugaan "wrangler
+#     menyentuh akun yang salah karena login pemilik memuat dua akun"
+#     TERBANTAH. Menyebut CLOUDFLARE_ACCOUNT_ID eksplisit tidak mengubah
+#     apa pun.
+#   - `hyperdrive list` MERAH, error 10000 di
+#     /accounts/cf6a.../hyperdrive/configs. Ini permintaan BACA, bukan
+#     tulis — dan tetap ditolak.
+#   - `hyperdrive update` MERAH dengan error yang sama.
+#
+# Karena MEMBACA saja sudah ditolak, kesimpulannya sederhana: token yang
+# dipakai GitHub Actions memang tidak punya izin Hyperdrive sama sekali —
+# terlepas dari apa yang tampil di halaman token `pahlevidirgadesign-
+# architectureweb build token`, yang pemiliknya periksa dan memang memuat
+# `Account · Hyperdrive · Edit`. Kemungkinan paling masuk akal: rahasia
+# CLOUDFLARE_API_TOKEN di GitHub berisi token yang BERBEDA dari yang
+# diperiksa itu. Tidak bisa dipastikan dari sini — nilai rahasianya tidak
+# bisa dibaca, dan memang tidak boleh.
+#
+# Penyelidikan dihentikan di sini dengan sengaja. Yang dikunci cuma sebuah
+# setelan yang SUDAH mati, dan menerbitkan token baru berarti pemilik harus
+# membuat lalu menempelkannya ulang ke GitHub — kerja nyata untuk imbalan
+# yang kecil. Workflow ini ditinggal apa adanya: kalau tokennya suatu saat
+# diganti, jalankan sekali dari tab Actions untuk menguji ulang. Kalau
+# hijau, pindahkan langkah terakhirnya ke deploy.yml.
 on:
   workflow_dispatch:
 
