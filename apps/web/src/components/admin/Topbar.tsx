@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as RPopover from "@radix-ui/react-popover";
 import { Command as Cmdk } from "cmdk";
-import * as RDialog from "@radix-ui/react-dialog";
 import { Icon } from "../ui/Icon";
 import { Avatar } from "../ui/misc/Avatar";
 import { ThemeToggle } from "../ui/ThemeToggle";
@@ -296,95 +295,6 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
   );
 }
 
-/** Command palette: perintah cepat, dibuka lewat tombol atau Ctrl/Cmd+K. */
-function Perintah({ proyek, tanpaTombol }: { proyek: Proyek[] | null; tanpaTombol?: boolean }) {
-  const [buka, setBuka] = useState(false);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setBuka((v) => !v);
-      }
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
-
-  const halaman: { label: string; ikon: Parameters<typeof Icon>[0]["name"]; ke: string }[] = [
-    { label: "Dashboard", ikon: "dashboard", ke: "/admin" },
-    { label: "Semua Proyek", ikon: "project", ke: "/admin/proyek" },
-    { label: "Tambah Proyek", ikon: "projectPlus", ke: "/admin/proyek/baru" },
-    { label: "List Kerjaan", ikon: "checklist", ke: "/admin/list-kerjaan" },
-    { label: "Keuangan", ikon: "finance", ke: "/admin/keuangan" },
-    { label: "Pesan Masuk", ikon: "inquiry", ke: "/admin/pesan" },
-    { label: "Tim & Freelancer", ikon: "team", ke: "/admin/tim" },
-    { label: "Direktori", ikon: "directory", ke: "/admin/direktori" },
-    { label: "Testimoni", ikon: "quote", ke: "/admin/testimoni" },
-    { label: "Notifikasi", ikon: "bell", ke: "/admin/notifikasi" },
-    { label: "Info Studio", ikon: "settings", ke: "/admin/pengaturan" },
-  ];
-
-  return (
-    <RDialog.Root open={buka} onOpenChange={setBuka}>
-      {/* Tanpa tombol, komponennya tidak menghasilkan elemen apa pun di
-          topbar — pintasan Cmd+K tetap terpasang karena Root-nya tetap
-          dirender. Tombolnya pindah ke sidebar pada tahap berikutnya. */}
-      {!tanpaTombol && (
-      <RDialog.Trigger asChild>
-        {/* Bentuknya kembar dengan combobox di sebelahnya: bidang abu yang
-            sama, ukuran yang sama, isi yang sejajar. Keduanya sama-sama
-            "kotak untuk mencari sesuatu" — kalau wujudnya berbeda, yang
-            terbaca adalah dua jenis benda, bukan dua pintu ke hal serupa. */}
-        <button type="button" className="topbar__field topbar__perintah" aria-label="Perintah cepat">
-          <Icon name="terminal" size={16} />
-          <span className="topbar__perintah-label">Perintah</span>
-          <kbd className="ov-menu__shortcut topbar__kbd">⌘K</kbd>
-        </button>
-      </RDialog.Trigger>
-      )}
-
-      <RDialog.Portal>
-        <RDialog.Overlay className="ov-scrim" />
-        <RDialog.Content className="ov-dialog ov-panel" aria-label="Perintah cepat">
-          <RDialog.Title className="sr-only">Perintah cepat</RDialog.Title>
-          <Cmdk className="ov-command" loop>
-            <div className="ov-command__search">
-              <Icon name="search" size={18} />
-              <Cmdk.Input className="ov-command__input" placeholder="Cari halaman atau proyek…" autoFocus />
-              <kbd className="ov-menu__shortcut">ESC</kbd>
-            </div>
-
-            <Cmdk.List className="ov-command__list">
-              <Cmdk.Empty className="ov-command__empty">Tidak ada yang cocok.</Cmdk.Empty>
-
-              <Cmdk.Group heading="Halaman" className="ov-command__group">
-                {halaman.map((h) => (
-                  <Cmdk.Item key={h.ke} className="ov-command__item"
-                    onSelect={() => { window.location.href = h.ke; }}>
-                    <Icon name={h.ikon} size={16} />{h.label}
-                  </Cmdk.Item>
-                ))}
-              </Cmdk.Group>
-
-              {(proyek ?? []).length > 0 && (
-                <Cmdk.Group heading="Proyek" className="ov-command__group">
-                  {(proyek ?? []).map((p) => (
-                    <Cmdk.Item key={p.id} value={`${p.title} ${p.category}`} className="ov-command__item"
-                      onSelect={() => bukaProyek(p.id)}>
-                      <Icon name="project" size={16} />{p.title}
-                    </Cmdk.Item>
-                  ))}
-                </Cmdk.Group>
-              )}
-            </Cmdk.List>
-          </Cmdk>
-        </RDialog.Content>
-      </RDialog.Portal>
-    </RDialog.Root>
-  );
-}
-
 export function Topbar({ heading: headingAwal }: { heading: string }) {
   /* Topbar memakai transition:persist, jadi prop heading-nya beku di halaman
    * tempat panel pertama kali dibuka. Judulnya dibaca ulang dari
@@ -459,10 +369,6 @@ export function Topbar({ heading: headingAwal }: { heading: string }) {
       </span>
 
       <Identitas settings={settings} profil={profil} />
-
-      {/* Tidak menghasilkan markup; hanya menjaga pintasan Cmd+K tetap
-          terpasang selama tombolnya belum pindah ke sidebar. */}
-      <Perintah proyek={proyek} tanpaTombol />
     </header>
   );
 }

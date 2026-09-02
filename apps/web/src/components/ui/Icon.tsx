@@ -12,6 +12,7 @@
 
 export type IconName =
   | "archive"
+  | "panel"
   | "dashboard"
   | "project"
   | "image"
@@ -430,6 +431,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
 
+  // Panel sisi: persegi panjang dengan satu bilah di kiri — bentuk sidebar
+  // itu sendiri, dipakai untuk tombol sempitkan/lebarkan.
+  panel: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M9 4v16" />
+    </>
+  ),
   gift: (
     <>
       <path d="M20 12v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8" />

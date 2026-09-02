@@ -296,6 +296,17 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
    Grafik tidak kena karena `<svg>`-nya memakai `viewBox` tanpa atribut
    lebar/tinggi.
 
+8. **Menulis cache dari satu island bisa merusak hidrasi island lain.**
+   `tulisCache()` ikut menyimpan PANJANG daftar di localStorage, dan panjang
+   itu dibaca **saat render** oleh skeleton (`jumlahDiingat`). Sidebar hidrasi
+   lebih dulu daripada isi halaman, jadi tulisan dari sidebar bisa mendarat
+   sebelum panel utamanya hidrasi — server merender 6 baris, klien menghitung
+   3, dan React membuang seluruh pohonnya (error #418). Kadarnya 3 dari 8 muat
+   halaman, jadi mudah lolos kalau cuma dicoba sekali. Aturannya: **yang boleh
+   memanggil `tulisCache(kunci, …)` hanya halaman pemilik daftar itu.**
+   Pemakai lain membaca saja. Kalau curiga, ukur dengan memuat halamannya
+   delapan kali dan hitung `pageerror` — bukan sekali.
+
 ## Kecepatan panel admin
 
 Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu
