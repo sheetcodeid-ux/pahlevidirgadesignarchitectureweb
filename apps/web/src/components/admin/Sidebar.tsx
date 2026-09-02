@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { Icon, type IconName } from "../ui/Icon";
 import { profilTersimpan, ambilSettings } from "../../lib/admin";
+import { Perintah } from "./Perintah";
 
 interface SubItem {
   label: string;
@@ -63,6 +64,11 @@ interface Props {
 export function Sidebar({ currentPath: currentPathAwal }: Props) {
   const [terbuka, setTerbuka] = useState(false); // drawer di layar kecil
   const [ciut, setCiut] = useState(false); // rail sempit di layar besar
+  // Rel yang sedang disembulkan kursor. Beda dari `ciut` yang dipilih staf:
+  // ini keadaan sesaat yang hilang begitu kursornya pergi, dan ia MENIMPA
+  // konten — melebarkan slotnya akan menggeser seluruh halaman tiap kali
+  // kursor lewat, dan itu jauh lebih mengganggu daripada menutupi sedikit.
+  const [intip, setIntip] = useState(false);
   const drawerId = useId();
 
   // Situs ini statis, jadi Astro.url.pathname saat build tidak pernah
@@ -184,11 +190,22 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
         />
       )}
 
+      <div
+        className="sidebar-slot"
+        data-collapsed={ciut || undefined}
+        data-peek={ciut && intip ? "" : undefined}
+        /* pointerType, bukan onMouseEnter: di layar sentuh satu ketukan ikut
+           mengirim peristiwa tetikus tiruan, lalu TIDAK PERNAH mengirim
+           pasangan "menjauh"-nya — jadi sidebar-nya nyangkut terbuka menutupi
+           halaman, dan tidak ada cara menutupnya selain memuat ulang. Sudah
+           terjadi di ponsel pemilik. */
+        onPointerEnter={(e) => { if (e.pointerType === "mouse") setIntip(true); }}
+        onPointerLeave={() => setIntip(false)}
+      >
       <aside
         id={drawerId}
         className="sidebar"
         data-open={terbuka || undefined}
-        data-collapsed={ciut || undefined}
       >
         <div className="sidebar__head">
           <a href="/admin" className="sidebar__brand" aria-label="Dirga Pahlevi Architecture, ke dashboard">
@@ -197,17 +214,10 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
             ) : (
               <span className="sidebar__mark" aria-hidden="true">DPA</span>
             )}
-            <span className="sidebar__wordmark">Dirga Pahlevi Architecture</span>
+            <span className="sidebar__wordmark geser">
+              <span className="geser__isi">Dirga Pahlevi Architecture</span>
+            </span>
           </a>
-
-          <button
-            type="button"
-            className="sidebar__collapse btn btn--ghost btn--icon"
-            aria-label={ciut ? "Lebarkan sidebar" : "Sempitkan sidebar"}
-            onClick={() => setCiut((v) => !v)}
-          >
-            <Icon name={ciut ? "chevronRight" : "chevronLeft"} size={16} />
-          </button>
 
           <button
             type="button"
@@ -218,6 +228,9 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
             <Icon name="close" size={18} />
           </button>
         </div>
+
+        {/* Kotak cari perintah, sejajar daftar menu yang isinya sama. */}
+        <Perintah />
 
         <nav className="sidebar__nav" aria-label="Navigasi admin">
           {Object.entries(kelompok).map(([labelGrup, itemGrup]) => (
@@ -236,7 +249,9 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                       title={ciut ? item.label : undefined}
                     >
                       <Icon name={item.icon} size={18} variant={aktif ? "filled" : "stroke"} />
-                      <span className="sidebar__label">{item.label}</span>
+                      <span className="sidebar__label geser">
+                        <span className="geser__isi">{item.label}</span>
+                      </span>
                     </a>
                   </li>
                 );
@@ -256,7 +271,9 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                     title={ciut ? item.label : undefined}
                   >
                     <Icon name={item.icon} size={18} variant={adaAnakAktif ? "filled" : "stroke"} />
-                    <span className="sidebar__label">{item.label}</span>
+                    <span className="sidebar__label geser">
+                      <span className="geser__isi">{item.label}</span>
+                    </span>
                     <span className="sidebar__chevron" data-open={grupTerbuka || undefined}>
                       <Icon name="chevronDown" size={14} />
                     </span>
@@ -290,12 +307,31 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
           <a href="/" className="sidebar__site">
             <span className="sidebar__site-text">
               <span className="t-label">Situs publik</span>
-              <span className="sidebar__site-name">pahlevidirgaarchitecture.com</span>
+              <span className="sidebar__site-name geser">
+                <span className="geser__isi">pahlevidirgaarchitecture.com</span>
+              </span>
             </span>
             <Icon name="external" size={16} />
           </a>
+
+          {/* Tombolnya di kaki, bukan di kepala: di kepala ia bersaing dengan
+              logo dan nama studio, dan yang paling sering dilihat justru
+              bukan dia. Referensi Cloudflare menaruhnya di kaki juga. */}
+          <button
+            type="button"
+            className="sidebar__collapse"
+            aria-label={ciut ? "Lebarkan sidebar" : "Sempitkan sidebar"}
+            aria-pressed={ciut}
+            onClick={() => { setCiut((v) => !v); setIntip(false); }}
+          >
+            <Icon name="panel" size={16} />
+            <span className="sidebar__label geser">
+              <span className="geser__isi">{ciut ? "Lebarkan" : "Sempitkan"}</span>
+            </span>
+          </button>
         </div>
       </aside>
+      </div>
     </>
   );
 }

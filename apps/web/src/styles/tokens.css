@@ -46,6 +46,8 @@
   --space-8: 4rem;
 
   --sidebar-w: 17rem;
+  /* Lebar rel sempit: cukup untuk satu ikon 18px yang berdiri sendiri. */
+  --rel-w: 4.5rem;
   /* 3,25rem (52px). Referensi pemilik jauh lebih padat dari 4,25rem yang
      dipakai sebelumnya: bilahnya kira-kira empat kali tinggi teksnya, bukan
      lima. Token ini juga dipakai sebagai offset sticky di beberapa tempat,

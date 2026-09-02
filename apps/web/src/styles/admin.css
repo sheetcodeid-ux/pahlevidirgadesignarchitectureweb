@@ -244,14 +244,6 @@
   opacity: 1;
 }
 
-.topbar__perintah {
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.topbar__perintah:focus-visible { outline: 0; background: var(--surface-hover); color: var(--text-muted); }
-.topbar__perintah-label { flex: 1; min-width: 0; }
-.topbar__kbd { margin-left: 0; }
 
 /* Daftar hasil menggantung di bawah field, di dalam topbar. z-index di atas
    topbar sendiri supaya tidak tertutup garis pemisah di sebelahnya. */
@@ -557,23 +549,12 @@
   .topbar__hitung { display: none !important; }
 }
 
-/* Perintah menyusut jadi tombol ikon persegi, bukan bidang selebar 8,5rem
-   yang isinya cuma satu ikon — bidang kosong selebar itu terbaca sebagai
-   isian yang gagal memuat. */
-@media (max-width: 76rem) {
-  .topbar__perintah-label,
-  .topbar__kbd { display: none; }
-  .topbar__perintah { width: 2.125rem; justify-content: center; padding: 0; }
-  /* Begitu Perintah tinggal ikon, membiarkannya melar berarti satu ikon
-     mengambang di tengah sel selebar setengah layar. Di sini pendorong
-     dipakai lagi — dan tidak apa-apa, karena di layar sempit sisa ruangnya
-     memang tinggal sedikit. */
-  .topbar__combo { flex: 0 0 auto; }
-  .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
-}
-
+/* Begitu combobox hilang, tidak ada lagi yang melar di topbar — tanpa
+   pendorong, seluruh segmen menggerombol di kiri dan panel akun ikut
+   berpindah dari ujung kanan. */
 @media (max-width: 71rem) {
   .topbar__combo { display: none !important; }
+  .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
 }
 
 @media (max-width: 52rem) {

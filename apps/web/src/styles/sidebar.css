@@ -1,11 +1,23 @@
 /* =============================================================================
    Sidebar admin.
 
-   Tiga wujud, satu markup:
-   - layar sempit  → drawer di luar layar, dibuka tombol
-   - layar sedang+ → kolom tetap
-   - disempitkan   → rail selebar ikon saja
+   Empat wujud, satu markup:
+   - layar sempit   → drawer di luar layar, dibuka tombol
+   - layar sedang+  → kolom tetap
+   - disempitkan    → rel selebar ikon saja, dipilih staf lewat tombol di kaki
+   - disembulkan    → rel yang sedang disentuh kursor, MELEBAR MENIMPA konten
+
+   Yang terakhir sengaja menimpa, bukan mendorong: kalau slotnya ikut melebar,
+   seluruh halaman bergeser setiap kali kursor lewat di tepi kiri — dan itu
+   jauh lebih mengganggu daripada menutupi sedikit isi.
+
+   .sidebar-slot yang jadi anak flex .admin, bukan .sidebar sendiri. Itu yang
+   memungkinkan lebar yang dipesan (slot) dan lebar yang tampak (panel) jadi
+   dua angka berbeda saat disembulkan. Slotnya ada DI DALAM island, jadi ia
+   tetap anak flex .admin — <astro-island> memakai display: contents.
    ============================================================================= */
+
+.sidebar-slot { display: contents; }
 
 .sidebar {
   position: fixed;
@@ -61,6 +73,9 @@
   height: 2rem;
   flex: none;
   border-radius: var(--radius-sm);
+  /* Kotak bergaris mengelilingi logo, sesuai referensi: tandanya jadi benda
+     tersendiri, bukan noda merah yang menempel di tepi kiri. */
+  border: 2px solid var(--border-strong);
   background: var(--brand);
   color: var(--brand-ink);
   font-family: var(--font-display);
@@ -78,8 +93,33 @@
   text-overflow: ellipsis;
 }
 
-.sidebar__collapse { display: none; }
 .sidebar__close { display: inline-flex; }
+
+/* --- Kotak cari perintah -------------------------------------------------- */
+
+/* Bentuknya kotak isian, bukan tombol: yang dijanjikan memang mengetik, dan
+   ⌘K di ujung kanan menyebut jalan pintasnya tanpa perlu dijelaskan. */
+.sidebar__cari {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: calc(100% - var(--space-4) * 2);
+  margin: var(--space-4) var(--space-4) 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.sidebar__cari:hover { border-color: var(--border-strong); color: var(--text-muted); }
+.sidebar__cari-label { flex: 1; min-width: 0; }
+.sidebar__kbd { flex: none; margin-left: 0; }
 
 /* --- Daftar navigasi ----------------------------------------------------- */
 
@@ -200,7 +240,34 @@
 
 /* --- Kaki ---------------------------------------------------------------- */
 
-.sidebar__foot { padding: var(--space-3); border-top: 1px solid var(--border); }
+.sidebar__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+/* Tombol sempitkan/lebarkan. Bentuknya sengaja sama persis dengan item menu
+   di atasnya — ia memang perintah navigasi, bukan aksi halaman. */
+.sidebar__collapse {
+  display: none;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-faint);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.sidebar__collapse:hover { background: var(--surface-hover); color: var(--text-strong); }
 
 .sidebar__site {
   display: flex;
@@ -221,25 +288,123 @@
 /* --- Layar sedang ke atas ------------------------------------------------ */
 
 @media (min-width: 60rem) {
-  .sidebar { position: sticky; top: 0; height: 100dvh; transform: none; box-shadow: none; }
+  /* Slot yang memesan tempat di baris flex .admin. Panelnya sendiri mengisi
+     slot itu — kecuali saat disembulkan, lihat di bawah. */
+  .sidebar-slot {
+    display: block;
+    flex: none;
+    width: var(--sidebar-w);
+    transition: width var(--dur) var(--ease);
+  }
+
+  .sidebar { position: sticky; top: 0; height: 100dvh; width: 100%; transform: none; box-shadow: none; }
   .sidebar-trigger,
   .sidebar-scrim,
   .sidebar__close { display: none; }
-  .sidebar__collapse { display: inline-flex; }
+  .sidebar__collapse { display: flex; }
 
-  /* Rail sempit: label dan submenu disembunyikan, ikon tetap terbaca. */
-  .sidebar[data-collapsed] { width: 4.5rem; }
-  .sidebar[data-collapsed] .sidebar__wordmark,
-  .sidebar[data-collapsed] .sidebar__label,
-  .sidebar[data-collapsed] .sidebar__chevron,
-  .sidebar[data-collapsed] .sidebar__sub,
-  .sidebar[data-collapsed] .sidebar__group-label,
-  .sidebar[data-collapsed] .sidebar__site-text { display: none; }
-  .sidebar[data-collapsed] .sidebar__item { justify-content: center; padding-inline: 0; }
-  .sidebar[data-collapsed] .sidebar__site { justify-content: center; }
-  .sidebar[data-collapsed] .sidebar__head { flex-direction: column; gap: var(--space-3); }
+  /* Rel sempit: label dan submenu disembunyikan, ikon tetap terbaca. */
+  .sidebar-slot[data-collapsed] { width: var(--rel-w); }
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__wordmark,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__label,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__chevron,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__sub,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__group-label,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__cari-label,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__kbd,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__site-text { display: none; }
+
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__item,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__collapse,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__cari,
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__site { justify-content: center; padding-inline: 0; }
+
+  /* Di rel, penanda halaman aktif tidak bisa mengandalkan teks tebal — yang
+     tersisa cuma ikon. Jadi pill-nya dikecilkan jadi kotak selebar ikon,
+     bukan pill selebar sisi yang menempel ke kedua tepi. */
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__item[aria-current="page"],
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__item[data-active-branch] {
+    width: 2.5rem;
+    margin-inline: auto;
+    border-radius: var(--radius-sm);
+    background: var(--surface-hover);
+  }
+
+  /* Menyembul: slotnya ikut melebar, jadi konten BERGESER — bukan tertutup.
+     Sempat dibuat menimpa supaya halaman tidak bergerak, dan pemilik menolak:
+     yang dia harapkan adalah tata letak yang menyesuaikan, bukan panel yang
+     menutupi isinya. Konsekuensinya diterima — halaman memang bergeser 200px
+     tiap kali kursor menyentuh rel. */
+  .sidebar-slot[data-peek] { width: var(--sidebar-w); }
 }
 
+/* --- Teks berjalan saat disentuh ----------------------------------------- */
+
+/* Label yang kepanjangan bergeser saat kursor menyentuh barisnya, lalu
+   kembali. Yang membuatnya aman: jarak gesernya dihitung sebagai
+   `min(0, lebar-wadah - lebar-teks)`, jadi teks yang MUAT menghasilkan 0 dan
+   tidak bergerak sama sekali. Tidak ada JavaScript yang mengukur apa pun.
+   `container-type: inline-size` di .geser itu wajib — tanpanya satuan cqw
+   tidak pernah menyala dan aturannya diam-diam tidak berlaku. */
+.geser {
+  display: block;
+  container-type: inline-size;
+  overflow: hidden;
+}
+
+.geser__isi {
+  display: inline-block;
+  white-space: nowrap;
+  transition: transform var(--dur) var(--ease);
+}
+
+.sidebar__item:hover .geser__isi,
+.sidebar__collapse:hover .geser__isi,
+.sidebar__brand:hover .geser__isi,
+.sidebar__site:hover .geser__isi,
+.sidebar__cari:hover .geser__isi {
+  animation: geser-bolak 6s var(--ease) infinite;
+}
+
+@keyframes geser-bolak {
+  0%, 15%   { transform: translateX(0); }
+  50%, 65%  { transform: translateX(min(0px, calc(100cqw - 100%))); }
+  100%      { transform: translateX(0); }
+}
+
+/* --- Ikon bergerak sedikit saat disentuh --------------------------------- */
+
+/* Cuma isyarat kecil bahwa barisnya bisa ditekan. Skalanya ditahan 1,12 —
+   lebih dari itu ikon terlihat melompat, dan sepuluh baris yang melompat
+   membuat sidebar terasa gelisah. */
+.sidebar__item svg,
+.sidebar__subitem svg,
+.sidebar__collapse svg,
+.sidebar__cari svg,
+.sidebar__site svg {
+  transition: transform var(--dur) var(--ease);
+}
+
+.sidebar__item:hover > svg,
+.sidebar__subitem:hover > svg,
+.sidebar__collapse:hover > svg,
+.sidebar__cari:hover > svg { transform: scale(1.12); }
+
+/* Panah "buka di tab lain" bergerak ke arah yang dijanjikannya. */
+.sidebar__site:hover svg { transform: translate(2px, -2px); }
+
 @media (prefers-reduced-motion: reduce) {
-  .sidebar { transition: none; }
+  .sidebar,
+  .sidebar-slot { transition: none; }
+  .geser__isi { animation: none !important; transition: none; }
+  .sidebar__item svg,
+  .sidebar__subitem svg,
+  .sidebar__collapse svg,
+  .sidebar__cari svg,
+  .sidebar__site svg { transition: none; }
+  .sidebar__item:hover > svg,
+  .sidebar__subitem:hover > svg,
+  .sidebar__collapse:hover > svg,
+  .sidebar__cari:hover > svg,
+  .sidebar__site:hover svg { transform: none; }
 }
