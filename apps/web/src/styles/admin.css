@@ -1111,6 +1111,11 @@
 
 .listbar__cta .btn { width: 100%; height: 3.5rem; justify-content: center; font-size: var(--text-md); }
 
+/* Daftar tanpa tombol aksi utama — Pesan Masuk, misalnya — tetap butuh garis
+   penutup di kanan. Tanpa ini bidang hitam kotak carinya menggantung tanpa
+   tepi, dan bilahnya terlihat terpotong. */
+.listbar__main > :last-child { border-right: 2px solid var(--border-strong); }
+
 /* Barisan chip dibiarkan LEPAS: selebar halaman penuh, berlatar abu, dan
    tanpa garis vertikal talang — hanya bagian ini yang begitu, sesuai
    referensi. Paddingnya menyamai lebar talang supaya chip pertama tetap

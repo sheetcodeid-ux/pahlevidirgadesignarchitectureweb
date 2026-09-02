@@ -1,5 +1,5 @@
 import { Icon } from "../ui/Icon";
-import { DataTable, type Kolom } from "../ui/data/DataTable";
+import { DataTable, type Kolom, type Chip } from "../ui/data/DataTable";
 import { Calendar } from "../ui/data/Calendar";
 import { DatePicker } from "../ui/data/DatePicker";
 import { BarChart, LineChart } from "../ui/data/Chart";
@@ -23,13 +23,13 @@ const proyek: Proyek[] = [
 ];
 
 const kolom: Kolom<Proyek>[] = [
-  { kunci: "judul", judul: "Proyek" },
-  { kunci: "kota", judul: "Kota" },
-  { kunci: "kategori", judul: "Kategori" },
-  { kunci: "tahun", judul: "Tahun", numerik: true },
+  { judul: "Proyek", render: (b) => <span className="item__title">{b.judul}</span> },
+  { judul: "Kota", lebar: "5rem", render: (b) => b.kota },
+  { judul: "Kategori", lebar: "5rem", render: (b) => b.kategori },
+  { judul: "Tahun", kelas: "table__num", lebar: "2.5rem", render: (b) => b.tahun },
   {
-    kunci: "status",
     judul: "Status",
+    lebar: "4rem",
     render: (b) => (
       <span className={`badge ${b.status === "Terbit" ? "badge--success" : ""}`}>
         {b.status === "Terbit" && <span className="badge__dot" />}
@@ -37,6 +37,13 @@ const kolom: Kolom<Proyek>[] = [
       </span>
     ),
   },
+];
+
+/** Chip menyaring di klien, sama seperti di Semua Proyek. */
+const chips: Chip<Proyek>[] = [
+  { id: "semua", label: "Semua" },
+  { id: "terbit", label: "Terbit", cocok: (b) => b.status === "Terbit" },
+  { id: "draf", label: "Draf", cocok: (b) => b.status === "Draf" },
 ];
 
 const besok = new Date();
@@ -51,10 +58,16 @@ export function DataShowcase() {
           <code className="swatch__name">DataTable</code>
         </div>
         <DataTable
-          kolom={kolom}
           data={proyek}
-          cariPada={["judul", "kota", "kategori"]}
-          kosong={{ judul: "Tidak ada proyek yang cocok", keterangan: "Coba kata kunci lain atau kosongkan pencarian." }}
+          kunci={(b) => b.judul}
+          kolom={kolom}
+          chips={chips}
+          cariPada={(b) => [b.judul, b.kota, b.kategori]}
+          placeholderCari="Cari judul, kota, atau kategori…"
+          labelCari="Cari proyek"
+          satuan="proyek"
+          barisSkeleton={5}
+          kosong={{ ikon: "project", judul: "Belum ada proyek", keterangan: "Buat proyek pertama untuk mulai mengisi portfolio." }}
         />
       </div>
 
