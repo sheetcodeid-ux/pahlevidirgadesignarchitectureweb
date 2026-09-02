@@ -194,8 +194,13 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
         className="sidebar-slot"
         data-collapsed={ciut || undefined}
         data-peek={ciut && intip ? "" : undefined}
-        onMouseEnter={() => setIntip(true)}
-        onMouseLeave={() => setIntip(false)}
+        /* pointerType, bukan onMouseEnter: di layar sentuh satu ketukan ikut
+           mengirim peristiwa tetikus tiruan, lalu TIDAK PERNAH mengirim
+           pasangan "menjauh"-nya — jadi sidebar-nya nyangkut terbuka menutupi
+           halaman, dan tidak ada cara menutupnya selain memuat ulang. Sudah
+           terjadi di ponsel pemilik. */
+        onPointerEnter={(e) => { if (e.pointerType === "mouse") setIntip(true); }}
+        onPointerLeave={() => setIntip(false)}
       >
       <aside
         id={drawerId}

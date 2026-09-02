@@ -307,6 +307,15 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
    Pemakai lain membaca saja. Kalau curiga, ukur dengan memuat halamannya
    delapan kali dan hitung `pageerror` — bukan sekali.
 
+9. **`onMouseEnter` di layar sentuh nyangkut selamanya.** Satu ketukan ikut
+   mengirim peristiwa tetikus tiruan, lalu **tidak pernah** mengirim pasangan
+   "menjauh"-nya. Sidebar yang menyembul saat di-hover jadi terbuka permanen
+   menutupi halaman, dan tidak ada cara menutupnya selain memuat ulang —
+   sudah terjadi di ponsel pemilik. Media query `(hover: hover)` saja tidak
+   cukup: ia menyembunyikan akibatnya, bukan mencegah keadaannya. Pakai
+   `onPointerEnter` lalu **periksa `e.pointerType === "mouse"`**, supaya
+   keadaannya memang tidak pernah menyala.
+
 ## Kecepatan panel admin
 
 Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu
@@ -427,4 +436,5 @@ skrip; jangan sunting hasilnya.
 | Deploy lewat GitHub Actions, bukan tangan | Deploy sebelumnya harus dijalankan pemilik dari komputer kantor, jadi kode yang sudah di-merge bisa menganggur berhari-hari — dan pernah tayang setengah jalan karena satu Worker ter-deploy dan satunya tidak. Sesi Claude tidak bisa menggantikannya karena jaringannya memblokir Cloudflare |
 | Kirim pratinjau sebelum deploy, bukan deploy lalu perbaiki | Permintaan eksplisit pemilik setelah beberapa putaran perbaikan yang meleset. Yang menilai estetika adalah pemilik; memeriksa gambar jauh lebih murah baginya ketimbang memeriksa situs yang sudah tayang |
 | Logo studio di R2 dengan folder `studio/`, bukan tabel terpisah | Satu kolom `logo_key` di `studio_settings` sudah cukup untuk satu logo. Folder dipisah dari `projects/` supaya berkas studio tidak ikut terhapus saat proyek dibersihkan |
+| Laba bersih dihitung dari kas yang BENAR-BENAR masuk, bukan nilai kontrak | Dikonfirmasi pemilik: "uang belum diterima dengan full". Nilai kontrak adalah janji, bukan uang — proyek yang baru DP 50% akan tampak untung besar padahal setengah biayanya sudah keluar. Konsekuensinya: laba bersih sebuah proyek naik bertahap mengikuti termin pembayaran, dan baru benar setelah pelunasan |
 | **Query yang gagal karena koneksi Hyperdrive putus TIDAK diulang otomatis** | Errornya `write CONNECTION_CLOSED ...hyperdrive.local:5432`, dan kata "write" itu **teks tetap** di `errors.connection()` milik postgres.js — bukan penanda operasi yang gagal. Baris pemanggilnya `!hadError && (query \|\| sent.length) && error(...)`, artinya query bisa saja SUDAH sampai dan SUDAH dijalankan saat koneksinya putus. Mengulang secara buta berarti bisa menggandakan penulisan: satu dokumen terunggah dua kali, satu tagihan tercatat dua kali. Kadarnya 3 dari 2.261 permintaan dalam 24 jam (0,13%), semuanya pembacaan, dan panel punya cache jadi sering tidak terlihat. Kalau suatu saat mau ditutup, satu-satunya cara yang aman adalah coba-ulang HANYA untuk unit kerja yang murni membaca — bukan di dalam `withDb` untuk semua pemanggil |

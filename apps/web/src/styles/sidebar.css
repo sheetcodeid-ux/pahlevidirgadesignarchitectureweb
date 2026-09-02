@@ -330,31 +330,12 @@
     background: var(--surface-hover);
   }
 
-  /* Menyembul: panelnya melebar dan MENIMPA konten, slotnya tetap selebar
-     rel. Itu sebabnya position-nya berubah jadi fixed — sticky selalu
-     terikat lebar slotnya. */
-  .sidebar-slot[data-peek] .sidebar {
-    position: fixed;
-    inset-block: 0;
-    left: 0;
-    width: var(--sidebar-w);
-    z-index: 60;
-    box-shadow: var(--shadow-lg);
-  }
-
-  /* Menyembul hanya untuk penunjuk sungguhan. Di layar sentuh, :hover
-     nyangkut setelah satu ketukan dan sidebar-nya tidak pernah menutup. */
-  @media not (hover: hover) {
-    .sidebar-slot[data-peek] .sidebar { position: sticky; width: 100%; box-shadow: none; }
-    .sidebar-slot[data-peek] .sidebar__wordmark,
-    .sidebar-slot[data-peek] .sidebar__label,
-    .sidebar-slot[data-peek] .sidebar__chevron,
-    .sidebar-slot[data-peek] .sidebar__sub,
-    .sidebar-slot[data-peek] .sidebar__group-label,
-    .sidebar-slot[data-peek] .sidebar__cari-label,
-    .sidebar-slot[data-peek] .sidebar__kbd,
-    .sidebar-slot[data-peek] .sidebar__site-text { display: none; }
-  }
+  /* Menyembul: slotnya ikut melebar, jadi konten BERGESER — bukan tertutup.
+     Sempat dibuat menimpa supaya halaman tidak bergerak, dan pemilik menolak:
+     yang dia harapkan adalah tata letak yang menyesuaikan, bukan panel yang
+     menutupi isinya. Konsekuensinya diterima — halaman memang bergeser 200px
+     tiap kali kursor menyentuh rel. */
+  .sidebar-slot[data-peek] { width: var(--sidebar-w); }
 }
 
 /* --- Teks berjalan saat disentuh ----------------------------------------- */
