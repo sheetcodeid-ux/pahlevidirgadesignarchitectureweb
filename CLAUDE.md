@@ -50,20 +50,43 @@ tayang sebelum kolomnya ada langsung gagal. Setelah menerapkan, buktikan
 kolomnya benar-benar ada lewat `execute_sql` — jangan menganggap berhasil
 karena `apply_migration` membalas success.
 
+**Proteksi password bocor Supabase tidak bisa dinyalakan di plan Free** —
+dokumennya menyebut ia Pro ke atas, dan sakelarnya memang mati permanen di
+dashboard. Advisor keamanan Supabase tetap melaporkannya sebagai peringatan;
+itu bukan sesuatu yang bisa diperbaiki, jadi jangan menyuruh pemilik
+menyalakannya. Yang sudah dipakai sebagai gantinya, dan gratis: panjang
+password minimum **12** dan Password Requirements paling ketat (huruf besar,
+huruf kecil, angka, simbol).
+
 **Cache query Hyperdrive HARUS mati.** Bawaannya menyala (60 detik) dan itu
 sudah menggigit: foto yang baru diunggah tidak muncul, cover yang baru
 dipilih tidak berubah, dan refresh browser tidak menolong karena cache-nya
 di edge. Setelannya di dashboard Cloudflare → Hyperdrive → `pahlevidirga-db`
-→ Caching. Langkah otomatis di workflow deploy sudah dicoba dan dilepas:
-`CLOUDFLARE_API_TOKEN` ditolak di endpoint Hyperdrive (Authentication error
-10000). Kalau token itu nanti diberi izin **Hyperdrive: Edit**, langkahnya
-bisa dikembalikan supaya setelan ini tidak bisa diam-diam berubah lagi.
-Kalau ada laporan "data lama" lagi, periksa setelan ini lebih dulu.
+→ Caching, dan **sudah dimatikan tangan oleh pemilik.** Kalau ada laporan
+"data lama" lagi, periksa setelan ini lebih dulu.
+
+Langkah otomatis untuk menguncinya sempat ada di workflow deploy lalu
+dilepas: `npx wrangler hyperdrive update ... --caching-disabled` ditolak
+dengan Authentication error 10000 (run #26). Catatan lama di file ini
+menyimpulkan penyebabnya token kekurangan izin **Hyperdrive: Edit** —
+**itu keliru.** Pemilik memeriksa tokennya langsung (2 September 2026):
+`pahlevidirgadesignarchitectureweb build token` sudah punya
+`Account · Hyperdrive · Edit`, dan juga `Account Settings: Read`,
+`User Details: Read`, `User Memberships: Read`. Jadi penyebab 10000 masih
+belum diketahui. Dugaan yang belum diuji: login pemilik memuat dua akun,
+dan perintahnya tidak menyebut account ID Dirga secara eksplisit — jebakan
+yang sama seperti pada konektor. Menguji ini butuh deploy sungguhan;
+jaringan sesi Claude memblokir `api.cloudflare.com`, jadi tidak bisa
+dibuktikan dari sini.
 
 Cloudflare: akun **`pahlevidirgadesignarchitecture`**, ID
 `cf6a6bde45d3fd8a93463e6cc7e71aa1`. Worker `pahlevidirgadesignarchitectureweb`
 menyajikan situs statis dari `apps/web/dist` lewat `wrangler.jsonc` di akar,
-tayang di `pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev`.
+tayang di **`pahlevidirgaarchitecture.com`** lewat custom domain — itu alamat
+yang dipakai pemilik sehari-hari, termasuk `/admin`. Alamat bawaan
+`pahlevidirgadesignarchitectureweb.pahlevidirgadesignarchitecture.workers.dev`
+masih hidup tapi bukan yang dipakai; `site` di `astro.config.mjs` sudah
+menunjuk domain kustomnya, jadi canonical dan kartu bagikan sudah benar.
 Worker kedua, `pahlevidirga-api`, menjalankan API (`apps/api/wrangler.jsonc`) —
 Postgres diakses lewat binding Hyperdrive (bukan koneksi langsung dari
 Worker), rate limit `/auth/login` dan `/inquiries` lewat KV (bukan in-memory,
