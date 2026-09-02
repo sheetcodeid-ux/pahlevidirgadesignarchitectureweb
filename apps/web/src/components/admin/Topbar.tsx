@@ -6,7 +6,7 @@ import { Avatar } from "../ui/misc/Avatar";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { IsiNotifikasi, TabNotifikasi } from "./NotifikasiPanel";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
-import { bukaProyek, proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
+import { bukaProyek, setProyekAktif, proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import {
   ambilSettings, profilTersimpan, hapusSesi, singkatanZona,
   type Profil, type Proyek, type StudioSettings,
@@ -247,9 +247,12 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
             className="ov-command__input topbar__field-input"
             /* Placeholder judul proyek bukan teks bantuan, melainkan isi —
                jadi ia diberi warna teks penuh, bukan warna redup. */
-            data-terpilih={judulAktif && !nilai ? "" : undefined}
-            placeholder={judulAktif ?? "Cari proyek"}
-            title={judulAktif ?? undefined}
+            /* Tanpa pilihan, yang berlaku memang "Semua" — dan menuliskannya
+               jauh lebih jujur daripada "Cari proyek", yang membuat keadaan
+               tanpa-pilihan terbaca seperti kotak yang belum diisi. */
+            data-terpilih={!nilai ? "" : undefined}
+            placeholder={judulAktif ?? "Semua Proyek"}
+            title={judulAktif ?? "Semua Proyek"}
             value={nilai}
             onValueChange={setNilai}
             onFocus={() => setBuka(true)}
@@ -264,6 +267,21 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
             {proyek === null
               ? <div className="ov-command__empty">Memuat…</div>
               : <Cmdk.Empty className="ov-command__empty">Tidak ada proyek yang cocok.</Cmdk.Empty>}
+
+            {/* "Semua" bukan proyek, jadi ia TIDAK memakai bukaProyek — yang
+                dilakukannya justru melepas pilihan. Halaman Keuangan lalu
+                menghitung seluruh studio, bukan satu proyek. Ditaruh paling
+                atas karena itu keadaan bawaannya. */}
+            <Cmdk.Item
+              value="Semua proyek seluruh studio"
+              className="ov-command__item"
+              onSelect={() => { setNilai(""); setBuka(false); setProyekAktif(null); }}
+            >
+              <Icon name="dashboard" size={15} />
+              <TeksGeser>Semua Proyek</TeksGeser>
+              <span className="topbar__combo-status">{(proyek ?? []).length}</span>
+            </Cmdk.Item>
+
             {(proyek ?? []).map((p) => (
               <Cmdk.Item
                 key={p.id}

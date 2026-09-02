@@ -1317,6 +1317,13 @@
    lebih dulu daripada nama proyeknya. */
 .table__idx { width: 1%; color: var(--text-faint); font-family: var(--font-mono); font-size: var(--text-sm); }
 
+/* Angka minus di keuangan. Merah karena "−Rp92.000.000" dan "Rp92.000.000"
+   terlalu mirip saat dipindai sekilas — tanda minus setipis itu hilang di
+   antara digit. Merah di sini bukan "destruktif", melainkan brand yang sama
+   dipakai sebagai penanda perhatian; tidak ada warna lain di palet yang
+   berarti "kurang dari nol". */
+.angka-minus { color: var(--brand); }
+
 /* Sel yang isinya kalimat panjang — kutipan testimoni, catatan — dipotong
    satu baris. Tanpa ini tinggi tiap baris ditentukan oleh kalimat terpanjang,
    dan tabelnya tidak bisa dipindai dengan mata. */

@@ -39,7 +39,15 @@ const NAV: NavItem[] = [
     ],
   },
   { label: "List Kerjaan", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
-  { label: "Keuangan", href: "/admin/keuangan", icon: "finance", group: "Utama" },
+  {
+    label: "Keuangan",
+    icon: "finance",
+    group: "Utama",
+    children: [
+      { label: "Ringkasan", href: "/admin/keuangan", icon: "dashboard" },
+      { label: "Analisis Bulanan", href: "/admin/keuangan/bulanan", icon: "clock" },
+    ],
+  },
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },
   { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Utama" },

@@ -135,6 +135,9 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
   const [labelBiaya, setLabelBiaya] = useState("");
   const [kategoriBiaya, setKategoriBiaya] = useState("lainnya");
   const [nominalBiaya, setNominalBiaya] = useState<number | null>(null);
+  // Kosong berarti hari ini. Staf yang mencatat nota hari ini tidak perlu
+  // mengetik tanggalnya; yang mencatat nota bulan lalu tinggal menggantinya.
+  const [tanggalBiaya, setTanggalBiaya] = useState("");
 
   /* Kop PDF diambil dari Info Studio. Dimuat sekali bersama panelnya, bukan
      saat tombol ditekan: kalau permintaannya gagal, tombolnya mati dengan
@@ -203,9 +206,10 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
     const nominal = nominalBiaya;
     if (label.length < 2 || nominal === null || nominal <= 0) return;
     try {
-      await tambahBiaya(proyek.id, label, kategoriBiaya, nominal);
+      await tambahBiaya(proyek.id, label, kategoriBiaya, nominal, tanggalBiaya || undefined);
       setLabelBiaya("");
       setNominalBiaya(null);
+      setTanggalBiaya("");
       muat();
     } catch (e) {
       toast({ judul: "Gagal menambah biaya", keterangan: (e as Error).message, nada: "gagal" });
@@ -421,7 +425,17 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                 <InputRupiah id="biaya-nominal" value={nominalBiaya} onChange={setNominalBiaya} />
               </div>
             </div>
-            <div className="row row--end">
+            {/* Tanggal ditaruh di baris tombol, bukan jadi kolom keempat:
+                baris Label / Kategori / Nominal sudah disetujui pemilik dan
+                tidak diubah. Ruang kosong di kiri tombol memang menganggur. */}
+            <div className="row row--between" style={{ flexWrap: "wrap", gap: "var(--space-3)" }}>
+              <div className="field field--sebaris">
+                <label className="field__label" htmlFor="biaya-tanggal">Tanggal biaya</label>
+                <input id="biaya-tanggal" className="input input--ringkas" type="date"
+                  value={tanggalBiaya} onChange={(e) => setTanggalBiaya(e.target.value)}
+                  max={new Date().toISOString().slice(0, 10)} />
+                <span className="field__help">Kosongkan kalau hari ini.</span>
+              </div>
               <button type="button" className="btn btn--secondary btn--sm"
                 disabled={labelBiaya.trim().length < 2 || nominalBiaya === null || nominalBiaya <= 0}
                 onClick={tambahBiayaBaru}>
@@ -435,7 +449,11 @@ function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontra
                   <li key={b.id} className="item item--bordered">
                     <span className="item__text">
                       <span className="item__title">{b.label}</span>
-                      <span className="item__desc">{KATEGORI_BIAYA.find(([v]) => v === b.category)?.[1] ?? b.category} · {formatRupiah(b.amount)}</span>
+                      <span className="item__desc">
+                        {KATEGORI_BIAYA.find(([v]) => v === b.category)?.[1] ?? b.category}
+                        {" · "}{formatRupiah(b.amount)}
+                        {" · "}{new Date(b.incurredOn).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
                     </span>
                     <AlertDialog
                       destructive

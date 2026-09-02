@@ -155,6 +155,24 @@
   overflow: hidden;
 }
 
+/* Kartu angka: ikon + label sebaris di atas, ANGKANYA sendirian di bawah.
+   Bukan gaya bebas — terukur: dengan angka di sebelah ikon, kotaknya cuma
+   174px sementara "Rp185.000.000" pada --text-2xl butuh 238px, jadi angkanya
+   terpotong di setiap kartu. Ditumpuk begini, angkanya dapat selebar kartu. */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.stat__head { display: flex; align-items: center; gap: var(--space-3); }
+.stat__head .t-label { margin: 0; }
+
+/* --text-xl, bukan --text-2xl: pada empat kolom, 28px tetap tidak muat.
+   Terukur di kartu 280px — 22px butuh 187px, tersedia 232px. */
+.stat__nilai { font-size: var(--text-xl); }
+
 .card__header {
   display: flex;
   align-items: flex-start;

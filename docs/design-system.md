@@ -69,6 +69,28 @@ Resizable · Message Scroller · Questionnaire · Attachment · Voice Note
 
 Direction (konteks LTR/RTL)
 
+### Kartu angka
+
+`.card.stat` — ikon + label sebaris di atas, angkanya sendirian di bawah pada
+`--text-xl`. Bukan gaya bebas: dengan angka di sebelah ikon, kotaknya hanya
+174px sementara `Rp185.000.000` pada `--text-2xl` butuh 238px, jadi angkanya
+terpotong di setiap kartu. Terukur, bukan dikira.
+
+Angka minus memakai `.angka-minus` (merah brand). Tanda minus setipis itu
+hilang di antara digit, dan `−Rp92.000.000` terlalu mirip `Rp92.000.000` saat
+dipindai sekilas.
+
+Deretan kartu angka memakai `.spec-grid--empat` atau `.spec-grid--tiga-tetap`,
+bukan `.spec-grid` bawaan: yang bawaan menghitung berapa kolom yang MUAT, jadi
+empat kartu jatuh 3+1 dan menyisakan dua sel kosong.
+
+### Grafik batang bernilai minus
+
+`BarChart` menggambar nilai negatif turun dari garis nol, batangnya merah, dan
+garis nolnya dipertebal. Sebelumnya sumbunya selalu mulai dari nol dan batang
+negatif tidak pernah tergambar sama sekali — laba bersih yang minus, justru
+angka yang paling perlu dilihat, menghilang tanpa jejak.
+
 ### Satu bentuk untuk semua daftar
 
 `apps/web/src/components/ui/data/DataTable.tsx` bukan sekadar salah satu

@@ -11,6 +11,7 @@ const HALAMAN: { label: string; ikon: Parameters<typeof Icon>[0]["name"]; ke: st
   { label: "Tambah Proyek", ikon: "projectPlus", ke: "/admin/proyek/baru" },
   { label: "List Kerjaan", ikon: "checklist", ke: "/admin/list-kerjaan" },
   { label: "Keuangan", ikon: "finance", ke: "/admin/keuangan" },
+  { label: "Analisis Bulanan", ikon: "clock", ke: "/admin/keuangan/bulanan" },
   { label: "Pesan Masuk", ikon: "inquiry", ke: "/admin/pesan" },
   { label: "Tim & Freelancer", ikon: "team", ke: "/admin/tim" },
   { label: "Direktori", ikon: "directory", ke: "/admin/direktori" },

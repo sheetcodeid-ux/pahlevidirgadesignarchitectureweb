@@ -341,9 +341,20 @@ admin.post("/projects/:id/tasks", async (c) => {
   }
 });
 
-// GET /api/v1/admin/finance/overview
+// GET /api/v1/admin/finance/overview?projectId=…
 admin.get("/finance/overview", async (c) => {
-  const data = await withDb(c.env, c.executionCtx, (sql) => financeRepo.overview(sql));
+  // Tanpa projectId berarti "Semua" — seluruh proyek studio, sama seperti
+  // sebelum penyaring ini ada.
+  const projectID = c.req.query("projectId") || null;
+  const data = await withDb(c.env, c.executionCtx, (sql) => financeRepo.overview(sql, projectID));
+  return c.json({ data });
+});
+
+// GET /api/v1/admin/finance/monthly?projectId=…&bulan=12
+admin.get("/finance/monthly", async (c) => {
+  const projectID = c.req.query("projectId") || null;
+  const bulan = Number(c.req.query("bulan") ?? 12);
+  const data = await withDb(c.env, c.executionCtx, (sql) => financeRepo.monthly(sql, projectID, bulan));
   return c.json({ data });
 });
 

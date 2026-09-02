@@ -1,0 +1,12 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { MonthlyPanel } from "../../../components/admin/MonthlyPanel";
+---
+
+<AdminLayout
+  title="Analisis Bulanan"
+  heading="Analisis Bulanan"
+  description="Kas masuk, biaya, dan laba bersih per bulan — beserta berapa proyek yang bergerak."
+>
+  <MonthlyPanel client:load />
+</AdminLayout>

@@ -40,7 +40,15 @@ export function BarChart({ data, title, unit = "" }: { data: BarDatum[]; title: 
   const [tabel, setTabel] = useState(false);
   const id = useId();
 
-  const maks = Math.max(...data.map((d) => d.value), 1);
+  // Nilai minus digambar TURUN dari garis nol, bukan diabaikan. Sebelumnya
+  // sumbunya selalu mulai dari nol dan batang bernilai negatif tidak pernah
+  // tergambar sama sekali — laba bersih yang minus, yaitu satu-satunya angka
+  // yang paling perlu dilihat, justru menghilang tanpa jejak.
+  const maks = Math.max(...data.map((d) => d.value), 0);
+  const min = Math.min(...data.map((d) => d.value), 0);
+  // Rentang minimal 1 supaya deret yang seluruhnya nol tidak membagi nol.
+  const rentang = Math.max(maks - min, 1);
+
   const plotW = W - P.kiri - P.kanan;
   const plotH = H - P.atas - P.bawah;
   const slot = plotW / data.length;
@@ -48,7 +56,15 @@ export function BarChart({ data, title, unit = "" }: { data: BarDatum[]; title: 
   // blok warna.
   const lebar = Math.min(slot - 8, 44);
 
-  const garis = [0, 0.5, 1].map((t) => Math.round(maks * t));
+  /** Ordinat sebuah nilai di dalam kotak plot. */
+  const yDari = (v: number) => P.atas + plotH - ((v - min) / rentang) * plotH;
+  const yNol = yDari(0);
+
+  // Kalau ada nilai minus, tiga garis bantunya jadi min / 0 / maks supaya
+  // garis nolnya benar-benar terlihat — itu yang memisahkan untung dari rugi.
+  const garis = min < 0
+    ? [min, 0, maks].map((g) => Math.round(g))
+    : [0, 0.5, 1].map((t) => Math.round(maks * t));
 
   return (
     <div className="chart">
@@ -74,19 +90,24 @@ export function BarChart({ data, title, unit = "" }: { data: BarDatum[]; title: 
             <title id={`${id}-t`}>{title}</title>
 
             {garis.map((g) => {
-              const y = P.atas + plotH - (g / maks) * plotH;
+              const y = yDari(g);
               return (
                 <g key={g}>
-                  <line className="chart__grid-line" x1={P.kiri} x2={W - P.kanan} y1={y} y2={y} />
+                  <line className="chart__grid-line" x1={P.kiri} x2={W - P.kanan} y1={y} y2={y}
+                    data-nol={g === 0 && min < 0 ? "" : undefined} />
                   <text className="chart__axis-text" x={P.kiri - 8} y={y + 4} textAnchor="end">{g}</text>
                 </g>
               );
             })}
 
             {data.map((d, i) => {
-              const tinggi = (d.value / maks) * plotH;
+              const yNilai = yDari(d.value);
+              const minus = d.value < 0;
+              // Batang minus tumbuh KE BAWAH dari garis nol: pangkalnya di
+              // nol, ujungnya di nilainya.
+              const y = minus ? yNol : yNilai;
+              const tinggi = Math.abs(yNilai - yNol);
               const x = P.kiri + i * slot + (slot - lebar) / 2;
-              const y = P.atas + plotH - tinggi;
               return (
                 <g key={d.label} onMouseEnter={() => setSorot(i)} onMouseLeave={() => setSorot(null)}>
                   {/* Area tangkap setinggi plot — kursor tidak perlu tepat di batangnya. */}
@@ -97,10 +118,13 @@ export function BarChart({ data, title, unit = "" }: { data: BarDatum[]; title: 
                     width={lebar}
                     height={Math.max(tinggi, 2)}
                     rx="4"
-                    fill="var(--chart-1)"
+                    fill={minus ? "var(--brand)" : "var(--chart-1)"}
                     opacity={sorot === null || sorot === i ? 1 : 0.45}
                   />
-                  <text className="chart__value-text" x={x + lebar / 2} y={y - 6} textAnchor="middle">{d.value}</text>
+                  {/* Angka batang minus ditaruh DI BAWAH ujungnya — di atas
+                      pangkalnya ia bertumpuk dengan garis nol. */}
+                  <text className="chart__value-text" x={x + lebar / 2}
+                    y={minus ? y + tinggi + 14 : y - 6} textAnchor="middle">{d.value}</text>
                   <text className="chart__axis-text" x={x + lebar / 2} y={H - 8} textAnchor="middle">{d.label}</text>
                 </g>
               );

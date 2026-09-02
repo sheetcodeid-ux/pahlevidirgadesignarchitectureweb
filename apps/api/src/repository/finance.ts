@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import type { FinanceOverview, FinanceOverviewRow } from "../types";
+import type { FinanceMonthRow, FinanceOverview, FinanceOverviewRow } from "../types";
 
 interface ProjectRow {
   project_id: string;
@@ -12,11 +12,24 @@ interface ProjectRow {
 /**
  * Ringkasan keuangan lintas proyek.
  *
- * Margin dihitung di sini, bukan disimpan — (kontrak - total biaya) / kontrak.
- * "Diterima" cuma menghitung invoice yang statusnya lunas; invoice draft
- * atau terbit belum dianggap kas masuk.
+ * Dua angka yang sengaja hidup berdampingan, karena keduanya menjawab
+ * pertanyaan berbeda:
+ *
+ * - **Margin** proyeksi: (kontrak - biaya) / kontrak. Ini JANJI — berapa untung
+ *   proyek ini kalau seluruh kontraknya benar-benar dibayar.
+ * - **Laba bersih** kenyataan kas: diterima - biaya. Keputusan pemilik, dengan
+ *   alasannya sendiri: "uang belum diterima dengan full". Proyek yang baru DP
+ *   50% akan tampak minus di sini kalau biayanya sudah keluar duluan, dan itu
+ *   memang keadaan kasnya — bukan salah hitung.
+ *
+ * "Diterima" hanya menghitung invoice berstatus lunas; draft dan terbit belum
+ * pernah jadi uang.
+ *
+ * @param projectID kalau diisi, seluruh angka hanya mencakup proyek itu.
  */
-export async function overview(sql: Sql): Promise<FinanceOverview> {
+export async function overview(sql: Sql, projectID?: string | null): Promise<FinanceOverview> {
+  // Satu query dengan filter opsional, bukan dua query bercabang: cabang yang
+  // dipakai jarang adalah cabang yang paling mudah hanyut berbeda.
   const rows = await sql<ProjectRow[]>`
     select
       p.id as project_id,
@@ -32,21 +45,30 @@ export async function overview(sql: Sql): Promise<FinanceOverview> {
       ), 0) as costs_total
     from public.projects p
     where p.contract_value is not null
+      and (${projectID ?? null}::uuid is null or p.id = ${projectID ?? null}::uuid)
     order by p.created_at desc`;
 
+  // Piutang ikut disaring: kalau satu proyek dipilih, angka di kartunya harus
+  // membicarakan proyek itu juga — bukan piutang seluruh studio.
   const piutangRows = await sql<{ total: string }[]>`
-    select coalesce(sum(amount), 0) as total from public.invoices where status = 'terbit'`;
+    select coalesce(sum(amount), 0) as total
+    from public.invoices
+    where status = 'terbit'
+      and (${projectID ?? null}::uuid is null or project_id = ${projectID ?? null}::uuid)`;
 
   const proyek: FinanceOverviewRow[] = rows.map((r) => {
-    const kontrak = Number(r.contract_value);
+    const kontrak = r.contract_value === null ? null : Number(r.contract_value);
     const biaya = Number(r.costs_total);
+    const diterima = Number(r.received);
     return {
       projectId: r.project_id,
       projectTitle: r.project_title,
       contractValue: kontrak,
-      received: Number(r.received),
+      received: diterima,
       costsTotal: biaya,
-      marginPct: kontrak > 0 ? ((kontrak - biaya) / kontrak) * 100 : null,
+      marginPct: kontrak && kontrak > 0 ? ((kontrak - biaya) / kontrak) * 100 : null,
+      labaBersih: diterima - biaya,
+      belumDiterima: kontrak === null ? null : kontrak - diterima,
     };
   });
 
@@ -58,6 +80,81 @@ export async function overview(sql: Sql): Promise<FinanceOverview> {
     kasMasuk,
     piutang: Number(piutangRows[0]?.total ?? 0),
     marginRataRata: totalKontrak > 0 ? ((totalKontrak - totalBiaya) / totalKontrak) * 100 : null,
+    labaBersih: kasMasuk - totalBiaya,
+    totalBiaya,
+    totalKontrak,
     proyek,
   };
+}
+
+interface MonthRow {
+  bulan: string;
+  kas_masuk: string;
+  biaya: string;
+  proyek_aktif: string;
+}
+
+/**
+ * Kas masuk, biaya, dan laba bersih per bulan.
+ *
+ * Tanggalnya diambil dari kejadiannya, bukan dari kapan barisnya diketik:
+ * invoices.paid_at untuk kas masuk, project_costs.incurred_on untuk biaya.
+ * Kalau memakai created_at, satu sore mengetik nota tiga bulan ke belakang
+ * akan menumpuk semuanya ke bulan ini dan grafiknya berbohong.
+ *
+ * Bulan tanpa kas masuk MAUPUN biaya tidak muncul sebagai baris kosong — ia
+ * memang tidak ada datanya, dan garis nol yang dikarang lebih menyesatkan
+ * daripada jeda. Yang mengisi jeda itu tugas grafiknya, bukan query ini.
+ *
+ * @param bulanTerakhir berapa bulan ke belakang yang disapu.
+ */
+export async function monthly(
+  sql: Sql,
+  projectID?: string | null,
+  bulanTerakhir = 12,
+): Promise<FinanceMonthRow[]> {
+  const batas = Math.min(Math.max(Math.trunc(bulanTerakhir) || 12, 1), 60);
+
+  const rows = await sql<MonthRow[]>`
+    with kas as (
+      select
+        to_char(i.paid_at, 'YYYY-MM') as bulan,
+        i.project_id,
+        i.amount as masuk,
+        0::numeric as keluar
+      from public.invoices i
+      where i.status = 'lunas'
+        and i.paid_at is not null
+        and i.paid_at >= date_trunc('month', current_date) - make_interval(months => ${batas - 1})
+        and (${projectID ?? null}::uuid is null or i.project_id = ${projectID ?? null}::uuid)
+      union all
+      select
+        to_char(c.incurred_on, 'YYYY-MM') as bulan,
+        c.project_id,
+        0::numeric as masuk,
+        c.amount as keluar
+      from public.project_costs c
+      where c.incurred_on >= date_trunc('month', current_date)::date - make_interval(months => ${batas - 1})
+        and (${projectID ?? null}::uuid is null or c.project_id = ${projectID ?? null}::uuid)
+    )
+    select
+      bulan,
+      coalesce(sum(masuk), 0) as kas_masuk,
+      coalesce(sum(keluar), 0) as biaya,
+      count(distinct project_id) as proyek_aktif
+    from kas
+    group by bulan
+    order by bulan`;
+
+  return rows.map((r) => {
+    const kasMasuk = Number(r.kas_masuk);
+    const biaya = Number(r.biaya);
+    return {
+      bulan: r.bulan,
+      kasMasuk,
+      biaya,
+      labaBersih: kasMasuk - biaya,
+      proyekAktif: Number(r.proyek_aktif),
+    };
+  });
 }

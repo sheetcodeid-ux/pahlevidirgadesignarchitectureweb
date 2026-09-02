@@ -55,6 +55,11 @@
    tabelnya jadi terlihat renggang sendiri. */
 .input--ringkas { padding: 0.35rem 0.7rem; font-size: var(--text-sm); }
 
+/* Isian yang berdiri sendiri di dalam baris bersama tombol: tidak melar
+   selebar baris, dan bantuan di bawahnya tidak memaksa tombol ikut turun. */
+.field--sebaris { flex: none; gap: var(--space-1); }
+.field--sebaris .input { width: auto; min-width: 9.5rem; }
+
 .input::placeholder { color: var(--text-faint); }
 .input:hover:not(:disabled):not([readonly]) { border-color: var(--border-strong); }
 
@@ -165,6 +170,26 @@
 @media (max-width: 30rem) {
   .spec-grid--dua { grid-template-columns: 1fr; }
 }
+
+/* Empat kolom untuk deretan kartu angka. Ambang 18rem bawaan .spec-grid
+   memberi TIGA kolom di lebar konten panel admin, jadi kartu keempat turun
+   sendirian dan meninggalkan dua sel kosong di sebelahnya — persis yang
+   dilarang: barisnya harus terisi penuh.
+
+   Media query, bukan container query: kartu-kartu ini anak langsung isi
+   halaman, dan tidak ada satu pun leluhurnya yang menyatakan container-type
+   (jebakan yang sudah menggigit sekali di panel Keuangan). */
+.spec-grid--empat { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 78rem) { .spec-grid--empat { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 40rem) { .spec-grid--empat { grid-template-columns: 1fr; } }
+
+/* Tiga kolom yang benar-benar tiga, untuk kartu angka — beda dari --tiga di
+   atas yang auto-fit untuk isian pendek. */
+.spec-grid--tiga-tetap { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 62rem) { .spec-grid--tiga-tetap { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 40rem) { .spec-grid--tiga-tetap { grid-template-columns: 1fr; } }
 
 
 /* --- Input group: kontrol dengan aksi menempel ---------------------------- */

@@ -102,6 +102,10 @@
 .chart__figure { position: relative; width: 100%; }
 .chart__svg { width: 100%; height: auto; overflow: visible; display: block; }
 .chart__grid-line { stroke: var(--chart-grid); stroke-width: 1; }
+
+/* Garis nol pada grafik yang punya nilai minus. Ia bukan garis bantu biasa —
+   ia batas antara untung dan rugi, dan harus terbaca sebagai batas. */
+.chart__grid-line[data-nol] { stroke: var(--border-strong); stroke-width: 2; }
 .chart__axis-text { fill: var(--chart-axis); font-size: 11px; font-family: var(--font-sans); }
 .chart__value-text { fill: var(--text-muted); font-size: 11px; font-family: var(--font-mono); }
 

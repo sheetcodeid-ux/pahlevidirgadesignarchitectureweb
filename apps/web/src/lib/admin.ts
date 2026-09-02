@@ -505,14 +505,31 @@ export interface FinanceOverviewRow {
   contractValue: number | null;
   received: number;
   costsTotal: number;
+  /** Proyeksi kalau seluruh kontrak dibayar. Janji, bukan uang. */
   marginPct: number | null;
+  /** Kenyataan kas: diterima - biaya. Boleh minus, dan itu memang datanya. */
+  labaBersih: number;
+  belumDiterima: number | null;
 }
 
 export interface FinanceOverview {
   kasMasuk: number;
   piutang: number;
   marginRataRata: number | null;
+  labaBersih: number;
+  totalBiaya: number;
+  totalKontrak: number;
   proyek: FinanceOverviewRow[];
+}
+
+/** Satu bulan di halaman Analisis Bulanan. */
+export interface BarisBulanan {
+  /** YYYY-MM. */
+  bulan: string;
+  kasMasuk: number;
+  biaya: number;
+  labaBersih: number;
+  proyekAktif: number;
 }
 
 /**
@@ -524,7 +541,14 @@ export interface FinanceOverview {
  */
 export const terbitkanSitus = () => panggil<{ dimulai: boolean }>("/admin/publish", { method: "POST" });
 
-export const ambilRingkasanKeuangan = () => panggil<FinanceOverview>("/admin/finance/overview");
+/** Tanpa projectId berarti "Semua" — seluruh proyek studio. */
+export const ambilRingkasanKeuangan = (projectId?: string | null) =>
+  panggil<FinanceOverview>(`/admin/finance/overview${projectId ? `?projectId=${projectId}` : ""}`);
+
+export const ambilBulanan = (projectId?: string | null, bulan = 12) =>
+  panggil<BarisBulanan[]>(
+    `/admin/finance/monthly?bulan=${bulan}${projectId ? `&projectId=${projectId}` : ""}`,
+  );
 
 export interface Invoice {
   id: string;
@@ -557,14 +581,18 @@ export interface BiayaProyek {
   label: string;
   category: string;
   amount: number;
+  /** Tanggal biaya benar-benar terjadi (YYYY-MM-DD), bukan kapan diketik. */
+  incurredOn: string;
 }
 
 export const daftarBiaya = (projectId: string) => panggil<BiayaProyek[]>(`/admin/projects/${projectId}/costs`);
 
-export const tambahBiaya = (projectId: string, label: string, category: string, amount: number) =>
+export const tambahBiaya = (
+  projectId: string, label: string, category: string, amount: number, incurredOn?: string,
+) =>
   panggil<{ id: string }>(`/admin/projects/${projectId}/costs`, {
     method: "POST",
-    body: JSON.stringify({ label, category, amount }),
+    body: JSON.stringify({ label, category, amount, incurredOn }),
   });
 
 export const hapusBiaya = (id: string) =>

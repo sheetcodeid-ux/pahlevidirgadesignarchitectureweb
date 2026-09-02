@@ -406,12 +406,15 @@ export interface ProjectCost {
   label: string;
   category: string;
   amount: number;
+  /** Tanggal biaya benar-benar terjadi (YYYY-MM-DD), bukan kapan diketik. */
+  incurredOn: string;
 }
 
 export interface ProjectCostInput {
   label?: string;
   category?: string;
   amount?: number;
+  incurredOn?: string;
 }
 
 export interface FinanceOverviewRow {
@@ -420,14 +423,34 @@ export interface FinanceOverviewRow {
   contractValue: number | null;
   received: number;
   costsTotal: number;
+  /** Proyeksi: (kontrak - biaya) / kontrak. Janji, bukan uang. */
   marginPct: number | null;
+  /** Kenyataan kas: diterima - biaya. Bisa minus, dan itu memang informasinya. */
+  labaBersih: number;
+  /** Sisa yang belum ditagih maupun belum dibayar: kontrak - diterima. */
+  belumDiterima: number | null;
 }
 
 export interface FinanceOverview {
   kasMasuk: number;
   piutang: number;
   marginRataRata: number | null;
+  /** Total kas masuk dikurangi seluruh biaya, lintas proyek yang tercakup. */
+  labaBersih: number;
+  totalBiaya: number;
+  totalKontrak: number;
   proyek: FinanceOverviewRow[];
+}
+
+/** Satu bulan di halaman Analisis Bulanan. */
+export interface FinanceMonthRow {
+  /** YYYY-MM. */
+  bulan: string;
+  kasMasuk: number;
+  biaya: number;
+  labaBersih: number;
+  /** Proyek yang punya kas masuk ATAU biaya di bulan itu. */
+  proyekAktif: number;
 }
 
 export interface DirectoryContact {
