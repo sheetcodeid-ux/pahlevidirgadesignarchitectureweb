@@ -1,0 +1,72 @@
+name: Kunci cache Hyperdrive
+
+# Workflow ini SENGAJA terpisah dari deploy.yml dan hanya jalan kalau
+# dijalankan tangan.
+#
+# Langkah pematian cache Hyperdrive dulu ada di dalam deploy.yml lalu
+# dilepas: perintahnya ditolak dengan Authentication error 10000 (run #26),
+# dan membiarkannya membuat SETIAP deploy merah padahal kedua Worker sudah
+# tayang. Deploy yang merah terus-menerus melatih orang mengabaikan merah,
+# persis saat merah itu akhirnya berarti sesuatu.
+#
+# Jadi sebabnya diselidiki di sini dulu, di tempat yang boleh merah tanpa
+# menakut-nakuti siapa pun. Kalau run ini hijau, langkahnya baru
+# dikembalikan ke deploy.yml. Kalau merah, lognya memberi tahu sebab
+# sebenarnya — yang sampai sekarang belum diketahui.
+on:
+  workflow_dispatch:
+
+jobs:
+  hyperdrive:
+    name: Pastikan cache query mati
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/stack-setup-supabase-cloudflare-kdwlkk
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+
+      - run: npm ci
+        working-directory: apps/api
+
+      # Tiga langkah berurutan yang memisahkan kemungkinan penyebabnya.
+      # Dua yang pertama boleh gagal tanpa menghentikan run, supaya satu
+      # kali jalan memberi gambaran utuh — bukan berhenti di kegagalan
+      # pertama lalu menyisakan tebakan.
+
+      # 1. Apakah tokennya bisa dipakai sama sekali?
+      - name: Siapa pemilik token ini
+        continue-on-error: true
+        run: npx wrangler whoami
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # 2. Apakah ia boleh MEMBACA Hyperdrive? Kalau langkah ini hijau
+      #    tapi langkah 3 merah, sebabnya bukan izin — izin baca dan tulis
+      #    Hyperdrive datang dari permission yang sama.
+      - name: Baca daftar konfigurasi Hyperdrive
+        continue-on-error: true
+        run: npx wrangler hyperdrive list
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: cf6a6bde45d3fd8a93463e6cc7e71aa1
+
+      # 3. Yang sebenarnya kita mau: matikan cache-nya.
+      #
+      #    CLOUDFLARE_ACCOUNT_ID disebut eksplisit — login pemilik memuat
+      #    DUA akun (punya Dirga dan punya Sheetcode), dan perintah versi
+      #    lama tidak pernah menyebut yang mana. Ini dugaan utama penyebab
+      #    error 10000, dan run inilah yang membuktikan atau membantahnya.
+      - name: Matikan cache query
+        run: npx wrangler hyperdrive update a6e312cc6ef14b0eb6e7553ad20e2029 --caching-disabled
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: cf6a6bde45d3fd8a93463e6cc7e71aa1
