@@ -50,6 +50,11 @@
     box-shadow var(--dur) var(--ease);
 }
 
+/* Varian ringkas untuk isian yang hidup DI DALAM sel tabel. Isian setinggi
+   biasa membuat barisnya 20px lebih tinggi dari baris tabel lain, dan seluruh
+   tabelnya jadi terlihat renggang sendiri. */
+.input--ringkas { padding: 0.35rem 0.7rem; font-size: var(--text-sm); }
+
 .input::placeholder { color: var(--text-faint); }
 .input:hover:not(:disabled):not([readonly]) { border-color: var(--border-strong); }
 

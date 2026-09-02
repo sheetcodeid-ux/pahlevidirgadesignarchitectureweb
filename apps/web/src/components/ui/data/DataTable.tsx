@@ -38,6 +38,11 @@ interface Props<T> {
   chips?: Chip<T>[];
   /** Tombol aksi utama di kanan bilah. */
   aksi?: ReactNode;
+  /** Pengalih tampilan (.listbar__views), seperti tabel/kartu di Semua Proyek. */
+  tampilan?: ReactNode;
+  /** Kalau diisi, ini yang digambar sebagai ganti tabel — untuk tampilan
+   *  kanban atau kartu. Barisnya sudah tersaring dan terurut. */
+  gantiIsi?: (terlihat: T[]) => ReactNode;
   /** Isi tambahan panel saringan — biasanya Select urutan atau kategori. */
   saringan?: ReactNode;
   /** Dipanggil saat "Bersihkan semua" ditekan, untuk menyetel ulang saringan
@@ -76,7 +81,8 @@ export function kolomSkeleton<T>(kolom: Kolom<T>[]) {
  */
 export function DataTable<T>({
   data, kunci, kolom, cariPada, placeholderCari, labelCari, satuan,
-  chips, aksi, saringan, onBersihkan, bersihkanAktif, kosong, barisSkeleton,
+  chips, aksi, tampilan, gantiIsi, saringan, onBersihkan, bersihkanAktif,
+  kosong, barisSkeleton,
 }: Props<T>) {
   const [cari, setCari] = useState("");
   const [saring, setSaring] = useState(chips?.[0]?.id ?? "semua");
@@ -120,6 +126,7 @@ export function DataTable<T>({
               aria-label={labelCari}
             />
           </div>
+          {tampilan && <div className="listbar__views">{tampilan}</div>}
           {aksi && <div className="listbar__cta">{aksi}</div>}
         </div>
 
@@ -180,6 +187,8 @@ export function DataTable<T>({
             {data.length === 0 ? kosong.keterangan : "Coba kata kunci atau saringan lain."}
           </p>
         </div></div>
+      ) : gantiIsi ? (
+        <div className="listpage__pad">{gantiIsi(terlihat)}</div>
       ) : (
         <div className="table-wrap">
           <div className="listcount">

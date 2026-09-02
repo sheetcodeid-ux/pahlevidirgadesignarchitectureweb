@@ -91,6 +91,18 @@ keduanya tidak bisa hanyut berbeda.
 Membuat daftar baru berarti memakai komponen ini. Kalau kebutuhannya tidak
 muat, perluas komponennya — jangan membangun tabel kedua.
 
+Dua prop membuatnya cukup untuk semua daftar yang ada:
+
+- `tampilan` mengisi sel `.listbar__views` — dipakai pengalih tabel/kanban di
+  List Kerjaan dan tabel/kartu di Semua Proyek
+- `gantiIsi(terlihat)` menggambar sesuatu selain tabel dengan baris yang
+  sudah tersaring dan terurut. Kanban List Kerjaan memakainya, jadi
+  pencarian, chip, dan panel saringan tetap satu tempat
+
+Yang memakainya sekarang: Pesan Masuk, Direktori, Testimoni, List Kerjaan,
+dan tabel proyek di Keuangan. Tim & Freelancer belum — daftar itu akan jadi
+kartu berfoto, bukan tabel.
+
 ### Skeleton berbentuk
 
 `apps/web/src/components/ui/Skeleton.tsx` — `SkeletonBaris`, `SkeletonDaftar`,

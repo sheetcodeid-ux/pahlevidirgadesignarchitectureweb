@@ -286,6 +286,16 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
    tanpa satu pun galat. Sudah menggigit tiga halaman sekaligus.
    **Periksa dengan menjalankan halamannya, bukan dengan membaca komponennya.**
 
+7. **Ikon SVG menyusut sampai 0 di dalam flex atau grid yang sempit.**
+   `global.css` memberi `svg { max-width: 100%; height: auto }` supaya gambar
+   tidak meluber — tapi ikon punya lebar dan tinggi eksplisit dan ikut kena.
+   Di kolom Aksi yang sempit, ikon 15px jadi **0×0** dan yang tampil adalah
+   tombol bulat kosong; bintang 13px jadi 5×5. Tanpa satu pun galat, dan
+   tidak kelihatan dari membaca komponennya. Sudah ditutup dengan
+   `svg[width][height] { flex: none; max-width: none; }` — jangan dilepas.
+   Grafik tidak kena karena `<svg>`-nya memakai `viewBox` tanpa atribut
+   lebar/tinggi.
+
 ## Kecepatan panel admin
 
 Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu

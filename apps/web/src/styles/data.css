@@ -52,23 +52,6 @@
 .table__sort-icon { transition: transform var(--dur) var(--ease); }
 .table__sort[aria-sort="descending"] .table__sort-icon { transform: rotate(180deg); }
 
-/* --- Data Table: toolbar + kaki ------------------------------------------- */
-
-.dt { display: flex; flex-direction: column; gap: var(--space-4); }
-
-.dt__toolbar { display: flex; flex-direction: column; gap: var(--space-3); }
-
-.dt__search { position: relative; display: flex; align-items: center; }
-.dt__search .input { padding-left: 2.75rem; }
-.dt__search-icon { position: absolute; left: 1rem; color: var(--text-faint); pointer-events: none; }
-
-.dt__meta { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
-.dt__count { font-size: var(--text-sm); color: var(--text-muted); }
-.dt__count b { color: var(--text-strong); font-variant-numeric: tabular-nums; }
-
-.dt__empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-8) var(--space-4); text-align: center; }
-.dt__empty .icon-tile { margin-bottom: var(--space-2); }
-
 /* --- Calendar & Date Picker ---------------------------------------------- */
 
 .cal { width: min(20rem, 100%); padding: var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }

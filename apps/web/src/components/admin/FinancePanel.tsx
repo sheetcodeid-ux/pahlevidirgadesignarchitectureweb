@@ -2,9 +2,37 @@ import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { BarChart } from "../ui/data/Chart";
+import { DataTable, type Kolom } from "../ui/data/DataTable";
 import { RequireAuth } from "./RequireAuth";
 import { ambilRingkasanKeuangan, type FinanceOverview, bacaCache, tulisCache} from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
+
+type BarisProyek = FinanceOverview["proyek"][number];
+
+const KOLOM: Kolom<BarisProyek>[] = [
+  {
+    judul: "Proyek",
+    render: (p) => (
+      <a href={`/admin/proyek/edit?id=${p.projectId}`} className="item__title" style={{ textDecoration: "none" }}>
+        {p.projectTitle}
+      </a>
+    ),
+  },
+  { judul: "Kontrak", kelas: "table__num", lebar: "7rem", render: (p) => (p.contractValue !== null ? formatRupiah(p.contractValue) : "—") },
+  { judul: "Diterima", kelas: "table__num", lebar: "7rem", render: (p) => formatRupiah(p.received) },
+  { judul: "Biaya (HPP)", kelas: "table__num", lebar: "7rem", render: (p) => formatRupiah(p.costsTotal) },
+  {
+    judul: "Margin",
+    kelas: "table__num",
+    lebar: "3.5rem",
+    render: (p) =>
+      p.marginPct !== null ? (
+        <span className={`badge ${p.marginPct >= 35 ? "badge--success" : "badge--warn"}`}>
+          {p.marginPct.toFixed(0)}%
+        </span>
+      ) : "—",
+  },
+];
 
 function Isi() {
   const [data, setData] = useState<FinanceOverview | null>(() => bacaCache<FinanceOverview>("keuangan"));
@@ -91,40 +119,21 @@ function Isi() {
             )}
           </div>
 
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Proyek</th>
-                  <th className="table__num">Kontrak</th>
-                  <th className="table__num">Diterima</th>
-                  <th className="table__num">Biaya (HPP)</th>
-                  <th className="table__num">Margin</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.proyek.map((p) => (
-                  <tr key={p.projectId}>
-                    <td>
-                      <a href={`/admin/proyek/edit?id=${p.projectId}`} className="item__title" style={{ textDecoration: "none" }}>
-                        {p.projectTitle}
-                      </a>
-                    </td>
-                    <td className="table__num">{p.contractValue !== null ? formatRupiah(p.contractValue) : "—"}</td>
-                    <td className="table__num">{formatRupiah(p.received)}</td>
-                    <td className="table__num">{formatRupiah(p.costsTotal)}</td>
-                    <td className="table__num">
-                      {p.marginPct !== null ? (
-                        <span className={`badge ${p.marginPct >= 35 ? "badge--success" : "badge--warn"}`}>
-                          {p.marginPct.toFixed(0)}%
-                        </span>
-                      ) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            data={data.proyek}
+            kunci={(p) => p.projectId}
+            kolom={KOLOM}
+            cariPada={(p) => [p.projectTitle]}
+            placeholderCari="Cari proyek…"
+            labelCari="Cari proyek"
+            satuan="proyek"
+            barisSkeleton={data.proyek.length}
+            kosong={{
+              ikon: "finance",
+              judul: "Belum ada proyek dengan nilai kontrak",
+              keterangan: "Isi nilai kontrak di tab Keuangan pada halaman tiap proyek.",
+            }}
+          />
         </>
       )}
     </div>

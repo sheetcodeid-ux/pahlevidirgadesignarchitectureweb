@@ -74,6 +74,14 @@ video {
   height: auto;
 }
 
+/* Ikon SVG punya lebar dan tinggi eksplisit, dan aturan di atas membuatnya
+   BOLEH menyusut: di dalam flex atau grid yang sempit ia mengecil sampai 0
+   dan yang tampil adalah tombol kosong tanpa satu pun galat. Terukur di
+   kolom Aksi Testimoni: ikon 15px jadi 0x0 dan bintang 13px jadi 5x5.
+   Ikon tidak pernah boleh ikut mengecil — kalau ruangnya kurang, yang harus
+   mengalah adalah teks di sebelahnya. */
+svg[width][height] { flex: none; max-width: none; }
+
 /* Fokus terlihat jelas di kedua tema. */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--focus);
