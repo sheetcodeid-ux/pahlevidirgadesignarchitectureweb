@@ -30,12 +30,47 @@ const facts = [
   { label: "Luas", value: project.areaSqm ? `${project.areaSqm} m²` : undefined },
   { label: "Arsitek utama", value: project.leadArchitect },
 ].filter((fact) => fact.value);
+
+const situs = Astro.site;
+const alamatHalaman = new URL(Astro.url.pathname, situs).href;
+
+// Satu proyek arsitektur paling tepat dijelaskan sebagai CreativeWork:
+// ia bukan artikel dan bukan produk yang dijual. Remah roti dipasang
+// terpisah supaya Google bisa menampilkan jalur Beranda › Proyek › Judul
+// di hasil pencarian, bukan URL mentah.
+const dataProyek = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "@id": alamatHalaman,
+    name: project.title,
+    url: alamatHalaman,
+    ...(project.summary ? { description: project.summary } : {}),
+    ...(project.coverImageUrl ? { image: project.coverImageUrl } : {}),
+    ...(project.year ? { dateCreated: String(project.year) } : {}),
+    genre: CATEGORY_LABELS[project.category],
+    ...(project.location || project.city
+      ? { locationCreated: { "@type": "Place", name: [project.location, project.city].filter(Boolean).join(", ") } }
+      : {}),
+    creator: { "@id": new URL("/#studio", situs).href },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Beranda", item: situs?.href },
+      { "@type": "ListItem", position: 2, name: "Proyek", item: new URL("/proyek/", situs).href },
+      { "@type": "ListItem", position: 3, name: project.title, item: alamatHalaman },
+    ],
+  },
+];
 ---
 
 <BaseLayout
   title={project.seoTitle ?? project.title}
   description={project.seoDescription ?? project.summary}
   image={project.coverImageUrl}
+  jsonLd={dataProyek}
 >
   <article>
     {

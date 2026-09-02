@@ -74,8 +74,17 @@ async function request<T>(path: string): Promise<T> {
     throw new Error(`API ${path} membalas ${response.status}`);
   }
 
-  const body = (await response.json()) as Envelope<T>;
-  return body.data;
+  const body = (await response.json()) as Partial<Envelope<T>>;
+
+  // Balasan tanpa field `data` bukan balasan yang sah. Tanpa pemeriksaan ini
+  // ia lolos sebagai `undefined` dan baru meledak jauh di halaman yang
+  // memakainya — padahal maksud safely() justru menahan kegagalan API di
+  // sini. Dilempar supaya nilai cadangan yang dipakai.
+  if (!body || typeof body !== "object" || !("data" in body)) {
+    throw new Error(`API ${path} membalas tanpa field data`);
+  }
+
+  return body.data as T;
 }
 
 /**
@@ -109,6 +118,25 @@ export function getProject(slug: string): Promise<Project | null> {
   return safely<Project | null>(`/api/v1/projects/${encodeURIComponent(slug)}`, null);
 }
 
+// Gambar cadangan untuk kartu bagikan halaman yang tidak punya gambarnya
+// sendiri (/kontak, /tentang, /faq). Foto proyek unggulan dipilih lebih dulu;
+// kalau belum ada yang diunggulkan, proyek terbit mana pun. Sama seperti
+// setelan studio, hasilnya ditampung supaya satu build tidak menembak API
+// berulang kali untuk jawaban yang sama.
+let gambarTersimpan: Promise<string | undefined> | null = null;
+
+export function gambarBagikan(): Promise<string | undefined> {
+  if (!gambarTersimpan) {
+    gambarTersimpan = (async () => {
+      const proyek = await listProjects({ limit: 12 });
+      if (!Array.isArray(proyek)) return undefined;
+      const unggulan = proyek.find((p) => p.isFeatured && p.coverImageUrl);
+      return (unggulan ?? proyek.find((p) => p.coverImageUrl))?.coverImageUrl;
+    })();
+  }
+  return gambarTersimpan;
+}
+
 export interface StudioSettings {
   studioName: string;
   tagline?: string | null;
@@ -125,8 +153,18 @@ const FALLBACK_SETTINGS: StudioSettings = {
   email: "studio@pahlevidirgaarchitecture.com",
 };
 
+// Header, Footer, dan BaseLayout sama-sama butuh setelan studio, jadi tanpa
+// penampung ini satu build 26 halaman menembak /api/v1/settings 78 kali untuk
+// jawaban yang sama persis. Yang disimpan promise-nya, bukan hasilnya —
+// panggilan berbarengan ikut menunggu permintaan yang sudah jalan, bukan
+// memulai permintaan kedua.
+let setelanTersimpan: Promise<StudioSettings> | null = null;
+
 export function getSettings(): Promise<StudioSettings> {
-  return safely<StudioSettings>("/api/v1/settings", FALLBACK_SETTINGS);
+  if (!setelanTersimpan) {
+    setelanTersimpan = safely<StudioSettings>("/api/v1/settings", FALLBACK_SETTINGS);
+  }
+  return setelanTersimpan;
 }
 
 export interface InquiryPayload {
