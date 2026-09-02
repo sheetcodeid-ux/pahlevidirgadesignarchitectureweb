@@ -202,3 +202,263 @@
 .resizable__handle:hover,
 .resizable__handle:active { background: var(--brand); }
 .resizable__handle:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+/* =============================================================================
+   Papan angka — bentuk halaman Keuangan.
+
+   Diturunkan dari referensi papan pasar milik pemilik: strip metrik padat,
+   satu grafik besar bertab, kartu mini berbadge, dan batang bertumpuk yang
+   berani turun di bawah nol. Yang ditiru susunan dan kepadatannya; warnanya
+   tetap milik situs ini.
+   ============================================================================= */
+
+/* --- Delta ---------------------------------------------------------------- */
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.delta--baik  { color: var(--success); }
+.delta--buruk { color: var(--brand); }
+.delta--kosong { color: var(--text-faint); font-family: var(--font-sans); }
+
+/* --- Strip metrik --------------------------------------------------------- */
+
+/* Satu bilah, bukan empat kartu: bingkai per angka membuatnya terbaca sebagai
+   empat benda terpisah, padahal keempatnya dibaca sekali sapu. */
+.metrik-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.metrik {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+/* Garis pemisah antar-metrik, bukan bingkai penuh. */
+.metrik + .metrik { border-left: 1px solid var(--border); }
+
+.metrik__label {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.metrik__nilai {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  line-height: 1.1;
+}
+
+@media (max-width: 68rem) {
+  .metrik-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Di dua kolom, pemisahnya tidak boleh mengikuti urutan DOM lagi: yang
+     butuh garis kiri adalah kolom kanan, dan yang butuh garis atas adalah
+     baris kedua. */
+  .metrik + .metrik { border-left: 0; }
+  .metrik:nth-child(even) { border-left: 1px solid var(--border); }
+  .metrik:nth-child(n + 3) { border-top: 1px solid var(--border); }
+}
+
+@media (max-width: 34rem) {
+  .metrik-strip { grid-template-columns: 1fr; }
+  .metrik:nth-child(even) { border-left: 0; }
+  .metrik + .metrik { border-top: 1px solid var(--border); }
+}
+
+/* --- Bilah kemajuan ------------------------------------------------------- */
+
+.kemajuan {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+}
+
+.kemajuan__isi {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: var(--radius-pill);
+  background: var(--chart-1);
+}
+
+.kemajuan__titik {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+}
+
+/* --- Gauge ---------------------------------------------------------------- */
+
+.gauge { display: grid; place-items: center; }
+.gauge__svg { width: min(14rem, 100%); height: auto; }
+
+.gauge__angka {
+  fill: var(--text-strong);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge__teks {
+  fill: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+/* --- Sparkline ------------------------------------------------------------ */
+
+.spark { width: 100%; height: 4rem; display: block; }
+.spark--kosong { display: grid; place-items: center; height: 4rem; color: var(--text-faint); font-size: var(--text-sm); }
+
+/* --- Grafik bidang & batang bertumpuk ------------------------------------- */
+
+.area { position: relative; width: 100%; }
+.area__svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* Garis puncak: putus-putus supaya jelas ia penanda, bukan data. */
+.area__puncak { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 5 5; }
+
+.area__puncak-teks {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.area__lacak { stroke: var(--border-strong); stroke-width: 1; }
+
+.area__tip {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+/* --- Kartu papan ---------------------------------------------------------- */
+
+.papan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.papan__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+
+.papan__judul {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--text-strong);
+  text-decoration: none;
+}
+
+a.papan__judul:hover { color: var(--brand); }
+
+.papan__nilai { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.papan__nilai .t-numeral { font-size: var(--text-2xl); }
+
+.papan__isi { min-width: 0; }
+
+/* Tab di KAKI kartu, seperti referensi — bukan di kepala. Yang dipilih di
+   sini mengganti isi grafik di atasnya, jadi tempatnya memang di bawahnya. */
+.papan__tab { display: flex; }
+.papan__tab .segmented { width: 100%; }
+
+/* --- Kartu mini ----------------------------------------------------------- */
+
+.mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+
+.mini__judul {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-body);
+  text-decoration: none;
+}
+
+a.mini__judul:hover { color: var(--brand); }
+
+.mini__ket { font-size: var(--text-xs); color: var(--text-faint); }
+
+.mini__nilai {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  line-height: 1.15;
+}
+
+.mini .badge { align-self: flex-start; }
+
+/* --- Pil lingkup ---------------------------------------------------------- */
+
+/* Sebaris: ikon, nama lingkup, angka besar, delta, lalu tautan ganti. Ini
+   pengganti spanduk peringatan — lingkup bukan peringatan, ia keadaan. */
+.lingkup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.lingkup__nama { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--text-muted); font-size: var(--text-sm); }
+.lingkup__nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-md); color: var(--text-strong); }
+.lingkup__dorong { margin-inline-start: auto; }

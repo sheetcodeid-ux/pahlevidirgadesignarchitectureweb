@@ -5,6 +5,9 @@ import { DatePicker } from "../ui/data/DatePicker";
 import { BarChart, LineChart } from "../ui/data/Chart";
 import { Carousel } from "../ui/data/Carousel";
 import { ScrollArea, ResizableDemo } from "../ui/data/Panels";
+import {
+  AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
+} from "../ui/data/Dashboard";
 
 interface Proyek extends Record<string, unknown> {
   judul: string;
@@ -151,6 +154,114 @@ export function DataShowcase() {
           </div>
           <ResizableDemo />
           <p className="field__help">Seret sekatnya, atau raih dengan Tab lalu geser dengan panah.</p>
+        </div>
+      </div>
+
+      {/* --- Papan angka -------------------------------------------------- */}
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Strip Metrik</span>
+          <code className="swatch__name">StripMetrik</code>
+        </div>
+        <StripMetrik
+          metrik={[
+            { label: "Kas masuk", nilai: "Rp185.000.000", delta: bandingkan(30, 45), deltaFormat: (v) => `Rp${v} jt` },
+            { label: "Biaya", nilai: "Rp261.000.000", delta: bandingkan(8, 70), deltaTerbalik: true, deltaFormat: (v) => `Rp${v} jt` },
+            { label: "Laba bersih", nilai: "−Rp76.000.000", minus: true, delta: bandingkan(22, -25), deltaFormat: (v) => `Rp${v} jt` },
+            { label: "Tertagih", nilai: "41%" },
+          ]}
+        />
+        <p className="field__help">
+          Satu bilah dipisah garis, bukan empat kartu. Delta yang basisnya negatif menampilkan
+          selisih rupiah, bukan persen — "dari rugi ke untung" bukan pertumbuhan sekian persen.
+        </p>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Kartu Papan + Area Chart</span>
+          <code className="swatch__name">KartuPapan, AreaChart</code>
+        </div>
+        <KartuPapan
+          judul="Arus uang per bulan"
+          nilai="Rp22.000.000"
+          delta={bandingkan(22, 18)}
+          kanan={<span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>7 bulan terakhir</span>}
+          anak={
+            <AreaChart
+              titik={[23, 32, -18, -17, -30, -25, 22]}
+              label={["Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep"]}
+              judulNilai="Laba bersih"
+              format={(v) => `Rp${Math.round(v)} jt`}
+              warna="var(--chart-3)"
+            />
+          }
+          tab={
+            <div className="segmented segmented--block" role="group" aria-label="Deret">
+              <button type="button" className="segmented__opt" aria-pressed>Laba bersih</button>
+              <button type="button" className="segmented__opt">Kas masuk</button>
+              <button type="button" className="segmented__opt">Biaya</button>
+            </div>
+          }
+        />
+        <p className="field__help">
+          Sumbu nilainya di kanan dan garis putus-putus menandai puncaknya. Tab di KAKI kartu,
+          karena yang dipilih di situ mengganti isi grafik di atasnya.
+        </p>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Stacked Bar Chart</span>
+          <code className="swatch__name">StackedBarChart</code>
+        </div>
+        <StackedBarChart
+          label={["Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep"]}
+          format={(v) => `Rp${Math.round(v)} jt`}
+          deret={[
+            { nama: "Kas masuk", warna: "var(--chart-1)", nilai: [35, 72, 0, 22, 60, 45, 30] },
+            { nama: "Biaya", warna: "var(--chart-2)", nilai: [-12, -40, -18, -40, -90, -70, -8] },
+          ]}
+        />
+        <p className="field__help">
+          Yang positif naik dari nol, yang negatif turun. Menjumlahkannya jadi satu batang akan
+          menyembunyikan bahwa dua deretnya berlawanan arah — dan selisih itulah datanya.
+        </p>
+      </div>
+
+      <div className="spec-grid spec-grid--dua">
+        <div className="spec-demo">
+          <div className="spec-demo__name">
+            <span className="t-subheading">Gauge</span>
+            <code className="swatch__name">Gauge</code>
+          </div>
+          <Gauge nilai={42} judul="Margin proyeksi" keterangan="Sehat" />
+          <p className="field__help">Zonanya memakai warna semantik: merah rugi, amber tipis, hijau sehat.</p>
+        </div>
+
+        <div className="spec-demo">
+          <div className="spec-demo__name">
+            <span className="t-subheading">Sparkline</span>
+            <code className="swatch__name">Sparkline</code>
+          </div>
+          <Sparkline titik={[23, 32, -18, -17, -30, -25, 22]} label="Laba bersih per bulan" />
+          <p className="field__help">Tanpa sumbu — bentuknya yang bercerita. Merah kalau berakhir lebih rendah dari awalnya.</p>
+        </div>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Kartu Mini</span>
+          <code className="swatch__name">KartuMini</code>
+        </div>
+        <div className="spec-grid spec-grid--tiga-tetap">
+          <KartuMini judul="Bulan terbaik" keterangan="Laba bersih tertinggi" nilai="Apr 2026"
+            badge="Rp32.500.000" badgeKelas="badge--success" />
+          <KartuMini judul="Bulan terberat" keterangan="Laba bersih terendah" nilai="Jul 2026"
+            badge="−Rp30.000.000" badgeKelas="badge--brand" />
+          <KartuMini judul="Bulan rugi" keterangan="Biaya melebihi kas masuk" nilai="4 dari 7"
+            badge="Sering" badgeKelas="badge--warn" />
         </div>
       </div>
 

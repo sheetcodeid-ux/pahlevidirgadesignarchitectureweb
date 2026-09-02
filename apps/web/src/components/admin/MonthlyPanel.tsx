@@ -1,30 +1,45 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
-import { BarChart, LineChart } from "../ui/data/Chart";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
-import { Select } from "../ui/overlay/Select";
+import {
+  AreaChart, KartuMini, KartuPapan, StackedBarChart, StripMetrik,
+  bandingkan, type DeretTumpuk, type Metrik, type Perubahan,
+} from "../ui/data/Dashboard";
 import { RequireAuth } from "./RequireAuth";
 import { ambilBulanan, type BarisBulanan, bacaCache, tulisCache } from "../../lib/admin";
 import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
 
-const RENTANG: { value: string; label: string }[] = [
-  { value: "6", label: "6 bulan terakhir" },
-  { value: "12", label: "12 bulan terakhir" },
-  { value: "24", label: "24 bulan terakhir" },
-];
+const RENTANG = [
+  { id: "6", label: "6 bulan" },
+  { id: "12", label: "12 bulan" },
+  { id: "24", label: "24 bulan" },
+] as const;
 
-function rupiahBertanda(n: number) {
+function rupiah(n: number) {
   return n < 0 ? `−${formatRupiah(Math.abs(n))}` : formatRupiah(n);
+}
+
+function rupiahRingkas(n: number) {
+  const tanda = n < 0 ? "−" : "";
+  const a = Math.abs(n);
+  if (a >= 1_000_000_000) return `${tanda}Rp${(a / 1_000_000_000).toFixed(1).replace(".", ",")} M`;
+  if (a >= 1_000_000) return `${tanda}Rp${Math.round(a / 1_000_000)} jt`;
+  if (a >= 1_000) return `${tanda}Rp${Math.round(a / 1_000)} rb`;
+  return `${tanda}Rp${a}`;
 }
 
 /** "2026-08" → "Agu 2026". Bulan penuh terlalu lebar untuk sumbu grafik. */
 function namaBulan(iso: string) {
   const [th, bl] = iso.split("-");
-  const nama = new Date(Number(th), Number(bl) - 1, 1)
-    .toLocaleDateString("id-ID", { month: "short" });
-  return `${nama} ${th}`;
+  return `${new Date(Number(th), Number(bl) - 1, 1).toLocaleDateString("id-ID", { month: "short" })} ${th}`;
+}
+
+/** Bulan terakhir dibanding bulan sebelumnya. null kalau tidak ada pembanding. */
+function delta(baris: BarisBulanan[], ambil: (b: BarisBulanan) => number): Perubahan | null {
+  if (baris.length < 2) return null;
+  return bandingkan(ambil(baris[baris.length - 1]), ambil(baris[baris.length - 2]));
 }
 
 const KOLOM: Kolom<BarisBulanan>[] = [
@@ -35,16 +50,9 @@ const KOLOM: Kolom<BarisBulanan>[] = [
     judul: "Laba bersih",
     kelas: "table__num",
     lebar: "7rem",
-    render: (b) => (
-      <span className={b.labaBersih < 0 ? "angka-minus" : undefined}>{rupiahBertanda(b.labaBersih)}</span>
-    ),
+    render: (b) => <span className={b.labaBersih < 0 ? "angka-minus" : undefined}>{rupiah(b.labaBersih)}</span>,
   },
-  {
-    judul: "Proyek",
-    kelas: "table__num",
-    lebar: "3.5rem",
-    render: (b) => b.proyekAktif,
-  },
+  { judul: "Proyek", kelas: "table__num", lebar: "3.5rem", render: (b) => b.proyekAktif },
 ];
 
 function Isi() {
@@ -63,8 +71,7 @@ function Isi() {
   useEffect(() => {
     if (!siap) return;
     const kunci = `bulanan:${aktif ?? "semua"}:${rentang}`;
-    const tersimpan = bacaCache<BarisBulanan[]>(kunci);
-    setData(tersimpan ?? null);
+    setData(bacaCache<BarisBulanan[]>(kunci) ?? null);
 
     ambilBulanan(aktif, Number(rentang))
       .then((d) => { tulisCache(kunci, d); setData(d); })
@@ -82,8 +89,8 @@ function Isi() {
 
   if (!data) {
     return (
-      <div className="stack" style={{ gap: "var(--space-6)" }}>
-        <SkeletonStat jumlah={3} />
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
     );
@@ -97,20 +104,46 @@ function Isi() {
   // kali lipat, dan itu bukan rata-rata apa pun.
   const rerata = data.length > 0 ? totalLaba / data.length : 0;
   const terbaik = data.reduce<BarisBulanan | null>((a, b) => (!a || b.labaBersih > a.labaBersih ? b : a), null);
+  const terburuk = data.reduce<BarisBulanan | null>((a, b) => (!a || b.labaBersih < a.labaBersih ? b : a), null);
+  const bulanRugi = data.filter((b) => b.labaBersih < 0).length;
 
-  return (
-    <div className="stack" style={{ gap: "var(--space-6)" }}>
-      <div className="row row--between" style={{ flexWrap: "wrap", gap: "var(--space-3)" }}>
-        <span className="t-muted">
-          {aktif ? "Hanya proyek yang dipilih di bilah atas." : "Seluruh proyek studio."}
-          {" "}Tanggalnya diambil dari kapan uangnya bergerak, bukan kapan barisnya diketik.
-        </span>
-        <div style={{ minWidth: "13rem" }}>
-          <Select ariaLabel="Rentang bulan" options={RENTANG} value={rentang} onValueChange={setRentang} />
+  const label = data.map((b) => namaBulan(b.bulan));
+
+  // Kas masuk NAIK, biaya TURUN dari garis nol. Menumpuk keduanya ke atas
+  // akan menyembunyikan bahwa mereka berlawanan arah — dan justru selisih
+  // itulah laba bersihnya.
+  const deret: DeretTumpuk[] = [
+    { nama: "Kas masuk", warna: "var(--chart-1)", nilai: data.map((b) => b.kasMasuk) },
+    { nama: "Biaya", warna: "var(--chart-2)", nilai: data.map((b) => -b.biaya) },
+  ];
+
+  const metrik: Metrik[] = [
+    { label: "Total kas masuk", nilai: formatRupiah(totalKas), delta: delta(data, (b) => b.kasMasuk), deltaFormat: rupiahRingkas },
+    { label: "Total biaya", nilai: formatRupiah(totalBiaya), delta: delta(data, (b) => b.biaya), deltaTerbalik: true, deltaFormat: rupiahRingkas },
+    { label: "Laba bersih", nilai: rupiah(totalLaba), minus: totalLaba < 0, delta: delta(data, (b) => b.labaBersih), deltaFormat: rupiahRingkas },
+    // Dibulatkan ke ribuan: "−Rp1.857.143" menjanjikan ketelitian yang tidak
+    // dimiliki angka rata-rata, dan tujuh digit sulit dibaca sekilas.
+    { label: "Rata-rata per bulan", nilai: rupiah(Math.round(rerata / 1000) * 1000), minus: rerata < 0 },
+  ];
+
+  const tabRentang = (
+    <div className="segmented" role="group" aria-label="Rentang bulan">
+      {RENTANG.map((r) => (
+        <button key={r.id} type="button" className="segmented__opt"
+          aria-pressed={rentang === r.id} onClick={() => setRentang(r.id)}>
+          {r.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (data.length === 0) {
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <div className="row row--between" style={{ flexWrap: "wrap", gap: "var(--space-3)" }}>
+          <span className="t-muted">{aktif ? "Hanya proyek yang dipilih di bilah atas." : "Seluruh proyek studio."}</span>
+          {tabRentang}
         </div>
-      </div>
-
-      {data.length === 0 ? (
         <div className="empty">
           <span className="icon-tile"><Icon name="finance" size={20} /></span>
           <span className="t-subheading">Belum ada pergerakan uang di rentang ini</span>
@@ -118,74 +151,110 @@ function Isi() {
             Analisis bulanan terisi begitu ada invoice yang ditandai lunas atau biaya yang dicatat.
           </p>
         </div>
-      ) : (
-        <>
-          <div className="spec-grid spec-grid--empat">
-            {[
-              { label: "Total kas masuk", nilai: formatRupiah(totalKas), ikon: "finance" as const, catatan: `${data.length} bulan berdata` },
-              { label: "Total biaya", nilai: formatRupiah(totalBiaya), ikon: "checklist" as const, catatan: "Seluruh biaya di rentang ini" },
-              { label: "Laba bersih", nilai: rupiahBertanda(totalLaba), ikon: "finance" as const, catatan: `Rata-rata ${rupiahBertanda(Math.round(rerata))} per bulan`, minus: totalLaba < 0 },
-              { label: "Bulan terbaik", nilai: terbaik ? namaBulan(terbaik.bulan) : "—", ikon: "star" as const, catatan: terbaik ? rupiahBertanda(terbaik.labaBersih) : undefined },
-            ].map((s) => (
-              <div className="card stat" key={s.label}>
-                <div className="stat__head">
-                  <span className="icon-tile"><Icon name={s.ikon} size={18} /></span>
-                  <span className="t-label">{s.label}</span>
-                </div>
-                <span className={`t-numeral stat__nilai${s.minus ? " angka-minus" : ""}`}>{s.nilai}</span>
-                {s.catatan && <span className="t-muted">{s.catatan}</span>}
-              </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      <div className="lingkup">
+        <span className="lingkup__nama">
+          <Icon name={aktif ? "project" : "dashboard"} size={15} />
+          {aktif ? "Satu proyek" : "Semua Proyek"}
+        </span>
+        <span className="lingkup__nilai">{data.length} bulan berdata</span>
+        <span className="lingkup__dorong">{tabRentang}</span>
+      </div>
+
+      <StripMetrik metrik={metrik} />
+
+      <KartuPapan
+        judul="Uang masuk dan keluar"
+        nilai={rupiah(data[data.length - 1].labaBersih)}
+        delta={delta(data, (b) => b.labaBersih)}
+        deltaFormat={rupiahRingkas}
+        kanan={
+          <span className="chart__legend">
+            {deret.map((d) => (
+              <span className="chart__legend-item" key={d.nama}>
+                <span className="chart__swatch" style={{ background: d.warna }} />{d.nama}
+              </span>
             ))}
-          </div>
+          </span>
+        }
+        anak={<StackedBarChart deret={deret} label={label} format={rupiahRingkas} />}
+      />
 
-          {/* Dua grafik, jadi dua kolom. .spec-grid bawaan menghitung
-              berapa yang MUAT dan memberi tiga di lebar ini — kolom ketiganya
-              kosong dan kedua grafik jadi menggantung di kiri. */}
-          <div className="spec-grid spec-grid--dua">
-            <div className="spec-demo">
-              <LineChart
-                title="Kas masuk vs biaya"
-                labels={data.map((b) => namaBulan(b.bulan))}
-                series={[
-                  { name: "Kas masuk", color: "var(--chart-1)", points: data.map((b) => Math.round(b.kasMasuk / 1_000_000)) },
-                  { name: "Biaya", color: "var(--chart-2)", points: data.map((b) => Math.round(b.biaya / 1_000_000)) },
-                ]}
-              />
-              <p className="field__help">Dalam juta rupiah. Dua deret di satu sumbu karena satuannya sama.</p>
-            </div>
+      <div className="spec-grid spec-grid--dua">
+        <KartuPapan
+          judul="Laba bersih per bulan"
+          anak={
+            <AreaChart
+              titik={data.map((b) => b.labaBersih)}
+              label={label}
+              judulNilai="Laba bersih"
+              format={rupiahRingkas}
+              warna="var(--chart-3)"
+            />
+          }
+        />
+        <KartuPapan
+          judul="Proyek yang bergerak"
+          anak={
+            <AreaChart
+              titik={data.map((b) => b.proyekAktif)}
+              label={label}
+              judulNilai="Proyek aktif"
+              format={(v) => String(Math.round(v))}
+              warna="var(--chart-1)"
+            />
+          }
+        />
+      </div>
 
-            <div className="spec-demo">
-              <BarChart
-                title="Proyek yang bergerak per bulan"
-                data={data.map((b) => ({ label: namaBulan(b.bulan), value: b.proyekAktif }))}
-              />
-              <p className="field__help">
-                Proyek yang punya kas masuk atau biaya di bulan itu — bukan yang sekadar masih terbuka.
-              </p>
-            </div>
-          </div>
+      <div className="spec-grid spec-grid--tiga-tetap">
+        <KartuMini
+          judul="Bulan terbaik"
+          keterangan="Laba bersih tertinggi"
+          nilai={terbaik ? namaBulan(terbaik.bulan) : "—"}
+          badge={terbaik ? rupiah(terbaik.labaBersih) : undefined}
+          badgeKelas="badge--success"
+        />
+        <KartuMini
+          judul="Bulan terberat"
+          keterangan="Laba bersih terendah"
+          nilai={terburuk ? namaBulan(terburuk.bulan) : "—"}
+          badge={terburuk ? rupiah(terburuk.labaBersih) : undefined}
+          badgeKelas={terburuk && terburuk.labaBersih < 0 ? "badge--brand" : "badge--warn"}
+        />
+        <KartuMini
+          judul="Bulan rugi"
+          keterangan="Biaya melebihi kas masuk"
+          nilai={`${bulanRugi} dari ${data.length}`}
+          badge={bulanRugi === 0 ? "Tidak ada" : bulanRugi > data.length / 2 ? "Sering" : "Sesekali"}
+          badgeKelas={bulanRugi === 0 ? "badge--success" : bulanRugi > data.length / 2 ? "badge--brand" : "badge--warn"}
+        />
+      </div>
 
-          <DataTable
-            data={data}
-            kunci={(b) => b.bulan}
-            kolom={KOLOM}
-            cariPada={(b) => [namaBulan(b.bulan)]}
-            placeholderCari="Cari bulan…"
-            labelCari="Cari bulan"
-            satuan="bulan"
-            barisSkeleton={data.length}
-            kosong={{ ikon: "finance", judul: "Tidak ada bulan yang cocok", keterangan: "Coba kata kunci lain." }}
-          />
-        </>
-      )}
+      <DataTable
+        data={data}
+        kunci={(b) => b.bulan}
+        kolom={KOLOM}
+        cariPada={(b) => [namaBulan(b.bulan)]}
+        placeholderCari="Cari bulan…"
+        labelCari="Cari bulan"
+        satuan="bulan"
+        barisSkeleton={data.length}
+        kosong={{ ikon: "finance", judul: "Tidak ada bulan yang cocok", keterangan: "Coba kata kunci lain." }}
+      />
     </div>
   );
 }
 
 export function MonthlyPanel() {
   return <RequireAuth skeleton={
-      <div className="stack" style={{ gap: "var(--space-6)" }}>
-        <SkeletonStat jumlah={3} />
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
     }><Isi /></RequireAuth>;

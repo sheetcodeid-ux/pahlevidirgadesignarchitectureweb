@@ -69,6 +69,30 @@ Resizable · Message Scroller · Questionnaire · Attachment · Voice Note
 
 Direction (konteks LTR/RTL)
 
+### Papan angka (Keuangan)
+
+`apps/web/src/components/ui/data/Dashboard.tsx` — bentuk yang diturunkan dari
+referensi papan pasar milik pemilik. Yang ditiru **susunan dan kepadatannya**,
+bukan warnanya: di situs ini warna punya makna tetap, dan referensi itu memakai
+warna yang artinya berbeda.
+
+| Komponen | Kegunaan |
+| --- | --- |
+| `StripMetrik` | Satu bilah berisi 4 angka dipisah garis — bukan 4 kartu berbingkai |
+| `Delta` + `bandingkan()` | Perubahan berpanah. Persen hanya kalau basisnya positif |
+| `KartuPapan` | Judul berchevron, angka besar + delta, isi, tab di KAKI |
+| `AreaChart` | Grafik bidang, sumbu nilai di kanan, garis putus-putus di puncak |
+| `StackedBarChart` | Batang bertumpuk yang berani turun di bawah nol |
+| `Gauge` | Busur berjarum 0–100 dengan zona semantik |
+| `Sparkline` | Garis mungil tanpa sumbu |
+| `KartuMini` | Label berchevron, keterangan, angka, badge status |
+
+Aturan yang paling mudah dilanggar ada di `bandingkan()`: **persentase hanya
+bermakna kalau basisnya positif.** Laba bersih yang bergerak dari −25 juta ke
++22 juta menghasilkan "+188%" — angka yang terbaca seperti untung berlipat
+padahal yang terjadi berbalik dari rugi. Untuk kasus itu yang ditampilkan
+selisih rupiahnya.
+
 ### Kartu angka
 
 `.card.stat` — ikon + label sebaris di atas, angkanya sendirian di bawah pada
