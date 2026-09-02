@@ -69,6 +69,28 @@ Resizable · Message Scroller · Questionnaire · Attachment · Voice Note
 
 Direction (konteks LTR/RTL)
 
+### Satu bentuk untuk semua daftar
+
+`apps/web/src/components/ui/data/DataTable.tsx` bukan sekadar salah satu
+komponen di daftar di atas — ia **bentuk baku setiap daftar di panel admin**,
+diturunkan langsung dari halaman Semua Proyek. Isinya, dari atas ke bawah:
+
+1. `.listbar__main` — kotak cari selebar bilah, opsional sel tampilan
+   (`.listbar__views`) dan tombol aksi utama (`.listbar__cta`)
+2. `.listbar__filters` — chip status berangka + tombol Saringan (Popover)
+3. `.listcount` — "1–N dari M <satuan>"
+4. `table.table.table--ruled` dengan kolom `#` (`.table__idx`) yang
+   ditambahkan sendiri oleh komponennya
+5. Keadaan kosong `.empty`, dan skeleton `SkeletonTabel` saat `data` masih
+   `null`
+
+Pemanggil cuma memberi kolom, chip, dan isi panel saringan. Yang penting:
+`kolomSkeleton()` menurunkan skeleton dari kolom tabelnya sendiri, jadi
+keduanya tidak bisa hanyut berbeda.
+
+Membuat daftar baru berarti memakai komponen ini. Kalau kebutuhannya tidak
+muat, perluas komponennya — jangan membangun tabel kedua.
+
 ### Skeleton berbentuk
 
 `apps/web/src/components/ui/Skeleton.tsx` — `SkeletonBaris`, `SkeletonDaftar`,
