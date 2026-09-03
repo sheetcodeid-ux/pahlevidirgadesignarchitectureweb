@@ -561,3 +561,199 @@ a.mini__judul:hover { color: var(--brand); }
      sebesar referensi: 28px butuh 269px, tersedia ~298px di layar 390px. */
   .kangka__nilai { font-size: var(--text-2xl); }
 }
+
+/* =============================================================================
+   Grafik arus kas (ChartArusKas.tsx) — tiruan kartu "Cash Flow Analysis".
+
+   Proporsi diukur dari gambar referensi sebagai persentase terhadap lebar
+   kartunya (978px), lalu diterapkan pada kartu di sini yang lebarnya 787px
+   (67,4% dari kolom konten 1168px). Rasio kartunya nyaris sama — referensi
+   978x439 = 2,23, di sini 787x355 = 2,22 — jadi penskalaannya lurus 0,805x.
+
+   | Bagian             | Referensi | Di sini |
+   | ------------------ | --------- | ------- |
+   | padding kartu      | 26px      | 24px    |
+   | kolom sumbu nilai  | 50px      | 44px    |
+   | tinggi bidang gambar | 255px   | 205px   |
+   | tinggi baris bulan | 28px      | 24px    |
+   ============================================================================= */
+
+.arus {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* --- Kepala --------------------------------------------------------------- */
+
+.arus__head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3) var(--space-5); }
+
+.arus__judul {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-strong);
+}
+
+.arus__legenda { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; padding: 0; list-style: none; }
+
+.arus__legenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+.arus__titik { inline-size: 9px; block-size: 9px; border-radius: 50%; flex: none; }
+
+/* Pemilih periode didorong ke tepi kanan, seperti di referensi. */
+.arus__periode { margin-inline-start: auto; inline-size: 8.5rem; }
+.arus__periode .input { height: 2.375rem; font-size: var(--text-sm); }
+
+/* --- Bidang gambar -------------------------------------------------------- */
+
+/* Kolom sumbu 58px, bukan 44px seperti hitungan awal dari referensi.
+   Label dolar di sana pendek ("$700k", 5 karakter); padanan rupiahnya
+   "Rp800 jt" delapan karakter dan butuh 53px — pada 44px ia pecah dua baris,
+   dan barisnya jadi tidak sejajar dengan garis kisinya. */
+.arus__plot { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: var(--space-3); margin-block-start: var(--space-5); }
+
+.arus__sumbu {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  text-align: right;
+  white-space: nowrap;
+  /* Angka pertama dan terakhir duduk TEPAT di garis kisinya, jadi setengah
+     tinggi barisnya harus keluar dari kotak di atas dan di bawah. */
+  margin-block: -0.5em;
+  padding-block: 0.5em;
+}
+
+.arus__gambar {
+  position: relative;
+  block-size: 205px;
+  min-inline-size: 0;
+  /* Gulir tegak halaman tetap jalan di layar sentuh; yang ditangkap komponen
+     ini cuma gerakan mendatar. */
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.arus__gambar:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--radius-xs); }
+
+.arus__gambar > svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  /* global.css memberi svg { max-width: 100% } — di sini harus penuh. */
+  max-inline-size: none;
+}
+
+.arus__kisi { stroke: var(--chart-grid); stroke-width: 1; }
+.arus__bidik { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 5 5; }
+
+.arus__nodul {
+  position: absolute;
+  inline-size: 10px;
+  block-size: 10px;
+  translate: -50% -50%;
+  border: 3px solid;
+  border-radius: 50%;
+  background: var(--surface);
+  pointer-events: none;
+}
+
+.arus__belum {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+/* --- Kartu keterangan ----------------------------------------------------- */
+
+.arus__tip {
+  position: absolute;
+  z-index: 2;
+  inline-size: max-content;
+  max-inline-size: 15rem;
+  margin-inline-start: 14px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+/* Melompat ke kiri garis bidik saat mendekati tepi kanan kartu. */
+.arus__tip--kiri { margin-inline-start: 0; translate: calc(-100% - 14px) 0; }
+
+.arus__tip-judul {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.arus__tip-baris {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: 0.2rem 0 0;
+  font-size: var(--text-2xs);
+}
+
+.arus__tip-baris b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* --- Nama bulan ----------------------------------------------------------- */
+
+.arus__bulan {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin: var(--space-3) 0 0;
+  /* Sejajar dengan bidang gambar, bukan dengan kolom sumbu. */
+  padding: 0 0 0 calc(58px + var(--space-3));
+  list-style: none;
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* Titik data pertama dan terakhir menempel di tepi bidang gambar, jadi nama
+   bulannya harus ikut menempel — bukan di tengah petaknya. */
+.arus__bulan li { transition: color var(--dur-fast) var(--ease); }
+.arus__bulan li:first-child { text-align: left; }
+.arus__bulan li:last-child { text-align: right; }
+.arus__bulan li.is-aktif { color: var(--text-strong); font-weight: 600; }
+
+@media (max-width: 46rem) {
+  .arus { padding: var(--space-4); }
+  .arus__periode { margin-inline-start: 0; inline-size: 100%; }
+  .arus__gambar { block-size: 170px; }
+  .arus__plot { grid-template-columns: 52px minmax(0, 1fr); }
+  .arus__bulan { padding-inline-start: calc(52px + var(--space-3)); }
+  /* Dua belas nama bulan tidak muat di 390px; tampilkan yang ganjil saja. */
+  .arus__bulan li:nth-child(even) { visibility: hidden; }
+}

@@ -6,6 +6,7 @@ import { BarChart, LineChart } from "../ui/data/Chart";
 import { Carousel } from "../ui/data/Carousel";
 import { ScrollArea, ResizableDemo } from "../ui/data/Panels";
 import { KartuAngka } from "../ui/data/KartuAngka";
+import { ChartArusKas } from "../ui/data/ChartArusKas";
 import {
   AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
 } from "../ui/data/Dashboard";
@@ -23,6 +24,29 @@ function rp(n: number) {
   if (a >= 1_000_000) return `${tanda}Rp${Math.round(a / 1_000_000)} jt`;
   return `${tanda}Rp${a.toLocaleString("id-ID")}`;
 }
+
+
+/** Contoh dua belas bulan untuk grafik arus kas di halaman ini. */
+const arusContoh = [
+  { label: "Jan", labelPanjang: "Januari", nilai: { kas: 330_000_000, beban: 270_000_000, laba: 95_000_000 } },
+  { label: "Feb", labelPanjang: "Februari", nilai: { kas: 480_000_000, beban: 320_000_000, laba: 175_000_000 } },
+  { label: "Mar", labelPanjang: "Maret", nilai: { kas: 555_000_000, beban: 430_000_000, laba: 300_000_000 } },
+  { label: "Apr", labelPanjang: "April", nilai: { kas: 470_000_000, beban: 545_000_000, laba: 555_000_000 } },
+  { label: "Mei", labelPanjang: "Mei", nilai: { kas: 400_000_000, beban: 520_000_000, laba: 470_000_000 } },
+  { label: "Jun", labelPanjang: "Juni", nilai: { kas: 670_000_000, beban: 400_000_000, laba: 310_000_000 } },
+  { label: "Jul", labelPanjang: "Juli", nilai: { kas: 640_000_000, beban: 610_000_000, laba: 480_000_000 } },
+  { label: "Agu", labelPanjang: "Agustus", nilai: { kas: 470_000_000, beban: 655_000_000, laba: 545_000_000 } },
+  { label: "Sep", labelPanjang: "September", nilai: { kas: 560_000_000, beban: 520_000_000, laba: 430_000_000 } },
+  { label: "Okt", labelPanjang: "Oktober", nilai: { kas: 540_000_000, beban: 420_000_000, laba: 300_000_000 } },
+  { label: "Nov", labelPanjang: "November", nilai: { kas: 385_000_000, beban: 400_000_000, laba: 320_000_000 } },
+  { label: "Des", labelPanjang: "Desember", nilai: { kas: 545_000_000, beban: 665_000_000, laba: 490_000_000 } },
+];
+
+const arusSeri = [
+  { kunci: "kas", label: "Kas masuk", warna: "var(--success)", gaya: "penuh" as const, isi: true },
+  { kunci: "beban", label: "Beban", warna: "var(--brand)", gaya: "putus" as const },
+  { kunci: "laba", label: "Laba", warna: "var(--warn)", gaya: "putus" as const },
+];
 
 interface Proyek extends Record<string, unknown> {
   judul: string;
@@ -304,6 +328,31 @@ export function DataShowcase() {
           22px, bukan 28px seperti referensinya: &quot;Rp1.284.500.000&quot; lima belas karakter
           dan pada 28px butuh 269px sementara ruang dalam kartu cuma 237px — terukur, bukan
           dikira. Nada netral tidak dapat panah, karena barisnya keterangan dan bukan tren.
+        </p>
+      </div>
+
+      {/* --- Grafik arus kas ----------------------------------------------- */}
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Grafik Arus Kas</span>
+          <code className="swatch__name">ChartArusKas</code>
+        </div>
+        <ChartArusKas
+          judul="Analisis Arus Kas"
+          seri={arusSeri}
+          data={arusContoh}
+          periode="tahun"
+          opsiPeriode={[{ nilai: "tahun", label: "Tahun ini" }, { nilai: "lalu", label: "Tahun lalu" }]}
+        />
+        <p className="field__help">
+          Satu seri bergaris penuh dengan bidang di bawahnya, dua seri putus-putus tanpa bidang.
+          Tunjuk di mana saja untuk memunculkan garis bidik, titik per seri, dan kartu keterangan
+          yang melompat ke kiri saat mendekati tepi kanan. Panah kiri/kanan dan Home/End juga
+          bekerja. Sumbu nilai memakai singkatan karena kolomnya cuma 58px; kartu keterangan
+          memakai nominal LENGKAP, karena di situlah angkanya dicocokkan dengan rekening.
+          Kurvanya monoton, jadi garis kas yang semua angkanya positif tidak pernah tergambar
+          menukik ke bawah nol di antara dua bulan.
         </p>
       </div>
 
