@@ -9,7 +9,7 @@ import {
   AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
 } from "../ui/data/Dashboard";
 import {
-  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, PitaMetrik,
+  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, PilLive, PitaMetrik,
 } from "../ui/data/Keuangan";
 
 /** Rupiah ringkas untuk contoh di halaman ini. */
@@ -283,20 +283,26 @@ export function DataShowcase() {
       <div className="spec-demo">
         <div className="spec-demo__name">
           <span className="t-subheading">Busur Target</span>
-          <code className="swatch__name">BusurTarget</code>
+          <code className="swatch__name">KartuData, BusurTarget, PilLive</code>
         </div>
         <div className="papan-grid papan-grid--tiga">
-          <BusurTarget judul="Target 6 bulan" nilai={418_000_000} target={1_000_000_000}
-            format={rp} keterangan="Realisasi vs target semester" />
-          <BusurTarget judul="Target 6 bulan" nilai={640_000_000} target={1_000_000_000}
-            format={rp} keterangan="Sudah lewat separuh jalan" />
-          <BusurTarget judul="Target 6 bulan" nilai={1_180_000_000} target={1_000_000_000}
-            format={rp} keterangan="Target terlampaui" />
+          <KartuData judul="Target Per Bulan" keterangan="Realisasi vs target bulan ini" kanan={<PilLive />}>
+            <BusurTarget judul="Target Per Bulan" nilai={836_896_159} target={15_496_418_900}
+              format={rp} delta="−93,7% vs bulan lalu" deltaArah="turun" />
+          </KartuData>
+          <KartuData judul="Target 6 Bulan" keterangan="Semester berjalan" kanan={<PilLive />}>
+            <BusurTarget judul="Target 6 Bulan" nilai={640_000_000} target={1_000_000_000}
+              format={rp} delta="+18,2% vs semester lalu" deltaArah="naik" />
+          </KartuData>
+          <KartuData judul="Target Tahunan" keterangan="Akumulasi 12 bulan">
+            <BusurTarget judul="Target Tahunan" nilai={1_180_000_000} target={1_000_000_000}
+              format={rp} delta="+31,4% vs tahun lalu" deltaArah="naik" />
+          </KartuData>
         </div>
         <p className="field__help">
-          Panjang busur yang terisi ADALAH rasionya. Warnanya ikut ambang: merah di bawah
-          separuh, amber setelahnya, hijau begitu target tercapai. Pencapaian di atas 100%
-          digambar penuh tapi angkanya tidak dipotong.
+          Penandanya kapsul di atas rel, bukan busur terisi — bacanya "sudah sampai mana",
+          dan untuk target yang baru 5% terisi kapsul jauh lebih terlihat daripada busur
+          setipis rambut. Busurnya 240°, terbuka di bawah.
         </p>
       </div>
 
@@ -305,17 +311,40 @@ export function DataShowcase() {
           <span className="t-subheading">Cincin Distribusi</span>
           <code className="swatch__name">CincinDistribusi</code>
         </div>
-        <CincinDistribusi
-          judul="Distribusi margin"
-          pita={[
-            { label: "Sehat", keterangan: "Margin ≥ 35%", jumlah: 8, warna: "var(--success)", ikon: "check" },
-            { label: "Cukup", keterangan: "Margin 15–34%", jumlah: 4, warna: "var(--warn)", ikon: "clock" },
-            { label: "Kritis", keterangan: "Margin < 15%", jumlah: 2, warna: "var(--brand)", ikon: "alert" },
-          ]}
-        />
+        <div className="papan-grid papan-grid--dua">
+          <KartuData
+            judul="Distribusi Margin"
+            keterangan="Sebaran kesehatan margin per proyek"
+            bawah={
+              <div className="segmented" role="group" aria-label="Kelompokkan menurut">
+                <button type="button" className="segmented__opt" aria-pressed="true">Kategori</button>
+                <button type="button" className="segmented__opt" aria-pressed="false">Arsitek</button>
+              </div>
+            }>
+            <CincinDistribusi
+              judul="Distribusi margin"
+              pita={[
+                { label: "Sehat", keterangan: "Margin ≥ 35%", jumlah: 30, warna: "var(--success)", lembut: "var(--success-soft)", ikon: "check" },
+                { label: "Cukup", keterangan: "Margin 15–34%", jumlah: 15, warna: "var(--warn)", lembut: "var(--warn-soft)", ikon: "clock" },
+                { label: "Kritis", keterangan: "Margin < 15%", jumlah: 5, warna: "var(--brand)", lembut: "var(--brand-soft)", ikon: "alert" },
+              ]}
+            />
+          </KartuData>
+          <KartuData judul="Distribusi Margin" keterangan="Studio yang belum punya proyek berkontrak">
+            <CincinDistribusi
+              judul="Distribusi margin kosong"
+              pita={[
+                { label: "Sehat", keterangan: "Margin ≥ 35%", jumlah: 0, warna: "var(--success)", lembut: "var(--success-soft)", ikon: "check" },
+                { label: "Cukup", keterangan: "Margin 15–34%", jumlah: 0, warna: "var(--warn)", lembut: "var(--warn-soft)", ikon: "clock" },
+                { label: "Kritis", keterangan: "Margin < 15%", jumlah: 0, warna: "var(--brand)", lembut: "var(--brand-soft)", ikon: "alert" },
+              ]}
+            />
+          </KartuData>
+        </div>
         <p className="field__help">
-          Angka di tengah adalah porsi pita pertama terhadap total — menjawab "berapa persen
-          proyek saya sehat?", bukan mengulang jumlah yang sudah tertulis di kanan.
+          Tiga cincin sepusat, satu per pita — bukan satu donat yang dibagi tiga. Tiap busur
+          mulai di titik yang sama (puncak), jadi panjangnya bisa dibandingkan langsung.
+          Keadaan kosong digambar sebagai rel polos, bukan lingkaran penuh satu warna.
         </p>
       </div>
 
@@ -324,18 +353,28 @@ export function DataShowcase() {
           <span className="t-subheading">Chart Banding Periode</span>
           <code className="swatch__name">ChartBanding</code>
         </div>
-        <ChartBanding
-          label={["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]}
-          kini={[45, 120, 96, 180, 210, 150, 96, 240, 205, 160, 190, 220]}
-          lalu={[30, 88, 110, 92, 140, 165, 120, 96, 150, 130, 118, 175]}
-          namaKini="Tahun ini"
-          namaLalu="Tahun lalu"
-          format={(v) => `Rp${Math.round(v)} jt`}
-        />
+        <KartuData
+          judul="Nilai Proyek"
+          keterangan="Total nilai kontrak per bulan · tahun ini vs tahun lalu"
+          kanan={
+            <div className="segmented" role="group" aria-label="Tahun">
+              <button type="button" className="segmented__opt" aria-pressed="true">2026</button>
+              <button type="button" className="segmented__opt" aria-pressed="false">2025</button>
+            </div>
+          }>
+          <ChartBanding
+            label={["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]}
+            kini={[45, 120, 96, 180, 210, 150, 96, 240, 205, 160, 190, 220]}
+            lalu={[30, 88, 110, 92, 140, 165, 120, 96, 150, 130, 118, 175]}
+            namaKini="Tahun ini"
+            namaLalu="Tahun lalu"
+            format={(v) => `Rp${Math.round(v)} jt`}
+          />
+        </KartuData>
         <p className="field__help">
-          Periode berjalan sebagai garis, pembandingnya sebagai batang — dua bentuk berbeda,
-          jadi tidak pernah tertukar. Sumbu Y selalu mulai dari nol: memotongnya membuat
-          selisih dua bulan terlihat berlipat dari yang sebenarnya.
+          Garis bidik tegak, titik membesar, dan kartu nilai yang membalik arah di paruh
+          kanan supaya tidak pernah keluar kartu. Sumbu Y selalu mulai dari nol: memotongnya
+          membuat selisih dua bulan terlihat berlipat dari yang sebenarnya.
         </p>
       </div>
 
@@ -346,18 +385,19 @@ export function DataShowcase() {
         </div>
         <PitaMetrik
           sel={[
-            { label: "Nilai kontrak", nilai: "Rp451.000.000" },
-            { label: "Kas masuk", nilai: "Rp185.000.000", delta: "12,4%", arah: "naik" },
-            { label: "Biaya operasional", nilai: "Rp261.000.000", delta: "8,1%", arah: "turun" },
-            { label: "Laba bersih", nilai: "−Rp76.000.000", minus: true },
-            { label: "Margin", nilai: "−41,1%", minus: true },
-            { label: "Tertagih", nilai: "41,0%" },
+            { label: "Nilai kontrak", nilai: "Rp451.000.000", persen: "100%", arah: "netral" },
+            { label: "Kas masuk", nilai: "Rp185.000.000", persen: "41,0%", arah: "naik" },
+            { label: "Biaya ops", nilai: "Rp261.000.000", persen: "57,9%", arah: "turun" },
+            { label: "Laba bersih", nilai: "−Rp76.000.000", persen: "−41,1%", arah: "turun", minus: true },
+            { label: "Margin", nilai: "−16,9%", persen: "−16,9%", arah: "turun", minus: true },
+            { label: "Tertagih", nilai: "41,0%", persen: "+12,4%", arah: "naik" },
           ]}
         />
         <p className="field__help">
-          Untuk angka yang dibaca bersama sebagai satu ringkasan. Garis pemisah, bukan jarak:
-          jarak memisahkan, garis menyatukan sambil tetap membedakan. Angka yang berdiri
-          sendiri tetap pakai kartu metrik.
+          Setiap sel WAJIB punya persentase dan labelnya satu baris. Kalau sebagian punya
+          chip dan sebagian tidak, tinggi selnya beda dan barisnya terbaca miring. Ketiga
+          barisnya dipatok ke grid yang sama lewat <code>subgrid</code>, jadi label, angka,
+          dan chip benar-benar sejajar antar sel.
         </p>
       </div>
 
@@ -366,15 +406,17 @@ export function DataShowcase() {
           <span className="t-subheading">Bilah Kategori</span>
           <code className="swatch__name">BilahKategori</code>
         </div>
-        <BilahKategori
-          format={rp}
-          iris={[
-            { nama: "Tenaga kerja & render", nilai: 148_000_000, warna: "var(--chart-1)" },
-            { nama: "Management fee 10%", nilai: 45_100_000, warna: "var(--chart-2)" },
-            { nama: "Operasional harian", nilai: 52_000_000, warna: "var(--chart-3)" },
-            { nama: "Lainnya", nilai: 15_900_000, warna: "var(--tray)" },
-          ]}
-        />
+        <KartuData judul="Beban Operasional" keterangan="Rincian beban studio · 12 bulan" kanan={<PilLive />}>
+          <BilahKategori
+            format={rp}
+            iris={[
+              { nama: "Tenaga kerja & render", nilai: 148_000_000, warna: "var(--chart-1)" },
+              { nama: "Management fee 10%", nilai: 45_100_000, warna: "var(--chart-2)" },
+              { nama: "Operasional harian", nilai: 52_000_000, warna: "var(--chart-3)" },
+              { nama: "Lainnya", nilai: 15_900_000, warna: "var(--tray)" },
+            ]}
+          />
+        </KartuData>
         <p className="field__help">
           Bilah, bukan pie: membandingkan panjang jauh lebih akurat daripada membandingkan
           sudut — dan kategori beban di sini memang timpang jauh.

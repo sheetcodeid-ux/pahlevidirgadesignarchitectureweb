@@ -506,25 +506,101 @@ a.mini__judul:hover { color: var(--brand); }
    Primitif papan Keuangan — pasangan Keuangan.tsx.
    ============================================================================= */
 
+/* Rel busur dan cincin: lebih terang dari --border tapi lebih redup dari isi.
+   Punya token sendiri karena dipakai sebagai BIDANG, bukan sebagai garis, jadi
+   nilainya tidak mengikuti token border mana pun. */
+:root                      { --busur-rel: #2a2a2a; }
+:root[data-theme="light"]  { --busur-rel: #ebebe7; }
+
+/* --- Pembungkus kartu ----------------------------------------------------- */
+
+.kdata {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-inline-size: 0;
+}
+
+.kdata__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.kdata__teks  { display: flex; flex-direction: column; gap: 0.2rem; min-inline-size: 0; }
+.kdata__kanan { flex: none; display: flex; align-items: center; gap: var(--space-2); }
+
+.kdata__judul {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: 1.25;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.kdata__ket   { margin: 0; font-size: var(--text-xs); color: var(--text-muted); }
+.kdata__bawah { display: flex; }
+.kdata__isi   { min-inline-size: 0; }
+
+/* Pil LIVE: titik berdenyut, teks kapital kecil. */
+.pil-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--success-soft);
+  color: var(--success);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+}
+
+.pil-live__titik {
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: denyut 2s var(--ease) infinite;
+}
+
+@keyframes denyut { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .pil-live__titik { animation: none; } }
+
 /* --- Busur target --------------------------------------------------------- */
 
 .busur { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
-.busur__svg { inline-size: 100%; max-inline-size: 15rem; block-size: auto; }
-
-.busur__angka {
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: 26px;
-  font-variant-numeric: tabular-nums;
-}
+.busur__svg { inline-size: 100%; max-inline-size: 17rem; block-size: auto; }
 
 .busur__cap {
   font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  fill: var(--text-faint);
+  fill: var(--text-muted);
 }
+
+.busur__angka {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  fill: var(--text-strong);
+}
+
+.busur__delta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.busur__delta--naik  { color: var(--success); }
+.busur__delta--turun { color: var(--brand); }
 
 .busur__baris {
   display: flex;
@@ -539,18 +615,22 @@ a.mini__judul:hover { color: var(--brand); }
 .busur__kini   { color: var(--text-strong); font-weight: 500; }
 .busur__pisah  { color: var(--text-faint); }
 .busur__target { color: var(--text-muted); }
-.busur__ket    { margin: 0; font-size: var(--text-xs); color: var(--text-faint); text-align: center; }
+
+.busur__legenda { display: flex; gap: var(--space-5); margin: 0; }
+.busur__lg { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--text-xs); color: var(--text-muted); }
+.busur__lg-titik { inline-size: 8px; block-size: 8px; border-radius: 50%; flex: none; }
+.busur__lg-titik--rel { background: var(--busur-rel); }
 
 /* --- Cincin distribusi ---------------------------------------------------- */
 
-.cincin { display: flex; align-items: center; gap: var(--space-5); flex-wrap: wrap; }
-.cincin__gambar { flex: none; inline-size: 11rem; }
+.cincin { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); }
+.cincin__gambar { inline-size: 100%; max-inline-size: 13rem; }
 .cincin__gambar svg { inline-size: 100%; block-size: auto; }
 
 .cincin__angka {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 34px;
+  font-size: 36px;
   font-variant-numeric: tabular-nums;
   fill: var(--text-strong);
 }
@@ -563,8 +643,7 @@ a.mini__judul:hover { color: var(--brand); }
 }
 
 .cincin__legenda {
-  flex: 1;
-  min-inline-size: 12rem;
+  inline-size: 100%;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -574,17 +653,28 @@ a.mini__judul:hover { color: var(--brand); }
 }
 
 .cincin__baris { display: flex; align-items: center; gap: var(--space-3); }
-.cincin__ikon  { display: inline-flex; flex: none; }
+
+/* Lencana bundar berlatar lembut — bentuk yang dipakai referensi, dan yang
+   membuat ikonnya terbaca sebagai penanda pita, bukan ikon aksi. */
+.cincin__lencana {
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .cincin__teks  { display: flex; flex-direction: column; gap: 0.05rem; min-inline-size: 0; flex: 1; }
-.cincin__nama  { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
+.cincin__nama  { font-size: var(--text-sm); font-weight: 700; color: var(--text-strong); }
 .cincin__ket   { font-size: var(--text-2xs); color: var(--text-faint); }
 
 .cincin__jumlah {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
-  font-size: var(--text-lg);
-  font-weight: 500;
-  color: var(--text-strong);
+  font-size: var(--text-xl);
+  font-weight: 700;
   flex: none;
 }
 
@@ -593,24 +683,21 @@ a.mini__judul:hover { color: var(--brand); }
 .banding { position: relative; }
 .banding__svg { inline-size: 100%; block-size: auto; display: block; }
 
-.banding__sumbu {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  fill: var(--chart-axis);
-}
+.banding__sumbu { font-family: var(--font-mono); font-size: 11px; fill: var(--chart-axis); }
+.banding__sumbu--aktif { fill: var(--text-strong); }
 
-/* Tooltip diposisikan dengan persen terhadap lebar grafik, lalu digeser
-   separuh lebarnya sendiri — supaya ia tetap menempel pada kolomnya di lebar
-   layar mana pun, bukan pada satu ukuran piksel tertentu. */
+/* Kartu nilai diposisikan dengan persen terhadap lebar grafik — supaya ia
+   menempel pada kolomnya di lebar layar mana pun, bukan pada satu ukuran
+   piksel tertentu. Arah gesernya dibalik di paruh kanan (lihat komponen). */
 .banding__tip {
   position: absolute;
-  top: 0;
-  transform: translateX(-50%);
+  top: var(--space-3);
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: var(--space-2) var(--space-3);
+  gap: 0.3rem;
+  padding: var(--space-3);
+  min-inline-size: 11rem;
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
@@ -619,24 +706,30 @@ a.mini__judul:hover { color: var(--brand); }
   z-index: 2;
 }
 
-.banding__tip-judul { font-size: var(--text-2xs); color: var(--text-faint); text-transform: uppercase; letter-spacing: var(--tracking-label); }
-.banding__tip-baris { display: flex; align-items: baseline; gap: var(--space-3); justify-content: space-between; }
-.banding__tip-nama  { font-size: var(--text-xs); color: var(--text-muted); }
-.banding__tip-nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-xs); color: var(--text-strong); }
+.banding__tip-judul {
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
 
-.banding__legenda { display: flex; gap: var(--space-5); justify-content: center; margin-top: var(--space-2); }
+.banding__tip-baris { display: flex; align-items: center; gap: var(--space-4); justify-content: space-between; }
+.banding__tip-nama  { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--text-xs); color: var(--text-muted); }
+.banding__tip-nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-xs); color: var(--text-strong); font-weight: 500; }
+
+.banding__legenda { display: flex; gap: var(--space-5); justify-content: center; margin-top: var(--space-3); }
 .banding__lg { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--text-xs); color: var(--text-muted); }
-.banding__lg-garis  { inline-size: 18px; block-size: 2px; background: var(--chart-1); border-radius: 2px; }
-.banding__lg-batang { inline-size: 10px; block-size: 12px; background: var(--tray); border-radius: 2px; }
+.banding__lg-garis  { inline-size: 16px; block-size: 3px; background: var(--chart-1); border-radius: 2px; flex: none; }
+.banding__lg-batang { inline-size: 9px; block-size: 12px; background: var(--tray); border-radius: 2px; flex: none; }
 
 /* --- Pita metrik ---------------------------------------------------------- */
 
-/* Satu bidang bergaris pemisah, bukan kartu terpisah: angkanya dibaca sebagai
-   satu ringkasan. auto-fit supaya barisnya selalu terisi penuh — tidak ada sel
-   yatim di baris terakhir. */
+/* Tiga baris grid yang dibagi SEMUA sel: label, angka, chip. Itu yang membuat
+   angka antar sel benar-benar sebaris — bukan kebetulan karena teksnya
+   kebetulan sama panjang. */
 .pita {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(10.5rem, 100%), 1fr));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -644,15 +737,15 @@ a.mini__judul:hover { color: var(--brand); }
 }
 
 .pita__sel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 3;
+  gap: 0.35rem;
   padding: var(--space-4) var(--space-5);
   border-inline-start: 1px solid var(--border);
   min-inline-size: 0;
 }
 
-/* Sel pertama tiap baris tidak butuh garis kiri — ia menempel tepi kartu. */
 .pita__sel:first-child { border-inline-start: none; }
 
 .pita__label {
@@ -661,10 +754,11 @@ a.mini__judul:hover { color: var(--brand); }
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-faint);
-  /* Dibungkus, bukan dipotong elipsis: labelnya ditulis pemanggil dan
-     panjangnya tidak bisa dijamin. "BIAYA OPERASIO…" menghilangkan justru
-     kata yang membedakannya dari label lain. */
-  line-height: 1.3;
+  /* Satu baris, dijamin: label yang membungkus mendorong angkanya turun dan
+     barisnya jadi tidak sejajar antar sel. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pita__nilai {
@@ -674,21 +768,25 @@ a.mini__judul:hover { color: var(--brand); }
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
   line-height: 1.15;
+  white-space: nowrap;
 }
 
-.pita__delta {
-  align-self: flex-start;
+.pita__chip {
+  justify-self: start;
+  align-self: start;
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   font-variant-numeric: tabular-nums;
-  padding: 0.1rem 0.4rem;
+  padding: 0.12rem 0.45rem;
   border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
 
-.pita__delta--naik  { color: var(--success); background: var(--success-soft); }
-.pita__delta--turun { color: var(--brand);   background: var(--brand-soft); }
+.pita__chip--naik   { color: var(--success); background: var(--success-soft); }
+.pita__chip--turun  { color: var(--brand);   background: var(--brand-soft); }
+.pita__chip--netral { color: var(--text-muted); background: var(--surface-hover); }
 
-@media (max-width: 34rem) {
+@media (max-width: 46rem) {
   .pita { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pita__sel { padding: var(--space-3) var(--space-4); }
 }
@@ -702,7 +800,7 @@ a.mini__judul:hover { color: var(--brand); }
   block-size: 12px;
   border-radius: var(--radius-pill);
   overflow: hidden;
-  background: var(--chart-grid);
+  background: var(--busur-rel);
 }
 
 .iris__potong { display: block; block-size: 100%; }
@@ -712,20 +810,13 @@ a.mini__judul:hover { color: var(--brand); }
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: var(--space-3) var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+  gap: var(--space-3) var(--space-6);
 }
 
 .iris__baris { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
 
-.iris__titik {
-  inline-size: 8px;
-  block-size: 8px;
-  border-radius: 50%;
-  flex: none;
-  align-self: center;
-}
-
+.iris__titik { inline-size: 8px; block-size: 8px; border-radius: 50%; flex: none; align-self: center; }
 .iris__nama  { font-size: var(--text-sm); color: var(--text-body); flex: 1; min-inline-size: 0;
                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .iris__porsi { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); flex: none; }
