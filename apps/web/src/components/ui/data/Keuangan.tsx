@@ -442,10 +442,19 @@ export function BilahKategori({ iris, format }: { iris: IrisKategori[]; format: 
       <ul className="iris__legenda">
         {iris.map((i) => (
           <li key={i.nama} className="iris__baris">
-            <span className="iris__titik" style={{ background: i.warna }} />
-            <span className="iris__nama">{i.nama}</span>
-            <span className="iris__porsi">{Math.round((i.nilai / total) * 100)}%</span>
-            <span className="iris__nilai">{format(i.nilai)}</span>
+            <span className="iris__atas">
+              <span className="iris__titik" style={{ background: i.warna }} />
+              <span className="iris__nama">{i.nama}</span>
+              <span className="iris__porsi">{Math.round((i.nilai / total) * 100)}%</span>
+              <span className="iris__nilai">{format(i.nilai)}</span>
+            </span>
+            {/* Bilah per kategori, bukan cuma titik warna: mata membandingkan
+                panjang jauh lebih cepat daripada membandingkan angka, dan
+                bilah tipis ini mengulang informasi yang sama dalam bentuk
+                yang bisa dipindai sekali lihat. */}
+            <span className="iris__rel">
+              <span className="iris__isi" style={{ inlineSize: `${(i.nilai / total) * 100}%`, background: i.warna }} />
+            </span>
           </li>
         ))}
       </ul>

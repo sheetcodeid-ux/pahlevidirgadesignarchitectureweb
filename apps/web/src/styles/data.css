@@ -570,10 +570,10 @@ a.mini__judul:hover { color: var(--brand); }
    di bawahnya, dan rongga itu yang membuat barisnya terlihat tidak rapi. */
 .kdata__isi {
   min-inline-size: 0;
+  min-block-size: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
 /* Pil LIVE: titik berdenyut, teks kapital kecil. */
@@ -603,8 +603,13 @@ a.mini__judul:hover { color: var(--brand); }
 
 /* --- Busur target --------------------------------------------------------- */
 
-.busur { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
-.busur__svg { inline-size: 100%; max-inline-size: 17rem; block-size: auto; }
+.busur { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); flex: 1; min-block-size: 0; }
+
+/* flex:1 + min-block-size:0 membuat svg memakai sisa tinggi kartu, dan
+   preserveAspectRatio bawaan menskalakan gambarnya untuk mengisi kotak itu.
+   Dengan max-inline-size, gambarnya terkunci di lebar tetap dan sisa
+   tingginya jadi rongga kosong — persis yang dikeluhkan pemilik. */
+.busur__svg { inline-size: 100%; flex: 1; min-block-size: 5rem; }
 
 .busur__cap {
   font-family: var(--font-sans);
@@ -651,21 +656,23 @@ a.mini__judul:hover { color: var(--brand); }
 
 /* --- Cincin distribusi ---------------------------------------------------- */
 
-.cincin { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); }
-.cincin__gambar { inline-size: 100%; max-inline-size: 11.5rem; }
+.cincin { display: flex; flex-direction: column; align-items: center; gap: var(--space-5);
+         flex: 1; min-block-size: 0; justify-content: space-between; }
+.cincin__gambar { inline-size: 100%; max-inline-size: 11.5rem; flex: 0 1 auto; min-block-size: 0; }
+.cincin__gambar svg { inline-size: 100%; block-size: 100%; }
 .cincin__gambar svg { inline-size: 100%; block-size: auto; }
 
 .cincin__angka {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 36px;
+  font-size: 26px;
   font-variant-numeric: tabular-nums;
   fill: var(--text-strong);
 }
 
 .cincin__cap {
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: var(--tracking-label);
   fill: var(--text-faint);
 }
@@ -708,8 +715,8 @@ a.mini__judul:hover { color: var(--brand); }
 
 /* --- Grafik banding ------------------------------------------------------- */
 
-.banding { position: relative; }
-.banding__svg { inline-size: 100%; block-size: auto; display: block; }
+.banding { position: relative; flex: 1; min-block-size: 0; display: flex; flex-direction: column; }
+.banding__svg { inline-size: 100%; flex: 1; min-block-size: 8rem; display: block; }
 
 .banding__sumbu { font-family: var(--font-mono); font-size: 11px; fill: var(--chart-axis); }
 .banding__sumbu--aktif { fill: var(--text-strong); }
@@ -821,7 +828,7 @@ a.mini__judul:hover { color: var(--brand); }
 
 /* --- Bilah kategori ------------------------------------------------------- */
 
-.iris { display: flex; flex-direction: column; gap: var(--space-4); }
+.iris { display: flex; flex-direction: column; gap: var(--space-4); flex: 1; min-block-size: 0; }
 
 .iris__bilah {
   display: flex;
@@ -838,11 +845,27 @@ a.mini__judul:hover { color: var(--brand); }
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
-  gap: var(--space-3) var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: var(--space-4) var(--space-6);
+  flex: 1;
+  /* Barisnya menyebar rata di sisa tinggi kartu. Menumpuknya di atas akan
+     meninggalkan satu celah besar di bawah; menyebarkannya membuat jaraknya
+     terbaca sebagai spasi yang disengaja. */
+  align-content: space-between;
 }
 
-.iris__baris { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
+.iris__baris { display: flex; flex-direction: column; gap: 0.35rem; min-inline-size: 0; }
+.iris__atas  { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
+
+.iris__rel {
+  display: block;
+  block-size: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--busur-rel);
+  overflow: hidden;
+}
+
+.iris__isi { display: block; block-size: 100%; border-radius: var(--radius-pill); }
 
 .iris__titik { inline-size: 8px; block-size: 8px; border-radius: 50%; flex: none; align-self: center; }
 .iris__nama  { font-size: var(--text-sm); color: var(--text-body); flex: 1; min-inline-size: 0;
@@ -853,7 +876,8 @@ a.mini__judul:hover { color: var(--brand); }
 
 /* --- Aktivitas terkini ---------------------------------------------------- */
 
-.akt { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.akt { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
+       flex: 1; justify-content: space-between; }
 
 .akt__baris {
   display: flex;
@@ -877,8 +901,10 @@ a.mini__judul:hover { color: var(--brand); }
 
 .akt__teks { display: flex; flex-direction: column; gap: 0.1rem; min-inline-size: 0; flex: 1; }
 .akt__judul { font-size: var(--text-sm); color: var(--text-strong); font-weight: 600; }
-.akt__ket   { font-size: var(--text-xs); color: var(--text-muted);
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.akt__ket   { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.4;
+              /* Dibungkus, bukan dipotong: keterangannya memuat nama proyek DAN
+                 nominalnya, dan elipsis selalu memakan nominalnya lebih dulu. */
+              overflow-wrap: anywhere; }
 
 .akt__waktu {
   font-family: var(--font-mono);
@@ -913,4 +939,43 @@ a.mini__judul:hover { color: var(--brand); }
   font-size: var(--text-2xs);
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+}
+
+/* --- Baris angka pendamping di kaki kartu --------------------------------- */
+
+.kaki-angka {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr));
+  gap: var(--space-2) var(--space-4);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+  flex: none;
+}
+
+.kaki-angka__sel { display: flex; flex-direction: column; gap: 0.1rem; min-inline-size: 0; }
+
+.kaki-angka__label {
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kaki-angka__nilai {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+/* Di kartu grafik, baris ini duduk di ATAS grafiknya — jadi garisnya pindah
+   ke bawah supaya tetap memisahkan, bukan menggantung. */
+.kdata__isi > .kaki-angka:first-child {
+  padding-block: 0 var(--space-3);
+  border-block: none;
+  border-block-end: 1px solid var(--border);
+  margin-block-end: var(--space-3);
 }

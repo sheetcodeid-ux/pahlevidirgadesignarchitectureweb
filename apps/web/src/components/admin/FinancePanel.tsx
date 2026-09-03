@@ -74,6 +74,27 @@ const KOLOM_IKON: Record<AktivitasKeuangan["jenis"], { ikon: Parameters<typeof I
   progres: { ikon: "clock", warna: "var(--upgrade)", lembut: "var(--upgrade-soft)" },
 };
 
+/**
+ * Baris angka pendamping di kaki kartu.
+ *
+ * Ada bukan sebagai pengisi: kartu yang isinya cuma satu gambar menyisakan
+ * rongga di bawahnya, dan rongga itu terbaca sebagai halaman yang belum jadi.
+ * Angka di sini menjawab pertanyaan lanjutan yang wajar muncul setelah melihat
+ * gambarnya — "kurang berapa", "berapa per bulan".
+ */
+function BarisAngka({ stat }: { stat: { label: string; nilai: string; minus?: boolean }[] }) {
+  return (
+    <div className="kaki-angka">
+      {stat.map((s) => (
+        <div key={s.label} className="kaki-angka__sel">
+          <span className="kaki-angka__label">{s.label}</span>
+          <span className={`kaki-angka__nilai${s.minus ? " angka-minus" : ""}`}>{s.nilai}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Kartu yang sumber datanya belum ada — dijelaskan, bukan dibiarkan kosong. */
 function BelumAdaSumber({ judul, keterangan }: { judul: string; keterangan: string }) {
   return (
@@ -265,6 +286,20 @@ function Isi() {
   // belum ada apa-apa".
   const nilaiLalu = tahunIni.map((_, i) => tahunLalu[i]?.kasMasuk ?? 0);
 
+  const totalKini = tahunIni.reduce((a, b) => a + b.kasMasuk, 0);
+  const totalLalu = tahunLalu.reduce((a, b) => a + b.kasMasuk, 0);
+
+  /* Sisa bulan dalam semester target. Dihitung dari bulan mulainya, bukan dari
+     kalender berjalan — semester bisa dimulai bulan apa saja. */
+  const sisaBulan = (() => {
+    const t = data.targetSemester;
+    if (!t) return 0;
+    const [th, bl] = t.mulai.split("-").map(Number);
+    const kini = new Date();
+    const lewat = (kini.getFullYear() - th) * 12 + (kini.getMonth() + 1 - bl);
+    return Math.max(6 - lewat, 0);
+  })();
+
   /* --- Beban operasional -------------------------------------------------- */
 
   const NAMA_BEBAN: Record<string, { nama: string; warna: string }> = {
@@ -305,13 +340,26 @@ function Isi() {
           keterangan="Kas masuk vs target 6 bulan"
           kanan={data.targetSemester ? <PilLive /> : undefined}>
           {data.targetSemester ? (
-            <BusurTarget
-              judul="Target semester"
-              nilai={data.kasMasuk}
-              target={data.targetSemester.nilai}
-              format={rupiahRingkas}
-              labelTengah="Target Semester"
-            />
+            <>
+              <BusurTarget
+                judul="Target semester"
+                nilai={data.kasMasuk}
+                target={data.targetSemester.nilai}
+                format={rupiahRingkas}
+                labelTengah="Target Semester"
+              />
+              <BarisAngka
+                stat={[
+                  { label: "Sisa ke target", nilai: rupiahRingkas(Math.max(data.targetSemester.nilai - data.kasMasuk, 0)) },
+                  {
+                    label: `Butuh / bulan · ${sisaBulan} bln`,
+                    nilai: sisaBulan > 0
+                      ? rupiahRingkas(Math.max(data.targetSemester.nilai - data.kasMasuk, 0) / sisaBulan)
+                      : "—",
+                  },
+                ]}
+              />
+            </>
           ) : (
             <BelumAdaSumber
               judul="Target belum disetel"
@@ -326,14 +374,23 @@ function Isi() {
             tahunLalu.length > 0 ? " vs periode sebelumnya" : ""
           }`}>
           {cukupUntukBanding ? (
-            <ChartBanding
+            <>
+              <BarisAngka
+                stat={[
+                  { label: "Periode ini", nilai: rupiahRingkas(totalKini) },
+                  { label: "Periode sebelumnya", nilai: rupiahRingkas(totalLalu) },
+                  { label: "Selisih", nilai: rupiahRingkas(totalKini - totalLalu), minus: totalKini < totalLalu },
+                ]}
+              />
+              <ChartBanding
               label={labelBulan}
               kini={nilaiKini}
               lalu={nilaiLalu}
               namaKini="Periode ini"
               namaLalu="Periode sebelumnya"
-              format={rupiahRingkas}
-            />
+                format={rupiahRingkas}
+              />
+            </>
           ) : (
             <BelumAdaSumber
               judul="Belum cukup bulan berdata"
@@ -350,7 +407,15 @@ function Isi() {
       <div className="papan-grid papan-grid--dua">
         <KartuData judul="Beban Operasional" keterangan="Rincian beban studio menurut kategori">
           {iris ? (
-            <BilahKategori iris={iris} format={formatRupiah} />
+            <>
+              <BarisAngka
+                stat={[
+                  { label: "Total beban", nilai: formatRupiah(iris.reduce((a, i) => a + i.nilai, 0)) },
+                  { label: "Kategori tercatat", nilai: String(iris.filter((i) => i.nilai > 0).length) },
+                ]}
+              />
+              <BilahKategori iris={iris} format={formatRupiah} />
+            </>
           ) : (
             <BelumAdaSumber
               judul="Rincian kategori belum tersedia"
