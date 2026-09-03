@@ -69,10 +69,16 @@ Resizable · Message Scroller · Questionnaire · Attachment · Voice Note
 
 Direction (konteks LTR/RTL)
 
-### Papan angka (Keuangan)
+### Papan angka
 
 `apps/web/src/components/ui/data/Dashboard.tsx` — bentuk yang diturunkan dari
-referensi papan pasar milik pemilik. Yang ditiru **susunan dan kepadatannya**,
+referensi papan pasar milik pemilik.
+
+> **Halaman yang memakainya sudah tidak ada.** Seluruh tampilan Keuangan
+> dihapus atas permintaan pemilik dan akan dirancang ulang dari nol; primitif
+> di bawah ini tetap ada di katalog karena bentuknya umum, bukan khusus
+> Keuangan. Kalau layar baru nanti tidak memakainya juga, hapus berkasnya
+> sekalian — jangan dibiarkan jadi katalog yang tidak pernah dipanggil. Yang ditiru **susunan dan kepadatannya**,
 bukan warnanya: di situs ini warna punya makna tetap, dan referensi itu memakai
 warna yang artinya berbeda.
 
@@ -86,46 +92,6 @@ warna yang artinya berbeda.
 | `Gauge` | Busur berjarum 0–100 dengan zona semantik |
 | `Sparkline` | Garis mungil tanpa sumbu |
 | `KartuMini` | Label berchevron, keterangan, angka, badge status |
-
-### Kartu statistik (referensi Aniq-ui)
-
-`apps/web/src/components/ui/data/Statistik.tsx` — bahasa kartu dari referensi
-dashboard yang dikirim pemilik. Berdampingan dengan papan angka di atas, bukan
-menggantikannya: yang ini dipakai untuk deret angka pokok di puncak halaman,
-yang lama tetap untuk papan yang isinya grafik penuh.
-
-| Komponen | Kegunaan |
-| --- | --- |
-| `KartuStatistik` | Angka besar dengan grafik area menempel di dasar kartu |
-| `KartuUtama` | Varian lebih besar berdekorasi, untuk angka pokok periode |
-| `GrafikDasar` | Grafik area mepet tepi, kurva monoton, tanpa sumbu |
-| `AksiBulat` | Tombol ikon bulat mengambang di pojok kanan atas kartu |
-
-Empat hal yang tidak boleh hilang saat komponen ini diubah, karena keempatnya
-sudah pernah salah dan sudah diukur:
-
-1. **Ruang untuk tombol bulat diberikan pada elemen yang sebaris dengannya**,
-   bukan sebagai padding kartu — kalau jadi padding kartu, angka besar ikut
-   menyempit dan `Rp1.284.500.000` terpotong di layar 390px.
-2. **`.kstat__isi` memakai `justify-content: space-between`.** Kartu sebaris
-   dipaksa sama tinggi, dan kelebihan tingginya harus disebar antar-baris —
-   bukan menumpuk jadi satu rongga kosong tepat di atas grafik.
-3. **Kurvanya monoton (Fritsch–Carlson), bukan spline kardinal.** Spline biasa
-   bisa melampaui titik datanya, jadi grafik yang semua angkanya positif bisa
-   menukik ke bawah nol di antara dua titik.
-4. **Warna pil delta menyatakan baik/buruk, bukan naik/turun** (`deltaNada`).
-   Beban operasional yang turun 3,6% adalah kabar baik dan harus hijau, meski
-   panahnya menunjuk ke bawah.
-
-Seri datar — termasuk semua nol — digambar sebagai garis putus-putus tanpa
-isian. Isian penuh di bawah garis datar tampak seperti balok warna solid:
-terbaca "besar", padahal artinya "tidak ada pergerakan". Kartu yang belum punya
-sumber data menampilkan catatan di tempat grafiknya, bukan angka karangan.
-
-Dekorasi `KartuUtama` adalah massa bangunan isometrik yang digambar sendiri.
-Referensi memakai render 3D yang asetnya tidak ada di repo ini; penggantinya
-sengaja bukan bentuk abstrak, karena studio arsitektur memang menggambar massa
-seperti itu.
 
 Aturan yang paling mudah dilanggar ada di `bandingkan()`: **persentase hanya
 bermakna kalau basisnya positif.** Laba bersih yang bergerak dari −25 juta ke

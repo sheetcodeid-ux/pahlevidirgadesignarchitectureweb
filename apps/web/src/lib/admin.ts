@@ -498,6 +498,12 @@ export const hapusTugas = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/tasks/${id}`, { method: "DELETE" });
 
 // --- Keuangan --------------------------------------------------------------
+//
+// Tampilan Keuangan dihapus seluruhnya atas permintaan pemilik dan akan
+// dirancang ulang dari nol. Yang tersisa di sini SENGAJA: tipe dan pemanggil
+// di bawah memetakan endpoint API yang masih hidup dan tidak ikut dihapus,
+// jadi layar baru nanti tinggal memakainya kembali. Tidak ada satu pun bidang
+// karangan di sini — semuanya benar-benar dikirim API.
 
 export interface FinanceOverviewRow {
   projectId: string;
@@ -512,21 +518,6 @@ export interface FinanceOverviewRow {
   belumDiterima: number | null;
 }
 
-/** Satu baris di kartu Aktivitas Terkini. */
-export interface AktivitasKeuangan {
-  id: string;
-  jenis: "invoice_lunas" | "invoice_terbit" | "biaya" | "dokumen" | "progres";
-  judul: string;
-  keterangan: string;
-  waktu: string;
-}
-
-/** Satu kategori di kartu Beban Operasional. */
-export interface BebanKategori {
-  kategori: "tenaga_kerja" | "management_fee" | "operasional" | "lainnya";
-  nilai: number;
-}
-
 export interface FinanceOverview {
   kasMasuk: number;
   piutang: number;
@@ -535,21 +526,9 @@ export interface FinanceOverview {
   totalBiaya: number;
   totalKontrak: number;
   proyek: FinanceOverviewRow[];
-
-  /* Tiga bidang di bawah ini BELUM disediakan API. Ditulis opsional supaya
-     panelnya bisa dibangun dan dinilai lebih dulu; selama nilainya undefined,
-     kartunya menampilkan keadaan "belum ada sumber data" — bukan angka
-     karangan. */
-
-  /** Target kas semester berjalan. Butuh tabel target yang belum ada. */
-  targetSemester?: { nilai: number; mulai: string } | null;
-  /** Beban studio dipecah per kategori. Butuh pengelompokan di repository. */
-  bebanKategori?: BebanKategori[] | null;
-  /** Pergerakan terbaru. Butuh endpoint gabungan invoice + biaya + dokumen. */
-  aktivitas?: AktivitasKeuangan[] | null;
 }
 
-/** Satu bulan di halaman Analisis Bulanan. */
+/** Satu bulan dari endpoint /admin/finance/monthly. */
 export interface BarisBulanan {
   /** YYYY-MM. */
   bulan: string;

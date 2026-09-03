@@ -1,8 +1,24 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { FinancePanel } from "../../components/admin/FinancePanel";
+import { RequireAuth } from "../../components/admin/RequireAuth";
+import { Icon } from "../../components/ui/Icon";
 ---
 
-<AdminLayout title="Keuangan" heading="Keuangan" description="Kas masuk, piutang, dan profitabilitas per proyek.">
-  <FinancePanel client:load />
+<AdminLayout title="Keuangan" heading="Keuangan" description="Sedang dirancang ulang dari nol.">
+  <RequireAuth client:load>
+    <div class="empty">
+      <span class="icon-tile" aria-hidden="true">
+        <Icon name="finance" size={22} />
+      </span>
+      <p class="t-heading">Halaman ini sedang dirancang ulang</p>
+      <p class="t-muted">
+        Seluruh tampilan Keuangan dihapus atas permintaan pemilik dan akan dibangun ulang
+        dari nol.
+      </p>
+      <p class="t-muted">
+        Data keuangan tidak ikut terhapus — tagihan, biaya, dan pembayaran di database
+        semuanya masih utuh. Yang hilang hanya layar untuk melihatnya.
+      </p>
+    </div>
+  </RequireAuth>
 </AdminLayout>

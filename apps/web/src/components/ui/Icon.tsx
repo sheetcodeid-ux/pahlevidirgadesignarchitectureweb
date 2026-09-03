@@ -66,9 +66,7 @@ export type IconName =
   | "play"
   | "pause"
   | "stop"
-  | "download"
-  | "arrowUpRight"
-  | "arrowDownRight";
+  | "download";
 
 interface Props {
   name: IconName;
@@ -176,18 +174,6 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />,
   check: <path d="m4 12 5.5 5.5L20 7" />,
-  arrowUpRight: (
-    <>
-      <path d="M7 17 17 7" />
-      <path d="M8 7h9v9" />
-    </>
-  ),
-  arrowDownRight: (
-    <>
-      <path d="M7 7l10 10" />
-      <path d="M17 8v9H8" />
-    </>
-  ),
   plus: <path d="M12 5v14M5 12h14" />,
   search: (
     <>
