@@ -1204,3 +1204,241 @@ a.mini__judul:hover { color: var(--brand); }
                  font-size: var(--text-2xs); color: var(--text-faint); }
 .kmaju__titik  { inline-size: 7px; block-size: 7px; border-radius: 50%; flex: none; }
 .kmaju__titik--rel { background: var(--busur-rel); }
+
+/* =============================================================================
+   Kartu statistik (Statistik.tsx) — bahasa kartu referensi Aniq-ui.
+
+   Tiga hal yang menentukan bentuknya, dan ketiganya beda dari .kmetrik:
+   1. Kartu adalah kolom flex; grafiknya anak terakhir dan mepet ke tiga tepi,
+      jadi kartunya TIDAK boleh punya padding — paddingnya di .kstat__isi.
+   2. Tombol bulat mengambang di atas isi, jadi ia absolut dan isi diberi
+      ruang kanan supaya labelnya tidak masuk ke bawah tombol.
+   3. Tinggi kartu ditentukan isinya, bukan grid — semua kartu di satu baris
+      jadi sama tinggi lewat align-items: stretch, dan grafik yang menyerap
+      sisa ruangnya (margin-top: auto).
+   ============================================================================= */
+
+.kstat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--dur) var(--ease);
+}
+
+.kstat:hover { border-color: var(--border-strong); }
+
+.kstat__isi {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  /* space-between, bukan flex-start: kartu sebaris dipaksa sama tinggi, dan
+     kelebihan tingginya harus DISEBAR ke antar-baris — bukan ditumpuk jadi
+     satu rongga kosong tepat di atas grafik. Rongga itu persis yang dikeluhkan
+     pemilik di putaran sebelumnya. */
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+/* Ruang untuk tombol bulat diberikan HANYA pada elemen yang sebaris dengannya.
+   Kalau diberikan sebagai padding kartu, angka besar di bawahnya ikut
+   menyempit — dan "Rp1.284.500.000" terpotong di layar 390px. Sudah terukur. */
+.kstat__isi > .kstat__atas,
+.kstat__isi > .kstat__label { padding-inline-end: 4.5rem; }
+.kstat__isi > .kstat__chip { max-inline-size: calc(100% - 4.75rem); }
+
+/* --- Tombol bulat mengambang --------------------------------------------- */
+
+.kstat__aksi {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+  z-index: 1;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.kstat__bulat {
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.kstat__bulat:hover {
+  color: var(--text-strong);
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.kstat__bulat:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* --- Baris atas ----------------------------------------------------------- */
+
+.kstat__atas {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  /* Label dua baris ("RATA-RATA NILAI PROYEK") tidak boleh menggeser angka ke
+     bawah sendirian — kalau digeser, angka di satu baris kartu jadi tidak
+     sejajar. 2rem menampung ubin 28px maupun dua baris label 15px. */
+  min-block-size: 2rem;
+}
+
+.kstat__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: var(--radius-xs);
+}
+
+.kstat__label {
+  min-inline-size: 0;
+  line-height: 1.35;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.kstat__chip {
+  align-self: flex-start;
+  padding: 0.15rem var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  background: var(--tray);
+  border-radius: var(--radius-pill);
+}
+
+/* --- Angka ---------------------------------------------------------------- */
+
+.kstat__nilai {
+  margin: 0;
+  font-family: var(--font-mono);
+  /* Angka rupiah lengkap panjang; --text-xl memecah digit terakhir ke baris
+     baru di kartu selebar 260px. Sudah pernah menggigit di .kmetrik. */
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.15;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.kstat__nilai--besar { font-size: var(--text-2xl); }
+
+/* --- Kaki ----------------------------------------------------------------- */
+
+.kstat__kaki {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  min-block-size: 1.375rem;
+}
+
+.kstat__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.4rem 0.1rem 0.3rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+}
+
+/* Warnanya menyatakan BAIK/BURUK, bukan naik/turun — beban operasional yang
+   turun adalah kabar baik dan harus hijau, meski panahnya menunjuk ke bawah. */
+.kstat__delta--baik  { color: var(--success); background: var(--success-soft); }
+.kstat__delta--buruk { color: var(--brand);   background: var(--brand-soft); }
+
+.kstat__banding { font-size: var(--text-2xs); color: var(--text-faint); }
+
+/* --- Grafik dasar --------------------------------------------------------- */
+
+.kstat__spark {
+  display: block;
+  inline-size: 100%;
+  flex: none;
+  /* global.css memberi svg { max-width: 100% } — di sini justru harus penuh. */
+  max-inline-size: none;
+}
+
+.kstat__spark--kosong { background: linear-gradient(to top, var(--tray), transparent); }
+
+.kstat__catatan {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  background: var(--bg-sunken);
+  border-block-start: 1px dashed var(--border);
+}
+
+/* --- Kartu utama ---------------------------------------------------------- */
+
+.kstat--utama { background: var(--surface-raised); }
+.kstat--utama .kstat__isi { gap: var(--space-3); padding-block-end: var(--space-5); }
+
+.kstat__dekor {
+  position: absolute;
+  opacity: 0.85;
+  inset-block-end: -0.75rem;
+  inset-inline-end: -1rem;
+  inline-size: 11rem;
+  max-inline-size: 55%;
+  block-size: auto;
+  pointer-events: none;
+}
+
+.dekor__atas  { fill: var(--chart-seq-4); stroke: var(--chart-seq-5); }
+.dekor__kanan { fill: var(--chart-seq-2); stroke: var(--chart-seq-3); }
+.dekor__kiri  { fill: var(--chart-seq-1); stroke: var(--chart-seq-3); }
+
+/* Skala urutan dibalik arahnya di tema terang: --chart-seq-1 di sana nyaris
+   putih, jadi muka gelapnya hilang di atas kartu putih dan massanya terbaca
+   sebagai satu bidang datar. Bukan pembalikan otomatis — nilainya dipilih
+   per tema, sama seperti warna semantik lain. */
+:root[data-theme="light"] .dekor__atas  { fill: var(--chart-seq-2); stroke: var(--chart-seq-5); }
+:root[data-theme="light"] .dekor__kanan { fill: var(--chart-seq-4); stroke: var(--chart-seq-5); }
+:root[data-theme="light"] .dekor__kiri  { fill: var(--chart-seq-3); stroke: var(--chart-seq-5); }
+
+/* --- Deret kartu ---------------------------------------------------------- */
+
+.kstat-deret {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+/* Kartu utama mengambil dua kolom selama masih muat lebih dari satu kolom. */
+@media (min-width: 60rem) {
+  .kstat-deret--utama { grid-template-columns: 1.35fr 1fr 1fr; }
+}
+
+@media (max-width: 34rem) {
+  .kstat__isi { padding-inline: var(--space-3); }
+  .kstat__nilai--besar { font-size: var(--text-xl); }
+  .kstat__dekor { inline-size: 8rem; }
+}

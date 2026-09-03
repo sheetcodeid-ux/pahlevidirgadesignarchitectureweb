@@ -11,6 +11,7 @@ import {
 import {
   BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, LiniMasa, PilLive, PitaMetrik,
 } from "../ui/data/Keuangan";
+import { KartuStatistik, KartuUtama } from "../ui/data/Statistik";
 
 /** Rupiah LENGKAP — bentuk yang dipakai di bawah busur target. */
 function rpPenuh(n: number) {
@@ -451,6 +452,116 @@ export function DataShowcase() {
           Garis penghubung tegak yang membuat daftar ini terbaca sebagai urutan waktu, bukan
           tumpukan baris. Garis pada butir terakhir sengaja tidak digambar — kalau digambar, ia
           menjanjikan butir berikutnya yang tidak ada.
+        </p>
+      </div>
+
+      {/* --- Kartu statistik (bahasa kartu referensi) ---------------------- */}
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Kartu Statistik</span>
+          <code className="swatch__name">KartuUtama, KartuStatistik</code>
+        </div>
+        <div className="kstat-deret kstat-deret--utama">
+          <KartuUtama
+            chip="September 2026"
+            label="Nilai kontrak berjalan"
+            nilai="Rp1.284.500.000"
+            delta="12,4%"
+            deltaArah="naik"
+            banding="vs Agustus 2026"
+            aksi={[
+              { ikon: "download", label: "Unduh rincian" },
+              { ikon: "external", label: "Buka Analisis Bulanan" },
+            ]}
+          />
+          <KartuStatistik
+            label="Kas masuk"
+            nilai="Rp836.896.159"
+            ikon="finance"
+            warna="var(--success)"
+            lembut="var(--success-soft)"
+            delta="8,1%"
+            deltaArah="naik"
+            banding="vs bulan lalu"
+            data={[38, 41, 36, 52, 49, 63, 58, 71, 68, 84, 79, 92]}
+            aksi={[
+              { ikon: "filter", label: "Saring periode" },
+              { ikon: "download", label: "Unduh CSV" },
+            ]}
+          />
+          <KartuStatistik
+            label="Beban operasional"
+            nilai="Rp451.203.000"
+            ikon="coffee"
+            warna="var(--warn)"
+            lembut="var(--warn-soft)"
+            delta="3,6%"
+            deltaArah="turun"
+            deltaNada="baik"
+            banding="vs bulan lalu"
+            data={[62, 58, 61, 55, 57, 50, 53, 47, 49, 44, 46, 41]}
+            aksi={[
+              { ikon: "filter", label: "Saring kategori" },
+              { ikon: "download", label: "Unduh CSV" },
+            ]}
+          />
+        </div>
+        <div className="kstat-deret" style={{ marginTop: "var(--space-4)" }}>
+          <KartuStatistik
+            label="Laba bersih"
+            nilai="Rp385.693.159"
+            ikon="check"
+            warna="var(--chart-3)"
+            lembut="var(--success-soft)"
+            delta="14,9%"
+            deltaArah="naik"
+            banding="marjin 46,1%"
+            data={[12, 18, 15, 24, 21, 30, 28, 35, 33, 41, 39, 46]}
+            aksi={[{ ikon: "info", label: "Cara menghitungnya" }]}
+          />
+          <KartuStatistik
+            label="Piutang belum tertagih"
+            nilai="−Rp447.603.841"
+            ikon="clock"
+            warna="var(--brand)"
+            lembut="var(--brand-soft)"
+            minus
+            delta="21,8%"
+            deltaArah="turun"
+            deltaNada="baik"
+            banding="4 tagihan lewat tempo"
+            data={[70, 66, 71, 64, 68, 60, 63, 58, 61, 54, 57, 52]}
+            aksi={[{ ikon: "alert", label: "Lihat tagihan lewat tempo" }]}
+          />
+          <KartuStatistik
+            label="Rata-rata nilai proyek"
+            nilai="Rp0"
+            ikon="project"
+            warna="var(--chart-1)"
+            lembut="var(--tray)"
+            banding="belum ada proyek berkontrak"
+            data={[0, 0, 0, 0, 0, 0, 0, 0]}
+            aksi={[{ ikon: "plus", label: "Tambah proyek" }]}
+          />
+          <KartuStatistik
+            label="Target semester"
+            nilai="Rp640.000.000"
+            ikon="star"
+            warna="var(--upgrade)"
+            lembut="var(--upgrade-soft)"
+            banding="64% dari Rp1 M"
+            catatan="Belum ada sumber data riwayat — grafik disembunyikan, bukan diisi angka karangan."
+            aksi={[{ ikon: "settings", label: "Atur target" }]}
+          />
+        </div>
+        <p className="field__help">
+          Empat hal yang menentukan bentuknya, semuanya dari referensi: grafik area mepet ke
+          dasar kartu (bukan grafik terpisah), tombol ikon bulat mengambang di pojok kanan atas,
+          angka besar bermono, dan delta sebagai pil berpanah. Kurvanya monoton — grafik yang
+          semua angkanya positif tidak akan pernah menukik ke bawah nol di antara dua titik.
+          Kartu tanpa sumber data menampilkan catatan, bukan grafik palsu; kartu yang semua
+          angkanya nol tetap menggambar garis, tidak menghilang.
         </p>
       </div>
 
