@@ -58,7 +58,7 @@ jobs:
       # dan produksi berakhir memakai kode yang lebih lama — padahal
       # branch-nya sudah maju. Dengan ref di bawah, run mana pun yang
       # menang tetap men-deploy keadaan terbaru branch.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: claude/stack-setup-supabase-cloudflare-kdwlkk
 
@@ -119,7 +119,7 @@ jobs:
       # dan produksi berakhir memakai kode yang lebih lama — padahal
       # branch-nya sudah maju. Dengan ref di bawah, run mana pun yang
       # menang tetap men-deploy keadaan terbaru branch.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: claude/stack-setup-supabase-cloudflare-kdwlkk
 
