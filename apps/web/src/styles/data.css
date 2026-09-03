@@ -484,7 +484,9 @@ a.mini__judul:hover { color: var(--brand); }
   align-items: center;
   gap: var(--space-3);
   flex-wrap: wrap;
-  padding: var(--space-2) var(--space-4);
+  /* Padding samping 24px, sama dengan .pita__sel dan .kdata — terukur,
+     isi lingkup sebelumnya mulai 9px lebih kiri dari sisa halaman. */
+  padding: var(--space-3) var(--space-5);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
@@ -613,46 +615,62 @@ a.mini__judul:hover { color: var(--brand); }
 
 .busur__cap {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 13px;
   fill: var(--text-muted);
 }
 
 .busur__angka {
   font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 30px;
+  font-size: 34px;
   font-variant-numeric: tabular-nums;
   fill: var(--text-strong);
 }
 
-.busur__delta {
+/* Delta ada DI DALAM svg lagi, seperti referensi — pada busur setengah
+   lingkaran ia duduk di bawah persentase dan masih jauh dari kedua ujung rel,
+   jadi tidak bisa menabrak kapsul. */
+.busur__delta { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.busur__delta--naik  { fill: var(--success); }
+.busur__delta--turun { fill: var(--brand); }
+
+.busur__nilai {
+  inline-size: 100%;
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  font-variant-numeric: tabular-nums;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.busur__delta--naik  { color: var(--success); }
-.busur__delta--turun { color: var(--brand); }
-
-.busur__baris {
+.busur__nb {
   display: flex;
   align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.busur__nb dt {
+  display: inline-flex;
+  align-items: center;
   gap: 0.4rem;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.busur__nb dd {
   margin: 0;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: var(--text-sm);
+  white-space: nowrap;
 }
 
 .busur__kini   { color: var(--text-strong); font-weight: 500; }
 .busur__pisah  { color: var(--text-faint); }
 .busur__target { color: var(--text-muted); }
 
-.busur__legenda { display: flex; gap: var(--space-5); margin: 0; }
-.busur__lg { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--text-xs); color: var(--text-muted); }
 .busur__lg-titik { inline-size: 8px; block-size: 8px; border-radius: 50%; flex: none; }
-.busur__lg-titik--rel { background: var(--busur-rel); }
+.busur__lg-titik--rel { background: color-mix(in srgb, var(--chart-1) 38%, var(--busur-rel)); }
 
 /* --- Cincin distribusi ---------------------------------------------------- */
 
@@ -668,6 +686,13 @@ a.mini__judul:hover { color: var(--brand); }
   font-size: 26px;
   font-variant-numeric: tabular-nums;
   fill: var(--text-strong);
+}
+
+.cincin__sub {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
 }
 
 .cincin__cap {
@@ -687,7 +712,22 @@ a.mini__judul:hover { color: var(--brand); }
   gap: var(--space-3);
 }
 
-.cincin__baris { display: flex; align-items: center; gap: var(--space-3); }
+/* Grid dua kolom dua baris: lencana membentang penuh di kiri, teks dan angka
+   di baris atas, rel porsi di baris bawah membentang di bawah keduanya. */
+.cincin__baris {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0.4rem var(--space-3);
+}
+
+.cincin__lencana { grid-row: 1 / 3; }
+.cincin__rel     { grid-column: 2 / 4; block-size: 3px; border-radius: var(--radius-pill);
+                   background: var(--busur-rel); overflow: hidden; }
+.cincin__isi     { display: block; block-size: 100%; border-radius: var(--radius-pill); }
+.cincin__kanan   { display: flex; align-items: baseline; gap: var(--space-2); }
+.cincin__porsi   { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); }
 
 /* Lencana bundar berlatar lembut — bentuk yang dipakai referensi, dan yang
    membuat ikonnya terbaca sebagai penanda pita, bukan ikon aksi. */
@@ -854,12 +894,19 @@ a.mini__judul:hover { color: var(--brand); }
   align-content: space-between;
 }
 
-.iris__baris { display: flex; flex-direction: column; gap: 0.35rem; min-inline-size: 0; }
-.iris__atas  { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
+/* Nomor urut · (nama + bilah) · porsi. Urutannya informasi: yang teratas
+   paling menghabiskan uang. */
+.iris__baris  { display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+                gap: var(--space-3); min-inline-size: 0; }
+.iris__urut   { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint);
+                inline-size: 1rem; text-align: end; flex: none; }
+.iris__tengah { display: flex; flex-direction: column; gap: 0.35rem; min-inline-size: 0; }
+.iris__atas   { display: flex; align-items: baseline; justify-content: space-between;
+                gap: var(--space-3); min-inline-size: 0; }
 
 .iris__rel {
   display: block;
-  block-size: 4px;
+  block-size: 5px;
   border-radius: var(--radius-pill);
   background: var(--busur-rel);
   overflow: hidden;
@@ -869,29 +916,35 @@ a.mini__judul:hover { color: var(--brand); }
 
 .iris__titik { inline-size: 8px; block-size: 8px; border-radius: 50%; flex: none; align-self: center; }
 .iris__nama  { font-size: var(--text-sm); color: var(--text-body); flex: 1; min-inline-size: 0;
-               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.iris__porsi { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); flex: none; }
+               /* Dibungkus, bukan dipotong: "Tenaga kerja & render" dan
+                  "Management fee 10%" kena elipsis di 1024px, dan yang hilang
+                  justru kata pembedanya. */
+               overflow-wrap: anywhere; }
+.iris__porsi { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--text-muted);
+               flex: none; inline-size: 2.5rem; text-align: end; font-variant-numeric: tabular-nums; }
 .iris__nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
                font-size: var(--text-sm); color: var(--text-strong); flex: none; }
 
-/* --- Aktivitas terkini ---------------------------------------------------- */
+/* --- Lini masa aktivitas -------------------------------------------------- */
 
-.akt { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
-       flex: 1; justify-content: space-between; }
+.lini { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
+        flex: 1; justify-content: space-between; }
 
-.akt__baris {
+.lini__baris { display: flex; gap: var(--space-3); min-inline-size: 0; }
+
+/* Rel kiri: ubin ikon, lalu garis tegak yang menyambung ke butir berikutnya.
+   Garisnya yang membuat daftar ini terbaca sebagai urutan waktu. */
+.lini__rel {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding-block: var(--space-3);
-  border-block-start: 1px solid var(--border);
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+  align-self: stretch;
 }
 
-.akt__baris:first-child { border-block-start: none; padding-block-start: 0; }
-
-.akt__ikon {
-  inline-size: 1.9rem;
-  block-size: 1.9rem;
+.lini__ubin {
+  inline-size: 2rem;
+  block-size: 2rem;
   border-radius: var(--radius-sm);
   flex: none;
   display: inline-flex;
@@ -899,20 +952,19 @@ a.mini__judul:hover { color: var(--brand); }
   justify-content: center;
 }
 
-.akt__teks { display: flex; flex-direction: column; gap: 0.1rem; min-inline-size: 0; flex: 1; }
-.akt__judul { font-size: var(--text-sm); color: var(--text-strong); font-weight: 600; }
-.akt__ket   { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.4;
-              /* Dibungkus, bukan dipotong: keterangannya memuat nama proyek DAN
-                 nominalnya, dan elipsis selalu memakan nominalnya lebih dulu. */
-              overflow-wrap: anywhere; }
+.lini__garis { inline-size: 2px; flex: 1; min-block-size: 0.75rem; background: var(--border); margin-block: 0.35rem; }
 
-.akt__waktu {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  color: var(--text-faint);
-  flex: none;
-  white-space: nowrap;
-}
+.lini__teks  { display: flex; flex-direction: column; gap: 0.15rem; min-inline-size: 0; flex: 1;
+               padding-block-end: var(--space-3); }
+.lini__atas  { display: flex; align-items: baseline; justify-content: space-between;
+               gap: var(--space-3); min-inline-size: 0; }
+.lini__judul { font-size: var(--text-sm); color: var(--text-strong); font-weight: 600; }
+.lini__waktu { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint);
+               flex: none; white-space: nowrap; }
+.lini__ket   { font-size: var(--text-xs); color: var(--text-muted); line-height: 1.4;
+               overflow-wrap: anywhere; }
+
+.lini__baris:last-child .lini__teks { padding-block-end: 0; }
 
 /* Keadaan "belum ada sumber data": bukan kartu kosong, tapi penjelasan apa
    yang akan mengisinya. Kartu kosong tanpa keterangan terbaca seperti bug. */

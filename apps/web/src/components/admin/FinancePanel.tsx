@@ -3,8 +3,8 @@ import { Icon } from "../ui/Icon";
 import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
 import {
-  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, PilLive, PitaMetrik,
-  type IrisKategori, type PitaCincin, type SelPita,
+  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, LiniMasa, PilLive,
+  PitaMetrik, type ButirAktivitas, type IrisKategori, type PitaCincin, type SelPita,
 } from "../ui/data/Keuangan";
 import { RequireAuth } from "./RequireAuth";
 import {
@@ -174,6 +174,7 @@ function Isi() {
   const [siap, setSiap] = useState(false);
   const [data, setData] = useState<FinanceOverview | null>(null);
   const [bulan, setBulan] = useState<BarisBulanan[] | null>(null);
+  const [rentang, setRentang] = useState<"12" | "24">("12");
   const [galat, setGalat] = useState<string | null>(null);
 
   useEffect(() => {
@@ -276,8 +277,9 @@ function Isi() {
   // Dua belas bulan terakhir, dan dua belas bulan sebelum itu, dipetakan ke
   // sumbu bulan yang sama. Deretnya sudah urut dari API, jadi cukup dipotong.
   const deret = bulan ?? [];
-  const tahunIni = deret.slice(-12);
-  const tahunLalu = deret.slice(-24, -12);
+  const n = Number(rentang);
+  const tahunIni = deret.slice(-n);
+  const tahunLalu = deret.slice(-2 * n, -n);
   const cukupUntukBanding = tahunIni.length >= 2;
   const labelBulan = tahunIni.map((b) => namaBulanPendek(b.bulan));
   const nilaiKini = tahunIni.map((b) => b.kasMasuk);
@@ -345,7 +347,7 @@ function Isi() {
                 judul="Target semester"
                 nilai={data.kasMasuk}
                 target={data.targetSemester.nilai}
-                format={rupiahRingkas}
+                format={formatRupiah}
                 labelTengah="Target Semester"
               />
               <BarisAngka
@@ -372,7 +374,17 @@ function Isi() {
           judul="Nilai Proyek"
           keterangan={`Kas masuk per bulan · ${tahunIni.length} bulan terakhir${
             tahunLalu.length > 0 ? " vs periode sebelumnya" : ""
-          }`}>
+          }`}
+          kanan={
+            <div className="segmented" role="group" aria-label="Rentang">
+              {(["12", "24"] as const).map((r) => (
+                <button key={r} type="button" className="segmented__opt"
+                  aria-pressed={rentang === r} onClick={() => setRentang(r)}>
+                  {r === "12" ? "1 thn" : "2 thn"}
+                </button>
+              ))}
+            </div>
+          }>
           {cukupUntukBanding ? (
             <>
               <BarisAngka
@@ -429,23 +441,9 @@ function Isi() {
           keterangan="Pergerakan uang dan dokumen terbaru"
           kanan={data.aktivitas ? <PilLive /> : undefined}>
           {data.aktivitas && data.aktivitas.length > 0 ? (
-            <ul className="akt">
-              {data.aktivitas.map((a) => {
-                const gaya = KOLOM_IKON[a.jenis];
-                return (
-                  <li key={a.id} className="akt__baris">
-                    <span className="akt__ikon" style={{ background: gaya.lembut, color: gaya.warna }}>
-                      <Icon name={gaya.ikon} size={15} />
-                    </span>
-                    <span className="akt__teks">
-                      <span className="akt__judul">{a.judul}</span>
-                      <span className="akt__ket">{a.keterangan}</span>
-                    </span>
-                    <span className="akt__waktu">{a.waktu}</span>
-                  </li>
-                );
-              })}
-            </ul>
+            <LiniMasa butir={data.aktivitas.map<ButirAktivitas>((a) => ({
+              id: a.id, judul: a.judul, keterangan: a.keterangan, waktu: a.waktu, ...KOLOM_IKON[a.jenis],
+            }))} />
           ) : (
             <BelumAdaSumber
               judul="Belum ada sumber aktivitas"

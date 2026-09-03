@@ -57,17 +57,20 @@ export function PilLive({ teks = "LIVE" }: { teks?: string }) {
 
 /* --- Busur target --------------------------------------------------------- */
 
-const BW = 260;
-const BH = 176;
+const BW = 300;
+const BH = 178;
 const BCX = BW / 2;
-const BCY = 108;
-const BR = 82;
+const BCY = 152;
+const BR = 118;
 
-// Busur 240°, terbuka di bawah: dari 210° (kiri bawah), lewat puncak, ke −30°
-// (kanan bawah). Bukan setengah lingkaran — referensi memakai busur yang jauh
-// lebih panjang, dan itu yang membuat kemajuan kecil masih kelihatan.
-const B_MULAI = 210;
-const B_RENTANG = 240;
+/* SETENGAH lingkaran, bukan 240°.
+   Diukur dari gambar referensi pemilik: ujung kiri busurnya (x≈205, y≈900),
+   puncaknya (x≈358, y≈745), ujung kanannya (x≈513, y≈900). Pusat (358, 899)
+   dengan jari-jari 154 — kedua ujungnya sejajar dengan pusat, dan itu
+   definisi setengah lingkaran. Versi saya sebelumnya 240° dan itu sebabnya
+   bentuknya tidak pernah mirip. */
+const B_MULAI = 180;
+const B_RENTANG = 180;
 
 function sudutBusur(t: number) {
   return ((B_MULAI - t * B_RENTANG) * Math.PI) / 180;
@@ -82,21 +85,20 @@ function jalurBusur(dari: number, ke: number, r: number) {
   const [x1, y1] = titikBusur(dari, r);
   const [x2, y2] = titikBusur(ke, r);
   const besar = (ke - dari) * B_RENTANG > 180 ? 1 : 0;
-  // sweep 1 = searah jarum jam di koordinat layar, arah jalannya busur ini.
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${besar} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
 }
 
 /**
  * Busur target dengan penanda KAPSUL di atas rel — bukan busur terisi.
  *
- * Bentuk ini diambil apa adanya dari referensi pemilik: relnya abu penuh, dan
- * yang bergerak cuma satu kapsul kecil di posisi pencapaian. Bacanya jadi
- * "sudah sampai mana", bukan "sudah terisi berapa" — dan untuk target yang
- * masih 5% terisi, kapsul jauh lebih terlihat daripada busur setipis rambut.
+ * Bentuknya diambil dari referensi pemilik dan diukur, bukan dikira: setengah
+ * lingkaran, rel abu tebal, satu kapsul berwarna di posisi pencapaian, dan
+ * SELURUH teks berada di dalam lengkung busur — label, persentase, lalu
+ * delta di bawahnya.
  *
- * Kapsulnya digambar sebagai potongan busur yang sangat pendek dengan ujung
- * membulat dan stroke lebih tebal dari relnya. Cara ini membuatnya selalu
- * menempel dan miring mengikuti lengkung rel, tanpa perlu hitung rotasi.
+ * Nominalnya ditulis LENGKAP, bukan disingkat. "Rp185 jt" menyembunyikan
+ * ratusan ribu yang justru dipakai pemilik untuk mencocokkan dengan rekening;
+ * angka penuh memang lebih panjang, tapi itu memang gunanya.
  */
 export function BusurTarget({
   judul, keterangan, nilai, target, format, delta, deltaArah, live = false, labelTengah = "Total Target",
@@ -105,6 +107,7 @@ export function BusurTarget({
   keterangan?: string;
   nilai: number;
   target: number;
+  /** Pemformat nominal. Pakai yang LENGKAP di sini, bukan yang disingkat. */
   format: (n: number) => string;
   delta?: string;
   deltaArah?: "naik" | "turun";
@@ -114,13 +117,9 @@ export function BusurTarget({
   const rasio = target > 0 ? nilai / target : 0;
   const t = Math.min(Math.max(rasio, 0), 1);
   const persen = rasio * 100;
-  // Koma desimal, bukan titik: seluruh situs ini berbahasa Indonesia. Dua
-  // angka di belakang koma sampai 100%, satu setelahnya — "118,00%" memberi
-  // ketelitian yang tidak berarti apa-apa pada angka sebesar itu.
   const persenTeks = `${persen.toFixed(persen >= 100 ? 1 : 2).replace(".", ",")}%`;
 
-  // Lebar kapsul dalam satuan t, dijaga agar tidak melewati ujung rel.
-  const lebarKapsul = 0.028;
+  const lebarKapsul = 0.03;
   const kMulai = Math.min(Math.max(t - lebarKapsul / 2, 0), 1 - lebarKapsul);
   const warna = rasio >= 1 ? "var(--success)" : rasio >= 0.5 ? "var(--warn)" : "var(--chart-1)";
 
@@ -128,34 +127,37 @@ export function BusurTarget({
     <div className="busur">
       <svg className="busur__svg" viewBox={`0 0 ${BW} ${BH}`} role="img"
         aria-label={`${judul}: ${format(nilai)} dari ${format(target)}, ${persenTeks}`}>
-        <path d={jalurBusur(0, 1, BR)} stroke="var(--busur-rel)" strokeWidth="17"
+        <path d={jalurBusur(0, 1, BR)} stroke="var(--busur-rel)" strokeWidth="22"
           fill="none" strokeLinecap="round" />
-        <path d={jalurBusur(kMulai, kMulai + lebarKapsul, BR)} stroke={warna} strokeWidth="21"
+        <path d={jalurBusur(kMulai, kMulai + lebarKapsul, BR)} stroke={warna} strokeWidth="27"
           fill="none" strokeLinecap="round" />
-        <text x={BCX} y={BCY - 24} textAnchor="middle" className="busur__cap">{labelTengah}</text>
-        <text x={BCX} y={BCY + 10} textAnchor="middle" className="busur__angka">
-          {persenTeks}
-        </text>
+
+        <text x={BCX} y={BCY - 62} textAnchor="middle" className="busur__cap">{labelTengah}</text>
+        <text x={BCX} y={BCY - 26} textAnchor="middle" className="busur__angka">{persenTeks}</text>
+        {delta && (
+          <text x={BCX} y={BCY - 6} textAnchor="middle"
+            className={`busur__delta busur__delta--${deltaArah === "naik" ? "naik" : "turun"}`}>
+            {delta}
+          </text>
+        )}
       </svg>
 
-      {/* Delta ditaruh DI LUAR svg. Di dalam busur ia menabrak kapsul begitu
-          pencapaiannya mendekati salah satu ujung — dan justru di ujung itulah
-          angkanya paling ingin dibaca. */}
-      {delta && (
-        <p className={`busur__delta busur__delta--${deltaArah === "naik" ? "naik" : "turun"}`}>{delta}</p>
-      )}
-
-      <p className="busur__baris">
-        <span className="busur__kini">{format(nilai)}</span>
-        <span className="busur__pisah">/</span>
-        <span className="busur__target">{format(target)}</span>
-      </p>
-
-      <p className="busur__legenda">
-        <span className="busur__lg"><span className="busur__lg-titik" style={{ background: warna }} />Realisasi</span>
-        <span className="busur__lg"><span className="busur__lg-titik busur__lg-titik--rel" />Target</span>
-      </p>
-      {live && <span className="sr-only">{keterangan}</span>}
+      {/* Realisasi dan target masing-masing satu baris berlabel, bukan
+          dipisah garis miring. Nominal LENGKAP di kolom selebar ini tidak muat
+          sebaris, dan garis miring yang menggantung di ujung baris pertama
+          terbaca seperti render yang rusak. Titik legendanya menyatu ke sini,
+          jadi tidak ada baris legenda terpisah yang mengulang hal yang sama. */}
+      <dl className="busur__nilai">
+        <div className="busur__nb">
+          <dt><span className="busur__lg-titik" style={{ background: warna }} />Realisasi</dt>
+          <dd className="busur__kini">{format(nilai)}</dd>
+        </div>
+        <div className="busur__nb">
+          <dt><span className="busur__lg-titik busur__lg-titik--rel" />Target</dt>
+          <dd className="busur__target">{format(target)}</dd>
+        </div>
+      </dl>
+      {live && keterangan && <span className="sr-only">{keterangan}</span>}
     </div>
   );
 }
@@ -172,25 +174,19 @@ export interface PitaCincin {
 }
 
 const CW = 230;
-// Tiga cincin sepusat, dari luar ke dalam. Jari-jari dan tebalnya dipilih agar
-// celah antar cincin sama besar dengan tebal cincinnya — itu yang membuat
-// ketiganya terbaca sebagai satu keluarga, bukan tiga lingkaran yang kebetulan
-// bertumpuk.
 const C_JARI = [86, 66, 46];
-const C_TEBAL = 12;
+const C_TEBAL = 13;
 
 /**
  * Sebaran proyek per pita margin, digambar sebagai CINCIN SEPUSAT — satu
  * cincin per pita, bukan satu donat yang dibagi-bagi.
  *
- * Bedanya penting: donat terbagi memaksa ketiga angka dibaca sebagai bagian
- * dari satu kue, padahal yang ingin dilihat pemilik adalah panjang masing-
- * masing terhadap TOTAL yang sama. Dengan cincin sepusat, tiap busur mulai di
- * titik yang sama (puncak) sehingga panjangnya bisa dibandingkan langsung.
- *
- * Angka di tengah adalah porsi pita pertama — pita paling sehat.
+ * Tiap busur mulai di titik yang sama (puncak), jadi panjangnya bisa
+ * dibandingkan langsung. Menyorot satu baris legenda meredupkan cincin yang
+ * lain, supaya mata bisa mengunci satu pita tanpa harus menghitung warna.
  */
 export function CincinDistribusi({ pita, judul }: { pita: PitaCincin[]; judul: string }) {
+  const [sorot, setSorot] = useState<number | null>(null);
   const total = pita.reduce((s, p) => s + p.jumlah, 0);
   const porsiUtama = total > 0 ? (pita[0]?.jumlah ?? 0) / total : 0;
 
@@ -203,8 +199,9 @@ export function CincinDistribusi({ pita, judul }: { pita: PitaCincin[]; judul: s
             const r = C_JARI[i] ?? C_JARI[C_JARI.length - 1];
             const keliling = 2 * Math.PI * r;
             const porsi = total > 0 ? p.jumlah / total : 0;
+            const redup = sorot !== null && sorot !== i;
             return (
-              <g key={p.label}>
+              <g key={p.label} opacity={redup ? 0.22 : 1} style={{ transition: "opacity var(--dur) var(--ease)" }}>
                 <circle cx={CW / 2} cy={CW / 2} r={r} fill="none"
                   stroke="var(--busur-rel)" strokeWidth={C_TEBAL} />
                 {porsi > 0 && (
@@ -216,28 +213,47 @@ export function CincinDistribusi({ pita, judul }: { pita: PitaCincin[]; judul: s
               </g>
             );
           })}
-          <text x={CW / 2} y={CW / 2 + 4} textAnchor="middle" className="cincin__angka">
+          <text x={CW / 2} y={CW / 2 - 4} textAnchor="middle" className="cincin__angka">
             {total > 0 ? `${Math.round(porsiUtama * 100)}%` : "—"}
           </text>
-          <text x={CW / 2} y={CW / 2 + 26} textAnchor="middle" className="cincin__cap">
+          <text x={CW / 2} y={CW / 2 + 15} textAnchor="middle" className="cincin__cap">
             {total > 0 ? pita[0]?.label.toUpperCase() : "BELUM ADA"}
           </text>
         </svg>
+        {/* Baris ketiga ditaruh di luar svg: lubang cincin terdalam cuma
+            berdiameter 80 satuan, dan tiga baris teks di dalamnya pasti
+            menabrak cincinnya. */}
+        <p className="cincin__sub">
+          {total > 0 ? `dari ${total} proyek terukur` : "belum ada proyek terukur"}
+        </p>
       </div>
 
       <ul className="cincin__legenda">
-        {pita.map((p) => (
-          <li key={p.label} className="cincin__baris">
-            <span className="cincin__lencana" style={{ background: p.lembut, color: p.warna }}>
-              <Icon name={p.ikon} size={15} />
-            </span>
-            <span className="cincin__teks">
-              <span className="cincin__nama">{p.label}</span>
-              <span className="cincin__ket">{p.keterangan}</span>
-            </span>
-            <span className="cincin__jumlah" style={{ color: p.warna }}>{p.jumlah}</span>
-          </li>
-        ))}
+        {pita.map((p, i) => {
+          const porsi = total > 0 ? Math.round((p.jumlah / total) * 100) : 0;
+          return (
+            <li key={p.label} className="cincin__baris"
+              onPointerEnter={(e) => { if (e.pointerType === "mouse") setSorot(i); }}
+              onPointerLeave={() => setSorot(null)}>
+              <span className="cincin__lencana" style={{ background: p.lembut, color: p.warna }}>
+                <Icon name={p.ikon} size={15} />
+              </span>
+              <span className="cincin__teks">
+                <span className="cincin__nama">{p.label}</span>
+                <span className="cincin__ket">{p.keterangan}</span>
+              </span>
+              <span className="cincin__kanan">
+                <span className="cincin__jumlah" style={{ color: p.warna }}>{p.jumlah}</span>
+                <span className="cincin__porsi">{porsi}%</span>
+              </span>
+              {/* Rel setipis rambut di bawah baris: mengulang porsi yang sama
+                  dalam bentuk panjang, supaya bisa dipindai tanpa membaca. */}
+              <span className="cincin__rel">
+                <span className="cincin__isi" style={{ inlineSize: `${porsi}%`, background: p.warna }} />
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -308,23 +324,22 @@ export function ChartBanding({
 
         {sorot !== null && (
           <line x1={x(sorot)} x2={x(sorot)} y1={PP.atas} y2={PP.atas + plotH}
-            stroke="var(--border-strong)" strokeWidth="1" />
+            stroke="var(--chart-1)" strokeWidth="1" strokeDasharray="4 4" opacity="0.7" />
         )}
 
         {lalu.map((v, i) => (
           <rect key={`b${i}`} x={x(i) - lebarBatang / 2} y={y(v)}
             width={lebarBatang} height={Math.max(PP.atas + plotH - y(v), 0)}
-            fill="var(--tray)" opacity={sorot === null || sorot === i ? 0.85 : 0.35} rx="3" />
+            fill="var(--tray)" opacity={sorot === null || sorot === i ? 0.9 : 0.3} rx={lebarBatang / 2} />
         ))}
 
         <path d={`${garis} L ${x(n - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`} fill={`url(#${id}-f)`} />
-        <path d={garis} fill="none" stroke="var(--chart-1)" strokeWidth="2.5"
+        <path d={garis} fill="none" stroke="var(--chart-1)" strokeWidth="3"
           strokeLinejoin="round" strokeLinecap="round" />
 
         {kini.map((v, i) => (
-          <circle key={`t${i}`} cx={x(i)} cy={y(v)} r={sorot === i ? 6 : 3.5}
-            fill={sorot === i ? "var(--surface)" : "var(--chart-1)"}
-            stroke="var(--chart-1)" strokeWidth={sorot === i ? 3 : 2} />
+          <circle key={`t${i}`} cx={x(i)} cy={y(v)} r={sorot === i ? 6.5 : 4}
+            fill="var(--surface)" stroke="var(--chart-1)" strokeWidth={sorot === i ? 3.5 : 2.5} />
         ))}
 
         {label.map((l, i) => (
@@ -416,12 +431,13 @@ export function PitaMetrik({ sel }: { sel: SelPita[] }) {
 export interface IrisKategori { nama: string; nilai: number; warna: string; }
 
 /**
- * Satu bilah horizontal yang dibagi menurut kategori, dengan legenda bernilai
- * di bawahnya.
+ * Beban per kategori: satu bilah ringkas di atas, lalu satu baris berperingkat
+ * untuk tiap kategori dengan bilahnya sendiri.
  *
  * Dipilih ketimbang pie: membandingkan panjang jauh lebih akurat daripada
- * membandingkan sudut, dan kategori beban di sini bisa timpang jauh (satu
- * kategori 70%, sisanya recehan) — bentuk yang paling buruk untuk pie.
+ * membandingkan sudut, dan kategori beban di sini timpang jauh — bentuk paling
+ * buruk untuk pie. Nomor urut ditulis karena urutannya memang informasi:
+ * yang teratas adalah yang paling menghabiskan uang.
  */
 export function BilahKategori({ iris, format }: { iris: IrisKategori[]; format: (n: number) => string }) {
   const total = iris.reduce((s, i) => s + i.nilai, 0);
@@ -430,34 +446,85 @@ export function BilahKategori({ iris, format }: { iris: IrisKategori[]; format: 
     return <p className="t-muted" style={{ fontSize: "var(--text-sm)" }}>Belum ada beban tercatat di periode ini.</p>;
   }
 
+  const urut = [...iris].sort((a, b) => b.nilai - a.nilai);
+  const terbesar = urut[0]?.nilai ?? 1;
+
   return (
     <div className="iris">
       <div className="iris__bilah" role="img"
-        aria-label={iris.map((i) => `${i.nama} ${format(i.nilai)}`).join(", ")}>
-        {iris.filter((i) => i.nilai > 0).map((i) => (
+        aria-label={urut.map((i) => `${i.nama} ${format(i.nilai)}`).join(", ")}>
+        {urut.filter((i) => i.nilai > 0).map((i) => (
           <span key={i.nama} className="iris__potong"
             style={{ inlineSize: `${(i.nilai / total) * 100}%`, background: i.warna }} />
         ))}
       </div>
+
       <ul className="iris__legenda">
-        {iris.map((i) => (
+        {urut.map((i, n) => (
           <li key={i.nama} className="iris__baris">
-            <span className="iris__atas">
-              <span className="iris__titik" style={{ background: i.warna }} />
-              <span className="iris__nama">{i.nama}</span>
-              <span className="iris__porsi">{Math.round((i.nilai / total) * 100)}%</span>
-              <span className="iris__nilai">{format(i.nilai)}</span>
+            <span className="iris__urut">{n + 1}</span>
+            <span className="iris__tengah">
+              <span className="iris__atas">
+                <span className="iris__nama">{i.nama}</span>
+                <span className="iris__nilai">{format(i.nilai)}</span>
+              </span>
+              {/* Bilah baris diskalakan ke kategori TERBESAR, bukan ke total.
+                  Terhadap total, kategori kecil jadi garis 3px yang tidak bisa
+                  dibandingkan satu sama lain sama sekali. */}
+              <span className="iris__rel">
+                <span className="iris__isi"
+                  style={{ inlineSize: `${(i.nilai / terbesar) * 100}%`, background: i.warna }} />
+              </span>
             </span>
-            {/* Bilah per kategori, bukan cuma titik warna: mata membandingkan
-                panjang jauh lebih cepat daripada membandingkan angka, dan
-                bilah tipis ini mengulang informasi yang sama dalam bentuk
-                yang bisa dipindai sekali lihat. */}
-            <span className="iris__rel">
-              <span className="iris__isi" style={{ inlineSize: `${(i.nilai / total) * 100}%`, background: i.warna }} />
-            </span>
+            <span className="iris__porsi">{Math.round((i.nilai / total) * 100)}%</span>
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+
+/* --- Lini masa aktivitas -------------------------------------------------- */
+
+export interface ButirAktivitas {
+  id: string;
+  judul: string;
+  keterangan: string;
+  waktu: string;
+  ikon: Parameters<typeof Icon>[0]["name"];
+  warna: string;
+  lembut: string;
+}
+
+/**
+ * Pergerakan terbaru sebagai LINI MASA — ubin ikon berwarna dengan garis
+ * penghubung tegak di antaranya.
+ *
+ * Garis penghubungnya yang membuat daftar ini terbaca sebagai urutan waktu,
+ * bukan sekadar tumpukan baris. Garis pada butir TERAKHIR sengaja tidak
+ * digambar: kalau digambar, ia menjanjikan butir berikutnya yang tidak ada.
+ */
+export function LiniMasa({ butir }: { butir: ButirAktivitas[] }) {
+  return (
+    <ol className="lini">
+      {butir.map((b, i) => (
+        <li key={b.id} className="lini__baris">
+          <span className="lini__rel">
+            <span className="lini__ubin" style={{ background: b.lembut, color: b.warna }}>
+              <Icon name={b.ikon} size={15} />
+            </span>
+            {i < butir.length - 1 && <span className="lini__garis" />}
+          </span>
+          <span className="lini__teks">
+            <span className="lini__atas">
+              <span className="lini__judul">{b.judul}</span>
+              <span className="lini__waktu">{b.waktu}</span>
+            </span>
+            <span className="lini__ket">{b.keterangan}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }

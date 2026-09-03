@@ -9,8 +9,13 @@ import {
   AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
 } from "../ui/data/Dashboard";
 import {
-  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, PilLive, PitaMetrik,
+  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, LiniMasa, PilLive, PitaMetrik,
 } from "../ui/data/Keuangan";
+
+/** Rupiah LENGKAP — bentuk yang dipakai di bawah busur target. */
+function rpPenuh(n: number) {
+  return `Rp${Math.round(n).toLocaleString("id-ID")}`;
+}
 
 /** Rupiah ringkas untuk contoh di halaman ini. */
 function rp(n: number) {
@@ -288,15 +293,15 @@ export function DataShowcase() {
         <div className="papan-grid papan-grid--tiga">
           <KartuData judul="Target Per Bulan" keterangan="Realisasi vs target bulan ini" kanan={<PilLive />}>
             <BusurTarget judul="Target Per Bulan" nilai={836_896_159} target={15_496_418_900}
-              format={rp} delta="−93,7% vs bulan lalu" deltaArah="turun" />
+              format={rpPenuh} delta="−93,7% vs bulan lalu" deltaArah="turun" />
           </KartuData>
           <KartuData judul="Target 6 Bulan" keterangan="Semester berjalan" kanan={<PilLive />}>
             <BusurTarget judul="Target 6 Bulan" nilai={640_000_000} target={1_000_000_000}
-              format={rp} delta="+18,2% vs semester lalu" deltaArah="naik" />
+              format={rpPenuh} delta="+18,2% vs semester lalu" deltaArah="naik" />
           </KartuData>
           <KartuData judul="Target Tahunan" keterangan="Akumulasi 12 bulan">
             <BusurTarget judul="Target Tahunan" nilai={1_180_000_000} target={1_000_000_000}
-              format={rp} delta="+31,4% vs tahun lalu" deltaArah="naik" />
+              format={rpPenuh} delta="+31,4% vs tahun lalu" deltaArah="naik" />
           </KartuData>
         </div>
         <p className="field__help">
@@ -420,6 +425,32 @@ export function DataShowcase() {
         <p className="field__help">
           Bilah, bukan pie: membandingkan panjang jauh lebih akurat daripada membandingkan
           sudut — dan kategori beban di sini memang timpang jauh.
+        </p>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Lini Masa</span>
+          <code className="swatch__name">LiniMasa</code>
+        </div>
+        <KartuData judul="Aktivitas Terkini" keterangan="Pergerakan uang dan dokumen terbaru" kanan={<PilLive />}>
+          <LiniMasa
+            butir={[
+              { id: "1", judul: "Invoice DP 50% lunas", keterangan: "Rumah Kaca · Rp72.500.000", waktu: "2 jam lalu",
+                ikon: "check", warna: "var(--success)", lembut: "var(--success-soft)" },
+              { id: "2", judul: "Biaya render ditambahkan", keterangan: "Kopi Simpang Tiga · Rp8.500.000", waktu: "5 jam lalu",
+                ikon: "alert", warna: "var(--warn)", lembut: "var(--warn-soft)" },
+              { id: "3", judul: "Gambar kerja diunggah", keterangan: "Renovasi Ruko Gajahmada · 12 berkas", waktu: "kemarin",
+                ikon: "document", warna: "var(--text-muted)", lembut: "var(--surface-hover)" },
+              { id: "4", judul: "Fase naik ke Desain 2", keterangan: "Rumah Kaca", waktu: "kemarin",
+                ikon: "clock", warna: "var(--upgrade)", lembut: "var(--upgrade-soft)" },
+            ]}
+          />
+        </KartuData>
+        <p className="field__help">
+          Garis penghubung tegak yang membuat daftar ini terbaca sebagai urutan waktu, bukan
+          tumpukan baris. Garis pada butir terakhir sengaja tidak digambar — kalau digambar, ia
+          menjanjikan butir berikutnya yang tidak ada.
         </p>
       </div>
 
