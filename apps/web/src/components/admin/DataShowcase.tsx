@@ -7,6 +7,7 @@ import { Carousel } from "../ui/data/Carousel";
 import { ScrollArea, ResizableDemo } from "../ui/data/Panels";
 import { KartuAngka } from "../ui/data/KartuAngka";
 import { ChartArusKas } from "../ui/data/ChartArusKas";
+import { KartuDonat } from "../ui/data/KartuDonat";
 import {
   AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
 } from "../ui/data/Dashboard";
@@ -46,6 +47,22 @@ const arusSeri = [
   { kunci: "kas", label: "Kas masuk", warna: "var(--success)", gaya: "penuh" as const, isi: true },
   { kunci: "beban", label: "Beban", warna: "var(--brand)", gaya: "putus" as const },
   { kunci: "laba", label: "Laba", warna: "var(--warn)", gaya: "putus" as const },
+];
+
+
+/** Contoh irisan untuk kartu donat di halaman ini. */
+const irisContoh = [
+  { label: "Tenaga kerja & render", nilai: 106_600_000, warna: "var(--chart-cat-1)" },
+  { label: "Management fee", nilai: 45_200_000, warna: "var(--chart-cat-2)" },
+  { label: "Operasional harian", nilai: 34_900_000, warna: "var(--chart-cat-3)" },
+  { label: "Perizinan", nilai: 12_300_000, warna: "var(--chart-cat-4)" },
+  { label: "Lainnya", nilai: 6_000_000, warna: "var(--chart-cat-5)" },
+];
+
+const donatTab = [
+  { nilai: "kategori", label: "Kategori", ikon: "list" as const },
+  { nilai: "proyek", label: "Proyek", ikon: "project" as const },
+  { nilai: "bulan", label: "Bulan", ikon: "calendar" as const },
 ];
 
 interface Proyek extends Record<string, unknown> {
@@ -353,6 +370,44 @@ export function DataShowcase() {
           memakai nominal LENGKAP, karena di situlah angkanya dicocokkan dengan rekening.
           Kurvanya monoton, jadi garis kas yang semua angkanya positif tidak pernah tergambar
           menukik ke bawah nol di antara dua bulan.
+        </p>
+      </div>
+
+      {/* --- Kartu donat ---------------------------------------------------- */}
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Kartu Donat</span>
+          <code className="swatch__name">KartuDonat</code>
+        </div>
+        <div className="papan-grid papan-grid--dua">
+          <KartuDonat
+            judul="Rincian Beban"
+            subjudul="September 2026"
+            tab={donatTab}
+            iris={irisContoh}
+            format={(n) => `Rp${Math.round(n / 1_000_000)} jt`}
+            kakiLabel="Total beban"
+            kakiNilai="Rp205.000.000"
+          />
+          <KartuDonat
+            judul="Rincian Beban"
+            subjudul="Belum ada biaya tercatat"
+            tab={donatTab}
+            iris={irisContoh.map((i) => ({ ...i, nilai: 0 }))}
+            format={(n) => `Rp${Math.round(n / 1_000_000)} jt`}
+            kakiLabel="Total beban"
+            kakiNilai="Rp0"
+          />
+        </div>
+        <p className="field__help">
+          Judul dan subjudul, bilah tab berkotak dengan segmen aktif yang jadi kartu terang,
+          donat berangka persentase besar di tengah, legenda tegak, lalu kaki berisi label,
+          lingkaran bertindih, dan total. Menunjuk satu baris legenda meredupkan irisan lain
+          dan mengganti angka di tengah. Warnanya memakai skala KATEGORI tersendiri
+          (<code className="swatch__name">--chart-cat-1</code>…<code className="swatch__name">5</code>),
+          bukan warna semantik — makna tiap irisan dibawa labelnya, bukan warnanya. Donat dan
+          legenda bertumpuk sendiri saat berdampingan tidak lagi muat.
         </p>
       </div>
 

@@ -623,7 +623,18 @@ a.mini__judul:hover { color: var(--brand); }
    Label dolar di sana pendek ("$700k", 5 karakter); padanan rupiahnya
    "Rp800 jt" delapan karakter dan butuh 53px — pada 44px ia pecah dua baris,
    dan barisnya jadi tidak sejajar dengan garis kisinya. */
-.arus__plot { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: var(--space-3); margin-block-start: var(--space-5); }
+.arus__plot {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-block-start: var(--space-5);
+  /* Menyerap sisa tinggi kartu. Kartu donat di sebelahnya lebih tinggi
+     daripada tinggi bawaan grafik ini, dan dua kartu sebaris yang beda
+     tinggi meninggalkan rongga kosong — persis yang dikeluhkan pemilik di
+     putaran sebelumnya. Yang memanjang bidang gambarnya, bukan paddingnya. */
+  flex: 1;
+  min-block-size: 0;
+}
 
 .arus__sumbu {
   display: flex;
@@ -646,7 +657,8 @@ a.mini__judul:hover { color: var(--brand); }
 
 .arus__gambar {
   position: relative;
-  block-size: 205px;
+  block-size: 100%;
+  min-block-size: 205px;
   min-inline-size: 0;
   /* Gulir tegak halaman tetap jalan di layar sentuh; yang ditangkap komponen
      ini cuma gerakan mendatar. */
@@ -751,9 +763,196 @@ a.mini__judul:hover { color: var(--brand); }
 @media (max-width: 46rem) {
   .arus { padding: var(--space-4); }
   .arus__periode { margin-inline-start: 0; inline-size: 100%; }
-  .arus__gambar { block-size: 170px; }
+  .arus__gambar { min-block-size: 170px; }
   .arus__plot { grid-template-columns: 52px minmax(0, 1fr); }
   .arus__bulan { padding-inline-start: calc(52px + var(--space-3)); }
   /* Dua belas nama bulan tidak muat di 390px; tampilkan yang ganjil saja. */
   .arus__bulan li:nth-child(even) { visibility: hidden; }
+}
+
+/* =============================================================================
+   Kartu donat (KartuDonat.tsx) — tiruan kartu "Distribusi Tugas per Jabatan".
+
+   Proporsi diukur dari gambar referensi (kartu 686px, ruang dalam 620px) lalu
+   diskalakan ke kartu di sini yang lebarnya 364px — 31,2% dari kolom konten,
+   angka yang sama dengan wireframe. Faktornya 0,53.
+
+   | Bagian              | Referensi | Di sini |
+   | ------------------- | --------- | ------- |
+   | padding kartu       | 33px      | 24px    |
+   | tinggi bilah tab    | 62px      | 44px    |
+   | garis tengah donat  | 272px     | 150px   |
+   | tebal cincin        | 46px      | 22px    |
+   | jarak baris legenda | 26px      | 14px    |
+   ============================================================================= */
+
+.donat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.donat__head { display: flex; flex-direction: column; gap: 0.15rem; }
+
+.donat__judul {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-strong);
+}
+
+.donat__sub { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+
+/* --- Bilah tab berkotak --------------------------------------------------- */
+
+/* Varian .segmented: referensi memakai kotak bersudut membulat, bukan pil,
+   dan segmen aktifnya jadi kartu terang berbingkai yang seolah terangkat. */
+.segmented--kotak {
+  padding: 4px;
+  gap: 2px;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+}
+
+.segmented--kotak .segmented__opt {
+  padding: 0.5rem 0.4rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  gap: 0.35rem;
+}
+
+.segmented--kotak .segmented__opt[aria-pressed="true"] {
+  color: var(--text-strong);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- Donat + legenda ------------------------------------------------------ */
+
+/* Bertumpuk sendiri saat berdampingan tidak muat. Bukan container query:
+   aturannya diam saja kalau tidak ada leluhur ber-container-type. */
+.donat__isi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4) var(--space-5);
+}
+
+.donat__gambar {
+  position: relative;
+  flex: 0 1 auto;
+  inline-size: 150px;
+  max-inline-size: 100%;
+  aspect-ratio: 1;
+}
+
+.donat__gambar > svg { display: block; inline-size: 100%; block-size: 100%; max-inline-size: none; }
+
+.donat__rel { stroke: var(--tray); }
+
+.donat__persen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  letter-spacing: var(--tracking-tight);
+  pointer-events: none;
+}
+
+.donat__legenda {
+  flex: 1 1 9rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.donat__baris {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  inline-size: 100%;
+  padding: 0.3rem 0.35rem;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.donat__baris:hover,
+.donat__baris[aria-pressed="true"] { background: var(--surface-hover); }
+.donat__baris:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+/* Titiknya diberi jarak atas supaya sejajar baris PERTAMA label yang dua
+   baris — kalau align-items center, titiknya melayang di tengah dua baris. */
+.donat__titik { inline-size: 10px; block-size: 10px; margin-block-start: 0.32em; border-radius: 50%; flex: none; }
+
+.donat__nama { flex: 1; min-inline-size: 0; line-height: 1.3; }
+
+.donat__angka {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* --- Kaki ----------------------------------------------------------------- */
+
+.donat__kaki {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border);
+}
+
+.donat__kaki-label { flex: 1; min-inline-size: 0; font-size: var(--text-sm); color: var(--text-muted); }
+
+/* Lingkaran bertindih. Cincin seukuran latar kartu yang membuat takik di
+   antaranya — sama seperti tumpukan avatar di referensi. */
+.donat__tumpuk { display: inline-flex; flex: none; }
+
+.donat__keping {
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.donat__keping + .donat__keping { margin-inline-start: -6px; }
+
+.donat__kaki-nilai {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+@media (max-width: 46rem) {
+  .donat { padding: var(--space-4); }
 }

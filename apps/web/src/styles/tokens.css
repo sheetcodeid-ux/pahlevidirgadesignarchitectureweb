@@ -230,6 +230,16 @@
   --chart-seq-4: #3f9bd0;
   --chart-seq-5: #7bbde2;
 
+  /* Skala KATEGORI — lima rona berbeda untuk irisan donat dan sejenisnya.
+     Ini skala tersendiri, BUKAN warna semantik: makna tiap irisan dibawa oleh
+     label di legendanya, bukan oleh warnanya. Nilainya sengaja dibedakan dari
+     --success/--warn/--upgrade supaya tidak terbaca sebagai status. */
+  --chart-cat-1: #4a8ef0;
+  --chart-cat-2: #f2a63b;
+  --chart-cat-3: #2fc4cf;
+  --chart-cat-4: #9d7bf5;
+  --chart-cat-5: #34c47c;
+
   --chart-grid: #232323;
   --chart-axis: #6b6b6b;
 }
@@ -244,6 +254,14 @@
   --chart-seq-3: #6ba5cf;
   --chart-seq-4: #2f7cb5;
   --chart-seq-5: #155ba6;
+
+  /* Bukan pembalikan otomatis: rona yang sama diturunkan gelapnya supaya
+     tetap terbaca di atas putih, sama seperti warna semantik lain. */
+  --chart-cat-1: #2563d6;
+  --chart-cat-2: #c47a11;
+  --chart-cat-3: #128b98;
+  --chart-cat-4: #7048d6;
+  --chart-cat-5: #14915a;
 
   --chart-grid: #e8e8e4;
   --chart-axis: #8b8b86;
