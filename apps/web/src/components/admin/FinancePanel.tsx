@@ -258,19 +258,21 @@ function Isi() {
             />
           </div>
 
-          <p className="keu__catatan">
-            Tiga kartu pertama membandingkan <b>bulan ini dengan bulan lalu</b>; angka besarnya
-            sendiri adalah total sejak awal. Laba bersih dihitung dari kas yang benar-benar
-            masuk, bukan nilai kontrak.
-          </p>
 
           <div className="keu__baris2">
             <ChartArusKas
               judul="Analisis Arus Kas"
+              /* Palet GRAFIK situs ini (--chart-1/2/3), bukan warna semantik.
+                 Versi sebelumnya memakai hijau-sukses, merah-brand, dan amber
+                 karena itu yang ada di gambar referensi — dan hasilnya halaman
+                 ini jadi satu-satunya di panel admin yang hijau, sementara
+                 Chart.tsx dan Dashboard.tsx sudah lama memakai --chart-1.
+                 Warna semantik tetap dipakai di tempat yang memang semantik:
+                 pil delta naik/turun di kartu angka. */
               seri={[
-                { kunci: "kas", label: "Kas masuk", warna: "var(--success)", gaya: "penuh", isi: true },
-                { kunci: "beban", label: "Beban", warna: "var(--brand)", gaya: "putus" },
-                { kunci: "laba", label: "Laba bersih", warna: "var(--warn)", gaya: "putus" },
+                { kunci: "kas", label: "Kas masuk", warna: "var(--chart-1)", gaya: "penuh", isi: true },
+                { kunci: "beban", label: "Beban", warna: "var(--chart-2)", gaya: "putus" },
+                { kunci: "laba", label: "Laba bersih", warna: "var(--chart-3)", gaya: "putus" },
               ]}
               data={arus}
               periode={rentang}
