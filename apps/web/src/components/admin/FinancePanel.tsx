@@ -262,17 +262,18 @@ function Isi() {
           <div className="keu__baris2">
             <ChartArusKas
               judul="Analisis Arus Kas"
-              /* Palet GRAFIK situs ini (--chart-1/2/3), bukan warna semantik.
-                 Versi sebelumnya memakai hijau-sukses, merah-brand, dan amber
-                 karena itu yang ada di gambar referensi — dan hasilnya halaman
-                 ini jadi satu-satunya di panel admin yang hijau, sementara
-                 Chart.tsx dan Dashboard.tsx sudah lama memakai --chart-1.
-                 Warna semantik tetap dipakai di tempat yang memang semantik:
-                 pil delta naik/turun di kartu angka. */
+              /* Hijau, merah, amber — bukan palet --chart-*.
+                 Sempat ditukar ke palet grafik situs supaya seragam dengan
+                 Chart.tsx dan Dashboard.tsx, lalu pemilik memintanya kembali:
+                 versi ini lebih menyala. Keputusan dia, dan ini halaman yang
+                 dia baca tiap hari.
+                 Warnanya di sini kebetulan juga masuk akal maknanya: hijau
+                 untuk uang masuk, merah untuk uang keluar, amber untuk
+                 sisanya. */
               seri={[
-                { kunci: "kas", label: "Kas masuk", warna: "var(--chart-1)", gaya: "penuh", isi: true },
-                { kunci: "beban", label: "Beban", warna: "var(--chart-2)", gaya: "putus" },
-                { kunci: "laba", label: "Laba bersih", warna: "var(--chart-3)", gaya: "putus" },
+                { kunci: "kas", label: "Kas masuk", warna: "var(--success)", gaya: "penuh", isi: true },
+                { kunci: "beban", label: "Beban", warna: "var(--brand)", gaya: "putus" },
+                { kunci: "laba", label: "Laba bersih", warna: "var(--warn)", gaya: "putus" },
               ]}
               data={arus}
               periode={rentang}
