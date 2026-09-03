@@ -97,7 +97,12 @@ function skala(maks: number, bagian = 5) {
   if (!Number.isFinite(maks) || maks <= 0) return { atas: bagian, langkah: 1 };
   const kasar = maks / bagian;
   const pangkat = 10 ** Math.floor(Math.log10(kasar));
-  const langkah = [1, 2, 2.5, 5, 10].map((k) => k * pangkat).find((k) => k >= kasar) ?? 10 * pangkat;
+  /* Daftar langkah yang lebih rapat daripada [1, 2, 2.5, 5, 10].
+     Dengan daftar kasar itu, data tertinggi Rp420 juta menghasilkan puncak
+     sumbu Rp800 juta — hampir separuh bidang gambar kosong. Yang rapat
+     memberi Rp500 juta: masih angka bulat, tapi headroom-nya 19% bukan 90%. */
+  const langkah = [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5, 10]
+    .map((k) => k * pangkat).find((k) => k >= kasar) ?? 10 * pangkat;
   return { atas: langkah * bagian, langkah };
 }
 

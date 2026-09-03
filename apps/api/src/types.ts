@@ -431,6 +431,13 @@ export interface FinanceOverviewRow {
   belumDiterima: number | null;
 }
 
+/** Satu kategori biaya, untuk donat Rincian Beban. */
+export interface BebanKategori {
+  /** Nilai enum public.cost_category. */
+  kategori: string;
+  nilai: number;
+}
+
 export interface FinanceOverview {
   kasMasuk: number;
   piutang: number;
@@ -440,6 +447,15 @@ export interface FinanceOverview {
   totalBiaya: number;
   totalKontrak: number;
   proyek: FinanceOverviewRow[];
+  /**
+   * Seluruh biaya dipecah per kategori.
+   *
+   * Selalu memuat KEEMPAT kategori, termasuk yang nilainya nol. Kategori
+   * yang hilang saat nilainya nol membuat warna irisan di donat bergeser
+   * dari bulan ke bulan — "operasional" bisa biru bulan ini dan hijau bulan
+   * depan hanya karena ada satu kategori yang kosong.
+   */
+  bebanKategori: BebanKategori[];
 }
 
 /** Satu bulan di halaman Analisis Bulanan. */

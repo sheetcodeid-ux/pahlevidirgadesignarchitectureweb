@@ -518,6 +518,13 @@ export interface FinanceOverviewRow {
   belumDiterima: number | null;
 }
 
+/** Satu kategori biaya, untuk donat Rincian Beban. Nilainya dari API. */
+export interface BebanKategori {
+  /** Nilai enum public.cost_category: freelancer, operasional, prinsipal, lainnya. */
+  kategori: string;
+  nilai: number;
+}
+
 export interface FinanceOverview {
   kasMasuk: number;
   piutang: number;
@@ -526,6 +533,8 @@ export interface FinanceOverview {
   totalBiaya: number;
   totalKontrak: number;
   proyek: FinanceOverviewRow[];
+  /** Selalu keempat kategori, termasuk yang nol. */
+  bebanKategori: BebanKategori[];
 }
 
 /** Satu bulan dari endpoint /admin/finance/monthly. */

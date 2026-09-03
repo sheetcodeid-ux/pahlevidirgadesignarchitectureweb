@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import type { FinanceMonthRow, FinanceOverview, FinanceOverviewRow } from "../types";
+import type { BebanKategori, FinanceMonthRow, FinanceOverview, FinanceOverviewRow } from "../types";
 
 interface ProjectRow {
   project_id: string;
@@ -72,6 +72,23 @@ export async function overview(sql: Sql, projectID?: string | null): Promise<Fin
     };
   });
 
+  // Biaya dipecah per kategori, untuk donat Rincian Beban. Query terpisah,
+  // bukan diturunkan dari `proyek` di atas, karena baris di sana sudah
+  // terlanjur dijumlahkan per proyek dan kategorinya hilang di situ.
+  const kategoriRows = await sql<{ kategori: string; total: string }[]>`
+    select c.category as kategori, coalesce(sum(c.amount), 0) as total
+    from public.project_costs c
+    join public.projects p on p.id = c.project_id
+    where p.contract_value is not null
+      and (${projectID ?? null}::uuid is null or c.project_id = ${projectID ?? null}::uuid)
+    group by c.category`;
+
+  // Keempat kategori selalu ikut, termasuk yang nol — lihat catatan di
+  // FinanceOverview.bebanKategori.
+  const urutan = ["freelancer", "operasional", "prinsipal", "lainnya"] as const;
+  const peta = new Map(kategoriRows.map((r) => [r.kategori, Number(r.total)]));
+  const bebanKategori: BebanKategori[] = urutan.map((k) => ({ kategori: k, nilai: peta.get(k) ?? 0 }));
+
   const kasMasuk = proyek.reduce((sum, p) => sum + p.received, 0);
   const totalKontrak = proyek.reduce((sum, p) => sum + (p.contractValue ?? 0), 0);
   const totalBiaya = proyek.reduce((sum, p) => sum + p.costsTotal, 0);
@@ -84,6 +101,7 @@ export async function overview(sql: Sql, projectID?: string | null): Promise<Fin
     totalBiaya,
     totalKontrak,
     proyek,
+    bebanKategori,
   };
 }
 

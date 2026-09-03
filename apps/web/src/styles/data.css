@@ -517,10 +517,16 @@ a.mini__judul:hover { color: var(--brand); }
   white-space: nowrap;
 }
 
-/* Varian angka bermono — aturan desain situs ini ("mono untuk data dan
-   angka") bentrok dengan referensi, yang memakai sans. Dua-duanya disiapkan
-   supaya pemilik bisa memilih dari gambar, bukan dari bayangan. */
-.kangka--mono .kangka__nilai {
+/* Angkanya BERMONO, bukan bersans seperti referensi.
+   Pemilik menyerahkan pilihannya, jadi ini keputusan saya dengan tiga alasan:
+   1. Aturan desain situs ini sudah menetapkan "mono untuk data dan angka",
+      dan seluruh angka lain di panel admin sudah bermono. Satu halaman yang
+      bersans akan terbaca sebagai halaman dari sistem lain.
+   2. tabular-nums membuat digit selebar sama, jadi empat kartu berjajar
+      angkanya sejajar rapi — dengan sans, lebar digitnya berbeda-beda.
+   3. Mono di sini justru LEBIH rapat: "Rp1.284.500.000" butuh 235px pada
+      26px bermono, sementara bersans butuh 250px. Terukur. */
+.kangka__nilai {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
@@ -1182,3 +1188,35 @@ a.mini__judul:hover { color: var(--brand); }
   /* Dua belas nama bulan tidak muat di 390px; tampilkan yang ganjil saja. */
   .banding__bulan li:nth-child(even) { visibility: hidden; }
 }
+
+/* =============================================================================
+   Halaman Keuangan (FinancePanel.tsx) — rangka yang merakit keempat komponen.
+
+   Susunannya mengikuti wireframe yang sudah disetujui pemilik:
+   baris tab → empat kartu angka → dua kolom 67,4%/31,2% → satu kartu penuh.
+   ============================================================================= */
+
+.keu { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.keu__bar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+.keu__ekspor { margin-inline-start: auto; }
+
+/* Angka yang persis sama dengan wireframe: 2,16 : 1 dengan celah 17px. */
+.keu__baris2 { display: grid; grid-template-columns: 2.16fr 1fr; gap: 17px; }
+
+@media (max-width: 62rem) { .keu__baris2 { grid-template-columns: 1fr; } }
+
+.keu__catatan {
+  margin: calc(var(--space-4) * -1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  max-inline-size: var(--measure);
+}
+
+.keu__catatan b { color: var(--text-muted); font-weight: 600; }
+
+/* Kerangka muat: bentuknya meniru isi sungguhannya, bukan kotak seragam —
+   kalau tidak, halamannya melompat saat data datang. */
+.keu__rangka-kartu { block-size: 145px; border-radius: var(--radius-lg); }
+.keu__rangka-besar { block-size: 538px; border-radius: var(--radius-lg); }
+.keu__rangka-lebar { block-size: 326px; border-radius: var(--radius-lg); }
