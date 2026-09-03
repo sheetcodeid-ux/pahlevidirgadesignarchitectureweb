@@ -42,46 +42,43 @@ export interface TitikArus {
 /* --- Kurva ---------------------------------------------------------------- */
 
 /**
- * Kurva kubik monoton (Fritsch–Carlson).
+ * Kurva Catmull–Rom, diubah jadi rangkaian kubik Bézier.
  *
- * Kurva di gambar referensi sedikit MELAMPAUI titik datanya — itu ciri spline
- * kardinal. Di sini sengaja tidak dipakai: grafik kas yang semua angkanya
- * positif bisa tergambar menukik ke bawah nol di antara dua bulan, dan garis
- * yang menunjukkan angka yang tidak pernah terjadi adalah grafik yang bohong.
- * Bedanya cuma terlihat pada belokan paling tajam.
+ * Ini yang membuat lengkungannya membulat penuh seperti di gambar referensi.
+ * Versi sebelumnya memakai kurva monoton (Fritsch–Carlson) yang memaksa
+ * kemiringan jadi NOL di tiap puncak dan lembah — hasilnya puncak yang rata,
+ * dan itu persis yang dikeluhkan pemilik.
+ *
+ * Bahayanya sudah ditutup, bukan diabaikan: Catmull–Rom bisa MELAMPAUI titik
+ * datanya, jadi garis kas yang semua angkanya positif bisa tergambar menukik
+ * ke bawah nol. Titik kendali Bézier di sini dijepit ke dalam bidang gambar,
+ * dan sebuah kurva kubik dijamin berada di dalam selubung cembung keempat
+ * titik kendalinya — jadi kurvanya tidak mungkin keluar dari bidangnya
+ * sementara bentuk membulatnya tetap utuh.
  */
-function kurva(titik: Array<{ x: number; y: number }>) {
+function kurva(titik: Array<{ x: number; y: number }>, batasAtas: number, batasBawah: number) {
   const n = titik.length;
   if (n === 0) return "";
   if (n === 1) return `M ${titik[0].x} ${titik[0].y}`;
 
-  const sekan: number[] = [];
-  for (let i = 0; i < n - 1; i += 1) {
-    sekan.push((titik[i + 1].y - titik[i].y) / (titik[i + 1].x - titik[i].x));
-  }
-  const m: number[] = [sekan[0]];
-  for (let i = 1; i < n - 1; i += 1) {
-    m.push(sekan[i - 1] * sekan[i] <= 0 ? 0 : (sekan[i - 1] + sekan[i]) / 2);
-  }
-  m.push(sekan[n - 2]);
-  for (let i = 0; i < n - 1; i += 1) {
-    if (sekan[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
-    const a = m[i] / sekan[i];
-    const b = m[i + 1] / sekan[i];
-    const s = a * a + b * b;
-    if (s > 9) {
-      const t = 3 / Math.sqrt(s);
-      m[i] = t * a * sekan[i];
-      m[i + 1] = t * b * sekan[i];
-    }
-  }
+  const jepit = (y: number) => Math.min(batasBawah, Math.max(batasAtas, y));
+  /* Sepertiga dibagi dua — nilai baku Catmull–Rom. Makin besar makin
+     melengkung; di atas ini kurvanya mulai bergelombang sendiri. */
+  const T = 1 / 6;
+
   let jalur = `M ${titik[0].x} ${titik[0].y}`;
   for (let i = 0; i < n - 1; i += 1) {
-    const dx = titik[i + 1].x - titik[i].x;
-    jalur +=
-      ` C ${titik[i].x + dx / 3} ${titik[i].y + (m[i] * dx) / 3}` +
-      ` ${titik[i + 1].x - dx / 3} ${titik[i + 1].y - (m[i + 1] * dx) / 3}` +
-      ` ${titik[i + 1].x} ${titik[i + 1].y}`;
+    const p0 = titik[i - 1] ?? titik[i];
+    const p1 = titik[i];
+    const p2 = titik[i + 1];
+    const p3 = titik[i + 2] ?? titik[i + 1];
+
+    const c1x = p1.x + (p2.x - p0.x) * T;
+    const c1y = jepit(p1.y + (p2.y - p0.y) * T);
+    const c2x = p2.x - (p3.x - p1.x) * T;
+    const c2y = jepit(p2.y - (p3.y - p1.y) * T);
+
+    jalur += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
   }
   return jalur;
 }
@@ -167,7 +164,7 @@ export function ChartArusKas({
 
     const jalurSeri = seri.map((s) => {
       const t = data.map((d, i) => ({ x: x(i), y: y(d.nilai[s.kunci] ?? 0) }));
-      const garis = kurva(t);
+      const garis = kurva(t, INSET, VH - INSET);
       return {
         ...s,
         garis,
