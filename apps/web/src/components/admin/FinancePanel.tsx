@@ -3,13 +3,13 @@ import { Icon } from "../ui/Icon";
 import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
 import {
-  AreaChart, Delta, Gauge, KartuMini, KartuPapan, Sparkline, StatSebaris, StripMetrik,
-  bandingkan, type Metrik, type Perubahan,
-} from "../ui/data/Dashboard";
+  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, PilLive, PitaMetrik,
+  type IrisKategori, type PitaCincin, type SelPita,
+} from "../ui/data/Keuangan";
 import { RequireAuth } from "./RequireAuth";
 import {
-  ambilRingkasanKeuangan, ambilBulanan, type FinanceOverview, type BarisBulanan,
-  bacaCache, tulisCache,
+  ambilRingkasanKeuangan, ambilBulanan, type AktivitasKeuangan, type FinanceOverview,
+  type BarisBulanan, bacaCache, tulisCache,
 } from "../../lib/admin";
 import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
@@ -31,15 +31,58 @@ function rupiahRingkas(n: number) {
   return `${tanda}Rp${a}`;
 }
 
-function namaBulan(iso: string) {
-  const [th, bl] = iso.split("-");
-  return `${new Date(Number(th), Number(bl) - 1, 1).toLocaleDateString("id-ID", { month: "short" })} ${th}`;
+/** Persen bergaya Indonesia: koma desimal, satu angka di belakangnya. */
+function persen(n: number | null) {
+  if (n === null || !Number.isFinite(n)) return "—";
+  return `${n.toFixed(1).replace(".", ",")}%`;
 }
 
-/** Bulan terakhir dibanding bulan sebelumnya. null kalau tidak ada pembanding. */
-function delta(baris: BarisBulanan[] | null, ambil: (b: BarisBulanan) => number): Perubahan | null {
-  if (!baris || baris.length < 2) return null;
-  return bandingkan(ambil(baris[baris.length - 1]), ambil(baris[baris.length - 2]));
+/** Porsi sebuah komponen terhadap nilai kontrak. */
+function porsiKontrak(nilai: number, kontrak: number) {
+  return kontrak > 0 ? (nilai / kontrak) * 100 : null;
+}
+
+function namaBulanPendek(iso: string) {
+  const [th, bl] = iso.split("-");
+  return new Date(Number(th), Number(bl) - 1, 1).toLocaleDateString("id-ID", { month: "short" });
+}
+
+/**
+ * Margin satu proyek = laba bersih terhadap KAS YANG BENAR-BENAR MASUK.
+ *
+ * Bukan terhadap nilai kontrak: proyek yang baru DP 50% akan terlihat
+ * bermargin tipis padahal uangnya memang belum ditagih. Kalau belum ada kas
+ * masuk sama sekali, marginnya tidak bisa dihitung — dan proyek itu tidak
+ * dimasukkan ke pita mana pun, bukan dilempar ke "kritis".
+ */
+function marginProyek(p: BarisProyek): number | null {
+  return p.received > 0 ? (p.labaBersih / p.received) * 100 : null;
+}
+
+/* Ambang pita margin. 35% diambil dari dokumen strategi pemilik ("target
+   margin minimum 35–45%", KPI "margin rata-rata minimal 35%"). Batas bawah
+   pita tengah menyambung tepat ke batas atas pita kritis — tidak ada nilai
+   margin yang jatuh di luar ketiganya. */
+const AMBANG_SEHAT = 35;
+const AMBANG_KRITIS = 15;
+
+const KOLOM_IKON: Record<AktivitasKeuangan["jenis"], { ikon: Parameters<typeof Icon>[0]["name"]; warna: string; lembut: string }> = {
+  invoice_lunas: { ikon: "check", warna: "var(--success)", lembut: "var(--success-soft)" },
+  invoice_terbit: { ikon: "finance", warna: "var(--chart-1)", lembut: "var(--info-soft)" },
+  biaya: { ikon: "alert", warna: "var(--warn)", lembut: "var(--warn-soft)" },
+  dokumen: { ikon: "document", warna: "var(--text-muted)", lembut: "var(--surface-hover)" },
+  progres: { ikon: "clock", warna: "var(--upgrade)", lembut: "var(--upgrade-soft)" },
+};
+
+/** Kartu yang sumber datanya belum ada — dijelaskan, bukan dibiarkan kosong. */
+function BelumAdaSumber({ judul, keterangan }: { judul: string; keterangan: string }) {
+  return (
+    <div className="belum">
+      <span className="belum__ikon"><Icon name="alert" size={22} /></span>
+      <span className="belum__judul">{judul}</span>
+      <p className="belum__ket">{keterangan}</p>
+    </div>
+  );
 }
 
 const KOLOM: Kolom<BarisProyek>[] = [
@@ -51,34 +94,57 @@ const KOLOM: Kolom<BarisProyek>[] = [
       </a>
     ),
   },
-  { judul: "Kontrak", kelas: "table__num", lebar: "7rem", render: (p) => (p.contractValue !== null ? formatRupiah(p.contractValue) : "—") },
-  { judul: "Diterima", kelas: "table__num", lebar: "7rem", render: (p) => formatRupiah(p.received) },
-  { judul: "Biaya (HPP)", kelas: "table__num", lebar: "7rem", render: (p) => formatRupiah(p.costsTotal) },
+  {
+    judul: "Nilai kontrak",
+    kelas: "table__num",
+    lebar: "8rem",
+    render: (p) => (p.contractValue !== null ? formatRupiah(p.contractValue) : "—"),
+  },
+  {
+    judul: "Kas masuk",
+    kelas: "table__num",
+    lebar: "8.5rem",
+    render: (p) => (
+      <span className="sel-angka">
+        {formatRupiah(p.received)}
+        <span className="sel-porsi">{persen(porsiKontrak(p.received, p.contractValue ?? 0))}</span>
+      </span>
+    ),
+  },
+  {
+    judul: "Biaya operasional",
+    kelas: "table__num",
+    lebar: "8.5rem",
+    render: (p) => (
+      <span className="sel-angka">
+        {formatRupiah(p.costsTotal)}
+        <span className="sel-porsi">{persen(porsiKontrak(p.costsTotal, p.contractValue ?? 0))}</span>
+      </span>
+    ),
+  },
   {
     judul: "Laba bersih",
     kelas: "table__num",
-    lebar: "7rem",
-    render: (p) => <span className={p.labaBersih < 0 ? "angka-minus" : undefined}>{rupiah(p.labaBersih)}</span>,
+    lebar: "8.5rem",
+    render: (p) => (
+      <span className="sel-angka">
+        <span className={p.labaBersih < 0 ? "angka-minus" : undefined}>{rupiah(p.labaBersih)}</span>
+        <span className="sel-porsi">{persen(porsiKontrak(p.labaBersih, p.contractValue ?? 0))}</span>
+      </span>
+    ),
   },
   {
     judul: "Margin",
     kelas: "table__num",
-    lebar: "3.5rem",
-    render: (p) =>
-      p.marginPct !== null ? (
-        <span className={`badge ${p.marginPct >= 35 ? "badge--success" : "badge--warn"}`}>
-          {p.marginPct.toFixed(0)}%
-        </span>
-      ) : "—",
+    lebar: "4.5rem",
+    render: (p) => {
+      const m = marginProyek(p);
+      if (m === null) return <span className="t-muted">—</span>;
+      const kelas = m >= AMBANG_SEHAT ? "badge--success" : m >= AMBANG_KRITIS ? "badge--warn" : "badge--brand";
+      return <span className={`badge ${kelas}`}>{persen(m)}</span>;
+    },
   },
 ];
-
-/** Deret yang bisa dipilih di kaki grafik besar. */
-const DERET = [
-  { id: "laba", label: "Laba bersih", ambil: (b: BarisBulanan) => b.labaBersih, warna: "var(--chart-3)" },
-  { id: "kas", label: "Kas masuk", ambil: (b: BarisBulanan) => b.kasMasuk, warna: "var(--chart-1)" },
-  { id: "biaya", label: "Biaya", ambil: (b: BarisBulanan) => b.biaya, warna: "var(--chart-2)" },
-] as const;
 
 function Isi() {
   // Proyek aktif dibaca setelah mount — localStorage tidak ada saat build, dan
@@ -87,7 +153,6 @@ function Isi() {
   const [siap, setSiap] = useState(false);
   const [data, setData] = useState<FinanceOverview | null>(null);
   const [bulan, setBulan] = useState<BarisBulanan[] | null>(null);
-  const [deret, setDeret] = useState<string>("laba");
   const [galat, setGalat] = useState<string | null>(null);
 
   useEffect(() => {
@@ -103,15 +168,15 @@ function Isi() {
     // detik sebelum yang benar tiba.
     const k = aktif ?? "semua";
     setData(bacaCache<FinanceOverview>(`keuangan:${k}`) ?? null);
-    setBulan(bacaCache<BarisBulanan[]>(`bulanan:${k}:12`) ?? null);
+    setBulan(bacaCache<BarisBulanan[]>(`bulanan:${k}:24`) ?? null);
 
     ambilRingkasanKeuangan(aktif)
       .then((d) => { tulisCache(`keuangan:${k}`, d); setData(d); })
       .catch((e) => setGalat((e as Error).message));
-    // Deret bulanan dipakai dua kali: grafik besarnya, dan angka perubahan di
-    // strip metrik. Tanpa ini, delta tidak punya pembanding sama sekali.
-    ambilBulanan(aktif, 12)
-      .then((d) => { tulisCache(`bulanan:${k}:12`, d); setBulan(d); })
+    // 24 bulan, bukan 12: grafik Nilai Proyek membandingkan tahun ini dengan
+    // tahun lalu, jadi ia butuh dua tahun penuh sekaligus.
+    ambilBulanan(aktif, 24)
+      .then((d) => { tulisCache(`bulanan:${k}:24`, d); setBulan(d); })
       .catch(() => setBulan([]));
   }, [aktif, siap]);
 
@@ -134,153 +199,195 @@ function Isi() {
   }
 
   const judul = aktif ? data.proyek.find((p) => p.projectId === aktif)?.projectTitle : null;
-  const pilih = DERET.find((d) => d.id === deret) ?? DERET[0];
-  const titik = (bulan ?? []).map(pilih.ambil);
-  const labelBulan = (bulan ?? []).map((b) => namaBulan(b.bulan));
 
-  const metrik: Metrik[] = [
-    { label: "Kas masuk", nilai: formatRupiah(data.kasMasuk), delta: delta(bulan, (b) => b.kasMasuk), deltaFormat: rupiahRingkas },
-    { label: "Biaya (HPP)", nilai: formatRupiah(data.totalBiaya), delta: delta(bulan, (b) => b.biaya), deltaTerbalik: true, deltaFormat: rupiahRingkas },
+  /* --- Pita metrik: enam angka, masing-masing dengan porsinya ------------- */
+
+  const marginKas = data.kasMasuk > 0 ? (data.labaBersih / data.kasMasuk) * 100 : null;
+
+  const sel: SelPita[] = [
+    { label: "Nilai kontrak", nilai: formatRupiah(data.totalKontrak), persen: "100%", arah: "netral" },
     {
-      label: "Laba bersih",
-      nilai: rupiah(data.labaBersih),
-      minus: data.labaBersih < 0,
-      delta: delta(bulan, (b) => b.labaBersih),
-      deltaFormat: rupiahRingkas,
+      label: "Kas masuk", nilai: formatRupiah(data.kasMasuk),
+      persen: persen(porsiKontrak(data.kasMasuk, data.totalKontrak)), arah: "naik",
     },
     {
-      label: "Terkumpul dari kontrak",
-      nilai: data.totalKontrak > 0 ? `${Math.round((data.kasMasuk / data.totalKontrak) * 100)}%` : "—",
-      sisipan: (
-        <BilahTerkumpul
-          nilai={data.kasMasuk}
-          maks={data.totalKontrak}
-        />
-      ),
+      label: "Piutang", nilai: formatRupiah(data.piutang),
+      persen: persen(porsiKontrak(data.piutang, data.totalKontrak)), arah: "netral",
+    },
+    {
+      label: "Biaya ops", nilai: formatRupiah(data.totalBiaya),
+      persen: persen(porsiKontrak(data.totalBiaya, data.totalKontrak)), arah: "turun",
+    },
+    {
+      label: "Laba bersih", nilai: rupiah(data.labaBersih), minus: data.labaBersih < 0,
+      persen: persen(porsiKontrak(data.labaBersih, data.totalKontrak)),
+      arah: data.labaBersih < 0 ? "turun" : "naik",
+    },
+    {
+      label: "Margin", nilai: persen(marginKas), minus: (marginKas ?? 0) < 0,
+      persen: "dari kas masuk", arah: (marginKas ?? 0) >= AMBANG_SEHAT ? "naik" : "turun",
     },
   ];
 
-  const margin = data.marginRataRata;
-  const rasioTertagih = data.totalKontrak > 0 ? (data.kasMasuk / data.totalKontrak) * 100 : 0;
+  /* --- Distribusi margin -------------------------------------------------- */
+
+  const terukur = data.proyek.map(marginProyek).filter((m): m is number => m !== null);
+  const pita: PitaCincin[] = [
+    {
+      label: "Sehat", keterangan: `Margin ≥ ${AMBANG_SEHAT}%`, ikon: "check",
+      warna: "var(--success)", lembut: "var(--success-soft)",
+      jumlah: terukur.filter((m) => m >= AMBANG_SEHAT).length,
+    },
+    {
+      label: "Cukup", keterangan: `Margin ${AMBANG_KRITIS}–${AMBANG_SEHAT - 1}%`, ikon: "clock",
+      warna: "var(--warn)", lembut: "var(--warn-soft)",
+      jumlah: terukur.filter((m) => m >= AMBANG_KRITIS && m < AMBANG_SEHAT).length,
+    },
+    {
+      label: "Kritis", keterangan: `Margin < ${AMBANG_KRITIS}%`, ikon: "alert",
+      warna: "var(--brand)", lembut: "var(--brand-soft)",
+      jumlah: terukur.filter((m) => m < AMBANG_KRITIS).length,
+    },
+  ];
+
+  /* --- Nilai proyek: tahun ini vs tahun lalu ------------------------------ */
+
+  // Dua belas bulan terakhir, dan dua belas bulan sebelum itu, dipetakan ke
+  // sumbu bulan yang sama. Deretnya sudah urut dari API, jadi cukup dipotong.
+  const deret = bulan ?? [];
+  const tahunIni = deret.slice(-12);
+  const tahunLalu = deret.slice(-24, -12);
+  const cukupUntukBanding = tahunIni.length >= 2;
+  const labelBulan = tahunIni.map((b) => namaBulanPendek(b.bulan));
+  const nilaiKini = tahunIni.map((b) => b.kasMasuk);
+  // Kalau tahun lalu belum punya data, dibandingkan dengan nol — bukan
+  // disembunyikan. Batang kosong adalah jawaban yang benar untuk "tahun lalu
+  // belum ada apa-apa".
+  const nilaiLalu = tahunIni.map((_, i) => tahunLalu[i]?.kasMasuk ?? 0);
+
+  /* --- Beban operasional -------------------------------------------------- */
+
+  const NAMA_BEBAN: Record<string, { nama: string; warna: string }> = {
+    tenaga_kerja: { nama: "Tenaga kerja & render", warna: "var(--chart-1)" },
+    management_fee: { nama: "Management fee 10%", warna: "var(--chart-2)" },
+    operasional: { nama: "Operasional harian", warna: "var(--chart-3)" },
+    lainnya: { nama: "Lainnya", warna: "var(--tray)" },
+  };
+
+  const iris: IrisKategori[] | null = data.bebanKategori
+    ? data.bebanKategori.map((b) => ({
+        nama: NAMA_BEBAN[b.kategori]?.nama ?? b.kategori,
+        warna: NAMA_BEBAN[b.kategori]?.warna ?? "var(--tray)",
+        nilai: b.nilai,
+      }))
+    : null;
 
   return (
     <div className="papan-stack">
-      {/* Pil lingkup menggantikan spanduk peringatan: lingkup bukan
-          peringatan, ia keadaan — dan keadaan ditulis sebaris, bukan dalam
-          kotak biru yang menuntut perhatian setiap kali halaman dibuka. */}
+      {/* Pil lingkup: lingkup bukan peringatan, ia keadaan — dan keadaan
+          ditulis sebaris, bukan dalam kotak yang menuntut perhatian. */}
       <div className="lingkup">
         <span className="lingkup__nama">
           <Icon name={aktif ? "project" : "dashboard"} size={15} />
           {judul ?? "Semua Proyek"}
         </span>
         <span className="lingkup__nilai">{rupiah(data.labaBersih)}</span>
-        <Delta ubah={delta(bulan, (b) => b.labaBersih)} format={rupiahRingkas} />
         <span className="lingkup__dorong t-muted" style={{ fontSize: "var(--text-xs)" }}>
           {data.proyek.length} proyek berkontrak
         </span>
       </div>
 
-      <StripMetrik metrik={metrik} />
+      <PitaMetrik sel={sel} />
 
-      <KartuPapan
-        judul="Arus uang per bulan"
-        ke="/admin/keuangan/bulanan"
-        nilai={titik.length > 0 ? rupiah(titik[titik.length - 1]) : "—"}
-        delta={delta(bulan, pilih.ambil)}
-        deltaTerbalik={pilih.id === "biaya"}
-        deltaFormat={rupiahRingkas}
-        kanan={<span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>12 bulan terakhir</span>}
-        anak={
-          titik.length >= 2 ? (
-            <AreaChart titik={titik} label={labelBulan} judulNilai={pilih.label}
-              format={rupiahRingkas} warna={pilih.warna} />
+      <div className="papan-grid papan-grid--1-2-1">
+        <KartuData
+          judul="Target Semester"
+          keterangan="Kas masuk vs target 6 bulan"
+          kanan={data.targetSemester ? <PilLive /> : undefined}>
+          {data.targetSemester ? (
+            <BusurTarget
+              judul="Target semester"
+              nilai={data.kasMasuk}
+              target={data.targetSemester.nilai}
+              format={rupiahRingkas}
+              labelTengah="Target Semester"
+            />
           ) : (
-            <div className="empty empty--sm">
-              <span className="t-muted">Belum cukup bulan berdata untuk digambar.</span>
-            </div>
-          )
-        }
-        tab={
-          <div className="segmented segmented--block" role="group" aria-label="Deret yang ditampilkan">
-            {DERET.map((d) => (
-              <button key={d.id} type="button" className="segmented__opt"
-                aria-pressed={deret === d.id} onClick={() => setDeret(d.id)}>
-                {d.label}
-              </button>
-            ))}
-          </div>
-        }
-      />
+            <BelumAdaSumber
+              judul="Target belum disetel"
+              keterangan="Butuh tabel target di database supaya angkanya bisa diatur dari Info Studio, bukan ditulis tetap di kode."
+            />
+          )}
+        </KartuData>
 
-      <div className="papan-grid papan-grid--dua">
-        {/* Gauge ditemani angkanya sendiri di sebelah kanan. Sendirian, ia
-            meninggalkan separuh kartu kosong di layar selebar ini — dan kartu
-            yang setengahnya udara adalah persis yang membuat halaman ini
-            terasa boros sebelumnya. */}
-        <KartuPapan
-          judul="Margin proyeksi"
-          kanan={<span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>kalau kontrak dibayar penuh</span>}
-          anak={
-            <div className="papan__sisi">
-              <Gauge nilai={margin ?? 0} judul="Margin proyeksi"
-                keterangan={margin === null ? "—" : margin >= 35 ? "Sehat" : margin >= 20 ? "Tipis" : "Rugi"} />
-              <StatSebaris
-                stat={[
-                  { label: "Nilai kontrak", nilai: formatRupiah(data.totalKontrak) },
-                  { label: "Biaya tercatat", nilai: formatRupiah(data.totalBiaya) },
-                  { label: "Selisihnya", nilai: rupiah(data.totalKontrak - data.totalBiaya), minus: data.totalKontrak - data.totalBiaya < 0 },
-                ]}
-              />
-            </div>
-          }
-        />
+        <KartuData
+          judul="Nilai Proyek"
+          keterangan={`Kas masuk per bulan · ${tahunIni.length} bulan terakhir${
+            tahunLalu.length > 0 ? " vs periode sebelumnya" : ""
+          }`}>
+          {cukupUntukBanding ? (
+            <ChartBanding
+              label={labelBulan}
+              kini={nilaiKini}
+              lalu={nilaiLalu}
+              namaKini="Periode ini"
+              namaLalu="Periode sebelumnya"
+              format={rupiahRingkas}
+            />
+          ) : (
+            <BelumAdaSumber
+              judul="Belum cukup bulan berdata"
+              keterangan="Grafik terisi begitu ada minimal dua bulan dengan pergerakan uang."
+            />
+          )}
+        </KartuData>
 
-        <KartuPapan
-          judul="Laba bersih 12 bulan"
-          nilai={rupiah((bulan ?? []).reduce((s, b) => s + b.labaBersih, 0))}
-          delta={delta(bulan, (b) => b.labaBersih)}
-          deltaFormat={rupiahRingkas}
-          kanan={<span className="t-muted" style={{ fontSize: "var(--text-xs)" }}>12 bulan</span>}
-          anak={
-            <>
-              <Sparkline titik={(bulan ?? []).map((b) => b.labaBersih)} label="Laba bersih per bulan" />
-              <StatSebaris
-                stat={[
-                  { label: "Bulan berdata", nilai: String((bulan ?? []).length) },
-                  { label: "Bulan rugi", nilai: String((bulan ?? []).filter((b) => b.labaBersih < 0).length) },
-                  {
-                    label: "Rata-rata per bulan",
-                    nilai: rupiah(Math.round(((bulan ?? []).reduce((s, b) => s + b.labaBersih, 0) / Math.max((bulan ?? []).length, 1)) / 1000) * 1000),
-                    minus: (bulan ?? []).reduce((s, b) => s + b.labaBersih, 0) < 0,
-                  },
-                ]}
-              />
-            </>
-          }
-        />
+        <KartuData judul="Distribusi Margin" keterangan="Sebaran kesehatan margin per proyek">
+          <CincinDistribusi judul="Distribusi margin" pita={pita} />
+        </KartuData>
       </div>
 
-      <div className="papan-grid papan-grid--tiga">
-        <KartuMini
-          judul="Tertagih"
-          keterangan="Kas masuk dibanding nilai kontrak"
-          nilai={`${Math.round(rasioTertagih)}%`}
-          sisipan={<BilahTerkumpul nilai={data.kasMasuk} maks={data.totalKontrak} />}
-        />
-        <KartuMini
-          judul="Piutang"
-          keterangan="Invoice terbit, belum dibayar"
-          nilai={formatRupiah(data.piutang)}
-          badge={data.piutang > 0 ? "Menunggu" : "Bersih"}
-          badgeKelas={data.piutang > 0 ? "badge--warn" : "badge--success"}
-        />
-        <KartuMini
-          judul="Belum ditagih"
-          keterangan="Kontrak dikurangi kas masuk dan piutang"
-          nilai={formatRupiah(Math.max(0, data.totalKontrak - data.kasMasuk - data.piutang))}
-          badge={data.totalKontrak - data.kasMasuk - data.piutang > 0 ? "Ada sisa" : "Habis"}
-          badgeKelas={data.totalKontrak - data.kasMasuk - data.piutang > 0 ? "badge--info" : "badge--success"}
-        />
+      <div className="papan-grid papan-grid--dua">
+        <KartuData judul="Beban Operasional" keterangan="Rincian beban studio menurut kategori">
+          {iris ? (
+            <BilahKategori iris={iris} format={formatRupiah} />
+          ) : (
+            <BelumAdaSumber
+              judul="Rincian kategori belum tersedia"
+              keterangan="Biaya sudah tersimpan berkategori, tapi ringkasan keuangan belum mengelompokkannya. Butuh satu perubahan di repository API."
+            />
+          )}
+        </KartuData>
+
+        <KartuData
+          judul="Aktivitas Terkini"
+          keterangan="Pergerakan uang dan dokumen terbaru"
+          kanan={data.aktivitas ? <PilLive /> : undefined}>
+          {data.aktivitas && data.aktivitas.length > 0 ? (
+            <ul className="akt">
+              {data.aktivitas.map((a) => {
+                const gaya = KOLOM_IKON[a.jenis];
+                return (
+                  <li key={a.id} className="akt__baris">
+                    <span className="akt__ikon" style={{ background: gaya.lembut, color: gaya.warna }}>
+                      <Icon name={gaya.ikon} size={15} />
+                    </span>
+                    <span className="akt__teks">
+                      <span className="akt__judul">{a.judul}</span>
+                      <span className="akt__ket">{a.keterangan}</span>
+                    </span>
+                    <span className="akt__waktu">{a.waktu}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <BelumAdaSumber
+              judul="Belum ada sumber aktivitas"
+              keterangan="Butuh endpoint gabungan yang menyatukan invoice lunas, biaya baru, dokumen terunggah, dan perubahan progres."
+            />
+          )}
+        </KartuData>
       </div>
 
       <DataTable
@@ -291,34 +398,24 @@ function Isi() {
         placeholderCari="Cari proyek…"
         labelCari="Cari proyek"
         satuan="proyek"
-        barisSkeleton={Math.max(data.proyek.length, 1)}
+        barisSkeleton={data.proyek.length}
         kosong={{
           ikon: "finance",
-          judul: "Belum ada proyek dengan nilai kontrak",
-          keterangan: "Isi nilai kontrak di tab Keuangan pada halaman tiap proyek.",
+          judul: "Belum ada proyek berkontrak",
+          keterangan: "Isi nilai kontrak di halaman proyek supaya angkanya ikut terhitung di sini.",
         }}
       />
     </div>
   );
 }
 
-/** Bilah "berapa dari kontrak yang sudah jadi uang". */
-function BilahTerkumpul({ nilai, maks }: { nilai: number; maks: number }) {
-  const rasio = maks > 0 ? Math.min(nilai / maks, 1) : 0;
-  return (
-    <span className="kemajuan" role="img"
-      aria-label={`${Math.round(rasio * 100)} persen dari nilai kontrak sudah diterima`}>
-      <span className="kemajuan__isi" style={{ inlineSize: `${rasio * 100}%` }} />
-      <span className="kemajuan__titik" style={{ insetInlineStart: `${rasio * 100}%` }} />
-    </span>
-  );
-}
-
 export function FinancePanel() {
-  return <RequireAuth skeleton={
+  return (
+    <RequireAuth skeleton={
       <div className="papan-stack">
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
-    }><Isi /></RequireAuth>;
+    }><Isi /></RequireAuth>
+  );
 }

@@ -362,6 +362,21 @@
 .papan-grid--dua  { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .papan-grid--tiga { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
+/* Kolom tengah dua kali lebar kiri dan kanan: grafik butuh ruang sumbu,
+   sementara busur dan cincin justru rusak kalau dipaksa melebar. */
+.papan-grid--1-2-1 { grid-template-columns: 1fr 2fr 1fr; }
+
+@media (max-width: 74rem) {
+  /* Grafik pindah ke barisnya sendiri selebar penuh, busur dan cincin
+     berbagi baris di bawahnya. */
+  .papan-grid--1-2-1 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .papan-grid--1-2-1 > :nth-child(2) { grid-column: 1 / -1; order: -1; }
+}
+
+@media (max-width: 46rem) {
+  .papan-grid--1-2-1 { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 62rem) { .papan-grid--tiga { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 40rem) {
   .papan-grid--dua,
@@ -523,6 +538,9 @@ a.mini__judul:hover { color: var(--brand); }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   min-inline-size: 0;
+  /* Semua kartu dalam satu baris grid setinggi yang tertinggi. Tanpa ini,
+     kartu pendek berhenti di tengah dan barisnya terbaca patah. */
+  block-size: 100%;
 }
 
 .kdata__head {
@@ -546,7 +564,17 @@ a.mini__judul:hover { color: var(--brand); }
 
 .kdata__ket   { margin: 0; font-size: var(--text-xs); color: var(--text-muted); }
 .kdata__bawah { display: flex; }
-.kdata__isi   { min-inline-size: 0; }
+
+/* Isi memenuhi sisa tinggi dan dipusatkan tegak. Kartu yang isinya pendek —
+   busur, misalnya — kalau dibiarkan menempel di atas akan meninggalkan rongga
+   di bawahnya, dan rongga itu yang membuat barisnya terlihat tidak rapi. */
+.kdata__isi {
+  min-inline-size: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
 /* Pil LIVE: titik berdenyut, teks kapital kecil. */
 .pil-live {
@@ -624,7 +652,7 @@ a.mini__judul:hover { color: var(--brand); }
 /* --- Cincin distribusi ---------------------------------------------------- */
 
 .cincin { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); }
-.cincin__gambar { inline-size: 100%; max-inline-size: 13rem; }
+.cincin__gambar { inline-size: 100%; max-inline-size: 11.5rem; }
 .cincin__gambar svg { inline-size: 100%; block-size: auto; }
 
 .cincin__angka {
@@ -822,3 +850,67 @@ a.mini__judul:hover { color: var(--brand); }
 .iris__porsi { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); flex: none; }
 .iris__nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
                font-size: var(--text-sm); color: var(--text-strong); flex: none; }
+
+/* --- Aktivitas terkini ---------------------------------------------------- */
+
+.akt { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.akt__baris {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.akt__baris:first-child { border-block-start: none; padding-block-start: 0; }
+
+.akt__ikon {
+  inline-size: 1.9rem;
+  block-size: 1.9rem;
+  border-radius: var(--radius-sm);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.akt__teks { display: flex; flex-direction: column; gap: 0.1rem; min-inline-size: 0; flex: 1; }
+.akt__judul { font-size: var(--text-sm); color: var(--text-strong); font-weight: 600; }
+.akt__ket   { font-size: var(--text-xs); color: var(--text-muted);
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.akt__waktu {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Keadaan "belum ada sumber data": bukan kartu kosong, tapi penjelasan apa
+   yang akan mengisinya. Kartu kosong tanpa keterangan terbaca seperti bug. */
+.belum {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-5);
+  text-align: center;
+}
+
+.belum__ikon { color: var(--text-faint); }
+.belum__judul { font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); }
+.belum__ket { margin: 0; font-size: var(--text-xs); color: var(--text-faint); max-inline-size: 22rem; }
+
+/* Sel angka bertingkat: nominal di baris atas, porsinya di bawah dengan huruf
+   lebih kecil. Dipakai di tabel Performa Proyek, di mana tiap komponen punya
+   persentasenya sendiri terhadap nilai kontrak. */
+.sel-angka { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
+
+.sel-porsi {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
