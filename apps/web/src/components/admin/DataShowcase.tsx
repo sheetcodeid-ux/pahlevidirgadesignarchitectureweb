@@ -8,6 +8,18 @@ import { ScrollArea, ResizableDemo } from "../ui/data/Panels";
 import {
   AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
 } from "../ui/data/Dashboard";
+import {
+  BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, PitaMetrik,
+} from "../ui/data/Keuangan";
+
+/** Rupiah ringkas untuk contoh di halaman ini. */
+function rp(n: number) {
+  const a = Math.abs(n);
+  const tanda = n < 0 ? "\u2212" : "";
+  if (a >= 1_000_000_000) return `${tanda}Rp${(a / 1_000_000_000).toFixed(2).replace(".", ",")} M`;
+  if (a >= 1_000_000) return `${tanda}Rp${Math.round(a / 1_000_000)} jt`;
+  return `${tanda}Rp${a.toLocaleString("id-ID")}`;
+}
 
 interface Proyek extends Record<string, unknown> {
   judul: string;
@@ -263,6 +275,110 @@ export function DataShowcase() {
           <KartuMini judul="Bulan rugi" keterangan="Biaya melebihi kas masuk" nilai="4 dari 7"
             badge="Sering" badgeKelas="badge--warn" />
         </div>
+      </div>
+
+
+      {/* --- Primitif papan Keuangan -------------------------------------- */}
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Busur Target</span>
+          <code className="swatch__name">BusurTarget</code>
+        </div>
+        <div className="papan-grid papan-grid--tiga">
+          <BusurTarget judul="Target 6 bulan" nilai={418_000_000} target={1_000_000_000}
+            format={rp} keterangan="Realisasi vs target semester" />
+          <BusurTarget judul="Target 6 bulan" nilai={640_000_000} target={1_000_000_000}
+            format={rp} keterangan="Sudah lewat separuh jalan" />
+          <BusurTarget judul="Target 6 bulan" nilai={1_180_000_000} target={1_000_000_000}
+            format={rp} keterangan="Target terlampaui" />
+        </div>
+        <p className="field__help">
+          Panjang busur yang terisi ADALAH rasionya. Warnanya ikut ambang: merah di bawah
+          separuh, amber setelahnya, hijau begitu target tercapai. Pencapaian di atas 100%
+          digambar penuh tapi angkanya tidak dipotong.
+        </p>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Cincin Distribusi</span>
+          <code className="swatch__name">CincinDistribusi</code>
+        </div>
+        <CincinDistribusi
+          judul="Distribusi margin"
+          pita={[
+            { label: "Sehat", keterangan: "Margin ≥ 35%", jumlah: 8, warna: "var(--success)", ikon: "check" },
+            { label: "Cukup", keterangan: "Margin 15–34%", jumlah: 4, warna: "var(--warn)", ikon: "clock" },
+            { label: "Kritis", keterangan: "Margin < 15%", jumlah: 2, warna: "var(--brand)", ikon: "alert" },
+          ]}
+        />
+        <p className="field__help">
+          Angka di tengah adalah porsi pita pertama terhadap total — menjawab "berapa persen
+          proyek saya sehat?", bukan mengulang jumlah yang sudah tertulis di kanan.
+        </p>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Chart Banding Periode</span>
+          <code className="swatch__name">ChartBanding</code>
+        </div>
+        <ChartBanding
+          label={["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]}
+          kini={[45, 120, 96, 180, 210, 150, 96, 240, 205, 160, 190, 220]}
+          lalu={[30, 88, 110, 92, 140, 165, 120, 96, 150, 130, 118, 175]}
+          namaKini="Tahun ini"
+          namaLalu="Tahun lalu"
+          format={(v) => `Rp${Math.round(v)} jt`}
+        />
+        <p className="field__help">
+          Periode berjalan sebagai garis, pembandingnya sebagai batang — dua bentuk berbeda,
+          jadi tidak pernah tertukar. Sumbu Y selalu mulai dari nol: memotongnya membuat
+          selisih dua bulan terlihat berlipat dari yang sebenarnya.
+        </p>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Pita Metrik</span>
+          <code className="swatch__name">PitaMetrik</code>
+        </div>
+        <PitaMetrik
+          sel={[
+            { label: "Nilai kontrak", nilai: "Rp451.000.000" },
+            { label: "Kas masuk", nilai: "Rp185.000.000", delta: "12,4%", arah: "naik" },
+            { label: "Biaya operasional", nilai: "Rp261.000.000", delta: "8,1%", arah: "turun" },
+            { label: "Laba bersih", nilai: "−Rp76.000.000", minus: true },
+            { label: "Margin", nilai: "−41,1%", minus: true },
+            { label: "Tertagih", nilai: "41,0%" },
+          ]}
+        />
+        <p className="field__help">
+          Untuk angka yang dibaca bersama sebagai satu ringkasan. Garis pemisah, bukan jarak:
+          jarak memisahkan, garis menyatukan sambil tetap membedakan. Angka yang berdiri
+          sendiri tetap pakai kartu metrik.
+        </p>
+      </div>
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Bilah Kategori</span>
+          <code className="swatch__name">BilahKategori</code>
+        </div>
+        <BilahKategori
+          format={rp}
+          iris={[
+            { nama: "Tenaga kerja & render", nilai: 148_000_000, warna: "var(--chart-1)" },
+            { nama: "Management fee 10%", nilai: 45_100_000, warna: "var(--chart-2)" },
+            { nama: "Operasional harian", nilai: 52_000_000, warna: "var(--chart-3)" },
+            { nama: "Lainnya", nilai: 15_900_000, warna: "var(--tray)" },
+          ]}
+        />
+        <p className="field__help">
+          Bilah, bukan pie: membandingkan panjang jauh lebih akurat daripada membandingkan
+          sudut — dan kategori beban di sini memang timpang jauh.
+        </p>
       </div>
 
       <div className="spec-demo">

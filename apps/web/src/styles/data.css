@@ -501,3 +501,233 @@ a.mini__judul:hover { color: var(--brand); }
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
 }
+
+/* =============================================================================
+   Primitif papan Keuangan — pasangan Keuangan.tsx.
+   ============================================================================= */
+
+/* --- Busur target --------------------------------------------------------- */
+
+.busur { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.busur__svg { inline-size: 100%; max-inline-size: 15rem; block-size: auto; }
+
+.busur__angka {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+
+.busur__cap {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  fill: var(--text-faint);
+}
+
+.busur__baris {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+}
+
+.busur__kini   { color: var(--text-strong); font-weight: 500; }
+.busur__pisah  { color: var(--text-faint); }
+.busur__target { color: var(--text-muted); }
+.busur__ket    { margin: 0; font-size: var(--text-xs); color: var(--text-faint); text-align: center; }
+
+/* --- Cincin distribusi ---------------------------------------------------- */
+
+.cincin { display: flex; align-items: center; gap: var(--space-5); flex-wrap: wrap; }
+.cincin__gambar { flex: none; inline-size: 11rem; }
+.cincin__gambar svg { inline-size: 100%; block-size: auto; }
+
+.cincin__angka {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+  fill: var(--text-strong);
+}
+
+.cincin__cap {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: var(--tracking-label);
+  fill: var(--text-faint);
+}
+
+.cincin__legenda {
+  flex: 1;
+  min-inline-size: 12rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cincin__baris { display: flex; align-items: center; gap: var(--space-3); }
+.cincin__ikon  { display: inline-flex; flex: none; }
+.cincin__teks  { display: flex; flex-direction: column; gap: 0.05rem; min-inline-size: 0; flex: 1; }
+.cincin__nama  { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
+.cincin__ket   { font-size: var(--text-2xs); color: var(--text-faint); }
+
+.cincin__jumlah {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--text-strong);
+  flex: none;
+}
+
+/* --- Grafik banding ------------------------------------------------------- */
+
+.banding { position: relative; }
+.banding__svg { inline-size: 100%; block-size: auto; display: block; }
+
+.banding__sumbu {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--chart-axis);
+}
+
+/* Tooltip diposisikan dengan persen terhadap lebar grafik, lalu digeser
+   separuh lebarnya sendiri — supaya ia tetap menempel pada kolomnya di lebar
+   layar mana pun, bukan pada satu ukuran piksel tertentu. */
+.banding__tip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.banding__tip-judul { font-size: var(--text-2xs); color: var(--text-faint); text-transform: uppercase; letter-spacing: var(--tracking-label); }
+.banding__tip-baris { display: flex; align-items: baseline; gap: var(--space-3); justify-content: space-between; }
+.banding__tip-nama  { font-size: var(--text-xs); color: var(--text-muted); }
+.banding__tip-nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--text-xs); color: var(--text-strong); }
+
+.banding__legenda { display: flex; gap: var(--space-5); justify-content: center; margin-top: var(--space-2); }
+.banding__lg { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--text-xs); color: var(--text-muted); }
+.banding__lg-garis  { inline-size: 18px; block-size: 2px; background: var(--chart-1); border-radius: 2px; }
+.banding__lg-batang { inline-size: 10px; block-size: 12px; background: var(--tray); border-radius: 2px; }
+
+/* --- Pita metrik ---------------------------------------------------------- */
+
+/* Satu bidang bergaris pemisah, bukan kartu terpisah: angkanya dibaca sebagai
+   satu ringkasan. auto-fit supaya barisnya selalu terisi penuh — tidak ada sel
+   yatim di baris terakhir. */
+.pita {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.pita__sel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: var(--space-4) var(--space-5);
+  border-inline-start: 1px solid var(--border);
+  min-inline-size: 0;
+}
+
+/* Sel pertama tiap baris tidak butuh garis kiri — ia menempel tepi kartu. */
+.pita__sel:first-child { border-inline-start: none; }
+
+.pita__label {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  /* Dibungkus, bukan dipotong elipsis: labelnya ditulis pemanggil dan
+     panjangnya tidak bisa dijamin. "BIAYA OPERASIO…" menghilangkan justru
+     kata yang membedakannya dari label lain. */
+  line-height: 1.3;
+}
+
+.pita__nilai {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  line-height: 1.15;
+}
+
+.pita__delta {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-pill);
+}
+
+.pita__delta--naik  { color: var(--success); background: var(--success-soft); }
+.pita__delta--turun { color: var(--brand);   background: var(--brand-soft); }
+
+@media (max-width: 34rem) {
+  .pita { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pita__sel { padding: var(--space-3) var(--space-4); }
+}
+
+/* --- Bilah kategori ------------------------------------------------------- */
+
+.iris { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.iris__bilah {
+  display: flex;
+  block-size: 12px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: var(--chart-grid);
+}
+
+.iris__potong { display: block; block-size: 100%; }
+
+.iris__legenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3) var(--space-5);
+}
+
+.iris__baris { display: flex; align-items: baseline; gap: var(--space-2); min-inline-size: 0; }
+
+.iris__titik {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  flex: none;
+  align-self: center;
+}
+
+.iris__nama  { font-size: var(--text-sm); color: var(--text-body); flex: 1; min-inline-size: 0;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iris__porsi { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); flex: none; }
+.iris__nilai { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+               font-size: var(--text-sm); color: var(--text-strong); flex: none; }
