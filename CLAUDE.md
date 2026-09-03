@@ -58,6 +58,17 @@ menyalakannya. Yang sudah dipakai sebagai gantinya, dan gratis: panjang
 password minimum **12** dan Password Requirements paling ketat (huruf besar,
 huruf kecil, angka, simbol).
 
+**Peringatan advisor `is_staff()` juga TIDAK boleh "diperbaiki".** Advisor
+mengeluh `authenticated` bisa memanggil `public.is_staff()` yang
+SECURITY DEFINER, dan menyarankan mencabut EXECUTE. Jangan. Fungsi itu
+dipanggil dari dalam policy RLS yang berjalan sebagai peran pemanggil, jadi
+mencabutnya membunuh policy-nya sendiri: sudah dicoba, dan `rls_test.sql`
+langsung jatuh dari **65 assertion lulus jadi 4**, sisanya
+`permission denied for function is_staff`. Fungsinya sendiri tidak bocor
+apa-apa — ia hanya menjawab benar/salah tentang si pemanggil sendiri.
+Jadi kedua peringatan advisor yang tersisa memang sengaja dibiarkan; kalau
+suatu saat jumlahnya bertambah, yang baru itulah yang perlu dilihat.
+
 **Cache query Hyperdrive HARUS mati.** Bawaannya menyala (60 detik) dan itu
 sudah menggigit: foto yang baru diunggah tidak muncul, cover yang baru
 dipilih tidak berubah, dan refresh browser tidak menolong karena cache-nya
@@ -144,6 +155,17 @@ Langgar ini dan ada yang rusak diam-diam:
    perlu menimbang region.
 5. **Konten baru butuh build ulang.** Deploy ulang Worker statis setelah
    konten berubah — halaman proyek dibekukan saat build.
+6. **Header keamanan hidup di `apps/web/public/_headers`.** Situs statis
+   tidak menjalankan kode Worker, jadi tidak ada tempat lain untuk menaruhnya.
+   Berkas itu disalin apa adanya ke `dist` dan dibaca Workers Static Assets.
+   CSP-nya sengaja mengizinkan `'unsafe-inline'` untuk skrip — Astro menaruh
+   skrip inline di tiap halaman, dan mem-hash semuanya berarti CSP diam-diam
+   rusak setiap kali isi skrip itu berubah. Yang benar-benar dijaga adalah
+   `connect-src`: panel admin menyimpan token Supabase di localStorage, jadi
+   jalur yang perlu ditutup adalah pengiriman token itu ke domain asing.
+   **Kalau menambah host baru** (CDN, layanan analitik, domain media lain),
+   `connect-src`/`img-src`/`script-src` harus ikut diperbarui — kalau tidak,
+   permintaannya diblokir browser tanpa satu pun galat di sisi server.
 
 ## Invarian keamanan
 
