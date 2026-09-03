@@ -32,6 +32,19 @@ env:
   PUBLIC_API_BASE_URL: https://api.pahlevidirgaarchitecture.com
   PUBLIC_SITE_URL: https://pahlevidirgaarchitecture.com
 
+  # Site key Turnstile. BUKAN rahasia — ia memang tercetak di HTML halaman
+  # kontak; yang rahasia adalah secret key, dan itu hidup sebagai secret
+  # Worker API. Diambil dari repository VARIABLE (Settings → Secrets and
+  # variables → Actions → Variables), bukan secret, supaya nilainya bisa
+  # dibaca dan diperiksa.
+  #
+  # Kalau kosong, ContactForm tidak merender widgetnya sama sekali dan form
+  # mengirim token kosong. Akibatnya bergantung pada Worker API: kalau
+  # TURNSTILE_SECRET_KEY di sana terisi, SETIAP kiriman pengunjung ditolak
+  # "token turnstile kosong"; kalau tidak terisi, form terbuka untuk bot.
+  # Dua-duanya tidak diinginkan — isi variabelnya.
+  PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+
 jobs:
   api:
     name: Worker API

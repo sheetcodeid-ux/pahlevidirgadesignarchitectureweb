@@ -30,28 +30,6 @@
 .table__num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .table__actions { text-align: right; white-space: nowrap; }
 
-/* Header yang bisa diurutkan. Panahnya hanya muncul pada kolom aktif supaya
-   deretan header tidak jadi ramai. */
-.table__sort {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 0;
-  padding: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  cursor: pointer;
-}
-
-.table__sort:hover { color: var(--text-body); }
-.table__sort[aria-sort="ascending"],
-.table__sort[aria-sort="descending"] { color: var(--text-strong); }
-.table__sort-icon { transition: transform var(--dur) var(--ease); }
-.table__sort[aria-sort="descending"] .table__sort-icon { transform: rotate(180deg); }
-
 /* --- Calendar & Date Picker ---------------------------------------------- */
 
 .cal { width: min(20rem, 100%); padding: var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }

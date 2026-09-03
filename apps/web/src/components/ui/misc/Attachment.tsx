@@ -48,6 +48,7 @@ export function Attachment() {
           multiple
           accept="image/jpeg,image/png,image/webp,image/avif"
           className="sr-only"
+          aria-label="Pilih berkas untuk dilampirkan"
           onChange={(e) => tambah(e.target.files)}
         />
         <button type="button" className="btn btn--secondary" onClick={() => input.current?.click()}>

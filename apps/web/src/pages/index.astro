@@ -24,7 +24,7 @@ const testimoni = await listTestimonials(true);
   </section>
 
   <section class="section shell">
-    <p class="eyebrow">Pilihan proyek</p>
+    <h2 class="eyebrow">Pilihan proyek</h2>
 
     {
       featured.length > 0 ? (
@@ -45,7 +45,7 @@ const testimoni = await listTestimonials(true);
   {
     testimoni.length > 0 && (
       <section class="section shell">
-        <p class="eyebrow">Kata klien</p>
+        <h2 class="eyebrow">Kata klien</h2>
         <ul class="testimoni-grid">
           {testimoni.map((t) => (
             <li class="testimoni-card">

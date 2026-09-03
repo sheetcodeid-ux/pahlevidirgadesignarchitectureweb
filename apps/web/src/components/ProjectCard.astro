@@ -5,9 +5,16 @@ interface Props {
   project: Project;
   /** Kartu pertama di viewport dimuat eager supaya LCP tidak tertunda. */
   priority?: boolean;
+  /**
+   * Tingkat judul kartu. Bawaannya h3 karena di beranda kartu berada di bawah
+   * judul seksi; di halaman arsip tidak ada seksi di atasnya, jadi h3 membuat
+   * kerangka judul melompat h1 → h3.
+   */
+  level?: 2 | 3;
 }
 
-const { project, priority = false } = Astro.props;
+const { project, priority = false, level = 3 } = Astro.props;
+const Judul = `h${level}` as "h2" | "h3";
 const meta = [project.city ?? project.location, project.year].filter(Boolean).join(" · ");
 ---
 
@@ -28,7 +35,7 @@ const meta = [project.city ?? project.location, project.year].filter(Boolean).jo
     }
     <div class="caption">
       <p class="category">{CATEGORY_LABELS[project.category]}</p>
-      <h3>{project.title}</h3>
+      <Judul>{project.title}</Judul>
       {meta && <p class="meta">{meta}</p>}
     </div>
   </a>
@@ -55,6 +62,17 @@ const meta = [project.city ?? project.location, project.year].filter(Boolean).jo
 
   .caption {
     padding-top: 1rem;
+  }
+
+  /* Judul dipatok ke bentuk h3 apa pun tingkatnya. Tingkat judul di sini
+     urusan kerangka halaman, bukan urusan ukuran huruf — kartu di arsip harus
+     terlihat persis sama dengan kartu di beranda. */
+  .caption :is(h2, h3) {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: var(--text-xl);
+    line-height: 1.25;
+    letter-spacing: normal;
   }
 
   .category {

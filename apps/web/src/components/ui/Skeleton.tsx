@@ -204,29 +204,3 @@ export function SkeletonTabel({
     </table>
   );
 }
-
-/**
- * Daftar kartu — dipakai halaman yang menampilkan tiap baris sebagai .card
- * penuh (Pesan Masuk, Testimoni), bukan sebagai .item ramping.
- */
-export function SkeletonKartuDaftar({
-  jumlah = 3, ikon = "list", teks = 0,
-}: { jumlah?: number; ikon?: Parameters<typeof Icon>[0]["name"]; teks?: number }) {
-  return (
-    <div className="stack skeleton--tunda" style={{ gap: "var(--space-3)" }} aria-hidden="true">
-      {Array.from({ length: jumlah }, (_, i) => (
-        <div className="card" key={i}>
-          <div className="card__header">
-            <span className="icon-tile" style={{ opacity: 0.4 }}><Icon name={ikon} size={18} /></span>
-            <span className="card__titles">
-              <Balok lebar="34%" tinggi="1rem" />
-              <Balok lebar="58%" style={{ marginTop: "0.35rem" }} />
-            </span>
-            <Balok lebar="4.5rem" tinggi="2rem" style={{ flex: "none", borderRadius: "var(--radius-pill)" }} />
-          </div>
-          {teks > 0 && <div className="card__body"><SkeletonTeks baris={teks} /></div>}
-        </div>
-      ))}
-    </div>
-  );
-}

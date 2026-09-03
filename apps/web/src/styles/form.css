@@ -179,10 +179,7 @@
    Media query, bukan container query: kartu-kartu ini anak langsung isi
    halaman, dan tidak ada satu pun leluhurnya yang menyatakan container-type
    (jebakan yang sudah menggigit sekali di panel Keuangan). */
-.spec-grid--empat { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
-@media (max-width: 78rem) { .spec-grid--empat { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 40rem) { .spec-grid--empat { grid-template-columns: 1fr; } }
 
 /* Tiga kolom yang benar-benar tiga, untuk kartu angka — beda dari --tiga di
    atas yang auto-fit untuk isian pendek. */

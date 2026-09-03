@@ -698,6 +698,7 @@ function PanelDokumen({ proyek }: { proyek: Proyek }) {
               </p>
             </div>
             <input ref={berkas} type="file" multiple className="sr-only" accept={TIPE_DOKUMEN}
+              aria-label="Pilih dokumen untuk diunggah"
               onChange={(e) => {
                 const list = e.target.files;
                 if (list && list.length > 0) void unggahBanyak(list);
@@ -956,6 +957,7 @@ function PanelGaleri({
         type="file"
         multiple
         className="sr-only"
+        aria-label="Pilih foto galeri untuk diunggah"
         accept="image/jpeg,image/png,image/webp,image/avif"
         onChange={(e) => { if (e.target.files) unggahBanyak(e.target.files); e.target.value = ""; }}
       />
@@ -1761,6 +1763,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
         </div>
 
         <input ref={berkas} type="file" className="sr-only"
+          aria-label="Pilih gambar sampul proyek"
           accept="image/jpeg,image/png,image/webp,image/avif"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) unggah(f); }} />
         <button type="button" className="btn btn--secondary btn--sm cover-baris__aksi"

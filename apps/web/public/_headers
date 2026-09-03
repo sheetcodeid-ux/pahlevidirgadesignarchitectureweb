@@ -1,0 +1,25 @@
+# Header keamanan untuk situs statis di Cloudflare Workers Static Assets.
+#
+# Berkas ini disalin apa adanya ke dist oleh Astro (isi public/ tidak diolah),
+# lalu dibaca Workers Static Assets saat menyajikan berkas.
+#
+# CSP-nya SENGAJA mengizinkan 'unsafe-inline' untuk skrip: Astro menaruh
+# beberapa <script> inline di setiap halaman (hidrasi island, ClientRouter,
+# tema), dan mem-hash semuanya berarti CSP diam-diam ikut rusak setiap kali
+# isi skrip itu berubah — kerusakan yang baru ketahuan dari situs yang sudah
+# tayang. Yang tetap dijaga dan justru yang paling berarti di sini: connect-src
+# mengunci ke mana halaman boleh MENGIRIM data. Panel admin menyimpan token
+# Supabase di localStorage, jadi jalur yang perlu ditutup adalah pengiriman
+# token itu ke domain asing, bukan eksekusi skrip inline milik sendiri.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: geolocation=(), camera=(), payment=(), usb=(), microphone=(self)
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://media.pahlevidirgaarchitecture.com; media-src 'self' blob:; connect-src 'self' blob: https://api.pahlevidirgaarchitecture.com https://media.pahlevidirgaarchitecture.com https://*.r2.cloudflarestorage.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:
+
+# Aset ber-hash tidak pernah berubah isinya, jadi boleh disimpan selamanya.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

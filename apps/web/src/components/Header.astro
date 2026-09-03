@@ -11,14 +11,19 @@ const links = [
 
 const current = Astro.url.pathname;
 const settings = await getSettings();
+const nama = settings.studioName?.trim() || "Dirga Pahlevi Architecture";
 ---
 
 <header class="site-header">
   <div class="shell">
     <div class="header-pill">
-      <a href="/" class="wordmark">
+      {/* Nama studio diberi lantai. Kalau API membalas bentuk yang tak terduga,
+          tautan ini jadi kotak kosong yang bisa diklik tanpa satu pun teks —
+          dan pembaca layar cuma menyebutnya "tautan". aria-label menjaga
+          namanya tetap ada apa pun yang dibalas API. */}
+      <a href="/" class="wordmark" aria-label={`${nama}, ke beranda`}>
         {settings.logoUrl && <img src={settings.logoUrl} alt="" class="wordmark__logo" />}
-        {settings.studioName}
+        {nama}
       </a>
 
       <nav class="header-nav" aria-label="Navigasi utama">

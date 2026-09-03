@@ -121,19 +121,6 @@ export function StripMetrik({ metrik }: { metrik: Metrik[] }) {
   );
 }
 
-/* --- Bilah kemajuan bersegmen --------------------------------------------- */
-
-/** Bilah kemajuan dengan bulatan penanda, seperti "Indeks Altcoin" di referensi. */
-export function BilahKemajuan({ nilai, maks, label }: { nilai: number; maks: number; label: string }) {
-  const rasio = maks > 0 ? Math.min(Math.max(nilai / maks, 0), 1) : 0;
-  return (
-    <span className="kemajuan" role="img" aria-label={`${label}: ${nilai} dari ${maks}`}>
-      <span className="kemajuan__isi" style={{ inlineSize: `${rasio * 100}%` }} />
-      <span className="kemajuan__titik" style={{ insetInlineStart: `${rasio * 100}%` }} />
-    </span>
-  );
-}
-
 /* --- Gauge (busur berjarum) ----------------------------------------------- */
 
 const GW = 200;
@@ -269,7 +256,6 @@ export function AreaChart({
   const garis = titik.map((v, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" ");
   const bidang = `${garis} L ${x(titik.length - 1).toFixed(1)} ${y(min)} L ${x(0)} ${y(min)} Z`;
 
-  const iMaks = titik.indexOf(maks);
   const sumbu = [maks, min + rentang / 2, min];
 
   return (

@@ -2,6 +2,16 @@
 // Widget Turnstile hanya dirender kalau site key sudah diisi, supaya form
 // tetap bisa dipakai saat development.
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
+// Build produksi tanpa site key sebelumnya lolos tanpa sepatah kata pun, dan
+// hasilnya baru ketahuan dari pengunjung yang formnya ditolak. Diteriakkan di
+// log build supaya ketahuan di tab Actions, bukan dari keluhan klien.
+if (import.meta.env.PROD && !turnstileSiteKey) {
+  console.warn(
+    "[kontak] PUBLIC_TURNSTILE_SITE_KEY kosong — form kontak tayang TANPA widget Turnstile. " +
+      "Kalau TURNSTILE_SECRET_KEY di Worker API terisi, semua kiriman pengunjung akan ditolak.",
+  );
+}
 ---
 
 <form id="contact-form" novalidate>
