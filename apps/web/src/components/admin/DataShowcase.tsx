@@ -8,6 +8,7 @@ import { ScrollArea, ResizableDemo } from "../ui/data/Panels";
 import { KartuAngka } from "../ui/data/KartuAngka";
 import { ChartArusKas } from "../ui/data/ChartArusKas";
 import { KartuDonat } from "../ui/data/KartuDonat";
+import { ChartBandingTahun } from "../ui/data/ChartBandingTahun";
 import {
   AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
 } from "../ui/data/Dashboard";
@@ -63,6 +64,23 @@ const donatTab = [
   { nilai: "kategori", label: "Kategori", ikon: "list" as const },
   { nilai: "proyek", label: "Proyek", ikon: "project" as const },
   { nilai: "bulan", label: "Bulan", ikon: "calendar" as const },
+];
+
+
+/** Contoh dua belas bulan untuk batang perbandingan tahun. */
+const bandingContoh = [
+  { label: "Jan", labelPanjang: "Januari", kini: 385_000_000, lalu: 340_000_000 },
+  { label: "Feb", labelPanjang: "Februari", kini: 300_000_000, lalu: 315_000_000 },
+  { label: "Mar", labelPanjang: "Maret", kini: 335_000_000, lalu: 290_000_000 },
+  { label: "Apr", labelPanjang: "April", kini: 405_000_000, lalu: 350_000_000 },
+  { label: "Mei", labelPanjang: "Mei", kini: 355_000_000, lalu: 300_000_000 },
+  { label: "Jun", labelPanjang: "Juni", kini: 320_000_000, lalu: 340_000_000 },
+  { label: "Jul", labelPanjang: "Juli", kini: 385_000_000, lalu: 325_000_000 },
+  { label: "Agu", labelPanjang: "Agustus", kini: 292_000_000, lalu: 330_000_000 },
+  { label: "Sep", labelPanjang: "September", kini: 420_000_000, lalu: 360_000_000 },
+  { label: "Okt", labelPanjang: "Oktober", kini: 345_000_000, lalu: 300_000_000 },
+  { label: "Nov", labelPanjang: "November", kini: 330_000_000, lalu: 285_000_000 },
+  { label: "Des", labelPanjang: "Desember", kini: 300_000_000, lalu: 315_000_000 },
 ];
 
 interface Proyek extends Record<string, unknown> {
@@ -408,6 +426,31 @@ export function DataShowcase() {
           (<code className="swatch__name">--chart-cat-1</code>…<code className="swatch__name">5</code>),
           bukan warna semantik — makna tiap irisan dibawa labelnya, bukan warnanya. Donat dan
           legenda bertumpuk sendiri saat berdampingan tidak lagi muat.
+        </p>
+      </div>
+
+      {/* --- Batang perbandingan tahun -------------------------------------- */}
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Batang Perbandingan Tahun</span>
+          <code className="swatch__name">ChartBandingTahun</code>
+        </div>
+        <ChartBandingTahun
+          judul="Perbandingan Nilai Proyek"
+          labelKini="2026"
+          labelLalu="2025"
+          data={bandingContoh}
+        />
+        <p className="field__help">
+          Satu batang per bulan, sudut membulat, kisi mendatar putus-putus. Batang yang ditunjuk
+          menyala dan sisanya diredupkan — itu yang membuat gambar referensinya tampak kelabu
+          semua kecuali satu batang. Tinggi tahun lalu ditandai di DALAM batang, jadi selisihnya
+          terbaca sebagai potongan yang lebih pekat; kalau tahun lalu justru lebih tinggi,
+          bayangannya menyembul di atas batang — dan itu memang yang perlu terlihat. Batangnya
+          elemen HTML, bukan <code className="swatch__name">&lt;rect&gt;</code> di dalam SVG:
+          SVG di sini diregangkan tanpa mempertahankan rasio, dan sudut membulat di dalamnya
+          akan tergambar lonjong.
         </p>
       </div>
 
