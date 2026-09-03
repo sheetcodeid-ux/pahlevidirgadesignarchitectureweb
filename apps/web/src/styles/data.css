@@ -217,14 +217,20 @@
 
 /* --- Strip metrik --------------------------------------------------------- */
 
-/* Kartu terpisah berjarak, bukan satu bilah — sesuai referensi. Yang penting
-   di sini KEPADATANNYA: label 11px, angka 18px, delta 12px, tinggi kartu di
-   bawah 80px. Versi sebelumnya memakai angka 22px dan tinggi 106px, dan
-   pemiliknya benar: itu terbaca boros, bukan padat. */
+/* Kartu terpisah berjarak, bukan satu bilah — sesuai referensi. Yang padat di
+   sini ISI kartunya: label 11px, angka 18px, delta 12px, tinggi kartu di bawah
+   80px. JARAK ANTAR kartu tidak ikut dipadatkan — itu kesalahan versi
+   sebelumnya, dan pemiliknya benar: "untuk data tabel memang mepet tapi card
+   jangan disamakan".
+
+   Diukur dari referensi sebagai persentase, bukan piksel: di sana jarak antar
+   kartu kira-kira 8,5% dari lebar satu kartu. Di lebar konten panel admin
+   (~1.100px, empat kolom) itu ~23px — jadi --space-5, bukan --space-3 yang
+   cuma 4,5%. */
 .metrik-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-5);
 }
 
 .metrik {
@@ -345,13 +351,34 @@
   pointer-events: none;
 }
 
+/* --- Tata letak kartu papan ------------------------------------------------ */
+
+/* Punya kelas sendiri, bukan menumpang .spec-grid: yang di sana adalah ritme
+   ISIAN FORM, dan menyamakan keduanya persis yang membuat papan terasa mepet.
+   Kartu dapat --space-5; tabel dan isian tetap serapat sebelumnya. */
+.papan-stack { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.papan-grid { display: grid; gap: var(--space-5); }
+.papan-grid--dua  { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.papan-grid--tiga { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 62rem) { .papan-grid--tiga { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 40rem) {
+  .papan-grid--dua,
+  .papan-grid--tiga { grid-template-columns: 1fr; }
+}
+
 /* --- Kartu papan ---------------------------------------------------------- */
 
 .papan {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4);
+  /* 8px adalah jarak baris tabel, bukan jarak judul ke isinya. */
+  gap: var(--space-3);
+  /* Diukur dari referensi: isi kartu duduk ~2,3% dari tepi kartu. Pada kartu
+     selebar 1.168px di panel ini itu ~27px, sementara --space-4 cuma 1,4%.
+     Itu yang membuat isinya terbaca menempel ke garis tepi. */
+  padding: var(--space-5);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -399,8 +426,9 @@ a.papan__judul:hover { color: var(--brand); }
 .mini {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: var(--space-3) var(--space-4);
+  /* 4px adalah jarak antar baris data, bukan antar judul dan angkanya. */
+  gap: 0.4rem;
+  padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

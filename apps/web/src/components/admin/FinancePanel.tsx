@@ -126,7 +126,7 @@ function Isi() {
 
   if (!data) {
     return (
-      <div className="stack" style={{ gap: "var(--space-4)" }}>
+      <div className="papan-stack">
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
@@ -164,7 +164,7 @@ function Isi() {
   const rasioTertagih = data.totalKontrak > 0 ? (data.kasMasuk / data.totalKontrak) * 100 : 0;
 
   return (
-    <div className="stack" style={{ gap: "var(--space-4)" }}>
+    <div className="papan-stack">
       {/* Pil lingkup menggantikan spanduk peringatan: lingkup bukan
           peringatan, ia keadaan — dan keadaan ditulis sebaris, bukan dalam
           kotak biru yang menuntut perhatian setiap kali halaman dibuka. */}
@@ -212,7 +212,7 @@ function Isi() {
         }
       />
 
-      <div className="spec-grid spec-grid--dua">
+      <div className="papan-grid papan-grid--dua">
         {/* Gauge ditemani angkanya sendiri di sebelah kanan. Sendirian, ia
             meninggalkan separuh kartu kosong di layar selebar ini — dan kartu
             yang setengahnya udara adalah persis yang membuat halaman ini
@@ -260,7 +260,7 @@ function Isi() {
         />
       </div>
 
-      <div className="spec-grid spec-grid--tiga-tetap">
+      <div className="papan-grid papan-grid--tiga">
         <KartuMini
           judul="Tertagih"
           keterangan="Kas masuk dibanding nilai kontrak"
@@ -316,7 +316,7 @@ function BilahTerkumpul({ nilai, maks }: { nilai: number; maks: number }) {
 
 export function FinancePanel() {
   return <RequireAuth skeleton={
-      <div className="stack" style={{ gap: "var(--space-4)" }}>
+      <div className="papan-stack">
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>

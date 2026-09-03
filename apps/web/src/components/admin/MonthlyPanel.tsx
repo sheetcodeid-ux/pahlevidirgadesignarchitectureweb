@@ -89,7 +89,7 @@ function Isi() {
 
   if (!data) {
     return (
-      <div className="stack" style={{ gap: "var(--space-4)" }}>
+      <div className="papan-stack">
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
@@ -139,7 +139,7 @@ function Isi() {
 
   if (data.length === 0) {
     return (
-      <div className="stack" style={{ gap: "var(--space-4)" }}>
+      <div className="papan-stack">
         <div className="row row--between" style={{ flexWrap: "wrap", gap: "var(--space-3)" }}>
           <span className="t-muted">{aktif ? "Hanya proyek yang dipilih di bilah atas." : "Seluruh proyek studio."}</span>
           {tabRentang}
@@ -156,7 +156,7 @@ function Isi() {
   }
 
   return (
-    <div className="stack" style={{ gap: "var(--space-4)" }}>
+    <div className="papan-stack">
       <div className="lingkup">
         <span className="lingkup__nama">
           <Icon name={aktif ? "project" : "dashboard"} size={15} />
@@ -185,7 +185,7 @@ function Isi() {
         }
       />
 
-      <div className="spec-grid spec-grid--dua">
+      <div className="papan-grid papan-grid--dua">
         <KartuPapan
           judul="Laba bersih per bulan"
           anak={
@@ -212,7 +212,7 @@ function Isi() {
         />
       </div>
 
-      <div className="spec-grid spec-grid--tiga-tetap">
+      <div className="papan-grid papan-grid--tiga">
         <KartuMini
           judul="Bulan terbaik"
           keterangan="Laba bersih tertinggi"
@@ -253,7 +253,7 @@ function Isi() {
 
 export function MonthlyPanel() {
   return <RequireAuth skeleton={
-      <div className="stack" style={{ gap: "var(--space-4)" }}>
+      <div className="papan-stack">
         <SkeletonStat jumlah={4} />
         <SkeletonKartu ikon="finance" />
       </div>
