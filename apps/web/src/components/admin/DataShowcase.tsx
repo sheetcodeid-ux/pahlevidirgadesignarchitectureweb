@@ -5,6 +5,7 @@ import { DatePicker } from "../ui/data/DatePicker";
 import { BarChart, LineChart } from "../ui/data/Chart";
 import { Carousel } from "../ui/data/Carousel";
 import { ScrollArea, ResizableDemo } from "../ui/data/Panels";
+import { KartuAngka } from "../ui/data/KartuAngka";
 import {
   AreaChart, Gauge, KartuMini, KartuPapan, Sparkline, StackedBarChart, StripMetrik, bandingkan,
 } from "../ui/data/Dashboard";
@@ -279,6 +280,32 @@ export function DataShowcase() {
         </div>
       </div>
 
+
+      {/* --- Kartu angka -------------------------------------------------- */}
+
+      <div className="spec-demo">
+        <div className="spec-demo__name">
+          <span className="t-subheading">Kartu Angka</span>
+          <code className="swatch__name">KartuAngka</code>
+        </div>
+        <div className="kangka-deret">
+          <KartuAngka label="Kas masuk (bulan ini)" nilai="Rp590.000.000" ikon="finance"
+            delta="+18,2%" deltaArah="naik" />
+          <KartuAngka label="Beban operasional" nilai="Rp205.000.000" ikon="coffee"
+            delta="−8,5%" deltaArah="turun" deltaNada="baik" />
+          <KartuAngka label="Nilai kontrak berjalan" nilai="Rp1.284.500.000" ikon="project"
+            delta="+12,4%" deltaArah="naik" />
+          <KartuAngka label="Rata-rata nilai proyek" nilai="Rp0" ikon="projectPlus"
+            delta="belum ada proyek berkontrak" deltaNada="netral" />
+        </div>
+        <p className="field__help">
+          Ubin ikon di pojok KANAN atas, label huruf biasa (bukan huruf besar bertrack seperti
+          label lain di panel ini), angka besar, lalu satu baris delta berpanah tren. Angkanya
+          22px, bukan 28px seperti referensinya: &quot;Rp1.284.500.000&quot; lima belas karakter
+          dan pada 28px butuh 269px sementara ruang dalam kartu cuma 237px — terukur, bukan
+          dikira. Nada netral tidak dapat panah, karena barisnya keterangan dan bukan tren.
+        </p>
+      </div>
 
       <div className="spec-demo">
         <div className="spec-demo__name">

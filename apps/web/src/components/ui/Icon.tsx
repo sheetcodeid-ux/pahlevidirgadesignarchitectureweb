@@ -66,7 +66,9 @@ export type IconName =
   | "play"
   | "pause"
   | "stop"
-  | "download";
+  | "download"
+  | "trendUp"
+  | "trendDown";
 
 interface Props {
   name: IconName;
@@ -174,6 +176,20 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />,
   check: <path d="m4 12 5.5 5.5L20 7" />,
+  /* Panah tren, bukan panah lurus: di referensi bentuknya garis grafik yang
+     berbelok lalu naik — bacanya "pergerakan", bukan "arah". */
+  trendUp: (
+    <>
+      <path d="M22 7 13.5 15.5 8.5 10.5 2 17" />
+      <path d="M16 7h6v6" />
+    </>
+  ),
+  trendDown: (
+    <>
+      <path d="M22 17 13.5 8.5 8.5 13.5 2 7" />
+      <path d="M16 17h6v-6" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" />,
   search: (
     <>

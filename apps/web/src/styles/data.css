@@ -439,3 +439,125 @@ a.mini__judul:hover { color: var(--brand); }
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
 }
+
+/* =============================================================================
+   Kartu angka (KartuAngka.tsx) — tiruan kartu metrik di referensi pemilik.
+
+   Ukuran diambil sebagai PERSENTASE terhadap lebar kartu di gambar referensi
+   (kartunya 277px), lalu diterapkan sebagai nilai tetap karena lebar kartu di
+   sini memang 277px juga — kolom konten 1168px dibagi 4 dengan celah 20px.
+
+   | Bagian          | Referensi | Di sini |
+   | --------------- | --------- | ------- |
+   | padding         | 20px      | 20px    |
+   | ubin ikon       | 34px      | 34px    |
+   | jarak label→angka | 14px    | 14px    |
+   | jarak angka→delta | 10px    | 10px    |
+   ============================================================================= */
+
+.kangka {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--dur) var(--ease);
+}
+
+.kangka:hover { border-color: var(--border-strong); }
+
+.kangka__head { display: flex; align-items: flex-start; gap: var(--space-3); }
+
+/* Huruf biasa, bukan HURUF BESAR bertrack seperti label lain di panel ini.
+   Referensi menulisnya sebagai kalimat, dan itu memang kalimat. */
+.kangka__label {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.kangka__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 34px;
+  block-size: 34px;
+  color: var(--text-muted);
+  background: var(--tray);
+  border-radius: var(--radius-sm);
+}
+
+/* Ukurannya --text-xl (22px), BUKAN --text-2xl (28px) seperti di referensi.
+   Alasannya bukan selera: "$590,000" delapan karakter, "Rp1.284.500.000" lima
+   belas. Diukur di Chromium pada kartu selebar 277px (ruang dalam 237px):
+
+   | Ukuran | Lebar "Rp1.284.500.000" | Muat? |
+   | ------ | ----------------------- | ----- |
+   | 28px   | 269px                   | tidak |
+   | 26px   | 250px                   | tidak |
+   | 24px   | 231px                   | ya    |
+   | 22px   | 211px                   | ya    |
+
+   22px dipilih, bukan 24px, karena 24px tidak ada di skala tipografi situs
+   ini. Angka terpotong jauh lebih buruk daripada angka 2px lebih kecil. */
+.kangka__nilai {
+  margin: 14px 0 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+  color: var(--text-strong);
+  /* Kalau suatu saat ada angka yang tetap tidak muat, ia harus KETAHUAN
+     terpotong — bukan diam-diam pecah jadi dua baris di tengah digit. */
+  white-space: nowrap;
+}
+
+/* Varian angka bermono — aturan desain situs ini ("mono untuk data dan
+   angka") bentrok dengan referensi, yang memakai sans. Dua-duanya disiapkan
+   supaya pemilik bisa memilih dari gambar, bukan dari bayangan. */
+.kangka--mono .kangka__nilai {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.kangka__delta {
+  display: flex;
+  /* flex-start, bukan center: kalau keterangannya dua baris, panahnya harus
+     sejajar baris PERTAMA — bukan mengambang di tengah dua baris. */
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.kangka__delta--baik   { color: var(--success); }
+.kangka__delta--buruk  { color: var(--brand); }
+.kangka__delta--netral { color: var(--text-faint); }
+
+/* --- Deret ---------------------------------------------------------------- */
+
+.kangka-deret {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 74rem) { .kangka-deret { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* SATU kolom di bawah 46rem, bukan dua. Di ponsel 390px dua kolom membuat
+   kartunya cuma 165px — ruang dalamnya 137px, sementara angka terpendek pun
+   butuh 181px pada ukuran terkecil yang masih pantas. Dua kolom di sana
+   berarti SEMUA angka terpotong; sudah diukur, bukan dikira. */
+@media (max-width: 46rem) {
+  .kangka-deret { grid-template-columns: 1fr; gap: 12px; }
+  /* Kartu selebar penuh punya ruang berlimpah, jadi angkanya justru boleh
+     sebesar referensi: 28px butuh 269px, tersedia ~298px di layar 390px. */
+  .kangka__nilai { font-size: var(--text-2xl); }
+}
