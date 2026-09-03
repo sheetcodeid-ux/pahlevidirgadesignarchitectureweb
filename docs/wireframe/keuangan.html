@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><title>Wireframe Keuangan</title>
+<style>
+  :root {
+    --kertas: #f0f0ef;
+    --putih: #ffffff;
+    --garis: #c4c4c2;
+    --garis-tipis: #dcdcda;
+    --isi: #f6f6f5;
+    --balok: #d9d9d7;
+    --balok-kuat: #adadab;
+    --anotasi: #8a8a88;
+    --label: #3d3d3b;
+    --ada: #e6e6e4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px; background: var(--kertas);
+    font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--label);
+  }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* --- kerangka --- */
+  .shell { display: grid; grid-template-columns: 232px 1fr; gap: 18px; max-width: 1450px; margin: 0 auto; }
+  .ada {
+    background: repeating-linear-gradient(45deg, var(--ada) 0 6px, #efefed 6px 12px);
+    border: 1px dashed var(--garis); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    color: var(--anotasi); font-size: 11px; padding: 12px;
+  }
+  .sidebar { min-height: 940px; }
+  .kanan { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .topbar { height: 52px; }
+
+  /* --- kotak wireframe --- */
+  .kotak { background: var(--putih); border: 1px solid var(--garis); border-radius: 12px; position: relative; }
+  .tag {
+    position: absolute; top: -9px; left: 12px; background: var(--kertas);
+    padding: 0 6px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--anotasi); font-family: ui-monospace, Menlo, monospace;
+  }
+  .ukur {
+    position: absolute; bottom: 6px; right: 10px; font-size: 10px; color: var(--anotasi);
+    font-family: ui-monospace, Menlo, monospace;
+  }
+
+  /* placeholder isi */
+  .t { background: var(--balok); border-radius: 3px; height: 9px; }
+  .t--judul { height: 13px; background: var(--balok-kuat); }
+  .t--besar { height: 26px; background: var(--balok-kuat); }
+  .t--kecil { height: 7px; }
+  .ubin { width: 34px; height: 34px; border-radius: 9px; background: var(--isi); border: 1px solid var(--garis-tipis); flex: none; }
+  .pil { height: 26px; border-radius: 999px; background: var(--isi); border: 1px solid var(--garis-tipis); }
+  .tbl { height: 30px; border-radius: 8px; background: var(--isi); border: 1px solid var(--garis-tipis); }
+  .titik { width: 8px; height: 8px; border-radius: 50%; background: var(--balok-kuat); flex: none; }
+
+  /* --- baris tab --- */
+  .tabbar { display: flex; align-items: center; gap: 8px; }
+  .tabbar .pil--aktif { background: var(--balok); }
+  .dorong { margin-left: auto; }
+
+  /* --- baris metrik --- */
+  .metrik { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .kmet { height: 130px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .kmet__atas { display: flex; align-items: flex-start; gap: 12px; }
+  .kmet__delta { display: flex; align-items: center; gap: 6px; margin-top: auto; }
+
+  /* --- baris 2 --- */
+  .baris2 { display: grid; grid-template-columns: 2.16fr 1fr; gap: 17px; }
+  .kbesar { height: 355px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .kepala { display: flex; align-items: center; gap: 10px; }
+  .legenda { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+  .legenda span { display: flex; align-items: center; gap: 5px; }
+  figure { margin: 0; flex: 1; min-height: 0; }
+  svg { display: block; width: 100%; height: 100%; }
+
+  /* --- legenda donat --- */
+  .donat-legenda { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  .donat-legenda > div { display: flex; align-items: center; gap: 6px; }
+  .persen { width: 30px; height: 17px; border-radius: 5px; background: var(--isi); border: 1px solid var(--garis-tipis); flex: none; }
+
+  /* --- baris 3 --- */
+  .kpenuh { height: 319px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* --- catatan --- */
+  .catatan { max-width: 1450px; margin: 26px auto 0; font-size: 12px; color: var(--anotasi); line-height: 1.65; }
+  .catatan b { color: var(--label); }
+  .catatan ol { padding-left: 18px; margin: 6px 0 0; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  .sub { font-size: 12px; color: var(--anotasi); margin: 0 0 18px; }
+
+  /* --- ponsel --- */
+  .ponsel { max-width: 1450px; margin: 32px auto 0; }
+  .ponsel__bingkai { width: 360px; border: 1px solid var(--garis); border-radius: 12px; padding: 12px; background: var(--putih); display: flex; flex-direction: column; gap: 12px; }
+  .ponsel .kmet { height: 104px; }
+  .ponsel .kbesar { height: 240px; }
+  .ponsel .kpenuh { height: 230px; }
+  .ponsel .metrik { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ponsel .baris2 { grid-template-columns: 1fr; gap: 12px; }
+</style></head>
+<body>
+
+<div style="max-width:1450px;margin:0 auto 18px">
+  <h1>Wireframe — Halaman Keuangan</h1>
+  <p class="sub mono">Abu-abu semua. Yang dinilai di sini cuma tata letak dan proporsi, bukan warna, tipografi, atau isi.
+  Angka di pojok kanan bawah tiap kotak = lebar kotak itu terhadap kolom konten, diukur dari gambar referensi.</p>
+</div>
+
+<div class="shell">
+  <div class="ada sidebar">SIDEBAR<br><br>sudah ada,<br>TIDAK diubah<br><br>232px</div>
+
+  <div class="kanan">
+    <div class="ada topbar">TOPBAR — sudah ada, TIDAK diubah</div>
+
+    <!-- baris tab -->
+    <div class="kotak" style="padding:12px 16px">
+      <span class="tag">Baris tab + Export</span>
+      <div class="tabbar">
+        <div class="pil pil--aktif" style="width:96px"></div>
+        <div class="pil" style="width:112px"></div>
+        <div class="pil" style="width:84px"></div>
+        <div class="tbl dorong" style="width:96px"></div>
+      </div>
+    </div>
+
+    <!-- 4 kartu metrik -->
+    <div class="metrik">
+      <div class="kotak kmet"><span class="tag">Kas masuk</span>
+        <div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:6px"></div><div class="ubin"></div></div>
+        <div class="t t--besar" style="width:78%"></div>
+        <div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:46px"></div></div>
+        <span class="ukur">23,8%</span>
+      </div>
+      <div class="kotak kmet"><span class="tag">Beban</span>
+        <div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:6px"></div><div class="ubin"></div></div>
+        <div class="t t--besar" style="width:72%"></div>
+        <div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:40px"></div></div>
+        <span class="ukur">23,8%</span>
+      </div>
+      <div class="kotak kmet"><span class="tag">Laba bersih</span>
+        <div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:6px"></div><div class="ubin"></div></div>
+        <div class="t t--besar" style="width:74%"></div>
+        <div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:44px"></div></div>
+        <span class="ukur">23,8%</span>
+      </div>
+      <div class="kotak kmet"><span class="tag">Belum dibayar</span>
+        <div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:6px"></div><div class="ubin"></div></div>
+        <div class="t t--besar" style="width:70%"></div>
+        <div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:56px"></div></div>
+        <span class="ukur">23,8%</span>
+      </div>
+    </div>
+
+    <!-- baris 2 -->
+    <div class="baris2">
+      <div class="kotak kbesar"><span class="tag">Arus kas — 12 bulan, 3 seri</span>
+        <div class="kepala">
+          <div class="t t--judul" style="width:170px"></div>
+          <div class="legenda">
+            <span><i class="titik"></i><i class="t t--kecil" style="width:42px;display:block"></i></span>
+            <span><i class="titik"></i><i class="t t--kecil" style="width:48px;display:block"></i></span>
+            <span><i class="titik"></i><i class="t t--kecil" style="width:26px;display:block"></i></span>
+          </div>
+          <div class="tbl" style="width:104px;margin-left:12px"></div>
+        </div>
+        <figure>
+          <svg viewBox="0 0 780 230" preserveAspectRatio="none" aria-label="Rangka grafik garis">
+            <!-- sumbu nilai -->
+            <g fill="#adadab">
+              <rect x="0" y="12" width="34" height="6" rx="3"/><rect x="0" y="52" width="34" height="6" rx="3"/>
+              <rect x="0" y="92" width="34" height="6" rx="3"/><rect x="0" y="132" width="34" height="6" rx="3"/>
+              <rect x="0" y="172" width="34" height="6" rx="3"/>
+            </g>
+            <!-- kisi -->
+            <g stroke="#e6e6e4" stroke-width="1">
+              <line x1="48" y1="15" x2="780" y2="15"/><line x1="48" y1="55" x2="780" y2="55"/>
+              <line x1="48" y1="95" x2="780" y2="95"/><line x1="48" y1="135" x2="780" y2="135"/>
+              <line x1="48" y1="175" x2="780" y2="175"/>
+            </g>
+            <!-- seri 1: garis penuh + bidang -->
+            <path d="M48 150 C 130 40, 180 60, 250 110 S 360 150, 420 42 S 540 60, 610 130 S 700 150, 780 70 L780 190 L48 190 Z" fill="#eeeeec"/>
+            <path d="M48 150 C 130 40, 180 60, 250 110 S 360 150, 420 42 S 540 60, 610 130 S 700 150, 780 70" fill="none" stroke="#8a8a88" stroke-width="2.5"/>
+            <!-- seri 2 & 3: putus-putus -->
+            <path d="M48 175 C 140 100, 200 90, 280 120 S 400 160, 470 70 S 600 120, 780 40" fill="none" stroke="#b4b4b2" stroke-width="2" stroke-dasharray="6 5"/>
+            <path d="M48 185 C 150 140, 210 150, 300 165 S 430 175, 500 120 S 640 165, 780 105" fill="none" stroke="#c9c9c7" stroke-width="2" stroke-dasharray="6 5"/>
+            <!-- garis bidik + tooltip -->
+            <line x1="420" y1="15" x2="420" y2="190" stroke="#adadab" stroke-width="1" stroke-dasharray="4 4"/>
+            <rect x="432" y="46" width="130" height="66" rx="7" fill="#ffffff" stroke="#c4c4c2"/>
+            <g fill="#d9d9d7">
+              <rect x="442" y="56" width="42" height="7" rx="3"/><rect x="442" y="70" width="100" height="6" rx="3"/>
+              <rect x="442" y="82" width="100" height="6" rx="3"/><rect x="442" y="94" width="76" height="6" rx="3"/>
+            </g>
+            <!-- label bulan -->
+            <g fill="#c9c9c7">
+              <rect x="52" y="208" width="26" height="7" rx="3"/><rect x="112" y="208" width="26" height="7" rx="3"/>
+              <rect x="172" y="208" width="26" height="7" rx="3"/><rect x="232" y="208" width="26" height="7" rx="3"/>
+              <rect x="292" y="208" width="26" height="7" rx="3"/><rect x="352" y="208" width="26" height="7" rx="3"/>
+              <rect x="412" y="208" width="26" height="7" rx="3"/><rect x="472" y="208" width="26" height="7" rx="3"/>
+              <rect x="532" y="208" width="26" height="7" rx="3"/><rect x="592" y="208" width="26" height="7" rx="3"/>
+              <rect x="652" y="208" width="26" height="7" rx="3"/><rect x="712" y="208" width="26" height="7" rx="3"/>
+            </g>
+          </svg>
+        </figure>
+        <span class="ukur">67,4%</span>
+      </div>
+
+      <div class="kotak kbesar"><span class="tag">Rincian beban — donat</span>
+        <div class="kepala"><div class="t t--judul" style="width:150px"></div></div>
+        <figure style="display:grid;place-items:center">
+          <svg viewBox="0 0 200 200" style="width:170px;height:170px" preserveAspectRatio="xMidYMid meet" aria-label="Rangka donat">
+            <circle cx="100" cy="100" r="72" fill="none" stroke="#8a8a88" stroke-width="26"
+              stroke-dasharray="204 249" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+            <circle cx="100" cy="100" r="72" fill="none" stroke="#adadab" stroke-width="26"
+              stroke-dasharray="113 340" stroke-dashoffset="-204" transform="rotate(-90 100 100)"/>
+            <circle cx="100" cy="100" r="72" fill="none" stroke="#c9c9c7" stroke-width="26"
+              stroke-dasharray="90 363" stroke-dashoffset="-317" transform="rotate(-90 100 100)"/>
+            <circle cx="100" cy="100" r="72" fill="none" stroke="#e0e0de" stroke-width="26"
+              stroke-dasharray="46 407" stroke-dashoffset="-407" transform="rotate(-90 100 100)"/>
+            <rect x="66" y="88" width="68" height="7" rx="3" fill="#c9c9c7"/>
+            <rect x="60" y="103" width="80" height="12" rx="4" fill="#adadab"/>
+          </svg>
+        </figure>
+        <div class="donat-legenda">
+          <div><i class="persen"></i><i class="t t--kecil" style="flex:1"></i></div>
+          <div><i class="persen"></i><i class="t t--kecil" style="flex:1"></i></div>
+          <div><i class="persen"></i><i class="t t--kecil" style="flex:1"></i></div>
+          <div><i class="persen"></i><i class="t t--kecil" style="flex:1"></i></div>
+        </div>
+        <span class="ukur">31,2%</span>
+      </div>
+    </div>
+
+    <!-- baris 3 -->
+    <div class="kotak kpenuh"><span class="tag">Perbandingan tahun — batang 12 bulan</span>
+      <div class="kepala">
+        <div class="t t--judul" style="width:190px"></div>
+        <div class="legenda">
+          <span><i class="titik"></i><i class="t t--kecil" style="width:34px;display:block"></i></span>
+          <span><i class="titik" style="background:#d9d9d7"></i><i class="t t--kecil" style="width:34px;display:block"></i></span>
+        </div>
+      </div>
+      <figure>
+        <svg viewBox="0 0 780 210" preserveAspectRatio="none" aria-label="Rangka grafik batang">
+          <g fill="#adadab">
+            <rect x="0" y="10" width="32" height="6" rx="3"/><rect x="0" y="52" width="32" height="6" rx="3"/>
+            <rect x="0" y="94" width="32" height="6" rx="3"/><rect x="0" y="136" width="32" height="6" rx="3"/>
+          </g>
+          <g stroke="#e6e6e4" stroke-width="1" stroke-dasharray="3 4">
+            <line x1="46" y1="13" x2="780" y2="13"/><line x1="46" y1="55" x2="780" y2="55"/>
+            <line x1="46" y1="97" x2="780" y2="97"/><line x1="46" y1="139" x2="780" y2="139"/>
+          </g>
+          <g fill="#e2e2e0">
+            <rect x="54"  y="34" width="46" height="141" rx="7"/><rect x="114" y="58" width="46" height="117" rx="7"/>
+            <rect x="174" y="46" width="46" height="129" rx="7"/><rect x="234" y="26" width="46" height="149" rx="7"/>
+            <rect x="294" y="40" width="46" height="135" rx="7"/><rect x="354" y="52" width="46" height="123" rx="7"/>
+            <rect x="474" y="30" width="46" height="145" rx="7"/><rect x="534" y="62" width="46" height="113" rx="7"/>
+            <rect x="594" y="22" width="46" height="153" rx="7"/><rect x="654" y="48" width="46" height="127" rx="7"/>
+            <rect x="714" y="56" width="46" height="119" rx="7"/>
+          </g>
+          <!-- batang tersorot -->
+          <rect x="414" y="18" width="46" height="86" rx="7" fill="#8a8a88"/>
+          <rect x="414" y="104" width="46" height="71" fill="#c4c4c2"/>
+          <rect x="414" y="160" width="46" height="15" rx="7" fill="#c4c4c2"/>
+          <!-- tooltip -->
+          <rect x="470" y="26" width="128" height="58" rx="7" fill="#ffffff" stroke="#c4c4c2"/>
+          <g fill="#d9d9d7">
+            <rect x="480" y="36" width="40" height="7" rx="3"/><rect x="480" y="50" width="100" height="6" rx="3"/>
+            <rect x="480" y="63" width="100" height="6" rx="3"/>
+          </g>
+          <g fill="#c9c9c7">
+            <rect x="62"  y="190" width="30" height="7" rx="3"/><rect x="122" y="190" width="30" height="7" rx="3"/>
+            <rect x="182" y="190" width="30" height="7" rx="3"/><rect x="242" y="190" width="30" height="7" rx="3"/>
+            <rect x="302" y="190" width="30" height="7" rx="3"/><rect x="362" y="190" width="30" height="7" rx="3"/>
+            <rect x="422" y="190" width="30" height="7" rx="3"/><rect x="482" y="190" width="30" height="7" rx="3"/>
+            <rect x="542" y="190" width="30" height="7" rx="3"/><rect x="602" y="190" width="30" height="7" rx="3"/>
+            <rect x="662" y="190" width="30" height="7" rx="3"/><rect x="722" y="190" width="30" height="7" rx="3"/>
+          </g>
+        </svg>
+      </figure>
+      <span class="ukur">100%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ponsel -->
+<div class="ponsel">
+  <p class="sub mono" style="margin-bottom:10px">Rencana tumpukan di ponsel (360px) — supaya tidak ada gulir mendatar</p>
+  <div class="ponsel__bingkai">
+    <div class="kotak" style="padding:10px 12px">
+      <div class="tabbar"><div class="pil pil--aktif" style="width:70px"></div><div class="pil" style="width:78px"></div><div class="pil" style="width:60px"></div></div>
+    </div>
+    <div class="metrik">
+      <div class="kotak kmet" style="padding:12px"><div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:4px"></div><div class="ubin" style="width:26px;height:26px"></div></div><div class="t t--besar" style="width:86%;height:20px"></div><div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:34px"></div></div></div>
+      <div class="kotak kmet" style="padding:12px"><div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:4px"></div><div class="ubin" style="width:26px;height:26px"></div></div><div class="t t--besar" style="width:80%;height:20px"></div><div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:30px"></div></div></div>
+      <div class="kotak kmet" style="padding:12px"><div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:4px"></div><div class="ubin" style="width:26px;height:26px"></div></div><div class="t t--besar" style="width:84%;height:20px"></div><div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:32px"></div></div></div>
+      <div class="kotak kmet" style="padding:12px"><div class="kmet__atas"><div class="t t--kecil" style="flex:1;margin-top:4px"></div><div class="ubin" style="width:26px;height:26px"></div></div><div class="t t--besar" style="width:78%;height:20px"></div><div class="kmet__delta"><div class="titik"></div><div class="t t--kecil" style="width:40px"></div></div></div>
+    </div>
+    <div class="baris2">
+      <div class="kotak kbesar" style="padding:12px">
+        <div class="kepala"><div class="t t--judul" style="width:120px"></div></div>
+        <div class="legenda" style="margin-left:0"><span><i class="titik"></i><i class="t t--kecil" style="width:34px;display:block"></i></span><span><i class="titik"></i><i class="t t--kecil" style="width:38px;display:block"></i></span><span><i class="titik"></i><i class="t t--kecil" style="width:22px;display:block"></i></span></div>
+        <figure><svg viewBox="0 0 300 130" preserveAspectRatio="none">
+          <g stroke="#e6e6e4"><line x1="30" y1="12" x2="300" y2="12"/><line x1="30" y1="48" x2="300" y2="48"/><line x1="30" y1="84" x2="300" y2="84"/></g>
+          <path d="M30 96 C 80 26, 120 44, 170 70 S 240 96, 300 40 L300 116 L30 116 Z" fill="#eeeeec"/>
+          <path d="M30 96 C 80 26, 120 44, 170 70 S 240 96, 300 40" fill="none" stroke="#8a8a88" stroke-width="2.5"/>
+          <path d="M30 108 C 90 64, 140 58, 200 78 S 260 60, 300 26" fill="none" stroke="#b4b4b2" stroke-width="2" stroke-dasharray="5 4"/>
+        </svg></figure>
+      </div>
+      <div class="kotak kbesar" style="padding:12px;height:250px">
+        <div class="kepala"><div class="t t--judul" style="width:110px"></div></div>
+        <figure style="display:grid;place-items:center"><svg viewBox="0 0 200 200" style="width:120px;height:120px">
+          <circle cx="100" cy="100" r="72" fill="none" stroke="#8a8a88" stroke-width="26" stroke-dasharray="204 249" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="72" fill="none" stroke="#adadab" stroke-width="26" stroke-dasharray="113 340" stroke-dashoffset="-204" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="72" fill="none" stroke="#c9c9c7" stroke-width="26" stroke-dasharray="136 317" stroke-dashoffset="-317" transform="rotate(-90 100 100)"/>
+          <rect x="66" y="88" width="68" height="7" rx="3" fill="#c9c9c7"/><rect x="60" y="103" width="80" height="12" rx="4" fill="#adadab"/>
+        </svg></figure>
+        <div class="donat-legenda" style="grid-template-columns:1fr">
+          <div><i class="persen"></i><i class="t t--kecil" style="flex:1"></i></div>
+          <div><i class="persen"></i><i class="t t--kecil" style="flex:1"></i></div>
+          <div><i class="persen"></i><i class="t t--kecil" style="flex:1"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="kotak kpenuh" style="padding:12px;height:190px">
+      <div class="kepala"><div class="t t--judul" style="width:140px"></div></div>
+      <figure><svg viewBox="0 0 300 120" preserveAspectRatio="none">
+        <g stroke="#e6e6e4" stroke-dasharray="3 4"><line x1="26" y1="12" x2="300" y2="12"/><line x1="26" y1="46" x2="300" y2="46"/><line x1="26" y1="80" x2="300" y2="80"/></g>
+        <g fill="#e2e2e0">
+          <rect x="32" y="30" width="17" height="70" rx="4"/><rect x="54" y="46" width="17" height="54" rx="4"/>
+          <rect x="76" y="38" width="17" height="62" rx="4"/><rect x="98" y="22" width="17" height="78" rx="4"/>
+          <rect x="120" y="34" width="17" height="66" rx="4"/><rect x="142" y="44" width="17" height="56" rx="4"/>
+          <rect x="186" y="26" width="17" height="74" rx="4"/><rect x="208" y="50" width="17" height="50" rx="4"/>
+          <rect x="230" y="18" width="17" height="82" rx="4"/><rect x="252" y="40" width="17" height="60" rx="4"/>
+          <rect x="274" y="48" width="17" height="52" rx="4"/>
+        </g>
+        <rect x="164" y="16" width="17" height="84" rx="4" fill="#8a8a88"/>
+      </svg></figure>
+    </div>
+  </div>
+</div>
+
+<div class="catatan">
+  <p><b>Yang perlu Anda putuskan sebelum saya lanjut:</b></p>
+  <ol>
+    <li>Sidebar dan topbar saya biarkan seperti yang sudah ada (kotak bergaris miring). Referensi punya sidebar dan topbar sendiri — kalau itu ikut disamakan, yang berubah <b>seluruh panel admin</b>, bukan cuma halaman Keuangan.</li>
+    <li>Referensi punya <b>tiga tab</b>: Overview, Transactions, Invoices. Yang saya siapkan slotnya juga tiga. Anda mau isinya apa? Tebakan saya: Ringkasan, Tagihan, Biaya.</li>
+    <li>Kartu ketiga di referensi "Net Profit". Di studio Anda laba bersih dihitung dari <b>kas yang benar-benar masuk</b>, bukan nilai kontrak — itu keputusan Anda sendiri dulu. Jadi angkanya akan naik bertahap ikut termin, bukan langsung penuh.</li>
+    <li>Grafik "Cash Flow Analysis" punya <b>3 seri × 12 bulan</b>. Data itu sudah ada di API. Tapi "Revenue Comparison" butuh <b>data tahun lalu</b> — studio ini baru jalan, jadi batang 2025 kemungkinan besar kosong. Perlu saya ganti jadi perbandingan lain, atau tetap dengan baris kosong?</li>
+  </ol>
+</div>
+
+</body></html>
