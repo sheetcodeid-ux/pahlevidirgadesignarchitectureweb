@@ -1,9 +1,16 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ContactForm from "../components/ContactForm.astro";
+import { getSettings } from "../lib/api";
 /* Form kontak memakai .field/.input dari form.css; BaseLayout tidak
    memuatnya, jadi halaman ini harus memintanya sendiri. */
 import "../styles/form.css";
+
+/* Kontak dibaca dari Info Studio, tidak ditulis tetap di sini. Sebelumnya
+   halaman ini memajang alamat surel yang tidak ada mailbox-nya sementara kaki
+   halaman memajang alamat yang benar — dua jawaban berbeda di satu situs. */
+const settings = await getSettings();
+const lokasi = [settings.address, settings.city].filter(Boolean).join(", ") || "Indonesia";
 ---
 
 <BaseLayout
@@ -20,13 +27,21 @@ import "../styles/form.css";
       </p>
 
       <dl class="contact-details">
-        <div>
-          <dt>Email</dt>
-          <dd><a href="mailto:studio@pahlevidirgaarchitecture.com">studio@pahlevidirgaarchitecture.com</a></dd>
-        </div>
+        {settings.email && (
+          <div>
+            <dt>Email</dt>
+            <dd><a href={`mailto:${settings.email}`}>{settings.email}</a></dd>
+          </div>
+        )}
+        {settings.phone && (
+          <div>
+            <dt>Telepon</dt>
+            <dd><a href={`tel:${settings.phone.replace(/[^\d+]/g, "")}`}>{settings.phone}</a></dd>
+          </div>
+        )}
         <div>
           <dt>Studio</dt>
-          <dd>Indonesia</dd>
+          <dd>{lokasi}</dd>
         </div>
       </dl>
     </div>

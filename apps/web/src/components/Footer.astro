@@ -11,7 +11,7 @@ const keterangan = settings.tagline || (settings.city ? `Arsitektur & Interior â
     <div>
       <p class="footer-name">
         {settings.logoUrl && <img src={settings.logoUrl} alt="" class="footer-logo" />}
-        {settings.studioName}
+        {settings.studioName?.trim() || "Dirga Pahlevi Architecture"}
       </p>
       <p class="footer-note">{keterangan}</p>
     </div>

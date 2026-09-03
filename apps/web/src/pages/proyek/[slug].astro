@@ -114,7 +114,7 @@ const dataProyek = [
 
     {
       project.images && project.images.length > 0 && (
-        <section class="shell section gallery">
+        <section class="shell section gallery" aria-label={`Galeri foto ${project.title}`}>
           {project.images.map((image) => (
             <figure>
               <img

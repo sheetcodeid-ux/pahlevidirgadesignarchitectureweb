@@ -194,7 +194,6 @@
    bidang, sementara Perintah polos di sel yang lebih sempit — dua benda yang
    perannya sama tapi wujudnya berbeda, dan barisnya jadi tidak berirama. */
 .topbar__combo { position: relative; }
-.topbar__sel { justify-content: center; }
 
 /* cmdk membungkus isinya dalam satu div tanpa lebar. Tanpa dibuat mengisi,
    lebar 100% pada bidang di dalamnya menunjuk ke lebar-otomatis pembungkus
@@ -580,7 +579,6 @@
   .topbar__crumb .breadcrumb__sep { display: none; }
   /* Tombol laci butuh 3rem di kiri; sisanya dipangkas dari sel tombol ikon. */
   .topbar__aksi,
-  .topbar__sel { padding-inline: var(--space-1); }
   /* Di lebar ini identitas tinggal avatar — tidak ada teks yang bisa
      dipendekkan, jadi menyusutkannya cuma mendorong avatar keluar layar.
      Seluruh penyusutan dibebankan ke remah roti, yang memang punya ellipsis. */
@@ -644,16 +642,6 @@
 /* Lingkaran bernomor di "Panduan memulai" — cincin berwarna, bukan kotak
    terisi, supaya status (selesai/aktif/belum) terbaca dari jauh. Warna
    diatur inline per baris karena ketiga statusnya butuh warna berbeda. */
-.langkah-lingkaran {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  flex: none;
-  border-radius: 50%;
-  border: 2px solid var(--border-strong);
-  background: var(--surface);
-}
 
 @media (min-width: 60rem) {
   /* Tombol drawer hilang, jadi ruang kirinya dikembalikan. Nolkan saja:
@@ -1439,14 +1427,6 @@
    isinya berbeda (gambar penuh di atas, isian keterangan, lalu deretan
    aksi), dan memaksakan satu kelas untuk keduanya justru membuat keduanya
    sulit diubah sendiri-sendiri. */
-.galeri-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
-  gap: var(--space-4);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
 
 .galeri-item {
   display: flex;
@@ -1874,12 +1854,6 @@
 /* Bilah simpan ikut berkartu hitam. Dibiarkan telanjang di atas badan abu ia
    satu-satunya benda yang melayang tanpa batas, dan judul proyek di kirinya
    terbaca seolah bagian dari judul halaman, bukan dari isinya. */
-.proyekpage__bilah {
-  padding: var(--space-4) var(--space-5);
-  border: 2px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--bg-sunken);
-}
 
 /* Keadaan kosong dan galat berdiri sendiri di badan abu — diberi kartu
    hitam supaya tidak melayang tanpa batas di tengah halaman. */

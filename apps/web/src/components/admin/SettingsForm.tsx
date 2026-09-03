@@ -243,6 +243,7 @@ function Isi() {
           ref={fileLogo}
           type="file"
           className="sr-only"
+          aria-label="Pilih berkas logo studio"
           accept="image/png,image/jpeg,image/webp"
           onChange={(e) => {
             const f = e.target.files?.[0];

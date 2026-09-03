@@ -136,6 +136,7 @@ function Isi() {
           </div>
 
           <input ref={berkas} type="file" className="sr-only"
+            aria-label="Pilih gambar sampul proyek"
             accept="image/jpeg,image/png,image/webp,image/avif"
             onChange={(e) => { const b = e.target.files?.[0]; if (b) unggahCover(b); e.target.value = ""; }} />
 

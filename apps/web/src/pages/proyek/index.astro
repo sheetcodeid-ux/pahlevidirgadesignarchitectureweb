@@ -37,7 +37,7 @@ const categories = [...new Set(projects.map((p) => p.category))] as ProjectCateg
       projects.length > 0 ? (
         <ul class="project-grid" id="project-grid">
           {projects.map((project, index) => (
-            <ProjectCard project={project} priority={index < 3} />
+            <ProjectCard project={project} priority={index < 3} level={2} />
           ))}
         </ul>
       ) : (
