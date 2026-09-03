@@ -55,6 +55,103 @@ export function PilLive({ teks = "LIVE" }: { teks?: string }) {
   return <span className="pil-live"><span className="pil-live__titik" />{teks}</span>;
 }
 
+/* --- Kartu metrik --------------------------------------------------------- */
+
+/**
+ * Satu angka dalam kartunya sendiri: ubin ikon di kiri atas, slot status di
+ * kanan atas, label, angka besar, lalu baris pembanding di kaki.
+ *
+ * Bentuk ini diambil dari referensi pemilik dan ditiru per bagian. Versi
+ * sebelumnya menyatukan enam angka ke dalam SATU bilah bergaris — itu ide
+ * saya, bukan permintaannya, dan hasilnya tidak pernah mirip referensi.
+ * Kartu terpisah juga yang membuat tiap angka bisa punya ikon dan status
+ * sendiri, hal yang mustahil di dalam satu bilah.
+ */
+export function KartuMetrik({
+  label, nilai, ikon, warna, lembut, banding, delta, deltaArah, minus, kanan,
+}: {
+  label: string;
+  nilai: string;
+  ikon: Parameters<typeof Icon>[0]["name"];
+  warna: string;
+  lembut: string;
+  /** Teks pembanding di kaki, mis. "vs periode lalu". */
+  banding?: string;
+  delta?: string;
+  deltaArah?: "naik" | "turun";
+  minus?: boolean;
+  kanan?: ReactNode;
+}) {
+  return (
+    <article className="kmetrik">
+      <header className="kmetrik__head">
+        <span className="kmetrik__ubin" style={{ background: lembut, color: warna }}>
+          <Icon name={ikon} size={17} />
+        </span>
+        {kanan}
+      </header>
+      <p className="kmetrik__label">{label}</p>
+      <p className={`kmetrik__nilai${minus ? " angka-minus" : ""}`}>{nilai}</p>
+      {(banding || delta) && (
+        <footer className="kmetrik__kaki">
+          <span className="kmetrik__banding">{banding}</span>
+          {delta && (
+            <span className={`kmetrik__delta kmetrik__delta--${deltaArah === "naik" ? "naik" : "turun"}`}>
+              {deltaArah === "naik" ? "↗" : "↘"} {delta}
+            </span>
+          )}
+        </footer>
+      )}
+    </article>
+  );
+}
+
+/* --- Kartu kemajuan ------------------------------------------------------- */
+
+/**
+ * Kemajuan terhadap target sebagai bilah lurus: judul dan persentase besar di
+ * satu baris, nominal berbanding nominal, bilahnya, lalu legenda.
+ *
+ * Dipakai untuk target yang tidak butuh busur. Di referensi, busur cuma
+ * dipakai SEKALI untuk target utama; sisanya bilah lurus — dan itu benar,
+ * karena empat busur bertumpuk di satu kolom saling berebut perhatian.
+ */
+export function KartuKemajuan({
+  judul, nilai, target, format, live = false, warna = "var(--chart-1)",
+}: {
+  judul: string;
+  nilai: number;
+  target: number;
+  format: (n: number) => string;
+  live?: boolean;
+  warna?: string;
+}) {
+  const rasio = target > 0 ? Math.min(Math.max(nilai / target, 0), 1) : 0;
+  const persen = target > 0 ? (nilai / target) * 100 : 0;
+
+  return (
+    <article className="kmaju">
+      <header className="kmaju__head">
+        <span className="kmaju__judul">{judul}</span>
+        {live && <PilLive />}
+        <span className="kmaju__persen">{persen.toFixed(persen >= 100 ? 0 : 1).replace(".", ",")}%</span>
+      </header>
+      <p className="kmaju__nominal">
+        <span className="kmaju__kini">{format(nilai)}</span>
+        <span className="kmaju__pisah">/</span>
+        <span className="kmaju__target">{format(target)}</span>
+      </p>
+      <span className="kmaju__rel">
+        <span className="kmaju__isi" style={{ inlineSize: `${rasio * 100}%`, background: warna }} />
+      </span>
+      <p className="kmaju__legenda">
+        <span className="kmaju__lg"><span className="kmaju__titik" style={{ background: warna }} />Realisasi</span>
+        <span className="kmaju__lg"><span className="kmaju__titik kmaju__titik--rel" />Target</span>
+      </p>
+    </article>
+  );
+}
+
 /* --- Busur target --------------------------------------------------------- */
 
 const BW = 300;

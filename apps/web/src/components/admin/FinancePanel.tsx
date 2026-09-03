@@ -4,7 +4,7 @@ import { SkeletonKartu, SkeletonStat } from "../ui/Skeleton";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
 import {
   BilahKategori, BusurTarget, ChartBanding, CincinDistribusi, KartuData, LiniMasa, PilLive,
-  PitaMetrik, type ButirAktivitas, type IrisKategori, type PitaCincin, type SelPita,
+  KartuKemajuan, KartuMetrik, type ButirAktivitas, type IrisKategori, type PitaCincin,
 } from "../ui/data/Keuangan";
 import { RequireAuth } from "./RequireAuth";
 import {
@@ -226,28 +226,34 @@ function Isi() {
 
   const marginKas = data.kasMasuk > 0 ? (data.labaBersih / data.kasMasuk) * 100 : null;
 
-  const sel: SelPita[] = [
-    { label: "Nilai kontrak", nilai: formatRupiah(data.totalKontrak), persen: "100%", arah: "netral" },
+  /* Empat kartu metrik, masing-masing dengan ubin ikonnya sendiri — bentuk
+     dari referensi. Pembandingnya porsi terhadap nilai kontrak, karena itu
+     satu-satunya angka yang membuat keempatnya bisa dibaca bersama. */
+  const metrik = [
+    {
+      label: "Nilai kontrak", nilai: formatRupiah(data.totalKontrak),
+      ikon: "project" as const, warna: "var(--text-strong)", lembut: "var(--surface-hover)",
+      banding: `${data.proyek.length} proyek berkontrak`,
+    },
     {
       label: "Kas masuk", nilai: formatRupiah(data.kasMasuk),
-      persen: persen(porsiKontrak(data.kasMasuk, data.totalKontrak)), arah: "naik",
+      ikon: "finance" as const, warna: "var(--chart-1)", lembut: "var(--info-soft)",
+      banding: "dari nilai kontrak",
+      delta: persen(porsiKontrak(data.kasMasuk, data.totalKontrak)), deltaArah: "naik" as const,
     },
     {
-      label: "Piutang", nilai: formatRupiah(data.piutang),
-      persen: persen(porsiKontrak(data.piutang, data.totalKontrak)), arah: "netral",
-    },
-    {
-      label: "Biaya ops", nilai: formatRupiah(data.totalBiaya),
-      persen: persen(porsiKontrak(data.totalBiaya, data.totalKontrak)), arah: "turun",
+      label: "Biaya operasional", nilai: formatRupiah(data.totalBiaya),
+      ikon: "alert" as const, warna: "var(--warn)", lembut: "var(--warn-soft)",
+      banding: "dari nilai kontrak",
+      delta: persen(porsiKontrak(data.totalBiaya, data.totalKontrak)), deltaArah: "turun" as const,
     },
     {
       label: "Laba bersih", nilai: rupiah(data.labaBersih), minus: data.labaBersih < 0,
-      persen: persen(porsiKontrak(data.labaBersih, data.totalKontrak)),
-      arah: data.labaBersih < 0 ? "turun" : "naik",
-    },
-    {
-      label: "Margin", nilai: persen(marginKas), minus: (marginKas ?? 0) < 0,
-      persen: "dari kas masuk", arah: (marginKas ?? 0) >= AMBANG_SEHAT ? "naik" : "turun",
+      ikon: "checklist" as const,
+      warna: data.labaBersih < 0 ? "var(--brand)" : "var(--success)",
+      lembut: data.labaBersih < 0 ? "var(--brand-soft)" : "var(--success-soft)",
+      banding: "margin dari kas masuk",
+      delta: persen(marginKas), deltaArah: (marginKas ?? 0) >= AMBANG_SEHAT ? "naik" as const : "turun" as const,
     },
   ];
 
@@ -320,9 +326,13 @@ function Isi() {
     : null;
 
   return (
-    <div className="papan-stack">
-      {/* Pil lingkup: lingkup bukan peringatan, ia keadaan — dan keadaan
-          ditulis sebaris, bukan dalam kotak yang menuntut perhatian. */}
+    /* Tiga kolom bertumpuk, mengikuti struktur referensi pemilik: rel sempit
+       di kiri untuk target, kolom lebar di tengah untuk angka dan grafik,
+       rel sempit di kanan untuk sebaran dan aktivitas.
+
+       Versi sebelumnya memakai satu kartu per kolom — itu bentuk saya
+       sendiri, bukan referensinya, dan itu sebabnya tidak pernah mirip. */
+    <div className="keu">
       <div className="lingkup">
         <span className="lingkup__nama">
           <Icon name={aktif ? "project" : "dashboard"} size={15} />
@@ -334,125 +344,139 @@ function Isi() {
         </span>
       </div>
 
-      <PitaMetrik sel={sel} />
+      <div className="keu__grid">
+        {/* --- Rel kiri: target ------------------------------------------- */}
+        <div className="keu__rel">
+          <KartuData
+            judul="Target Semester"
+            keterangan="Kas masuk vs target 6 bulan"
+            kanan={data.targetSemester ? <PilLive /> : undefined}>
+            {data.targetSemester ? (
+              <>
+                <BusurTarget
+                  judul="Target semester"
+                  nilai={data.kasMasuk}
+                  target={data.targetSemester.nilai}
+                  format={formatRupiah}
+                  labelTengah="Target Semester"
+                />
+                <BarisAngka
+                  stat={[
+                    { label: "Sisa ke target", nilai: rupiahRingkas(Math.max(data.targetSemester.nilai - data.kasMasuk, 0)) },
+                    {
+                      label: `Butuh / bulan · ${sisaBulan} bln`,
+                      nilai: sisaBulan > 0
+                        ? rupiahRingkas(Math.max(data.targetSemester.nilai - data.kasMasuk, 0) / sisaBulan)
+                        : "—",
+                    },
+                  ]}
+                />
+              </>
+            ) : (
+              <BelumAdaSumber
+                judul="Target belum disetel"
+                keterangan="Butuh tabel target di database supaya angkanya bisa diatur dari Info Studio, bukan ditulis tetap di kode."
+              />
+            )}
+          </KartuData>
 
-      <div className="papan-grid papan-grid--1-2-1">
-        <KartuData
-          judul="Target Semester"
-          keterangan="Kas masuk vs target 6 bulan"
-          kanan={data.targetSemester ? <PilLive /> : undefined}>
-          {data.targetSemester ? (
-            <>
-              <BusurTarget
-                judul="Target semester"
-                nilai={data.kasMasuk}
-                target={data.targetSemester.nilai}
-                format={formatRupiah}
-                labelTengah="Target Semester"
-              />
-              <BarisAngka
-                stat={[
-                  { label: "Sisa ke target", nilai: rupiahRingkas(Math.max(data.targetSemester.nilai - data.kasMasuk, 0)) },
-                  {
-                    label: `Butuh / bulan · ${sisaBulan} bln`,
-                    nilai: sisaBulan > 0
-                      ? rupiahRingkas(Math.max(data.targetSemester.nilai - data.kasMasuk, 0) / sisaBulan)
-                      : "—",
-                  },
-                ]}
-              />
-            </>
-          ) : (
-            <BelumAdaSumber
-              judul="Target belum disetel"
-              keterangan="Butuh tabel target di database supaya angkanya bisa diatur dari Info Studio, bukan ditulis tetap di kode."
-            />
-          )}
-        </KartuData>
+          <KartuKemajuan judul="Tertagih dari kontrak" nilai={data.kasMasuk} target={data.totalKontrak}
+            format={rupiahRingkas} live warna="var(--chart-1)" />
 
-        <KartuData
-          judul="Nilai Proyek"
-          keterangan={`Kas masuk per bulan · ${tahunIni.length} bulan terakhir${
-            tahunLalu.length > 0 ? " vs periode sebelumnya" : ""
-          }`}
-          kanan={
-            <div className="segmented" role="group" aria-label="Rentang">
-              {(["12", "24"] as const).map((r) => (
-                <button key={r} type="button" className="segmented__opt"
-                  aria-pressed={rentang === r} onClick={() => setRentang(r)}>
-                  {r === "12" ? "1 thn" : "2 thn"}
-                </button>
-              ))}
-            </div>
-          }>
-          {cukupUntukBanding ? (
-            <>
-              <BarisAngka
-                stat={[
-                  { label: "Periode ini", nilai: rupiahRingkas(totalKini) },
-                  { label: "Periode sebelumnya", nilai: rupiahRingkas(totalLalu) },
-                  { label: "Selisih", nilai: rupiahRingkas(totalKini - totalLalu), minus: totalKini < totalLalu },
-                ]}
-              />
+          <KartuKemajuan judul="Piutang berjalan" nilai={data.piutang} target={data.totalKontrak}
+            format={rupiahRingkas} warna="var(--warn)" />
+
+          <KartuKemajuan judul="Biaya terhadap kontrak" nilai={data.totalBiaya} target={data.totalKontrak}
+            format={rupiahRingkas} warna="var(--brand)" />
+        </div>
+
+        {/* --- Kolom tengah: angka, grafik, tabel -------------------------- */}
+        <div className="keu__utama">
+          <div className="keu__metrik">
+            {metrik.map((m) => <KartuMetrik key={m.label} {...m} />)}
+          </div>
+
+          <KartuData
+            judul="Nilai Proyek"
+            keterangan={`Kas masuk per bulan · ${tahunIni.length} bulan terakhir${
+              tahunLalu.length > 0 ? " vs periode sebelumnya" : ""
+            }`}
+            kanan={
+              <div className="segmented" role="group" aria-label="Rentang">
+                {(["12", "24"] as const).map((r) => (
+                  <button key={r} type="button" className="segmented__opt"
+                    aria-pressed={rentang === r} onClick={() => setRentang(r)}>
+                    {r === "12" ? "1 thn" : "2 thn"}
+                  </button>
+                ))}
+              </div>
+            }>
+            {cukupUntukBanding ? (
               <ChartBanding
-              label={labelBulan}
-              kini={nilaiKini}
-              lalu={nilaiLalu}
-              namaKini="Periode ini"
-              namaLalu="Periode sebelumnya"
+                label={labelBulan}
+                kini={nilaiKini}
+                lalu={nilaiLalu}
+                namaKini="Periode ini"
+                namaLalu="Periode sebelumnya"
                 format={rupiahRingkas}
               />
-            </>
-          ) : (
-            <BelumAdaSumber
-              judul="Belum cukup bulan berdata"
-              keterangan="Grafik terisi begitu ada minimal dua bulan dengan pergerakan uang."
-            />
-          )}
-        </KartuData>
-
-        <KartuData judul="Distribusi Margin" keterangan="Sebaran kesehatan margin per proyek">
-          <CincinDistribusi judul="Distribusi margin" pita={pita} />
-        </KartuData>
-      </div>
-
-      <div className="papan-grid papan-grid--dua">
-        <KartuData judul="Beban Operasional" keterangan="Rincian beban studio menurut kategori">
-          {iris ? (
-            <>
-              <BarisAngka
-                stat={[
-                  { label: "Total beban", nilai: formatRupiah(iris.reduce((a, i) => a + i.nilai, 0)) },
-                  { label: "Kategori tercatat", nilai: String(iris.filter((i) => i.nilai > 0).length) },
-                ]}
+            ) : (
+              <BelumAdaSumber
+                judul="Belum cukup bulan berdata"
+                keterangan="Grafik terisi begitu ada minimal dua bulan dengan pergerakan uang."
               />
-              <BilahKategori iris={iris} format={formatRupiah} />
-            </>
-          ) : (
-            <BelumAdaSumber
-              judul="Rincian kategori belum tersedia"
-              keterangan="Biaya sudah tersimpan berkategori, tapi ringkasan keuangan belum mengelompokkannya. Butuh satu perubahan di repository API."
-            />
-          )}
-        </KartuData>
+            )}
+          </KartuData>
 
-        <KartuData
-          judul="Aktivitas Terkini"
-          keterangan="Pergerakan uang dan dokumen terbaru"
-          kanan={data.aktivitas ? <PilLive /> : undefined}>
-          {data.aktivitas && data.aktivitas.length > 0 ? (
-            <LiniMasa butir={data.aktivitas.map<ButirAktivitas>((a) => ({
-              id: a.id, judul: a.judul, keterangan: a.keterangan, waktu: a.waktu, ...KOLOM_IKON[a.jenis],
-            }))} />
-          ) : (
-            <BelumAdaSumber
-              judul="Belum ada sumber aktivitas"
-              keterangan="Butuh endpoint gabungan yang menyatukan invoice lunas, biaya baru, dokumen terunggah, dan perubahan progres."
-            />
-          )}
-        </KartuData>
+          <KartuData judul="Beban Operasional" keterangan="Rincian beban studio menurut kategori">
+            {iris ? (
+              <>
+                <BarisAngka
+                  stat={[
+                    { label: "Total beban", nilai: formatRupiah(iris.reduce((a, i) => a + i.nilai, 0)) },
+                    { label: "Kategori tercatat", nilai: String(iris.filter((i) => i.nilai > 0).length) },
+                  ]}
+                />
+                <BilahKategori iris={iris} format={formatRupiah} />
+              </>
+            ) : (
+              <BelumAdaSumber
+                judul="Rincian kategori belum tersedia"
+                keterangan="Biaya sudah tersimpan berkategori, tapi ringkasan keuangan belum mengelompokkannya. Butuh satu perubahan di repository API."
+              />
+            )}
+          </KartuData>
+
+        </div>
+
+        {/* --- Rel kanan: sebaran dan aktivitas ---------------------------- */}
+        <div className="keu__rel">
+          <KartuData judul="Distribusi Margin" keterangan="Sebaran kesehatan margin per proyek">
+            <CincinDistribusi judul="Distribusi margin" pita={pita} />
+          </KartuData>
+
+          <KartuData
+            judul="Aktivitas Terkini"
+            keterangan="Pergerakan uang dan dokumen terbaru"
+            kanan={data.aktivitas ? <PilLive /> : undefined}>
+            {data.aktivitas && data.aktivitas.length > 0 ? (
+              <LiniMasa butir={data.aktivitas.map<ButirAktivitas>((a) => ({
+                id: a.id, judul: a.judul, keterangan: a.keterangan, waktu: a.waktu, ...KOLOM_IKON[a.jenis],
+              }))} />
+            ) : (
+              <BelumAdaSumber
+                judul="Belum ada sumber aktivitas"
+                keterangan="Butuh endpoint gabungan yang menyatukan invoice lunas, biaya baru, dokumen terunggah, dan perubahan progres."
+              />
+            )}
+          </KartuData>
+        </div>
       </div>
 
+      {/* Tabel selebar halaman, di luar tiga kolom. Enam kolom uang di dalam
+          kolom tengah selebar 600px membuat nama proyek pecah tiga baris dan
+          separuh kolomnya harus digulir menyamping — tabel memang butuh lebar
+          yang tidak bisa diberikan kolom tengah. */}
       <DataTable
         data={data.proyek}
         kunci={(p) => p.projectId}

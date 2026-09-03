@@ -1031,3 +1031,176 @@ a.mini__judul:hover { color: var(--brand); }
   border-block-end: 1px solid var(--border);
   margin-block-end: var(--space-3);
 }
+
+/* =============================================================================
+   Halaman Keuangan — tiga kolom bertumpuk, mengikuti struktur referensi.
+   ============================================================================= */
+
+.keu { display: flex; flex-direction: column; gap: var(--space-5); }
+
+/* Rel sempit | kolom lebar | rel sempit. Rel-nya tetap sempit dan tidak ikut
+   melebar: kartu target dan cincin justru rusak kalau dipaksa lebar, sementara
+   grafik dan tabel memang butuh ruang. */
+.keu__grid {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr) 18.5rem;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.keu__rel   { display: flex; flex-direction: column; gap: var(--space-5); min-inline-size: 0; }
+.keu__utama { display: flex; flex-direction: column; gap: var(--space-5); min-inline-size: 0; }
+
+/* Empat kartu metrik dua-dua, seperti referensi. auto-fit supaya barisnya
+   selalu terisi penuh dan tidak ada kartu yatim di baris terakhir. */
+.keu__metrik {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: var(--space-5);
+}
+
+@media (max-width: 82rem) {
+  /* Rel kanan turun ke bawah dan berbagi baris dengan rel kiri. */
+  .keu__grid { grid-template-columns: 17rem minmax(0, 1fr); }
+  .keu__grid > :last-child {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  }
+}
+
+@media (max-width: 58rem) {
+  .keu__grid { grid-template-columns: 1fr; }
+  .keu__grid > :last-child { grid-column: auto; }
+}
+
+/* --- Kartu metrik --------------------------------------------------------- */
+
+.kmetrik {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-inline-size: 0;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.kmetrik:hover { border-color: var(--border-strong); }
+
+.kmetrik__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+
+.kmetrik__ubin {
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--radius-sm);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kmetrik__label {
+  margin: 0;
+  margin-block-start: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.kmetrik__nilai {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  /* --text-lg, bukan --text-xl. Terukur: "Rp451.000.000" pada 22px butuh
+     ~205px sementara isi kartunya cuma 192px, jadi digit terakhirnya jatuh
+     ke baris kedua — "Rp451.000.00" lalu "0". Angka yang pecah begitu lebih
+     buruk daripada angka yang sedikit lebih kecil. */
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.kmetrik__kaki {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-block-start: auto;
+  padding-block-start: var(--space-2);
+}
+
+.kmetrik__banding { font-size: var(--text-2xs); color: var(--text-faint); }
+
+.kmetrik__delta {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  flex: none;
+}
+
+.kmetrik__delta--naik  { color: var(--success); background: var(--success-soft); }
+.kmetrik__delta--turun { color: var(--brand);   background: var(--brand-soft); }
+
+/* --- Kartu kemajuan ------------------------------------------------------- */
+
+.kmaju {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-inline-size: 0;
+}
+
+/* Judul dapat baris pertama utuh; pil dan persentase turun ke baris sendiri
+   kalau tidak muat. Tanpa ini, "Tertagih dari kontrak" terhimpit jadi tiga
+   baris satu kata — dan judul tiga baris di kartu setinggi ini terbaca
+   seperti tata letak yang gagal. */
+.kmaju__head   { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.kmaju__judul  { font-size: var(--text-sm); font-weight: 700; color: var(--text-strong);
+                 flex: 1 1 100%; }
+
+.kmaju__persen {
+  margin-inline-start: auto;
+  order: 1;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  flex: none;
+}
+
+.kmaju__nominal {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs);
+}
+
+.kmaju__kini   { color: var(--text-body); }
+.kmaju__pisah  { color: var(--text-faint); }
+.kmaju__target { color: var(--text-faint); }
+
+.kmaju__rel { display: block; block-size: 6px; border-radius: var(--radius-pill);
+              background: var(--busur-rel); overflow: hidden; }
+.kmaju__isi { display: block; block-size: 100%; border-radius: var(--radius-pill); }
+
+.kmaju__legenda { display: flex; gap: var(--space-4); margin: 0; }
+.kmaju__lg     { display: inline-flex; align-items: center; gap: 0.35rem;
+                 font-size: var(--text-2xs); color: var(--text-faint); }
+.kmaju__titik  { inline-size: 7px; block-size: 7px; border-radius: 50%; flex: none; }
+.kmaju__titik--rel { background: var(--busur-rel); }
