@@ -87,7 +87,12 @@
 
 .sidebar__wordmark {
   font-family: var(--font-display);
-  font-size: var(--text-md);
+  /* 15px + kerapatan sendiri, bukan 16px. Geist lebih lebar daripada
+     Newsreader: "Dirga Pahlevi Architecture" butuh 208px pada 16px sementara
+     ruang di sidebar cuma 194px, jadi nama studionya terpotong di tengah kata.
+     Terukur, bukan dikira. */
+  font-size: var(--text-base);
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

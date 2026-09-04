@@ -204,8 +204,15 @@ Aturan yang mengikat:
    destruktif, amber = terbatas atau terkunci sebagian, ungu = upgrade dan
    fitur berbayar, hijau = status hidup dan konfirmasi, biru = penjelasan.
    Ungu tidak pernah dipakai untuk aksi biasa.
-2. **Serif untuk judul halaman dan momen bernada manusia; sans untuk perkakas;
-   mono untuk data dan angka.** Newsreader / Plus Jakarta Sans / IBM Plex Mono.
+2. **Satu keluarga sans untuk seluruh situs, plus pasangan mono-nya untuk
+   angka.** Geist / Geist Mono. Judul dibedakan dari teks biasa lewat
+   **ukuran, bobot (700), dan kerapatan huruf** (`--tracking-judul`) — bukan
+   lewat keluarga font kedua.
+
+   Aturan ini **membatalkan** aturan lama "serif untuk judul halaman". Pemilik
+   menilai Newsreader jelek untuk panel seperti ini dan IBM Plex Mono terlalu
+   terasa seperti font bawaan alat AI; yang dia minta adalah font yang lazim
+   dipakai produk SaaS. Jangan kembalikan serifnya tanpa dia yang meminta.
 3. **Ikon selalu SVG inline** dari `apps/web/src/components/ui/Icon.tsx`. Tanpa
    emoji, tanpa icon-font. Ikon wajib cocok maknanya dengan label di sebelahnya.
 4. **Tidak ada nilai warna literal di komponen.** Semuanya menunjuk token di

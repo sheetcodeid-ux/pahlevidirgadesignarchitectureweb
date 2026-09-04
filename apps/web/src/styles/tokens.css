@@ -9,9 +9,18 @@
 
 :root {
   /* --- Tipografi ------------------------------------------------------- */
-  --font-display: "Newsreader", "Times New Roman", serif;
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* Geist dan Geist Mono — sistem font yang lazim dipakai produk SaaS.
+     Menggantikan Newsreader (serif) + Plus Jakarta Sans + IBM Plex Mono atas
+     permintaan pemilik: serif untuk judul halaman dan mono berslab untuk
+     nominal dinilai tidak cocok untuk panel seperti ini.
+
+     Display dan sans sekarang SATU keluarga. Itu memang cara SaaS: yang
+     membedakan judul dari teks biasa adalah ukuran, bobot, dan kerapatan
+     huruf — bukan keluarga font kedua. Tokennya tetap dua supaya tidak ada
+     markup yang perlu diubah, dan supaya suatu saat bisa dipisah lagi. */
+  --font-display: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --text-2xs: 0.6875rem;
   --text-xs: 0.75rem;
@@ -26,6 +35,9 @@
 
   --tracking-label: 0.12em;
   --tracking-tight: -0.015em;
+  /* Khusus judul besar. Serif tidak butuh ini; grotesk butuh — pada 44px,
+     -0.015em masih terbaca renggang dan judulnya kehilangan bobot. */
+  --tracking-judul: -0.032em;
 
   /* --- Radius ----------------------------------------------------------- */
   --radius-xs: 6px;

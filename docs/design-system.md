@@ -224,12 +224,26 @@ ditambahkan sebelum halaman ini bisa menggatingkan aksesnya.
 
 | Peran | Typeface | Dipakai untuk |
 | --- | --- | --- |
-| Display | Newsreader | Judul halaman dan momen bernada manusia |
-| UI | Plus Jakarta Sans | Seluruh perkakas sehari-hari |
-| Data | IBM Plex Mono | Angka, kode, dan nilai yang berjajar |
+| Display | Geist | Judul halaman, bobot 700, `--tracking-judul` |
+| UI | Geist | Seluruh perkakas sehari-hari |
+| Data | Geist Mono | Angka, kode, dan nilai yang berjajar |
 
-Plus Jakarta Sans dipilih bukan hanya karena bentuknya cocok — typeface itu
-dirancang di Indonesia untuk identitas kota Jakarta.
+Display dan UI memakai keluarga yang SAMA. Itu bukan kelalaian — begitulah
+produk SaaS menyusun tipografinya: yang membedakan judul dari teks biasa
+adalah ukuran, bobot, dan kerapatan huruf, bukan keluarga kedua. Tokennya
+tetap dipisah (`--font-display` dan `--font-sans`) supaya suatu saat bisa
+dipisah lagi tanpa menyentuh satu pun komponen.
+
+Dua setelan yang wajib ikut kalau keluarga fontnya diganti lagi:
+
+1. **Judul berbobot 700, bukan 400.** Serif berukuran besar sudah punya bobot
+   dari bentuknya sendiri; grotesk tidak, dan pada 400 judulnya terbaca kendur.
+2. **`--tracking-judul` (−0,032em), bukan `--tracking-tight` (−0,015em).**
+   Pada 44px, −0,015em masih terbaca renggang untuk grotesk.
+
+Susunan sebelumnya adalah Newsreader / Plus Jakarta Sans / IBM Plex Mono.
+Diganti atas permintaan pemilik: serif untuk judul dinilai tidak cocok di
+panel seperti ini, dan mono berslab terasa seperti font bawaan alat AI.
 
 ## Tema terang dan gelap
 

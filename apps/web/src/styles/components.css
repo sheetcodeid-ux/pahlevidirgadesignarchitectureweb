@@ -5,8 +5,10 @@
 
 /* --- Typography ---------------------------------------------------------- */
 
-.t-display   { font-family: var(--font-display); font-weight: 400; font-size: var(--text-4xl); line-height: 1.05; letter-spacing: var(--tracking-tight); color: var(--text-strong); text-wrap: balance; }
-.t-title     { font-family: var(--font-display); font-weight: 400; font-size: var(--text-3xl); line-height: 1.1;  letter-spacing: var(--tracking-tight); color: var(--text-strong); text-wrap: balance; }
+/* Bobot 700, bukan 400. Serif berukuran besar sudah punya bobot dari
+   bentuknya sendiri; grotesk tidak — pada 400 judulnya terbaca kendur. */
+.t-display   { font-family: var(--font-display); font-weight: 700; font-size: var(--text-4xl); line-height: 1.05; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
+.t-title     { font-family: var(--font-display); font-weight: 700; font-size: var(--text-3xl); line-height: 1.1;  letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
 .t-heading   { font-family: var(--font-sans); font-weight: 700; font-size: var(--text-xl); line-height: 1.25; color: var(--text-strong); }
 .t-subheading{ font-family: var(--font-sans); font-weight: 700; font-size: var(--text-md); line-height: 1.35; color: var(--text-strong); }
 .t-body      { font-size: var(--text-base); color: var(--text-body); }
