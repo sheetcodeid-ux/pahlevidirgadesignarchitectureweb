@@ -1202,7 +1202,10 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 0.5rem 1.1rem;
+  /* Padding tegak 7px, bukan 8px. Pemilik menilai barisan pil ini terlalu
+     tinggi di ruangnya; 2px turun (34px -> 32px) sudah cukup tanpa membuat
+     angka di dalamnya sesak. */
+  padding: 0.4375rem 1.1rem;
   font: inherit;
   font-size: var(--text-sm);
   font-weight: 500;
@@ -1271,11 +1274,22 @@
    huruf biasa, bukan kapital kecil ber-tracking. Dipakai untuk daftar
    panjang yang dibaca menyamping — garis vertikal menjaga mata tetap di
    kolom yang sama saat barisnya tinggi. */
+/* Garis rambut 1px, bukan 2px. Dua piksel itulah yang membuat tabelnya
+   terbaca KAKU — pemilik menandainya sendiri dan mengirim acuan yang
+   garisnya tipis. Yang dijaga tetap sama: garis tegak antar-kolom, supaya
+   mata tidak pindah kolom saat barisnya tinggi. */
 .table--ruled th + th,
-.table--ruled td + td { border-left: 2px solid var(--border-strong); }
+.table--ruled td + td { border-left: 1px solid var(--border); }
 
 .table--ruled th,
-.table--ruled td { border-bottom: 2px solid var(--border-strong); }
+.table--ruled td { border-bottom: 1px solid var(--border); }
+
+/* Baris terakhir tidak perlu garis — bingkai .table-wrap sudah menutupnya,
+   dan garis ganda di sana yang membuat kakinya terlihat berat. */
+.table--ruled tbody tr:last-child td { border-bottom: 0; }
+
+.table--ruled tbody tr { transition: background-color var(--dur-fast) var(--ease); }
+.table--ruled tbody tr:hover { background: var(--bg-sunken); }
 
 .table--ruled thead th {
   padding: calc(var(--space-4) + 5px) var(--space-4);

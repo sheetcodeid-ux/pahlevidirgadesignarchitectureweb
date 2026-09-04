@@ -9,15 +9,23 @@
 
 .table { width: 100%; border-collapse: collapse; font-size: var(--text-base); min-width: 40rem; }
 
+/* Baris lebih lega dan ada pemisah antar-kolom. Pemilik menilai tabel lama
+   terlalu kaku; di gambar acuannya tiap kolom berdiri sendiri dengan garis
+   tegak, dan barisnya bernapas. */
 .table th,
-.table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table td { padding: 1rem 1.1rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+
+.table th + th,
+.table td + td { border-left: 1px solid var(--border); }
 
 .table thead th {
-  font-size: var(--text-2xs);
-  font-weight: 600;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--text-faint);
+  /* Bukan huruf besar semua lagi. Label kapital-kecil 11px terbaca sebagai
+     label sistem; di acuan pemilik kepala tabelnya kalimat biasa. */
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-muted);
   background: var(--bg-sunken);
   white-space: nowrap;
   position: sticky;

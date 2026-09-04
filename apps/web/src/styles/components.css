@@ -10,7 +10,10 @@
    yang dikirim pemilik memang menunjukkan font-normal. Bobot 700 di sini
    berasal dari susunan Geist dan tidak berlaku lagi. */
 .t-display   { font-family: var(--font-display); font-weight: 400; font-size: var(--text-4xl); line-height: 1.08; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
-.t-title     { font-family: var(--font-display); font-weight: 400; font-size: var(--text-3xl); line-height: 1.15; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
+/* 30px pas, bukan clamp. Permintaan pemilik: pada 38px judulnya terlalu
+   besar. .t-title cuma dipakai judul halaman admin, jadi h2 publik yang
+   ikut --text-3xl tidak kena. */
+.t-title     { font-family: var(--font-display); font-weight: 400; font-size: 1.875rem; line-height: 1.15; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
 .t-heading   { font-family: var(--font-sans); font-weight: 700; font-size: var(--text-xl); line-height: 1.25; color: var(--text-strong); }
 .t-subheading{ font-family: var(--font-sans); font-weight: 700; font-size: var(--text-md); line-height: 1.35; color: var(--text-strong); }
 .t-body      { font-size: var(--text-base); color: var(--text-body); }

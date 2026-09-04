@@ -41,8 +41,8 @@
   font: inherit;
   font-size: var(--text-base);
   color: var(--text-strong);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  background: var(--field);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
   transition:
     border-color var(--dur) var(--ease),

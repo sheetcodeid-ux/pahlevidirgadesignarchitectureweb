@@ -91,6 +91,11 @@
 
   --border: #272727;
   --border-strong: #3a3a3a;
+
+  /* Latar isian form. Punya token sendiri, bukan menumpang --surface-raised,
+     karena pemilik minta isian terbaca ABU di tema terang sementara kartu
+     tetap putih. Di tema gelap keduanya kebetulan sama. */
+  --field: #1c1c1c;
   /* Nampan: bidang terangkat kecil yang menampung pilihan, seperti pengalih
      tampilan. Punya token sendiri karena nilainya tidak mengikuti --surface
      mana pun — di tema gelap ia harus lebih terang dari semuanya, di tema
@@ -162,6 +167,11 @@
      karena keduanya token, bukan nilai literal di komponen. */
   --border: #f0efec;
   --border-strong: #e2e2de;
+
+  /* Abu, bukan putih polos — permintaan pemilik lewat contoh isian
+     "Nama Lengkap". Kartu di sekelilingnya tetap putih, jadi isiannya
+     terbaca sebagai bidang yang bisa diketik. */
+  --field: #f2f2f0;
   --tray: #f4f4f2;
 
   --text-strong: #0d0d0c;
