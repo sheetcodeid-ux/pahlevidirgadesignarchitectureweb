@@ -154,9 +154,15 @@
   --surface-raised: #fdfdfd;
   --surface-hover: #e8e8e5;
 
-  --border: #e2e2de;
-  --border-strong: #c9c9c3;
-  --tray: #eeeeec;
+  /* Permintaan pemilik: garis batas di tema terang terlalu gelap. Dia
+     mengirim dua contoh warna — yang lama (#c9c9c3, persis --border-strong)
+     dan yang dia mau, satu tingkat jauh lebih pucat. Keduanya digeser satu
+     langkah: yang dulu --border sekarang jadi --border-strong, dan --border
+     mengambil nada dari contohnya. Berlaku ke SELURUH halaman sekaligus
+     karena keduanya token, bukan nilai literal di komponen. */
+  --border: #f0efec;
+  --border-strong: #e2e2de;
+  --tray: #f4f4f2;
 
   --text-strong: #0d0d0c;
   --text-body: #262624;
