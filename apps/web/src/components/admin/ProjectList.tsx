@@ -6,6 +6,7 @@ import { Popover, Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { Select } from "../ui/overlay/Select";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
+import { KolomPembayaran } from "./PaymentFlow";
 import { daftarProyek, hapusProyek, simpanProyek, ubahFaseProgress, type Proyek, bacaCache, tulisCache, jumlahDiingat} from "../../lib/admin";
 
 const LABEL: Record<string, string> = {
@@ -203,6 +204,7 @@ function Isi() {
               { label: "Kota", lebar: "4.5rem" },
               { label: "Tahap", lebar: "7rem" },
               { label: "Fase Klien", lebar: "7rem" },
+              { label: "Pembayaran", lebar: "9rem" },
               { label: "Tahun", kelas: "table__num", lebar: "2.5rem" },
               { label: "Status", lebar: "4rem" },
               { label: "Aksi", kelas: "table__actions", lebar: "3.5rem" },
@@ -350,6 +352,7 @@ function Isi() {
                 <th className="table__idx">#</th>
                 <th>Proyek</th><th>Kategori</th><th>Kota</th>
                 <th>Tahap</th><th>Fase Klien</th>
+                <th>Pembayaran</th>
                 <th className="table__num">Tahun</th><th>Status</th>
                 <th className="table__actions">Aksi</th>
               </tr>
@@ -401,6 +404,13 @@ function Isi() {
                       ariaLabel={`Fase klien ${p.title}`}
                       simpan={(v) => ubahFaseProgress(p.id, v)}
                       onSukses={(v) => gantiSatu(p.id, { phase: v })}
+                    />
+                  </td>
+                  <td>
+                    <KolomPembayaran
+                      proyek={p}
+                      onTercatat={(nilai) =>
+                        gantiSatu(p.id, { paidTotal: (p.paidTotal ?? 0) + nilai })}
                     />
                   </td>
                   <td className="table__num">{p.year ?? "—"}</td>
@@ -510,6 +520,7 @@ export function ProjectList() {
               { label: "Kota", lebar: "4.5rem" },
               { label: "Tahap", lebar: "7rem" },
               { label: "Fase Klien", lebar: "7rem" },
+              { label: "Pembayaran", lebar: "9rem" },
               { label: "Tahun", kelas: "table__num", lebar: "2.5rem" },
               { label: "Status", lebar: "4rem" },
               { label: "Aksi", kelas: "table__actions", lebar: "3.5rem" },

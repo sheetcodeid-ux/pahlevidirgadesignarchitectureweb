@@ -12,7 +12,11 @@ import { Icon } from "../Icon";
  */
 
 interface DialogProps {
-  trigger: ReactNode;
+  /** Opsional. Dialog yang buka-tutupnya dikendalikan penuh lewat `open`
+   *  tidak punya tombol pemicu sendiri — alur berantai seperti "terima
+   *  pembayaran lalu buktinya" dibuka dari hasil langkah sebelumnya, bukan
+   *  dari satu tombol yang duduk di halaman. */
+  trigger?: ReactNode;
   title: string;
   description?: string;
   children?: ReactNode;
@@ -25,7 +29,7 @@ interface DialogProps {
 export function Dialog({ trigger, title, description, children, footer, open, onOpenChange }: DialogProps) {
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
-      <RDialog.Trigger asChild>{trigger}</RDialog.Trigger>
+      {trigger && <RDialog.Trigger asChild>{trigger}</RDialog.Trigger>}
       <RDialog.Portal>
         <RDialog.Overlay className="ov-scrim" />
         <RDialog.Content className="ov-dialog ov-panel">

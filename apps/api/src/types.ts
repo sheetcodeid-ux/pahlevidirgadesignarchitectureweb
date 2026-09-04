@@ -73,6 +73,9 @@ export interface Project {
   contractValue?: number | null;
   /** Nomor WhatsApp klien, angka saja (mis. 628123456789). */
   clientWhatsapp?: string | null;
+  /** Jumlah uang yang BENAR-BENAR sudah diterima proyek ini. Dipakai tabel
+   *  untuk memutuskan antara "Belum Bayar", DP berjalan, dan "Lunas". */
+  paidTotal?: number;
 }
 
 export interface Image {
@@ -115,6 +118,45 @@ export interface ProjectInput {
   pipelineStage?: string;
   contractValue?: number | null;
   clientWhatsapp?: string | null;
+}
+
+/** Satu uang masuk yang benar-benar diterima — bukan tagihan. */
+export interface Payment {
+  id: string;
+  projectId: string;
+  amount: number;
+  /** 'dp' | 'termin' | 'pelunasan' */
+  kind: string;
+  /** 'tunai' | 'transfer' | 'qris' | 'lainnya' */
+  method: string;
+  receiver?: string | null;
+  note?: string | null;
+  paidAt: string;
+  /** Kunci tautan bukti publik. Tidak pernah sama dengan id barisnya. */
+  receiptToken: string;
+}
+
+export interface PaymentInput {
+  amount: number;
+  kind?: string;
+  method?: string;
+  receiver?: string | null;
+  note?: string | null;
+}
+
+/** Bukti yang dibuka klien tanpa login. Sengaja TIDAK memuat id proyek,
+ *  nomor WhatsApp, atau apa pun yang tidak dicetak di kertasnya. */
+export interface Receipt {
+  id: string;
+  receiptToken: string;
+  amount: number;
+  kind: string;
+  method: string;
+  receiver?: string | null;
+  paidAt: string;
+  projectTitle: string;
+  contractValue: number | null;
+  studioName: string;
 }
 
 /** Foto galeri dan foto material tinggal di tabel yang sama, dibedakan kind. */

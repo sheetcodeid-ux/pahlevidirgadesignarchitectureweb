@@ -11,6 +11,7 @@ import * as teamRepo from "../repository/team";
 import * as tasksRepo from "../repository/tasks";
 import * as invoicesRepo from "../repository/invoices";
 import * as costsRepo from "../repository/costs";
+import * as paymentsRepo from "../repository/payments";
 import * as financeRepo from "../repository/finance";
 import * as documentsRepo from "../repository/documents";
 import * as directoryRepo from "../repository/directory";
@@ -22,7 +23,7 @@ import { presignUpload, sanitizeSlug } from "../lib/r2";
 import { checkProjectInput, ValidationError } from "../lib/validate";
 import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
-  InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput,
+  InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput, PaymentInput,
   ProjectBriefInput, TestimonialInput,
 } from "../types";
 import {
@@ -427,6 +428,50 @@ admin.delete("/costs/:id", async (c) => {
     if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "biaya tidak ditemukan" } }, 404);
     throw err;
   }
+});
+
+// --- Pembayaran ------------------------------------------------------------
+//
+// Uang yang BENAR-BENAR diterima, terpisah dari invoices yang cuma tagihan.
+
+const METODE_SAH = new Set(["tunai", "transfer", "qris", "lainnya"]);
+const JENIS_SAH = new Set(["dp", "termin", "pelunasan"]);
+
+admin.get("/projects/:id/payments", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    paymentsRepo.listByProject(sql, c.req.param("id")));
+  return c.json({ data });
+});
+
+admin.post("/projects/:id/payments", async (c) => {
+  const input = await c.req.json<PaymentInput>().catch(() => ({}) as PaymentInput);
+
+  // Jumlah divalidasi di sini, bukan cuma diandalkan CHECK di database:
+  // galat constraint Postgres tidak bisa ditampilkan apa adanya ke staf.
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    return c.json({ error: { status: 422, message: "jumlah pembayaran harus lebih dari nol" } }, 422);
+  }
+  if (input.method !== undefined && !METODE_SAH.has(input.method)) {
+    return c.json({ error: { status: 422, message: "metode pembayaran tidak dikenal" } }, 422);
+  }
+  if (input.kind !== undefined && !JENIS_SAH.has(input.kind)) {
+    return c.json({ error: { status: 422, message: "kategori pembayaran tidak dikenal" } }, 422);
+  }
+
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      paymentsRepo.create(sql, c.req.param("id"), input));
+    return c.json({ data }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.delete("/projects/:id/payments/:paymentId", async (c) => {
+  const dihapus = await withDb(c.env, c.executionCtx, (sql) =>
+    paymentsRepo.remove(sql, c.req.param("id"), c.req.param("paymentId")));
+  if (!dihapus) return c.json({ error: { status: 404, message: "pembayaran tidak ditemukan" } }, 404);
+  return c.json({ data: { deleted: true } });
 });
 
 // GET /api/v1/admin/projects/:id/documents

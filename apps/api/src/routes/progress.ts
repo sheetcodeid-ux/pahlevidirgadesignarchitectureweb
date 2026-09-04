@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { ClientBriefInput, Env } from "../types";
 import { withDb } from "../db";
 import * as progressRepo from "../repository/progress";
+import * as paymentsRepo from "../repository/payments";
 
 export const progress = new Hono<{ Bindings: Env }>();
 
@@ -14,6 +15,31 @@ export const progress = new Hono<{ Bindings: Env }>();
  * Tabel di baliknya sengaja tertutup total dari anon lewat RLS+GRANT; jalur
  * baca publik satu-satunya ya endpoint ini.
  */
+/**
+ * GET /api/v1/receipt/:token — bukti pembayaran, dibuka klien dari WhatsApp.
+ *
+ * Alasannya sama persis dengan /progress/:token di bawah: tokennya (32
+ * karakter hex, 128-bit) yang jadi kredensial, dicocokkan langsung di klausa
+ * WHERE. project_payments tertutup total dari anon lewat RLS+GRANT — endpoint
+ * inilah satu-satunya jalur baca publiknya.
+ *
+ * Bentuk token diperiksa SEBELUM menyentuh database. Tanpa itu, setiap
+ * karakter sampah yang orang tempel dari WhatsApp jadi satu query — dan
+ * Hyperdrive punya batas koneksi yang tidak layak dihabiskan untuk itu.
+ */
+progress.get("/receipt/:token", async (c) => {
+  const token = c.req.param("token");
+  if (!/^[0-9a-f]{32}$/.test(token)) {
+    return c.json({ error: { status: 404, message: "bukti tidak ditemukan" } }, 404);
+  }
+
+  const data = await withDb(c.env, c.executionCtx, (sql) => paymentsRepo.getByToken(sql, token));
+  if (!data) {
+    return c.json({ error: { status: 404, message: "bukti tidak ditemukan" } }, 404);
+  }
+  return c.json({ data });
+});
+
 progress.get("/progress/:token", async (c) => {
   const token = c.req.param("token");
   if (!/^[0-9a-f]{40}$/.test(token)) {

@@ -50,6 +50,12 @@ export type IconName =
   | "user"
   | "checklist"
   | "clock"
+  | "cash"
+  | "bank"
+  | "qr"
+  | "dots"
+  | "receipt"
+  | "whatsapp"
   | "camera"
   | "building"
   | "projectPlus"
@@ -308,6 +314,58 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M14.7 12h2.8" />
       <path d="m8.3 17.3 1.4 1.4 2.5-3" />
       <path d="M14.7 17h2.8" />
+    </>
+  ),
+  // Lembar uang — pembayaran TUNAI. Persegi panjang dengan lingkaran di
+  // tengah, bentuk uang kertas yang dikenali tanpa perlu label.
+  cash: (
+    <>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M6 12h.01M18 12h.01" />
+    </>
+  ),
+  // Gedung berpilar — TRANSFER bank. Sengaja beda dari ikon `building` yang
+  // dipakai identitas studio: yang ini berpilar, jelas sebuah bank.
+  bank: (
+    <>
+      <path d="M3 10h18M4 10V21M20 10V21M8 10v11M12 10v11M16 10v11" />
+      <path d="M12 3l9 5H3l9-5z" />
+      <path d="M2 21h20" />
+    </>
+  ),
+  // Kode QR — QRIS. Tiga kotak penanda sudut, persis penanda posisi QR asli.
+  qr: (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path d="M14 14h3v3h-3zM19 19h2v2h-2zM14 21v-2M21 14h-2" />
+    </>
+  ),
+  // Tiga titik mendatar — metode LAINNYA, yang tidak punya lambang sendiri.
+  dots: (
+    <>
+      <circle cx="5" cy="12" r="1.2" />
+      <circle cx="12" cy="12" r="1.2" />
+      <circle cx="19" cy="12" r="1.2" />
+    </>
+  ),
+  // Struk bergerigi di bawah — bukti pembayaran. Gerigi itu yang membedakannya
+  // dari ikon `document`; struk memang disobek dari gulungan.
+  receipt: (
+    <>
+      <path d="M5 3h14v18l-2.3-1.6L14.4 21l-2.4-1.6L9.6 21l-2.3-1.6L5 21V3z" />
+      <path d="M9 8h6M9 12h6" />
+    </>
+  ),
+  // Balon percakapan bergagang — WhatsApp. Sengaja BUKAN logo resminya:
+  // memakai lambang merek pihak lain di dalam antarmuka sendiri bukan hak
+  // kita, dan bentuk balon sudah cukup terbaca di sebelah label "WA".
+  whatsapp: (
+    <>
+      <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.7-5.2A8.5 8.5 0 1 1 21 11.5z" />
+      <path d="M8.8 9.2c.4 2.2 2.1 3.9 4.3 4.3l.9-1.2 1.8.9c-.3 1-1.3 1.5-2.3 1.3a7 7 0 0 1-5.4-5.4c-.2-1 .3-2 1.3-2.3l.9 1.8-1.5.6z" />
     </>
   ),
   // Jam — piutang: uang yang ditagih tapi belum diterima, sedang ditunggu.

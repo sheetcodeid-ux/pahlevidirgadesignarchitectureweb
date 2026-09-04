@@ -31,6 +31,7 @@ interface AdminRow {
   contract_value: string | null;
   client_whatsapp: string | null;
   phase: string | null;
+  paid_total: string | null;
 }
 
 function rowToProject(row: AdminRow, assetBase: string): Project {
@@ -58,6 +59,7 @@ function rowToProject(row: AdminRow, assetBase: string): Project {
     phase: row.phase,
     contractValue: row.contract_value !== null ? Number(row.contract_value) : null,
     clientWhatsapp: row.client_whatsapp,
+    paidTotal: row.paid_total !== null ? Number(row.paid_total) : 0,
   };
 }
 
@@ -72,7 +74,13 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
            -- LEFT join: proyek yang belum pernah dibuatkan portal klien belum
            -- punya baris project_progress, dan itu sah. Tanpa LEFT, proyek
            -- seperti itu hilang dari daftar admin tanpa satu pun galat.
-           pr.phase
+           pr.phase,
+           -- Subquery berkorelasi, bukan join + group by: dengan join, proyek
+           -- yang punya dua pembayaran akan muncul dua kali kecuali seluruh
+           -- kolom lain ikut di-group, dan daftar admin diam-diam jadi ganda.
+           (select coalesce(sum(pay.amount), 0)
+              from public.project_payments pay
+             where pay.project_id = p.id) as paid_total
     from public.projects p
     left join public.project_progress pr on pr.project_id = p.id
     order by p.sort_order, p.created_at desc`;

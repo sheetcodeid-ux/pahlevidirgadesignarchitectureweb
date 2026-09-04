@@ -1,0 +1,19 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { ReceiptView } from "../components/ReceiptView";
+/* Gaya struk hidup di misc.css. BaseLayout cuma memuat global.css dan
+   components.css, jadi halaman ini harus memintanya sendiri — kalau tidak,
+   markupnya benar tapi tampil sebagai elemen mentah bawaan browser tanpa
+   satu pun galat. Sudah menggigit tiga halaman sekaligus dulu. */
+import "../styles/misc.css";
+---
+
+<BaseLayout
+  title="Bukti Pembayaran"
+  description="Bukti pembayaran yang dikeluarkan studio."
+  noindex
+>
+  <section class="section shell">
+    <ReceiptView client:load />
+  </section>
+</BaseLayout>

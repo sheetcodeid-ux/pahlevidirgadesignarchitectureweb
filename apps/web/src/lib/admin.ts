@@ -287,7 +287,35 @@ export interface Proyek {
   phase?: string | null;
   contractValue?: number | null;
   clientWhatsapp?: string | null;
+  /** Uang yang BENAR-BENAR sudah diterima. Nol berarti belum dibayar sama
+   *  sekali — itulah yang memunculkan tombol Bayar Pertama di tabel. */
+  paidTotal?: number;
 }
+
+/** Satu uang masuk. Beda dari Tagihan (invoice), yang cuma janji. */
+export interface Pembayaran {
+  id: string;
+  projectId: string;
+  amount: number;
+  kind: string;
+  method: string;
+  receiver?: string | null;
+  note?: string | null;
+  paidAt: string;
+  receiptToken: string;
+}
+
+export const daftarPembayaran = (projectId: string) =>
+  panggil<Pembayaran[]>(`/admin/projects/${projectId}/payments`);
+
+export const catatPembayaran = (
+  projectId: string,
+  isi: { amount: number; kind: string; method: string; receiver?: string | null },
+) =>
+  panggil<Pembayaran>(`/admin/projects/${projectId}/payments`, {
+    method: "POST",
+    body: JSON.stringify(isi),
+  });
 
 export const daftarProyek = () => panggil<Proyek[]>("/admin/projects");
 

@@ -2300,3 +2300,156 @@
   .zonapilih__kartu { flex-direction: row; justify-content: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
   .zonapilih__nama { flex: 1; text-align: left; }
 }
+
+/* =============================================================================
+   Alur terima pembayaran — kolom di tabel, dialog terima, dan bukti.
+
+   Tinggal di admin.css, bukan form.css, karena seluruhnya hanya muncul di
+   panel admin. Halaman bukti PUBLIK punya gayanya sendiri di misc.css —
+   halaman publik tidak memuat admin.css sama sekali (jebakan nomor 5).
+   ============================================================================= */
+
+.bayar-sel { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: nowrap; }
+
+.bayar-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bayar-status--lunas    { color: var(--success); }
+.bayar-status--sebagian { color: var(--warn); }
+.bayar-status--belum    { color: var(--brand); }
+
+/* Tombol WhatsApp. Hijau WA memang bukan warna semantik palet ini, dan itu
+   disengaja: tombol ini membuka aplikasi lain, dan warnanya yang membuat
+   maksudnya terbaca tanpa dibaca. Satu-satunya tempat hijau ini dipakai. */
+.btn--wa {
+  background: #1fa855;
+  color: #ffffff;
+  border-color: #1fa855;
+}
+.btn--wa:hover:not(:disabled) { background: #1a9149; border-color: #1a9149; }
+
+/* --- Dialog terima pembayaran -------------------------------------------- */
+
+.terima { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.terima__nominal { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Rp berdiri di luar isian, bukan di dalam nilainya. Kalau ikut diketik,
+   setiap penyaringan angka harus membuangnya lagi — dan sekali terlewat,
+   yang terkirim ke API bukan angka. */
+.terima__isian { position: relative; display: flex; align-items: center; }
+.terima__rp {
+  position: absolute;
+  left: 1.05rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.terima__input {
+  padding-left: 3rem;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.terima__grup { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Dua kolom di ponsel, empat metode jadi 2×2 seperti acuan pemilik. */
+.terima__pilihan {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.terima__pilihan--dua { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.terima__opsi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-body);
+  background: var(--field);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
+}
+.terima__opsi:hover { color: var(--text-strong); border-color: var(--text-faint); }
+
+/* Terpilih ditandai garis dan warna teks, BUKAN latar penuh — di dalam dialog
+   yang sudah berlatar terang, blok gelap terbaca sebagai tombol aksi utama
+   dan bersaing dengan "Konfirmasi Pembayaran" di kakinya. */
+.terima__opsi--aktif {
+  color: var(--text-strong);
+  border-color: var(--action);
+  box-shadow: inset 0 0 0 1px var(--action);
+  background: var(--surface);
+}
+
+/* --- Bukti pembayaran ---------------------------------------------------- */
+
+.bukti { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.bukti__puncak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block-end: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.bukti__studio { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.bukti__nominal {
+  margin: 0;
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+.bukti__waktu { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+
+.bukti__rinci { display: flex; flex-direction: column; gap: 0; margin: 0; }
+.bukti__rinci > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.bukti__rinci > div:last-child { border-bottom: 0; }
+.bukti__rinci dt { font-size: var(--text-sm); color: var(--text-muted); }
+.bukti__rinci dd { margin: 0; font-weight: 600; color: var(--text-strong); text-align: right; }
+
+/* Tautan panjang WAJIB boleh patah di tengah. Tanpa overflow-wrap, satu URL
+   32 karakter tanpa spasi melebarkan dialognya sampai keluar layar ponsel. */
+.bukti__tautan {
+  margin: 0;
+  padding: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+}
+
+.bukti__aksi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); width: 100%; }
+.bukti__aksi .btn { justify-content: center; }
+
+@media (max-width: 30rem) {
+  .terima__pilihan--dua { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
