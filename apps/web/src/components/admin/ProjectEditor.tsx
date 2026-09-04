@@ -1732,6 +1732,18 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
           <input id="ed-luas" className="input" type="number" value={String(nilai("areaSqm") ?? "")}
             onChange={(e) => set("areaSqm", Number(e.target.value) as never)} />
         </div>
+        {/* Nomor WhatsApp klien. Boleh ditempel apa adanya dari kontak
+            ponsel — API yang membuang spasi, plus, dan tanda hubung sebelum
+            menyimpan, karena database cuma menerima angka. Nomor inilah yang
+            dipakai tombol WA di bukti pembayaran. */}
+        <div className="field">
+          <label className="field__label" htmlFor="ed-wa">No WhatsApp Klien</label>
+          <input id="ed-wa" className="input" type="tel" inputMode="tel"
+            placeholder="628123456789"
+            value={String(nilai("clientWhatsapp") ?? "")}
+            onChange={(e) => set("clientWhatsapp", e.target.value)} />
+          <p className="field__help">Dipakai tombol WA saat mengirim bukti pembayaran.</p>
+        </div>
       </div>
     </div>
   );

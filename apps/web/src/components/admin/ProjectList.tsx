@@ -6,7 +6,7 @@ import { Popover, Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { Select } from "../ui/overlay/Select";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { daftarProyek, hapusProyek, type Proyek, bacaCache, tulisCache, jumlahDiingat} from "../../lib/admin";
+import { daftarProyek, hapusProyek, simpanProyek, ubahFaseProgress, type Proyek, bacaCache, tulisCache, jumlahDiingat} from "../../lib/admin";
 
 const LABEL: Record<string, string> = {
   residential: "Hunian", commercial: "Komersial", interior: "Interior",
@@ -18,6 +18,30 @@ const STATUS: Record<string, { teks: string; kelas: string }> = {
   draft: { teks: "Draf", kelas: "" },
   archived: { teks: "Arsip", kelas: "badge--warn" },
 };
+
+/** Tahap operasional INTERNAL studio — projects.pipeline_stage. Tidak pernah
+ *  dilihat klien. Urutannya urutan kerja sungguhan, bukan abjad. */
+const TAHAP: { value: string; label: string }[] = [
+  { value: "proposal", label: "Proposal" },
+  { value: "deal_kontrak", label: "Deal Kontrak" },
+  { value: "dp_50", label: "DP 50%" },
+  { value: "desain_1", label: "Desain 1" },
+  { value: "desain_2", label: "Desain 2" },
+  { value: "finish", label: "Finish" },
+  { value: "pelunasan", label: "Pelunasan" },
+];
+
+/** Fase yang dilihat KLIEN di portal — project_progress.phase. Sumbernya
+ *  tabel yang berbeda dari TAHAP di atas, dan itu memang disengaja: yang satu
+ *  urusan dapur studio, yang satu janji ke klien. */
+const FASE: { value: string; label: string }[] = [
+  { value: "konsultasi", label: "Konsultasi" },
+  { value: "konsep", label: "Konsep" },
+  { value: "ded", label: "DED" },
+  { value: "perizinan", label: "Perizinan" },
+  { value: "konstruksi", label: "Konstruksi" },
+  { value: "selesai", label: "Selesai" },
+];
 
 /** Saringan status, sekaligus urutan tampilnya di barisan chip. */
 const SARINGAN: { id: string; label: string }[] = [
@@ -45,6 +69,56 @@ function Lencana({ status }: { status: string }) {
   );
 }
 
+/** Satu sel dropdown yang menyimpan sendiri saat diubah.
+ *
+ *  Nilai barunya dipasang ke layar LEBIH DULU (optimistic) lalu dikembalikan
+ *  kalau permintaannya gagal. Tanpa itu, dropdown terasa macet selama satu
+ *  putaran jaringan dan staf cenderung mengklik dua kali — yang berarti dua
+ *  penulisan untuk satu maksud. */
+function SelSimpan({
+  nilai, opsi, ariaLabel, simpan, onSukses,
+}: {
+  nilai: string;
+  opsi: { value: string; label: string }[];
+  ariaLabel: string;
+  simpan: (nilaiBaru: string) => Promise<unknown>;
+  onSukses: (nilaiBaru: string) => void;
+}) {
+  const toast = useToast();
+  const [tampil, setTampil] = useState(nilai);
+  const [sibuk, setSibuk] = useState(false);
+
+  // Nilai dari server menang kalau daftarnya dimuat ulang di belakang layar.
+  useEffect(() => { setTampil(nilai); }, [nilai]);
+
+  async function ubah(baru: string) {
+    if (baru === tampil) return;
+    const sebelum = tampil;
+    setTampil(baru);
+    setSibuk(true);
+    try {
+      await simpan(baru);
+      onSukses(baru);
+    } catch (e) {
+      setTampil(sebelum);
+      toast({ judul: "Gagal menyimpan", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  return (
+    <Select
+      ringkas
+      disabled={sibuk}
+      options={opsi}
+      value={tampil}
+      onValueChange={ubah}
+      ariaLabel={ariaLabel}
+    />
+  );
+}
+
 function Isi() {
   const toast = useToast();
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
@@ -66,6 +140,21 @@ function Isi() {
   }
 
   useEffect(() => { muat(); }, []);
+
+  /** Satu baris diperbarui di tempat setelah dropdown-nya berhasil disimpan.
+   *
+   *  Sengaja TIDAK memanggil muat(): mengambil ulang seluruh daftar hanya untuk
+   *  satu kolom membuat tabel berkedip dan mengembalikan posisi gulir. Cache
+   *  ikut ditulis karena halaman inilah pemilik kunci "proyek" — halaman lain
+   *  cuma membaca (lihat catatan hidrasi di CLAUDE.md). */
+  function gantiSatu(id: string, ubahan: Partial<Proyek>) {
+    setProyek((lama) => {
+      if (!lama) return lama;
+      const baru = lama.map((p) => (p.id === id ? { ...p, ...ubahan } : p));
+      tulisCache("proyek", baru);
+      return baru;
+    });
+  }
 
   async function hapus(p: Proyek) {
     try {
@@ -112,6 +201,8 @@ function Isi() {
               { label: "Proyek", gambar: true },
               { label: "Kategori", lebar: "5rem" },
               { label: "Kota", lebar: "4.5rem" },
+              { label: "Tahap", lebar: "7rem" },
+              { label: "Fase Klien", lebar: "7rem" },
               { label: "Tahun", kelas: "table__num", lebar: "2.5rem" },
               { label: "Status", lebar: "4rem" },
               { label: "Aksi", kelas: "table__actions", lebar: "3.5rem" },
@@ -258,6 +349,7 @@ function Isi() {
               <tr>
                 <th className="table__idx">#</th>
                 <th>Proyek</th><th>Kategori</th><th>Kota</th>
+                <th>Tahap</th><th>Fase Klien</th>
                 <th className="table__num">Tahun</th><th>Status</th>
                 <th className="table__actions">Aksi</th>
               </tr>
@@ -293,6 +385,24 @@ function Isi() {
                   </td>
                   <td>{LABEL[p.category] ?? p.category}</td>
                   <td>{p.city ?? "—"}</td>
+                  <td>
+                    <SelSimpan
+                      nilai={p.pipelineStage ?? "proposal"}
+                      opsi={TAHAP}
+                      ariaLabel={`Tahap ${p.title}`}
+                      simpan={(v) => simpanProyek(p.id, { pipelineStage: v })}
+                      onSukses={(v) => gantiSatu(p.id, { pipelineStage: v })}
+                    />
+                  </td>
+                  <td>
+                    <SelSimpan
+                      nilai={p.phase ?? "konsultasi"}
+                      opsi={FASE}
+                      ariaLabel={`Fase klien ${p.title}`}
+                      simpan={(v) => ubahFaseProgress(p.id, v)}
+                      onSukses={(v) => gantiSatu(p.id, { phase: v })}
+                    />
+                  </td>
                   <td className="table__num">{p.year ?? "—"}</td>
                   <td><Lencana status={p.status} /></td>
                   <td className="table__actions">
@@ -398,6 +508,8 @@ export function ProjectList() {
               { label: "Proyek", gambar: true },
               { label: "Kategori", lebar: "5rem" },
               { label: "Kota", lebar: "4.5rem" },
+              { label: "Tahap", lebar: "7rem" },
+              { label: "Fase Klien", lebar: "7rem" },
               { label: "Tahun", kelas: "table__num", lebar: "2.5rem" },
               { label: "Status", lebar: "4rem" },
               { label: "Aksi", kelas: "table__actions", lebar: "3.5rem" },

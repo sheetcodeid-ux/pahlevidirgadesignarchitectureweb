@@ -281,7 +281,12 @@ export interface Proyek {
   seoDescription?: string;
   publishedAt?: string;
   pipelineStage?: string;
+  /** Fase yang dilihat KLIEN di portal token — kolom project_progress.phase,
+   *  bukan projects.pipeline_stage. Ikut di daftar supaya tabel bisa
+   *  menampilkannya tanpa satu permintaan tambahan per baris. */
+  phase?: string | null;
   contractValue?: number | null;
+  clientWhatsapp?: string | null;
 }
 
 export const daftarProyek = () => panggil<Proyek[]>("/admin/projects");

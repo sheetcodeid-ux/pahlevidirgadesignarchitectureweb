@@ -41,6 +41,15 @@ export function checkProjectInput(input: ProjectInput, isNew: boolean): void {
   if (input.year !== undefined && input.year !== null && (input.year < 1900 || input.year > 2100)) {
     throw new ValidationError("tahun di luar rentang wajar");
   }
+  // Panjangnya saja yang diperiksa. Tanda baca TIDAK ditolak di sini —
+  // repository yang membuang non-angka, supaya pemilik boleh menempel nomor
+  // apa adanya dari kontak ponselnya.
+  if (input.clientWhatsapp !== undefined && input.clientWhatsapp !== null) {
+    const angka = input.clientWhatsapp.replace(/\D/g, "");
+    if (angka.length > 0 && (angka.length < 8 || angka.length > 15)) {
+      throw new ValidationError("nomor WhatsApp harus 8-15 angka");
+    }
+  }
 }
 
 export interface InquiryRequest {

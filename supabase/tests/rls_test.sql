@@ -820,4 +820,90 @@ begin
 end;
 $$;
 
+-- project_payments ----------------------------------------------------
+--
+-- Tabel uang masuk. Tidak ada policy anon SAMA SEKALI — bukti pembayaran
+-- dibaca lewat Worker API dengan service_role yang mencocokkan
+-- receipt_token di klausa WHERE. Kalau suatu saat ada yang menambah policy
+-- anon di sini, tiga assertion di bawah ini yang jatuh duluan.
+
+insert into public.project_payments (project_id, amount, kind, method, receiver)
+select id, 50000000, 'dp', 'transfer', 'Dirga'
+from public.projects where slug = 'tes-published';
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_anon();
+
+  -- Ditolak di lapis GRANT, bukan sekadar difilter RLS jadi nol baris.
+  -- Bedanya penting: kalau suatu saat ada yang menambahkan
+  -- "grant select ... to anon", assertion ini yang jatuh duluan — sementara
+  -- "count = 0" masih akan lulus selama policy-nya kebetulan menutup.
+  begin
+    select count(*) into terlihat from public.project_payments;
+    raise exception 'GAGAL: anon berhasil membaca project_payments';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca project_payments';
+  end;
+
+  begin
+    insert into public.project_payments (project_id, amount)
+    select id, 1 from public.projects where slug = 'tes-published';
+    raise exception 'GAGAL: anon berhasil menulis project_payments';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis project_payments';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.project_payments;
+  perform pg_temp.tolak(terlihat <> 1, 'staf melihat pembayaran yang dicatat');
+
+  reset role;
+end;
+$$;
+
+-- Token bukti harus unik. Kalau dua pembayaran bisa punya token yang sama,
+-- satu link WhatsApp akan membuka bukti milik proyek lain.
+do $$
+declare token_a text;
+begin
+  select receipt_token into token_a from public.project_payments limit 1;
+
+  begin
+    insert into public.project_payments (project_id, amount, receipt_token)
+    select id, 1, token_a from public.projects where slug = 'tes-published';
+    raise exception 'GAGAL: receipt_token ganda diterima';
+  exception when unique_violation then
+    raise notice 'ok: receipt_token ganda ditolak';
+  end;
+end;
+$$;
+
+-- Nomor WhatsApp harus angka saja. Tombol WA merangkai wa.me/<nomor>;
+-- spasi, tanda plus, atau tanda hubung membuat tautannya mati diam-diam.
+do $$
+begin
+  begin
+    update public.projects set client_whatsapp = '+62 812-3456-789'
+    where slug = 'tes-published';
+    raise exception 'GAGAL: nomor WhatsApp bertanda baca diterima';
+  exception when check_violation then
+    raise notice 'ok: nomor WhatsApp bertanda baca ditolak';
+  end;
+
+  update public.projects set client_whatsapp = '628123456789'
+  where slug = 'tes-published';
+  raise notice 'ok: nomor WhatsApp angka saja diterima';
+end;
+$$;
+
 rollback;

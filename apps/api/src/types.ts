@@ -67,7 +67,12 @@ export interface Project {
   materials?: Image[];
   /** Tahap alur kerja internal studio — beda dari status (draft/published/archived). */
   pipelineStage?: string;
+  /** Fase yang dilihat KLIEN di portal token. Beda sumber dari pipelineStage:
+   *  ini kolom project_progress.phase, bukan projects.pipeline_stage. */
+  phase?: string | null;
   contractValue?: number | null;
+  /** Nomor WhatsApp klien, angka saja (mis. 628123456789). */
+  clientWhatsapp?: string | null;
 }
 
 export interface Image {
@@ -109,6 +114,7 @@ export interface ProjectInput {
   seoDescription?: string | null;
   pipelineStage?: string;
   contractValue?: number | null;
+  clientWhatsapp?: string | null;
 }
 
 /** Foto galeri dan foto material tinggal di tabel yang sama, dibedakan kind. */

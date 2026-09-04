@@ -29,6 +29,8 @@ interface AdminRow {
   published_at: string | null;
   pipeline_stage: string;
   contract_value: string | null;
+  client_whatsapp: string | null;
+  phase: string | null;
 }
 
 function rowToProject(row: AdminRow, assetBase: string): Project {
@@ -53,19 +55,27 @@ function rowToProject(row: AdminRow, assetBase: string): Project {
     seoDescription: row.seo_description,
     publishedAt: row.published_at,
     pipelineStage: row.pipeline_stage,
+    phase: row.phase,
     contractValue: row.contract_value !== null ? Number(row.contract_value) : null,
+    clientWhatsapp: row.client_whatsapp,
   };
 }
 
 /** Seluruh proyek, termasuk draft dan arsip — dilihat staf, bukan pengunjung. */
 export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
   const rows = await sql<AdminRow[]>`
-    select id, slug, title, subtitle, summary, description, category, status,
-           location, city, year, client, area_sqm, lead_architect,
-           cover_image_key, is_featured, seo_title, seo_description, published_at,
-           pipeline_stage, contract_value
-    from public.projects
-    order by sort_order, created_at desc`;
+    select p.id, p.slug, p.title, p.subtitle, p.summary, p.description, p.category,
+           p.status, p.location, p.city, p.year, p.client, p.area_sqm,
+           p.lead_architect, p.cover_image_key, p.is_featured, p.seo_title,
+           p.seo_description, p.published_at, p.pipeline_stage, p.contract_value,
+           p.client_whatsapp,
+           -- LEFT join: proyek yang belum pernah dibuatkan portal klien belum
+           -- punya baris project_progress, dan itu sah. Tanpa LEFT, proyek
+           -- seperti itu hilang dari daftar admin tanpa satu pun galat.
+           pr.phase
+    from public.projects p
+    left join public.project_progress pr on pr.project_id = p.id
+    order by p.sort_order, p.created_at desc`;
   return rows.map((r) => rowToProject(r, assetBase));
 }
 
@@ -140,6 +150,16 @@ export async function update(sql: Sql, id: string, input: ProjectInput): Promise
   }
   if (input.pipelineStage !== undefined && input.pipelineStage !== null) {
     fragments.push(sql`pipeline_stage = ${input.pipelineStage}::public.pipeline_stage`);
+  }
+
+  // Nomor WhatsApp DINORMALKAN di sini, bukan ditolak. Pemilik akan menempel
+  // "+62 812-3456-789" dari kontak ponselnya, sementara CHECK di database cuma
+  // menerima angka — tanpa langkah ini penyimpanan gagal dengan galat yang
+  // tidak berarti apa-apa baginya. Nomor terlalu pendek dianggap kosong,
+  // supaya tombol WA tidak pernah merangkai tautan yang mati.
+  if (input.clientWhatsapp !== undefined) {
+    const angka = (input.clientWhatsapp ?? "").replace(/\D/g, "");
+    fragments.push(sql`client_whatsapp = ${angka.length >= 8 ? angka : null}`);
   }
   if (input.status === "published") {
     fragments.push(sql`published_at = coalesce(published_at, now())`);
