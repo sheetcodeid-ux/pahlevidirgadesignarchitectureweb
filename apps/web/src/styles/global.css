@@ -27,14 +27,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Judul dibedakan dari teks biasa lewat ukuran, bobot, dan kerapatan —
-   bukan lewat keluarga font kedua. Itu cara SaaS, dan itu yang diminta
-   pemilik setelah serif dinilai tidak cocok di sini. */
+/* Arvo (slab serif) menandai judul halaman; Maven Pro menandai seluruh
+   perkakas dan angka. Dua keluarga, sesuai tangkapan layar pemilik. */
 h1,
 h2 {
   font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.08;
+  font-weight: 400;
+  line-height: 1.12;
   letter-spacing: var(--tracking-judul);
   color: var(--text-strong);
   text-wrap: balance;

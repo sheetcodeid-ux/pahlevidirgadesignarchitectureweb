@@ -224,26 +224,45 @@ ditambahkan sebelum halaman ini bisa menggatingkan aksesnya.
 
 | Peran | Typeface | Dipakai untuk |
 | --- | --- | --- |
-| Display | Geist | Judul halaman, bobot 700, `--tracking-judul` |
-| UI | Geist | Seluruh perkakas sehari-hari |
-| Data | Geist Mono | Angka, kode, dan nilai yang berjajar |
+| Display | Arvo | Judul halaman, bobot 400, `--tracking-judul` = 0em |
+| UI | Maven Pro | Seluruh perkakas sehari-hari |
+| Data | Maven Pro | Angka dan nominal (`--font-mono` menunjuk ke sini) |
+| Kode | monospace sistem | Nama token dan tuts pintasan (`--font-kode`) |
 
-Display dan UI memakai keluarga yang SAMA. Itu bukan kelalaian — begitulah
-produk SaaS menyusun tipografinya: yang membedakan judul dari teks biasa
-adalah ukuran, bobot, dan kerapatan huruf, bukan keluarga kedua. Tokennya
-tetap dipisah (`--font-display` dan `--font-sans`) supaya suatu saat bisa
-dipisah lagi tanpa menyentuh satu pun komponen.
+Angka memakai keluarga yang sama dengan UI. Itu permintaan eksplisit pemilik,
+bukan kelalaian: dia mengirim tangkapan layar DevTools sebuah situs yang
+memakai Arvo untuk judul dan Maven Pro untuk semuanya, dan meminta persis itu.
+`--font-mono` tetap ada sebagai token supaya suatu saat bisa dipisahkan lagi
+tanpa menyentuh satu pun komponen.
 
-Dua setelan yang wajib ikut kalau keluarga fontnya diganti lagi:
+Yang benar-benar monospace tinggal `--font-kode`, dan hanya dipakai di dua
+tempat: nama token di halaman UI Component, dan tuts pintasan (`.kbd`,
+`.ov-menu__shortcut`). Kalau `--chart-cat-1` ikut Maven Pro, ia berhenti
+terbaca sebagai kode.
 
-1. **Judul berbobot 700, bukan 400.** Serif berukuran besar sudah punya bobot
-   dari bentuknya sendiri; grotesk tidak, dan pada 400 judulnya terbaca kendur.
-2. **`--tracking-judul` (−0,032em), bukan `--tracking-tight` (−0,015em).**
-   Pada 44px, −0,015em masih terbaca renggang untuk grotesk.
+Tiga setelan yang wajib ikut kalau keluarga fontnya diganti lagi:
 
-Susunan sebelumnya adalah Newsreader / Plus Jakarta Sans / IBM Plex Mono.
-Diganti atas permintaan pemilik: serif untuk judul dinilai tidak cocok di
-panel seperti ini, dan mono berslab terasa seperti font bawaan alat AI.
+1. **Judul berbobot 400, bukan 700.** Bobot 700 dibuat untuk Geist yang
+   grotesk; Arvo adalah slab serif yang batangnya sudah tebal pada reguler dan
+   menutup sendiri di 700.
+2. **`--tracking-judul` = 0em.** Angka −0,032em juga milik Geist. Kerapatan
+   negatif dibuat untuk grotesk; serif Arvo justru butuh ruang.
+3. **Maven Pro tidak punya fitur `tnum`.** Terukur di browser: `tabular-nums`
+   tidak mengubah lebar sama sekali. Untungnya seluruh digitnya sudah sama
+   lebar kecuali `1` (0,36px lebih sempit pada 13px), jadi kolom rupiah tetap
+   sejajar — tapi jangan mengandalkan `tnum` untuk font ini.
+
+Susunannya sudah dua kali diganti: Newsreader / Plus Jakarta Sans / IBM Plex
+Mono, lalu Geist / Geist Mono, lalu susunan ini. Yang ditolak pemilik pada
+putaran pertama bukan "serif untuk judul" melainkan Newsreader-nya; Arvo juga
+serif. Geist ditolak untuk UI pada putaran kedua.
+
+**Verifikasi bahwa fontnya benar-benar termuat tidak boleh memakai
+`document.fonts.check()`.** Fungsi itu mengembalikan `true` untuk keluarga
+yang tidak ada sama sekali (dianggap font sistem), dan sudah sekali membuat
+tangkapan layar cadangan-sistem lolos sebagai bukti. Yang membuktikan adalah
+membandingkan lebar teks: `Arvo` harus BERBEDA dari `serif`, dan `Maven Pro`
+harus BERBEDA dari `system-ui`.
 
 ## Tema terang dan gelap
 

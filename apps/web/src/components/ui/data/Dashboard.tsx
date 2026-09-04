@@ -218,10 +218,11 @@ const AW = 760;
 const AH = 170;
 // Kiri 44: label sumbu waktu pertama dirata-tengahkan, jadi separuhnya
 // menggantung ke kiri dan terpotong tepi kartu kalau paddingnya nol.
-/* Kolom sumbu kanan 74, bukan 58. Geist Mono lebih lebar daripada IBM Plex
-   Mono: "Rp32 jt" butuh 66px sementara ruang lamanya 52px, jadi labelnya
-   tergambar keluar dari viewBox. Terukur setelah font diganti. */
-const AP = { atas: 20, kanan: 74, bawah: 22, kiri: 40 };
+/* Kolom sumbu kanan 58. Sempat dilebarkan ke 74 karena Geist Mono butuh 66px
+   untuk "Rp32 jt"; Maven Pro lebih ramping — label terlebar ("Rp-90 jt") cuma
+   42px, jadi 74 menyisakan 26px ruang kosong yang memakan bidang gambar.
+   Pada 58 sisanya 10px. Terukur dengan getBBox(), bukan dikira. */
+const AP = { atas: 20, kanan: 58, bawah: 22, kiri: 40 };
 
 /**
  * Grafik bidang selebar kartu, dengan garis putus-putus di nilai tertinggi
@@ -327,7 +328,7 @@ export function AreaChart({
 
 const SW = 760;
 const SH = 190;
-const SP = { atas: 14, kanan: 74, bawah: 22, kiri: 18 };
+const SP = { atas: 14, kanan: 58, bawah: 22, kiri: 18 };
 
 export interface DeretTumpuk { nama: string; warna: string; nilai: number[]; }
 

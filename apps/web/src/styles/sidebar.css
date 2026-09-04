@@ -87,10 +87,12 @@
 
 .sidebar__wordmark {
   font-family: var(--font-display);
-  /* 15px + kerapatan sendiri, bukan 16px. Geist lebih lebar daripada
-     Newsreader: "Dirga Pahlevi Architecture" butuh 208px pada 16px sementara
-     ruang di sidebar cuma 194px, jadi nama studionya terpotong di tengah kata.
-     Terukur, bukan dikira. */
+  /* 15px + kerapatan sendiri, bukan 16px. Arvo persis selebar Geist di sini:
+     "Dirga Pahlevi Architecture" butuh 208px pada 16px sementara ruang di
+     sidebar cuma 194px, jadi nama studionya terpotong di tengah kata. Pada
+     15px butuh 195px — masih 1px lebih — sehingga kerapatan -0,01em ikut
+     dipakai; hasilnya 191px, muat. Terukur di browser dengan font yang
+     BENAR-BENAR termuat, bukan dikira. */
   font-size: var(--text-base);
   letter-spacing: -0.01em;
   white-space: nowrap;

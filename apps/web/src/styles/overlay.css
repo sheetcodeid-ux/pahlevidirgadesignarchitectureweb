@@ -206,7 +206,7 @@
 .ov-menu__item--danger[data-highlighted] { background: var(--brand-soft); color: var(--brand); }
 .ov-menu__label { padding: 0.4rem 0.65rem; font-size: var(--text-2xs); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-faint); }
 .ov-menu__sep { height: 1px; margin: var(--space-2) 0.25rem; background: var(--border); }
-.ov-menu__shortcut { margin-left: auto; font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-faint); }
+.ov-menu__shortcut { margin-left: auto; font-family: var(--font-kode); font-size: var(--text-2xs); color: var(--text-faint); }
 .ov-menu__check { display: grid; place-items: center; width: 1rem; flex: none; color: var(--brand); }
 
 .ov-menubar { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-raised); }

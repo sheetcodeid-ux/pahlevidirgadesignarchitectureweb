@@ -738,7 +738,7 @@
   border: 1px solid var(--border);
 }
 
-.swatch__name { font-size: var(--text-2xs); color: var(--text-muted); font-family: var(--font-mono); }
+.swatch__name { font-size: var(--text-2xs); color: var(--text-muted); font-family: var(--font-kode); }
 
 /* --- Settings split (Info Studio) -----------------------------------------
    Tanpa bingkai luar. Satu-satunya pembatas antara kolom logo dan kolom
@@ -1973,8 +1973,8 @@
 .dash-salam {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(2rem, 4.6vw, 2.6875rem);
+  font-weight: 400;
+  font-size: clamp(1.75rem, 4vw, 2.375rem);
   letter-spacing: var(--tracking-judul);
   color: var(--text-strong);
   text-align: center;

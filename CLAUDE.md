@@ -204,15 +204,26 @@ Aturan yang mengikat:
    destruktif, amber = terbatas atau terkunci sebagian, ungu = upgrade dan
    fitur berbayar, hijau = status hidup dan konfirmasi, biru = penjelasan.
    Ungu tidak pernah dipakai untuk aksi biasa.
-2. **Satu keluarga sans untuk seluruh situs, plus pasangan mono-nya untuk
-   angka.** Geist / Geist Mono. Judul dibedakan dari teks biasa lewat
-   **ukuran, bobot (700), dan kerapatan huruf** (`--tracking-judul`) — bukan
-   lewat keluarga font kedua.
+2. **Arvo untuk judul halaman; Maven Pro untuk SELURUH sisanya, termasuk
+   nominal.** Dipilih pemilik sendiri lewat empat tangkapan layar DevTools.
+   `--font-mono` menunjuk Maven Pro juga — itu memang permintaannya; monospace
+   sungguhan (`--font-kode`) hanya untuk permukaan yang memang kode: nama token
+   di `/admin/ui` dan tuts pintasan.
 
-   Aturan ini **membatalkan** aturan lama "serif untuk judul halaman". Pemilik
-   menilai Newsreader jelek untuk panel seperti ini dan IBM Plex Mono terlalu
-   terasa seperti font bawaan alat AI; yang dia minta adalah font yang lazim
-   dipakai produk SaaS. Jangan kembalikan serifnya tanpa dia yang meminta.
+   Riwayatnya: Newsreader/Plus Jakarta Sans/IBM Plex Mono → Geist/Geist Mono →
+   susunan ini. Yang dia tolak bukan "serif untuk judul" melainkan Newsreader-
+   nya; Arvo juga serif (slab). **Geist ditolak untuk UI** — jangan kembalikan.
+
+   Tiga hal yang wajib ikut kalau fontnya diganti lagi:
+
+   - **Judul berbobot 400, bukan 700.** Bobot 700 dibuat untuk Geist yang
+     grotesk. Arvo slab sudah tebal pada reguler dan menutup sendiri di 700.
+   - **`--tracking-judul` = 0em.** Angka −0,032em juga milik Geist; kerapatan
+     negatif membuat serif Arvo saling bersinggungan.
+   - **Maven Pro TIDAK punya fitur `tnum`.** `font-variant-numeric:
+     tabular-nums` tidak mengubah apa pun padanya. Terukur: seluruh digitnya
+     sama lebar KECUALI `1`, yang 0,36px lebih sempit pada 13px — jadi kolom
+     rupiah tetap sejajar dalam praktik, tapi jangan mengandalkan `tnum`.
 3. **Ikon selalu SVG inline** dari `apps/web/src/components/ui/Icon.tsx`. Tanpa
    emoji, tanpa icon-font. Ikon wajib cocok maknanya dengan label di sebelahnya.
 4. **Tidak ada nilai warna literal di komponen.** Semuanya menunjuk token di
@@ -344,6 +355,18 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
    cukup: ia menyembunyikan akibatnya, bukan mencegah keadaannya. Pakai
    `onPointerEnter` lalu **periksa `e.pointerType === "mouse"`**, supaya
    keadaannya memang tidak pernah menyala.
+
+10. **`document.fonts.check()` berbohong, dan jaringan sesi ini memutus
+    fonts.googleapis.com di tengah jalan.** Fungsi itu mengembalikan `true`
+    untuk keluarga yang tidak ada sama sekali — spesifikasinya menganggap
+    nama yang tak dikenal sebagai font sistem. Sudah menggigit: satu putaran
+    tangkapan layar dikirim sebagai bukti "Arvo termuat" padahal CSS-nya kena
+    `ERR_CONNECTION_RESET` dan yang terpasang adalah Georgia. Yang
+    membuktikan adalah **membandingkan lebar teks**: `Arvo` harus berbeda
+    dari `serif`, `Maven Pro` harus berbeda dari `system-ui`.
+    Dan supaya pratinjaunya tidak bergantung pada proxy yang labil, unduh
+    CSS + woff2-nya sekali dengan `curl`, taruh di `dist/_font-uji/`, lalu
+    `route.fulfill()` permintaan ke fonts.googleapis.com dengan salinan itu.
 
 ## Kecepatan panel admin
 

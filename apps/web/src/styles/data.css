@@ -621,7 +621,12 @@ a.mini__judul:hover { color: var(--brand); }
 
 /* Pemilih periode didorong ke tepi kanan, seperti di referensi. */
 .arus__periode { margin-inline-start: auto; inline-size: 8.5rem; }
-.arus__periode .input { height: 2.375rem; font-size: var(--text-sm); }
+/* Padding tegak DIKECILKAN dari 0,7rem bawaan .input. Tingginya dipaksa
+   2,375rem, jadi kotak-isinya cuma 38 − 22,4 − 2 = 13,6px sementara satu baris
+   Maven Pro pada 13px butuh 16px — teksnya terpotong di bawah. Maven Pro punya
+   metrik lebih tinggi (rasio baris 1,231) daripada Arvo dan font sistem
+   (1,154), jadi ini muncul justru setelah ganti font. Terukur, bukan dikira. */
+.arus__periode .input { height: 2.375rem; padding-block: 0.35rem; font-size: var(--text-sm); }
 
 /* --- Bidang gambar -------------------------------------------------------- */
 

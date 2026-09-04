@@ -9,18 +9,25 @@
 
 :root {
   /* --- Tipografi ------------------------------------------------------- */
-  /* Geist dan Geist Mono — sistem font yang lazim dipakai produk SaaS.
-     Menggantikan Newsreader (serif) + Plus Jakarta Sans + IBM Plex Mono atas
-     permintaan pemilik: serif untuk judul halaman dan mono berslab untuk
-     nominal dinilai tidak cocok untuk panel seperti ini.
+  /* Arvo untuk judul halaman, Maven Pro untuk seluruh sisanya termasuk
+     nominal. Dua font, sesuai empat tangkapan layar yang dikirim pemilik.
 
-     Display dan sans sekarang SATU keluarga. Itu memang cara SaaS: yang
-     membedakan judul dari teks biasa adalah ukuran, bobot, dan kerapatan
-     huruf — bukan keluarga font kedua. Tokennya tetap dua supaya tidak ada
-     markup yang perlu diubah, dan supaya suatu saat bisa dipisah lagi. */
-  --font-display: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+     Riwayatnya: Newsreader/Plus Jakarta Sans/IBM Plex Mono -> Geist/Geist Mono
+     -> susunan ini. Yang dia tolak bukan "serif untuk judul", tapi Newsreader-
+     nya; Arvo juga serif (slab). Dan Geist ditolak untuk UI.
+
+     Angka memakai --font-mono yang menunjuk Maven Pro juga — itu memang
+     permintaannya. Maven Pro bukan monospace, jadi lebar digitnya dijaga
+     lewat font-variant-numeric: tabular-nums yang sudah dipakai di seluruh
+     tempat angka berjajar. */
+  --font-display: "Arvo", Georgia, "Times New Roman", serif;
+  --font-sans: "Maven Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Maven Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  /* Monospace SUNGGUHAN, khusus permukaan yang memang kode: nama token di
+     halaman UI Component dan tuts pintasan. Kalau ikut Maven Pro, "--chart-cat-1"
+     berhenti terbaca sebagai kode. */
+  --font-kode: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --text-2xs: 0.6875rem;
   --text-xs: 0.75rem;
@@ -30,14 +37,16 @@
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
-  --text-3xl: clamp(2rem, 4vw, 2.75rem);
-  --text-4xl: clamp(2.5rem, 6vw, 4rem);
+  --text-3xl: clamp(1.75rem, 3.4vw, 2.375rem);
+  --text-4xl: clamp(2.25rem, 5vw, 3.375rem);
 
   --tracking-label: 0.12em;
   --tracking-tight: -0.015em;
-  /* Khusus judul besar. Serif tidak butuh ini; grotesk butuh — pada 44px,
-     -0.015em masih terbaca renggang dan judulnya kehilangan bobot. */
-  --tracking-judul: -0.032em;
+  /* Nol untuk Arvo. Kerapatan negatif dibuat untuk grotesk; slab serif punya
+     serif yang justru butuh ruang, dan merapatkannya membuat huruf saling
+     bersinggungan. Angka -0,032em di sini berasal dari susunan Geist dan
+     TIDAK boleh dibawa ke font serif. */
+  --tracking-judul: 0em;
 
   /* --- Radius ----------------------------------------------------------- */
   --radius-xs: 6px;
