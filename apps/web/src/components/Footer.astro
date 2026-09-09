@@ -119,8 +119,12 @@ const luar = (href: string) => /^https?:\/\//.test(href);
      langsung jadi 13px di tinggi kaki. */
   .kaki-tautan {
     list-style: none;
+    /* Padding saja membuat sasaran bersinggungan tepat di tepinya. Jarak 2px
+       antar-baris memisahkannya tanpa menambah tinggi yang terasa. */
     margin: 0;
     padding: 0;
+    display: grid;
+    gap: 2px;
     font-size: 13px;
     line-height: 1.65;
   }
@@ -128,6 +132,13 @@ const luar = (href: string) => /^https?:\/\//.test(href);
     display: inline-block;
     color: var(--teks-2);
     text-decoration: none;
+    /* Di mockup isi kaki halaman TEKS BIASA (<p> + <br>) yang tidak bisa
+       diklik sama sekali, jadi ia tidak punya masalah sasaran sentuh untuk
+       dipecahkan. Begitu dijadikan tautan sungguhan, sepuluh sasaran setinggi
+       21px berdempet tanpa jarak — terukur, dan di ponsel itu salah-tekan.
+       WCAG 2.5.8 minta 24×24px; padding 3px membawanya ke 27px dengan
+       ongkos tinggi yang paling kecil. */
+    padding-block: 3px;
     /* Alamat email studio 220px dan tidak punya satu pun titik patah alami:
        di 390px ia mendorong dokumen jadi 432px. Di mockup isinya cuma
        "hello@…" sehingga tidak pernah terjadi — ini baru muncul dengan data
