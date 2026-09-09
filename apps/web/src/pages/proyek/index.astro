@@ -1,99 +1,396 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import ProjectCard from "../../components/ProjectCard.astro";
-import { listProjects, CATEGORY_LABELS, type ProjectCategory } from "../../lib/api";
+import {
+  listProjects,
+  getSettings,
+  CATEGORY_LABELS_EN,
+  CATEGORY_BLURBS_EN,
+  type Project,
+  type ProjectCategory,
+} from "../../lib/api";
 
-const projects = await listProjects({ limit: 48 });
+const settings = await getSettings();
+const semua = await listProjects({ limit: 200 });
 
-// Filter dibangun dari data yang benar-benar ada, bukan dari daftar statis —
-// kategori kosong tidak perlu ditampilkan.
-const categories = [...new Set(projects.map((p) => p.category))] as ProjectCategory[];
+// Terbaru dulu. `year` yang kosong tidak boleh melompat ke atas daftar, jadi
+// proyek tanpa tahun jatuh ke belakang, diurutkan menurut waktu terbitnya.
+const tahunDari = (p: Project) => p.year ?? (p.publishedAt ? new Date(p.publishedAt).getFullYear() : 0);
+const proyek = [...semua].sort((a, b) => tahunDari(b) - tahunDari(a) || a.title.localeCompare(b.title));
+
+// Rel kategori. Rancangan yang di-ACC memuat empat bidang yang memang
+// dikerjakan studio ini, LENGKAP dengan keadaan kosongnya — keadaan itu
+// dirancang justru untuk kategori yang belum ada isinya, jadi menyembunyikan
+// yang kosong akan membuang bagian yang sudah disetujui. Dua kategori sisanya
+// (landscape, masterplan) baru muncul kalau benar-benar ada proyeknya, supaya
+// rel tidak mengiklankan bidang yang belum pernah dikerjakan sama sekali.
+const INTI: ProjectCategory[] = ["commercial", "residential", "interior", "renovation"];
+const terpakai = [...new Set(proyek.map((p) => p.category))] as ProjectCategory[];
+const urutKat: ProjectCategory[] = [
+  ...INTI,
+  ...(["landscape", "masterplan"] as ProjectCategory[]).filter((k) => terpakai.includes(k)),
+];
+const kategori = [
+  { kunci: "all", label: "All work", ket: "Everything the studio has published so far." },
+  ...urutKat.map((k) => ({ kunci: k, label: CATEGORY_LABELS_EN[k], ket: CATEGORY_BLURBS_EN[k] })),
+];
+const hitung = (kunci: string) =>
+  kunci === "all" ? proyek.length : proyek.filter((p) => p.category === kunci).length;
+const kata = (n: number) => (n === 1 ? "1 project" : `${n} projects`);
+
+// Baris di bawah judul: kategori · tempat · tahun, hanya bagian yang terisi.
+const meta = (p: Project) =>
+  [CATEGORY_LABELS_EN[p.category], p.location || p.city, p.year].filter(Boolean).join(" · ");
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Work",
+    url: new URL("/proyek", Astro.site).href,
+    hasPart: proyek.map((p) => ({
+      "@type": "CreativeWork",
+      name: p.title,
+      url: new URL(`/proyek/${p.slug}`, Astro.site).href,
+      ...(p.summary ? { abstract: p.summary } : {}),
+      ...(p.year ? { dateCreated: String(p.year) } : {}),
+    })),
+  },
+];
 ---
 
 <BaseLayout
-  title="Proyek"
-  description="Arsip proyek arsitektur dan interior yang telah diselesaikan studio Dirga Pahlevi Architecture."
+  title="Work"
+  description="Every project starts with the awkward part of the brief, not the finished photograph. The published work of an architecture studio in Pontianak, Indonesia."
+  jsonLd={jsonLd}
 >
-  <section class="section shell">
-    <p class="eyebrow">Arsip</p>
-    <h1>Proyek</h1>
+  <div class="pita">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi kepala">
+        <span class="label">WORK</span>
+        <div class="s24"></div>
+        <h1 class="h1 kepala__judul">Buildings, and the problems<br />they were built to solve.</h1>
+        <div class="s24"></div>
+        <p class="lead">
+          Every project here starts with the awkward part of the brief, not the finished photograph.
+          If a page does not tell you what was difficult, it is not worth reading.
+        </p>
+      </div>
+    </div>
+  </div>
 
-    {
-      categories.length > 1 && (
-        <div class="filters" role="group" aria-label="Saring berdasarkan kategori">
-          <button type="button" class="filter is-active" data-category="all">
-            Semua
-          </button>
-          {categories.map((category) => (
-            <button type="button" class="filter" data-category={category}>
-              {CATEGORY_LABELS[category]}
-            </button>
-          ))}
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris baris-kat">
+        <div class="sel kat kat--rapat">
+          <div class="kat__kop"><span class="label label--redup">CATEGORIES</span></div>
+          <nav id="relKat" aria-label="Filter by category">
+            {
+              kategori.map((k, i) => (
+                <button class="kat__b" type="button" data-kat={k.kunci} data-label={k.label} data-ket={k.ket} aria-current={i === 0 ? "true" : "false"}>
+                  {k.label}
+                  <span class="hitung">{hitung(k.kunci)}</span>
+                  <span class="panah-kotak" aria-hidden="true">
+                    <svg width="19" height="19" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="16.8" height="16.8" rx="4.6" /><path d="M9.4 7.4 13 11l-3.6 3.6" /></svg>
+                  </span>
+                </button>
+              ))
+            }
+          </nav>
+          <div class="kat__urut">
+            <span class="label label--redup">SORT</span>
+            <div class="s10"></div>
+            <div class="rowx">
+              <button class="pil pil--on" type="button" data-urut="baru">Newest</button>
+              <button class="pil" type="button" data-urut="lama">Oldest</button>
+            </div>
+          </div>
         </div>
-      )
-    }
 
-    {
-      projects.length > 0 ? (
-        <ul class="project-grid" id="project-grid">
-          {projects.map((project, index) => (
-            <ProjectCard project={project} priority={index < 3} level={2} />
-          ))}
-        </ul>
-      ) : (
-        <p class="lede">Belum ada proyek yang dipublikasikan.</p>
-      )
-    }
-  </section>
+        <div class="sel kerja-panel">
+          <div class="kerja-kop">
+            <h2 class="h3 ak kerja-kop__judul" id="katJudul">ALL WORK</h2>
+            <span class="dim kecil" id="katHitung">{kata(proyek.length)}</span>
+          </div>
+          <div class="kerja-ket"><p class="mut kecil" id="katKet">{kategori[0].ket}</p></div>
+
+          <div id="katDaftar" class="kerja-daftar">
+            {
+              proyek.map((p) => (
+                <a class="baris-kerja" href={`/proyek/${p.slug}`} data-kat={p.category} data-tahun={tahunDari(p)}>
+                  <div class="foto">
+                    {p.coverImageUrl ? (
+                      <img src={p.coverImageUrl} alt="" loading="lazy" decoding="async" width="640" height="360" />
+                    ) : (
+                      <span>NO COVER YET</span>
+                    )}
+                  </div>
+                  <div>
+                    <span class="label label--redup">{meta(p).toUpperCase()}</span>
+                    <div class="s10"></div>
+                    <h3>{p.title}</h3>
+                    {p.summary && (
+                      <>
+                        <div class="s6"></div>
+                        <p class="mut kecil baris-kerja__ket">{p.summary}</p>
+                      </>
+                    )}
+                  </div>
+                  <span class="panah-kotak" aria-hidden="true">
+                    <svg width="19" height="19" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="16.8" height="16.8" rx="4.6" /><path d="M9.4 7.4 13 11l-3.6 3.6" /></svg>
+                  </span>
+                </a>
+              ))
+            }
+
+            {/* Keadaan kosong dirender di server juga, bukan dirakit JS, supaya
+                situs tanpa satu pun proyek terbit tetap mengatakan sesuatu. */}
+            <div class="kosong" id="katKosong" hidden={proyek.length > 0}>
+              <span class="kotak-ikon">
+                <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 4.5h15v11h-15zM2.5 12l4-3.5 3.5 3 3-2.5 4.5 4" /><circle cx="7" cy="7.5" r="1.2" /></svg>
+              </span>
+              <p class="hs" id="kosongJudul">
+                {proyek.length ? "No published work here yet" : "No published work yet"}
+              </p>
+              <p class="mut kecil">
+                It is coming. In the meantime, the rest of the studio&rsquo;s work is one click away.
+              </p>
+              <button class="btn" type="button" data-semua>See all work</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita pita--akhir">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi ajak">
+        <h2 class="h2 ajak__judul">
+          Yours could be the next <span class="ak">awkward brief</span> on this page.
+        </h2>
+        <div class="s24"></div>
+        <div class="rowx ajak__tombol">
+          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
+          {settings.email && <a class="btn" href={`mailto:${settings.email}`}>Email us instead</a>}
+        </div>
+      </div>
+    </div>
+  </div>
 </BaseLayout>
 
-<script>
-  // Penyaringan dilakukan di klien terhadap kartu yang sudah ter-render.
-  // Jumlah proyek studio ada di orde puluhan, jadi tidak perlu request ulang.
-  const grid = document.querySelector<HTMLUListElement>("#project-grid");
-  const filters = document.querySelectorAll<HTMLButtonElement>(".filter");
-
-  filters.forEach((filter) => {
-    filter.addEventListener("click", () => {
-      const selected = filter.dataset.category ?? "all";
-
-      filters.forEach((f) => f.classList.toggle("is-active", f === filter));
-
-      grid?.querySelectorAll<HTMLLIElement>("li").forEach((card) => {
-        card.hidden = selected !== "all" && card.dataset.category !== selected;
-      });
-    });
-  });
-</script>
-
 <style>
-  h1 {
-    margin-bottom: 2.5rem;
+  /* Rel kategori: lebarnya milik halaman ini, bukan sistem — di halaman lain
+     rel yang sama memakai lebar berbeda. */
+  .baris-kat {
+    grid-template-columns: 290px 1fr;
   }
-
-  .filters {
+  .kat--rapat,
+  .kerja-panel {
+    padding: 0;
+  }
+  .kat__kop {
+    padding: 26px 26px 18px;
+  }
+  .kat__urut {
+    padding: 26px;
+  }
+  .kepala {
+    padding-block: 76px;
+  }
+  .kepala__judul {
+    font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+  }
+  .kerja-kop {
+    padding: 28px 28px 6px;
     display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
     flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    margin-bottom: 3rem;
   }
-
-  .filter {
-    background: none;
-    border: 0;
-    padding: 0.25rem 0;
-    font: inherit;
-    font-size: 0.78rem;
-    letter-spacing: 0.14em;
+  .kerja-kop__judul {
+    font-family: var(--tubuh);
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--text-faint);
-    cursor: pointer;
-    border-bottom: 1px solid transparent;
+    font-size: 19px;
+  }
+  .kerja-ket {
+    padding: 0 28px 20px;
+  }
+  .kerja-ket p {
+    max-width: 60ch;
+  }
+  .kerja-daftar {
+    border-top: 1px solid var(--garis);
   }
 
-  .filter:hover,
-  .filter.is-active {
-    color: var(--text-strong);
-    border-bottom-color: var(--text-strong);
+  /* Baris karya. Di mockup ini <article tabindex="0"> karena belum menuju ke
+     mana pun; di sini ia tautan sungguhan, jadi warna dan garis bawah bawaan
+     peramban harus dimatikan — publik.css sengaja tidak menyetel <a> global. */
+  .baris-kerja {
+    position: relative;
+    display: grid;
+    grid-template-columns: 280px 1fr auto;
+    gap: 26px;
+    align-items: center;
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--garis);
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+    transition: background 180ms var(--e-halus);
+  }
+  .baris-kerja:hover {
+    background: var(--gelap);
+  }
+  .baris-kerja:focus-visible {
+    background: var(--gelap);
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--cincin);
+  }
+  /* `:last-child` TIDAK bisa dipakai di sini: anak terakhir .kerja-daftar
+     adalah blok keadaan-kosong, bukan baris — jadi ia tidak pernah cocok.
+     Ia juga tidak peduli baris di depannya sedang disembunyikan penyaring.
+     Penandanya dipasang JS setiap kali daftar disaring atau diurutkan. */
+  .baris-kerja--akhir {
+    border-bottom: 0;
+  }
+  .baris-kerja .foto {
+    aspect-ratio: var(--rasio-foto);
+    width: 100%;
+  }
+  .baris-kerja .foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .baris-kerja h3 {
+    margin: 0;
+    font-family: var(--tubuh);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--teks);
+  }
+  .baris-kerja__ket {
+    margin: 0;
+    max-width: 60ch;
+  }
+  .hitung {
+    font-size: 11px;
+    color: var(--teks-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .kat__b .hitung {
+    margin-left: auto;
+    margin-right: 12px;
+  }
+  .ajak {
+    padding-block: 80px;
+    text-align: center;
+  }
+  .ajak__judul {
+    max-width: 24ch;
+    margin-inline: auto;
+  }
+  .ajak__tombol {
+    justify-content: center;
+  }
+
+  @media (max-width: 900px) {
+    .baris-kat {
+      grid-template-columns: 1fr;
+    }
+    .baris-kat > .kat {
+      position: static;
+      border-bottom: 1px solid var(--garis);
+    }
+    .baris-kerja {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
   }
 </style>
+
+<script>
+  (() => {
+    "use strict";
+    const rel = document.getElementById("relKat");
+    const daftar = document.getElementById("katDaftar");
+    const kosong = document.getElementById("katKosong");
+    const judul = document.getElementById("katJudul");
+    const ket = document.getElementById("katKet");
+    const hitungN = document.getElementById("katHitung");
+    const kosongJudul = document.getElementById("kosongJudul");
+    if (!rel || !daftar || !kosong || !judul || !ket || !hitungN || !kosongJudul) return;
+
+    // Seluruh baris sudah ada di HTML sejak build — penyaring hanya
+    // menyembunyikan, tidak merakit ulang. Itu yang menjaga tiap proyek tetap
+    // terbaca mesin pencari walau JS tidak jalan sama sekali.
+    const baris = [...daftar.querySelectorAll<HTMLElement>(".baris-kerja")];
+    const tombol = [...rel.querySelectorAll<HTMLButtonElement>(".kat__b")];
+    const ketKat = new Map(tombol.map((b) => [b.dataset.kat!, b.dataset.ket ?? ""]));
+
+    let katKini = "all";
+    let urutKini: "baru" | "lama" = "baru";
+
+    const tampil = () => {
+      let n = 0;
+      baris.forEach((b) => {
+        const cocok = katKini === "all" || b.dataset.kat === katKini;
+        b.hidden = !cocok;
+        if (cocok) n++;
+      });
+      hitungN.textContent = n === 1 ? "1 project" : `${n} projects`;
+      kosong.hidden = n > 0;
+      // Garis bawah baris terakhir dimatikan lewat :last-child, dan
+      // :last-child tidak peduli elemen di depannya disembunyikan atau tidak.
+      // Jadi barisnya harus ditandai sendiri.
+      const tampak = baris.filter((b) => !b.hidden);
+      baris.forEach((b) => b.classList.remove("baris-kerja--akhir"));
+      if (tampak.length) tampak[tampak.length - 1].classList.add("baris-kerja--akhir");
+      return n;
+    };
+
+    const urutkan = () => {
+      const urut = [...baris].sort((a, b) => {
+        const x = Number(a.dataset.tahun || 0);
+        const y = Number(b.dataset.tahun || 0);
+        return urutKini === "baru" ? y - x : x - y;
+      });
+      urut.forEach((b) => daftar.insertBefore(b, kosong));
+    };
+
+    rel.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>(".kat__b");
+      if (!b) return;
+      katKini = b.dataset.kat!;
+      tombol.forEach((x) => x.setAttribute("aria-current", String(x === b)));
+      judul.textContent = (b.dataset.label || "").toUpperCase();
+      ket.textContent = ketKat.get(katKini) || "";
+      kosongJudul.textContent =
+        katKini === "all" ? "No published work yet" : "No published work here yet";
+      tampil();
+    });
+
+    document.querySelectorAll<HTMLButtonElement>("[data-urut]").forEach((b) => {
+      b.addEventListener("click", () => {
+        urutKini = b.dataset.urut === "lama" ? "lama" : "baru";
+        document
+          .querySelectorAll("[data-urut]")
+          .forEach((x) => x.classList.toggle("pil--on", x === b));
+        urutkan();
+        tampil();
+      });
+    });
+
+    kosong.querySelector("[data-semua]")?.addEventListener("click", () => {
+      tombol[0].click();
+    });
+
+    tampil();
+  })();
+</script>

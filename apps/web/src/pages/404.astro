@@ -1,19 +1,118 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+
+const jalan = [
+  ["/proyek", "Work", "Every project, with the difficult part written down"],
+  ["/studio", "Studio", "Who we are, and what we are not right for"],
+  /* Journal ditahan sampai rutenya ada — lihat Header.astro. */
+  // ["/jurnal", "Journal", "What we learned the expensive way"],
+  ["/faq", "Questions", "Fees, timing, permits — answered plainly"],
+  ["/kontak", "Contact", "The first conversation costs nothing"],
+  ["/progres", "Your project page", "Already a client? Use the link we sent you"],
+];
 ---
 
-<BaseLayout title="Halaman tidak ditemukan" noindex>
-  <section class="section shell">
-    <p class="eyebrow">404</p>
-    <h1>Halaman tidak ditemukan</h1>
-    <p class="lede">Tautan yang Anda buka mungkin sudah dipindahkan atau dihapus.</p>
-    <a href="/" class="btn btn--primary btn--lg">Kembali ke beranda</a>
-  </section>
+<BaseLayout title="Page not found" description="This address does not exist." noindex>
+  <div class="pita pita--akhir">
+    <div class="dalam titik">
+      <div class="nf">
+        <div class="nf__k">
+          <span class="nf__n">404</span>
+          <div class="s16"></div>
+          <h1 class="h2">This address does not exist</h1>
+          <div class="s16"></div>
+          <p class="mut nf__ket">
+            Either the link was mistyped, or a page moved and we did not redirect it — that second
+            one would be our fault. Here is everything the site actually has.
+          </p>
+
+          <div class="jalan">
+            {
+              jalan.map(([href, judul, ket]) => (
+                <a href={href}>
+                  <b>{judul}</b>
+                  <span>{ket}</span>
+                </a>
+              ))
+            }
+          </div>
+
+          <div class="s36"></div>
+          <p class="dim kecil">
+            Arrived here from a link on this site?{" "}
+            <a href="/kontak" class="tl">Tell us which page it was</a> — that is the only way we
+            find them.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </BaseLayout>
 
 <style>
-  h1 {
-    margin-bottom: 1.5rem;
+  /* ══ 404 ═══════════════════════════════════════════════════════════════
+     Halaman ini muncul justru saat orang sudah salah jalan, jadi tugasnya
+     satu: mengembalikan mereka ke tempat yang benar dengan cepat. Bukan
+     lelucon. */
+  .nf {
+    display: grid;
+    place-items: center;
+    min-height: calc(100vh - 66px);
+    padding: 60px 20px;
   }
-
+  .nf__k {
+    max-width: 640px;
+    width: 100%;
+    text-align: center;
+  }
+  .nf__n {
+    font-family: var(--judul);
+    font-size: clamp(4rem, 14vw, 7rem);
+    line-height: 1;
+    color: var(--teks-4);
+    letter-spacing: -0.02em;
+  }
+  .nf__ket {
+    max-width: 46ch;
+    margin-inline: auto;
+  }
+  .jalan {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1px;
+    background: var(--garis);
+    border: 1px solid var(--garis);
+    margin-top: 36px;
+    text-align: left;
+  }
+  .jalan a {
+    display: block;
+    background: var(--kanvas);
+    padding: 20px 22px;
+    text-decoration: none;
+    transition: background 180ms var(--e-halus);
+  }
+  .jalan a:hover {
+    background: var(--gelap);
+  }
+  .jalan a:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--cincin);
+  }
+  .jalan b {
+    display: block;
+    font-family: var(--judul);
+    font-size: 16px;
+    color: var(--teks);
+    margin-bottom: 5px;
+    font-weight: 400;
+  }
+  .jalan span {
+    font-size: 12.5px;
+    color: var(--teks-3);
+    line-height: 1.55;
+  }
+  .jalan a:hover b {
+    color: var(--aksen);
+  }
 </style>

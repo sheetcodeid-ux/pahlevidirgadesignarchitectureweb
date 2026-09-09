@@ -19,23 +19,60 @@ export interface Profil {
   isMasterAdmin: boolean;
 }
 
+/**
+ * Sesi boleh disimpan di dua tempat, dan halaman masuk yang memilih:
+ *
+ * - localStorage  — "Tetap masuk di perangkat ini" dicentang. Bertahan setelah
+ *                   peramban ditutup.
+ * - sessionStorage — tidak dicentang. Hilang begitu tabnya ditutup, yang
+ *                   memang yang diinginkan orang di komputer bersama.
+ *
+ * `baca` memeriksa sessionStorage LEBIH DULU: kalau seseorang masuk tanpa
+ * mencentang di perangkat yang sebelumnya pernah dicentang, sesi baru itu yang
+ * harus berlaku, bukan token lama yang tertinggal. `simpanSesi` juga membuang
+ * salinan di penyimpanan satunya, supaya tidak pernah ada dua token hidup.
+ */
 function baca(kunci: string): string | null {
-  try { return localStorage.getItem(kunci); } catch { return null; }
+  try {
+    return sessionStorage.getItem(kunci) ?? localStorage.getItem(kunci);
+  } catch {
+    return null;
+  }
 }
 
-function tulis(kunci: string, nilai: string) {
-  try { localStorage.setItem(kunci, nilai); } catch { /* penyimpanan diblokir */ }
+/** Di penyimpanan mana sesi yang sedang berjalan berada. Dipakai saat token
+ *  disegarkan: menulis balik ke localStorage secara buta akan MENAIKKAN sesi
+ *  yang sengaja dibuat tidak permanen, dan pemakainya tidak akan pernah tahu. */
+function sesiPermanen(): boolean {
+  try {
+    return sessionStorage.getItem(KUNCI_AKSES) === null;
+  } catch {
+    return true;
+  }
 }
 
-export function simpanSesi(d: { accessToken: string; refreshToken: string; email: string; role: string; isMasterAdmin: boolean }) {
-  tulis(KUNCI_AKSES, d.accessToken);
-  tulis(KUNCI_SEGAR, d.refreshToken);
-  tulis(KUNCI_PROFIL, JSON.stringify({ email: d.email, role: d.role, isMasterAdmin: d.isMasterAdmin }));
+function tulis(kunci: string, nilai: string, tetap: boolean) {
+  try {
+    (tetap ? localStorage : sessionStorage).setItem(kunci, nilai);
+    (tetap ? sessionStorage : localStorage).removeItem(kunci);
+  } catch { /* penyimpanan diblokir */ }
+}
+
+export function simpanSesi(
+  d: { accessToken: string; refreshToken: string; email: string; role: string; isMasterAdmin: boolean },
+  tetap = true,
+) {
+  tulis(KUNCI_AKSES, d.accessToken, tetap);
+  tulis(KUNCI_SEGAR, d.refreshToken, tetap);
+  tulis(KUNCI_PROFIL, JSON.stringify({ email: d.email, role: d.role, isMasterAdmin: d.isMasterAdmin }), tetap);
 }
 
 export function hapusSesi() {
   [KUNCI_AKSES, KUNCI_SEGAR, KUNCI_PROFIL].forEach((k) => {
+    // Kedua penyimpanan dibersihkan: keluar harus benar-benar keluar, tak
+    // peduli sesinya dulu disimpan dengan atau tanpa "tetap masuk".
     try { localStorage.removeItem(k); } catch { /* abaikan */ }
+    try { sessionStorage.removeItem(k); } catch { /* abaikan */ }
   });
   // Data proyek dan keuangan tidak boleh tertinggal untuk akun berikutnya
   // yang masuk di tab yang sama.
@@ -189,8 +226,10 @@ async function jalankanPenyegaran(): Promise<boolean> {
   if (!res.ok) return false;
 
   const { data } = await res.json();
-  tulis(KUNCI_AKSES, data.accessToken);
-  tulis(KUNCI_SEGAR, data.refreshToken);
+  // Token baru menggantikan yang lama DI TEMPAT YANG SAMA.
+  const tetap = sesiPermanen();
+  tulis(KUNCI_AKSES, data.accessToken, tetap);
+  tulis(KUNCI_SEGAR, data.refreshToken, tetap);
   return true;
 }
 
@@ -242,7 +281,7 @@ async function panggil<T>(path: string, init: RequestInit = {}, ulang = true): P
 
 // --- Autentikasi ----------------------------------------------------------
 
-export async function masuk(email: string, password: string) {
+export async function masuk(email: string, password: string, tetap = true) {
   const res = await fetch(`${API}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -252,7 +291,7 @@ export async function masuk(email: string, password: string) {
   const body = await res.json().catch(() => null);
   if (!res.ok) throw new Error(body?.error?.message ?? "Gagal masuk");
 
-  simpanSesi(body.data);
+  simpanSesi(body.data, tetap);
   return body.data as Profil;
 }
 

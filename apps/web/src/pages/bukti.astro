@@ -1,19 +1,442 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-import { ReceiptView } from "../components/ReceiptView";
-/* Gaya struk hidup di misc.css. BaseLayout cuma memuat global.css dan
-   components.css, jadi halaman ini harus memintanya sendiri — kalau tidak,
-   markupnya benar tapi tampil sebagai elemen mentah bawaan browser tanpa
-   satu pun galat. Sudah menggigit tiga halaman sekaligus dulu. */
-import "../styles/misc.css";
+/**
+ * Bukti pembayaran yang dibuka klien dari tautan WhatsApp.
+ *
+ * Halaman PUBLIK: tidak ada login dan tidak boleh menyentuh apa pun di
+ * lib/admin. Satu-satunya kredensialnya token 32 hex di URL (?t=), yang
+ * ditukar ke endpoint publik /api/v1/receipt/:token.
+ *
+ * Ia berdiri sendiri — tanpa Header/Footer situs — karena orang yang
+ * membukanya datang untuk satu hal dan sering langsung mencetaknya. Bilah
+ * atasnya cuma nama studio dan pemilih bahasa, persis rancangan yang di-ACC.
+ */
+import "../styles/publik.css";
 ---
 
-<BaseLayout
-  title="Bukti Pembayaran"
-  description="Bukti pembayaran yang dikeluarkan studio."
-  noindex
->
-  <section class="section shell">
-    <ReceiptView client:load />
-  </section>
-</BaseLayout>
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment receipt — Dirga Pahlevi Architecture</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#09090B" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Maven+Pro:wght@400..800&display=swap"
+    />
+  </head>
+  <body>
+    <a href="#isi" class="lompat" data-t="lewati">Skip to content</a>
+
+    <div class="pita pita--awal nav">
+      <div class="dalam">
+        <div class="isi isi--rapat" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:9px">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M10 1.5 18 6v8l-8 4.5L2 14V6l8-4.5Z" stroke="#2DD4BF" stroke-width="1.6"/>
+              <path d="M10 6.5 14 9v4l-4 2.2L6 13V9l4-2.5Z" fill="#2DD4BF" fill-opacity=".25" stroke="#2DD4BF" stroke-width="1.2"/></svg>
+            <span class="label" style="letter-spacing:.14em">DIRGA PAHLEVI</span></span>
+          <span class="bhs" role="group" aria-label="Language" style="margin-left:auto">
+            <button type="button" data-bhs="en" aria-pressed="true">EN</button>
+            <button type="button" data-bhs="id" aria-pressed="false">ID</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <main id="isi">
+
+<div class="pita pita--akhir">
+  <div class="dalam">
+    <div class="struk">
+
+      <!-- ── BERHASIL ─────────────────────────────────────────────────── -->
+      <div id="vBerhasil" hidden>
+        <div class="struk__kop">
+          <span class="struk__nama">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#2DD4BF" stroke-width="1.6" stroke-linejoin="round"><path d="M3 17V7.5L10 3l7 4.5V17"/><path d="M8 17v-5h4v5"/></svg>
+            <span id="sNama">Pahlevi Dirga Design Architecture</span></span>
+          <span class="dim kecil" data-t="kop">Payment receipt</span>
+        </div>
+
+        <div class="kartu-struk">
+          <div class="struk__puncak">
+            <p class="struk__l" data-t="totalDibayar">TOTAL PAID</p>
+            <p class="struk__nom" id="sNom">—</p>
+            <span class="struk__cap"><i></i><span data-t="diterima">Received</span></span>
+          </div>
+
+          <dl class="struk__rinci" id="sRinci"></dl>
+
+          <div class="struk__sah">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#34D399" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.6 13.4 4v4c0 3-2.2 5.4-5.4 6.4C4.8 13.4 2.6 11 2.6 8V4L8 1.6Z"/><path d="M5.9 8.1 7.3 9.5l2.8-3"/></svg>
+            <p id="sSah">—</p>
+          </div>
+        </div>
+
+        <div class="struk__aksi">
+          <button class="btn btn--isi" id="bCetak" data-t="cetak">Save or print</button>
+          <a class="btn" href="/progres" data-t="bukaProyek">Open project page <span class="ar">→</span></a>
+        </div>
+        <p class="struk__kaki" id="sKaki">—</p>
+      </div>
+
+      <!-- ── TAUTAN SALAH ─────────────────────────────────────────────── -->
+      <div id="vGalat" hidden>
+        <div class="struk__kop"><span class="struk__nama">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#2DD4BF" stroke-width="1.6" stroke-linejoin="round"><path d="M3 17V7.5L10 3l7 4.5V17"/><path d="M8 17v-5h4v5"/></svg>
+          Pahlevi Dirga Design Architecture</span></div>
+        <div class="kartu-struk">
+          <div class="struk__kosong">
+            <span class="kotak-ikon" style="color:var(--merah);border-color:#7F3B3B">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="7.5"/><path d="M10 6.2v4.4M10 13.4h.01"/></svg></span>
+            <h1 id="gJudul">This receipt link is incomplete</h1>
+            <p id="gKet">WhatsApp sometimes cuts long links when they are forwarded. Ask us to
+            send it again — nothing is lost, and the payment is still recorded.</p>
+            <div class="s10"></div>
+            <a class="btn" href="/kontak" id="gTombol">Ask for the link again <span class="ar">→</span></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MEMUAT ───────────────────────────────────────────────────── -->
+      <div id="vMuat">
+        <div class="struk__kop"><span class="struk__nama">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#2DD4BF" stroke-width="1.6" stroke-linejoin="round"><path d="M3 17V7.5L10 3l7 4.5V17"/><path d="M8 17v-5h4v5"/></svg>
+          Pahlevi Dirga Design Architecture</span></div>
+        <div class="kartu-struk">
+          <div class="struk__puncak">
+            <span class="rangka-b" style="width:96px;margin:0 auto;display:block"></span>
+            <div class="s16"></div>
+            <span class="rangka-b" style="width:190px;height:34px;margin:0 auto;display:block"></span>
+            <div class="s16"></div>
+            <span class="rangka-b" style="width:104px;height:26px;margin:0 auto;display:block"></span>
+          </div>
+          <dl class="struk__rinci">
+            <div><span class="rangka-b" style="width:70px"></span><span class="rangka-b" style="width:130px"></span></div>
+            <div><span class="rangka-b" style="width:96px"></span><span class="rangka-b" style="width:84px"></span></div>
+            <div><span class="rangka-b" style="width:62px"></span><span class="rangka-b" style="width:110px"></span></div>
+            <div><span class="rangka-b" style="width:80px"></span><span class="rangka-b" style="width:140px"></span></div>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+    </main>
+  </body>
+</html>
+
+<script>
+/* ══ Bukti pembayaran ══════════════════════════════════════════════════════
+   Datanya diambil sendiri di sini, bukan lewat lib/admin: halaman ini publik
+   dan tidak boleh menyentuh sesi staf. Kredensialnya token 32 hex di ?t=. */
+(() => {
+  "use strict";
+  const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787")
+    .replace(/\/$/, "");
+
+  interface Bukti {
+    receiptToken: string;
+    amount: number;
+    kind: string;
+    method: string;
+    receiver?: string | null;
+    paidAt: string;
+    projectTitle: string;
+    contractValue: number | null;
+    studioName: string;
+  }
+
+  type Kamus = {
+    [k: string]: string | Record<string, string>;
+  };
+
+  const KAMUS: Record<"en" | "id", Kamus> = {
+    en: {
+      lewati:"Skip to content", kop:"Payment receipt", totalDibayar:"TOTAL PAID",
+      diterima:"Received", cetak:"Save or print", bukaProyek:"Open project page",
+      galatJ:"This receipt link is incomplete",
+      galatK:"WhatsApp sometimes cuts long links when they are forwarded. Ask us to send it again — nothing is lost, and the payment is still recorded.",
+      galatB:"Ask for the link again",
+      proyek:"Project", idBayar:"Receipt no.", kategori:"Category", metode:"Method",
+      penerima:"Received by", tanggal:"Paid on", kontrak:"Contract value",
+      sisa:"Rp{x} still outstanding",
+      jenis:{dp:"Deposit",termin:"Instalment",pelunasan:"Final payment"},
+      cara:{tunai:"Cash",transfer:"Bank transfer",qris:"QRIS",lainnya:"Other"},
+      sah:"Issued by {s} at the moment the payment was recorded. Its number can be checked against your project page, and this page is the record — there is no separate document.",
+      kaki:"Receipt {n} · {d}",
+      /* Dua kalimat galat yang TIDAK ada di mockup, karena mockup cuma punya
+         satu keadaan salah. Tautan bisa gagal karena dua sebab yang berbeda,
+         dan menyamakan keduanya membuat orang mengira tautannya rusak padahal
+         jaringannya yang mati. */
+      hilangJ:"We cannot find this receipt",
+      hilangK:"The link is complete but no payment matches it. It may have been reissued — ask us and we will send the current one.",
+      jaringanJ:"We could not reach the studio",
+      jaringanK:"The connection dropped before the receipt arrived. Nothing is wrong with your link; try again in a moment.",
+      jaringanB:"Try again",
+    },
+    id: {
+      lewati:"Lewati ke isi", kop:"Bukti pembayaran", totalDibayar:"TOTAL DIBAYAR",
+      diterima:"Diterima", cetak:"Simpan atau cetak", bukaProyek:"Buka halaman proyek",
+      galatJ:"Tautan bukti ini tidak lengkap",
+      galatK:"WhatsApp kadang memotong tautan panjang saat diteruskan. Minta kami kirim ulang — tidak ada yang hilang, dan pembayarannya tetap tercatat.",
+      galatB:"Minta tautannya dikirim ulang",
+      proyek:"Proyek", idBayar:"No. bukti", kategori:"Kategori", metode:"Metode",
+      penerima:"Diterima oleh", tanggal:"Tanggal bayar", kontrak:"Nilai kontrak",
+      sisa:"Sisa Rp{x}",
+      jenis:{dp:"DP",termin:"Termin",pelunasan:"Pelunasan"},
+      cara:{tunai:"Tunai",transfer:"Transfer",qris:"QRIS",lainnya:"Lainnya"},
+      sah:"Diterbitkan {s} tepat saat pembayarannya dicatat. Nomornya bisa dicocokkan dengan halaman proyek Anda, dan halaman ini adalah catatannya — tidak ada dokumen terpisah.",
+      kaki:"Bukti {n} · {d}",
+      hilangJ:"Bukti ini tidak kami temukan",
+      hilangK:"Tautannya lengkap, tapi tidak ada pembayaran yang cocok. Bisa jadi buktinya diterbitkan ulang — beri tahu kami dan kami kirimkan yang berlaku.",
+      jaringanJ:"Studio tidak bisa dihubungi",
+      jaringanK:"Sambungannya putus sebelum buktinya sampai. Tautan Anda tidak bermasalah; coba lagi sebentar.",
+      jaringanB:"Coba lagi",
+    },
+  };
+
+  let B: "en" | "id" = "en";
+  let D: Bukti | null = null;
+  const teks = (k: string) => String(KAMUS[B][k] ?? "");
+  const peta = (k: string) => (KAMUS[B][k] as Record<string, string>) ?? {};
+
+  const rp = (n: number) => "Rp" + n.toLocaleString("id-ID");
+  const tgl = (s: string) => new Date(s.slice(0, 10) + "T00:00:00").toLocaleDateString(
+    B === "en" ? "en-GB" : "id-ID", { day:"numeric", month:"long", year:"numeric" });
+  /* Nomor bukti dipenggal 8 karakter seperti versi yang sudah tayang, supaya
+     nomor yang klien sebut di WhatsApp cocok dengan yang staf lihat. */
+  const no = () => (D ? D.receiptToken.slice(0, 8).toUpperCase() : "");
+
+  const ambil = (id: string) => document.getElementById(id);
+  const vBerhasil = ambil("vBerhasil"), vGalat = ambil("vGalat"), vMuat = ambil("vMuat");
+  const sNama = ambil("sNama"), sNom = ambil("sNom"), sRinci = ambil("sRinci"),
+        sSah = ambil("sSah"), sKaki = ambil("sKaki");
+  const gJudul = ambil("gJudul"), gKet = ambil("gKet"), gTombol = ambil("gTombol");
+  if (!vBerhasil || !vGalat || !vMuat || !sNama || !sNom || !sRinci || !sSah ||
+      !sKaki || !gJudul || !gKet || !gTombol) return;
+
+  /* Kunci kalimat galat yang sedang tampil. Disimpan supaya pindah bahasa
+     menerjemahkan keadaan yang SEDANG terlihat, bukan mengembalikannya ke
+     "tautan tidak lengkap" yang mungkin bukan penyebabnya. */
+  let galatKini: "galat" | "hilang" | "jaringan" | null = null;
+
+  const gambarGalat = () => {
+    if (!galatKini) return;
+    const p = galatKini === "galat" ? "galat" : galatKini;
+    gJudul.textContent = teks(p + "J");
+    gKet.textContent = teks(p + "K");
+    gTombol.childNodes[0].textContent =
+      (galatKini === "jaringan" ? teks("jaringanB") : teks("galatB")) + " ";
+  };
+
+  const tampilkan = (v: "berhasil" | "galat" | "muat") => {
+    vBerhasil.hidden = v !== "berhasil";
+    vGalat.hidden = v !== "galat";
+    vMuat.hidden = v !== "muat";
+  };
+
+  /* projectTitle, receiver dan nama studio datang dari database dan ditulis
+     staf — tetap dilepaskan sebelum masuk innerHTML. Barisnya dirakit sebagai
+     string HTML demi <span> di dalamnya, jadi ini bukan kehati-hatian
+     berlebihan: tanpa ini satu judul proyek bertanda kurung siku sudah cukup. */
+  const lolos = (v: string) => String(v)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const gambar = () => {
+    document.querySelectorAll<HTMLElement>("[data-t]").forEach((el) => {
+      const k = el.dataset.t;
+      const v = k ? KAMUS[B][k] : undefined;
+      if (typeof v === "string") el.textContent = v;
+    });
+    document.documentElement.lang = B;
+    if (galatKini) { gambarGalat(); return; }
+    if (!D) return;
+
+    sNama.textContent = D.studioName;
+    sNom.textContent = rp(D.amount);
+
+    const sisa = D.contractValue !== null ? Math.max(0, D.contractValue - D.amount) : null;
+    const baris: [string, string][] = [
+      [teks("proyek"), lolos(D.projectTitle)],
+      [teks("idBayar"), `<span class="struk__kode">${no()}</span>`],
+      [teks("kategori"), lolos(peta("jenis")[D.kind] ?? D.kind)],
+      [teks("metode"), lolos(peta("cara")[D.method] ?? D.method)],
+    ];
+    if (D.receiver) baris.push([teks("penerima"), lolos(D.receiver)]);
+    baris.push([teks("tanggal"), tgl(D.paidAt)]);
+    if (D.contractValue !== null) {
+      /* Sisa ditulis sebagai kalimat penuh, bukan "· sisa Rp…" yang menempel:
+         angka kedua di baris yang sama mudah terbaca sebagai jumlah dibayar. */
+      baris.push([teks("kontrak"), rp(D.contractValue) +
+        (sisa && sisa > 0
+          ? `<span class="struk__sisa">${teks("sisa").replace("{x}", sisa.toLocaleString("id-ID"))}</span>`
+          : "")]);
+    }
+    sRinci.innerHTML = baris.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+    sSah.textContent = teks("sah").replace("{s}", D.studioName);
+    sKaki.textContent = teks("kaki").replace("{n}", "#" + no()).replace("{d}", tgl(D.paidAt));
+  };
+
+  const muat = () => {
+    const token = new URLSearchParams(location.search).get("t") ?? "";
+    /* Bentuk token diperiksa di klien juga, supaya tautan yang terpotong saat
+       disalin dari WhatsApp langsung dijawab tanpa satu permintaan pun. */
+    if (!/^[0-9a-f]{32}$/.test(token)) {
+      galatKini = "galat"; tampilkan("galat"); gambar(); return;
+    }
+    galatKini = null;
+    tampilkan("muat");
+    fetch(`${API}/api/v1/receipt/${token}`)
+      .then((res) => {
+        if (res.status === 404) throw new Error("hilang");
+        if (!res.ok) throw new Error("jaringan");
+        return res.json();
+      })
+      .then((isi) => {
+        D = isi.data as Bukti;
+        galatKini = null;
+        tampilkan("berhasil");
+        gambar();
+      })
+      .catch((e: Error) => {
+        galatKini = e.message === "hilang" ? "hilang" : "jaringan";
+        tampilkan("galat");
+        gambar();
+      });
+  };
+
+  document.querySelectorAll<HTMLElement>("[data-bhs]").forEach((b) =>
+    b.addEventListener("click", () => {
+      B = b.dataset.bhs === "id" ? "id" : "en";
+      document.querySelectorAll("[data-bhs]").forEach((x) =>
+        x.setAttribute("aria-pressed", String(x === b)));
+      gambar();
+    }));
+
+  ambil("bCetak")?.addEventListener("click", () => print());
+  gTombol.addEventListener("click", (e) => {
+    /* Pada keadaan "jaringan" tombolnya mencoba lagi, bukan membuka /kontak —
+       memindahkan orang ke halaman kontak karena satu permintaan gagal
+       membuang halaman yang sebenarnya cuma perlu diulang. */
+    if (galatKini === "jaringan") { e.preventDefault(); muat(); }
+  });
+
+  muat();
+})();
+</script>
+
+<style is:global>
+/* ══ Bukti pembayaran ══════════════════════════════════════════════════════
+   Dibuka dari tautan WhatsApp, hampir selalu di ponsel, dan sering disimpan
+   atau dicetak. Jadi: satu kolom sempit, nominal sebagai tokoh utamanya, dan
+   gaya cetak yang benar-benar ditulis — bukan halaman gelap yang menghabiskan
+   satu kartrid tinta. */
+.struk{max-width:520px;margin-inline:auto;padding:0 20px}
+
+.struk__kop{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:26px 0 22px;flex-wrap:wrap}
+.struk__nama{display:flex;align-items:center;gap:10px;font-family:var(--judul);font-size:15px;
+  color:var(--teks)}
+
+.kartu-struk{border:1px solid var(--garis-2);background:var(--gelap);position:relative}
+/* Garis kepala dokumen — fungsinya sama seperti garis tebal di kop surat:
+   menandai "di sini dokumennya mulai". Bukan sobekan tiruan; yang itu cuma
+   kostum dan memakai warna aksen untuk sesuatu yang tidak bermakna. */
+.kartu-struk::before{content:"";position:absolute;left:0;right:0;top:-1px;height:3px;
+  background:var(--aksen)}
+
+.struk__puncak{padding:34px 30px 28px;text-align:center;
+  border-bottom:1px dashed var(--garis-2)}
+.struk__l{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--teks-3);
+  font-weight:600}
+.struk__nom{font-family:var(--judul);font-size:clamp(2rem,7vw,2.6rem);color:var(--teks);
+  line-height:1.1;margin:14px 0 16px;font-variant-numeric:tabular-nums}
+.struk__cap{display:inline-flex;align-items:center;gap:8px;border:1px solid #1F5B4C;
+  background:rgba(16,185,129,.13);color:#34D399;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;font-weight:600;padding:6px 13px}
+.struk__cap i{width:7px;height:7px;border-radius:99px;background:currentColor;display:block}
+
+.struk__rinci{margin:0;padding:8px 30px 26px}
+.struk__rinci > div{display:flex;justify-content:space-between;gap:20px;padding:14px 0;
+  border-bottom:1px solid var(--garis)}
+.struk__rinci > div:last-child{border-bottom:0}
+.struk__rinci dt{font-size:13px;color:var(--teks-3);flex:none}
+.struk__rinci dd{margin:0;font-size:14px;color:var(--teks);text-align:right;min-width:0;
+  word-break:break-word}
+.struk__kode{font-family:var(--font-kode,ui-monospace,monospace);letter-spacing:.08em}
+.struk__sisa{display:block;font-size:12.5px;color:#FBBF24;margin-top:4px}
+
+.struk__sah{padding:18px 30px 24px;border-top:1px dashed var(--garis-2);
+  display:flex;gap:12px;align-items:flex-start}
+.struk__sah svg{flex:none;margin-top:1px}
+.struk__sah p{margin:0;font-size:12px;color:var(--teks-2);line-height:1.6}
+
+.struk__aksi{display:flex;gap:10px;flex-wrap:wrap;padding:22px 0 8px}
+.struk__aksi .btn{flex:1;min-width:150px}
+.struk__kaki{padding:14px 0 40px;text-align:center;font-size:11.5px;color:var(--teks-3);
+  font-variant-numeric:tabular-nums}
+
+.bhs{display:inline-flex;border:1px solid var(--garis-2);border-radius:var(--r);overflow:hidden}
+.bhs button{appearance:none;background:transparent;border:0;font-family:var(--tubuh);
+  font-size:11.5px;font-weight:600;letter-spacing:.06em;color:var(--teks-3);padding:7px 12px;
+  cursor:pointer;transition:all 180ms var(--e-halus)}
+.bhs button + button{border-left:1px solid var(--garis-2)}
+.bhs button[aria-pressed="true"]{background:rgba(45,212,191,.12);color:var(--aksen)}
+.bhs button:hover{color:var(--teks)}
+
+/* Tombol bahasa 21px di ponsel — sama seperti di portal, dinaikkan ke ambang
+   sasaran sentuh. */
+@media (max-width:900px){
+  .bhs button{min-height:44px;padding-inline:16px}
+  .struk{padding:0 16px}
+  .struk__puncak{padding:28px 20px 24px}
+  .struk__rinci{padding:6px 20px 22px}
+  .struk__sah{padding:16px 20px 20px}
+}
+
+/* Keadaan galat & memuat */
+.struk__kosong{padding:52px 30px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:14px}
+.struk__kosong .kotak-ikon{width:46px;height:46px}
+.struk__kosong h1{margin:0;font-family:var(--judul);font-size:19px;color:var(--teks);
+  font-weight:400}
+.struk__kosong p{margin:0;font-size:13.5px;color:var(--teks-2);max-width:34ch;line-height:1.6}
+.rangka-b{height:13px;background:var(--sel);position:relative;overflow:hidden}
+.rangka-b::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  animation:sapu 1.4s linear infinite}
+@keyframes sapu{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){.rangka-b::after{animation:none}}
+
+/* ── Cetak ────────────────────────────────────────────────────────────────
+   Kertas itu putih. Menyerahkan halaman gelap apa adanya ke printer berarti
+   klien mencetak satu halaman penuh tinta hitam — atau, kalau latar diabaikan,
+   teks putih di atas putih dan kuitansi kosong. */
+@media print{
+  :root{color-scheme:light}
+  body{background:#fff!important;color:#111!important}
+  .nav,.struk__aksi,.bar-atas,.lompat{display:none!important}
+  /* Garis kisi dan bidik biru cetak sebagai coretan liar di kertas — mereka
+     bahasa layar, bukan bahasa dokumen. */
+  .pita,.dalam{border:0!important}
+  .dalam::before,.dalam::after{display:none!important}
+  .struk{max-width:150mm;padding:0;margin-inline:auto}
+  .kartu-struk{border:1px solid #bbb;background:#fff!important}
+  .kartu-struk::before{background:#111}
+  .struk__nama,.struk__nom,.struk__rinci dd,.struk__kosong h1{color:#111!important}
+  .struk__l,.struk__rinci dt,.struk__kaki,.struk__sah p{color:#555!important}
+  .struk__cap{border-color:#137a5f;background:#fff!important;color:#0d6b52!important}
+  .struk__sisa{color:#8a5a00!important}
+  .struk__puncak,.struk__sah{border-color:#bbb}
+  .struk__rinci > div{border-color:#ddd}
+}
+</style>

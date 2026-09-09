@@ -1,68 +1,170 @@
 ---
 import { getSettings } from "../lib/api";
 
-const year = new Date().getFullYear();
 const settings = await getSettings();
-const keterangan = settings.tagline || (settings.city ? `Arsitektur & Interior — ${settings.city}` : "Arsitektur & Interior — Indonesia");
+const nama = settings.studioName?.trim() || "Dirga Pahlevi Architecture";
+const tahun = new Date().getFullYear();
+const kota = settings.city?.trim() || "Indonesia";
+
+// Nomor Indonesia ditulis pemilik dengan 0 di depan; wa.me menolak bentuk itu
+// dan minta format internasional tanpa tanda apa pun.
+const waTautan = (nomor: string) => {
+  const angka = nomor.replace(/[^\d+]/g, "");
+  const intl = angka.startsWith("+") ? angka.slice(1) : angka.startsWith("0") ? `62${angka.slice(1)}` : angka;
+  return `https://wa.me/${intl}`;
+};
+
+const situs = [
+  { href: "/proyek", label: "Work" },
+  { href: "/studio", label: "Studio" },
+  /* Journal ditahan sampai rutenya ada. Dilepas dari daftar, BUKAN dihapus:
+     mengembalikannya nanti cukup melepas komentar ini. Menayangkannya lebih
+     dulu berarti 25 tautan menuju 404 di setiap halaman. */
+  // { href: "/jurnal", label: "Journal" },
+  { href: "/kontak", label: "Contact" },
+];
+const klien = [
+  { href: "/progres", label: "Project portal" },
+  { href: "/bukti", label: "Payment receipt" },
+  { href: "/faq", label: "FAQ" },
+];
+// Baris kontak yang datanya belum diisi pemilik DIHILANGKAN, bukan ditulis
+// kosong — tautan mati lebih buruk daripada tautan yang tidak ada.
+const kontak = [
+  settings.email ? { href: `mailto:${settings.email}`, label: settings.email } : null,
+  settings.phone ? { href: waTautan(settings.phone), label: "WhatsApp" } : null,
+  settings.instagramUrl ? { href: settings.instagramUrl, label: "Instagram" } : null,
+].filter((x): x is { href: string; label: string } => x !== null);
+
+const luar = (href: string) => /^https?:\/\//.test(href);
 ---
 
-<footer class="site-footer">
-  <div class="shell footer-inner">
-    <div>
-      <p class="footer-name">
-        {settings.logoUrl && <img src={settings.logoUrl} alt="" class="footer-logo" />}
-        {settings.studioName?.trim() || "Dirga Pahlevi Architecture"}
-      </p>
-      <p class="footer-note">{keterangan}</p>
+<div class="pita pita--akhir">
+  <div class="dalam">
+    <div class="baris b4">
+      <div class="sel">
+        <span class="rowx kaki-merek">
+          {
+            settings.logoUrl ? (
+              <img src={settings.logoUrl} alt="" width="18" height="18" class="kaki-logo" />
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 1.5 18 6v8l-8 4.5L2 14V6l8-4.5Z" stroke="#2DD4BF" stroke-width="1.6" />
+              </svg>
+            )
+          }
+          <span class="label kaki-nama">{nama.toUpperCase()}</span>
+        </span>
+        <div class="s16"></div>
+        <p class="dim kecil">Architecture studio<br />{kota}</p>
+      </div>
+
+      <div class="sel">
+        <span class="label label--redup">SITE</span>
+        <div class="s16"></div>
+        <ul class="kaki-tautan">
+          {situs.map((t) => (<li><a href={t.href}>{t.label}</a></li>))}
+        </ul>
+      </div>
+
+      <div class="sel">
+        <span class="label label--redup">CLIENTS</span>
+        <div class="s16"></div>
+        <ul class="kaki-tautan">
+          {klien.map((t) => (<li><a href={t.href}>{t.label}</a></li>))}
+        </ul>
+      </div>
+
+      <div class="sel">
+        <span class="label label--redup">CONTACT</span>
+        <div class="s16"></div>
+        {
+          kontak.length ? (
+            <ul class="kaki-tautan">
+              {kontak.map((t) => (
+                <li>
+                  <a
+                    href={t.href}
+                    rel={luar(t.href) ? "noopener noreferrer" : undefined}
+                    target={luar(t.href) ? "_blank" : undefined}
+                  >
+                    {t.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="dim kecil">Contact details are set in the studio panel.</p>
+          )
+        }
+      </div>
     </div>
-    <div>
-      {settings.email && (
-        <p class="footer-note">
-          <a href={`mailto:${settings.email}`}>{settings.email}</a>
-        </p>
-      )}
-      <p class="footer-note">
-        <a href="/privasi">Kebijakan Privasi</a>
-      </p>
-      <p class="footer-note">&copy; {year}</p>
+
+    <div class="baris">
+      <div class="sel kaki-bawah">
+        <span class="dim kecil">© {tahun} {nama}</span>
+        <a class="dim kecil kaki-privasi" href="/privasi">Privacy</a>
+      </div>
     </div>
   </div>
-</footer>
+</div>
 
 <style>
-  .site-footer {
-    border-top: 1px solid var(--border);
-    margin-top: clamp(var(--space-7), 8vw, var(--space-8));
+  /* publik.css tidak menyetel <a> secara global — sengaja, supaya tiap
+     komponen memutuskan sendiri. Konsekuensinya tautan kaki yang tidak
+     diberi aturan akan tampil biru bergaris bawah bawaan peramban. */
+  /* Ukuran huruf harus di <li>, bukan cuma di <a>: kotak baris <li>
+     memakai strut miliknya sendiri, jadi <li> 15px berisi <a> 13px tetap
+     setinggi 15px×1,65. Di mockup ini satu <p> ber-<br>, dan selisihnya
+     langsung jadi 13px di tinggi kaki. */
+  .kaki-tautan {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.65;
   }
-
-  .footer-inner {
+  .kaki-tautan a {
+    display: inline-block;
+    color: var(--teks-2);
+    text-decoration: none;
+    /* Alamat email studio 220px dan tidak punya satu pun titik patah alami:
+       di 390px ia mendorong dokumen jadi 432px. Di mockup isinya cuma
+       "hello@…" sehingga tidak pernah terjadi — ini baru muncul dengan data
+       sungguhan. */
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+  .kaki-tautan a:hover {
+    color: var(--aksen);
+  }
+  .kaki-tautan a:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--cincin);
+  }
+  .kaki-merek {
+    gap: 9px;
+  }
+  .kaki-logo {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    object-fit: contain;
+  }
+  .kaki-nama {
+    letter-spacing: 0.14em;
+  }
+  .kaki-bawah {
     display: flex;
     justify-content: space-between;
-    gap: 2rem;
+    gap: 20px;
     flex-wrap: wrap;
-    padding-block: 3rem;
+    padding: 20px 32px;
   }
-
-  .footer-name {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
+  .kaki-privasi {
+    text-decoration: none;
   }
-
-  .footer-logo {
-    width: 1.75rem;
-    height: 1.75rem;
-    flex: none;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
-  }
-
-  .footer-note {
-    font-size: 0.85rem;
-    color: var(--text-faint);
-    margin: 0;
+  .kaki-privasi:hover {
+    color: var(--aksen);
   }
 </style>

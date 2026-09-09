@@ -97,6 +97,9 @@ interface ClientRow {
   title: string;
   cover_image_key: string | null;
   phase: string;
+  category: string;
+  city: string | null;
+  contract_value: string | null;
 }
 
 interface DocumentRow {
@@ -109,6 +112,7 @@ interface DocumentRow {
   file_size: string | null;
   mime_type: string | null;
   duration_ms: number | null;
+  created_at: string;
 }
 
 function rowToClientDocument(row: DocumentRow, assetBase: string, comments: DocumentComment[]): ClientDocument {
@@ -122,6 +126,9 @@ function rowToClientDocument(row: DocumentRow, assetBase: string, comments: Docu
     fileSize: row.file_size === null ? null : Number(row.file_size),
     mimeType: row.mime_type,
     durationMs: row.duration_ms,
+    // Sejak kapan dokumen ini menunggu klien. Tanpa tanggalnya, "sudah lama"
+    // dan "baru saja" tampak sama persis di daftar.
+    createdAt: row.created_at,
     comments,
   };
 }
@@ -150,7 +157,8 @@ function rowToClientInvoice(row: InvoiceRow): ClientInvoice {
  */
 export async function getByToken(sql: Sql, assetBase: string, token: string): Promise<ClientProgressView | null> {
   const rows = await sql<ClientRow[]>`
-    select p.id as project_id, p.title, p.cover_image_key, pr.phase
+    select p.id as project_id, p.title, p.cover_image_key, pr.phase,
+           p.category::text as category, p.city, p.contract_value
     from public.project_progress pr
     join public.projects p on p.id = pr.project_id
     where pr.access_token = ${token}`;
@@ -166,7 +174,8 @@ export async function getByToken(sql: Sql, assetBase: string, token: string): Pr
     order by created_at desc`;
 
   const documents = await sql<DocumentRow[]>`
-    select id, title, file_key, kind, status, client_note, file_size, mime_type, duration_ms
+    select id, title, file_key, kind, status, client_note, file_size, mime_type,
+           duration_ms, created_at
     from public.project_documents
     where project_id = ${projectID}::uuid
     order by sort_order, created_at`;
@@ -189,6 +198,11 @@ export async function getByToken(sql: Sql, assetBase: string, token: string): Pr
     projectTitle: rows[0].title,
     coverImageUrl: url(assetBase, rows[0].cover_image_key),
     phase: rows[0].phase,
+    category: rows[0].category,
+    city: rows[0].city,
+    contractValue: rows[0].contract_value !== null ? Number(rows[0].contract_value) : null,
+    // updates sudah diurutkan created_at desc, jadi yang pertama yang terbaru.
+    updatedAt: updates[0]?.created_at ?? null,
     updates: updates.map((r) => rowToUpdate(r, assetBase)),
     documents: documentsWithComments,
     invoices: invoices.map(rowToClientInvoice),

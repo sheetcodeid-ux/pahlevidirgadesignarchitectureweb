@@ -1,104 +1,828 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import ProjectCard from "../components/ProjectCard.astro";
-import { Icon } from "../components/ui/Icon";
-import { listProjects, listTestimonials } from "../lib/api";
+import {
+  listProjects,
+  listTestimonials,
+  getSettings,
+  CATEGORY_LABELS_EN,
+  type Project,
+  type ProjectImage,
+} from "../lib/api";
+import { SOROTAN_FAQ } from "../lib/faq";
+import { MITRA, MITRA_MASIH_PENANDA, TAHUN_BERDIRI } from "../lib/menunggu";
 
-const featured = await listProjects({ featured: true, limit: 6 });
+const settings = await getSettings();
+const kota = settings.city?.trim() || "Indonesia";
+
+const semua = await listProjects({ limit: 200 });
 const testimoni = await listTestimonials(true);
+
+// Showcase: proyek yang diunggulkan lebih dulu, lalu yang terbaru. Maksimal
+// tiga, karena bilah tabnya dirancang untuk tiga.
+const tahunDari = (p: Project) => p.year ?? (p.publishedAt ? new Date(p.publishedAt).getFullYear() : 0);
+const sorot = [...semua]
+  .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || tahunDari(b) - tahunDari(a))
+  .slice(0, 3);
+
+// Foto yang dipakai di tiga blok proses. Diambil dari proyek yang ada, bukan
+// dari berkas statis — kalau belum ada fotonya, bloknya tetap tampil tanpa
+// gambar dan tidak menampilkan kotak kosong bergaris.
+interface FotoBerlabel extends ProjectImage {
+  proyek: string;
+}
+const semuaFoto: FotoBerlabel[] = sorot.flatMap((p) =>
+  (p.images ?? []).map((f) => ({ ...f, proyek: p.title })),
+);
+const fotoProses = [semuaFoto[0], semuaFoto[Math.floor(semuaFoto.length / 2)], semuaFoto[semuaFoto.length - 1]]
+  .filter((f, i, arr) => f && arr.findIndex((x) => x?.id === f.id) === i);
+
+// Foto besar di bawah hero. Diambil dari daftar berlabel yang sama supaya
+// keterangannya bisa menyebut proyek asalnya.
+const heroFoto: FotoBerlabel | null = semuaFoto[0] ?? null;
+
+/* Marquee "materials & partners we specify" — isinya dari lib/menunggu.ts,
+   satu-satunya tempat data yang masih ditunggu pemilik disimpan. */
+
+const proses = [
+  {
+    no: "01. LISTEN",
+    judul: "We start from how you live, not from a style.",
+    teks: "One long conversation, then a written brief you can correct yourself — in your own words, in your own time zone.",
+  },
+  {
+    no: "02. DRAW",
+    judul: "Concept, plans and construction drawings — all reviewable from a phone.",
+    teks: "Every document can be approved or sent back for changes right in your project page, with the whole conversation kept next to it.",
+  },
+  {
+    no: "03. BUILD & STAY",
+    judul: "You know where the project is, every week.",
+    teks: "Site photos, invoices and payment receipts land in the same page. No news gets lost between a WhatsApp thread and a spreadsheet.",
+  },
+];
+
+const IKON: Record<string, string> = {
+  globe: "M10 1a9 9 0 100 18 9 9 0 000-18ZM1 10h18M10 1c2.5 2.4 3.8 5.4 3.8 9S12.5 17.6 10 19c-2.5-1.4-3.8-4.4-3.8-9S7.5 3.4 10 1Z",
+  mata: "M1 10s3.3-5.5 9-5.5S19 10 19 10s-3.3 5.5-9 5.5S1 10 1 10Zm9 2.2a2.2 2.2 0 100-4.4 2.2 2.2 0 000 4.4Z",
+  kunci: "M5 9V6.5a5 5 0 0110 0V9M3.5 9h13v8.5h-13V9Z",
+  kirim: "M18.5 1.5 9 11M18.5 1.5 12.5 18.5 9 11 1.5 7.5 18.5 1.5Z",
+  berkas: "M11.5 1.5H4.5v17h11V5.5l-4-4Zm0 0v4h4",
+  jam: "M10 1a9 9 0 100 18 9 9 0 000-18Zm0 4.5V10l3 2",
+};
+const fitur: [keyof typeof IKON, string, string][] = [
+  ["globe", "We work across time zones", "Every approval happens in your project page, so nothing waits for office hours in Jakarta."],
+  ["mata", "You always know where it stands", "Phases, documents and site photos are open whenever you open the link."],
+  ["kirim", "Money in is recorded, not promised", "Every payment gets a receipt number you can open yourself from WhatsApp."],
+  ["berkas", "Drawings you can approve or push back", "With the whole thread kept beside them, so no two versions get confused."],
+  ["kunci", "Your project data stays closed", "Only you and the studio can open it. Tested, not assumed."],
+  ["jam", "First reply under 24 hours", "A small studio — which is exactly why your message doesn’t pile up."],
+];
+
+const janji = [
+  ["M10 1a9 9 0 100 18 9 9 0 000-18ZM10 5.5V10l3 2", "A reply within 24 hours", "Small studio — which is exactly why your message doesn’t queue."],
+  ["M11.5 1.5h-7v17h11V5.5l-4-4Zm0 0v4h4M7 11h6M7 14h4", "Every drawing approved online", "Approve or request changes from your phone, with the whole thread kept."],
+  ["M2.5 5.5h15v9h-15zM2.5 9h15M5.5 12h3", "Receipts you can open yourself", "Every payment gets a link. No “trust me, it’s recorded”."],
+];
+
+const fakta = (p: Project) =>
+  [
+    { label: "LOCATION", nilai: p.location || p.city },
+    { label: "YEAR", nilai: p.year ? String(p.year) : null, mono: true },
+    { label: "TYPE", nilai: CATEGORY_LABELS_EN[p.category] },
+    { label: "AREA", nilai: p.areaSqm ? `${p.areaSqm.toLocaleString("en-US")} m²` : null, mono: true },
+  ].filter((f) => f.nilai);
 ---
 
 <BaseLayout
-  title="Studio Arsitektur"
-  description="Studio arsitektur di Pontianak yang merancang coffee shop, ruang hospitality, dan rumah tropis — dengan pendekatan iklim khatulistiwa yang tenang dan tahan lama."
+  title="Architecture you can watch being built"
+  description={`Houses, cafés and workplaces across ${kota} and Indonesia. You get the drawings, the schedule, and one link that shows exactly where your project stands.`}
+  image={sorot[0]?.coverImageUrl}
 >
-  <section class="hero shell bg-dots">
-    <p class="eyebrow">Studio Arsitektur Pontianak</p>
-    <h1>Ruang yang menua dengan baik.</h1>
-    <p class="lede">
-      Kami merancang coffee shop dan rumah tinggal di Pontianak —
-      memperhatikan cahaya, aliran udara, dan material yang jujur, agar
-      ruang tetap relevan jauh setelah selesai dibangun.
-    </p>
-    <a href="/proyek" class="btn btn--primary btn--lg">Lihat proyek</a>
-  </section>
-
-  <section class="section shell">
-    <h2 class="eyebrow">Pilihan proyek</h2>
-
-    {
-      featured.length > 0 ? (
-        <ul class="project-grid">
-          {featured.map((project, index) => (
-            <ProjectCard project={project} priority={index < 2} />
-          ))}
-        </ul>
-      ) : (
-        <p class="lede">
-          Belum ada proyek yang dipublikasikan. Tandai proyek sebagai
-          <em>featured</em> di panel admin agar tampil di sini.
+  <div class="pita">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi isi--longgar hero">
+        {/* Spasi sebelum tahun datang dari baris baru JSX; menambah {" "}
+            membuatnya jadi dua spasi, dan letter-spacing .18em melebarkan
+            spasi kedua itu jadi celah yang terlihat. */}
+        <span class="label masuk"
+          >ARCHITECTURE STUDIO · INDONESIA · SINCE {TAHUN_BERDIRI ?? <span class="tunggu">20XX</span>}</span
+        >
+        <div class="s24"></div>
+        <h1 class="h1">
+          <span class="brs"><i>We design buildings you can</i></span>
+          <span class="brs"><i>watch being built — <span class="ak glow">from anywhere</span>.</i></span>
+        </h1>
+        <div class="s24"></div>
+        <p class="lead masuk masuk--3 hero__lead">
+          Houses, cafés and workplaces across Indonesia. You get the drawings, the schedule, and one
+          link that shows you exactly where your project stands — this week, not last quarter.
         </p>
-      )
-    }
-  </section>
+        <div class="s36"></div>
+        <div class="rowx masuk masuk--4 hero__tombol">
+          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
+          <a class="btn" href="/proyek">See our work <span class="ar">→</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   {
-    testimoni.length > 0 && (
-      <section class="section shell">
-        <h2 class="eyebrow">Kata klien</h2>
-        <ul class="testimoni-grid">
-          {testimoni.map((t) => (
-            <li class="testimoni-card">
-              <span class="icon-tile"><Icon name="quote" size={18} /></span>
-              <p class="testimoni-card__quote">{t.quote}</p>
-              <span class="testimoni-card__nama">{t.clientName}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+    heroFoto && (
+      <div class="pita hero-foto">
+        <div class="dalam">
+          <div class="foto foto--nyata">
+            <img src={heroFoto.url} alt={heroFoto.altText ?? ""} width="1600" height="900" fetchpriority="high" decoding="async" />
+            {heroFoto.caption && (
+              <span class="foto__ket">
+                <b>{heroFoto.proyek}</b> {heroFoto.caption}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
     )
   }
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris b3">
+        {
+          janji.map(([d, judul, teks]) => (
+            <div class="sel">
+              <div class="janji">
+                <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d={d} /></svg>
+                <span>
+                  <span class="hs">{judul}</span>
+                  <div class="s6"></div>
+                  <span class="mut kecil">{teks}</span>
+                </span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  {
+    MITRA.length > 0 && (
+      <div class="pita">
+        <div class="dalam">
+          <div class="isi isi--rapat mq-kop">
+            {/* Judulnya "clients", bukan "materials & partners", karena yang dikirim
+                pemilik adalah nama klien. Judul lama di atas daftar klien adalah
+                pernyataan yang tidak benar, bukan sekadar salah kata. */}
+            <span class="label label--redup">SELECTED CLIENTS</span>
+            <button class="pil" id="mqJeda" type="button" aria-pressed="false">
+              <span aria-hidden="true">❙❙</span> Pause
+            </button>
+          </div>
+          <div class="mq mq--garis">
+            {/* Daftar digandakan supaya gulirannya menyambung tanpa jeda. */}
+            <div class="mq__rel" id="mqRel">
+              {[...MITRA, ...MITRA].map((m) => (
+                <div class={MITRA_MASIH_PENANDA ? "mq__i tunggu" : "mq__i"}>{m}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    sorot.length > 0 && (
+      <div class="pita" id="kerja">
+        <div class="dalam">
+          {sorot.map((p, i) => (
+            <div class="sorot" data-sorot={i} hidden={i !== 0}>
+              <div class="isi">
+                <span class="label">SELECTED WORK</span>
+                <div class="s16"></div>
+                <h2 class="h2">{p.title}{p.subtitle ? ` — ${p.subtitle}` : ""}</h2>
+                {p.summary && (
+                  <>
+                    <div class="s16"></div>
+                    <p class="lead">{p.summary}</p>
+                  </>
+                )}
+              </div>
+              <div class={`baris b${Math.min(fakta(p).length, 4)} sorot__fakta`}>
+                {fakta(p).map((f) => (
+                  <div class="sel">
+                    <span class="label label--redup">{f.label}</span>
+                    <div class="s6"></div>
+                    <span class={f.mono ? "hs mono" : "hs"}>{f.nilai}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div class="tabs" id="swTabs" role="tablist">
+            <span class="ind" id="swInd"></span>
+            {sorot.map((p, i) => (
+              <button class="tab" type="button" role="tab" data-ke={i}
+                aria-selected={i === 0 ? "true" : "false"} tabindex={i === 0 ? 0 : -1}>
+                {String(i + 1).padStart(2, "0")} · {p.title}
+              </button>
+            ))}
+          </div>
+
+          {sorot.map((p, i) => (
+            <div data-strip={i} hidden={i !== 0}>
+              <div class="strip" data-gulir>
+                {(p.images ?? []).map((f, k) => (
+                  <div class="foto foto--sorot">
+                    <img src={f.url} alt={f.altText ?? ""} loading={i === 0 && k < 2 ? "eager" : "lazy"} decoding="async" width="1600" height="900" />
+                    {f.caption && <span class="foto__ket"><b>{String(k + 1).padStart(2, "0")}</b> {f.caption}</span>}
+                  </div>
+                ))}
+              </div>
+              <div class="rel"><i data-prog></i></div>
+              <div class="film" data-film aria-label="Choose a photo">
+                {(p.images ?? []).map((_, k) => (
+                  <button type="button" data-ke={k} aria-current={k === 0 ? "true" : "false"}>
+                    {String(k + 1).padStart(2, "0")}
+                  </button>
+                ))}
+              </div>
+              <div class="isi isi--rapat sorot__kaki">
+                <span class="dim kecil" data-info role="status" aria-live="polite">—</span>
+                <span class="dim kecil">drag · scroll · arrow keys</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  <div class="pita pita--gelap">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi">
+        <span class="label">WHILE IT IS BEING BUILT</span>
+        <div class="s16"></div>
+        <h2 class="h2">The part almost no studio our size gives you.</h2>
+        <div class="s16"></div>
+        <p class="lead">
+          If you are sending money across a border to build something you cannot visit every week,
+          the real fear isn’t “will it look good”. It is <strong>“will I know what is happening”</strong>.
+          So every project comes with its own page — phases, documents you can approve, invoices, and
+          a receipt for every payment you can open yourself.
+        </p>
+      </div>
+      <div class="portal-bung">
+        <div class="kilau">
+          {/* Gambaran tampilan portal — angkanya contoh, bukan data proyek
+              yang sedang berjalan. */}
+          <div class="panel portal">
+            <div class="portal__bar">
+              <span class="portal__titik"></span><span class="portal__titik"></span><span class="portal__titik"></span>
+              <span class="dim portal__url">pahlevidirgaarchitecture.com/progres</span>
+            </div>
+            <div class="portal__isi">
+              <div class="portal__rel">
+                <span class="label label--redup portal__kecil">YOUR PROJECT</span>
+                <div class="s16"></div>
+                <div class="hs portal__nama">Your project</div>
+                <div class="s16"></div>
+                {[
+                  ["Brief", "cek"],
+                  ["Concept", "cek"],
+                  ["Construction drawings", "kini"],
+                  ["On site", "nanti"],
+                  ["Handover", "nanti"],
+                ].map(([t, s]) => (
+                  <div class="cek">
+                    <i class={`cek--${s}`}>
+                      {s === "cek" && (
+                        <svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5l3 3 5-6" stroke="#2DD4BF" stroke-width="1.8" fill="none" /></svg>
+                      )}
+                    </i>
+                    <span class={s === "kini" ? "portal__fase portal__fase--kini" : "portal__fase"}>{t}</span>
+                  </div>
+                ))}
+              </div>
+              <div class="portal__kanan">
+                <div class="portal__angka">
+                  {[["PHASE", "3 / 5", false], ["PAID", "50%", true], ["DOCUMENTS", "12", false]].map(([l, v, ak]) => (
+                    <div class="portal__kotak">
+                      <span class="label label--redup portal__mini">{l}</span>
+                      <div class="s6"></div>
+                      <span class={ak ? "hs ak portal__nilai" : "hs portal__nilai"}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+                <div class="s16"></div>
+                <div class="portal__batang"><div></div></div>
+                <div class="s16"></div>
+                <div class="foto portal__foto"><span>LATEST SITE PHOTO</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi">
+        <span class="label">HOW IT GOES</span>
+        <div class="s16"></div>
+        <h2 class="h2">Three steps before a single line is drawn.</h2>
+      </div>
+      {
+        proses.map((l, i) => {
+          const f = fotoProses[i];
+          const teksSel = (
+            <div class="sel proses__teks">
+              <span class="label">{l.no}</span>
+              <div class="s16"></div>
+              <h3 class="h3">{l.judul}</h3>
+              <div class="s16"></div>
+              <p class="mut kecil">{l.teks}</p>
+            </div>
+          );
+          const fotoSel = f ? (
+            <div class="sel proses__foto">
+              <div class="foto foto--nyata">
+                <img src={f.url} alt={f.altText ?? ""} loading="lazy" decoding="async" width="1600" height="900" />
+                {f.caption && <span class="foto__ket"><b>{f.proyek}</b> {f.caption}</span>}
+              </div>
+            </div>
+          ) : null;
+          return (
+            <div class={fotoSel ? "baris b2" : "baris"}>
+              {fotoSel && i % 2 === 0 ? fotoSel : null}
+              {teksSel}
+              {fotoSel && i % 2 === 1 ? fotoSel : null}
+            </div>
+          );
+        })
+      }
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi">
+        <span class="label">WHY OWNERS ABROAD PICK US</span>
+        <div class="s16"></div>
+        <h2 class="h2">Distance is a scheduling problem, not a design problem.</h2>
+      </div>
+      {
+        [fitur.slice(0, 3), fitur.slice(3)].map((baris) => (
+          <div class="baris b3">
+            {baris.map(([ikon, judul, teks]) => (
+              <div class="sel">
+                <span class="kotak-ikon">
+                  <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d={IKON[ikon]} /></svg>
+                </span>
+                <div class="s16"></div>
+                <p class="hs">{judul}</p>
+                <div class="s6"></div>
+                <p class="mut kecil">{teks}</p>
+              </div>
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi isi--rapat"><span class="label">FROM CLIENTS</span></div>
+      <div class="baris b3">
+        {
+          testimoni.length > 0
+            ? testimoni.slice(0, 3).map((t) => (
+                <div class="sel">
+                  <p class="mut">“{t.quote}”</p>
+                  <div class="s16"></div>
+                  <span class="hs kutip__nama">{t.clientName}</span>
+                </div>
+              ))
+            : (
+              <>
+                <div class="sel sel--kosong kutip-kosong">
+                  <span class="kecil kutip-kosong__t">
+                    No testimonials yet
+                    <br />
+                    <span class="dim">This fills itself from the client portal — we do not write them</span>
+                  </span>
+                </div>
+                <div class="sel sel--kosong kutip-kosong"><span class="dim kecil">—</span></div>
+                <div class="sel sel--kosong kutip-kosong"><span class="dim kecil">—</span></div>
+              </>
+            )
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris baris-faq">
+        <div class="sel faq-kiri">
+          <span class="label">BEFORE YOU ASK</span>
+          <div class="s16"></div>
+          <h3 class="h3">The five questions we get most.</h3>
+          <div class="s16"></div>
+          <a class="btn" href="/faq">All questions <span class="ar">→</span></a>
+        </div>
+        <div class="sel faq-kanan">
+          {
+            SOROTAN_FAQ.map((t) => (
+              <a class="ak-baris" href={`/faq#${t.id}`}>
+                <span class="kecil">{t.tanya}</span>
+                <span class="dim ar">→</span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita pita--akhir">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi ajak">
+        <h2 class="h2 ajak__judul">
+          Tell us the site, the budget, and <span class="ak">what bothers you</span> about it.
+        </h2>
+        <div class="s16"></div>
+        <p class="lead ajak__lead">
+          First reply usually within 24 hours. The first conversation costs nothing.
+        </p>
+        <div class="s36"></div>
+        <div class="rowx ajak__tombol">
+          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
+          {settings.email && <a class="btn" href={`mailto:${settings.email}`}>Email us instead</a>}
+        </div>
+      </div>
+    </div>
+  </div>
 </BaseLayout>
 
 <style>
+  /* ── Dari blok CSS khusus halaman di mockup yang di-ACC ──────────────── */
+  .foto--nyata {
+    aspect-ratio: var(--rasio-foto);
+    width: 100%;
+  }
+  .foto__ket {
+    position: absolute;
+    left: 14px;
+    bottom: 12px;
+    right: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    color: #6e6e78;
+    text-align: left;
+  }
+  .foto__ket b {
+    color: var(--aksen);
+    font-weight: 600;
+    flex: none;
+  }
+  .hero-foto {
+    position: relative;
+    border-top: 1px solid var(--garis);
+  }
+  .pita--gelap {
+    background: var(--gelap);
+  }
+  .janji {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .janji svg {
+    flex: none;
+    margin-top: 2px;
+    color: var(--aksen);
+  }
+
+  /* ── Sisanya: kelas untuk apa yang di mockup masih ditulis inline ────── */
   .hero {
-    padding-block: clamp(4rem, 12vw, 10rem) clamp(var(--space-7), 8vw, var(--space-8));
+    text-align: center;
   }
-
-  .hero h1 {
-    max-width: 16ch;
-    margin-bottom: 2rem;
+  .hero__lead,
+  .ajak__lead {
+    margin-inline: auto;
+    text-align: center;
   }
-
-  .hero .lede {
-    margin-bottom: 2.5rem;
+  .hero__tombol,
+  .ajak__tombol {
+    justify-content: center;
   }
-
-  .testimoni-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-    gap: var(--space-5);
-    list-style: none;
-    padding: 0;
-    margin-top: var(--space-6);
+  .foto--nyata img,
+  .foto--sorot img,
+  .proses__foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
-
-  .testimoni-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-    padding: var(--space-5);
+  .mq-kop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .mq--garis {
+    border-top: 1px solid var(--garis);
+  }
+  .sorot__fakta {
+    border-top: 1px solid var(--garis);
+  }
+  .foto--sorot {
+    height: 400px;
+    aspect-ratio: var(--rasio-foto);
+    flex: none;
+  }
+  .sorot__kaki {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .proses__teks {
+    padding: 44px 38px;
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    justify-content: center;
+  }
+  .proses__foto {
+    padding: 0;
+  }
+  .kutip-kosong {
+    display: grid;
+    place-items: center;
+    min-height: 180px;
+  }
+  .kutip-kosong__t {
+    text-align: center;
+    padding: 20px;
+    color: var(--teks-2);
+  }
+  .kutip__nama {
+    display: block;
+  }
+  .faq-kiri {
+    padding: 44px 34px;
+  }
+  .faq-kanan {
+    padding: 0;
+  }
+  .ak-baris {
+    color: inherit;
+    text-decoration: none;
+  }
+  .baris-faq {
+    grid-template-columns: 1fr 2fr;
+  }
+  .ajak {
+    padding-block: 96px;
+    text-align: center;
+  }
+  .ajak__judul {
+    max-width: 22ch;
+    margin-inline: auto;
   }
 
-  .testimoni-card__quote {
-    color: var(--text-muted);
+  /* Penanda "data ini masih ditunggu". Sengaja tidak mencolok: ia bagian dari
+     rancangan, bukan peringatan galat. Hilang sendiri begitu lib/menunggu.ts
+     diisi. */
+  /* --teks-3, bukan --teks-4: penanda "menunggu" tetap harus terbaca
+     (3,67:1 vs 5,46:1). Ia meredup, bukan menghilang. */
+  .tunggu {
+    color: var(--teks-3);
   }
 
-  .testimoni-card__nama {
-    font-size: var(--text-sm);
-    font-weight: 600;
+  /* Gambaran portal klien */
+  .portal-bung {
+    padding: 0 44px 44px;
+  }
+  .portal {
+    border: 0;
+  }
+  .portal__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 14px;
+    border-bottom: 1px solid #2a2a2e;
+  }
+  .portal__titik {
+    width: 9px;
+    height: 9px;
+    background: #3f3f46;
+    border-radius: 99px;
+  }
+  .portal__url {
+    font-size: 11px;
+    margin-left: 12px;
+  }
+  .portal__isi {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+  }
+  .portal__rel {
+    border-right: 1px solid #2a2a2e;
+    padding: 20px 18px;
+  }
+  .portal__kecil {
+    font-size: 9.5px;
+  }
+  .portal__mini {
+    font-size: 9px;
+  }
+  .portal__nama {
+    font-size: 14px;
+  }
+  .portal__fase {
+    font-size: 12px;
+  }
+  .portal__fase--kini {
+    color: #fff;
+  }
+  .cek--kini {
+    background: var(--isi);
+  }
+  .cek--nanti {
+    background: #27272a;
+  }
+  .portal__kanan {
+    padding: 20px 22px;
+  }
+  .portal__angka {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #2a2a2e;
+    border: 1px solid #2a2a2e;
+  }
+  .portal__kotak {
+    background: #141417;
+    padding: 15px;
+  }
+  .portal__nilai {
+    font-size: 15px;
+  }
+  .portal__batang {
+    height: 2px;
+    background: #27272a;
+  }
+  .portal__batang > div {
+    width: 58%;
+    height: 100%;
+    background: var(--aksen);
+  }
+  .portal__foto {
+    height: 104px;
+  }
+
+  @media (max-width: 900px) {
+    .baris-faq {
+      grid-template-columns: 1fr;
+    }
+    /* Panel portal SENGAJA tidak diubah di ponsel: ia gambaran tangkapan
+       layar, dan rancangan yang di-ACC memang mempertahankan padding 44px
+       serta dua kolomnya di layar sempit. Melebarkannya "supaya terbaca"
+       bukan keputusan saya. */
   }
 </style>
+
+<script>
+  (() => {
+    "use strict";
+    const diam = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* ── Marquee ──────────────────────────────────────────────────────── */
+    const jeda = document.getElementById("mqJeda");
+    const mq = document.querySelector(".mq");
+    if (jeda && mq) {
+      if (diam) {
+        mq.classList.add("mq--jeda");
+        jeda.setAttribute("aria-pressed", "true");
+      }
+      jeda.addEventListener("click", () => {
+        const kini = mq.classList.toggle("mq--jeda");
+        jeda.setAttribute("aria-pressed", String(kini));
+        jeda.lastChild!.textContent = kini ? " Play" : " Pause";
+        jeda.firstElementChild!.textContent = kini ? "▶" : "❙❙";
+      });
+    }
+
+    /* ── Showcase: tab + strip per proyek ─────────────────────────────── */
+    const tabs = document.getElementById("swTabs");
+    const ind = document.getElementById("swInd");
+    if (tabs && ind) {
+      const tombol = [...tabs.querySelectorAll<HTMLButtonElement>(".tab")];
+      const blokSorot = [...document.querySelectorAll<HTMLElement>("[data-sorot]")];
+      const blokStrip = [...document.querySelectorAll<HTMLElement>("[data-strip]")];
+
+      const geserInd = (b: HTMLElement) => {
+        ind.style.width = b.offsetWidth + "px";
+        ind.style.transform = `translateX(${b.offsetLeft}px)`;
+      };
+      const pilih = (i: number) => {
+        tombol.forEach((b, k) => {
+          b.setAttribute("aria-selected", String(k === i));
+          b.tabIndex = k === i ? 0 : -1;
+        });
+        blokSorot.forEach((b, k) => (b.hidden = k !== i));
+        blokStrip.forEach((b, k) => (b.hidden = k !== i));
+        geserInd(tombol[i]);
+        // Strip yang baru muncul belum pernah dihitung lebarnya selagi
+        // tersembunyi — scrollWidth-nya 0 dan bar kemajuannya salah.
+        hitungSemua();
+      };
+      tombol.forEach((b, i) => b.addEventListener("click", () => pilih(i)));
+      if (tombol.length) geserInd(tombol[0]);
+      addEventListener("resize", () => {
+        const aktif = tombol.find((b) => b.getAttribute("aria-selected") === "true");
+        if (aktif) geserInd(aktif);
+      });
+    }
+
+    /* ── Strip foto (dipakai tiap blok showcase) ──────────────────────── */
+    const strips = [...document.querySelectorAll<HTMLElement>("[data-gulir]")];
+    const hitungStrip = (strip: HTMLElement) => {
+      const induk = strip.parentElement!;
+      const prog = induk.querySelector<HTMLElement>("[data-prog]");
+      const film = induk.querySelector<HTMLElement>("[data-film]");
+      const info = induk.querySelector<HTMLElement>("[data-info]");
+      const kartu = [...strip.children] as HTMLElement[];
+      if (!prog || !film || !info || !kartu.length) return;
+      const maks = strip.scrollWidth - strip.clientWidth;
+      const rasio = maks > 0 ? strip.scrollLeft / maks : 0;
+      const lebar = Math.max(8, (strip.clientWidth / strip.scrollWidth) * 100);
+      prog.style.width = lebar + "%";
+      prog.style.marginLeft = rasio * (100 - lebar) + "%";
+      let ke = 0;
+      kartu.forEach((el, i) => {
+        if (el.offsetLeft - strip.scrollLeft <= 40) ke = i;
+      });
+      const ket = kartu[ke].querySelector(".foto__ket")?.textContent?.trim() ?? "";
+      info.textContent = `${ke + 1} / ${kartu.length}${ket ? ` — ${ket}` : ""}`;
+      [...film.children].forEach((b, i) => b.setAttribute("aria-current", String(i === ke)));
+    };
+    function hitungSemua() {
+      strips.forEach((s) => {
+        const blok = s.closest<HTMLElement>("[data-strip]");
+        if (blok && !blok.hidden) hitungStrip(s);
+      });
+    }
+    strips.forEach((strip) => {
+      const induk = strip.parentElement!;
+      const kartu = [...strip.children] as HTMLElement[];
+      strip.addEventListener("scroll", () => hitungStrip(strip), { passive: true });
+      induk.querySelector("[data-film]")?.addEventListener("click", (e) => {
+        const b = (e.target as HTMLElement).closest("button");
+        if (!b) return;
+        strip.scrollTo({ left: kartu[Number(b.dataset.ke)].offsetLeft, behavior: diam ? "auto" : "smooth" });
+      });
+      let seret = false;
+      let mx = 0;
+      let kiri = 0;
+      strip.addEventListener("pointerdown", (e) => {
+        if (e.pointerType !== "mouse") return;
+        seret = true;
+        mx = e.clientX;
+        kiri = strip.scrollLeft;
+        strip.classList.add("tarik");
+        strip.setPointerCapture(e.pointerId);
+      });
+      strip.addEventListener("pointermove", (e) => {
+        if (seret) strip.scrollLeft = kiri - (e.clientX - mx);
+      });
+      const lepas = () => {
+        if (seret) {
+          seret = false;
+          strip.classList.remove("tarik");
+        }
+      };
+      strip.addEventListener("pointerup", lepas);
+      strip.addEventListener("pointercancel", lepas);
+      strip.tabIndex = 0;
+      strip.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        strip.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * 460, behavior: diam ? "auto" : "smooth" });
+      });
+    });
+    hitungSemua();
+    addEventListener("resize", hitungSemua);
+  })();
+</script>

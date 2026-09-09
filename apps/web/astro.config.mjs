@@ -6,6 +6,12 @@ import react from "@astrojs/react";
 const site = process.env.PUBLIC_SITE_URL ?? "https://pahlevidirgaarchitecture.com";
 
 export default defineConfig({
+  // /tentang diganti /studio. Alamat lama tetap hidup sebagai pengalihan:
+  // membiarkannya mati membuang tautan yang sudah pernah dibagikan dan
+  // peringkat apa pun yang sudah dikumpulkannya.
+  redirects: {
+    "/tentang": "/studio",
+  },
   site,
 
   // Static: seluruh halaman proyek di-render saat build, lalu disajikan dari

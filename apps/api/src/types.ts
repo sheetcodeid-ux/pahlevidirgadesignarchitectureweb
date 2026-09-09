@@ -281,6 +281,7 @@ export interface ClientDocument {
   fileSize?: number | null;
   mimeType?: string | null;
   durationMs?: number | null;
+  createdAt?: string;
   comments: DocumentComment[];
 }
 
@@ -390,6 +391,18 @@ export interface ClientProgressView {
   projectTitle: string;
   coverImageUrl?: string | null;
   phase: string;
+  /* Tiga hal berikut sudah ada di tabel projects dan tidak menambah apa pun
+     yang belum boleh dilihat klien: kategori dan kota tercetak di kepala
+     halaman proyeknya sendiri, dan nilai kontrak adalah nilai kontrak DIA.
+     Tanpa contractValue panel "uang sejauh ini" tidak bisa menghitung sisa —
+     dan sisa itulah satu-satunya angka yang benar-benar dicari klien. */
+  category: string;
+  city?: string | null;
+  contractValue: number | null;
+  /* Kapan halaman ini terakhir berubah. Diambil dari pembaruan terbaru, jadi
+     ia menjawab "apakah ada yang baru sejak terakhir saya buka" tanpa klien
+     harus membandingkan daftar sendiri. */
+  updatedAt?: string | null;
   updates: ProjectProgressUpdate[];
   documents: ClientDocument[];
   invoices: ClientInvoice[];

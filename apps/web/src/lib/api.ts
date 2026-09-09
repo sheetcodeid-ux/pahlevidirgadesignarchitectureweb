@@ -25,6 +25,29 @@ export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
   renovation: "Renovasi",
 };
 
+// Situs publik berbahasa Inggris (pasarnya internasional); panel admin tetap
+// Indonesia. Dua peta, bukan satu peta yang diterjemahkan di tempat pakai —
+// supaya label admin tidak ikut berubah kalau salinan publiknya diubah.
+export const CATEGORY_LABELS_EN: Record<ProjectCategory, string> = {
+  residential: "Residential",
+  commercial: "Commercial",
+  interior: "Interior",
+  landscape: "Landscape",
+  masterplan: "Masterplan",
+  renovation: "Renovation",
+};
+
+// Kalimat pengantar tiap kategori di rel /proyek. Ditulis di sini, bukan di
+// halaman, supaya halaman proyek dan beranda menyebut hal yang sama.
+export const CATEGORY_BLURBS_EN: Record<ProjectCategory, string> = {
+  residential: "Houses, and the way people actually live in them.",
+  commercial: "Places that have to keep working after the opening week.",
+  interior: "Work inside buildings that already stand.",
+  landscape: "The ground around a building, treated as part of it.",
+  masterplan: "How several buildings agree to sit on one site.",
+  renovation: "Buildings given more years instead of being replaced.",
+};
+
 export interface ProjectImage {
   id: string;
   url: string;

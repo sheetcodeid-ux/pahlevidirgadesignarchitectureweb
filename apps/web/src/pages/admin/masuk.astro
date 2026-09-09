@@ -1,72 +1,809 @@
 ---
-import "../../styles/global.css";
-import "../../styles/components.css";
-import "../../styles/form.css";
-import "../../styles/misc.css";
-import { LoginForm } from "../../components/admin/LoginForm";
+/**
+ * Halaman masuk staf.
+ *
+ * Ia BUKAN bagian panel admin dan tidak memakai AdminLayout: tampilannya
+ * mengikuti sistem publik yang di-ACC (kisi cetak biru, sudut siku, warna
+ * refine), dan ia satu-satunya halaman di bawah /admin yang begitu. Itu
+ * disengaja — pintu depan boleh terlihat berbeda dari ruang kerjanya.
+ *
+ * Globe di kolom kiri digambar sendiri di <canvas> dari mask daratan Natural
+ * Earth 110m (lib/darat.ts), bukan gambar dan bukan pustaka.
+ */
+import "../../styles/publik.css";
 ---
 
 <!doctype html>
-<html lang="id" data-theme="dark">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Masuk — Admin Dirga Pahlevi Architecture</title>
+    <title>Sign in — Dirga Pahlevi Architecture</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#09090B" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Maven+Pro:wght@400..800&display=swap"
     />
-    <script is:inline>
-      (function () {
-        try {
-          var simpan = localStorage.getItem("tema");
-          var sistem = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-          document.documentElement.setAttribute("data-theme", simpan || sistem);
-        } catch (e) { document.documentElement.setAttribute("data-theme", "dark"); }
-      })();
-    </script>
   </head>
-
   <body>
-    <main class="masuk">
-      <div class="masuk__panel">
-        <a href="/" class="masuk__brand">
-          <span class="sidebar__mark" aria-hidden="true">DPA</span>
-          <span>Dirga Pahlevi Architecture</span>
-        </a>
-        <h1 class="t-title">Selamat datang kembali.</h1>
-        <p class="t-muted" style="margin-bottom: var(--space-6)">Masuk untuk mengelola konten studio.</p>
-        <LoginForm client:load />
+    <a href="#isi" class="lompat">Skip to content</a>
+    <main id="isi">
+<div class="pita pita--awal pita--akhir">
+  <div class="dalam">
+    <div class="msk">
+
+      <!-- ── Kiri: globe titik yang berputar ────────────────────────── -->
+      <div class="msk__kiri">
+        <canvas class="globe" id="globe" aria-hidden="true"></canvas>
+        <div class="tanda" id="tanda" aria-hidden="true">
+          <span class="tanda__t"></span><span class="tanda__g"></span>
+          <span class="tanda__l">Pontianak</span>
+        </div>
+
+        <div class="msk__mark">
+          <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M10 1.5 18 6v8l-8 4.5L2 14V6l8-4.5Z" stroke="#2DD4BF" stroke-width="1.5"/>
+            <path d="M10 6.5 14 9v4l-4 2.2L6 13V9l4-2.5Z" fill="#2DD4BF" fill-opacity=".25" stroke="#2DD4BF" stroke-width="1.2"/></svg>
+          <span>Pahlevi Dirga</span>
+        </div>
+
+        <div class="msk__slogan">
+          <span class="msk__eyebrow"><span data-t="eyebrow">Studio panel</span><i>·</i>0°02′S 109°20′E</span>
+          <h1 data-t="h1">Drawn in Pontianak. Built anywhere.</h1>
+          <p data-t="lead">Every phase, drawing, invoice and client approval lives behind this
+          page. Two people have keys, and both of them are on the drawings.</p>
+        </div>
+
+        <dl class="kop">
+          <div><dt data-t="kopStudio">Studio</dt><dd><b>Pontianak</b>, <span data-t="negara">Indonesia</span></dd></div>
+          <div><dt data-t="kopJamL">Local time</dt><dd id="kopJam">—</dd></div>
+          <div><dt data-t="kopAkses">Access</dt><dd class="kop__hidup"><i></i><span data-t="kopStaf">Staff only</span></dd></div>
+        </dl>
       </div>
+
+      <!-- ── Kanan: pintunya ────────────────────────────────────────── -->
+      <div class="msk__kanan">
+        <div class="msk__form">
+          <div class="msk__atas">
+            <div>
+              <div class="msk__judul" data-t="judul">Sign in</div>
+            </div>
+            <div class="bhs" role="group" aria-label="Language">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><path d="M2.5 10h15M10 2.5c4.5 5 4.5 10 0 15-4.5-5-4.5-10 0-15Z"/></svg>
+              <button type="button" class="bhs__b bhs__b--aktif" data-bhs="en" aria-pressed="true">EN</button>
+              <button type="button" class="bhs__b" data-bhs="id" aria-pressed="false">ID</button>
+            </div>
+          </div>
+          <p class="msk__sub" data-t="sub">Two accounts have access. There is no sign-up, and
+          nothing here can be created from this page.</p>
+
+          <div class="luring" id="luring" hidden>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 5.5 18 16.5M4.2 8.4A9.6 9.6 0 0 1 10 6.5c2.2 0 4.2.7 5.8 1.9M6.8 11.4A6 6 0 0 1 10 10.4c.6 0 1.2.1 1.7.3M10 14.6h.01"/></svg>
+            <span data-t="luring">You appear to be offline. Signing in needs a connection —
+            the studio panel has nothing stored locally.</span>
+          </div>
+
+          <div class="kunci" id="kunci" hidden>
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="8.5" width="12" height="8" rx="1.5"/><path d="M7 8.5V6a3 3 0 0 1 6 0v2.5"/></svg>
+            <div><b data-t="kunciJudul">Too many attempts</b>
+            <p><span data-t="kunciA">This address is paused for</span>
+            <span class="jam" id="kunciJam">2:00</span>.
+            <span data-t="kunciB">It unlocks by itself — nothing is broken and nothing needs
+            resetting.</span></p></div>
+          </div>
+
+          <div class="ingat" id="ingat" hidden>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#909096" stroke-width="1.6"><circle cx="10" cy="7" r="3.2"/><path d="M4 16.5c1.4-2.6 3.5-3.9 6-3.9s4.6 1.3 6 3.9"/></svg>
+            <span class="ingat__t" id="ingatT">—</span>
+            <button type="button" id="ingatX" data-t="bukanAnda">Not you?</button>
+          </div>
+
+          <form id="formMasuk" novalidate>
+            <div class="bidang" data-bidang="email">
+              <label for="m-email" data-t="lEmail">Email</label>
+              <input class="isian" id="m-email" name="email" type="email" autocomplete="username"
+                inputmode="email" enterkeyhint="next"
+                placeholder="you@pahlevidirgaarchitecture.com">
+              <p class="bantu" data-pesan>&nbsp;</p>
+            </div>
+            <div class="bidang" data-bidang="sandi">
+              <label for="m-sandi" data-t="lSandi">Password</label>
+              <div class="sandi-bung">
+                <input class="isian" id="m-sandi" name="sandi" type="password"
+                  autocomplete="current-password" enterkeyhint="go" placeholder="••••••••••••">
+                <button class="mata" type="button" id="lihatSandi" aria-pressed="false"
+                  aria-label="Show password">
+                  <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.8 10S4.6 4.8 10 4.8 18.2 10 18.2 10 15.4 15.2 10 15.2 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.4"/></svg>
+                </button>
+              </div>
+              <div class="caps" id="caps" hidden>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M8 2.2 13 7.4h-2.6v3H5.6v-3H3L8 2.2Z"/><path d="M5.6 13.2h4.8"/></svg>
+                <span data-t="caps">Caps Lock is on</span>
+              </div>
+              <p class="bantu" data-pesan>&nbsp;</p>
+            </div>
+
+            <label class="ceklis">
+              <input type="checkbox" id="tetap" checked>
+              <span><span data-t="tetap">Stay signed in on this device</span>
+              <small data-t="tetapSub">Otherwise the session ends when the browser closes.</small></span>
+            </label>
+
+            <div class="s16"></div>
+            <button class="btn btn--isi btn--penuh" type="submit" id="btnMasuk"><span
+              data-t="btn">Sign in</span><span class="tuts" aria-hidden="true">&#9166;</span></button>
+            <div id="hasilMasuk" role="alert" aria-live="assertive" hidden></div>
+          </form>
+
+          <div class="msk__pisah"></div>
+          <p class="msk__cetak">
+            <strong data-t="klienJ">Are you a client?</strong>
+            <span data-t="klienP">Your project page needs no password — use the link we sent you.
+            If you lost it,</span> <a href="#" data-t="klienA">ask us for a new one</a>.
+          </p>
+          <div class="s10"></div>
+          <p class="msk__cetak" data-t="cetak">Passwords cannot be reset from here — the other
+          account holder resets them from Settings. Signing in on a shared computer is your
+          responsibility.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
     </main>
 
     <style>
-      .masuk {
-        min-height: 100dvh;
-        display: grid;
-        place-items: center;
-        padding: var(--space-5);
-        background: var(--bg);
-      }
+/* ══ Masuk staf ════════════════════════════════════════════════════════════
+   Kolom kiri adalah GLOBE TITIK yang berputar: proyeksi ortografik dari mask
+   daratan Natural Earth 110m (1°), digambar sebagai kotak-kotak kecil di
+   <canvas>. Bukan hiasan — pasarnya internasional, dan penanda yang berputar
+   ikut bola menunjukkan dari mana kerjanya dikirim. Warnanya milik kita
+   sendiri: kanvas gelap dengan titik teal, bukan bidang oranye referensi. */
+.msk{display:grid;grid-template-columns:1fr 452px;min-height:calc(100vh - 2px)}
 
-      .masuk__panel { width: min(28rem, 100%); }
+.msk__kiri{position:relative;overflow:hidden;background:var(--gelap);isolation:isolate;
+  border-right:1px solid var(--garis);padding:42px 46px;
+  display:flex;flex-direction:column;justify-content:space-between;gap:30px}
 
-      .masuk__brand {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-3);
-        margin-bottom: var(--space-6);
-        font-family: var(--font-display);
-        font-size: var(--text-lg);
-        color: var(--text-strong);
-        text-decoration: none;
-      }
+/* z: 0 kanvas · 1 penanda · 2 tirai · 3 teks. Penanda sengaja DI BAWAH tirai
+   supaya ikut meredup saat berputar ke sisi yang tertutup teks. */
+.globe{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%}
+.msk__kiri::before,.msk__kiri::after{content:"";position:absolute;inset:0;z-index:2;
+  pointer-events:none}
+.msk__kiri::before{background:linear-gradient(90deg,
+  rgba(9,9,11,.97) 0%,rgba(9,9,11,.94) 30%,rgba(9,9,11,.66) 50%,
+  rgba(9,9,11,.14) 72%,transparent 86%)}
+.msk__kiri::after{background:linear-gradient(0deg,
+  rgba(9,9,11,.9) 0%,rgba(9,9,11,.45) 20%,transparent 40%)}
+
+/* Penanda Pontianak — posisinya dihitung tiap frame dari proyeksi yang sama */
+.tanda{position:absolute;left:0;top:0;z-index:1;width:0;height:0;pointer-events:none;
+  visibility:hidden}
+.tanda__t{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:99px;
+  background:var(--aksen-3);box-shadow:0 0 0 3px rgba(45,212,191,.2)}
+.tanda__t::after{content:"";position:absolute;inset:-3px;border-radius:99px;
+  border:1px solid var(--aksen);animation:denyut 2.8s ease-out infinite}
+@keyframes denyut{0%{transform:scale(.55);opacity:.85}100%{transform:scale(3);opacity:0}}
+.tanda__g{position:absolute;left:5px;top:-1px;width:34px;height:1px;
+  background:linear-gradient(90deg,var(--aksen),rgba(45,212,191,.25))}
+.tanda__l{position:absolute;left:44px;top:-10px;white-space:nowrap;font-size:10.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--aksen-3);
+  background:rgba(9,9,11,.66);padding:3px 8px;border:1px solid rgba(45,212,191,.3)}
+
+.tanda--kiri .tanda__g{left:auto;right:5px;
+  background:linear-gradient(270deg,var(--aksen),rgba(45,212,191,.25))}
+.tanda--kiri .tanda__l{left:auto;right:44px}
+
+.msk__mark{display:flex;align-items:center;gap:11px;position:relative;z-index:3}
+.msk__mark span{font-family:var(--judul);font-size:15px;color:var(--teks)}
+
+.msk__slogan{position:relative;z-index:3}
+.msk__eyebrow{display:block;font-size:11px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--aksen);margin-bottom:18px}
+.msk__eyebrow i{font-style:normal;color:var(--teks-3);margin-inline:8px}
+.msk__slogan h1{font-family:var(--judul);font-size:clamp(2rem,3.5vw,3rem);color:var(--teks);
+  line-height:1.13;font-weight:400;letter-spacing:0;max-width:13ch}
+.msk__slogan p{margin-top:18px;max-width:42ch;font-size:14.5px;color:var(--teks-2);
+  line-height:1.72}
+
+/* Kop lembar: tiga bidang yang semuanya benar dan tak satu pun karangan */
+.kop{position:relative;z-index:3;display:flex;flex-wrap:wrap;
+  border:1px solid var(--garis-2);background:rgba(9,9,11,.66);backdrop-filter:blur(3px)}
+.kop div{flex:1;min-width:132px;padding:13px 16px;border-left:1px solid var(--garis-2)}
+.kop div:first-child{border-left:0}
+.kop dt{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--teks-3);
+  margin-bottom:5px}
+.kop dd{margin:0;font-size:13px;color:var(--teks-2);font-variant-numeric:tabular-nums}
+.kop dd b{color:var(--teks);font-weight:600}
+.kop__hidup{display:inline-flex;align-items:center;gap:7px}
+.kop__hidup i{width:6px;height:6px;border-radius:99px;background:var(--aksen);flex:none}
+
+/* ── Kolom kanan ─────────────────────────────────────────────────────────── */
+.msk__kanan{padding:42px 44px;display:grid;place-items:center;background:var(--kanvas)}
+.msk__form{width:100%;max-width:340px}
+.msk__atas{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.msk__judul{font-family:var(--judul);font-size:1.5rem;color:var(--teks);line-height:1.2}
+.msk__sub{font-size:13.5px;color:var(--teks-3);line-height:1.65;margin:8px 0 26px}
+
+/* Pemilih bahasa: pasarnya internasional, tapi yang memakai panel ini orang
+   Indonesia. Pilihannya diingat per perangkat. */
+.bhs{display:flex;align-items:center;border:1px solid var(--garis-2);flex:none;
+  background:var(--gelap)}
+.bhs > svg{margin:0 3px 0 8px;color:var(--teks-4);flex:none}
+.bhs__b{background:none;border:0;border-left:1px solid var(--garis-2);color:var(--teks-3);
+  font-family:var(--tubuh);font-size:11.5px;font-weight:600;letter-spacing:.08em;
+  padding:7px 9px;cursor:pointer;min-height:30px}
+.bhs > svg + .bhs__b{border-left:0;padding-left:4px}
+.bhs__b:hover{color:var(--teks-2)}
+.bhs__b--aktif{background:var(--sel);color:var(--teks)}
+.bhs__b:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--cincin)}
+
+.sandi-bung{position:relative}
+.sandi-bung .isian{padding-right:46px}
+.mata{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;
+  display:grid;place-items:center;background:none;border:0;color:var(--teks-3);cursor:pointer;
+  border-radius:var(--r)}
+.mata:hover{color:var(--teks)}
+.mata:focus-visible{outline:none;box-shadow:0 0 0 2px var(--cincin)}
+.caps{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12.5px;color:#FBBF24}
+.caps svg{flex:none}
+
+.ingat{display:flex;align-items:center;gap:10px;padding:11px 14px;margin-bottom:18px;
+  border:1px solid var(--garis-2);background:var(--gelap);font-size:13px}
+.ingat__t{flex:1;min-width:0;color:var(--teks-2);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.ingat button{background:none;border:0;color:var(--teks-3);font-family:var(--tubuh);
+  font-size:12px;cursor:pointer;padding:4px 6px;border-radius:4px;flex:none}
+.ingat button:hover{color:var(--merah)}
+.ingat button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--cincin)}
+
+.kunci{border:1px solid #78502A;background:rgba(251,191,36,.08);padding:16px 18px;
+  display:flex;gap:12px;align-items:flex-start;margin-bottom:20px}
+.kunci svg{flex:none;color:#FBBF24;margin-top:1px}
+.kunci b{display:block;color:var(--teks);font-size:13.5px;margin-bottom:4px}
+.kunci p{margin:0;font-size:12.5px;color:var(--teks-2);line-height:1.6}
+.kunci .jam{color:#FBBF24;font-variant-numeric:tabular-nums;font-weight:600}
+
+/* Putus jaringan: tanpa ini, gagal kirim tampil sebagai "kombinasi salah" —
+   orang lalu mengganti sandinya yang sebenarnya sudah benar. */
+.luring{border:1px solid var(--garis-2);background:var(--gelap);padding:13px 15px;
+  display:flex;gap:11px;align-items:flex-start;margin-bottom:18px;font-size:12.5px;
+  color:var(--teks-2);line-height:1.6}
+.luring svg{flex:none;color:var(--teks-3);margin-top:2px}
+
+.ceklis{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:13px;
+  color:var(--teks-2);line-height:1.5}
+.ceklis input{appearance:none;width:16px;height:16px;flex:none;margin-top:1px;
+  border:1px solid var(--garis-2);background:var(--gelap);border-radius:3px;cursor:pointer}
+.ceklis input:checked{background:var(--isi);border-color:var(--isi)}
+.ceklis input:checked::after{content:"";display:block;width:4px;height:8px;margin:1px 0 0 5px;
+  border:solid #fff;border-width:0 1.7px 1.7px 0;transform:rotate(42deg)}
+.ceklis input:focus-visible{outline:none;box-shadow:0 0 0 2px var(--cincin)}
+.ceklis small{display:block;color:var(--teks-3);font-size:11.5px;margin-top:3px}
+
+/* Tuts ⏎ pada tombol: memberi tahu bahwa Enter cukup, tanpa satu kalimat pun */
+.tuts{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;
+  border:1px solid rgba(24,24,27,.28);border-radius:4px;
+  font-family:var(--font-kode,ui-monospace,monospace);
+  font-size:11px;line-height:1;margin-left:9px;opacity:.62}
+.btn--memuat .tuts{opacity:0}
+
+.msk__cetak{font-size:12px;color:var(--teks-3);line-height:1.75}
+.msk__cetak strong{color:var(--teks-2);font-weight:600}
+.msk__cetak a{color:var(--teks-3);text-decoration:none;border-bottom:1px solid var(--garis-2)}
+.msk__cetak a:hover{color:var(--aksen);border-bottom-color:var(--aksen)}
+.msk__pisah{height:1px;background:var(--garis);margin:26px 0 18px}
+
+@media (prefers-reduced-motion:reduce){
+  .tanda__t::after{animation:none;opacity:0}
+}
+@media (max-width:900px){
+  .msk{grid-template-columns:1fr;min-height:0}
+  /* Panel jadi pendek dan selebar layar: tirai mendatar tidak lagi
+     menyisakan ruang bersih, jadi diganti tirai tegak. */
+  .msk__kiri::before{background:linear-gradient(180deg,
+    rgba(9,9,11,.3) 0%,rgba(9,9,11,.68) 26%,rgba(9,9,11,.92) 52%,rgba(9,9,11,.96) 100%)}
+  .msk__kiri::after{background:none}
+  .msk__kiri{border-right:0;border-bottom:1px solid var(--garis);
+    padding:26px 20px 22px;min-height:300px;gap:20px}
+  .msk__kanan{padding:32px 20px 44px}
+  .msk__eyebrow{margin-bottom:13px}
+  .msk__slogan h1{max-width:none;font-size:1.7rem}
+  .msk__slogan p{max-width:none;font-size:13px;margin-top:13px;line-height:1.62}
+  .kop div{min-width:104px;padding:11px 13px}
+  .tanda__l{display:none}
+  .tanda__g{width:22px}
+  .isian{font-size:16px;padding:12px 14px}
+  .sandi-bung .isian{padding-right:52px}
+  .mata{width:44px;height:44px}
+  .ingat{padding:8px 8px 8px 14px}
+  .ingat button{min-height:44px;padding-inline:12px}
+  .bhs__b{min-height:38px;padding-inline:11px}
+  .ceklis{padding:7px 0}
+  .ceklis input{width:22px;height:22px;margin-top:0}
+  .ceklis input:checked::after{width:5px;height:11px;margin:2px 0 0 7px;border-width:0 2px 2px 0}
+}
+@media (max-width:420px){
+  .msk__kiri{padding:26px 16px 22px;min-height:290px}
+  .msk__kanan{padding:28px 16px 40px}
+  /* Tiga bidang bertumpuk memakan 165px; dua baris cukup */
+  .kop div{min-width:0;flex-basis:50%}
+  .kop div:nth-child(3){flex-basis:100%;border-left:0;border-top:1px solid var(--garis-2)}
+}
     </style>
+
+    <script>
+      import { masuk } from "../../lib/admin";
+      import { DARAT_B64 } from "../../lib/darat";
+
+/* ═══ Globe titik ═══════════════════════════════════════════════════════════
+   Proyeksi ortografik: sumbu bola tegak, jadi tiap lingkaran lintang jatuh
+   sebagai SEGMEN MENDATAR di layar — itu sebabnya titiknya berbaris rapi
+   seperti pada referensi. Titik hanya digambar kalau berada di belahan depan
+   (Z>0); kecerahan dan ukurannya turun ke arah tepi bola. */
+(() => {
+  "use strict";
+  const cv = document.getElementById("globe") as HTMLCanvasElement | null;
+  const tanda = document.getElementById("tanda") as HTMLElement | null;
+  if (!cv || !tanda || !cv.getContext) return;
+  const ctx = cv.getContext("2d", { alpha: true });
+  if (!ctx) return;
+  const DEG = Math.PI / 180;
+
+  /* Mask daratan Natural Earth 110m pada kisi 1°: 360×180 bit.
+     Baris 0 = lintang +89,5°; kolom 0 = bujur −179,5°. */
+  const MW = 360, MH = 180;
+  let peta: Uint8Array;
+  try {
+    const s = atob(DARAT_B64);
+    peta = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) peta[i] = s.charCodeAt(i);
+  } catch (e) { return; }
+  const daratDi = (lat: number, lon: number) => {
+    let i = Math.round(89.5 - lat);
+    i = i < 0 ? 0 : i >= MH ? MH - 1 : i;
+    let j = Math.round(lon + 179.5) % MW;
+    if (j < 0) j += MW;
+    const k = i * MW + j;
+    return (peta[k >> 3] >> (7 - (k & 7))) & 1;
+  };
+
+  /* Titik disimpan sebagai koordinat satuan yang SUDAH ditrigonometrikan.
+     Per frame tinggal tiga perkalian — tanpa sin/cos sama sekali. */
+  let ax = new Float32Array(0), ay = new Float32Array(0),
+      az = new Float32Array(0), av = new Float32Array(0);
+  let N = 0, cincin = 0;
+  const bangunTitik = (c: number) => {
+    const bx: number[] = [], by: number[] = [], bz: number[] = [], bv: number[] = [];
+    for (let i = 0; i < c; i++) {
+      /* Cincin dibagi rata pada sin(lintang), BUKAN pada lintang. Di proyeksi
+         ortografik y = R·sin(lintang), jadi hanya cara ini yang membuat baris
+         berjarak sama di layar; membagi rata lintang menumpuk titik di kutub
+         dan itulah yang membuat percobaan pertama tampak berat di atas. */
+      const u = -1 + (i + 0.5) * (2 / c);
+      const sl = u, cl = Math.sqrt(1 - u * u);
+      const lat = Math.asin(u) / DEG;
+      /* Jarak antar-kolom di pusat cakram disamakan dengan jarak antar-baris:
+         Δλ = 2/(c·cos φ)  →  n = π·c·cos φ. Angka 2·c·cos φ yang dipakai
+         sebelumnya membuat titik 57% terlalu renggang mendatar. */
+      const n = Math.max(1, Math.round(Math.PI * c * cl));
+      for (let j = 0; j < n; j++) {
+        const lon = -180 + (j + 0.5) * (360 / n);
+        if (!daratDi(lat, lon)) continue;
+        bx.push(cl * Math.sin(lon * DEG));
+        bz.push(cl * Math.cos(lon * DEG));
+        by.push(-sl);
+        let h = ((i * 73856093) ^ (j * 19349663)) >>> 0;
+        h = Math.imul(h, 2654435761) >>> 0;
+        bv.push(0.52 + 0.48 * (h / 4294967296));
+      }
+    }
+    N = bx.length;
+    ax = Float32Array.from(bx); ay = Float32Array.from(by);
+    az = Float32Array.from(bz); av = Float32Array.from(bv);
+  };
+
+  /* Warna: makin dekat ke pengamat makin terang dan makin pucat teal-nya.
+     #0D9488 (isi) → #99F6E4. Semua dari palet kita, bukan oranye referensi. */
+  const NIV = 20;
+  const warna: string[] = [];
+  const ember: { x: Float32Array; y: Float32Array; n: number }[] = [];
+  for (let k = 0; k < NIV; k++) {
+    const t = k / (NIV - 1);
+    /* #14B8A6 (jauh) → #CCFBF1 (dekat). Alfa terendah 0,24 — di 0,12 titik
+       terjauh hampir hilang dan tepi bola tampak berlumpur, bukan berkabut. */
+    const r = Math.round(20 + (204 - 20) * t);
+    const g = Math.round(184 + (251 - 184) * t);
+    const b = Math.round(166 + (241 - 166) * t);
+    warna.push("rgba(" + r + "," + g + "," + b + "," + (0.24 + 0.76 * t).toFixed(3) + ")");
+    ember.push({ x: new Float32Array(8192), y: new Float32Array(8192), n: 0 });
+  }
+
+  /* Pontianak — titik yang sama dengan bidang Studio di kop lembar */
+  const PLAT = -0.03, PLON = 109.33;
+  const pcl = Math.cos(PLAT * DEG);
+  const px = pcl * Math.sin(PLON * DEG), pz = pcl * Math.cos(PLON * DEG),
+        py = -Math.sin(PLAT * DEG);
+
+  let W = 0, H = 0, R = 0, cx = 0, cy = 0, sisi = 2, dpr = 1;
+  let grad: CanvasGradient | null = null;
+  const ukur = () => {
+    const r = cv.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return false;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (W < 620) {
+      /* Panel ponsel pendek dan sempit: bola ditarik ke sudut kanan-atas
+         sebagai busur, supaya seluruh teks di bawahnya berdiri di atas
+         permukaan bersih. Menaruhnya di tengah membuat titik memotong judul. */
+      R = Math.min(W, H) * 0.66;
+      cx = W * 0.74; cy = H * 0.30;
+    } else {
+      R = Math.min(W, H) * 0.58;
+      cx = W * 0.66; cy = H * 0.5;  /* membludak ke kanan, sisakan tepi kiri */
+    }
+    const c = Math.max(40, Math.min(88, Math.round(R / 5.4)));
+    if (c !== cincin) { cincin = c; bangunTitik(c); }
+    sisi = Math.max(1.4, (2 * R / cincin) * 0.55);
+    grad = ctx.createRadialGradient(cx, cy, R * 0.12, cx, cy, R * 1.28);
+    grad.addColorStop(0, "rgba(20,184,166,.16)");
+    grad.addColorStop(0.6, "rgba(20,184,166,.07)");
+    grad.addColorStop(1, "rgba(20,184,166,0)");
+    return true;
+  };
+
+  /* Mulai dengan Pontianak 8° di kanan pusat: di dalam panel, tapi tidak
+     bertabrakan dengan judul di kiri. Ia mengelilingi kembali tiap 2,5 menit. */
+  let rot = (8 - PLON) * DEG;
+  const gambar = () => {
+    if (!W) return;
+    const cr = Math.cos(rot), sr = Math.sin(rot);
+    ctx.clearRect(0, 0, W, H);
+    if (grad) { ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H); }
+    for (let k = 0; k < NIV; k++) ember[k].n = 0;
+
+    const s2 = sisi / 2;
+    for (let i = 0; i < N; i++) {
+      const X = ax[i] * cr + az[i] * sr;
+      const Z = az[i] * cr - ax[i] * sr;
+      if (Z <= 0) continue;                       /* belahan belakang */
+      let niv = Math.pow(Z, 0.68) * av[i];
+      let k = (niv * (NIV - 1)) | 0;
+      if (k < 0) k = 0; else if (k >= NIV) k = NIV - 1;
+      const e = ember[k];
+      if (e.n >= e.x.length) continue;
+      e.x[e.n] = cx + X * R - s2;
+      e.y[e.n] = cy + ay[i] * R - s2;
+      e.n++;
+    }
+    for (let k = 0; k < NIV; k++) {
+      const e = ember[k];
+      if (!e.n) continue;
+      ctx.fillStyle = warna[k];
+      for (let i = 0; i < e.n; i++) ctx.fillRect(e.x[i], e.y[i], sisi, sisi);
+    }
+
+    /* Penanda: HTML, bukan canvas — supaya labelnya memakai font sungguhan */
+    const MX = px * cr + pz * sr, MZ = pz * cr - px * sr;
+    if (MZ > 0.05) {
+      const x = cx + MX * R, y = cy + py * R;
+      tanda.style.visibility = "visible";
+      tanda.style.opacity = Math.min(1, MZ * 2.4).toFixed(2);
+      tanda.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)";
+      tanda.classList.toggle("tanda--kiri", x > W - 150);
+    } else {
+      tanda.style.visibility = "hidden";
+    }
+  };
+
+  const KURANG = matchMedia("(prefers-reduced-motion: reduce)");
+  const LAJU = (2 * Math.PI) / 150000;  /* satu putaran penuh = 2,5 menit */
+  let id = 0, lalu = 0, hidup = false;
+
+  const frame = (t: number) => {
+    id = requestAnimationFrame(frame);
+    if (t - lalu < 32) return;            /* dibatasi ~30 fps, hemat baterai */
+    const dt = lalu ? Math.min(t - lalu, 120) : 0;
+    lalu = t; rot += LAJU * dt; gambar();
+  };
+  const mulai = () => {
+    if (hidup || KURANG.matches) return;
+    hidup = true; lalu = 0; id = requestAnimationFrame(frame);
+  };
+  const henti = () => { hidup = false; cancelAnimationFrame(id); };
+
+  if (!ukur()) {
+    /* Tata letak belum jadi — coba lagi di frame berikutnya */
+    requestAnimationFrame(() => { if (ukur()) { gambar(); mulai(); } });
+  } else { gambar(); mulai(); }
+
+  /* Berhenti saat tab disembunyikan atau panelnya tergulir keluar layar:
+     tidak ada gunanya memutar bola yang tak dilihat siapa pun. */
+  document.addEventListener("visibilitychange", () => {
+    document.hidden ? henti() : mulai();
+  });
+  if (window.IntersectionObserver) {
+    new IntersectionObserver((es) => {
+      es[0].isIntersecting ? mulai() : henti();
+    }, { threshold: 0 }).observe(cv);
+  }
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => { if (ukur()) gambar(); }).observe(cv);
+  } else {
+    addEventListener("resize", () => { if (ukur()) gambar(); });
+  }
+  KURANG.addEventListener("change", () => {
+    KURANG.matches ? henti() : mulai();
+  });
+})();
+
+/* ═══ Formulir ═════════════════════════════════════════════════════════════ */
+(() => {
+  "use strict";
+  /* Tipe disebut sekali di sini. Sisa berkas memakainya apa adanya —
+     menyebar `as HTMLInputElement` di tiap pemakaian membuat logikanya
+     tenggelam di antara anotasi. */
+  const ambil = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const form  = ambil<HTMLFormElement>("formMasuk");
+  const btn   = ambil<HTMLButtonElement>("btnMasuk");
+  const hasil = ambil<HTMLElement>("hasilMasuk");
+  const mata  = ambil<HTMLButtonElement>("lihatSandi");
+  const sandi = ambil<HTMLInputElement>("m-sandi");
+  const email = ambil<HTMLInputElement>("m-email");
+  const caps  = ambil<HTMLElement>("caps");
+  const kunci = ambil<HTMLElement>("kunci");
+  const ingat = ambil<HTMLElement>("ingat");
+  const luring = ambil<HTMLElement>("luring");
+  const tetap = ambil<HTMLInputElement>("tetap");
+  const ingatT = ambil<HTMLElement>("ingatT");
+  const ingatX = ambil<HTMLButtonElement>("ingatX");
+  const kopJamEl = ambil<HTMLElement>("kopJam");
+  const kunciJam = ambil<HTMLElement>("kunciJam");
+  /* Satu penjaga di depan: halaman ini punya satu bentuk saja, jadi kalau
+     ada yang hilang, yang salah adalah markupnya — bukan sesuatu yang perlu
+     ditangani per-baris di seluruh berkas. */
+  if (!form || !btn || !hasil || !mata || !sandi || !email || !caps || !kunci ||
+      !ingat || !luring || !tetap || !ingatT || !ingatX || !kopJamEl || !kunciJam) return;
+
+  /* ── Bahasa ─────────────────────────────────────────────────────────────
+     Pasarnya internasional, jadi bawaannya Inggris — tapi yang mengetik data
+     tiap hari orang Indonesia. Pilihannya diingat di perangkat itu sendiri.
+     Teks Inggris diambil dari markup (jadi tidak ada dua sumber kebenaran);
+     yang ditulis di sini hanya sisi Indonesia dan kalimat yang dibuat JS. */
+  const ID = {
+    eyebrow:"Panel studio",
+    h1:"Digambar di Pontianak. Dibangun di mana saja.",
+    lead:"Setiap fase, gambar, tagihan, dan persetujuan klien ada di balik halaman ini. Dua orang memegang kuncinya, dan keduanya ikut menggambar.",
+    kopStudio:"Studio", negara:"Indonesia", kopJamL:"Waktu setempat",
+    kopAkses:"Akses", kopStaf:"Staf saja",
+    judul:"Masuk",
+    sub:"Hanya dua akun yang punya akses. Tidak ada pendaftaran, dan tidak ada yang bisa dibuat dari halaman ini.",
+    luring:"Anda tampaknya sedang luring. Masuk butuh koneksi — panel studio tidak menyimpan apa pun di perangkat.",
+    kunciJudul:"Terlalu banyak percobaan",
+    kunciA:"Alamat ini dijeda selama",
+    kunciB:"Ia terbuka sendiri — tidak ada yang rusak dan tidak ada yang perlu disetel ulang.",
+    bukanAnda:"Bukan Anda?",
+    lEmail:"Email", lSandi:"Kata sandi", caps:"Caps Lock menyala",
+    tetap:"Tetap masuk di perangkat ini",
+    tetapSub:"Kalau tidak, sesi berakhir saat peramban ditutup.",
+    btn:"Masuk",
+    klienJ:"Anda klien?",
+    klienP:"Halaman proyek Anda tidak butuh kata sandi — pakai tautan yang kami kirim. Kalau tautannya hilang,",
+    klienA:"minta yang baru",
+    cetak:"Kata sandi tidak bisa disetel ulang dari sini — pemegang akun satunya yang menyetelnya dari Pengaturan. Masuk di komputer bersama adalah tanggung jawab Anda."
+  };
+  /* Kalimat yang dirakit JS, jadi tidak ada di markup */
+  const JS_EN = {
+    lihat:"Show password", sembunyi:"Hide password",
+    vEmail:"That is not a complete email address.", vSandi:"Enter your password.",
+    gagalJ:"That combination did not work.", gagalP:"Check both fields and try again.",
+    gagalTambah:" After five attempts this address pauses for two minutes.",
+    luarJam:"after hours", judulDok:"Sign in"
+  };
+  const JS_ID = {
+    lihat:"Tampilkan kata sandi", sembunyi:"Sembunyikan kata sandi",
+    vEmail:"Alamat email itu belum lengkap.", vSandi:"Masukkan kata sandi Anda.",
+    gagalJ:"Kombinasi itu tidak cocok.", gagalP:"Periksa kedua isian lalu coba lagi.",
+    gagalTambah:" Setelah lima kali gagal, alamat ini dijeda dua menit.",
+    luarJam:"di luar jam kerja", judulDok:"Masuk"
+  };
+
+  const simpul = [...document.querySelectorAll<HTMLElement>("[data-t]")];
+  const EN: Record<string, string> = {};
+  const kamusId: Record<string, string> = ID;
+  const kamusJsId: Record<string, string> = JS_ID;
+  const kamusJsEn: Record<string, string> = JS_EN;
+  simpul.forEach((el) => {
+    const k = el.dataset.t;
+    if (k) EN[k] = (el.textContent || "").replace(/\s+/g, " ").trim();
+  });
+
+  let bhs = "en";
+  const T = (k: string) =>
+    bhs === "id" ? kamusJsId[k] || kamusId[k] : kamusJsEn[k] || EN[k];
+
+  const terap = (b: string) => {
+    bhs = b === "id" ? "id" : "en";
+    const kamus = bhs === "id" ? kamusId : EN;
+    simpul.forEach((el) => {
+      const k = el.dataset.t;
+      const v = k ? kamus[k] : undefined;
+      if (v) el.textContent = v;
+    });
+    document.documentElement.lang = bhs;
+    document.title = T("judulDok");
+    mata.setAttribute("aria-label",
+      sandi.type === "password" ? T("lihat") : T("sembunyi"));
+    document.querySelectorAll<HTMLElement>("[data-bhs]").forEach((b2) => {
+      const on = b2.dataset.bhs === bhs;
+      b2.classList.toggle("bhs__b--aktif", on);
+      b2.setAttribute("aria-pressed", String(on));
+    });
+    perbaruiJam();
+    if (!hasil.hidden) gambarGagal();       /* pesan galat ikut berganti */
+    try { localStorage.setItem("masuk:bhs", bhs); } catch (e) {}
+  };
+  document.querySelectorAll<HTMLElement>("[data-bhs]").forEach((b2) => {
+    b2.addEventListener("click", () => terap(b2.dataset.bhs || "en"));
+  });
+
+  /* ── Email yang diingat, dari perangkat ini saja ─────────────────────────
+     Disimpan di localStorage milik peramban orang itu sendiri; tidak pernah
+     dikirim ke mana pun, dan TIDAK menampilkan daftar akun yang ada. */
+  const KUNCI_INGAT = "masuk:email";
+  const pasangIngat = () => {
+    let v = null;
+    try { v = localStorage.getItem(KUNCI_INGAT); } catch (e) {}
+    if (!v) { ingat.hidden = true; email.focus(); return; }
+    ingatT.textContent = v;
+    ingat.hidden = false;
+    email.value = v;
+    sandi.focus();          /* emailnya sudah benar — langsung ke sandi */
+  };
+  ingatX.addEventListener("click", () => {
+    try { localStorage.removeItem(KUNCI_INGAT); } catch (e) {}
+    email.value = ""; ingat.hidden = true; email.focus();
+  });
+
+  /* ── Luring ─────────────────────────────────────────────────────────────
+     Tanpa ini, kirim yang gagal karena jaringan tampil sebagai "kombinasi
+     salah" — dan orang lalu mengganti sandi yang sebenarnya sudah benar. */
+  const cekJaringan = () => {
+    const mati = navigator.onLine === false;
+    luring.hidden = !mati;
+    btn.disabled = mati || sisa > 0;
+  };
+  addEventListener("online", cekJaringan);
+  addEventListener("offline", cekJaringan);
+
+  /* Jam studio di kop lembar. Dihitung dari zona waktu PERAMBAN — kalau Dirga
+     membuka dari luar negeri, ia tetap melihat jam Pontianak. */
+  const perbaruiJam = () => {
+    const wib = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+    const j = wib.getHours(), m = wib.getMinutes();
+    const kerja = j >= 9 && j < 18;
+    kopJamEl.innerHTML = "<b>" + String(j).padStart(2, "0") + ":" +
+      String(m).padStart(2, "0") + "</b> WIB" +
+      (kerja ? "" : ' <span style="color:var(--teks-3)">· ' + T("luarJam") + "</span>");
+  };
+
+  /* ── Caps Lock ──────────────────────────────────────────────────────────
+     Sandi disembunyikan, jadi Caps Lock yang menyala tidak bisa diketahui
+     sendiri — dan itu penyebab gagal masuk yang paling sering. */
+  const cekCaps = (e: KeyboardEvent) => {
+    if (typeof e.getModifierState !== "function") return;
+    caps.hidden = !e.getModifierState("CapsLock");
+  };
+  sandi.addEventListener("keydown", cekCaps);
+  sandi.addEventListener("keyup", cekCaps);
+  sandi.addEventListener("blur", () => { caps.hidden = true; });
+
+  mata.addEventListener("click", () => {
+    const buka = sandi.type === "password";
+    sandi.type = buka ? "text" : "password";
+    mata.setAttribute("aria-pressed", String(buka));
+    mata.setAttribute("aria-label", buka ? T("sembunyi") : T("lihat"));
+    sandi.focus();
+  });
+
+  const ATURAN: Record<string, (v: string) => true | string> = {
+    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || T("vEmail"),
+    sandi: (v) => v.length >= 1 || T("vSandi"),
+  };
+  const tandaiBidang = (n: string, pesan: string) => {
+    const b = form.querySelector('[data-bidang="' + n + '"]') as HTMLElement;
+    const p = b.querySelector("[data-pesan]") as HTMLElement;
+    b.classList.toggle("bidang--salah", !!pesan);
+    b.querySelector(".isian")!.setAttribute("aria-invalid", String(!!pesan));
+    if (pesan) { p.classList.remove("bantu"); p.textContent = pesan; }
+    else { p.classList.add("bantu"); p.innerHTML = "&nbsp;"; }
+  };
+
+  /* ── Terkunci: hitungan mundur sungguhan ────────────────────────────────
+     API membatasi /auth/login lewat KV. Tanpa hitungan mundur, orang mengira
+     akunnya rusak dan menelepon; dengan hitungan mundur ia cuma menunggu. */
+  let sisa = 0;
+  let jamId: ReturnType<typeof setInterval> | undefined;
+  const mulaiKunci = (detik: number) => {
+    sisa = detik; kunci.hidden = false; btn.disabled = true;
+    const gambar = () => {
+      const m = Math.floor(sisa / 60), d = sisa % 60;
+      kunciJam.textContent = m + ":" + String(d).padStart(2, "0");
+    };
+    gambar();
+    clearInterval(jamId);
+    jamId = setInterval(() => {
+      sisa -= 1; gambar();
+      if (sisa <= 0) {
+        clearInterval(jamId); sisa = 0; kunci.hidden = true;
+        hasil.hidden = true; gagal = 0; cekJaringan(); sandi.focus();
+      }
+    }, 1000);
+  };
+
+  /* Pesannya sengaja TIDAK menyebut mana yang salah, email atau sandi:
+     menyebutnya memberi tahu penebak bahwa emailnya sudah benar. */
+  let gagal = 0;
+  const gambarGagal = () => {
+    hasil.hidden = false;
+    hasil.innerHTML = '<div class="s16"></div><div class="pesan pesan--salah">' +
+      '<svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="#F87171" ' +
+      'stroke-width="1.6" style="flex:none"><circle cx="8" cy="8" r="6.5"/>' +
+      '<path d="M8 5v4M8 11h.01"/></svg><span><b>' + T("gagalJ") + "</b>" + T("gagalP") +
+      (gagal >= 3 ? T("gagalTambah") : "") + "</span></div>";
+  };
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (sisa > 0 || navigator.onLine === false) return;
+    let pertama: string | null = null;
+    for (const n of Object.keys(ATURAN)) {
+      const h = ATURAN[n]((form.elements.namedItem(n) as HTMLInputElement).value);
+      tandaiBidang(n, h === true ? "" : h);
+      if (h !== true && !pertama) pertama = n;
+    }
+    if (pertama) { (form.elements.namedItem(pertama) as HTMLInputElement).focus(); return; }
+
+    btn.classList.add("btn--memuat"); btn.disabled = true; hasil.hidden = true;
+    masuk(email.value.trim(), sandi.value, tetap.checked).then(() => {
+      /* Email diingat HANYA kalau masuknya berhasil — menyimpan alamat yang
+         salah ketik cuma membuat percobaan berikutnya gagal lagi. */
+      try {
+        if (tetap.checked) localStorage.setItem(KUNCI_INGAT, email.value.trim());
+        else localStorage.removeItem(KUNCI_INGAT);
+      } catch (e) {}
+      /* Ganti riwayat, bukan menambahnya: tombol kembali setelah masuk tidak
+         boleh mengembalikan orang ke halaman masuk. */
+      location.replace("/admin");
+    }).catch((err) => {
+      btn.classList.remove("btn--memuat"); btn.disabled = false;
+      gagal += 1;
+      /* API membatasi /auth/login lewat KV dan membalas 429. Bentuk yang
+         ditampilkan di sini sama dengan yang dirancang: hitungan mundur,
+         bukan pesan galat mentah. */
+      const kunciApi = /429|too many|terlalu banyak/i.test(String(err && err.message));
+      if (kunciApi || gagal >= 5) { mulaiKunci(120); return; }
+      gambarGagal();
+      sandi.select();
+    });
+  });
+
+  let awal = null;
+  try { awal = localStorage.getItem("masuk:bhs"); } catch (e) {}
+  terap(awal === "id" ? "id" : "en");
+  pasangIngat();
+  cekJaringan();
+  setInterval(perbaruiJam, 30000);
+})();
+    </script>
   </body>
 </html>

@@ -1,140 +1,185 @@
 ---
-import { ThemeToggle } from "./ui/ThemeToggle";
 import { getSettings } from "../lib/api";
 
-const links = [
-  { href: "/proyek", label: "Proyek" },
-  { href: "/tentang", label: "Tentang" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/kontak", label: "Kontak" },
-];
-
-const current = Astro.url.pathname;
 const settings = await getSettings();
 const nama = settings.studioName?.trim() || "Dirga Pahlevi Architecture";
+
+// Wordmark di pita nav memakai bentuk pendek — kata generik di ekor nama
+// ("Architecture", "Studio") dibuang supaya tidak memakan setengah bilah.
+// Kalau pemilik mengganti nama studionya, ini tetap ikut; yang tetap
+// dibuang cuma ekornya.
+const EKOR = /\s+(architecture|architects|architect|studio|design|designs)$/i;
+const wordmark = nama.replace(EKOR, "").toUpperCase();
+
+const tautan = [
+  { href: "/proyek", label: "Work" },
+  { href: "/studio", label: "Studio" },
+  /* Journal ditahan sampai rutenya ada. Dilepas dari daftar, BUKAN dihapus:
+     mengembalikannya nanti cukup melepas komentar ini. Menayangkannya lebih
+     dulu berarti 25 tautan menuju 404 di setiap halaman. */
+  // { href: "/jurnal", label: "Journal" },
+  { href: "/kontak", label: "Contact" },
+];
+
+const kini = Astro.url.pathname;
+const aktif = (href: string) =>
+  href === "/" ? kini === "/" : kini === href || kini.startsWith(href + "/");
+
+// Tahun yang ditawarkan dihitung, bukan diketik — kalau diketik ia basi diam-diam
+// dan situsnya masih menawarkan tahun yang sudah lewat. Batas September itu
+// TEBAKAN saya: proyek arsitektur butuh berbulan-bulan sebelum mulai, jadi di
+// kuartal terakhir yang masuk akal ditawarkan adalah tahun berikutnya.
+// Kalau batasnya salah, pindahkan ke setelan studio supaya pemilik yang atur.
+const sekarang = new Date();
+const tahunTawar = sekarang.getMonth() >= 8 ? sekarang.getFullYear() + 1 : sekarang.getFullYear();
+const statusTeks = `Taking projects for ${tahunTawar}`;
 ---
 
-<header class="site-header">
-  <div class="shell">
-    <div class="header-pill">
-      {/* Nama studio diberi lantai. Kalau API membalas bentuk yang tak terduga,
-          tautan ini jadi kotak kosong yang bisa diklik tanpa satu pun teks —
-          dan pembaca layar cuma menyebutnya "tautan". aria-label menjaga
-          namanya tetap ada apa pun yang dibalas API. */}
-      <a href="/" class="wordmark" aria-label={`${nama}, ke beranda`}>
-        {settings.logoUrl && <img src={settings.logoUrl} alt="" class="wordmark__logo" />}
-        {nama}
+<a href="#isi" class="lompat">Skip to content</a>
+<div class="bar-atas" id="barAtas"></div>
+
+<div class="pita pita--awal nav" id="nav">
+  <div class="dalam">
+    <div class="isi isi--rapat nav-utama nav-baris">
+      <a href="/" class="merek" aria-label={`${nama}, ke beranda`}>
+        {
+          settings.logoUrl ? (
+            <img src={settings.logoUrl} alt="" class="merek__logo" width="20" height="20" />
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M10 1.5 18 6v8l-8 4.5L2 14V6l8-4.5Z" stroke="#2DD4BF" stroke-width="1.6" />
+              <path
+                d="M10 6.5 14 9v4l-4 2.2L6 13V9l4-2.5Z"
+                fill="#2DD4BF"
+                fill-opacity=".25"
+                stroke="#2DD4BF"
+                stroke-width="1.2"
+              />
+            </svg>
+          )
+        }
+        <span class="label merek__teks">{wordmark}</span>
       </a>
 
-      <nav class="header-nav" aria-label="Navigasi utama">
-        <ul>
-          {
-            links.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  aria-current={current.startsWith(link.href) ? "page" : undefined}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
+      <nav class="rowx nav-lipat nav-tautan" aria-label="Main">
+        {
+          tautan.map((t) => (
+            <a href={t.href} aria-current={aktif(t.href) ? "page" : undefined}>
+              {t.label}
+            </a>
+          ))
+        }
       </nav>
 
-      <div class="header-actions">
-        <ThemeToggle client:load />
-      </div>
+      <span class="rowx nav-kanan">
+        <span class="status nav-lipat"><i></i>{statusTeks}</span>
+        <a class="btn btn--isi nav-lipat" href="/kontak">Start a project</a>
+        <button class="nav-tombol" id="bukaLaci" aria-label="Open menu" aria-expanded="false">
+          <svg width="19" height="19" viewBox="0 0 20 20" stroke="currentColor" stroke-width="1.6"
+            ><path d="M2 6h16M2 14h16"></path></svg
+          >
+        </button>
+      </span>
     </div>
   </div>
-</header>
+</div>
+
+<dialog class="laci" id="laci" aria-label="Menu">
+  <div class="laci__kop">
+    <span class="label merek__teks">{wordmark}</span>
+    <button class="nav-tombol laci__x" id="tutupLaci" aria-label="Close menu">
+      <svg width="19" height="19" viewBox="0 0 20 20" stroke="currentColor" stroke-width="1.6"
+        ><path d="M5 5l10 10M15 5L5 15"></path></svg
+      >
+    </button>
+  </div>
+  {tautan.map((t) => (<a href={t.href}>{t.label} <span class="ak">→</span></a>))}
+  <div class="laci__kaki">
+    <span class="status"><i></i>{statusTeks}</span>
+    <div class="s16"></div>
+    <a class="btn btn--isi btn--penuh" href="/kontak">Start a project →</a>
+  </div>
+</dialog>
 
 <style>
-  /* Bar mengambang, bukan menempel ke tepi — jarak atasnya bagian dari
-     kotak sticky ini sendiri, supaya konten yang lewat di baliknya tetap
-     terlihat sekilas lewat celahnya, bukan disembunyikan warna solid. */
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    padding-top: var(--space-4);
+  /* Gaya khusus chrome nav. Sisanya — .pita, .dalam, .isi, .status, .btn —
+     datang dari publik.css dan sengaja TIDAK diulang di sini. */
+  .nav-baris {
+    display: flex;
+    align-items: center;
+    gap: 28px;
   }
-
-  .header-pill {
+  .merek {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0;
+  }
+  .merek__logo {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    object-fit: contain;
+  }
+  .merek__teks {
+    letter-spacing: 0.14em;
+  }
+  .nav-tautan {
+    gap: 24px;
+    margin-left: 8px;
+  }
+  .nav-kanan {
+    margin-left: auto;
+  }
+  .laci__kop {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-5);
-    flex-wrap: wrap;
-    padding: 0.85rem 1.5rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    backdrop-filter: blur(10px);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--garis);
   }
-
-  .wordmark {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-    letter-spacing: 0.02em;
-    text-decoration: none;
-    flex: none;
+  /* .nav-tombol disembunyikan di layar lebar oleh publik.css; tombol tutup
+     di dalam laci harus tetap ada berapa pun lebar layarnya. */
+  .laci__x {
+    display: grid;
   }
-
-  .wordmark__logo {
-    width: 1.75rem;
-    height: 1.75rem;
-    flex: none;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
-  }
-
-  .header-nav {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-  }
-
-  .header-nav ul {
-    display: flex;
-    gap: clamp(1.25rem, 3vw, 2.5rem);
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .header-nav a {
-    font-size: 0.78rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    text-decoration: none;
-    color: var(--text-muted);
-  }
-
-  .header-nav a:hover,
-  .header-nav a[aria-current="page"] {
-    color: var(--text-strong);
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    flex: none;
-  }
-
-  @media (max-width: 40rem) {
-    .header-pill {
-      justify-content: center;
-    }
-
-    .header-nav {
-      order: 3;
-      flex: 1 0 100%;
-      justify-content: center;
-    }
+  .laci__kaki {
+    padding: 24px;
   }
 </style>
+
+<script>
+  (() => {
+    "use strict";
+    const bar = document.getElementById("barAtas");
+    const nav = document.getElementById("nav");
+    const laci = document.getElementById("laci") as HTMLDialogElement | null;
+    const buka = document.getElementById("bukaLaci");
+    const tutup = document.getElementById("tutupLaci");
+    if (!bar || !nav || !laci || !buka || !tutup) return;
+
+    // Bar kemajuan baca + nav yang menyingkir saat menggulir ke bawah.
+    // Keduanya menumpang satu listener passive supaya tidak menahan gulir.
+    let lalu = 0;
+    addEventListener(
+      "scroll",
+      () => {
+        const maks = document.body.scrollHeight - innerHeight;
+        bar.style.width = (maks > 0 ? (scrollY / maks) * 100 : 0) + "%";
+        const y = scrollY;
+        if (y > 140 && y > lalu) nav.classList.add("nav--sembunyi");
+        else if (y < lalu) nav.classList.remove("nav--sembunyi");
+        lalu = y;
+      },
+      { passive: true },
+    );
+
+    buka.addEventListener("click", () => {
+      laci.showModal();
+      buka.setAttribute("aria-expanded", "true");
+    });
+    tutup.addEventListener("click", () => laci.close());
+    laci.addEventListener("close", () => buka.setAttribute("aria-expanded", "false"));
+    laci.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => laci.close()));
+  })();
+</script>
