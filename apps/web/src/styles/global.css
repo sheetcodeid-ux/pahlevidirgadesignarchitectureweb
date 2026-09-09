@@ -8,6 +8,21 @@
   box-sizing: border-box;
 }
 
+/* Atribut [hidden] HARUS menang atas kelas komponen.
+ *
+ * Aturan bawaan peramban `[hidden]{display:none}` berkekhususan sama dengan
+ * `.stack{display:flex}`, dan aturan penulis selalu mengalahkan aturan
+ * peramban — jadi elemen yang disembunyikan dari JS tetap tergambar tanpa
+ * satu pun galat. Sudah menggigit di /admin/ui: satu panel tab setinggi
+ * 16.565px ikut tampil di bawah tab yang aktif.
+ *
+ * Kembarannya sudah ada di publik.css. Dua stylesheet karena situs publik dan
+ * panel admin memang dua sistem yang terpisah — kalau salah satunya ditambah
+ * aturan sejenis, yang satunya perlu ikut. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   /* Android Chrome menyorot elemen yang ditekan dengan overlay biru bawaan
