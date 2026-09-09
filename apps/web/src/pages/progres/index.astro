@@ -1,22 +1,1289 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { ClientProgressView } from "../../components/ClientProgressView";
-/* Stepper fase, timeline progres, dan pemutar pesan suara semuanya hidup di
-   misc.css — BaseLayout tidak memuatnya, jadi halaman ini harus memintanya
-   sendiri, sama seperti /faq dan /tentang. */
-import "../../styles/misc.css";
-/* Form brief dan form testimoni di halaman ini memakai .field/.input, yang
-   hidup di form.css. Tanpa ini keduanya tampil sebagai isian mentah bawaan
-   browser — label sebaris dengan kotak, tanpa border, tanpa radius. */
-import "../../styles/form.css";
+/**
+ * Portal klien — halaman proyek yang dibuka klien dari tautan yang dikirim
+ * studio.
+ *
+ * PUBLIK dan tanpa login: kredensialnya token 40 hex di ?t=, ditukar ke
+ * /api/v1/progress/:token. Tidak boleh menyentuh apa pun di lib/admin.
+ *
+ * Berdiri sendiri tanpa Header/Footer situs — bilah atasnya identitas proyek
+ * dan pemilih bahasa, bukan navigasi pemasaran. Klien yang sampai di sini
+ * tidak sedang menimbang mau memakai studio yang mana.
+ */
+import "../../styles/publik.css";
 ---
 
-<BaseLayout
-  title="Progres Proyek"
-  description="Lihat progres proyek Anda lewat link yang dibagikan studio."
-  noindex
->
-  <section class="section shell" style="max-width: 42rem; margin-inline: auto;">
-    <ClientProgressView client:load />
-  </section>
-</BaseLayout>
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your project page — Dirga Pahlevi Architecture</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#09090B" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Maven+Pro:wght@400..800&display=swap"
+    />
+  </head>
+  <body>
+    <a href="#isi" class="lompat" data-t="lewati">Skip to content</a>
+    <div class="bar-atas" id="barAtas"></div>
+
+    <div class="pita pita--awal nav" id="nav">
+      <div class="dalam">
+        <div class="isi isi--rapat pbar">
+          <span class="pbar__id">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M10 1.5 18 6v8l-8 4.5L2 14V6l8-4.5Z" stroke="#2DD4BF" stroke-width="1.6"/>
+              <path d="M10 6.5 14 9v4l-4 2.2L6 13V9l4-2.5Z" fill="#2DD4BF" fill-opacity=".25" stroke="#2DD4BF" stroke-width="1.2"/></svg>
+            <span class="label" style="letter-spacing:.14em">DIRGA PAHLEVI</span></span>
+          <span class="dim kecil" data-t="portalLabel">Client project page</span>
+          <span style="margin-left:auto" class="rowx" style="gap:12px">
+            <span class="dim kecil" id="navSegar"></span>
+            <span class="bhs" role="group" aria-label="Language">
+              <button type="button" data-bhs="en" aria-pressed="true">EN</button>
+              <button type="button" data-bhs="id" aria-pressed="false">ID</button>
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="lengket" id="lengket">
+      <div class="lengket__d">
+        <span class="lengket__n" id="lengketN">0</span>
+        <span class="lengket__t" id="lengketT"></span>
+        <button class="btn btn--isi" id="lengketB" style="padding:8px 15px;font-size:12.5px"
+          data-t="lihatB">Show me <span class="ar">&#8595;</span></button>
+      </div>
+    </div>
+
+    <main id="isi">
+
+<!-- ══ MEMUAT ══════════════════════════════════════════════════════════════
+     Bentuknya mengikuti isi yang akan menggantikannya: sampul, rel tahap,
+     lalu dua kolom. Skeleton yang bentuknya beda dari isinya justru membuat
+     halaman melompat begitu datanya sampai. -->
+<div id="vMuat">
+  <div class="pita">
+    <div class="dalam">
+      <div class="sampul" style="background:var(--sel)"></div>
+      <div class="s24"></div>
+      <div class="tahap">
+        <div class="tahap__l"><span class="rangka-b" style="width:22px;height:22px;border-radius:99px;margin:0 auto 13px;display:block"></span><span class="rangka-b" style="width:70%;margin:0 auto;display:block"></span></div>
+        <div class="tahap__l"><span class="rangka-b" style="width:22px;height:22px;border-radius:99px;margin:0 auto 13px;display:block"></span><span class="rangka-b" style="width:70%;margin:0 auto;display:block"></span></div>
+        <div class="tahap__l"><span class="rangka-b" style="width:22px;height:22px;border-radius:99px;margin:0 auto 13px;display:block"></span><span class="rangka-b" style="width:70%;margin:0 auto;display:block"></span></div>
+        <div class="tahap__l"><span class="rangka-b" style="width:22px;height:22px;border-radius:99px;margin:0 auto 13px;display:block"></span><span class="rangka-b" style="width:70%;margin:0 auto;display:block"></span></div>
+        <div class="tahap__l"><span class="rangka-b" style="width:22px;height:22px;border-radius:99px;margin:0 auto 13px;display:block"></span><span class="rangka-b" style="width:70%;margin:0 auto;display:block"></span></div>
+        <div class="tahap__l"><span class="rangka-b" style="width:22px;height:22px;border-radius:99px;margin:0 auto 13px;display:block"></span><span class="rangka-b" style="width:70%;margin:0 auto;display:block"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="pita pita--akhir">
+    <div class="dalam">
+      <div class="baris baris-portal">
+        <div class="sel sel-p">
+          <span class="rangka-b" style="width:130px"></span><div class="s16"></div>
+          <span class="rangka-b" style="width:70%;height:24px"></span><div class="s24"></div>
+          <span class="rangka-b" style="width:100%;height:52px"></span><div class="s16"></div>
+          <span class="rangka-b" style="width:100%;height:52px"></span>
+        </div>
+        <div class="sel sel-p" style="background:var(--gelap)">
+          <span class="rangka-b" style="width:110px"></span><div class="s16"></div>
+          <span class="rangka-b" style="width:100%;height:8px"></span><div class="s24"></div>
+          <span class="rangka-b" style="width:100%"></span><div class="s10"></div>
+          <span class="rangka-b" style="width:100%"></span><div class="s10"></div>
+          <span class="rangka-b" style="width:100%"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAUTAN SALAH ════════════════════════════════════════════════════════
+     Rancangan yang di-ACC cuma memuat keadaan berhasil — ia dibuat dari satu
+     proyek contoh. Tautan bisa gagal karena tiga sebab yang berbeda, dan
+     menyamakan ketiganya membuat klien mengira tautannya rusak padahal
+     jaringannya yang mati. -->
+<div id="vGalat" hidden>
+  <div class="pita pita--akhir">
+    <div class="dalam">
+      <div class="sel sel-p" style="text-align:center;padding-block:64px">
+        <span class="kotak-ikon" style="color:var(--merah);border-color:#7F3B3B;margin-inline:auto">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+            stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="7.5"/><path d="M10 6.2v4.4M10 13.4h.01"/></svg></span>
+        <div class="s16"></div>
+        <h1 class="h3" id="gJudul">This project link is incomplete</h1>
+        <div class="s10"></div>
+        <p class="mut kecil" id="gKet" style="max-width:46ch;margin-inline:auto">WhatsApp sometimes
+        cuts long links when they are forwarded. Ask us to send it again — nothing on your project
+        is lost.</p>
+        <div class="s24"></div>
+        <a class="btn" href="/kontak" id="gTombol">Ask for the link again <span class="ar">→</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="vIsi" hidden>
+
+
+<!-- ══ KEPALA PROYEK ═════════════════════════════════════════════════════ -->
+<div class="pita">
+  <div class="dalam">
+    <div class="sampul">
+      <img id="sampulFoto" alt="" hidden />
+      <span id="sampulKosong" data-t="fotoSampul">PROJECT COVER PHOTO</span>
+      <div class="sampul__t">
+        <div>
+          <span class="label" data-t="proyekAnda">YOUR PROJECT</span>
+          <div class="s10"></div>
+          <h1 class="h1" id="judulProyek" style="font-size:clamp(1.8rem,3.2vw,2.5rem)">—</h1>
+          <div class="s6"></div>
+          <p class="mut kecil" id="metaProyek">Commercial · Pontianak · Started March 2025</p>
+        </div>
+        <span class="status"><i></i><span data-t="hidup">Live — updated by the studio</span></span>
+      </div>
+    </div>
+    <div class="isi isi--rapat" style="padding-top:22px;padding-bottom:0">
+      <p class="mut kecil" data-t="subKepala" style="max-width:70ch">This page is updated by the
+      studio as the work moves. You do not need to ask for a status.</p>
+    </div>
+    <div class="s24"></div>
+    <div class="tahap" id="tahap"></div>
+    <div class="tahap-kaki">
+      <span class="tahap-kaki__n" id="tahapKe">—</span>
+      <span class="tahap-kaki__k" id="tahapKet">—</span>
+      <span style="min-width:150px;flex:1">
+        <span class="bayar-b__l"><span data-t="kemajuan">Progress</span><b id="tahapPersen">—</b></span>
+        <span class="batang"><i id="tahapBatang" style="width:0"></i></span>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ YANG MENUNGGU ANDA + RINGKASAN ════════════════════════════════════ -->
+<div class="pita">
+  <div class="dalam">
+    <div class="baris baris-portal">
+      <div class="sel sel-p">
+        <span class="label" data-t="menungguJudul">WAITING FOR YOU</span>
+        <div class="s16"></div>
+        <h2 class="h3" data-t="menungguH">Three things need you. Nothing else does.</h2>
+        <div class="s24"></div>
+        <div id="tugasDaftar"></div>
+        <div class="s24"></div>
+        <div class="kartu-n">
+          <span class="kartu-n__l" data-t="berikutJudul">WHAT HAPPENS NEXT</span>
+          <div class="kartu-n__j" id="berikutJ">—</div>
+          <p class="kartu-n__k" id="berikutK">—</p>
+        </div>
+      </div>
+      <div class="sel sel-p" style="background:var(--gelap)">
+        <span class="label label--redup" data-t="uangJudul">MONEY SO FAR</span>
+        <div class="s16"></div>
+        <div class="bayar-b">
+          <div class="bayar-b__l"><span data-t="terbayar">Paid</span><b id="uPersen">—</b></div>
+          <div class="bayar-b__r" id="uBatang"></div>
+        </div>
+        <div class="ringkas"><span data-t="nilaiKontrak">Contract value</span><b id="uKontrak">—</b></div>
+        <div class="ringkas"><span data-t="sudahBayar">Paid so far</span><b id="uBayar">—</b></div>
+        <div class="ringkas ringkas--sisa"><span data-t="sisaBayar">Outstanding</span><b id="uSisa">—</b></div>
+        <div class="s16"></div>
+        <p class="dim kecil" data-t="uangKet">Every figure here comes from an invoice you can open
+        below. Nothing is estimated.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DOKUMEN ═══════════════════════════════════════════════════════════ -->
+<div class="pita">
+  <div class="dalam">
+    <div class="isi isi--rapat">
+      <span class="label" data-t="dokJudul">DRAWINGS &amp; DOCUMENTS</span>
+      <div class="s16"></div>
+      <h2 class="h2" data-t="dokH">Everything we have sent you.</h2>
+      <div class="s10"></div>
+      <p class="mut kecil" data-t="dokSub">Approving a document tells us it is settled and we can
+      build on it. Asking for a revision is normal and costs nothing inside the same stage.</p>
+    </div>
+    <div class="sel sel-p" style="border-top:1px solid var(--garis)">
+      <div class="dok-saring" id="dokSaring"></div>
+      <div id="dokDaftar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAGIHAN ═══════════════════════════════════════════════════════════ -->
+<div class="pita">
+  <div class="dalam">
+    <div class="isi isi--rapat">
+      <span class="label" data-t="tagJudul">INVOICES</span>
+      <div class="s16"></div>
+      <h2 class="h2" data-t="tagH">What has been billed, and what has been paid.</h2>
+    </div>
+    <div class="sel sel-p" style="border-top:1px solid var(--garis)">
+      <table class="tag-t">
+        <thead><tr>
+          <th data-t="thTagihan">Invoice</th>
+          <th data-t="thJatuh">Due</th>
+          <th data-t="thStatus">Status</th>
+          <th class="nom" data-t="thJumlah">Amount</th>
+        </tr></thead>
+        <tbody id="tagBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BRIEF ═════════════════════════════════════════════════════════════ -->
+<div class="pita">
+  <div class="dalam">
+    <div class="isi isi--rapat">
+      <span class="label" data-t="briefJudul">WHAT YOU ASKED FOR</span>
+      <div class="s16"></div>
+      <h2 class="h2" data-t="briefH">Your brief, as we recorded it.</h2>
+      <div class="s10"></div>
+      <p class="mut kecil" data-t="briefSub">If any of this has changed, say so — it is the document
+      every drawing is checked against.</p>
+    </div>
+    <div class="s24"></div>
+    <dl class="brief-g" id="briefG"></dl>
+    <div class="sel sel-p" style="border-top:1px solid var(--garis)">
+      <span class="label label--redup" data-t="briefReqJ">REQUIREMENTS IN YOUR WORDS</span>
+      <div class="s10"></div>
+      <p class="mut" id="briefReq" style="max-width:74ch"></p>
+      <div class="s16"></div>
+      <button class="btn" id="bBrief" data-t="briefB">Something has changed <span class="ar">→</span></button>
+      <div id="briefForm" hidden></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RIWAYAT PEMBARUAN ═════════════════════════════════════════════════ -->
+<div class="pita">
+  <div class="dalam">
+    <div class="isi isi--rapat">
+      <span class="label" data-t="updJudul">WHAT HAS HAPPENED</span>
+      <div class="s16"></div>
+      <h2 class="h2" data-t="updH">The project, newest first.</h2>
+    </div>
+    <div class="sel sel-p" style="border-top:1px solid var(--garis)" id="updDaftar"></div>
+  </div>
+</div>
+
+<!-- ══ BANTUAN ═══════════════════════════════════════════════════════════ -->
+<div class="pita pita--akhir">
+  <div class="dalam">
+    <div class="baris b2">
+      <div class="sel sel-p">
+        <span class="label label--redup" data-t="tanyaJudul">SOMETHING UNCLEAR?</span>
+        <div class="s16"></div>
+        <p class="mut kecil" data-t="tanyaK">Write it under the drawing it concerns — that keeps the
+        answer next to the thing it is about. For anything else, WhatsApp is fastest.</p>
+        <div class="s16"></div>
+        <a class="btn" id="bTanya" href="/kontak" data-t="tanyaB">Message the studio <span class="ar">→</span></a>
+      </div>
+      <div class="sel sel-p">
+        <span class="label label--redup" data-t="tautanJudul">THIS LINK IS YOUR LOGIN</span>
+        <div class="s16"></div>
+        <p class="mut kecil" data-t="tautanK">No password to forget. Anyone you forward it to can
+        see this page, so send it only to people who should — and tell us if you want it replaced.</p>
+        <div class="s16"></div>
+        <a class="btn" id="bTautan" href="/kontak" data-t="tautanB">Replace this link <span class="ar">→</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+    </main>
+  </body>
+</html>
+
+<script>
+/* ══ Portal klien ══════════════════════════════════════════════════════════
+   Datanya diambil sendiri di sini, bukan lewat lib/admin: halaman ini publik
+   dan tidak boleh menyentuh sesi staf. Kredensialnya token 40 hex di ?t=. */
+(() => {
+  "use strict";
+  const API = (import.meta.env.PUBLIC_API_BASE_URL ?? "http://localhost:8787")
+    .replace(/\/$/, "");
+
+  const FASE = ["konsultasi", "konsep", "ded", "perizinan", "konstruksi", "selesai"];
+
+  interface Komentar { id: string; author: string; body: string; createdAt: string }
+  interface Dokumen {
+    id: string; title: string; fileUrl: string; kind: string; status: string;
+    clientNote?: string | null; fileSize?: number | null; mimeType?: string | null;
+    durationMs?: number | null; createdAt?: string; comments: Komentar[];
+  }
+  interface Tagihan { id: string; label: string; amount: number; status: string; dueDate?: string | null }
+  interface Pembaruan { id: string; title: string; note?: string | null; photoUrl?: string | null; createdAt: string }
+  interface Brief {
+    budgetRange?: string | null; budgetAmount?: number | null; startDate?: string | null;
+    endDate?: string | null; timeline?: string | null; stylePreference?: string | null;
+    requirements?: string | null; submittedAt?: string | null;
+  }
+  interface Portal {
+    projectTitle: string; coverImageUrl?: string | null; phase: string;
+    category: string; city?: string | null; contractValue: number | null;
+    updatedAt?: string | null;
+    updates: Pembaruan[]; documents: Dokumen[]; invoices: Tagihan[]; brief: Brief;
+  }
+
+  type Kamus = Record<string, string | Record<string, string> | string[]>;
+
+  const KAMUS: Record<"en" | "id", Kamus> = {
+    en: {
+      lewati:"Skip to content", portalLabel:"Client project page",
+      hidup:"Live — updated by the studio", proyekAnda:"YOUR PROJECT",
+      subKepala:"This page is updated by the studio as the work moves. You do not need to ask for a status — and if something here looks wrong, telling us is how it gets fixed.",
+      menungguJudul:"WAITING FOR YOU", menungguH:"Two things need you. Nothing else does.",
+      uangJudul:"MONEY SO FAR", nilaiKontrak:"Contract value", sudahBayar:"Paid so far",
+      sisaBayar:"Outstanding",
+      uangKet:"Every figure here comes from an invoice you can open below. Nothing is estimated.",
+      dokJudul:"DRAWINGS & DOCUMENTS", dokH:"Everything we have sent you.",
+      dokSub:"Approving a document tells us it is settled and we can build on it. Asking for a revision is normal and costs nothing inside the same stage.",
+      tagJudul:"INVOICES", tagH:"What has been billed, and what has been paid.",
+      thTagihan:"Invoice", thJatuh:"Due", thStatus:"Status", thJumlah:"Amount",
+      updJudul:"WHAT HAS HAPPENED", updH:"The project, newest first.",
+      tanyaJudul:"SOMETHING UNCLEAR?",
+      tanyaK:"Write it under the drawing it concerns — that keeps the answer next to the thing it is about. For anything else, WhatsApp is fastest.",
+      tanyaB:"Message the studio", tautanJudul:"THIS LINK IS YOUR LOGIN",
+      tautanK:"No password to forget. Anyone you forward it to can see this page, so send it only to people who should — and tell us if you want it replaced.",
+      tautanB:"Replace this link",
+      fase:["Consultation","Concept","Developed design","Permits","Construction","Handover"],
+      dokStatus:{menunggu_klien:"Needs your answer",revisi_diminta:"Revision requested",
+        disetujui:"Approved",final:"Final",draft:"Draft"},
+      tagStatus:{lunas:"Paid",terbit:"Awaiting payment",draft:"Not issued yet"},
+      setujui:"Approve", revisi:"Ask for a revision", unduh:"Download",
+      dengar:"Listen", balas:"Reply",
+      tugasDok:"A drawing is waiting for your answer",
+      tugasSuara:"A voice note is waiting for your answer",
+      tugasDokK:'“{x}” has been with you since {d}. Approving it lets the next stage start; asking for a revision is free inside this stage.',
+      tugasTag:"An invoice is due", tugasTagK:"{x} — {a}, due {d}.",
+      studio:"Studio", klien:"You", fotoTapak:"SITE PHOTO",
+      buka:"Open", dari:"from",
+      fotoSampul:"PROJECT COVER PHOTO", kemajuan:"Progress", terbayar:"Paid",
+      lihatB:"Show me", tahapKe:"Stage {n} of 6 · {x}",
+      tahapKet:{konsultasi:"Understanding the site, the budget and what you actually need.",
+        konsep:"Testing arrangements. Nothing here is final; it is meant to be argued with.",
+        ded:"Turning the agreed design into drawings a builder can price and build from.",
+        perizinan:"With the permit office. Waiting is most of this stage.",
+        konstruksi:"On site. Site photos land here as the work goes up.",
+        selesai:"Handed over. This page stays live so the documents stay findable."},
+      berikutJudul:"WHAT HAPPENS NEXT",
+      briefJudul:"WHAT YOU ASKED FOR", briefH:"Your brief, as we recorded it.",
+      briefSub:"If any of this has changed, say so — it is the document every drawing is checked against.",
+      briefReqJ:"REQUIREMENTS IN YOUR WORDS", briefB:"Something has changed",
+      bAnggaran:"Budget", bMulai:"Started", bWaktu:"Timeline", bGaya:"Style",
+      sAll:"All", sPerlu:"Needs you", sSelesai:"Settled",
+      diperbarui:"Updated {d}", perkiraan:"expected",
+      lengket1:"1 thing is waiting for you", lengketN:"{n} things are waiting for you",
+      tglBelum:"date to follow",
+      berikutSelesaiJ:"Nothing after this stage",
+      berikutSelesaiK:"The project has been handed over. This page stays live so the drawings and invoices remain findable years later — which is usually when somebody actually needs them.",
+      tugasKosong:"Nothing needs you right now. We will put it here the moment something does.",
+      dokKosong:"Nothing here yet under this filter.",
+      tagKosong:"No invoices have been issued yet.",
+      updKosong:"No updates have been posted yet.",
+      belumTeken:"not agreed yet", briefBelum:"not recorded yet",
+      briefReqBelum:"Nothing recorded yet. Tell us and it goes here — it is the document every drawing is checked against.",
+      berkasUmum:"File", pesanSuara:"Voice note",
+      kategori:{residential:"Residential",commercial:"Commercial",interior:"Interior",
+        institutional:"Institutional",landscape:"Landscape",other:"Project"},
+      dimulai:"Started {d}",
+      revisiPh:"What should change, and why? Being specific here saves a round.",
+      revisiKirim:"Send revision request", balasPh:"Write your question or comment.",
+      balasKirim:"Send", batal:"Cancel", briefKirim:"Save changes",
+      kosongDulu:"Write something first.",
+      aksiGagal:"That did not go through. Check your connection and try again.",
+      galatJ:"This project link is incomplete",
+      galatK:"WhatsApp sometimes cuts long links when they are forwarded. Ask us to send it again — nothing on your project is lost.",
+      galatB:"Ask for the link again",
+      hilangJ:"We cannot find this project page",
+      hilangK:"The link is complete but no project matches it. It may have been replaced — ask us and we will send the current one.",
+      jaringanJ:"We could not reach the studio",
+      jaringanK:"The connection dropped before your project page arrived. Nothing is wrong with your link; try again in a moment.",
+      jaringanB:"Try again",
+    },
+    id: {
+      lewati:"Lewati ke isi", portalLabel:"Halaman proyek klien",
+      hidup:"Hidup — diperbarui studio", proyekAnda:"PROYEK ANDA",
+      subKepala:"Halaman ini diperbarui studio seiring pekerjaan berjalan. Anda tidak perlu menanyakan status — dan kalau ada yang terlihat keliru, memberi tahu kami adalah cara memperbaikinya.",
+      menungguJudul:"MENUNGGU ANDA", menungguH:"Dua hal menunggu Anda. Sisanya tidak.",
+      uangJudul:"UANG SEJAUH INI", nilaiKontrak:"Nilai kontrak", sudahBayar:"Sudah dibayar",
+      sisaBayar:"Sisa",
+      uangKet:"Setiap angka di sini berasal dari tagihan yang bisa Anda buka di bawah. Tidak ada yang dikira-kira.",
+      dokJudul:"GAMBAR & DOKUMEN", dokH:"Semua yang sudah kami kirimkan.",
+      dokSub:"Menyetujui dokumen berarti ia sudah final dan bisa dijadikan dasar. Meminta revisi itu wajar dan tidak menambah biaya selama masih di tahap yang sama.",
+      tagJudul:"TAGIHAN", tagH:"Yang sudah ditagih, dan yang sudah dibayar.",
+      thTagihan:"Tagihan", thJatuh:"Jatuh tempo", thStatus:"Status", thJumlah:"Jumlah",
+      updJudul:"YANG SUDAH TERJADI", updH:"Perjalanan proyek, terbaru dulu.",
+      tanyaJudul:"ADA YANG BELUM JELAS?",
+      tanyaK:"Tulis di bawah gambar yang Anda maksud — supaya jawabannya menempel pada hal yang ditanyakan. Untuk hal lain, WhatsApp paling cepat.",
+      tanyaB:"Hubungi studio", tautanJudul:"TAUTAN INI ADALAH LOGIN ANDA",
+      tautanK:"Tidak ada kata sandi yang bisa lupa. Siapa pun yang Anda kirimi tautan ini bisa melihat halamannya, jadi kirim hanya ke orang yang berhak — dan beri tahu kami kalau ingin diganti.",
+      tautanB:"Ganti tautan ini",
+      fase:["Konsultasi","Konsep","DED","Perizinan","Konstruksi","Selesai"],
+      dokStatus:{menunggu_klien:"Menunggu tanggapan Anda",revisi_diminta:"Revisi diminta",
+        disetujui:"Disetujui",final:"Final",draft:"Draf"},
+      tagStatus:{lunas:"Lunas",terbit:"Menunggu pembayaran",draft:"Belum diterbitkan"},
+      setujui:"Setujui", revisi:"Minta revisi", unduh:"Unduh",
+      dengar:"Dengarkan", balas:"Balas",
+      tugasDok:"Ada gambar yang menunggu tanggapan Anda",
+      tugasSuara:"Ada pesan suara yang menunggu tanggapan Anda",
+      tugasDokK:'“{x}” ada di tangan Anda sejak {d}. Menyetujuinya membuat tahap berikutnya bisa mulai; meminta revisi tidak dipungut biaya di tahap ini.',
+      tugasTag:"Ada tagihan yang jatuh tempo", tugasTagK:"{x} — {a}, jatuh tempo {d}.",
+      studio:"Studio", klien:"Anda", fotoTapak:"FOTO TAPAK",
+      buka:"Buka", dari:"dari",
+      fotoSampul:"FOTO SAMPUL PROYEK", kemajuan:"Kemajuan", terbayar:"Terbayar",
+      lihatB:"Lihat", tahapKe:"Tahap {n} dari 6 · {x}",
+      tahapKet:{konsultasi:"Memahami tapak, anggaran, dan apa yang sebenarnya Anda butuhkan.",
+        konsep:"Menguji susunan. Tidak ada yang final di sini; memang untuk diperdebatkan.",
+        ded:"Mengubah desain yang disepakati jadi gambar yang bisa dihitung dan dibangun tukang.",
+        perizinan:"Di kantor perizinan. Menunggu adalah sebagian besar tahap ini.",
+        konstruksi:"Di lapangan. Foto tapak masuk ke sini seiring bangunannya naik.",
+        selesai:"Sudah diserahterimakan. Halaman ini tetap hidup supaya dokumennya tetap mudah dicari."},
+      berikutJudul:"YANG TERJADI BERIKUTNYA",
+      briefJudul:"YANG ANDA MINTA", briefH:"Brief Anda, sebagaimana kami catat.",
+      briefSub:"Kalau ada yang berubah, beri tahu kami — ini dokumen yang jadi acuan setiap gambar.",
+      briefReqJ:"KEBUTUHAN DALAM KATA-KATA ANDA", briefB:"Ada yang berubah",
+      bAnggaran:"Anggaran", bMulai:"Mulai", bWaktu:"Target waktu", bGaya:"Gaya",
+      sAll:"Semua", sPerlu:"Menunggu Anda", sSelesai:"Sudah beres",
+      diperbarui:"Diperbarui {d}", perkiraan:"perkiraan",
+      lengket1:"1 hal menunggu Anda", lengketN:"{n} hal menunggu Anda",
+      tglBelum:"tanggal menyusul",
+      berikutSelesaiJ:"Tidak ada tahap sesudah ini",
+      berikutSelesaiK:"Proyeknya sudah diserahterimakan. Halaman ini tetap hidup supaya gambar dan tagihannya tetap mudah dicari bertahun-tahun kemudian — dan biasanya justru saat itulah orang membutuhkannya.",
+      tugasKosong:"Tidak ada yang menunggu Anda saat ini. Kami taruh di sini begitu ada.",
+      dokKosong:"Belum ada apa-apa pada saringan ini.",
+      tagKosong:"Belum ada tagihan yang diterbitkan.",
+      updKosong:"Belum ada pembaruan yang ditulis.",
+      belumTeken:"belum disepakati", briefBelum:"belum dicatat",
+      briefReqBelum:"Belum ada yang dicatat. Beri tahu kami dan isinya masuk ke sini — ini dokumen yang jadi acuan setiap gambar.",
+      berkasUmum:"Berkas", pesanSuara:"Pesan suara",
+      kategori:{residential:"Rumah tinggal",commercial:"Komersial",interior:"Interior",
+        institutional:"Institusional",landscape:"Lanskap",other:"Proyek"},
+      dimulai:"Mulai {d}",
+      revisiPh:"Apa yang perlu diubah, dan kenapa? Menyebutkannya dengan jelas menghemat satu putaran.",
+      revisiKirim:"Kirim permintaan revisi", balasPh:"Tulis pertanyaan atau komentar Anda.",
+      balasKirim:"Kirim", batal:"Batal", briefKirim:"Simpan perubahan",
+      kosongDulu:"Tulis dulu isinya.",
+      aksiGagal:"Tidak berhasil terkirim. Periksa sambungan Anda lalu coba lagi.",
+      galatJ:"Tautan proyek ini tidak lengkap",
+      galatK:"WhatsApp kadang memotong tautan panjang saat diteruskan. Minta kami kirim ulang — tidak ada yang hilang dari proyek Anda.",
+      galatB:"Minta tautannya dikirim ulang",
+      hilangJ:"Halaman proyek ini tidak kami temukan",
+      hilangK:"Tautannya lengkap, tapi tidak ada proyek yang cocok. Bisa jadi tautannya sudah diganti — beri tahu kami dan kami kirimkan yang berlaku.",
+      jaringanJ:"Studio tidak bisa dihubungi",
+      jaringanK:"Sambungannya putus sebelum halaman proyek Anda sampai. Tautan Anda tidak bermasalah; coba lagi sebentar.",
+      jaringanB:"Coba lagi",
+    },
+  };;
+
+  let B: "en" | "id" = "en";
+  let V: Portal | null = null;
+  let token = "";
+  const t = (k: string) => String(KAMUS[B][k] ?? "");
+  const tp = (k: string) => (KAMUS[B][k] as Record<string, string>) ?? {};
+  const tl = (k: string) => (KAMUS[B][k] as string[]) ?? [];
+
+  /* Isi yang diketik staf (judul dokumen, catatan, komentar) masuk ke
+     innerHTML karena barisnya dirakit sebagai string HTML — jadi dilepaskan
+     lebih dulu. Klien juga menulis di sini lewat komentar dan catatan revisi,
+     dan komentar itu ditampilkan kembali ke staf. */
+  const E = (v: unknown) => String(v ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+  const rp = (n: number) => "Rp" + n.toLocaleString("id-ID");
+  const tgl = (s?: string | null) => s
+    ? new Date(String(s).slice(0, 10) + "T00:00:00").toLocaleDateString(
+        B === "en" ? "en-GB" : "id-ID", { day: "numeric", month: "short", year: "numeric" })
+    : "—";
+  const bulan = (v: string) => v.length === 7
+    ? new Date(v + "-01T00:00:00").toLocaleDateString(B === "en" ? "en-GB" : "id-ID",
+        { month: "short", year: "numeric" })
+    : tgl(v);
+  /* Ukuran berkas dan durasi datang sebagai angka mentah dari API; mockup
+     memakai "8.4 MB" dan "1:48", jadi keduanya dibentuk di sini. */
+  const ukuran = (b?: number | null) => {
+    if (!b && b !== 0) return "";
+    if (b < 1024) return b + " B";
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+    return (b / 1048576).toFixed(1) + " MB";
+  };
+  const durasi = (ms?: number | null) => {
+    if (!ms) return "";
+    const d = Math.round(ms / 1000);
+    return Math.floor(d / 60) + ":" + String(d % 60).padStart(2, "0");
+  };
+  const jenisBerkas = (m?: string | null) => {
+    if (!m) return t("berkasUmum");
+    if (m.includes("pdf")) return "PDF";
+    if (m.startsWith("image/")) return m.split("/")[1].toUpperCase();
+    if (m.startsWith("audio/")) return t("pesanSuara");
+    return m.split("/").pop()!.toUpperCase();
+  };
+
+  const ambil = (id: string) => document.getElementById(id);
+  const wajib = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) throw new Error("elemen hilang: " + id);
+    return el;
+  };
+
+  const ikon = (d: string) => `<svg width="16" height="16" viewBox="0 0 20 20" fill="none"
+    stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const I = {
+    berkas: ikon('<path d="M11.5 2.5H5.5A1.5 1.5 0 0 0 4 4v12a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 16 16V7l-4.5-4.5Z"/><path d="M11.5 2.5V7H16"/>'),
+    suara: ikon('<rect x="7.5" y="2.5" width="5" height="9" rx="2.5"/><path d="M4.5 9a5.5 5.5 0 0 0 11 0M10 14.5v3"/>'),
+    jam: ikon('<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2"/>'),
+    uang: ikon('<rect x="2.5" y="5" width="15" height="10" rx="1.5"/><circle cx="10" cy="10" r="2.2"/>'),
+  };
+
+  /* ── Bilah kemajuan gulir ── */
+  const bar = wajib("barAtas");
+  addEventListener("scroll", () => {
+    const m = document.body.scrollHeight - innerHeight;
+    bar.style.width = (m > 0 ? (scrollY / m) * 100 : 0) + "%";
+  }, { passive: true });
+
+  /* ── Tahap ── */
+  const tahapEl = wajib("tahap");
+  const CENTANG = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"
+    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.3 4.7 9 10 3.2"/></svg>`;
+  const TITIK = `<svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>`;
+
+  const gambarTahap = () => {
+    if (!V) return;
+    const ke = Math.max(0, FASE.indexOf(V.phase));
+    tahapEl.innerHTML = tl("fase").map((n, i) => {
+      const k = i < ke ? " tahap__l--lewat" : i === ke ? " tahap__l--kini" : "";
+      const isi = i < ke ? CENTANG : i === ke ? TITIK : "";
+      /* Tanggal per tahap belum ada tempatnya di database — tidak ada satu pun
+         kolom yang mencatat kapan sebuah fase dimulai atau selesai. Yang
+         ditampilkan di sini karena itu tanda menunggu, BUKAN tanggal karangan:
+         menaruh tanggal tebakan di bawah "Perizinan" berarti menjanjikan
+         sesuatu yang tidak pernah bisa dijanjikan. */
+      const w = `<span class="tahap__t">${t("tglBelum")}</span>`;
+      return `<div class="tahap__l${k}"><span class="tahap__d">${isi}</span>
+        <span class="tahap__n">${E(n)}</span>${w}</div>`;
+    }).join("");
+
+    const persen = Math.round(((ke + 0.5) / FASE.length) * 100);
+    wajib("tahapKe").textContent = t("tahapKe").replace("{n}", String(ke + 1)).replace("{x}", tl("fase")[ke]);
+    wajib("tahapKet").textContent = tp("tahapKet")[V.phase] ?? "";
+    wajib("tahapPersen").textContent = persen + "%";
+    (wajib("tahapBatang") as HTMLElement).style.width = persen + "%";
+
+    /* Garis penghubung digambar SESUDAH kolomnya ada, memakai posisi titik
+       sungguhan — menebak dengan persentase meleset begitu label berbeda
+       panjang antar bahasa. */
+    const l = [...tahapEl.querySelectorAll<HTMLElement>(".tahap__l")];
+    if (l.length < 2 || getComputedStyle(tahapEl).gridAutoFlow.includes("row")) return;
+    const p = tahapEl.getBoundingClientRect();
+    const kotak = (n: HTMLElement) => n.querySelector(".tahap__d")!.getBoundingClientRect();
+    const x = (n: HTMLElement) => { const r = kotak(n); return r.left - p.left + r.width / 2; };
+    const y = kotak(l[0]).top - p.top + kotak(l[0]).height / 2 - 1;
+    const g1 = document.createElement("span"); g1.className = "tahap__g";
+    g1.style.left = x(l[0]) + "px"; g1.style.top = y + "px";
+    g1.style.width = (x(l[l.length - 1]) - x(l[0])) + "px";
+    const g2 = document.createElement("span"); g2.className = "tahap__g tahap__g--isi";
+    g2.style.left = x(l[0]) + "px"; g2.style.top = y + "px";
+    g2.style.width = Math.max(0, x(l[ke]) - x(l[0])) + "px";
+    tahapEl.append(g1, g2);
+  };
+
+  /* ── Yang menunggu: diturunkan dari data, bukan diketik tangan. Kalau
+     dokumennya disetujui angkanya turun sendiri. ── */
+  const menunggu = () => V
+    ? V.documents.filter((d) => d.status === "menunggu_klien").length
+      + V.invoices.filter((v) => v.status === "terbit").length
+    : 0;
+
+  const gambarTugas = () => {
+    if (!V) return;
+    const perlu: { w: string; i: string; j: string; k: string }[] = [];
+    V.documents.filter((d) => d.status === "menunggu_klien").forEach((d) => {
+      perlu.push({
+        w: "kuning", i: d.kind === "suara" ? I.suara : I.jam,
+        j: t(d.kind === "suara" ? "tugasSuara" : "tugasDok"),
+        k: t("tugasDokK").replace("{x}", E(d.title)).replace("{d}", tgl(d.createdAt)),
+      });
+    });
+    V.invoices.filter((v) => v.status === "terbit").forEach((v) => {
+      perlu.push({
+        w: "merah", i: I.uang, j: t("tugasTag"),
+        k: t("tugasTagK").replace("{x}", E(v.label)).replace("{a}", rp(v.amount)).replace("{d}", tgl(v.dueDate)),
+      });
+    });
+    wajib("tugasDaftar").innerHTML = perlu.length
+      ? perlu.map((p) => `<div class="tugas"><span class="tugas__i tugas__i--${p.w}">${p.i}</span>
+          <div><div class="tugas__t">${p.j}</div><div class="tugas__k">${p.k}</div></div></div>`).join("")
+      : `<p class="mut kecil">${t("tugasKosong")}</p>`;
+    /* Judulnya menyebut jumlahnya, jadi ia harus dihitung — bukan ditulis "Three". */
+    const h = document.querySelector('[data-t="menungguH"]');
+    const n = perlu.length;
+    if (h) h.textContent = B === "en"
+      ? (n === 0 ? "Nothing needs you right now."
+        : n === 1 ? "One thing needs you. Nothing else does."
+        : `${n} things need you. Nothing else does.`)
+      : (n === 0 ? "Tidak ada yang menunggu Anda saat ini." : `${n} hal menunggu Anda. Sisanya tidak.`);
+  };
+
+  /* ── Uang ── */
+  const gambarUang = () => {
+    if (!V) return;
+    const jml = (st: string) => V!.invoices.filter((v) => v.status === st).reduce((s, v) => s + v.amount, 0);
+    const bayar = jml("lunas"), terbit = jml("terbit");
+    /* Nilai kontrak boleh kosong — proyek yang belum diteken belum punya
+       angkanya. Kalau begitu yang ditampilkan jumlah tagihan yang sudah ada,
+       dan persentase tidak dihitung sama sekali: membaginya dengan nol
+       menghasilkan "Infinity%" di halaman klien. */
+    const kontrak = V.contractValue;
+    wajib("uKontrak").textContent = kontrak !== null ? rp(kontrak) : t("belumTeken");
+    wajib("uBayar").textContent = rp(bayar);
+    wajib("uSisa").textContent = kontrak !== null ? rp(Math.max(0, kontrak - bayar)) : "—";
+    wajib("uPersen").textContent = kontrak ? Math.round((bayar / kontrak) * 100) + "%" : "—";
+    /* Dua segmen: yang sudah masuk, dan yang sudah ditagih tapi belum dibayar.
+       Satu batang saja menyembunyikan bedanya, dan bedanya itu yang penting. */
+    wajib("uBatang").innerHTML = kontrak
+      ? `<i class="lunas" style="width:${Math.min(100, (bayar / kontrak) * 100)}%"></i>` +
+        `<i class="terbit" style="width:${Math.min(100, (terbit / kontrak) * 100)}%"></i>`
+      : "";
+  };
+
+  /* ── Dokumen ── */
+  const lencanaDok = (s: string) => {
+    const w = s === "disetujui" || s === "final" ? "ok"
+      : s === "menunggu_klien" || s === "revisi_diminta" ? "warn" : "info";
+    const warna = {
+      ok: "background:rgba(16,185,129,.14);color:#34D399;border-color:#1F5B4C",
+      warn: "background:rgba(251,191,36,.13);color:#FBBF24;border-color:#78502A",
+      info: "background:rgba(161,161,170,.10);color:var(--teks-2);border-color:var(--garis-2)",
+    }[w];
+    return `<span style="${warna};border:1px solid;font-size:10.5px;letter-spacing:.08em;
+      text-transform:uppercase;padding:4px 9px;font-weight:600">${tp("dokStatus")[s] ?? E(s)}</span>`;
+  };
+
+  let saring = "all";
+  const cocokSaring = (d: Dokumen) => saring === "all"
+    || (saring === "perlu"
+      ? d.status === "menunggu_klien" || d.status === "revisi_diminta"
+      : d.status === "disetujui" || d.status === "final");
+
+  const gambarSaring = () => {
+    if (!V) return;
+    const n = (f: string) => V!.documents.filter((d) => {
+      const s0 = saring; saring = f; const r = cocokSaring(d); saring = s0; return r;
+    }).length;
+    wajib("dokSaring").innerHTML = [["all", "sAll"], ["perlu", "sPerlu"], ["selesai", "sSelesai"]]
+      .map(([k, lb]) => `<button type="button" class="pil${saring === k ? " pil--on" : ""}"
+        data-saring="${k}">${t(lb)} <span class="dim">${n(k)}</span></button>`).join("");
+  };
+
+  const gambarDok = () => {
+    if (!V) return;
+    gambarSaring();
+    const daftar = V.documents.filter(cocokSaring);
+    wajib("dokDaftar").innerHTML = daftar.length ? daftar.map((d) => {
+      /* <audio> asli, bukan pemutar buatan sendiri: mockup menggambar bentuknya
+         tapi perilaku bawaan tidak bisa rusak diam-diam, dan pesan suara adalah
+         hal yang paling sering diputar klien di ponsel. */
+      const suara = d.kind === "suara"
+        ? `<div class="suara"><audio controls preload="none" src="${E(d.fileUrl)}"
+             style="width:100%"></audio></div>`
+        : "";
+      const thr = d.comments.length ? `<div class="thr">${d.comments.map((c) =>
+        `<div class="thr__k"><div class="thr__w"><b>${c.author === "studio" ? t("studio") : t("klien")}</b> · ${tgl(c.createdAt)}</div>
+          <div class="thr__b">${E(c.body)}</div></div>`).join("")}</div>` : "";
+      const catatan = d.status === "revisi_diminta" && d.clientNote
+        ? `<div class="thr"><div class="thr__k"><div class="thr__w"><b>${t("klien")}</b></div>
+             <div class="thr__b">${E(d.clientNote)}</div></div></div>` : "";
+      const aksi = d.status === "menunggu_klien"
+        ? `<button class="btn btn--isi" data-aksi="setujui" data-id="${E(d.id)}">${t("setujui")}</button>
+           <button class="btn" data-aksi="revisi" data-id="${E(d.id)}">${t("revisi")}</button>`
+        : `<a class="btn" href="${E(d.fileUrl)}" target="_blank" rel="noopener">${
+            d.kind === "suara" ? t("dengar") : t("unduh")} <span class="ar">→</span></a>`;
+      const meta = [jenisBerkas(d.mimeType),
+        d.kind === "suara" ? durasi(d.durationMs) : ukuran(d.fileSize),
+        tgl(d.createdAt)].filter(Boolean);
+      return `<div class="dok" data-dok="${E(d.id)}"><div class="dok__b">
+          <span class="dok__ikon">${d.kind === "suara" ? I.suara : I.berkas}</span>
+          <div class="dok__isi"><div class="dok__j">${E(d.title)}</div>
+            <div class="dok__m">${meta.map((m) => `<span>${E(m)}</span>`).join("")}</div>
+            <div class="s10"></div>${lencanaDok(d.status)}${suara}${catatan}${thr}
+            <div class="s10"></div>
+            <button class="btn" data-aksi="balas" data-id="${E(d.id)}"
+              style="padding:7px 13px;font-size:12.5px">${t("balas")}</button>
+            <div class="aksi-kotak" data-kotak="${E(d.id)}" hidden></div>
+          </div>
+          <div class="dok__aksi">${aksi}</div></div></div>`;
+    }).join("") : `<p class="mut kecil">${t("dokKosong")}</p>`;
+  };
+
+  /* ── Tagihan ── */
+  const gambarTag = () => {
+    if (!V) return;
+    const warna: Record<string, string> = { lunas: "#34D399", terbit: "#FBBF24", draft: "var(--teks-3)" };
+    wajib("tagBody").innerHTML = V.invoices.length ? V.invoices.map((v) =>
+      `<tr><td style="color:var(--teks)">${E(v.label)}</td><td>${tgl(v.dueDate)}</td>
+        <td style="color:${warna[v.status] ?? "var(--teks-3)"}">${tp("tagStatus")[v.status] ?? E(v.status)}</td>
+        <td class="nom">${rp(v.amount)}</td></tr>`).join("")
+      : `<tr><td colspan="4" class="mut kecil">${t("tagKosong")}</td></tr>`;
+  };
+
+  /* ── Riwayat ── */
+  const gambarUpd = () => {
+    if (!V) return;
+    wajib("updDaftar").innerHTML = V.updates.length ? V.updates.map((u) => {
+      const foto = u.photoUrl
+        ? `<div class="upd-f"><div style="padding:0;border:0"><img src="${E(u.photoUrl)}" alt=""
+             style="width:100%;height:100%;object-fit:cover" loading="lazy" /></div></div>` : "";
+      return `<div class="upd"><span class="upd__d"></span><span class="upd__g"></span>
+        <div class="upd__w">${tgl(u.createdAt)}</div>
+        <div class="upd__c"><div class="upd__j">${E(u.title)}</div>
+          <div class="upd__n">${E(u.note)}</div>${foto}</div></div>`;
+    }).join("") : `<p class="mut kecil">${t("updKosong")}</p>`;
+  };
+
+  /* ── Langkah berikutnya ──
+     Tidak ada kolom "apa berikutnya" di database. Yang BISA dikatakan dengan
+     jujur adalah tahap sesudah tahap sekarang, dan apa arti tahap itu —
+     kalimatnya sudah ada di kamus tahapKet dan sudah di-ACC. Menuliskan
+     kalimat karangan per proyek justru yang tidak bisa dipertanggungjawabkan. */
+  const gambarBerikut = () => {
+    if (!V) return;
+    const ke = Math.max(0, FASE.indexOf(V.phase));
+    const lanjut = ke + 1 < FASE.length ? FASE[ke + 1] : null;
+    wajib("berikutJ").textContent = lanjut ? tl("fase")[ke + 1] : t("berikutSelesaiJ");
+    wajib("berikutK").textContent = lanjut ? tp("tahapKet")[lanjut] : t("berikutSelesaiK");
+  };
+
+  /* ── Brief ── */
+  const gambarBrief = () => {
+    if (!V) return;
+    const b = V.brief ?? {};
+    const anggaran = b.budgetAmount ? rp(b.budgetAmount) : (b.budgetRange || t("briefBelum"));
+    const waktu = b.endDate ? tgl(b.endDate) : (b.timeline || t("briefBelum"));
+    wajib("briefG").innerHTML = [
+      ["bAnggaran", anggaran],
+      ["bMulai", b.startDate ? tgl(b.startDate) : t("briefBelum")],
+      ["bWaktu", waktu],
+      ["bGaya", b.stylePreference || t("briefBelum")],
+    ].map(([k, v]) => `<div><dt>${t(k)}</dt><dd>${E(v)}</dd></div>`).join("");
+    wajib("briefReq").textContent = b.requirements || t("briefReqBelum");
+    wajib("navSegar").textContent = V.updatedAt
+      ? t("diperbarui").replace("{d}", tgl(V.updatedAt)) : "";
+  };
+
+  /* ── Kepala proyek ── */
+  const gambarKepala = () => {
+    if (!V) return;
+    wajib("judulProyek").textContent = V.projectTitle;
+    document.title = V.projectTitle + " — " + t("portalLabel");
+    const foto = wajib("sampulFoto") as HTMLImageElement;
+    if (V.coverImageUrl) {
+      foto.src = V.coverImageUrl; foto.hidden = false;
+      wajib("sampulKosong").hidden = true;
+    } else {
+      foto.hidden = true; wajib("sampulKosong").hidden = false;
+    }
+    const mulai = V.brief?.startDate;
+    wajib("metaProyek").textContent = [
+      tp("kategori")[V.category] ?? V.category,
+      V.city,
+      mulai ? t("dimulai").replace("{d}", bulan(String(mulai).slice(0, 7))) : null,
+    ].filter(Boolean).join(" · ");
+  };
+
+  /* ── Bilah lengket ── */
+  const lengket = wajib("lengket");
+  const panel = () => wajib("tugasDaftar");
+  const gambarLengket = () => {
+    const n = menunggu();
+    wajib("lengketN").textContent = String(n);
+    wajib("lengketT").textContent = n === 1 ? t("lengket1") : t("lengketN").replace("{n}", String(n));
+    lengket.dataset.n = String(n);
+    /* Tingginya diukur, bukan ditebak: di layar sempit isinya membungkus dan
+       bilahnya jadi dua baris. */
+    document.body.style.setProperty("--kaki-lengket",
+      n > 0 ? Math.ceil(lengket.getBoundingClientRect().height) + "px" : "0px");
+  };
+  /* Bilah hanya muncul setelah panel "menunggu Anda" tergulir lewat — sebelum
+     itu panelnya sendiri masih terlihat dan bilahnya cuma menutupi halaman.
+     Dihitung langsung dari posisi gulir, bukan IntersectionObserver: IO hanya
+     berbunyi saat perpotongan BERUBAH, dan pada lompatan gulir besar ia sudah
+     sekali salah di halaman ini. */
+  const perbaruiLengket = () => {
+    const perlu = Number(lengket.dataset.n || 0) > 0;
+    const lewat = panel().getBoundingClientRect().bottom < 0;
+    lengket.classList.toggle("lengket--tampil", perlu && lewat);
+  };
+  addEventListener("scroll", perbaruiLengket, { passive: true });
+  addEventListener("resize", () => { gambarLengket(); perbaruiLengket(); gambarTahap(); }, { passive: true });
+  wajib("lengketB").addEventListener("click", () =>
+    panel().scrollIntoView({ block: "center", behavior: "smooth" }));
+
+  /* ── Menggambar seluruhnya ── */
+  const gambarSemua = () => {
+    document.querySelectorAll<HTMLElement>("[data-t]").forEach((el) => {
+      const k = el.dataset.t;
+      const v = k ? KAMUS[B][k] : undefined;
+      if (typeof v === "string") el.textContent = v;
+    });
+    document.documentElement.lang = B;
+    if (galatKini) { gambarGalat(); return; }
+    if (!V) return;
+    gambarKepala(); gambarTahap(); gambarTugas(); gambarUang(); gambarDok();
+    gambarTag(); gambarUpd(); gambarBerikut(); gambarBrief();
+    gambarLengket(); perbaruiLengket();
+  };
+
+  /* ── Keadaan halaman ── */
+  let galatKini: "galat" | "hilang" | "jaringan" | null = null;
+  const gambarGalat = () => {
+    if (!galatKini) return;
+    wajib("gJudul").textContent = t(galatKini + "J");
+    wajib("gKet").textContent = t(galatKini + "K");
+    const tb = wajib("gTombol");
+    tb.childNodes[0].textContent =
+      (galatKini === "jaringan" ? t("jaringanB") : t("galatB")) + " ";
+  };
+  const tampilkan = (v: "isi" | "galat" | "muat") => {
+    wajib("vIsi").hidden = v !== "isi";
+    wajib("vGalat").hidden = v !== "galat";
+    wajib("vMuat").hidden = v !== "muat";
+  };
+
+  const muat = () => {
+    token = new URLSearchParams(location.search).get("t") ?? "";
+    /* Bentuk token diperiksa di klien juga, supaya tautan yang terpotong saat
+       disalin dari WhatsApp langsung dijawab tanpa satu permintaan pun. */
+    if (!/^[0-9a-f]{40}$/.test(token)) {
+      galatKini = "galat"; tampilkan("galat"); gambarSemua(); return;
+    }
+    galatKini = null;
+    tampilkan("muat");
+    return fetch(`${API}/api/v1/progress/${token}`)
+      .then((res) => {
+        if (res.status === 404) throw new Error("hilang");
+        if (!res.ok) throw new Error("jaringan");
+        return res.json();
+      })
+      .then((isi) => {
+        V = isi.data as Portal;
+        galatKini = null;
+        tampilkan("isi");
+        gambarSemua();
+      })
+      .catch((e: Error) => {
+        galatKini = e.message === "hilang" ? "hilang" : "jaringan";
+        tampilkan("galat");
+        gambarSemua();
+      });
+  };
+
+  /* ── Aksi dokumen ──────────────────────────────────────────────────────
+     Menyetujui dan meminta revisi mengubah keadaan proyek, jadi keduanya
+     memuat ulang seluruh data sesudahnya: jumlah "yang menunggu Anda",
+     pil saring, dan bilah lengket semuanya diturunkan dari data yang sama,
+     dan menebak mana yang berubah adalah cara termudah menampilkan angka
+     yang sudah basi. */
+  const kirim = async (jalan: string, badan?: unknown) => {
+    const res = await fetch(`${API}/api/v1/progress/${token}${jalan}`, {
+      method: "POST",
+      headers: badan ? { "Content-Type": "application/json" } : undefined,
+      body: badan ? JSON.stringify(badan) : undefined,
+    });
+    if (!res.ok) throw new Error(String(res.status));
+  };
+
+  const kotakDi = (id: string) =>
+    document.querySelector<HTMLElement>(`[data-kotak="${CSS.escape(id)}"]`);
+
+  const tutupKotak = () => document.querySelectorAll<HTMLElement>("[data-kotak]")
+    .forEach((k) => { k.hidden = true; k.innerHTML = ""; });
+
+  const bukaKotak = (id: string, mode: "revisi" | "balas") => {
+    const k = kotakDi(id);
+    if (!k) return;
+    const terbuka = !k.hidden && k.dataset.mode === mode;
+    tutupKotak();
+    if (terbuka) return;
+    k.dataset.mode = mode;
+    k.hidden = false;
+    k.innerHTML = `<div class="s10"></div>
+      <textarea class="isian" data-teks placeholder="${t(mode === "revisi" ? "revisiPh" : "balasPh")}"></textarea>
+      <div class="s10"></div>
+      <button class="btn btn--isi" data-kirim="${mode}" data-id="${E(id)}">${t(mode === "revisi" ? "revisiKirim" : "balasKirim")}</button>
+      <button class="btn" data-batal style="margin-left:8px">${t("batal")}</button>
+      <div data-pesan></div>`;
+    k.querySelector("textarea")?.focus();
+  };
+
+  wajib("vIsi").addEventListener("click", async (ev) => {
+    const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-aksi],[data-kirim],[data-batal],[data-saring]");
+    if (!el) return;
+
+    if (el.dataset.saring) { saring = el.dataset.saring; gambarDok(); return; }
+    if ("batal" in el.dataset) { tutupKotak(); return; }
+
+    const id = el.dataset.id ?? "";
+    if (el.dataset.aksi === "revisi" || el.dataset.aksi === "balas") {
+      bukaKotak(id, el.dataset.aksi as "revisi" | "balas");
+      return;
+    }
+
+    if (el.dataset.aksi === "setujui") {
+      const b = el as HTMLButtonElement;
+      b.disabled = true;
+      try { await kirim(`/documents/${id}/approve`, {}); await muat(); }
+      catch { b.disabled = false; pesanDi(el, t("aksiGagal"), false); }
+      return;
+    }
+
+    if (el.dataset.kirim) {
+      const kotak = kotakDi(id);
+      const ta = kotak?.querySelector("textarea");
+      const isi = (ta?.value ?? "").trim();
+      if (!isi) { ta?.focus(); pesanDi(el, t("kosongDulu"), false); return; }
+      const b = el as HTMLButtonElement;
+      b.disabled = true;
+      try {
+        if (el.dataset.kirim === "revisi") await kirim(`/documents/${id}/revise`, { note: isi });
+        else await kirim(`/documents/${id}/comments`, { body: isi });
+        await muat();
+      } catch {
+        b.disabled = false;
+        pesanDi(el, t("aksiGagal"), false);
+      }
+    }
+  });
+
+  const pesanDi = (el: HTMLElement, teks: string, ok: boolean) => {
+    const w = el.closest("[data-kotak]")?.querySelector("[data-pesan]")
+      ?? el.parentElement?.querySelector("[data-pesan]");
+    if (w) { w.className = ok ? "aksi-ok" : "aksi-galat"; w.textContent = teks; return; }
+    const n = document.createElement("div");
+    n.className = ok ? "aksi-ok" : "aksi-galat";
+    n.textContent = teks;
+    el.after(n);
+  };
+
+  /* ── Brief: tombolnya ada di rancangan, formnya belum. Yang dibuka adalah
+     isian yang sama dengan yang dikirim ke /brief, memakai komponen isian
+     yang sudah ada — bukan komponen baru. ── */
+  wajib("bBrief").addEventListener("click", () => {
+    const f = wajib("briefForm");
+    if (!f.hidden) { f.hidden = true; f.innerHTML = ""; return; }
+    const b = V?.brief ?? {};
+    f.hidden = false;
+    f.innerHTML = `<div class="s16"></div>
+      <label class="label label--redup" for="bfReq">${t("briefReqJ")}</label>
+      <div class="s10"></div>
+      <textarea class="isian" id="bfReq">${E(b.requirements ?? "")}</textarea>
+      <div class="s10"></div>
+      <label class="label label--redup" for="bfGaya">${t("bGaya")}</label>
+      <div class="s10"></div>
+      <input class="isian" id="bfGaya" value="${E(b.stylePreference ?? "")}" />
+      <div class="s16"></div>
+      <button class="btn btn--isi" id="bfKirim">${t("briefKirim")}</button>
+      <div data-pesan></div>`;
+    wajib("bfKirim").addEventListener("click", async (ev) => {
+      const tb = ev.currentTarget as HTMLButtonElement;
+      tb.disabled = true;
+      try {
+        await kirim("/brief", {
+          requirements: (ambil("bfReq") as HTMLTextAreaElement).value.trim() || null,
+          stylePreference: (ambil("bfGaya") as HTMLInputElement).value.trim() || null,
+        });
+        await muat();
+      } catch {
+        tb.disabled = false;
+        pesanDi(tb, t("aksiGagal"), false);
+      }
+    });
+  });
+
+  /* ── Bahasa ── */
+  document.querySelectorAll<HTMLElement>("[data-bhs]").forEach((b) =>
+    b.addEventListener("click", () => {
+      B = b.dataset.bhs === "id" ? "id" : "en";
+      document.querySelectorAll("[data-bhs]").forEach((x) =>
+        x.setAttribute("aria-pressed", String(x === b)));
+      try { localStorage.setItem("progres:bhs", B); } catch { /* diblokir */ }
+      gambarSemua();
+    }));
+  try {
+    const simpan = localStorage.getItem("progres:bhs");
+    if (simpan === "id") {
+      B = "id";
+      document.querySelectorAll("[data-bhs]").forEach((x) =>
+        x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.bhs === "id")));
+    }
+  } catch { /* diblokir */ }
+
+  wajib("gTombol").addEventListener("click", (e) => {
+    /* Pada keadaan "jaringan" tombolnya mencoba lagi, bukan membuka /kontak —
+       memindahkan orang ke halaman kontak karena satu permintaan gagal
+       membuang halaman yang sebenarnya cuma perlu diulang. */
+    if (galatKini === "jaringan") { e.preventDefault(); muat(); }
+  });
+
+  muat();
+})();
+</script>
+
+<style is:global>
+/* ══ Khusus portal klien ═══════════════════════════════════════════════════ */
+
+/* Rangka pemuatan. Sama persis dengan yang dipakai /bukti — dua halaman
+   berdiri sendiri di luar BaseLayout, jadi masing-masing memuat gayanya
+   sendiri. */
+.rangka-b{height:13px;background:var(--sel);position:relative;overflow:hidden;display:block}
+.rangka-b::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  animation:sapu 1.4s linear infinite}
+@keyframes sapu{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){.rangka-b::after{animation:none}}
+
+/* Sampul: <img> begitu proyeknya punya foto, kotak berlabel kalau belum. */
+.sampul img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* Isian di halaman ini (catatan revisi, balasan, brief) — .isian sudah ada di
+   publik.css; yang belum cuma bentuk textarea-nya. */
+textarea.isian{min-height:96px;resize:vertical;line-height:1.6;font-family:var(--tubuh)}
+.aksi-galat{color:var(--merah);font-size:12.5px;margin-top:8px}
+.aksi-ok{color:var(--cincin);font-size:12.5px;margin-top:8px}
+
+/* Bilah portal: bukan navigasi pemasaran. Klien di sini sudah masuk lewat
+   tautannya sendiri, jadi yang berguna adalah identitas proyek + bahasa. */
+.pbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pbar__id{display:flex;align-items:center;gap:9px}
+.bhs{display:inline-flex;border:1px solid var(--garis-2);border-radius:var(--r);overflow:hidden}
+.bhs button{appearance:none;background:transparent;border:0;font-family:var(--tubuh);
+  font-size:11.5px;font-weight:600;letter-spacing:.06em;color:var(--teks-3);padding:7px 12px;
+  cursor:pointer;transition:all 180ms var(--e-halus)}
+.bhs button + button{border-left:1px solid var(--garis-2)}
+.bhs button[aria-pressed="true"]{background:rgba(45,212,191,.12);color:var(--aksen)}
+.bhs button:hover{color:var(--teks)}
+
+/* ── Tahap ────────────────────────────────────────────────────────────────
+   Klien membuka halaman ini terutama untuk melihat baris ini, jadi tiap
+   langkah membawa tanggalnya sendiri, bukan cuma nama. Titik yang sudah lewat
+   memakai centang: bentuk terbaca lebih cepat daripada warna, dan tetap
+   terbaca oleh orang yang tidak membedakan hijau. */
+.tahap{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:relative}
+.tahap__l{position:relative;z-index:1;padding:26px 14px 22px;text-align:center;
+  border-left:1px solid var(--garis)}
+.tahap__l:first-child{border-left:0}
+.tahap__d{display:grid;place-items:center;width:22px;height:22px;border-radius:99px;
+  margin:0 auto 13px;border:2px solid var(--sel-2);background:var(--kanvas);
+  color:transparent;position:relative}
+.tahap__d svg{display:block}
+.tahap__l--lewat .tahap__d{background:var(--isi);border-color:var(--isi);color:#062B25}
+/* Cincin luar digambar sebagai lapisan PADAT sewarna kanvas, lalu warnanya di
+   atasnya. Kalau memakai box-shadow tembus pandang, garis rel terlihat
+   menembus titiknya — persis bug yang dilaporkan. */
+.tahap__l--kini .tahap__d{border-color:var(--aksen);background:var(--aksen);color:#062B25}
+.tahap__l--kini .tahap__d::before{content:"";position:absolute;inset:-7px;border-radius:99px;
+  background:var(--kanvas);z-index:-2}
+.tahap__l--kini .tahap__d::after{content:"";position:absolute;inset:-7px;border-radius:99px;
+  background:rgba(45,212,191,.20);z-index:-1}
+.tahap__n{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--teks-3);font-weight:600}
+.tahap__l--lewat .tahap__n{color:var(--teks-2)}
+.tahap__l--kini .tahap__n{color:var(--aksen)}
+.tahap__t{display:block;margin-top:6px;font-size:11px;color:var(--teks-3);
+  font-variant-numeric:tabular-nums}
+.tahap__l--kini .tahap__t{color:var(--teks-2)}
+/* z-index 0 sudah cukup: relnya disisipkan SESUDAH kolomnya di DOM, jadi tanpa
+   .tahap__l{z-index:1} ia menang urutan cat dan menggores titiknya. */
+.tahap__g{position:absolute;height:2px;background:var(--garis-2);z-index:0}
+.tahap__g--isi{background:var(--isi)}
+
+/* Ringkasan di bawah rel: tahap ke berapa, dan apa yang sedang dikerjakan */
+.tahap-kaki{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;
+  padding:20px 34px 24px;border-top:1px solid var(--garis)}
+.tahap-kaki__n{font-family:var(--judul);font-size:15px;color:var(--teks);white-space:nowrap}
+.tahap-kaki__k{flex:1;min-width:240px;font-size:13.5px;color:var(--teks-2);line-height:1.6}
+.batang{display:block;height:5px;background:var(--sel);position:relative;overflow:hidden;
+  min-width:120px;margin-top:8px}
+.batang i{display:block}
+.batang i{position:absolute;left:0;top:0;bottom:0;background:var(--isi)}
+
+/* "Yang menunggu Anda" — alasan halaman ini ada */
+.tugas{display:flex;gap:14px;align-items:flex-start;padding:18px 0;
+  border-top:1px solid var(--garis)}
+.tugas:first-child{border-top:0;padding-top:0}
+.tugas:last-child{padding-bottom:0}
+.tugas__i{flex:none;width:34px;height:34px;display:grid;place-items:center;
+  border:1px solid var(--garis-2)}
+.tugas__i--kuning{border-color:#78502A;color:#FBBF24;background:rgba(251,191,36,.08)}
+.tugas__i--merah{border-color:#7F3B3B;color:var(--merah);background:rgba(248,113,113,.08)}
+.tugas__t{font-size:14.5px;font-weight:600;color:var(--teks);margin-bottom:4px}
+.tugas__k{font-size:13px;color:var(--teks-2);line-height:1.6}
+.tugas a{color:var(--aksen);text-decoration:none;border-bottom:1px solid rgba(45,212,191,.4)}
+
+/* Dokumen */
+.dok{border-top:1px solid var(--garis);padding:20px 0}
+.dok:first-child{border-top:0;padding-top:0}
+.dok__b{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.dok__ikon{flex:none;width:38px;height:38px;display:grid;place-items:center;
+  border:1px solid var(--garis-2);color:var(--teks-3)}
+.dok__isi{flex:1;min-width:200px}
+.dok__j{font-size:15px;font-weight:600;color:var(--teks)}
+.dok__m{font-size:12px;color:var(--teks-3);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.dok__aksi{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+
+/* Pemutar pesan suara — <audio> asli akan dipakai di kode; di sini bentuknya */
+.suara{display:flex;align-items:center;gap:12px;background:var(--gelap);
+  border:1px solid var(--garis);padding:11px 14px;margin-top:12px}
+.suara__p{flex:none;width:32px;height:32px;border-radius:99px;background:var(--aksen);
+  color:#18181B;display:grid;place-items:center;border:0;cursor:pointer}
+.suara__bar{flex:1;height:3px;background:var(--sel-2);position:relative;min-width:80px}
+.suara__bar i{position:absolute;left:0;top:0;bottom:0;width:34%;background:var(--aksen)}
+.suara__w{font-size:11.5px;color:var(--teks-3);font-variant-numeric:tabular-nums}
+
+/* Thread komentar */
+.thr{margin-top:14px;border-left:2px solid var(--garis);padding-left:16px}
+.thr__k{padding:9px 0;border-top:1px solid var(--garis)}
+.thr__k:first-child{border-top:0;padding-top:0}
+.thr__w{font-size:11px;color:var(--teks-3);margin-bottom:3px}
+.thr__w b{color:var(--teks-2);font-weight:600}
+.thr__b{font-size:13.5px;color:var(--teks-2);line-height:1.6}
+
+/* Tagihan */
+.tag-t{width:100%;border-collapse:collapse;font-size:14px}
+.tag-t th{text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--teks-3);font-weight:600;padding:0 0 12px;border-bottom:1px solid var(--garis)}
+.tag-t td{padding:15px 0;border-bottom:1px solid var(--garis);color:var(--teks-2);
+  vertical-align:top}
+.tag-t tr:last-child td{border-bottom:0}
+.tag-t .nom{text-align:right;color:var(--teks);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.tag-t th.nom{text-align:right}
+.ringkas{display:flex;justify-content:space-between;gap:20px;padding:14px 0;
+  border-top:1px solid var(--garis);font-size:14px}
+.ringkas:first-of-type{border-top:2px solid var(--garis-2)}
+.ringkas b{font-variant-numeric:tabular-nums}
+/* Bukan toska: warna itu berarti "beres" di sistem ini, dan sisa tagihan
+   bukan sesuatu yang sudah beres. Penekanannya lewat ukuran saja. */
+.ringkas--sisa b{color:var(--teks);font-size:17px}
+
+/* Riwayat pembaruan */
+.upd{display:grid;grid-template-columns:104px 1fr;gap:0 20px;padding:0 0 26px;position:relative}
+.upd:last-child{padding-bottom:0}
+.upd__w{font-size:12px;color:var(--teks-3);padding-top:2px;line-height:1.5}
+.upd__g{position:absolute;left:117px;top:18px;bottom:-8px;width:1px;background:var(--garis)}
+.upd:last-child .upd__g{display:none}
+.upd__d{position:absolute;left:114px;top:6px;width:7px;height:7px;border-radius:99px;
+  background:var(--aksen)}
+.upd__c{grid-column:2;min-width:0}
+.upd__j{font-size:15px;font-weight:600;color:var(--teks);margin-bottom:6px}
+.upd__n{font-size:13.5px;color:var(--teks-2);line-height:1.65;max-width:68ch}
+.upd__f{margin-top:12px;aspect-ratio:var(--rasio-foto);max-width:420px;background:var(--gelap);
+  border:1px solid var(--garis);display:grid;place-items:center;color:#4B4B52;font-size:10.5px;
+  letter-spacing:.14em}
+
+/* Sampul proyek: data `coverImageUrl` sudah ada di API dan belum dipakai.
+   Klien membuka halamannya untuk melihat bangunannya sendiri. */
+/* TINGGI tetap, bukan aspect-ratio + max-height: begitu max-height menggigit,
+   lebarnya ikut diturunkan dari rasio dan sampulnya menyusut jadi 604px di
+   wadah selebar 1200px. Sampul adalah pita, bukan foto berbingkai. */
+.sampul{position:relative;height:clamp(230px,25vw,340px);background:var(--gelap);
+  display:grid;place-items:center;color:#4B4B52;font-size:11px;letter-spacing:.14em;
+  overflow:hidden;border-bottom:1px solid var(--garis)}
+.sampul::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(9,9,11,.86),rgba(9,9,11,.15) 55%,transparent)}
+.sampul__t{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:26px 34px;
+  color:var(--teks);letter-spacing:normal;font-size:14px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.sampul__t .h1{color:var(--teks)}
+
+/* Bilah lengket: begitu ada yang menunggu klien, ia ikut turun bersama gulir
+   supaya tidak hilang setelah dilewati sekali. */
+.lengket{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(9,9,11,.95);
+  backdrop-filter:blur(10px);border-top:1px solid var(--garis-2);
+  transform:translateY(101%);transition:transform 260ms var(--e-keluar);
+  pointer-events:none}
+.lengket--tampil{transform:none;pointer-events:auto}
+body{padding-bottom:var(--kaki-lengket,0px)}
+.lengket__d{max-width:var(--lebar);margin-inline:auto;display:flex;align-items:center;
+  gap:16px;padding:11px 34px;flex-wrap:wrap}
+.lengket__n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;
+  background:#FBBF24;color:#18181B;font-size:12px;font-weight:700;
+  font-variant-numeric:tabular-nums}
+.lengket__t{font-size:13.5px;color:var(--teks);flex:1;min-width:150px}
+
+/* Saring dokumen */
+.dok-saring{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:22px;
+  border-bottom:1px solid var(--garis);margin-bottom:22px}
+
+/* Kemajuan pembayaran */
+.bayar-b{margin:6px 0 20px}
+.bayar-b__l{display:flex;justify-content:space-between;gap:16px;font-size:12px;
+  color:var(--teks-3);margin-bottom:8px}
+.bayar-b__r{display:flex}
+.bayar-b__r{height:8px;background:var(--sel);display:flex;overflow:hidden}
+.bayar-b__r i{display:block;height:100%}
+.bayar-b__r i.lunas{background:var(--isi)}
+.bayar-b__r i.terbit{background:#FBBF24}
+
+/* Langkah berikutnya + ringkasan brief */
+.kartu-n{padding:24px 26px;border:1px solid var(--garis-2);background:var(--gelap)}
+.kartu-n__l{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--aksen);
+  font-weight:600}
+.kartu-n__j{font-family:var(--judul);font-size:19px;color:var(--teks);margin:12px 0 8px}
+.kartu-n__k{font-size:13.5px;color:var(--teks-2);line-height:1.65}
+.brief-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;
+  background:var(--garis)}
+.brief-g > div{background:var(--kanvas);padding:18px 20px}
+.brief-g dt{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--teks-3);
+  margin-bottom:7px}
+.brief-g dd{margin:0;font-size:14.5px;color:var(--teks)}
+
+/* Kisi foto pada pembaruan */
+.upd-f{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));
+  gap:8px;margin-top:12px;max-width:520px}
+.upd-f > div{aspect-ratio:var(--rasio-foto);background:var(--gelap);border:1px solid var(--garis);
+  display:grid;place-items:center;color:#4B4B52;font-size:10px;letter-spacing:.12em}
+
+.baris-portal{grid-template-columns:1fr 340px}
+.sel-p{padding:32px 34px}
+@media (max-width:980px){
+  .baris-portal{grid-template-columns:1fr}
+  .tahap{grid-auto-flow:row;grid-auto-columns:auto}
+  .tahap__l{border-left:0;border-top:1px solid var(--garis);text-align:left;
+    display:flex;align-items:center;gap:14px;padding:15px 20px}
+  .tahap__l:first-child{border-top:0}
+  .tahap__d{margin:0}
+  .tahap__g{display:none}
+}
+@media (max-width:900px){
+  .sel-p{padding:24px 20px}
+  .sampul__t{padding:20px}
+  .tahap-kaki{padding:18px 20px 20px}
+  .lengket__d{padding:10px 20px}
+  /* Sasaran sentuh: tombol bahasa 27px dan tombol putar 32px sama-sama di
+     bawah ambang 40px, dan tombol putar justru yang paling sering ditekan
+     klien di ponsel. */
+  .bhs button{min-height:44px;padding-inline:16px}
+  .suara__p{width:44px;height:44px}
+  .isian{font-size:16px;padding:12px 14px}
+  .upd{grid-template-columns:1fr;gap:0}
+  .upd__c{grid-column:1}
+  .upd__w{padding-bottom:8px}
+  .upd__g,.upd__d{display:none}
+}
+</style>
