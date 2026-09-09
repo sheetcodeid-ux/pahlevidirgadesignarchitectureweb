@@ -42,8 +42,18 @@
    dan aturan penulis selalu mengalahkan aturan peramban — jadi elemen yang
    disembunyikan dari JS tetap tergambar tanpa satu pun galat. */
 [hidden]{display:none!important}
+/* Bidik silang di sudut `.dalam` sengaja MELEWATI tepinya 9px — begitulah ia
+   duduk di atas garis, bukan di sebelahnya. Di desktop lengan itu jatuh di
+   ruang kosong kiri-kanan; di ponsel `.dalam` selebar layar, jadi lengan
+   kanannya menonjol 8px keluar viewport.
+   `overflow-x:hidden` di body saja tidak menutupnya: roda tetikus memang
+   tertahan, tapi viewport-nya masih bisa digeser 8px — terukur, dan di layar
+   sentuh itu berarti halaman bergoyang saat digulir. `clip` di html menutup
+   jalurnya tanpa membuat penampung gulir baru, jadi `position:sticky` di
+   dalamnya tetap hidup — beda dengan `hidden`, yang mematikannya diam-diam. */
+html{overflow-x:clip}
 body{margin:0;background:var(--kanvas);color:var(--teks);font-family:var(--tubuh);
-  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip}
 h1,h2,h3{font-family:var(--judul);font-weight:400;letter-spacing:0;line-height:1.14;margin:0;
   text-wrap:balance}
 p{margin:0;text-wrap:pretty}
