@@ -1,85 +1,598 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import ContactForm from "../components/ContactForm.astro";
 import { getSettings } from "../lib/api";
-/* Form kontak memakai .field/.input dari form.css; BaseLayout tidak
-   memuatnya, jadi halaman ini harus memintanya sendiri. */
-import "../styles/form.css";
 
-/* Kontak dibaca dari Info Studio, tidak ditulis tetap di sini. Sebelumnya
-   halaman ini memajang alamat surel yang tidak ada mailbox-nya sementara kaki
-   halaman memajang alamat yang benar — dua jawaban berbeda di satu situs. */
 const settings = await getSettings();
-const lokasi = [settings.address, settings.city].filter(Boolean).join(", ") || "Indonesia";
+const email = settings.email?.trim() || null;
+const telp = settings.phone?.trim() || null;
+
+// Nomor Indonesia ditulis dengan 0 di depan; wa.me minta format internasional.
+const waTautan = (nomor: string) => {
+  const angka = nomor.replace(/[^\d+]/g, "");
+  const intl = angka.startsWith("+") ? angka.slice(1) : angka.startsWith("0") ? `62${angka.slice(1)}` : angka;
+  return `https://wa.me/${intl}`;
+};
+
+// Widget Turnstile hanya dirender kalau site key sudah diisi, supaya form
+// tetap bisa dipakai saat pengembangan. Kalau kunci rahasianya SUDAH terisi
+// di Worker API sementara kunci publiknya belum di sini, semua kiriman
+// pengunjung akan ditolak — karena itu build produksi memperingatkannya.
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+if (import.meta.env.PROD && !turnstileSiteKey) {
+  console.warn(
+    "[kontak] PUBLIC_TURNSTILE_SITE_KEY kosong — form kontak tayang TANPA widget Turnstile. " +
+      "Kalau TURNSTILE_SECRET_KEY di Worker API terisi, semua kiriman pengunjung akan ditolak.",
+  );
+}
+
+const jenisProyek = [
+  "A house",
+  "A café or restaurant",
+  "A workspace or office",
+  "Retail",
+  "A renovation",
+  "Something else",
+];
+const rentangAnggaran = [
+  "Not sure yet",
+  "Under Rp 500 million",
+  "Rp 500 million – 1,5 billion",
+  "Rp 1,5 – 5 billion",
+  "Above Rp 5 billion",
+];
+const langkah = [
+  [
+    "We read it and reply within a day",
+    "Usually with two or three questions, because the first message never contains everything — and that is fine.",
+  ],
+  [
+    "One call, about an hour",
+    "Video or WhatsApp, whichever your connection likes. We talk about the site, the money, and the timeline honestly.",
+  ],
+  [
+    "A written proposal",
+    "Scope, fee, and stages in writing. You decide after reading it — not during the call.",
+  ],
+];
+const bantu = [
+  "Land size and orientation",
+  "Photos of the site as it is now",
+  "Roughly when you want to start",
+];
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact",
+    url: new URL("/kontak", Astro.site).href,
+  },
+];
 ---
 
 <BaseLayout
-  title="Kontak"
-  description="Hubungi studio Dirga Pahlevi Architecture untuk konsultasi proyek arsitektur dan interior."
+  title="Start a project"
+  description="The first conversation costs nothing and commits you to nothing. Tell us the site, the budget, and what bothers you about it."
+  jsonLd={jsonLd}
 >
-  <section class="section shell layout">
-    <div>
-      <p class="eyebrow">Mulai percakapan</p>
-      <h1>Kontak</h1>
-      <p class="lede">
-        Ceritakan lokasi, perkiraan luas, dan target waktu proyek Anda. Kami
-        membalas setiap pesan dalam 1–2 hari kerja.
-      </p>
-
-      <dl class="contact-details">
-        {settings.email && (
-          <div>
-            <dt>Email</dt>
-            <dd><a href={`mailto:${settings.email}`}>{settings.email}</a></dd>
-          </div>
-        )}
-        {settings.phone && (
-          <div>
-            <dt>Telepon</dt>
-            <dd><a href={`tel:${settings.phone.replace(/[^\d+]/g, "")}`}>{settings.phone}</a></dd>
-          </div>
-        )}
-        <div>
-          <dt>Studio</dt>
-          <dd>{lokasi}</dd>
-        </div>
-      </dl>
+  <div class="pita">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi kepala">
+        <span class="label">CONTACT</span>
+        <div class="s24"></div>
+        <h1 class="h1 kepala__judul">
+          Tell us the site, the budget,<br />and <span class="ak">what bothers you</span> about it.
+        </h1>
+        <div class="s24"></div>
+        <p class="lead">
+          The first conversation costs nothing and commits you to nothing. Even if you decide not to
+          build, you will leave it knowing what the project would realistically take.
+        </p>
+      </div>
     </div>
+  </div>
 
-    <ContactForm />
-  </section>
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris baris-kontak">
+        <div class="sel sel-kontak">
+          <dl class="info">
+            <dt>Reply time</dt>
+            <dd>
+              Under 24 hours<small
+                >Including weekends. A small studio is slower at many things and faster at this
+                one.</small
+              >
+            </dd>
+            <dt>Working hours</dt>
+            <dd class="jam">
+              09:00 – 18:00 WIB <span class="dim">(UTC+7)</span>
+              <small id="jamKini">—</small>
+            </dd>
+            <dt>Languages</dt>
+            <dd>
+              English &amp; Bahasa Indonesia<small
+                >Write in whichever is easier. We answer in the same one.</small
+              >
+            </dd>
+            {
+              (email || telp) && (
+                <>
+                  <dt>Direct</dt>
+                  <dd>
+                    {email ? <a class="tl" href={`mailto:${email}`}>{email}</a> : "WhatsApp"}
+                    {telp && <small>Or WhatsApp, if that is faster for you.</small>}
+                  </dd>
+                </>
+              )
+            }
+          </dl>
+          <div class="s16"></div>
+          <div class="garis-tipis"></div>
+          <div class="s24"></div>
+          <span class="label label--redup">HELPFUL, NOT REQUIRED</span>
+          <div class="s16"></div>
+          {
+            bantu.map((b) => (
+              <div class="cek">
+                <i>
+                  <svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5l3 3 5-6" stroke="#2DD4BF" stroke-width="1.8" fill="none" /></svg>
+                </i>
+                <span>{b}</span>
+              </div>
+            ))
+          }
+          <div class="s10"></div>
+          <p class="dim kecil">None of it is required to write. Send what you have.</p>
+        </div>
+
+        <div class="sel sel-form">
+          <form id="formKontak" novalidate>
+            <div class="dua">
+              <div class="bidang" data-bidang="nama">
+                <label for="f-nama">Your name<span class="wajib">*</span></label>
+                <input class="isian" id="f-nama" name="nama" autocomplete="name" placeholder="Jane Wijaya" />
+                <p class="bantu" data-pesan>&nbsp;</p>
+              </div>
+              <div class="bidang" data-bidang="email">
+                <label for="f-email">Email<span class="wajib">*</span></label>
+                <input class="isian" id="f-email" name="email" type="email" autocomplete="email" placeholder="jane@example.com" />
+                <p class="bantu" data-pesan>We reply here.</p>
+              </div>
+            </div>
+            <div class="dua">
+              <div class="bidang" data-bidang="wa">
+                <label for="f-wa">WhatsApp</label>
+                <input class="isian" id="f-wa" name="wa" inputmode="tel" autocomplete="tel" placeholder="+62 …" />
+                <p class="bantu" data-pesan>Optional. Faster for quick questions.</p>
+              </div>
+              <div class="bidang" data-bidang="lokasi">
+                <label for="f-lokasi">Where is the site?<span class="wajib">*</span></label>
+                <input class="isian" id="f-lokasi" name="lokasi" placeholder="Pontianak, Indonesia" />
+                <p class="bantu" data-pesan>City is enough.</p>
+              </div>
+            </div>
+            <div class="dua">
+              <div class="bidang" data-bidang="jenis">
+                <label for="f-jenis">What are you building?<span class="wajib">*</span></label>
+                <select class="isian" id="f-jenis" name="jenis">
+                  <option value="">Choose one…</option>
+                  {jenisProyek.map((j) => (<option>{j}</option>))}
+                </select>
+                <p class="bantu" data-pesan>&nbsp;</p>
+              </div>
+              <div class="bidang" data-bidang="anggaran">
+                <label for="f-anggaran">Budget range</label>
+                <select class="isian" id="f-anggaran" name="anggaran">
+                  {rentangAnggaran.map((a) => (<option>{a}</option>))}
+                </select>
+                <p class="bantu" data-pesan>“Not sure yet” is a normal answer.</p>
+              </div>
+            </div>
+            <div class="bidang" data-bidang="pesan">
+              <label for="f-pesan">Tell us about it<span class="wajib">*</span></label>
+              <textarea class="isian" id="f-pesan" name="pesan" placeholder="What is the site like? What is the part you are unsure about?"></textarea>
+              <p class="bantu" data-pesan>The awkward part of the brief is the useful part.</p>
+            </div>
+
+            {/* Perangkap bot: manusia tidak pernah melihatnya, jadi apa pun yang
+                terisi di sini datang dari skrip. Disembunyikan lewat kelas, bukan
+                display:none inline, supaya tetap ada di pohon aksesibilitas
+                sebagai isian yang jelas-jelas tidak perlu diisi. */}
+            <div class="jebakan" aria-hidden="true">
+              <label for="f-website">Leave this empty</label>
+              <input id="f-website" name="website" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="s10"></div>
+            {
+              turnstileSiteKey ? (
+                <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="dark" />
+              ) : (
+                <div class="turnstile-kosong">TURNSTILE WIDGET</div>
+              )
+            }
+            <div class="s24"></div>
+            <div class="kirim-baris">
+              <p class="dim kecil kirim-baris__ket">
+                We never share your details, and we do not send newsletters.
+              </p>
+              <button class="btn btn--isi" type="submit" id="kirim">
+                Send message <span class="ar">→</span>
+              </button>
+            </div>
+            <div id="hasil" role="status" aria-live="polite" hidden></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi isi--rapat">
+        <span class="label">AFTER YOU PRESS SEND</span>
+        <div class="s16"></div>
+        <h2 class="h2">Three steps, and none of them cost anything.</h2>
+      </div>
+      <div class="baris b3 langkah">
+        {
+          langkah.map(([judul, teks]) => (
+            <div class="sel">
+              <span class="angka no"></span>
+              <div class="s16"></div>
+              <p class="hs">{judul}</p>
+              <div class="s6"></div>
+              <p class="mut kecil">{teks}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="pita pita--akhir">
+    <div class="dalam">
+      <div class="baris b2">
+        <div class="sel sel-tutup">
+          <span class="label label--redup">ALREADY A CLIENT?</span>
+          <div class="s16"></div>
+          <p class="mut kecil">
+            Your project page has the phases, documents and invoices. Use the link we sent you — it
+            does not need a password.
+          </p>
+          <div class="s16"></div>
+          <a class="btn" href="/progres">Open project portal <span class="ar">→</span></a>
+        </div>
+        <div class="sel sel-tutup">
+          <span class="label label--redup">RATHER NOT FILL A FORM?</span>
+          <div class="s16"></div>
+          <p class="mut kecil">
+            Write one line on WhatsApp. “I have a plot in Pontianak and no idea where to start” is a
+            perfectly good first message.
+          </p>
+          <div class="s16"></div>
+          {
+            telp ? (
+              <a class="btn" href={waTautan(telp)} rel="noopener noreferrer" target="_blank">
+                Message on WhatsApp <span class="ar">→</span>
+              </a>
+            ) : email ? (
+              <a class="btn" href={`mailto:${email}`}>Email us instead <span class="ar">→</span></a>
+            ) : null
+          }
+        </div>
+      </div>
+    </div>
+  </div>
 </BaseLayout>
 
+{turnstileSiteKey && <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js" />}
+
 <style>
-  .layout {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
-    gap: clamp(2.5rem, 6vw, 6rem);
-    align-items: start;
+  /* ── Dari blok CSS khusus halaman di mockup yang di-ACC ──────────────── */
+  .bidang {
+    display: block;
+    margin-bottom: 20px;
   }
-
-  h1 {
-    margin-bottom: 1.5rem;
-  }
-
-  .contact-details {
-    margin-top: 3rem;
-  }
-
-  .contact-details > div {
-    padding: 0.75rem 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .contact-details dt {
-    font-size: 0.72rem;
+  .bidang > label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--text-faint);
-    margin-bottom: 0.25rem;
+    color: var(--teks-3);
+    margin-bottom: 8px;
+  }
+  .bidang > label .wajib {
+    color: var(--aksen);
+    margin-left: 3px;
+  }
+  .bidang > p {
+    margin-top: 7px;
+    font-size: 12.5px;
+    display: flex;
+    gap: 7px;
+    align-items: flex-start;
+  }
+  .bidang > p.bantu {
+    color: var(--teks-3);
+  }
+  .bidang--salah .isian {
+    border-color: var(--merah);
+  }
+  .bidang--salah .isian:focus {
+    box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.18);
+  }
+  .bidang--salah > p {
+    color: var(--merah);
+  }
+  .bidang--benar .isian {
+    border-color: var(--isi);
+  }
+  select.isian {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23909096' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  textarea.isian {
+    min-height: 132px;
+    resize: vertical;
+    font-family: var(--tubuh);
+    line-height: 1.6;
+  }
+  .baris-kontak {
+    grid-template-columns: 340px 1fr;
+  }
+  /* Padding lewat kelas, bukan gaya inline: gaya inline mengalahkan media query
+     ponsel dan menyisakan sel yang terlalu longgar di layar sempit. */
+  .sel-kontak {
+    padding: 40px 34px;
+  }
+  .sel-form {
+    padding: 40px 38px;
+  }
+  .sel-tutup {
+    padding: 34px 32px;
+  }
+  .dua {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 18px;
+  }
+  .info dt {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--teks-3);
+    margin-bottom: 6px;
+  }
+  .info dd {
+    margin: 0 0 22px;
+    font-size: 14.5px;
+    color: var(--teks);
+  }
+  .info dd small {
+    display: block;
+    font-size: 12.5px;
+    color: var(--teks-2);
+    margin-top: 4px;
+    font-weight: 400;
+  }
+  .jam {
+    font-variant-numeric: tabular-nums;
+  }
+  .kepala {
+    padding-block: 72px;
+  }
+  .kepala__judul {
+    font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+  }
+  .garis-tipis {
+    height: 1px;
+    background: var(--garis);
+  }
+  .turnstile-kosong {
+    border: 1px dashed var(--garis-2);
+    padding: 18px;
+    display: grid;
+    place-items: center;
+    color: var(--teks-3);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+  }
+  .kirim-baris {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .kirim-baris__ket {
+    max-width: 38ch;
+  }
+  /* Perangkap bot: keluar dari alur tanpa display:none, supaya peramban
+     tetap menganggapnya isian sungguhan yang bisa diisi skrip. */
+  .jebakan {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
 
-  .contact-details dd {
-    margin: 0;
+  @media (max-width: 900px) {
+    .dua {
+      grid-template-columns: 1fr;
+    }
+    .baris-kontak {
+      grid-template-columns: 1fr;
+    }
+    /* kolom kiri jadi pengantar di atas form, jadi garisnya pindah ke bawah */
+    .baris-kontak > .sel:first-child {
+      border-bottom: 1px solid var(--garis);
+    }
+    /* 16px mencegah iOS memperbesar halaman saat isian difokus, dan padding 12px
+       membawa tingginya ke 45px — di atas ambang sasaran sentuh 40px. */
+    .isian {
+      font-size: 16px;
+      padding: 12px 14px;
+    }
+    select.isian {
+      padding-right: 38px;
+    }
   }
 </style>
+
+<script>
+  import { submitInquiry } from "../lib/api";
+
+  (() => {
+    "use strict";
+
+    /* Jam studio dihitung dari zona waktu PENGUNJUNG — supaya orang di Singapura
+       atau Belanda langsung tahu apakah sekarang jam kerja di sini. */
+    const jam = document.getElementById("jamKini");
+    const perbaruiJam = () => {
+      if (!jam) return;
+      const wib = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+      const j = wib.getHours();
+      const buka = j >= 9 && j < 18;
+      jam.innerHTML =
+        `It is <strong class="${buka ? "ak" : "mut"}">` +
+        `${String(j).padStart(2, "0")}:${String(wib.getMinutes()).padStart(2, "0")}</strong>` +
+        ` in the studio right now — ${buka ? "we are working" : "outside hours, but the message still lands"}.`;
+    };
+    perbaruiJam();
+    setInterval(perbaruiJam, 30000);
+
+    const form = document.getElementById("formKontak") as HTMLFormElement | null;
+    const hasil = document.getElementById("hasil");
+    const kirim = document.getElementById("kirim") as HTMLButtonElement | null;
+    if (!form || !hasil || !kirim) return;
+
+    /* Pesan galat menyebut APA yang salah dan APA yang harus dilakukan. */
+    const ATURAN: Record<string, (v: string) => true | string> = {
+      nama: (v) => v.trim().length >= 2 || "Please write the name we should call you.",
+      email: (v) =>
+        /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ||
+        "This address is missing the part after the dot.",
+      lokasi: (v) => v.trim().length >= 2 || "Even just the city helps us answer properly.",
+      jenis: (v) => v !== "" || "Pick the closest one — you can change your mind later.",
+      pesan: (v) =>
+        v.trim().length >= 20 || "A little more, please — at least a sentence about the site.",
+    };
+    const isian = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+    const bidang = (n: string) => form.querySelector<HTMLElement>(`[data-bidang="${n}"]`)!;
+    const tandai = (n: string, pesan: string) => {
+      const b = bidang(n);
+      const p = b.querySelector<HTMLElement>("[data-pesan]")!;
+      b.classList.toggle("bidang--salah", !!pesan);
+      b.classList.toggle("bidang--benar", !pesan);
+      b.querySelector(".isian")!.setAttribute("aria-invalid", String(!!pesan));
+      if (pesan) {
+        p.classList.remove("bantu");
+        p.innerHTML =
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" ' +
+          'stroke-width="1.6" style="flex:none;margin-top:1px"><circle cx="8" cy="8" r="6.5"/>' +
+          '<path d="M8 5v4M8 11h.01"/></svg>' +
+          pesan;
+      } else {
+        p.classList.add("bantu");
+        p.innerHTML = p.dataset.asli || "&nbsp;";
+      }
+    };
+    form.querySelectorAll<HTMLElement>("[data-pesan]").forEach((p) => {
+      p.dataset.asli = p.innerHTML;
+    });
+    Object.keys(ATURAN).forEach((n) => {
+      const el = isian(n);
+      el.addEventListener("blur", () => {
+        if (el.value) {
+          const h = ATURAN[n](el.value);
+          tandai(n, h === true ? "" : h);
+        }
+      });
+    });
+
+    const pesanKotak = (jenis: "ok" | "salah", judul: string, teks: string) => {
+      const warna = jenis === "ok" ? "#2DD4BF" : "#F87171";
+      const ikon =
+        jenis === "ok"
+          ? '<path d="M3.5 8.5 6.5 11.5 12.5 5"/>'
+          : '<circle cx="8" cy="8" r="6.5"/><path d="M8 5v4M8 11h.01"/>';
+      hasil.hidden = false;
+      hasil.innerHTML =
+        `<div class="s24"></div><div class="pesan pesan--${jenis}">` +
+        `<svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="${warna}" ` +
+        `stroke-width="1.6" style="flex:none">${ikon}</svg>` +
+        `<span><b>${judul}</b>${teks}</span></div>`;
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      let pertamaSalah: string | null = null;
+      for (const n of Object.keys(ATURAN)) {
+        const h = ATURAN[n](isian(n).value);
+        tandai(n, h === true ? "" : h);
+        if (h !== true && !pertamaSalah) pertamaSalah = n;
+      }
+      if (pertamaSalah) {
+        pesanKotak(
+          "salah",
+          "Nothing was sent yet.",
+          "A few fields still need something — they are marked above. Fix those and press send again.",
+        );
+        const el = isian(pertamaSalah);
+        el.focus({ preventScroll: true });
+        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+
+      kirim.classList.add("btn--memuat");
+      kirim.disabled = true;
+      hasil.hidden = true;
+      const data = new FormData(form);
+      try {
+        // Lokasi belum punya kolomnya sendiri di API, jadi ia ditulis sebagai
+        // baris pertama pesan dengan label yang jelas — bukan dibuang.
+        const lokasi = String(data.get("lokasi") ?? "").trim();
+        const pesan = String(data.get("pesan") ?? "").trim();
+        await submitInquiry({
+          name: String(data.get("nama") ?? "").trim(),
+          email: String(data.get("email") ?? "").trim(),
+          phone: String(data.get("wa") ?? "").trim() || undefined,
+          projectType: String(data.get("jenis") ?? "") || undefined,
+          budgetRange: String(data.get("anggaran") ?? "") || undefined,
+          message: lokasi ? `Site location: ${lokasi}\n\n${pesan}` : pesan,
+          turnstileToken: String(data.get("cf-turnstile-response") ?? ""),
+          website: String(data.get("website") ?? ""),
+        });
+        form.reset();
+        form.querySelectorAll(".bidang").forEach((b) => b.classList.remove("bidang--benar"));
+        pesanKotak(
+          "ok",
+          "Sent. It is in the studio inbox.",
+          "You will get a reply within a day, usually with two or three questions.",
+        );
+      } catch (err) {
+        pesanKotak(
+          "salah",
+          "It did not go through.",
+          (err as Error).message +
+            " Try again in a moment, or write to us directly — the address is on the left.",
+        );
+        // Token Turnstile sekali pakai; minta yang baru supaya percobaan
+        // berikutnya tidak ditolak karena token yang sudah terpakai.
+        (window as unknown as { turnstile?: { reset: () => void } }).turnstile?.reset();
+      } finally {
+        kirim.classList.remove("btn--memuat");
+        kirim.disabled = false;
+      }
+    });
+  })();
+</script>

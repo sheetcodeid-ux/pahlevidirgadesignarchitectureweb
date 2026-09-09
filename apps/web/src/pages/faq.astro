@@ -1,250 +1,469 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { Icon } from "../components/ui/Icon";
-import "../styles/misc.css";
+import { FAQ, LABEL_FAQ, type KategoriFaq } from "../lib/faq";
 
-const kategori = [
+const urut: KategoriFaq[] = ["mulai", "uang", "waktu", "kerja", "selesai"];
+const daftar = urut.flatMap((k) => FAQ.filter((t) => t.kat === k));
+const hitung = (k: string) => (k === "semua" ? FAQ.length : FAQ.filter((t) => t.kat === k).length);
+const pils = [{ kat: "semua", label: "All" }, ...urut.map((k) => ({ kat: k, label: LABEL_FAQ[k] }))];
+
+// JSON-LD dibangkitkan dari data yang SAMA dengan yang dirender, jadi jawaban
+// di hasil pencarian tidak pernah menyimpang dari halamannya. Tag dibuang dan
+// butir daftar dijadikan satu kalimat dengan pemisah "·".
+const teksPolos = (html: string) =>
+  html
+    .replace(/<li>/g, " · ")
+    .replace(/<\/p>\s*<p>/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const jsonLd = [
   {
-    id: "proses",
-    label: "Proses & Konsultasi",
-    pertanyaan: [
-      {
-        q: "Bagaimana proses dari kontak pertama sampai desain jadi?",
-        a: "Diawali konsultasi dan survei lokasi, dilanjutkan konsep dan estimasi anggaran, lalu pengembangan desain sampai dokumen kerja siap dibangun. Detail tiap tahap ada di bagian Cara Kerja pada halaman Tentang.",
-      },
-      {
-        q: "Apakah saya perlu sudah punya lahan sebelum konsultasi?",
-        a: "Tidak wajib. Kami juga membantu di tahap awal memikirkan kebutuhan ruang sebelum lahan ditentukan — meski desain rinci baru bisa dimulai setelah lokasi dan ukuran lahan pasti.",
-      },
-      {
-        q: "Berapa lama tahap perancangan biasanya berlangsung?",
-        a: "Empat sampai delapan minggu untuk hunian, tergantung kompleksitas dan kecepatan persetujuan dari Anda di tiap tahap. Proyek komersial bisa lebih lama.",
-      },
-    ],
-  },
-  {
-    id: "biaya",
-    label: "Biaya & Estimasi",
-    pertanyaan: [
-      {
-        q: "Bagaimana cara menghitung biaya jasa desain?",
-        a: "Berdasarkan luas bangunan dan tingkat kerumitan proyek. Kami berikan estimasi tertulis setelah konsultasi awal, sebelum ada kesepakatan apa pun.",
-      },
-      {
-        q: "Apakah konsultasi pertama berbayar?",
-        a: "Tidak. Konsultasi awal untuk memahami kebutuhan dan memberi gambaran biaya tidak dikenakan biaya.",
-      },
-      {
-        q: "Apa saja yang termasuk dalam biaya jasa desain?",
-        a: "Gambar konsep, pengembangan desain, dokumen konstruksi, dan dokumen untuk pengurusan PBG. Biaya pengawasan berkala pelaksanaan dihitung terpisah, disepakati di awal.",
-      },
-    ],
-  },
-  {
-    id: "legalitas",
-    label: "Legalitas & Dokumen",
-    pertanyaan: [
-      {
-        q: "Dokumen apa yang dibutuhkan sebelum survei?",
-        a: "Sertifikat tanah atau bukti kepemilikan, gambar situasi bila ada, dan perkiraan anggaran awal. Tidak masalah kalau belum lengkap — kami bantu identifikasi apa yang masih kurang.",
-      },
-      {
-        q: "Apakah studio mengurus PBG (dulu IMB)?",
-        a: "Kami menyiapkan gambar dan dokumen teknis yang dibutuhkan untuk pengurusan PBG. Proses pengajuan ke dinas terkait dikoordinasikan bersama, sesuai kesepakatan di awal proyek.",
-      },
-      {
-        q: "Siapa yang mengurus sertifikat tanah?",
-        a: "Legalitas lahan adalah tanggung jawab pemilik. Ini di luar dokumen teknis bangunan yang kami siapkan — lihat juga bagian Batasan Layanan di halaman Tentang.",
-      },
-    ],
-  },
-  {
-    id: "pelaksanaan",
-    label: "Pelaksanaan & Pengawasan",
-    pertanyaan: [
-      {
-        q: "Apakah studio mendampingi pelaksanaan pembangunan?",
-        a: "Ya, dalam bentuk pengawasan berkala sesuai kesepakatan — kunjungan terjadwal untuk memastikan yang terbangun sesuai rancangan.",
-      },
-      {
-        q: "Apakah studio juga berperan sebagai kontraktor?",
-        a: "Tidak. Kami merancang; pembangunan dikerjakan kontraktor pilihan Anda. Kami tetap mendampingi lewat pengawasan berkala, bukan mengelola pelaksanaan sehari-hari.",
-      },
-      {
-        q: "Bagaimana kalau ada perubahan desain saat pembangunan?",
-        a: "Perubahan kecil biasanya bisa disesuaikan langsung di lapangan. Perubahan yang memengaruhi struktur atau anggaran signifikan akan kami diskusikan dulu sebelum dilanjutkan.",
-      },
-    ],
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ.map((t) => ({
+      "@type": "Question",
+      name: t.tanya,
+      acceptedAnswer: { "@type": "Answer", text: teksPolos(t.jawab) },
+    })),
   },
 ];
 ---
 
 <BaseLayout
-  title="FAQ"
-  description="Pertanyaan yang sering ditanyakan seputar proses, biaya, legalitas, dan pengawasan proyek di Dirga Pahlevi Architecture."
+  title="Questions before you start"
+  description="Fees, timing, permits and what happens after handover — answered plainly, including the parts that are inconvenient for us."
+  jsonLd={jsonLd}
 >
-  <section class="section shell bg-dots hero-faq">
-    <span class="marker marker--live hero-faq__marker">
-      <span class="marker__dot" aria-hidden="true"></span>
-      Dijawab langsung, bukan skrip
-    </span>
-    <p class="eyebrow">FAQ</p>
-    <h1>Pertanyaan yang Sering Ditanyakan</h1>
-    <p class="lede">
-      Tidak menemukan jawaban yang Anda cari?
-      <a href="/kontak">Hubungi kami langsung</a>.
-    </p>
-  </section>
+  <div class="pita">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi kepala">
+        <span class="label">QUESTIONS</span>
+        <div class="s24"></div>
+        <h1 class="h1 kepala__judul">
+          Everything people ask before<br />they decide to start.
+        </h1>
+        <div class="s24"></div>
+        <p class="lead">
+          Nineteen questions, answered the way we would answer them on a call. Where a number is not
+          published yet, it says so instead of pretending.
+        </p>
+      </div>
+    </div>
+  </div>
 
-  <section class="section shell section--sunken">
-    <div class="faq-shell">
-      <nav class="faq-nav" aria-label="Kategori FAQ">
-        {
-          kategori.map((k) => (
-            <a href={`#${k.id}`}>{k.label}</a>
-          ))
-        }
-      </nav>
-
-      <div class="faq-kategori-list">
-        {
-          kategori.map((k) => (
-            <div id={k.id} class="faq-kategori">
-              <h2>{k.label}</h2>
-              <div class="accordion">
-                {k.pertanyaan.map((item) => (
-                  <details>
-                    <summary>
-                      {item.q}
-                      <span class="accordion__chevron">
-                        <Icon name="chevronDown" size={16} />
-                      </span>
-                    </summary>
-                    <div class="accordion__body t-muted">{item.a}</div>
-                  </details>
-                ))}
-              </div>
+  <div class="pita pita--akhir">
+    <div class="dalam">
+      <div class="baris baris-faq2">
+        <div class="sel sel-rel">
+          <div class="rel-judul"><span class="label label--redup">FIND AN ANSWER</span></div>
+          <div class="rel-kop">
+            <div class="cari">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.6" /><path d="M10.5 10.5 14 14" /></svg>
+              <input class="isian" id="cari" type="search" placeholder="Search, e.g. “deposit”" aria-label="Search the questions" autocomplete="off" />
+              <button class="cari__x" id="cariX" hidden aria-label="Clear search">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+              </button>
             </div>
-          ))
-        }
-      </div>
-    </div>
-  </section>
+            <div class="s16"></div>
+            <div class="pils" id="pils">
+              {
+                pils.map((p, i) => (
+                  <button class={i === 0 ? "pil pil--on" : "pil"} data-kat={p.kat}>
+                    {p.label} <span class="dim">{hitung(p.kat)}</span>
+                  </button>
+                ))
+              }
+            </div>
+            <div class="s16"></div>
+            <p class="dim kecil" id="hitung" aria-live="polite" role="status">
+              {FAQ.length} questions
+            </p>
+          </div>
+          <div class="rel-kaki">
+            <span class="label label--redup">NOT HERE?</span>
+            <div class="s10"></div>
+            <p class="mut kecil">
+              Ask it directly. The reply comes from the person who would draw your building, not from
+              a form.
+            </p>
+            <div class="s16"></div>
+            <a class="btn" href="/kontak">Ask us instead <span class="ar">→</span></a>
+          </div>
+        </div>
 
-  <section class="section shell">
-    <div class="cta-card">
-      <div>
-        <h2>Masih ada yang ingin ditanyakan?</h2>
-        <p class="t-muted">Kirim pesan lewat form kontak — kami balas dalam 1–2 hari kerja.</p>
+        <div class="sel sel-tny" id="daftar">
+          {
+            daftar.map((t) => (
+              <details class="tny" data-kat={t.kat} id={t.id}>
+                <summary>
+                  <span class="tny__t">
+                    <span class="tny__kat">{LABEL_FAQ[t.kat]}</span>
+                    {t.tanya}
+                    {t.menunggu && <span class="lencana lencana--tanya">FIGURES ON REQUEST</span>}
+                  </span>
+                  <span class="tny__i" aria-hidden="true" />
+                </summary>
+                <div class="tny__b" set:html={t.jawab} />
+              </details>
+            ))
+          }
+
+          {/* Keadaan kosong dirender di server, bukan dirakit JS — halaman
+              tetap masuk akal walau skripnya gagal dimuat. */}
+          <div class="kosong" id="kosong" hidden>
+            <span class="kotak-ikon">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5.6" /><path d="M13 13l4 4" /></svg>
+            </span>
+            <p class="mut">
+              Nothing here uses that word. The question is probably still a good one — send it and
+              you will have an answer within a day.
+            </p>
+            <a class="btn" href="/kontak">Ask us instead <span class="ar">→</span></a>
+          </div>
+        </div>
       </div>
-      <a href="/kontak" class="btn btn--primary btn--lg">Hubungi kami</a>
     </div>
-  </section>
+  </div>
 </BaseLayout>
 
 <style>
-  h1 {
-    margin-bottom: 1.5rem;
+  /* ══ Khusus halaman FAQ ═══════════════════════════════════════════════════
+     Accordion memakai <details> asli — perilaku buka/tutup, pencarian di dalam
+     halaman oleh peramban, dan dukungan keyboard datang gratis dan tidak bisa
+     rusak diam-diam. */
+  .tny {
+    border-top: 1px solid var(--garis);
   }
-
-  .hero-faq {
-    padding-block: clamp(4rem, 10vw, 7rem) clamp(var(--space-6), 6vw, var(--space-7));
+  .tny:first-child {
+    border-top: 0;
   }
-
-  .hero-faq__marker {
-    margin-bottom: var(--space-4);
-    padding: 0.3rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
-    background: var(--surface-raised);
-    width: fit-content;
-  }
-
-  .hero-faq .lede {
-    max-width: var(--measure);
-  }
-
-  .section--sunken {
-    background: var(--bg-sunken);
-  }
-
-  /* --- Layout: sidebar sticky di desktop, pill horizontal di ponsel ------- */
-
-  .faq-shell {
-    display: grid;
-    gap: var(--space-6);
-  }
-
-  .faq-nav {
+  .tny > summary {
+    list-style: none;
+    cursor: pointer;
     display: flex;
-    gap: var(--space-2);
-    overflow-x: auto;
-    padding-bottom: var(--space-2);
-  }
-
-  .faq-nav a {
-    flex: none;
-    padding: 0.5rem 0.9rem;
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--border);
-    background: var(--surface-raised);
-    color: var(--text-muted);
-    font-size: var(--text-sm);
+    gap: 18px;
+    align-items: flex-start;
+    padding: 22px 0;
+    font-size: 16.5px;
     font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    color: var(--teks);
+    line-height: 1.5;
+    transition: color 180ms var(--e-halus);
+  }
+  .tny > summary::-webkit-details-marker {
+    display: none;
+  }
+  .tny > summary:hover {
+    color: var(--aksen);
+  }
+  .tny > summary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--cincin);
+    border-radius: 2px;
+  }
+  .tny__t {
+    flex: 1;
+    min-width: 0;
+  }
+  /* Tanda +/− digambar dengan dua garis; yang tegak dikempiskan saat terbuka.
+     Rotasi 45° akan membuatnya jadi ×, dan × berarti "tutup/batal", bukan
+     "lipat kembali". */
+  .tny__i {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    position: relative;
+    margin-top: 2px;
+    color: var(--teks-3);
+    transition: color 180ms var(--e-halus);
+  }
+  .tny__i::before,
+  .tny__i::after {
+    content: "";
+    position: absolute;
+    background: currentColor;
+    transition:
+      transform 240ms var(--e-halus),
+      opacity 240ms var(--e-halus);
+  }
+  .tny__i::before {
+    left: 2px;
+    right: 2px;
+    top: 9px;
+    height: 2px;
+  }
+  .tny__i::after {
+    top: 2px;
+    bottom: 2px;
+    left: 9px;
+    width: 2px;
+  }
+  .tny[open] .tny__i {
+    color: var(--aksen);
+  }
+  .tny[open] .tny__i::after {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  .tny > summary:hover .tny__i {
+    color: var(--aksen);
+  }
+  .tny__b {
+    padding: 0 38px 24px 0;
+    font-size: 14.5px;
+    color: var(--teks-2);
+    line-height: 1.72;
+    max-width: 74ch;
+  }
+  .tny__b :global(p) {
+    margin: 0 0 14px;
+  }
+  .tny__b :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .tny__b :global(strong) {
+    color: var(--teks);
+    font-weight: 600;
+  }
+  .tny__b :global(ul) {
+    margin: 0 0 14px;
+    padding-left: 18px;
+  }
+  .tny__b :global(li) {
+    margin-bottom: 7px;
+  }
+  .tny__kat {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teks-3);
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .lencana--tanya {
+    margin-left: 8px;
+    vertical-align: 2px;
   }
 
-  .faq-nav a:hover {
-    background: var(--surface-hover);
-    color: var(--text-strong);
-    border-color: var(--border-strong);
+  /* Pencarian */
+  .cari {
+    position: relative;
+  }
+  .cari .isian {
+    padding-left: 42px;
+  }
+  .cari svg {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--teks-3);
+    pointer-events: none;
+  }
+  .cari__x {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 0;
+    color: var(--teks-3);
+    cursor: pointer;
+  }
+  .cari__x:hover {
+    color: var(--teks);
   }
 
-  @media (min-width: 64rem) {
-    .faq-shell {
-      grid-template-columns: 14rem 1fr;
-      align-items: start;
-    }
-
-    .faq-nav {
-      flex-direction: column;
-      position: sticky;
-      top: 6rem;
-      overflow-x: visible;
-      padding-bottom: 0;
-    }
-  }
-
-  .faq-kategori-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-  }
-
-  .faq-kategori {
-    scroll-margin-top: 6rem;
-  }
-
-  .faq-kategori h2 {
-    margin-bottom: var(--space-4);
-  }
-
-  .cta-card {
+  .pils {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-5);
-    padding: var(--space-6);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
+    gap: 8px;
   }
 
-  .cta-card h2 {
-    font-size: var(--text-2xl);
-    margin-bottom: var(--space-2);
+  /* Sorotan hasil pencarian */
+  .sel-tny :global(mark) {
+    background: #134e4a;
+    color: #5eead4;
+    padding: 0 2px;
+  }
+
+  .baris-faq2 {
+    grid-template-columns: 300px 1fr;
+  }
+  .sel-rel {
+    padding: 0;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow: auto;
+  }
+  .rel-judul {
+    padding: 26px 26px 18px;
+  }
+  .rel-kop {
+    padding: 0 26px 22px;
+  }
+  .rel-kaki {
+    border-top: 1px solid var(--garis);
+    padding: 24px 26px;
+  }
+  .sel-tny {
+    padding: 8px 34px 34px;
+  }
+  .kepala {
+    padding-block: 72px;
+  }
+  .kepala__judul {
+    font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+  }
+
+  @media (max-width: 900px) {
+    .baris-faq2 {
+      grid-template-columns: 1fr;
+    }
+    /* Sama seperti di /kontak: 16px mencegah iOS memperbesar halaman saat isian
+       difokus, dan tinggi naik di atas ambang sasaran sentuh 40px. */
+    .isian {
+      font-size: 16px;
+      padding: 12px 14px;
+    }
+    .cari .isian {
+      padding-left: 44px;
+    }
+    .cari__x {
+      width: 40px;
+      height: 40px;
+    }
+    .pil {
+      min-height: 44px;
+      padding-inline: 16px;
+    }
+    .baris-faq2 > .sel-rel {
+      position: static;
+      max-height: none;
+      border-bottom: 1px solid var(--garis);
+    }
+    .sel-tny {
+      padding: 4px 20px 24px;
+    }
+    .tny__b {
+      padding-right: 0;
+    }
   }
 </style>
+
+<script>
+  (() => {
+    "use strict";
+    const daftar = document.getElementById("daftar");
+    const cari = document.getElementById("cari") as HTMLInputElement | null;
+    const cariX = document.getElementById("cariX");
+    const hitung = document.getElementById("hitung");
+    const pils = document.getElementById("pils");
+    const kosong = document.getElementById("kosong");
+    if (!daftar || !cari || !cariX || !hitung || !pils || !kosong) return;
+
+    type Baris = {
+      el: HTMLDetailsElement;
+      t: HTMLElement;
+      b: HTMLElement;
+      ht: string;
+      hb: string;
+      cari: string;
+    };
+    /* Teks asli disimpan sekali. Menyorot hasil menulis ulang innerHTML, jadi
+       tanpa salinan ini pencarian kedua akan menyorot di dalam <mark> sendiri. */
+    const semua: Baris[] = [...daftar.querySelectorAll<HTMLDetailsElement>(".tny")].map((el) => {
+      const t = el.querySelector<HTMLElement>(".tny__t")!;
+      const b = el.querySelector<HTMLElement>(".tny__b")!;
+      return {
+        el,
+        t,
+        b,
+        ht: t.innerHTML,
+        hb: b.innerHTML,
+        cari: (t.textContent + " " + b.textContent).toLowerCase(),
+      };
+    });
+    let kat = "semua";
+
+    const lolos = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const sorot = (el: HTMLElement, asli: string, q: string) => {
+      if (!q) {
+        el.innerHTML = asli;
+        return;
+      }
+      /* (?![^<]*>) menjaga supaya kata yang cocok DI DALAM sebuah tag
+         (misal "start" di dalam class) tidak ikut dibungkus <mark> dan
+         merusak HTML-nya. */
+      el.innerHTML = asli.replace(new RegExp("(" + lolos(q) + ")(?![^<]*>)", "gi"), "<mark>$1</mark>");
+    };
+
+    const saring = () => {
+      const q = cari.value.trim().toLowerCase();
+      cariX.hidden = !cari.value;
+      let n = 0;
+      semua.forEach((d) => {
+        const cocokKat = kat === "semua" || d.el.dataset.kat === kat;
+        const cocokTeks = !q || d.cari.includes(q);
+        const tampil = cocokKat && cocokTeks;
+        d.el.hidden = !tampil;
+        if (tampil) {
+          n++;
+          sorot(d.t, d.ht, q);
+          sorot(d.b, d.hb, q);
+          /* Jawaban yang cocok tapi tetap terlipat tidak menolong siapa pun. */
+          if (q) d.el.open = true;
+        } else {
+          d.el.open = false;
+          sorot(d.t, d.ht, "");
+          sorot(d.b, d.hb, "");
+        }
+      });
+      hitung.textContent =
+        n === 0
+          ? "No question matches — try a shorter word, or just ask us."
+          : n === 1
+            ? "1 question"
+            : n + " questions";
+      kosong.hidden = n > 0;
+    };
+
+    cari.addEventListener("input", saring);
+    cariX.addEventListener("click", () => {
+      cari.value = "";
+      cari.focus();
+      saring();
+    });
+    pils.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>(".pil");
+      if (!b) return;
+      kat = b.dataset.kat!;
+      pils.querySelectorAll(".pil").forEach((p) => p.classList.toggle("pil--on", p === b));
+      saring();
+    });
+
+    /* Datang dari /#tautan beranda: buka pertanyaannya, jangan cuma
+       menggulir ke <details> yang masih terlipat. */
+    const buka = () => {
+      const id = location.hash.slice(1);
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (el instanceof HTMLDetailsElement) {
+        el.open = true;
+        el.scrollIntoView({ block: "center" });
+      }
+    };
+    addEventListener("hashchange", buka);
+    buka();
+  })();
+</script>

@@ -1,257 +1,390 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getSettings } from "../lib/api";
-import "../styles/misc.css";
+import {
+  BADAN_USAHA,
+  ALAMAT_RESMI,
+  SIMPAN_PESAN,
+  SIMPAN_DOKUMEN,
+  HUKUM_BERLAKU,
+} from "../lib/menunggu";
 
 const settings = await getSettings();
+const email = settings.email?.trim() || null;
+const studio = settings.studioName?.trim() || "Dirga Pahlevi Architecture";
 
-// Tanggal berlaku ditulis tetap, bukan dari new Date(): halaman kebijakan
-// yang tanggalnya ikut berubah tiap build membuat pembaca tidak bisa tahu
-// apakah isinya benar-benar berubah. Ubah tangan kalau isinya diperbarui.
-const berlaku = "27 Agustus 2026";
-
-const dikumpulkan = [
-  { apa: "Nama", kenapa: "Menyapa Anda dengan benar saat membalas." },
-  { apa: "Alamat email", kenapa: "Membalas pesan Anda. Ini satu-satunya cara kami menghubungi balik kalau nomor telepon tidak diisi." },
-  { apa: "Nomor telepon", kenapa: "Opsional. Hanya dipakai kalau Anda lebih nyaman dihubungi lewat telepon atau WhatsApp." },
-  { apa: "Jenis proyek dan perkiraan anggaran", kenapa: "Opsional. Membantu kami menyiapkan jawaban yang relevan sebelum konsultasi." },
-  { apa: "Isi pesan", kenapa: "Isi permintaan Anda sendiri." },
+const bagian = [
+  { id: "kirim", label: "If you send us something" },
+  { id: "klien", label: "If you are a client" },
+  { id: "peramban", label: "What your browser stores" },
+  { id: "pihak", label: "Who else sees it" },
+  { id: "simpan", label: "How long we keep it" },
+  { id: "tidak", label: "What we never do" },
+  { id: "hak", label: "Asking us to delete it" },
+  { id: "siapa", label: "Who is responsible" },
 ];
 
-const tidakDilakukan = [
-  "Menjual, menyewakan, atau menukar data Anda kepada siapa pun.",
-  "Mengirim buletin atau promosi. Kami hanya membalas pesan yang Anda kirim.",
-  "Memasang cookie pelacak, piksel iklan, atau alat analitik pihak ketiga.",
-  "Membuat profil Anda untuk penargetan iklan.",
+const pihak = [
+  ["Cloudflare", "Serves the site and stores images", "Your IP address and browser, as with any website; project photographs"],
+  ["Cloudflare Turnstile", "Blocks bots on the contact form", "A signal that you are a person. Not your message"],
+  ["Supabase", "Database and staff sign-in", "Your enquiry, and everything on a client project page"],
+  ["Resend", "Delivers our email", "Your email address and the message you sent"],
 ];
 
-const pihakKetiga = [
-  { nama: "Supabase", peran: "Menyimpan isi form kontak di basis data.", lokasi: "Singapura (ap-southeast-1)" },
-  { nama: "Cloudflare", peran: "Menyajikan situs ini, menyimpan gambar proyek, dan menyaring bot lewat Turnstile.", lokasi: "Jaringan global" },
-  { nama: "Resend", peran: "Mengirim pemberitahuan email ke studio saat ada pesan masuk.", lokasi: "Amerika Serikat" },
+const tidak = [
+  ["No analytics.", "Not Google Analytics, not any replacement. We genuinely do not know how many people read this page."],
+  ["No advertising pixels", "and no remarketing. Nothing you do here follows you anywhere else."],
+  ["No newsletter", "and no marketing email. We reply to what you send; that is the whole correspondence."],
+  ["Nothing sold or shared", "with anyone outside the services listed above."],
 ];
+
+// Kalimat yang butuh keterangan dari pemilik. Selama belum ada, kalimatnya
+// TETAP ada tapi bagian yang kosong ditandai — halaman privasi yang mengarang
+// angka penyimpanan berbunyi seperti janji hukum yang tidak bisa ditepati.
+const belum = "to be confirmed";
 ---
 
 <BaseLayout
-  title="Kebijakan Privasi"
-  description={`Bagaimana ${settings.studioName} memperlakukan data yang Anda kirim lewat form kontak: apa yang dikumpulkan, kenapa, berapa lama disimpan, dan cara menghapusnya.`}
+  title="Privacy"
+  description="A contact form, a project page for clients, and nothing else. No analytics, no advertising pixels, no newsletter, and nothing sold to anyone."
 >
-  <section class="section shell bg-dots hero-privasi">
-    <p class="eyebrow">Kebijakan Privasi</p>
-    <h1>Data Anda, dan apa yang kami lakukan dengannya</h1>
-    <p class="lede">
-      Halaman ini berlaku untuk form kontak di situs ini. Ditulis sependek mungkin,
-      karena datanya memang sedikit.
-    </p>
-    <p class="t-muted privasi-tanggal">Berlaku sejak {berlaku}</p>
-  </section>
+  <div class="pita">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi isi--longgar kepala">
+        <span class="label">PRIVACY</span>
+        <div class="s24"></div>
+        <h1 class="h1 kepala__judul">What this website knows about you, in plain words</h1>
+        <div class="s24"></div>
+        <p class="lead">
+          Short version: a contact form, a project page for clients, and nothing else. No analytics,
+          no advertising pixels, no newsletter, and nothing sold to anyone. The long version is
+          below, and it is short too.
+        </p>
+      </div>
+    </div>
+  </div>
 
-  <section class="section shell privasi-isi">
-    <article>
-      <h2>Yang kami kumpulkan</h2>
-      <p class="t-muted">
-        Hanya yang Anda ketik sendiri di form kontak. Tidak ada yang diambil diam-diam.
-      </p>
-      <dl class="privasi-daftar">
-        {
-          dikumpulkan.map((d) => (
-            <div class="privasi-daftar__baris">
-              <dt>{d.apa}</dt>
-              <dd class="t-muted">{d.kenapa}</dd>
-            </div>
-          ))
-        }
-      </dl>
-    </article>
-
-    <article>
-      <h2>Yang tidak kami lakukan</h2>
-      <ul class="privasi-list t-muted">
-        {tidakDilakukan.map((t) => <li>{t}</li>)}
-      </ul>
-    </article>
-
-    <article>
-      <h2>Siapa lagi yang menyentuh data ini</h2>
-      <p class="t-muted">
-        Kami memakai tiga layanan untuk menjalankan situs ini. Masing-masing hanya
-        menerima bagian yang memang dibutuhkannya.
-      </p>
-      <div class="privasi-tabel-bungkus">
-        <table class="table">
-          <thead>
-            <tr><th>Layanan</th><th>Perannya</th><th>Lokasi server</th></tr>
-          </thead>
-          <tbody>
+  <div class="pita pita--akhir">
+    <div class="dalam">
+      <div class="baris baris-pv">
+        <div class="sel rel-pv">
+          <div class="rel-pv__kop"><span class="label label--redup">ON THIS PAGE</span></div>
+          <nav id="toc" aria-label="On this page">
             {
-              pihakKetiga.map((p) => (
-                <tr>
-                  <td>{p.nama}</td>
-                  <td>{p.peran}</td>
-                  <td>{p.lokasi}</td>
-                </tr>
+              bagian.map((b, i) => (
+                <a href={`#${b.id}`} class={i === 0 ? "kat__b kini" : "kat__b"}>
+                  {b.label}
+                  <span class="panah-kotak" aria-hidden="true">
+                    <svg width="19" height="19" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="16.8" height="16.8" rx="4.6" /><path d="M9.4 7.4 13 11l-3.6 3.6" /></svg>
+                  </span>
+                </a>
               ))
             }
-          </tbody>
-        </table>
+          </nav>
+        </div>
+
+        <div class="sel sel-pv">
+          <div class="pv">
+            <h2 id="kirim">If you send us something</h2>
+            <p>
+              The contact form asks for your <strong>name, email, phone number, where the site is,
+              what you are building, a budget range, and your message</strong>. Only the name, email,
+              location, project type and message are required — the rest exist because they make our
+              first reply more useful to you.
+            </p>
+            <p>
+              That message reaches us as an email and is stored in our own database so we can find it
+              again. It is read by the two people who work here. It is not read by anyone else.
+            </p>
+
+            <h2 id="klien">If you are a client</h2>
+            <p>
+              Your project page holds what the project needs: the drawings and documents we send you,
+              the invoices, the phases, your brief, and the comment threads. It also holds the
+              <strong>link that opens it</strong> — that link is the credential, which is why we say
+              to send it only to people who should see the project.
+            </p>
+            <p>
+              Photographs of your building are stored with us. We ask before any of them appear
+              publicly on this site, and <strong>no is a complete answer</strong> that changes
+              nothing about how we work with you.
+            </p>
+
+            <h2 id="peramban">What your browser stores</h2>
+            <p>
+              No tracking cookies, because there is no tracking. What is stored stays on your own
+              device and never reaches us:
+            </p>
+            <div class="tanpa">
+              <i>▸</i>
+              <span><b>Your language choice</b> — remembered so a client page opens in the language you last read it in.</span>
+            </div>
+            <div class="tanpa">
+              <i>▸</i>
+              <span><b>For staff only:</b> a sign-in token, a light-or-dark preference for the studio panel, and a short cache of panel data, so moving between admin pages does not reload everything.</span>
+            </div>
+            <p class="pv__lanjut">Clearing your browser data removes all of it, and nothing breaks.</p>
+
+            <h2 id="pihak">Who else sees it</h2>
+            <p>
+              We run this site on services rather than our own machines. Each one sees only the part
+              it needs to do its job:
+            </p>
+            <div class="pihak-bung">
+              <table class="pihak">
+                <thead>
+                  <tr><th>Service</th><th>What it does</th><th>What reaches it</th></tr>
+                </thead>
+                <tbody>
+                  {pihak.map(([a, b, c]) => (<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>))}
+                </tbody>
+              </table>
+            </div>
+            <p>
+              We chose these because they are ordinary, not because they are clever. If any of them
+              changes, this page changes with it.
+            </p>
+
+            <h2 id="simpan">How long we keep it</h2>
+            <p>
+              An enquiry that does not become a project is kept for{" "}
+              {SIMPAN_PESAN ? <strong>{SIMPAN_PESAN}</strong> : <em class="belum">{belum}</em>}, then
+              deleted. Documents tied to a completed project — contracts, invoices, drawings — are
+              kept for{" "}
+              {SIMPAN_DOKUMEN ? <strong>{SIMPAN_DOKUMEN}</strong> : <em class="belum">{belum}</em>},
+              because they are the record of work that was done and paid for.
+            </p>
+
+            <h2 id="tidak">What we never do</h2>
+            {
+              tidak.map(([tebal, sisa]) => (
+                <div class="tanpa">
+                  <i>✓</i>
+                  <span><b>{tebal}</b> {sisa}</span>
+                </div>
+              ))
+            }
+
+            <h2 id="hak">Asking us to delete it</h2>
+            <p>
+              Write to {email ? <a href={`mailto:${email}`}>{email}</a> : "the studio"} and say what
+              you want removed. We will do it and tell you when it is done. You do not need to give a
+              reason, and it does not affect a project that is running.
+            </p>
+            <p>
+              One exception, stated plainly: documents tied to a completed project we keep for the
+              period above. Everything else goes.
+            </p>
+
+            <h2 id="siapa">Who is responsible</h2>
+            <p>
+              This site is run by{" "}
+              {BADAN_USAHA ? <strong>{BADAN_USAHA}</strong> : <><strong>{studio}</strong> (<em class="belum">registered name {belum}</em>)</>}
+              {ALAMAT_RESMI ? <>, {ALAMAT_RESMI}</> : <>, <em class="belum">registered address {belum}</em></>}.
+              Questions about anything on this page go to the same address above.
+            </p>
+            <p>
+              This page is governed by{" "}
+              {HUKUM_BERLAKU ? <strong>{HUKUM_BERLAKU}</strong> : <em class="belum">{belum}</em>}.
+            </p>
+          </div>
+        </div>
       </div>
-      <p class="t-muted">
-        Selain ketiganya, tidak ada pihak lain yang menerima data Anda — kecuali
-        kalau kami diwajibkan menyerahkannya oleh hukum yang berlaku.
-      </p>
-    </article>
-
-    <article>
-      <h2>Berapa lama disimpan</h2>
-      <p class="t-muted">
-        Pesan yang tidak berlanjut jadi proyek kami hapus setelah <strong>dua tahun</strong>.
-        Pesan yang berlanjut jadi proyek disimpan selama proyeknya berjalan, ditambah
-        lima tahun setelahnya — sesuai kebiasaan penyimpanan dokumen perancangan,
-        karena catatan itu sering dibutuhkan lagi saat bangunan direnovasi.
-      </p>
-    </article>
-
-    <article>
-      <h2>Hak Anda</h2>
-      <p class="t-muted">
-        Kapan saja Anda boleh meminta kami menunjukkan data apa yang kami simpan
-        tentang Anda, memperbaikinya kalau ada yang keliru, atau menghapusnya
-        sepenuhnya. Tidak perlu alasan, dan tidak dipungut biaya.
-      </p>
-      <p class="t-muted">
-        Kirim permintaannya ke alamat email di bawah. Kami balas dalam 7 hari kerja.
-        Kalau permintaannya penghapusan, kami konfirmasi setelah datanya benar-benar
-        terhapus — bukan saat permintaannya diterima.
-      </p>
-    </article>
-
-    <article>
-      <h2>Cookie</h2>
-      <p class="t-muted">
-        Situs publik ini tidak memasang cookie sama sekali. Pilihan tema terang atau
-        gelap disimpan di penyimpanan lokal peramban Anda dan tidak pernah dikirim
-        ke mana pun.
-      </p>
-      <p class="t-muted">
-        Cloudflare Turnstile — penyaring bot di form kontak — bisa menaruh penanda
-        sementara di peramban untuk membedakan manusia dari mesin. Penanda itu tidak
-        dipakai untuk melacak Anda antar-situs.
-      </p>
-    </article>
-
-    <article>
-      <h2>Kalau halaman ini berubah</h2>
-      <p class="t-muted">
-        Perubahan berarti akan mengubah tanggal berlaku di atas. Kami tidak
-        memberlakukan perubahan secara surut terhadap data yang sudah terlanjur
-        Anda kirim.
-      </p>
-    </article>
-
-    <article>
-      <h2>Menghubungi kami</h2>
-      <p class="t-muted">
-        {settings.studioName}{settings.city ? ` — ${settings.city}` : ""}
-      </p>
-      {
-        settings.email && (
-          <p class="t-muted">
-            <a href={`mailto:${settings.email}`}>{settings.email}</a>
-          </p>
-        )
-      }
-      {settings.address && <p class="t-muted">{settings.address}</p>}
-    </article>
-  </section>
+    </div>
+  </div>
 </BaseLayout>
 
 <style>
-  .hero-privasi {
-    padding-block: clamp(4rem, 10vw, 7rem) clamp(var(--space-5), 5vw, var(--space-6));
+  /* ══ Privasi ═════════════════════════════════════════════════════════════ */
+  .pv {
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: var(--teks-2);
   }
-
-  .hero-privasi h1 {
-    margin-bottom: 1.5rem;
+  .pv > p {
+    margin: 0 0 18px;
+    max-width: 60ch;
   }
-
-  .hero-privasi .lede {
-    max-width: var(--measure);
+  .pv h2 {
+    font-family: var(--judul);
+    font-size: 1.4rem;
+    color: var(--teks);
+    line-height: 1.25;
+    margin: 42px 0 14px;
+    scroll-margin-top: 80px;
   }
-
-  .privasi-tanggal {
-    margin-top: var(--space-4);
-    font-size: var(--text-sm);
+  .pv h2:first-child {
+    margin-top: 0;
   }
-
-  .privasi-isi {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(var(--space-6), 5vw, var(--space-7));
-    padding-bottom: clamp(var(--space-7), 8vw, var(--space-8));
-  }
-
-  .privasi-isi article {
-    max-width: var(--measure);
-  }
-
-  .privasi-isi h2 {
-    margin-bottom: var(--space-3);
-    font-size: var(--text-xl);
-  }
-
-  .privasi-isi p + p {
-    margin-top: var(--space-3);
-  }
-
-  /* Definisi dua kolom di layar lebar, bertumpuk di ponsel — istilahnya di
-     kiri supaya bisa dipindai cepat tanpa membaca seluruh keterangan. */
-  .privasi-daftar {
-    margin: var(--space-4) 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .privasi-daftar__baris {
-    display: grid;
-    gap: 0.15rem;
-    padding-bottom: var(--space-3);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .privasi-daftar__baris:last-child {
-    border-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .privasi-daftar dt {
+  .pv strong {
+    color: var(--teks);
     font-weight: 600;
-    color: var(--text-strong);
+  }
+  .pv a {
+    color: var(--aksen);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(45, 212, 191, 0.4);
+  }
+  .pv__lanjut {
+    margin-top: 18px;
+  }
+  /* Keterangan yang masih ditunggu dari pemilik. Ditandai jelas — halaman
+     privasi berbunyi seperti janji hukum, jadi bagian yang belum pasti tidak
+     boleh menyamar sebagai bagian yang sudah pasti. */
+  .belum {
+    color: var(--teks-3);
+    font-style: italic;
   }
 
-  .privasi-daftar dd {
-    margin: 0;
+  /* Tabel pihak ketiga: siapa, untuk apa, dan apa yang benar-benar sampai */
+  .pihak {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 20px 0 24px;
   }
-
-  .privasi-list {
-    margin: var(--space-4) 0 0;
-    padding-left: 1.1rem;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+  .pihak th {
+    text-align: left;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teks-3);
+    font-weight: 600;
+    padding: 0 14px 12px 0;
+    border-bottom: 1px solid var(--garis);
   }
-
-  /* Tabel bisa lebih lebar dari kolom teks, jadi dibiarkan menggulir sendiri
-     ketimbang memaksa badan halaman ikut menggulir menyamping. */
-  .privasi-tabel-bungkus {
-    margin: var(--space-4) 0;
+  .pihak td {
+    padding: 15px 14px 15px 0;
+    border-bottom: 1px solid var(--garis);
+    vertical-align: top;
+    color: var(--teks-2);
+    line-height: 1.6;
+  }
+  .pihak tr:last-child td {
+    border-bottom: 0;
+  }
+  .pihak td:first-child {
+    color: var(--teks);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pihak-bung {
     overflow-x: auto;
   }
 
-  @media (min-width: 40rem) {
-    .privasi-daftar__baris {
-      grid-template-columns: 14rem 1fr;
-      gap: var(--space-4);
+  /* Daftar "yang TIDAK kami lakukan" — bagian paling berguna di halaman ini */
+  .tanpa {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 13px 0;
+    border-top: 1px solid var(--garis);
+  }
+  .tanpa:first-child {
+    border-top: 0;
+  }
+  .tanpa i {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    color: #34d399;
+  }
+  .tanpa span {
+    font-size: 14.5px;
+    color: var(--teks-2);
+    line-height: 1.6;
+  }
+  .tanpa b {
+    color: var(--teks);
+    font-weight: 600;
+  }
+
+  .baris-pv {
+    grid-template-columns: 270px 1fr;
+  }
+  .sel-pv {
+    padding: 40px 44px 52px;
+  }
+  .rel-pv {
+    padding: 0;
+    position: sticky;
+    top: 0;
+    align-self: start;
+  }
+  .rel-pv__kop {
+    padding: 26px 26px 16px;
+  }
+  .rel-pv .kat__b {
+    text-decoration: none;
+    letter-spacing: normal;
+    text-transform: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 16px 22px 16px 26px;
+  }
+  .rel-pv .kat__b.kini {
+    color: var(--aksen);
+    background: var(--gelap);
+  }
+  .rel-pv .kat__b.kini .panah-kotak {
+    opacity: 1;
+    transform: none;
+  }
+  .kepala {
+    padding-top: 70px;
+    padding-bottom: 48px;
+  }
+  .kepala__judul {
+    font-size: clamp(2rem, 3.9vw, 3rem);
+  }
+
+  @media (max-width: 960px) {
+    .baris-pv {
+      grid-template-columns: 1fr;
+    }
+    .baris-pv > .rel-pv {
+      position: static;
+      border-bottom: 1px solid var(--garis);
+    }
+    .sel-pv {
+      padding: 28px 20px 36px;
     }
   }
 </style>
+
+<script>
+  (() => {
+    "use strict";
+    /* Rel menandai bagian yang sedang dibaca. Matematika gulir langsung,
+       bukan IntersectionObserver: observer tidak bisa diandalkan pada
+       lompatan gulir yang jauh. */
+    const tautan = [...document.querySelectorAll<HTMLAnchorElement>("#toc a")];
+    if (!tautan.length) return;
+    tautan.forEach((t) =>
+      t.addEventListener("click", () => {
+        tautan.forEach((x) => x.classList.remove("kini"));
+        t.classList.add("kini");
+      }),
+    );
+    const bagian = tautan
+      .map((a) => document.querySelector(a.getAttribute("href") || ""))
+      .filter((x): x is Element => Boolean(x));
+    if (!bagian.length) return;
+    const GARIS = () => innerHeight * 0.14;
+    const tandai = () => {
+      let ke = 0;
+      bagian.forEach((b, k) => {
+        if (b.getBoundingClientRect().top <= GARIS() + 1) ke = k;
+      });
+      // Bagian terakhir tidak pernah melewati garis kalau halaman sudah mentok
+      // di bawah — tanpa ini ia tidak pernah menyala.
+      if (innerHeight + scrollY >= document.body.scrollHeight - 4) ke = bagian.length - 1;
+      tautan.forEach((t, k) => t.classList.toggle("kini", k === ke));
+    };
+    addEventListener("scroll", tandai, { passive: true });
+    addEventListener("resize", tandai);
+    tandai();
+  })();
+</script>

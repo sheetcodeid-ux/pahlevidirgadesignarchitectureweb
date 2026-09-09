@@ -110,3 +110,29 @@ export const KREDIT_MENUNGGU = [
  *  satu tempat — supaya tidak ada dua versi yang berbeda di halaman berbeda. */
 export const BELUM_ADA = "Name to be credited";
 export const TAHUN_BELUM = "YEAR?";
+
+/* ── Halaman privasi ─────────────────────────────────────────────────────── */
+
+/**
+ * Empat hal yang harus diisi sebelum halaman privasi benar-benar lengkap.
+ * Saya sengaja tidak mengarangnya: halaman privasi yang SALAH lebih buruk
+ * daripada halaman privasi yang belum lengkap, karena ia berbunyi seperti
+ * janji hukum. Selama kosong, halamannya tetap tayang dan bagian yang belum
+ * ada ditandai apa adanya, bukan disembunyikan.
+ *
+ * Kalau perlu, tunjukkan halaman itu ke notaris Anda — isinya sudah benar
+ * secara teknis; yang kurang hanya keempat keterangan di bawah.
+ */
+export const BADAN_USAHA: string | null = null;
+export const ALAMAT_RESMI: string | null = null;
+
+/** Berapa lama pesan yang tidak jadi proyek disimpan sebelum dihapus.
+ *  Contoh isian: "12 bulan". */
+export const SIMPAN_PESAN: string | null = null;
+
+/** Berapa lama dokumen proyek yang sudah selesai disimpan.
+ *  Contoh isian: "10 tahun". */
+export const SIMPAN_DOKUMEN: string | null = null;
+
+/** Hukum negara mana yang berlaku. Contoh isian: "the laws of Indonesia". */
+export const HUKUM_BERLAKU: string | null = null;
