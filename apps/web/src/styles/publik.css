@@ -1,0 +1,531 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SISTEM SITUS PUBLIK
+   ───────────────────────────────────────────────────────────────────────────
+   Satu-satunya stylesheet untuk seluruh halaman publik + halaman masuk staf.
+   Dipisah dari sistem admin (global/components/data/form/…) karena arah
+   visualnya memang beda: kisi cetak biru dengan tanda silang di tiap
+   perpotongan, sudut siku pada wadah (radius 6px HANYA untuk kontrol), tanpa
+   bayangan hover, warna mengikuti refine.dev.
+
+   Digabung dari 13 halaman tata letak yang sudah di-ACC pemilik. Sebelumnya
+   tiap halaman membawa salinannya sendiri dan salinan itu sudah menyimpang
+   satu sama lain — itu sumber bug "kelasnya ada di satu halaman, tidak ada di
+   halaman lain". Kesetaraan hasil gabungan dibuktikan dengan mengukur ulang
+   13 halaman pada 1400/768/390px: nol elemen bergeser.
+
+   ATURAN YANG MENGIKAT
+   1. Aturan yang cuma dipakai SATU halaman bukan milik berkas ini — taruh di
+      <style> halaman itu sendiri (mis. lebar rel .baris-toc, .baris-kat).
+   2. Wadah tidak pernah ber-radius. `--r` hanya untuk tombol, isian, dan pil.
+   3. Tidak ada nilai warna literal di komponen; semuanya lewat token di :root.
+   4. Setiap kelas baru wajib dipakai — kelas yatim ditangkap oleh yatim.mjs.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@property --sudut{syntax:'<angle>';inherits:false;initial-value:0deg}
+:root{--kanvas:#18181B; --gelap:#09090B; --sel:#27272A; --sel-2:#3F3F46;
+  --garis:#27272A; --garis-2:#3F3F46;
+  --teks:#FFFFFF; --teks-2:#A1A1AA; --teks-3:#909096; --teks-4:#71717A;
+  --aksen:#2DD4BF; --aksen-3:#5EEAD4; --isi:#0D9488;
+  --isi-hover:#047857; --isi-tekan:#065F46; --cincin:#34D399; --merah:#F87171;
+    --glow-judul:0 0 30px #26D97F8C;
+  --judul:"Arvo",Georgia,serif; --tubuh:"Maven Pro",system-ui,sans-serif;
+  --lebar:1200px; --r:6px;
+  --rasio-foto: 16 / 9;   /* 5760×3240 dari fotografer — tepat 16:9 */
+  /* Tanda silang — DIUKUR dari dua gambar Anda:
+     tebal 3× garis tipis, lengan ±9px dari titik potong. */
+  --xh:18px; --xh-1:-9px;
+  --e-keluar:cubic-bezier(.22,1,.36,1); --e-halus:cubic-bezier(.4,0,.2,1);
+  color-scheme:dark;}
+*{box-sizing:border-box}
+/* Atribut [hidden] HARUS menang atas kelas komponen. Aturan peramban
+   `[hidden]{display:none}` berkekhususan sama dengan `.kunci{display:flex}`,
+   dan aturan penulis selalu mengalahkan aturan peramban — jadi elemen yang
+   disembunyikan dari JS tetap tergambar tanpa satu pun galat. */
+[hidden]{display:none!important}
+body{margin:0;background:var(--kanvas);color:var(--teks);font-family:var(--tubuh);
+  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:var(--judul);font-weight:400;letter-spacing:0;line-height:1.14;margin:0;
+  text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+h1,h2,h3{hanging-punctuation:first last}
+/* ═══ TANDA SILANG ════════════════════════════════════════════════════════
+   Tiga bentuk. Lengan hanya digambar ke arah yang benar-benar ada garisnya:
+   4 garis → +   ·   garis lanjut ke bawah saja → ⊤   ·   ke atas saja → ⊥ */
+:root{--xh-plus:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 0v18' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
+  --xh-bawah:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 9v9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
+  --xh-atas:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 0v9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
+  /* Garis MENDATAR yang berhenti di tepi tegak: lengan hanya ke arah yang ada */
+  --xh-kanan:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M9 0v18M9 9h9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
+  --xh-kiri:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M9 0v18M0 9h9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");}
+.pita{border-top:1px solid var(--garis);position:relative}
+.pita--akhir{border-bottom:1px solid var(--garis)}
+.dalam{max-width:var(--lebar);margin-inline:auto;border-inline:1px solid var(--garis);
+  position:relative}
+.dalam::before,.dalam::after{content:"";position:absolute;left:var(--xh-1);right:var(--xh-1);
+  height:var(--xh);z-index:4;pointer-events:none;background-repeat:no-repeat;
+  background-position:left center,right center;
+  background-image:var(--xh-plus),var(--xh-plus)}
+.dalam::before{top:var(--xh-1)}
+.dalam::after{bottom:var(--xh-1)}
+.pita--awal .dalam::before{background-image:var(--xh-bawah),var(--xh-bawah)}
+.pita--akhir .dalam::after{background-image:var(--xh-atas),var(--xh-atas)}
+.isi{padding:56px 44px}
+.isi--rapat{padding:24px 44px}
+.isi--longgar{padding:96px 44px}
+/* Sel: berbagi garis; pemisahnya diberi ⊤ di ujung atas dan ⊥ di ujung bawah,
+   karena garis tegak itu memang berhenti di situ. Persis aturan Anda. */
+.baris{display:grid}
+.sel{position:relative;padding:30px 32px;min-width:0}
+.sel + .sel{border-left:1px solid var(--garis)}
+.sel + .sel::before{content:"";position:absolute;left:var(--xh-1);top:var(--xh-1);
+  bottom:var(--xh-1);width:var(--xh);z-index:4;pointer-events:none;
+  background-repeat:no-repeat;background-position:center top,center bottom;
+  background-image:var(--xh-bawah),var(--xh-atas)}
+.baris + .baris{border-top:1px solid var(--garis)}
+.b2{grid-template-columns:repeat(2,1fr)}
+.b3{grid-template-columns:repeat(3,1fr)}
+.b4{grid-template-columns:repeat(4,1fr)}
+.sel--kosong{background:repeating-linear-gradient(45deg,#1C1C20 0 5px,#18181B 5px 10px)}
+.sel--isi{background:var(--sel)}
+.sel--sorot{background:radial-gradient(120% 90% at 50% 0%,rgba(45,212,197,.16),transparent 62%),#1E1E22}
+/* ═══ POLA TITIK ══════════════════════════════════════════════════════════
+   Kisi 4px dengan titik 1px — halus, terbaca sebagai TEKSTUR, bukan sebagai
+   titik-titik yang bisa dihitung. Ini yang membedakan dari versi sebelumnya
+   (22px) yang titiknya kelihatan satu per satu. */
+:root{--titik:#2C2C32; --titik-jarak:4px}
+.titik{background-image:radial-gradient(circle at 0.5px 0.5px,var(--titik) .5px,transparent 0);
+  background-size:var(--titik-jarak) var(--titik-jarak)}
+.titik--renggang{--titik-jarak:8px}
+/* Pijar teal: satu kubah cahaya dari tepi atas, meredup ke bawah.
+   Dipasang DI ATAS titik supaya titik di dekat pusatnya ikut kehijauan —
+   persis seperti kepala halaman About milik refine. */
+.pijar{position:relative}
+.pijar > *{position:relative;z-index:1}
+.pijar-lapis{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(78% 112% at 50% 0%, rgba(20,184,166,.34), rgba(13,148,136,.15) 44%, transparent 76%),
+    radial-gradient(34% 46% at 50% 0%, rgba(94,234,212,.20), transparent 74%)}
+.pijar--sisi > .pijar-lapis{background:
+  radial-gradient(75% 100% at 0% 50%, rgba(45,212,191,.18), transparent 68%)}
+/* Bingkai berkilau: conic-gradient yang berputar di tepi — efek refine */
+.kilau{position:relative;padding:1px;background:
+  linear-gradient(#1E1E22,#1E1E22) padding-box,
+  conic-gradient(from var(--sudut),transparent 78%,var(--aksen) 86%,var(--aksen-3) 90%,var(--aksen) 94%,transparent) border-box;
+  border:1px solid transparent;animation:putar 5s linear infinite}
+@keyframes putar{to{--sudut:360deg}}
+/* ═══ TIPE ════════════════════════════════════════════════════════════════ */
+.label{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--aksen)}
+.label--redup{color:var(--teks-3)}
+.h1{font-size:clamp(2.4rem,5vw,3.9rem);line-height:1.08}
+.h2{font-size:clamp(1.7rem,3vw,2.4rem)}
+.h3{font-size:1.35rem}
+.hs{font-family:var(--tubuh);font-weight:600;font-size:16px}
+.lead{font-size:16.5px;line-height:1.7;color:var(--teks-2);max-width:64ch}
+.mut{color:var(--teks-2)}
+.dim{color:var(--teks-3)}
+.ak{color:var(--aksen)}
+.glow{text-shadow:var(--glow-judul)}
+.kecil{font-size:13px}
+.mono{font-variant-numeric:tabular-nums}
+.s6{height:6px}
+.s10{height:10px}
+.s16{height:16px}
+.s24{height:24px}
+.s36{height:36px}
+.rowx{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+ul.rapi{margin:0;padding-left:17px;color:var(--teks-2);font-size:14px;line-height:1.7}
+ul.rapi li{margin-bottom:6px}
+ul.rapi strong,p strong{color:var(--teks);font-weight:600}
+.cek{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--teks-2);margin-bottom:11px}
+.cek i{flex:none;width:17px;height:17px;border-radius:99px;background:rgba(45,212,191,.15);
+  display:grid;place-items:center;margin-top:2px}
+.kotak-ikon{width:38px;height:38px;border:1px solid var(--garis-2);display:grid;place-items:center;
+  color:var(--aksen);background:var(--gelap)}
+.angka{font-family:var(--judul);font-size:34px;color:var(--sel-2);line-height:1}
+/* ═══ KONTROL — satu-satunya yang melengkung (6px) ════════════════════════ */
+/* line-height dan text-decoration WAJIB disebut: di mockup .btn selalu
+   <button>, yang memakai line-height:normal bawaan peramban dan tidak
+   bergaris bawah. Begitu ia jadi <a> — dan tombol yang menavigasi memang
+   harus <a> — ia mewarisi line-height 1.65 milik <body> dan tumbuh 5px,
+   lalu bergaris bawah. Tanpa dua baris ini tiap tombol-tautan di situs
+   meleset dari rancangan yang di-ACC. */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:1px solid var(--garis-2);background:transparent;color:var(--teks);border-radius:var(--r);
+  padding:11px 19px;font-family:var(--tubuh);font-size:13.5px;font-weight:500;cursor:pointer;
+  line-height:normal;text-decoration:none;
+  transition:background 180ms var(--e-halus),border-color 180ms var(--e-halus),
+    color 180ms var(--e-halus),box-shadow 180ms var(--e-halus),transform 110ms var(--e-halus)}
+.btn .ar{transition:transform 180ms var(--e-keluar)}
+.btn:hover{border-color:var(--isi);color:var(--aksen);background:rgba(45,212,191,.08)}
+.btn:hover .ar{transform:translateX(3px)}
+.btn:active{transform:scale(.978)}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 2px var(--kanvas),0 0 0 4px var(--cincin)}
+.btn--isi{background:var(--aksen);border-color:var(--aksen);color:#18181B;font-weight:600}
+.btn--isi:hover{background:#5EEAD4;border-color:#5EEAD4;color:#18181B}
+.btn--isi:active{background:#14B8A6;border-color:#14B8A6;color:#18181B}
+.btn--penuh{width:100%}
+.btn--bahaya{border-color:#7F1D1D;color:var(--merah)}
+.btn--bahaya:hover{background:rgba(248,113,113,.08);border-color:var(--merah);color:var(--merah)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.isian{width:100%;background:var(--gelap);border:1px solid var(--garis-2);border-radius:var(--r);
+  padding:10px 13px;color:var(--teks);font-family:var(--tubuh);font-size:14px;
+  transition:border-color 180ms var(--e-halus),box-shadow 180ms var(--e-halus)}
+.isian::placeholder{color:var(--teks-3)}
+.isian:hover{border-color:var(--teks-3)}
+.isian:focus{outline:none;border-color:var(--isi);box-shadow:0 0 0 4px #2b6e6280}
+.lencana{display:inline-block;border-radius:var(--r);background:var(--aksen);color:#18181B;font-size:10.5px;
+  font-weight:600;letter-spacing:.1em;padding:4px 9px;text-transform:uppercase}
+.pil{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--garis-2);
+  border-radius:var(--r);padding:6px 13px;font-size:12px;color:var(--teks-2);cursor:pointer;
+  appearance:none;background:transparent;font-family:var(--tubuh);
+  transition:all 180ms var(--e-halus)}
+.pil:hover{color:var(--teks);border-color:var(--teks-3)}
+.pil--on{background:rgba(45,212,191,.10);border-color:var(--isi);color:var(--aksen)}
+.tl{position:relative;text-decoration:none;color:var(--teks);padding-bottom:2px}
+.tl::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:100%;background:var(--aksen);
+  transform:scaleX(0);transform-origin:left;transition:transform 260ms var(--e-keluar)}
+.tl:hover{color:var(--aksen)}
+.tl:hover::after{transform:scaleX(1)}
+/* ═══ FOTO / PANEL ════════════════════════════════════════════════════════ */
+.foto{position:relative;overflow:hidden;display:grid;place-items:center;color:#4B4B52;font-size:11px;
+  letter-spacing:.14em;user-select:none;
+  background:repeating-linear-gradient(45deg,#212125 0 8px,#1B1B1F 8px 16px)}
+.foto span{transition:transform 620ms var(--e-keluar)}
+.panel{background:linear-gradient(180deg,#202024,#141417);border:1px solid var(--garis-2);
+  box-shadow:0 0 0 1px #09090B, 0 30px 80px -20px rgba(45,212,191,.18)}
+/* ═══ MARQUEE ═════════════════════════════════════════════════════════════ */
+.mq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+.mq__rel{display:flex;width:max-content;animation:geser 34s linear infinite}
+.mq:hover .mq__rel,.mq--jeda .mq__rel{animation-play-state:paused}
+.mq__i{display:grid;place-items:center;width:200px;height:74px;flex:none;
+  border-right:1px solid var(--garis);color:var(--teks-3);font-size:11px;letter-spacing:.14em;
+  transition:color 180ms,background 180ms}
+.mq__i:hover{color:var(--aksen);background:var(--sel)}
+@keyframes geser{to{transform:translateX(-50%)}}
+/* ═══ TAB SHOWCASE ════════════════════════════════════════════════════════ */
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--garis);
+  position:relative}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;padding:16px 26px;font-size:12.5px;color:var(--teks-3);white-space:nowrap;
+  cursor:pointer;background:none;border:0;border-right:1px solid var(--garis);font-family:var(--tubuh);
+  transition:color 180ms var(--e-halus),background 180ms var(--e-halus)}
+.tab:hover{color:var(--teks-2);background:var(--sel)}
+.tab[aria-selected="true"]{color:var(--teks);background:var(--sel)}
+.ind{position:absolute;bottom:-1px;height:2px;background:var(--aksen);z-index:2;
+  box-shadow:0 0 12px rgba(45,212,191,.7);transition:transform 380ms var(--e-keluar),width 380ms var(--e-keluar)}
+.foto__ket{position:absolute;left:0;right:0;bottom:0;padding:26px 16px 12px;
+  font-size:11.5px;line-height:1.5;color:#E4E4E7;letter-spacing:normal;text-align:left;
+  background:linear-gradient(to top,rgba(9,9,11,.88),rgba(9,9,11,.55) 55%,transparent);
+  opacity:0;transform:translateY(6px);transition:opacity 240ms var(--e-halus),
+  transform 240ms var(--e-halus);pointer-events:none}
+.foto__ket b{color:#fff;font-weight:600}
+.foto:hover .foto__ket,.foto:focus-within .foto__ket{opacity:1;transform:none}
+@media (hover:none){
+  .foto__ket{opacity:1;transform:none}
+}
+.strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;cursor:grab;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip.tarik{cursor:grabbing;scroll-snap-type:none}
+.strip .foto{flex:none;scroll-snap-align:start;height:340px;border-right:1px solid var(--garis)}
+.rel{height:2px;background:var(--garis)}
+.rel i{display:block;height:100%;background:var(--aksen);width:30%;box-shadow:0 0 10px rgba(45,212,191,.6)}
+/* ═══ KARTU PROYEK ════════════════════════════════════════════════════════ */
+.pk{position:relative;cursor:pointer;transition:background 180ms var(--e-halus)}
+.pk:hover{background:var(--sel)}
+.pk:hover .foto span{transform:scale(1.06)}
+.pk__nm{font-family:var(--judul);font-size:18px;position:relative;display:inline-block}
+.pk__nm::after{content:"";position:absolute;left:0;bottom:-3px;height:1px;width:100%;
+  background:var(--aksen);transform:scaleX(0);transform-origin:left;
+  transition:transform 320ms var(--e-keluar)}
+.pk:hover .pk__nm::after{transform:scaleX(1)}
+.pk__gr{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--aksen);
+  transform:scaleX(0);transform-origin:left;transition:transform 420ms var(--e-keluar)}
+.pk:hover .pk__gr{transform:scaleX(1)}
+/* ═══ ACCORDION ═══════════════════════════════════════════════════════════ */
+.ak-baris{border-bottom:1px solid var(--garis);padding:17px 32px;display:flex;align-items:center;
+  justify-content:space-between;gap:20px;cursor:pointer;transition:background 180ms var(--e-halus)}
+.ak-baris:hover{background:var(--sel)}
+.ak-baris:last-child{border-bottom:0}
+/* ═══ TABEL & SWATCH ══════════════════════════════════════════════════════ */
+.tab-data{width:100%;border-collapse:collapse;font-size:13px}
+.tab-data th{text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--teks-3);padding:0 16px 10px 0;border-bottom:1px solid var(--garis-2)}
+.tab-data td{padding:11px 16px 11px 0;border-bottom:1px solid var(--garis);color:var(--teks-2);vertical-align:top}
+.tab-data td:first-child{color:var(--teks);white-space:nowrap}
+.tab-data tr:last-child td{border-bottom:0}
+.swat{height:66px;border:1px solid var(--garis-2);display:flex;align-items:flex-end;padding:8px 10px;
+  font-size:10px;letter-spacing:.08em}
+/* ═══ BILAH KEMAJUAN ══════════════════════════════════════════════════════ */
+.bar-atas{position:fixed;top:0;left:0;height:2px;background:var(--aksen);z-index:99;width:0;
+  box-shadow:0 0 10px var(--aksen),0 0 5px var(--aksen);transition:width 200ms linear,opacity 300ms}
+.rv{opacity:0;transform:translateY(16px);
+  transition:opacity 340ms var(--e-keluar),transform 340ms var(--e-keluar)}
+.rv.tampil{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  .rv{opacity:1;transform:none}
+}
+.demo{height:220px;overflow-y:auto;border:1px solid var(--garis-2);position:relative;background:var(--gelap)}
+.demo__bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;padding:0 16px;
+  height:46px;background:rgba(9,9,11,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--garis);
+  font-size:12px;color:var(--teks-2);transition:transform 320ms var(--e-keluar)}
+.demo__bar.sembunyi{transform:translateY(-100%)}
+/* Crosshair sel ikut menyala saat selnya disentuh kursor */
+:root{--xh-bawah-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 9v9' stroke='%232DD4BF' stroke-width='3'/%3E%3C/svg%3E");
+  --xh-atas-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 0v9' stroke='%232DD4BF' stroke-width='3'/%3E%3C/svg%3E");}
+.sel:hover::before,.sel:hover + .sel::before{background-image:var(--xh-bawah-ak),var(--xh-atas-ak)}
+.sel::before{transition:opacity 200ms}
+/* ═══ URUTAN MASUK HALAMAN ════════════════════════════════════════════════ */
+/* padding+margin negatif: topeng animasi harus turun melewati garis dasar,
+   kalau tidak ekor huruf g/y/p ikut terpotong setelah animasinya selesai. */
+.brs{display:block;overflow:hidden;padding-bottom:.16em;margin-bottom:-.16em}
+.brs > i{display:block;font-style:normal;transform:translateY(112%);
+  animation:angkat 820ms var(--e-keluar) forwards}
+.brs:nth-of-type(2) > i{animation-delay:110ms}
+@keyframes angkat{to{transform:none}}
+.masuk{opacity:0;transform:translateY(14px);animation:naik 640ms var(--e-keluar) forwards}
+.masuk--3{animation-delay:280ms}
+.masuk--4{animation-delay:420ms}
+@keyframes naik{to{opacity:1;transform:none}}
+/* ═══ REL SEKSI LENGKET ═══════════════════════════════════════════════════ */
+.rel-seksi{position:fixed;left:22px;top:50%;transform:translateY(-50%);z-index:55;
+  display:flex;flex-direction:column;gap:11px}
+.rel-seksi a{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--teks-4);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;transition:color 220ms var(--e-halus)}
+.rel-seksi b{display:block;width:16px;height:1px;background:var(--sel-2);flex:none;
+  transition:width 320ms var(--e-keluar),background 220ms var(--e-halus)}
+.rel-seksi span{opacity:0;transform:translateX(-6px);
+  transition:opacity 220ms var(--e-halus),transform 220ms var(--e-keluar)}
+.rel-seksi a:hover span,.rel-seksi a.kini span{opacity:1;transform:none}
+.rel-seksi a:hover,.rel-seksi a.kini{color:var(--aksen)}
+.rel-seksi a.kini b{width:30px;background:var(--aksen);box-shadow:0 0 8px rgba(45,212,191,.7)}
+@media (max-width:1500px){
+  .rel-seksi{display:none}
+}
+/* ═══ KARTU PROYEK: SAPUAN + AKSI MENYEMBUL ══════════════════════════════ */
+.pk .foto{clip-path:inset(0 0 0 0);transition:clip-path 620ms var(--e-keluar)}
+.pk__aksi{position:absolute;left:0;right:0;bottom:0;background:var(--aksen);color:#18181B;
+  font-size:11.5px;font-weight:600;letter-spacing:.06em;padding:9px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  transform:translateY(101%);transition:transform 380ms var(--e-keluar)}
+.pk:hover .pk__aksi,.pk:focus-visible .pk__aksi{transform:none}
+.pk__bung{position:relative;overflow:hidden}
+/* ═══ SLIDER SEBELUM / SESUDAH ═══════════════════════════════════════════ */
+.ba{position:relative;height:360px;overflow:hidden;user-select:none}
+.ba__b{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;
+  letter-spacing:.14em;color:var(--teks-4)}
+.ba__sesudah{background:repeating-linear-gradient(45deg,#232327 0 8px,#1C1C20 8px 16px)}
+.ba__sebelum{background:repeating-linear-gradient(-45deg,#2A2A2F 0 8px,#202024 8px 16px);
+  clip-path:inset(0 calc(100% - var(--pos,50%)) 0 0)}
+.ba__garis{position:absolute;top:0;bottom:0;width:2px;background:var(--aksen);
+  left:var(--pos,50%);box-shadow:0 0 14px rgba(45,212,191,.8);pointer-events:none}
+.ba__pegang{position:absolute;top:50%;left:var(--pos,50%);width:38px;height:38px;
+  transform:translate(-50%,-50%);border:2px solid var(--aksen);background:#18181B;
+  display:grid;place-items:center;color:var(--aksen);font-size:13px;pointer-events:none}
+.ba input[type=range]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+.ba input[type=range]:focus-visible{outline:none}
+.ba:has(input:focus-visible){box-shadow:inset 0 0 0 2px var(--cincin)}
+.ba__tag{position:absolute;top:14px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  background:rgba(9,9,11,.7);padding:5px 10px;color:var(--teks-2)}
+/* ═══ FILMSTRIP ══════════════════════════════════════════════════════════ */
+.film{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(54px,1fr);
+  border-top:1px solid var(--garis);overflow-x:auto;scrollbar-width:none}
+.film::-webkit-scrollbar{display:none}
+.film button{width:100%;height:62px;border:0;border-right:1px solid var(--garis);
+  background:repeating-linear-gradient(45deg,#212125 0 6px,#1B1B1F 6px 12px);cursor:pointer;
+  color:var(--teks-3);font-size:9.5px;font-family:var(--tubuh);letter-spacing:.1em;
+  position:relative;transition:filter 200ms var(--e-halus)}
+.film button:last-child{border-right:0}
+.film button:hover{filter:brightness(1.5)}
+.film button[aria-current="true"]{box-shadow:inset 0 -2px 0 var(--aksen);color:var(--aksen);
+  filter:brightness(1.4)}
+/* ═══ KEADAAN ISIAN ══════════════════════════════════════════════════════ */
+.bidang{display:block}
+.bidang > label{display:block;font-size:11px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--teks-3);margin-bottom:8px}
+.bidang > p{margin-top:7px;font-size:12.5px;display:flex;gap:7px;align-items:flex-start}
+.bidang--salah .isian{border-color:var(--merah)}
+.bidang--salah .isian:focus{box-shadow:0 0 0 4px rgba(248,113,113,.18)}
+.bidang--salah > p{color:var(--merah)}
+.bidang--benar .isian{border-color:var(--isi)}
+.bidang--benar > p{color:var(--aksen)}
+.bidang > p.bantu{color:var(--teks-3)}
+.isian[disabled]{opacity:.45;cursor:not-allowed}
+.btn--memuat{pointer-events:none;color:transparent!important;position:relative}
+.btn--memuat::after{content:"";position:absolute;width:15px;height:15px;border-radius:99px;
+  border:2px solid rgba(24,24,27,.3);border-top-color:#18181B;animation:muter 700ms linear infinite}
+@keyframes muter{to{transform:rotate(360deg)}}
+.pesan{display:flex;gap:12px;padding:14px 16px;border:1px solid var(--garis-2);
+  align-items:flex-start;font-size:13px}
+.pesan--ok{border-color:var(--isi);background:rgba(45,212,191,.07);color:var(--teks-2)}
+.pesan--salah{border-color:#7F1D1D;background:rgba(248,113,113,.07);color:var(--teks-2)}
+.pesan b{color:var(--teks);display:block;margin-bottom:3px;font-weight:600}
+/* ═══ KEADAAN KOSONG ══════════════════════════════════════════════════════ */
+.kosong{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;
+  padding:44px 24px}
+.kosong .kotak-ikon{width:44px;height:44px;color:var(--teks-3)}
+.kosong p{max-width:34ch}
+/* ═══ RANGKA MEMUAT ══════════════════════════════════════════════════════ */
+.rangka{background:linear-gradient(90deg,#212125 25%,#2A2A2F 37%,#212125 63%);
+  background-size:400% 100%;animation:kilas 1.4s ease infinite}
+@keyframes kilas{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){
+  .rangka{animation:none}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  .rv{opacity:1;transform:none}
+}
+/* ═══ REL KATEGORI LENGKET (pola /use-cases refine) ══════════════════════ */
+.kat{position:sticky;top:0;align-self:start}
+.kat__b{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;background:none;border:0;border-bottom:1px solid var(--garis);cursor:pointer;
+  padding:22px 26px;font-family:var(--tubuh);font-size:13px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--teks-3);text-align:left;
+  transition:color 180ms var(--e-halus),background 180ms var(--e-halus)}
+.kat__b:hover{color:var(--teks-2);background:#1C1C20}
+.kat__b[aria-current="true"]{color:var(--aksen);background:var(--gelap)}
+/* Tanda di kedua ujung tiap garis pemisah — inilah bentuk ⊢ dan ⊣ */
+.kat__b::after{content:"";position:absolute;left:-9px;right:-9px;bottom:-9px;height:18px;z-index:3;
+  pointer-events:none;background-repeat:no-repeat;background-position:left center,right center;
+  background-image:var(--xh-kanan),var(--xh-kiri)}
+.panah-kotak{position:relative;width:38px;height:38px;flex:none;display:grid;place-items:center;
+  background:#0C2A27;color:var(--aksen);
+  opacity:0;transform:translateX(-7px);
+  transition:opacity 220ms var(--e-halus),transform 260ms var(--e-keluar),background 180ms var(--e-halus)}
+/* Siku di empat sudut, satu pseudo-elemen dengan empat latar */
+.panah-kotak::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background-repeat:no-repeat;
+  background-position:left top,right top,left bottom,right bottom;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Cpath d='M0.7 6.3V0.7h5.6' stroke='%232DD4BF' stroke-width='1.4' fill='none'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Cpath d='M0.7 0.7h5.6v5.6' stroke='%232DD4BF' stroke-width='1.4' fill='none'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Cpath d='M6.3 6.3H0.7V0.7' stroke='%232DD4BF' stroke-width='1.4' fill='none'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Cpath d='M0.7 6.3h5.6V0.7' stroke='%232DD4BF' stroke-width='1.4' fill='none'/%3E%3C/svg%3E")}
+.panah-kotak svg{position:relative;z-index:1}
+.kat__b[aria-current="true"] .panah-kotak,.kat__b:hover .panah-kotak,
+.baris-daftar:hover .panah-kotak,.baris-daftar:focus-visible .panah-kotak{opacity:1;transform:none}
+.kat__b:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--cincin)}
+.laci a:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--cincin);color:var(--aksen)}
+.panah-kotak--kecil{width:28px;height:28px;opacity:1;transform:none;background:transparent}
+.panah-kotak--kecil::before{display:none}
+.pk__aksi .panah-kotak--kecil{color:#18181B}
+.baris-daftar__isi{flex:1;min-width:0}
+/* ═══ NAVBAR ══════════════════════════════════════════════════════════════ */
+.nav{position:sticky;top:0;z-index:70;background:rgba(24,24,27,.82);
+  backdrop-filter:blur(14px) saturate(140%);border-bottom:1px solid var(--garis);
+  transition:transform 320ms var(--e-keluar)}
+.nav--sembunyi{transform:translateY(-101%)}
+.nav a{position:relative;text-decoration:none;color:var(--teks-3);font-size:13px;
+  padding:6px 0;transition:color 180ms var(--e-halus)}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--aksen);
+  transform:scaleX(0);transform-origin:left;transition:transform 260ms var(--e-keluar)}
+.nav a:hover,.nav a[aria-current="page"]{color:var(--teks)}
+.nav a:hover::after,.nav a[aria-current="page"]::after{transform:scaleX(1)}
+.status{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--teks-2);border:1px solid var(--garis-2);padding:5px 11px}
+.status i{width:6px;height:6px;background:var(--aksen);border-radius:99px;flex:none;
+  animation:denyut 2.2s ease-in-out infinite}
+@keyframes denyut{0%,100%{opacity:1}50%{opacity:.35}}
+.nav-tombol{display:none;width:44px;height:44px;border:1px solid var(--garis-2);background:none;
+  color:var(--teks);cursor:pointer;place-items:center}
+.laci{border:0;padding:0;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;
+  background:var(--kanvas);color:var(--teks)}
+.laci::backdrop{background:rgba(9,9,11,.75)}
+.laci a{display:flex;align-items:center;justify-content:space-between;padding:22px 24px;
+  border-bottom:1px solid var(--garis);color:var(--teks);text-decoration:none;
+  font-family:var(--judul);font-size:24px}
+.laci a:hover{background:var(--sel);color:var(--aksen)}
+
+/* ── Tombol yang berupa <a> di dalam pita nav dan laci ─────────────────────
+   `.nav a` dan `.laci a` berkekhususan (0,1,1); `.btn` cuma (0,1,0). Di 13
+   mockup yang di-ACC setiap `.btn` adalah <button>, jadi kedua aturan itu
+   tidak pernah bertemu. Begitu tombolnya jadi tautan sungguhan — dan tombol
+   yang MENAVIGASI memang harus <a>, supaya bisa dibuka di tab baru dan
+   dibacakan sebagai tautan — ia mewarisi ukuran, warna, padding, bahkan
+   font judul 24px milik aturan menu, lalu berhenti tampak seperti tombol.
+   Pengecualiannya wajib ditulis dengan kekhususan minimal setara. */
+.nav a.btn,.laci a.btn{font-family:var(--tubuh);font-size:13.5px;font-weight:500;
+  color:var(--teks);background:transparent}
+/* `display` sengaja TIDAK disebut untuk .nav a.btn: di ponsel tombol ini
+   disembunyikan oleh .nav-lipat{display:none} yang cuma (0,1,0), dan aturan
+   (0,2,1) di sini akan mengalahkannya — tombolnya muncul kembali di layar
+   sempit. Cukup .btn{display:inline-flex} bawaannya. Di laci lain soal:
+   .laci a memaksa display:flex + justify-content:space-between, jadi di
+   sana display memang harus dikembalikan. */
+.laci a.btn{display:inline-flex;align-items:center;justify-content:center}
+.nav a.btn::after,.laci a.btn::after{display:none}
+.nav a.btn{padding:9px 16px}
+.laci a.btn{padding:11px 19px}
+.nav a.btn:hover,.laci a.btn:hover{background:var(--sel);color:var(--teks)}
+.nav a.btn--isi,.laci a.btn--isi{background:var(--aksen);color:#18181B;font-weight:600}
+.nav a.btn--isi:hover,.laci a.btn--isi:hover{background:#5EEAD4;color:#18181B}
+.nav a.btn:focus-visible,.laci a.btn:focus-visible{color:var(--teks);
+  box-shadow:0 0 0 2px var(--cincin)}
+.nav a.btn--isi:focus-visible,.laci a.btn--isi:focus-visible{color:#18181B}
+@media (max-width:900px){
+  .nav-tombol{display:grid}
+}
+/* ═══ KUTIPAN ═════════════════════════════════════════════════════════════ */
+.kutip{font-family:var(--judul);font-size:19px;line-height:1.45}
+.kutip::before{content:"“";color:var(--aksen);margin-right:2px}
+.kutip::after{content:"”";color:var(--aksen)}
+.orang{display:flex;align-items:center;gap:12px}
+.orang span:first-child{width:36px;height:36px;flex:none;
+  background:repeating-linear-gradient(45deg,#232327 0 6px,#1B1B1F 6px 12px)}
+/* ═══ LOMPAT KE ISI ══════════════════════════════════════════════════════ */
+.lompat{position:absolute;left:-9999px;top:0;z-index:200;background:var(--aksen);color:#18181B;
+  padding:10px 16px;font-weight:600;font-size:13px}
+.lompat:focus{left:12px;top:12px}
+@media (max-width:900px){
+  .b4{grid-template-columns:repeat(2,1fr)}
+  .b3,.b2{grid-template-columns:1fr}
+  .isi{padding:36px 20px}
+  .isi--longgar{padding:56px 20px}
+  .sel{padding:24px 20px}
+  .isi--rapat{padding:16px 20px}
+  .nav-lipat{display:none}
+  .nav-utama{gap:14px}
+  /* Panel produk hero: kolom sidebar dilepas supaya tidak memaksa lebar */
+  .panel > div:last-child{grid-template-columns:1fr!important}
+  .panel > div:last-child > div:first-child{border-right:0;border-bottom:1px solid #2A2A2E}
+  /* Sasaran sentuh minimum 44px */
+  .btn{min-height:44px}
+  .pil{min-height:44px;padding-inline:16px}
+  .film button{width:76px;height:54px}
+  .ba{height:260px}
+  .brs > i{animation:none;transform:none}
+}
+@media (max-width:900px){
+  .nav-tombol{display:grid}
+  .b4{grid-template-columns:repeat(2,1fr)}
+  .b3,.b2{grid-template-columns:1fr}
+  .isi{padding:36px 20px}
+  .isi--longgar{padding:56px 20px}
+  .sel{padding:24px 20px}
+  .isi--rapat{padding:16px 20px}
+  .nav-lipat{display:none}
+  .nav-utama{gap:14px}
+  .panel > div:last-child{grid-template-columns:1fr!important}
+  .panel > div:last-child > div:first-child{border-right:0;border-bottom:1px solid #2A2A2E}
+  .btn{min-height:44px}
+  .pil{min-height:44px;padding-inline:16px}
+  .film button{width:76px;height:54px}
+  .ba{height:260px}
+  .brs > i{animation:none;transform:none}
+}
+.catat{display:flex;gap:12px;align-items:flex-start;padding:16px 18px;
+  border:1px dashed var(--garis-2);background:#141417}
+.catat svg{flex:none;margin-top:1px}
+.catat p{margin:0;font-size:12.5px;color:var(--teks-2);line-height:1.62}
+.catat b{color:var(--teks)}
+@media (max-width:420px){
+  .h1{font-size:2rem}
+  .h2{font-size:1.5rem}
+  .isi{padding:28px 16px}
+  .sel{padding:20px 16px}
+  .isi--rapat{padding:14px 16px}
+}
+.kat__b[aria-current="true"] .panah-kotak,.kat__b:hover .panah-kotak,.kat__b.kini .panah-kotak,
+.baris-daftar:hover .panah-kotak,.baris-daftar:focus-visible .panah-kotak{opacity:1;transform:none}
+.kat__b[aria-current="true"] .panah-kotak,.kat__b:hover .panah-kotak,.kat__b.kini .panah-kotak,
+.baris-daftar:hover .panah-kotak,.baris-daftar:focus-visible .panah-kotak,
+.baris-kerja:hover .panah-kotak,.baris-kerja:focus-visible .panah-kotak{opacity:1;transform:none}
+.langkah{counter-reset:langkah}
+.langkah .no::before{counter-increment:langkah;content:"0" counter(langkah)}
+.btn--memuat[disabled]{opacity:1}

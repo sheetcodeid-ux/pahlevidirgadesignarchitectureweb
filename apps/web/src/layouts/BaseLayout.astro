@@ -1,6 +1,9 @@
 ---
-import "../styles/global.css";
-import "../styles/components.css";
+// Situs publik memakai sistem visualnya sendiri (kisi cetak biru, sudut siku,
+// warna refine.dev) — BUKAN global.css/components.css milik panel admin.
+// AdminLayout tetap memuat rantai lamanya; keduanya tidak pernah bertemu di
+// satu halaman, jadi nama tokennya boleh sama-sama hidup.
+import "../styles/publik.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { gambarBagikan, getSettings } from "../lib/api";
@@ -16,7 +19,7 @@ interface Props {
 
 const {
   title,
-  description = "Studio arsitektur di Pontianak yang merancang ruang hospitality dan rumah tropis dengan pendekatan iklim khatulistiwa.",
+  description = "An architecture studio in Pontianak, Indonesia, working on hospitality interiors and tropical houses for the equatorial climate.",
   image,
   noindex = false,
   jsonLd = [],
@@ -80,7 +83,7 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
 ---
 
 <!doctype html>
-<html lang="id" data-theme="dark">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -95,7 +98,7 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
     {ogImage && <meta property="og:image" content={ogImage} />}
-    <meta property="og:locale" content="id_ID" />
+    <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -111,17 +114,6 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
       href="https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&family=Maven+Pro:wght@400..800&display=swap"
     />
 
-    <script is:inline>
-      (function () {
-        try {
-          var simpan = localStorage.getItem("tema");
-          var sistem = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-          document.documentElement.setAttribute("data-theme", simpan || sistem);
-        } catch (e) {
-          document.documentElement.setAttribute("data-theme", "dark");
-        }
-      })();
-    </script>
 
     {
       dataTerstruktur.map((data) => (
@@ -131,9 +123,8 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
   </head>
 
   <body>
-    <a href="#main" class="sr-only">Lewati ke konten</a>
     <Header />
-    <main id="main">
+    <main id="isi">
       <slot />
     </main>
     <Footer />
