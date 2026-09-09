@@ -111,9 +111,11 @@ async function request<T>(path: string): Promise<T> {
 }
 
 /**
- * Build tidak boleh gagal total hanya karena backend sedang tidak bisa
- * dihubungi — situs lama tetap tayang, dan halaman yang gagal di-generate
- * akan terisi pada deploy berikutnya.
+ * Kegagalan yang boleh ditelan: yang hilang cuma pemanis, dan halaman tetap
+ * berguna tanpanya. Setelan studio punya nilai cadangan yang masuk akal, dan
+ * seksi testimoni yang absen tidak merugikan siapa pun.
+ *
+ * BUKAN untuk daftar proyek — lihat wajib() di bawah.
  */
 async function safely<T>(path: string, fallback: T): Promise<T> {
   try {
@@ -121,6 +123,34 @@ async function safely<T>(path: string, fallback: T): Promise<T> {
   } catch (error) {
     console.warn(`[api] gagal mengambil ${path}:`, (error as Error).message);
     return fallback;
+  }
+}
+
+/**
+ * Kegagalan yang HARUS menghentikan build.
+ *
+ * Catatan lama di sini berbunyi "situs lama tetap tayang" — itu tidak benar.
+ * Workers Static Assets MENGGANTI seluruh aset saat deploy, jadi build yang
+ * berhasil dengan daftar proyek kosong akan menimpa situs yang bagus dengan
+ * situs tanpa satu pun proyek: portofolio kosong, dan setiap /proyek/<slug>
+ * yang pernah dibagikan berubah jadi 404. Tanpa satu pun langkah merah di
+ * tab Actions, karena buildnya sendiri "berhasil".
+ *
+ * Daftar KOSONG dari API yang menjawab dengan benar tetap sah — studio yang
+ * belum menerbitkan apa pun memang begitu. Yang dihentikan hanya kegagalan
+ * permintaannya.
+ */
+async function wajib<T>(path: string): Promise<T> {
+  try {
+    return await request<T>(path);
+  } catch (error) {
+    const sebab = (error as Error).message;
+    throw new Error(
+      `Build dihentikan: ${path} tidak bisa diambil (${sebab}).\n` +
+      `Halaman proyek dibekukan saat build, jadi melanjutkan berarti men-deploy ` +
+      `situs TANPA satu pun proyek dan menimpa yang sedang tayang. ` +
+      `Periksa Worker API lalu jalankan ulang deploy-nya.`,
+    );
   }
 }
 
@@ -134,7 +164,7 @@ export function listProjects(options: {
   if (options.featured) params.set("featured", "true");
   params.set("limit", String(options.limit ?? 48));
 
-  return safely<Project[]>(`/api/v1/projects?${params}`, []);
+  return wajib<Project[]>(`/api/v1/projects?${params}`);
 }
 
 export function getProject(slug: string): Promise<Project | null> {
