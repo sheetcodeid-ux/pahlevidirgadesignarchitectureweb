@@ -1,5 +1,7 @@
-import { VALID_CATEGORIES, VALID_PROJECT_STATUS, VALID_PIPELINE_STAGE } from "../types";
-import type { ProjectInput } from "../types";
+import {
+  VALID_CATEGORIES, VALID_PROJECT_STATUS, VALID_PIPELINE_STAGE, VALID_JOURNAL_CATEGORY,
+} from "../types";
+import type { ProjectInput, JournalPostInput } from "../types";
 
 /** Slug hanya huruf kecil, angka, dan tanda hubung — aman dipakai di URL. */
 export function isValidSlug(s: string): boolean {
@@ -73,4 +75,47 @@ export function checkInquiry(req: InquiryRequest): void {
   if (!isValidEmail(req.email)) {
     throw new ValidationError("format email tidak valid");
   }
+}
+
+/* Aturan isian dipusatkan di sini supaya create dan update tidak menyimpang.
+ * Database sudah memaksakan hal yang sama lewat CHECK — ini lapisan yang
+ * memberi PESAN yang bisa dibaca, bukan pengganti penjagaan di database. */
+export function checkJournalInput(
+  input: JournalPostInput,
+  wajibLengkap: boolean,
+): string | null {
+  const ada = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+
+  if (wajibLengkap || input.slug !== undefined) {
+    if (!ada(input.slug)) return "slug wajib diisi";
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(input.slug!)) {
+      return "slug hanya boleh huruf kecil, angka, dan tanda hubung";
+    }
+    if (input.slug!.length < 3 || input.slug!.length > 120) return "panjang slug 3–120 karakter";
+  }
+  if (wajibLengkap || input.title !== undefined) {
+    if (!ada(input.title)) return "judul wajib diisi";
+    if (input.title!.trim().length > 200) return "judul maksimal 200 karakter";
+  }
+  if (wajibLengkap || input.excerpt !== undefined) {
+    if (!ada(input.excerpt)) return "kalimat pembuka wajib diisi";
+    const n = input.excerpt!.trim().length;
+    if (n < 10 || n > 600) return "panjang kalimat pembuka 10–600 karakter";
+  }
+  if (input.category !== undefined && !VALID_JOURNAL_CATEGORY.has(input.category)) {
+    return "kategori tulisan tidak dikenal";
+  }
+  if (input.readMinutes !== undefined) {
+    if (!Number.isInteger(input.readMinutes) || input.readMinutes < 1 || input.readMinutes > 90) {
+      return "lama baca 1–90 menit";
+    }
+  }
+  /* Menerbitkan yang kosong ditolak di sini DAN oleh CHECK di database. Yang
+   * di sini ada supaya pesannya menyebut sebabnya, bukan "check violation". */
+  if (input.publishedAt) {
+    const isi = (input.body ?? "").trim();
+    if (isi.length < 200) return "tulisan yang diterbitkan harus punya isi minimal 200 karakter";
+    if (Number.isNaN(Date.parse(input.publishedAt))) return "tanggal terbit tidak sah";
+  }
+  return null;
 }

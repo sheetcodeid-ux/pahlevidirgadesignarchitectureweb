@@ -409,6 +409,40 @@ export interface ClientProgressView {
   brief: ClientBrief;
 }
 
+/* ── Jurnal ──────────────────────────────────────────────────────────────
+ *
+ * Isi tulisan disimpan sebagai MARKDOWN dan dirender saat build oleh situs,
+ * bukan di sini: API tidak pernah mengirim HTML yang perlu dibersihkan lagi
+ * di sisi penerima.
+ */
+export type JournalCategory = "site" | "money" | "permit" | "build";
+
+/** Dilihat staf: termasuk tulisan berencana yang belum punya isi. */
+export interface JournalPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body?: string | null;
+  category: JournalCategory;
+  readMinutes: number;
+  /** null = masih rencana. Tanggal di masa depan = terjadwal. */
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** undefined = jangan diubah. null pada publishedAt = kembalikan jadi rencana. */
+export interface JournalPostInput {
+  slug?: string;
+  title?: string;
+  excerpt?: string;
+  body?: string | null;
+  category?: JournalCategory;
+  readMinutes?: number;
+  publishedAt?: string | null;
+}
+
 export interface TeamMember {
   id: string;
   name: string;
@@ -602,6 +636,7 @@ export const VALID_TASK_STATUS = new Set([
 ]);
 
 export const VALID_INVOICE_STATUS = new Set(["draft", "terbit", "lunas"]);
+export const VALID_JOURNAL_CATEGORY = new Set(["site", "money", "permit", "build"]);
 
 export const VALID_COST_CATEGORY = new Set([
   "freelancer",

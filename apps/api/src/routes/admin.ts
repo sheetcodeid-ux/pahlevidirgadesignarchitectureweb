@@ -18,13 +18,14 @@ import * as directoryRepo from "../repository/directory";
 import * as briefRepo from "../repository/brief";
 import * as commentsRepo from "../repository/documentComments";
 import * as testimonialsRepo from "../repository/testimonials";
+import * as journalRepo from "../repository/journal";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload, sanitizeSlug } from "../lib/r2";
-import { checkProjectInput, ValidationError } from "../lib/validate";
+import { checkProjectInput, checkJournalInput, ValidationError } from "../lib/validate";
 import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
   InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput, PaymentInput,
-  ProjectBriefInput, TestimonialInput,
+  ProjectBriefInput, TestimonialInput, JournalPostInput,
 } from "../types";
 import {
   VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
@@ -796,6 +797,77 @@ admin.delete("/progress-updates/:id", async (c) => {
     return c.json({ data: { deleted: true } });
   } catch (err) {
     if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "catatan tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+// ── Jurnal ─────────────────────────────────────────────────────────────────
+//
+// Seluruhnya di belakang requireSupabaseAuth + requireStaff seperti endpoint
+// admin lainnya. Token Supabase yang sah cuma membuktikan "punya akun", bukan
+// "berhak menulis di jurnal studio".
+
+// GET /api/v1/admin/journal — termasuk draf dan rencana.
+admin.get("/journal", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.listAll(sql));
+  return c.json({ data });
+});
+
+admin.get("/journal/:id", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.getById(sql, c.req.param("id")));
+  if (!data) return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
+  return c.json({ data });
+});
+
+admin.post("/journal", async (c) => {
+  const input = await c.req.json<JournalPostInput>().catch(() => ({}) as JournalPostInput);
+  const salah = checkJournalInput(input, true);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => journalRepo.create(sql, input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    // slug unik dijaga database. Tanpa penanganan ini, judul yang kebetulan
+    // sama menghasilkan 500 alih-alih pesan yang bisa ditindaklanjuti.
+    if (/unique|duplicate/i.test((err as Error).message)) {
+      return c.json({ error: { status: 409, message: "slug itu sudah dipakai tulisan lain" } }, 409);
+    }
+    throw err;
+  }
+});
+
+admin.patch("/journal/:id", async (c) => {
+  const input = await c.req.json<JournalPostInput>().catch(() => ({}) as JournalPostInput);
+  const salah = checkJournalInput(input, false);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => journalRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
+    }
+    if (/unique|duplicate/i.test((err as Error).message)) {
+      return c.json({ error: { status: 409, message: "slug itu sudah dipakai tulisan lain" } }, 409);
+    }
+    if (/terbit_wajib_berisi/.test((err as Error).message)) {
+      return c.json({ error: { status: 422,
+        message: "tulisan yang diterbitkan harus punya isi minimal 200 karakter" } }, 422);
+    }
+    throw err;
+  }
+});
+
+admin.delete("/journal/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => journalRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
+    }
     throw err;
   }
 });
