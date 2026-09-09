@@ -175,8 +175,15 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .isian:focus{outline:none;border-color:var(--isi);box-shadow:0 0 0 4px #2b6e6280}
 .lencana{display:inline-block;border-radius:var(--r);background:var(--aksen);color:#18181B;font-size:10.5px;
   font-weight:600;letter-spacing:.1em;padding:4px 9px;text-transform:uppercase}
+/* line-height WAJIB disebut, alasan yang sama seperti .btn: di mockup .pil
+   dipakai 7 kali sebagai <button> (29px) dan 3 kali sebagai <span> (34px),
+   karena <span> mewarisi line-height 1,65 milik <body> dan <button> tidak.
+   Tinggi komponen tidak boleh bergantung pada tag yang kebetulan dipakai;
+   disamakan ke 29px, mengikuti pemakaian mayoritas dan semua pil yang memang
+   bisa diklik. */
 .pil{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--garis-2);
-  border-radius:var(--r);padding:6px 13px;font-size:12px;color:var(--teks-2);cursor:pointer;
+  border-radius:var(--r);padding:6px 13px;font-size:12px;line-height:normal;
+  color:var(--teks-2);cursor:pointer;
   appearance:none;background:transparent;font-family:var(--tubuh);
   transition:all 180ms var(--e-halus)}
 .pil:hover{color:var(--teks);border-color:var(--teks-3)}

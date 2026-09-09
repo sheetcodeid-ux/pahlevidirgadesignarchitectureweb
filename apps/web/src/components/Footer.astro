@@ -125,6 +125,12 @@ const luar = (href: string) => /^https?:\/\//.test(href);
     display: inline-block;
     color: var(--teks-2);
     text-decoration: none;
+    /* Alamat email studio 220px dan tidak punya satu pun titik patah alami:
+       di 390px ia mendorong dokumen jadi 432px. Di mockup isinya cuma
+       "hello@…" sehingga tidak pernah terjadi — ini baru muncul dengan data
+       sungguhan. */
+    overflow-wrap: anywhere;
+    max-width: 100%;
   }
   .kaki-tautan a:hover {
     color: var(--aksen);
