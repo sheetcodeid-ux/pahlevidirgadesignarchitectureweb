@@ -1,0 +1,813 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { listProjects, getSettings } from "../lib/api";
+import {
+  TAHUN_BERDIRI,
+  TAHUN_KOMERSIAL_PERTAMA,
+  TAHUN_BELUM,
+  TIM,
+  BANDING_SEBELUM,
+  BANDING_SESUDAH,
+} from "../lib/menunggu";
+
+const settings = await getSettings();
+const kota = settings.city?.trim() || "Pontianak";
+const proyek = await listProjects({ limit: 200 });
+
+// Angka studio. Tiga yang pertama adalah keputusan, bukan hitungan — nilainya
+// tetap. Yang keempat dihitung dari basis data; kalau nol, ia tampil sebagai
+// penanda seperti di rancangan, karena angka yang tidak bisa ditunjukkan
+// halamannya bukan angka yang layak dicetak.
+const angka = [
+  {
+    n: "2",
+    label: "People, total",
+    ket: "Not a headcount we are working to grow. Two is the number where nothing gets handed to someone you never met.",
+  },
+  {
+    n: "~7",
+    label: "Conversations a month",
+    ket: "We take a fraction of them. Saying no early is cheaper for you than finding out in month three.",
+  },
+  {
+    n: "24 h",
+    label: "Reply time",
+    ket: "Weekends included. It is the one promise a studio this size can actually keep, so we keep it.",
+  },
+  {
+    n: proyek.length ? String(proyek.length) : "—",
+    tunggu: proyek.length === 0,
+    label: "Projects delivered",
+    ket: proyek.length
+      ? "Every one of them has a page on this site. A number you cannot open is not a number worth printing."
+      : "Left blank on purpose until the real count is in the database. A number we cannot show you a page for is not a number worth printing.",
+  },
+];
+
+const prinsip = [
+  {
+    no: "01",
+    judul: "The site decides more than we do",
+    teks: "Orientation, wind, the neighbour’s wall, where the water goes in March. We start by measuring what is already there, because a plan that ignores it will be corrected by the building itself — expensively, later.",
+  },
+  {
+    no: "02",
+    judul: "One material rule per level",
+    teks: "A floor reads as one idea, or it reads as a catalogue. Deciding the rule early is what keeps a modest budget from looking modest.",
+  },
+  {
+    no: "03",
+    judul: "Money is a design constraint, not a taboo",
+    teks: "We put the number on the table in the first call. A design you cannot afford to finish is not a design — it is a drawing.",
+  },
+  {
+    no: "04",
+    judul: "Drawings are for builders, not for us",
+    teks: "If the contractor has to call us to understand a detail, the detail was not finished. We would rather spend the extra week on paper than on site.",
+  },
+];
+
+// Garis waktu. Dua tonggak pertama menunggu tahun dari pemilik; dua terakhir
+// diturunkan dari proyek yang benar-benar terbit, jadi tiap tahun di sini
+// bisa diperiksa terhadap halaman proyeknya sendiri.
+const proyekTerlama = [...proyek].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999))[0];
+const garisWaktu = [
+  {
+    tahun: TAHUN_BERDIRI ? String(TAHUN_BERDIRI) : TAHUN_BELUM,
+    tunggu: !TAHUN_BERDIRI,
+    judul: "The studio starts",
+    teks: "One desk, one drawing table, and the decision to stay small on purpose.",
+  },
+  {
+    tahun: TAHUN_KOMERSIAL_PERTAMA ? String(TAHUN_KOMERSIAL_PERTAMA) : TAHUN_BELUM,
+    tunggu: !TAHUN_KOMERSIAL_PERTAMA,
+    judul: "First commercial project",
+    teks: "The point where the work stopped being houses only and the drawings had to answer to a business as well as a family.",
+  },
+  ...(proyekTerlama
+    ? [
+        {
+          tahun: proyekTerlama.year ? String(proyekTerlama.year) : TAHUN_BELUM,
+          tunggu: !proyekTerlama.year,
+          judul: `${proyekTerlama.title}${proyekTerlama.location ? `, ${proyekTerlama.location}` : ""}`,
+          teks: "The first project documented photograph by photograph on this site rather than summarised in a paragraph.",
+        },
+      ]
+    : []),
+  {
+    tahun: "2026",
+    judul: "The client page goes live",
+    teks: "Phases, drawings and invoices in one place. Built because answering “where are we?” five times a week is a design problem, not an admin one.",
+  },
+];
+
+const tidak = [
+  ["Drawings only, no involvement.", "If the plan is to take the file and build it without us, another studio will serve you better and charge you less."],
+  ["A design in two weeks.", "Concept alone takes longer than that once the site has been measured properly. We would rather lose the job than promise the date."],
+  ["Copying a building you saw.", "We will read the reference with you and take the idea underneath it, but a copy on a different site stops working on day one."],
+  ["Free concepts to compare studios.", "The first conversation is free and always will be. Drawings are not, for anyone."],
+];
+
+const bandingSiap = Boolean(BANDING_SEBELUM && BANDING_SESUDAH);
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: "The Studio",
+    url: new URL("/studio", Astro.site).href,
+  },
+];
+---
+
+<BaseLayout
+  title="The Studio"
+  description={`A deliberately small architecture studio in ${kota}, Indonesia. Two people, and you will meet both.`}
+  jsonLd={jsonLd}
+>
+  <div class="pita">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi isi--longgar">
+        <span class="label masuk">STUDIO</span>
+        <div class="s24"></div>
+        <h1 class="h1 kepala__judul">
+          <span class="brs"><i>A small studio in {kota}</i></span>
+          <span class="brs"><i>that would rather <span class="ak">show you the work</span></i></span>
+          <span class="brs"><i>than describe it.</i></span>
+        </h1>
+        <div class="s24"></div>
+        <p class="lead masuk masuk--3">
+          We are deliberately small. That is not modesty — it is how the person who draws your
+          building stays the person who answers your messages. Everything below is what that
+          actually means in practice, including the parts that are inconvenient for us.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris b4">
+        {
+          angka.map((a) => (
+            <div class="sel fak">
+              <span class={a.tunggu ? "fak__n fak__n--tunggu" : "fak__n"}>{a.n}</span>
+              <div class="fak__l">{a.label}</div>
+              <p class="fak__k">{a.ket}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris baris-studio">
+        <div class="sel sel-teks">
+          <span class="label">HOW WE WORK</span>
+          <div class="s16"></div>
+          <h2 class="h2">You do not have to ask where the project is.</h2>
+          <div class="s16"></div>
+          <p class="mut">
+            Most of the anxiety in a building project is not about design. It is about not knowing.
+            Which stage are we in, what was decided last week, how much has been paid, what is the
+            next thing waiting on me.
+          </p>
+          <div class="s16"></div>
+          <p class="mut">
+            So every client gets a page. Phases, drawings, invoices, and the comments thread all
+            live there. It updates when we update it, not when you ask. It needs no password and no
+            app — the link we send you is the login.
+          </p>
+          <div class="s24"></div>
+          <a class="btn" href="/progres">See how the client page works <span class="ar">→</span></a>
+        </div>
+        <div class="sel sel-ba">
+          <div class="ba" id="ba">
+            {/* Dua sisi pembanding. Selama fotonya belum ada, keduanya tampil
+                sebagai slot berpola yang jelas berbeda, supaya penggesernya
+                tetap terbaca bekerja. */}
+            <div class={bandingSiap ? "ba__b" : "ba__b ba__b--built"}>
+              {BANDING_SESUDAH ? (
+                <img src={BANDING_SESUDAH} alt="The site after construction" />
+              ) : (
+                <span>
+                  PHOTO — BUILT
+                  <small>waiting for the studio’s photograph</small>
+                </span>
+              )}
+            </div>
+            <div class={bandingSiap ? "ba__b ba__sebelum" : "ba__b ba__sebelum ba__b--found"} id="baSebelum">
+              {BANDING_SEBELUM ? (
+                <img src={BANDING_SEBELUM} alt="The site as found" />
+              ) : (
+                <span>
+                  PHOTO — SITE AS FOUND
+                  <small>waiting for the studio’s photograph</small>
+                </span>
+              )}
+            </div>
+            <span class="ba__tag ba__tag--kiri">AS FOUND</span>
+            <span class="ba__tag ba__tag--kanan">BUILT</span>
+            <div class="ba__garis" id="baGaris"></div>
+            <button class="ba__pegang" id="baPegang" role="slider" aria-label="Compare before and after"
+              aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5 3.5 10 8 15M12 5l4.5 5-4.5 5" /></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi isi--rapat">
+        <span class="label">WHAT WE BELIEVE</span>
+        <div class="s16"></div>
+        <h2 class="h2">Four positions we do not negotiate.</h2>
+      </div>
+      <div class="baris b2">
+        {
+          [prinsip.slice(0, 2), prinsip.slice(2)].map((kolom) => (
+            <div class="sel">
+              {kolom.map((p) => (
+                <div class="prin">
+                  <span class="prin__n">{p.no}</span>
+                  <div>
+                    <h3>{p.judul}</h3>
+                    <p>{p.teks}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi isi--rapat">
+        <span class="label">OUR TEAM</span>
+        <div class="s16"></div>
+        <h2 class="h2">Two people, and you will meet both.</h2>
+        <div class="s16"></div>
+        <p class="mut tim__intro">
+          There is no account manager between you and the person drawing. The same two names appear
+          on the first call, on the drawings, and on the message you send at nine on a Sunday.
+        </p>
+      </div>
+      <div class="baris b2">
+        {
+          TIM.map((o) => (
+            <div class="sel tim tim--rapat">
+              <div class={o.foto ? "tim__foto" : "tim__foto tim__foto--kosong"}>
+                {o.foto ? (
+                  <img src={o.foto} alt={o.nama ?? o.peran} />
+                ) : (
+                  <span>
+                    PHOTO — {o.slot}
+                    <small>portrait 4:5</small>
+                  </span>
+                )}
+              </div>
+              <div class="tim__isi">
+                <div class={o.nama ? "tim__nm" : "tim__nm tunggu"}>{o.nama ?? "Name to follow"}</div>
+                <div class={o.nama ? "tim__pr" : "tim__pr tim__pr--tunggu"}>{o.peran}</div>
+                <p class="tim__ket">{o.ket}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+      <div class="baris">
+        <div class="sel tim-catatan">
+          <span class="kotak-ikon">
+            <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 4v12M4 10h12" /></svg>
+          </span>
+          <div>
+            <div class="tim__nm">Everyone else comes in by project</div>
+            <p class="tim__ket tim__ket--lebar">
+              Structural engineers, MEP, renderers and a photographer are hired per project and
+              named in that project’s credits — not listed here as if they sat in this room. You
+              will know who touched your drawings.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris baris-studio">
+        <div class="sel sel-teks">
+          <span class="label">HOW IT WENT</span>
+          <div class="s16"></div>
+          <h2 class="h2">The short version.</h2>
+          <div class="s16"></div>
+          <p class="mut">
+            Written as it happened, not as a growth story. Anything with a year on it should be
+            checkable against a project page on this site.
+          </p>
+        </div>
+        <div class="sel sel-teks">
+          {
+            garisWaktu.map((t) => (
+              <div class="thn">
+                <span class="thn__d"></span>
+                <span class="thn__g"></span>
+                <span class={t.tunggu ? "thn__t thn__t--tunggu" : "thn__t"}>{t.tahun}</span>
+                <div>
+                  <h3>{t.judul}</h3>
+                  <p>{t.teks}</p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita">
+    <div class="dalam">
+      <div class="baris baris-studio">
+        <div class="sel sel-teks">
+          <span class="label">HONESTLY</span>
+          <div class="s16"></div>
+          <h2 class="h2">Things we are not the right studio for.</h2>
+          <div class="s16"></div>
+          <p class="mut">
+            Reading this list costs you two minutes. Finding out the same thing in month three costs
+            considerably more.
+          </p>
+        </div>
+        <div class="sel sel-teks">
+          {
+            tidak.map(([judul, teks]) => (
+              <div class="tidak">
+                <i>
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+                </i>
+                <span>
+                  <b>{judul}</b> {teks}
+                </span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita pita--akhir">
+    <div class="dalam titik">
+      <div class="isi isi--longgar ajak">
+        <h2 class="h2">Still the right studio for you?</h2>
+        <div class="s16"></div>
+        <p class="mut ajak__lead">
+          Tell us the site and the budget. If we are not the right fit we will say so in the first
+          reply, and point you somewhere better.
+        </p>
+        <div class="s24"></div>
+        <div class="rowx ajak__tombol">
+          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
+          <a class="btn" href="/proyek">See the work <span class="ar">→</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* ── Dari blok CSS khusus halaman di mockup yang di-ACC ──────────────── */
+
+  /* Kartu orang mendatar: potret 4:5 selebar 190px di kiri, keterangan di
+     kanan. Versi bertumpuk sebelumnya membuat slot foto setinggi 460px untuk
+     studio dua orang — berat, dan separuh pitanya kosong. */
+  .tim {
+    position: relative;
+    display: flex;
+    gap: 0;
+  }
+  /* align-self:start — tanpa ini flex meregangkan foto setinggi kartunya dan
+     aspect-ratio kalah: dua potret jadi 165px dan 182px. Foto harus sama
+     besar, aturan yang sama seperti di halaman proyek. */
+  .tim__foto {
+    flex: none;
+    align-self: flex-start;
+    width: 190px;
+    aspect-ratio: 4/5;
+    background: var(--gelap);
+    border-right: 1px solid var(--garis);
+    display: grid;
+    place-items: center;
+    color: #4b4b52;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-align: center;
+    padding: 12px;
+    overflow: hidden;
+  }
+  .tim__foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .tim__foto--kosong {
+    background: repeating-linear-gradient(45deg, #1c1c20 0 6px, #161619 6px 12px);
+  }
+  .tim__foto small,
+  .ba__b small {
+    display: block;
+    margin-top: 6px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    opacity: 0.6;
+  }
+  .tim-catatan {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    padding: 26px 32px;
+  }
+  /* Teks pengganti di lapisan pembanding: satu saja, jangan dua yang terpotong
+     di tengah oleh garis pemisah. */
+  .ba__sebelum span {
+    display: none;
+  }
+  .tim--rapat {
+    padding: 0;
+  }
+  .tim__isi {
+    padding: 22px 24px;
+    align-self: center;
+  }
+  .tim__nm {
+    font-family: var(--judul);
+    font-size: 17px;
+    color: var(--teks);
+  }
+  .tim__pr {
+    font-size: 12px;
+    color: var(--aksen);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 5px;
+    font-weight: 600;
+  }
+  .tim__pr--tunggu {
+    color: var(--teks-3);
+  }
+  .tim__ket {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--teks-2);
+    line-height: 1.6;
+  }
+  .tim__ket--lebar {
+    max-width: 74ch;
+  }
+  .tim__intro {
+    max-width: 62ch;
+  }
+
+  /* Angka studio. Hanya yang bisa dibuktikan; sisanya bertanda tunggu. */
+  .fak {
+    padding: 26px 24px;
+  }
+  .fak__n {
+    font-family: var(--judul);
+    font-size: 34px;
+    color: var(--teks);
+    line-height: 1;
+  }
+  .fak__n--tunggu {
+    color: var(--teks-3);
+  }
+  .fak__l {
+    margin-top: 10px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teks-3);
+  }
+  .fak__k {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--teks-2);
+    line-height: 1.55;
+  }
+
+  /* Prinsip: nomor besar di kiri, isi di kanan, garis pemisah antar baris */
+  .prin {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 0 20px;
+    padding: 26px 0;
+    border-top: 1px solid var(--garis);
+  }
+  .prin:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .prin:last-child {
+    padding-bottom: 0;
+  }
+  .prin__n {
+    font-family: var(--judul);
+    font-size: 15px;
+    color: var(--teks-3);
+    padding-top: 3px;
+  }
+  .prin h3 {
+    margin: 0 0 8px;
+    font-family: var(--tubuh);
+    font-size: 16.5px;
+    /* line-height WAJIB disebut: di mockup ini <h4>, yang mewarisi 1,65
+       dari <body>. Sebagai <h3> — tingkat yang benar di bawah <h2> seksi ini
+       — ia kena aturan sistem h1,h2,h3 yang line-height-nya 1,14, dan
+       judulnya menyusut 8px dari rancangan yang di-ACC. */
+    line-height: 1.65;
+    font-weight: 600;
+    color: var(--teks);
+  }
+  .prin p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--teks-2);
+    line-height: 1.68;
+  }
+
+  /* Daftar "yang tidak kami kerjakan" — jujur menghemat waktu dua pihak */
+  .tidak {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 15px 0;
+    border-top: 1px solid var(--garis);
+  }
+  .tidak:first-child {
+    border-top: 0;
+  }
+  .tidak i {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    margin-top: 2px;
+    display: grid;
+    place-items: center;
+    color: var(--teks-3);
+  }
+  .tidak span {
+    font-size: 14px;
+    color: var(--teks-2);
+    line-height: 1.6;
+  }
+  .tidak b {
+    color: var(--teks);
+    font-weight: 600;
+  }
+
+  /* Garis waktu studio */
+  .thn {
+    display: grid;
+    grid-template-columns: 78px 18px 1fr;
+    gap: 0 14px;
+    position: relative;
+    padding: 0 0 26px;
+  }
+  .thn:last-child {
+    padding-bottom: 0;
+  }
+  /* Titik dan garis rel absolut, jadi BUKAN item grid — tanpa penempatan
+     eksplisit isinya jatuh ke kolom rel yang 18px dan halaman meledak. */
+  .thn__t {
+    grid-column: 1;
+    font-family: var(--judul);
+    font-size: 14px;
+    color: var(--aksen);
+    padding-top: 1px;
+  }
+  .thn__t--tunggu {
+    color: var(--teks-3);
+  }
+  .thn > div {
+    grid-column: 3;
+  }
+  /* Rel punya kolom sendiri (18px di tengah). Sebelumnya titiknya digambar di
+     left:26px — persis di atas tulisan tahunnya. */
+  .thn__g {
+    position: absolute;
+    left: calc(78px + 14px + 8px);
+    top: 16px;
+    bottom: -6px;
+    width: 1px;
+    background: var(--garis);
+  }
+  .thn:last-child .thn__g {
+    display: none;
+  }
+  .thn__d {
+    position: absolute;
+    left: calc(78px + 14px + 5px);
+    top: 5px;
+    width: 7px;
+    height: 7px;
+    background: var(--aksen);
+    border-radius: 99px;
+  }
+  .thn h3 {
+    margin: 0 0 6px;
+    font-family: var(--tubuh);
+    font-size: 15px;
+    /* line-height WAJIB disebut: di mockup ini <h4>, yang mewarisi 1,65
+       dari <body>. Sebagai <h3> — tingkat yang benar di bawah <h2> seksi ini
+       — ia kena aturan sistem h1,h2,h3 yang line-height-nya 1,14, dan
+       judulnya menyusut 8px dari rancangan yang di-ACC. */
+    line-height: 1.65;
+    font-weight: 600;
+    color: var(--teks);
+  }
+  .thn p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--teks-2);
+    line-height: 1.6;
+  }
+
+  .baris-studio {
+    grid-template-columns: 1fr 1fr;
+  }
+  .sel-ba {
+    padding: 0;
+    display: grid;
+  }
+  .sel-ba .ba {
+    height: 100%;
+    min-height: 380px;
+  }
+  .ba__b img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* Dua sisi pengganti dibuat jelas berbeda, supaya pembandingnya terbaca
+     bekerja sebelum fotonya ada. */
+  .ba__b--found {
+    background: repeating-linear-gradient(45deg, #232327 0 8px, #1c1c20 8px 16px) !important;
+  }
+  .ba__b--built {
+    background: radial-gradient(120% 90% at 50% 0%, #20514b, #0f2a27 62%, #0b1f1d) !important;
+  }
+  .ba__b span {
+    position: absolute;
+    top: 34%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 16px;
+  }
+  .ba__pegang:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--cincin);
+  }
+  .ba__tag--kiri {
+    left: 16px;
+  }
+  .ba__tag--kanan {
+    right: 16px;
+  }
+  .sel-teks {
+    padding: 44px 38px;
+  }
+  .kepala__judul {
+    font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+  }
+  .ajak {
+    text-align: center;
+  }
+  .ajak__lead {
+    max-width: 52ch;
+    margin-inline: auto;
+  }
+  .ajak__tombol {
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .tunggu {
+    color: var(--teks-3);
+  }
+
+  @media (max-width: 900px) {
+    .baris-studio {
+      grid-template-columns: 1fr;
+    }
+    /* Pegangan pembanding 38px di bawah ambang sasaran sentuh — dan justru
+       inilah kontrol yang paling sering disentuh di halaman ini. */
+    .ba__pegang {
+      width: 44px;
+      height: 44px;
+    }
+    .prin {
+      grid-template-columns: 46px 1fr;
+      gap: 0 14px;
+    }
+    .thn {
+      grid-template-columns: 58px 16px 1fr;
+      gap: 0 12px;
+    }
+    .thn__g {
+      left: calc(58px + 12px + 7px);
+    }
+    .thn__d {
+      left: calc(58px + 12px + 4px);
+    }
+  }
+  @media (max-width: 560px) {
+    /* 190px foto menyisakan 150px untuk teks di ponsel 390 — "PROJECT
+       COORDINATOR" pecah jadi tiga baris. Fotonya yang mengalah. */
+    .tim__foto {
+      width: 132px;
+    }
+    .tim__isi {
+      padding: 18px;
+    }
+    .tim-catatan {
+      padding: 22px 20px;
+      gap: 14px;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    "use strict";
+
+    /* Muncul saat digulir — SATU ARAH, tidak pernah disembunyikan lagi saat naik */
+    if (window.IntersectionObserver) {
+      const io = new IntersectionObserver(
+        (e) =>
+          e.forEach((x) => {
+            if (x.isIntersecting) {
+              x.target.classList.add("tampil");
+              io.unobserve(x.target);
+            }
+          }),
+        { rootMargin: "0px 0px -8% 0px" },
+      );
+      document.querySelectorAll(".rv").forEach((n) => io.observe(n));
+    }
+
+    /* ── Pembanding sebelum/sesudah ─────────────────────────────────────────
+       Dipakai keyboard juga: panah kiri/kanan menggeser 4%, Home/End ke ujung. */
+    const ba = document.getElementById("ba");
+    const pegang = document.getElementById("baPegang");
+    if (!ba || !pegang) return;
+    let pos = 50;
+    /* Satu variabel saja: clip-path, garis, dan pegangan semuanya membaca --pos
+       dari CSS sistem. Menyalinnya sebagai tiga gaya inline berarti tiga tempat
+       yang bisa lepas sendiri-sendiri. */
+    const pasang = (p: number) => {
+      pos = Math.max(0, Math.min(100, p));
+      ba.style.setProperty("--pos", pos + "%");
+      pegang.setAttribute("aria-valuenow", String(Math.round(pos)));
+    };
+    pasang(50);
+    const dariX = (x: number) => {
+      const r = ba.getBoundingClientRect();
+      return ((x - r.left) / r.width) * 100;
+    };
+    let seret = false;
+    ba.addEventListener("pointerdown", (e) => {
+      seret = true;
+      ba.setPointerCapture(e.pointerId);
+      pasang(dariX(e.clientX));
+    });
+    ba.addEventListener("pointermove", (e) => {
+      if (seret) pasang(dariX(e.clientX));
+    });
+    const lepas = () => {
+      seret = false;
+    };
+    ba.addEventListener("pointerup", lepas);
+    ba.addEventListener("pointercancel", lepas);
+    pegang.addEventListener("keydown", (e) => {
+      const k = e.key;
+      if (k === "ArrowLeft") pasang(pos - 4);
+      else if (k === "ArrowRight") pasang(pos + 4);
+      else if (k === "Home") pasang(0);
+      else if (k === "End") pasang(100);
+      else return;
+      e.preventDefault();
+    });
+  })();
+</script>

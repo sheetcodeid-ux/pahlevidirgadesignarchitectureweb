@@ -9,6 +9,7 @@ import {
   type ProjectImage,
 } from "../lib/api";
 import { SOROTAN_FAQ } from "../lib/faq";
+import { MITRA, MITRA_MASIH_PENANDA, TAHUN_BERDIRI } from "../lib/menunggu";
 
 const settings = await getSettings();
 const kota = settings.city?.trim() || "Indonesia";
@@ -39,12 +40,8 @@ const fotoProses = [semuaFoto[0], semuaFoto[Math.floor(semuaFoto.length / 2)], s
 // keterangannya bisa menyebut proyek asalnya.
 const heroFoto: FotoBerlabel | null = semuaFoto[0] ?? null;
 
-/* Marquee "materials & partners we specify".
-   Daftarnya belum ada — pemilik yang menentukan merek material apa yang
-   memang dipakai studio. Selama kosong, seluruh pita ini TIDAK dirender:
-   logo atau nama karangan di bagian ini adalah cara tercepat kehilangan
-   kepercayaan klien internasional. Isi array-nya dan pitanya muncul sendiri. */
-const MITRA: string[] = [];
+/* Marquee "materials & partners we specify" — isinya dari lib/menunggu.ts,
+   satu-satunya tempat data yang masih ditunggu pemilik disimpan. */
 
 const proses = [
   {
@@ -105,9 +102,10 @@ const fakta = (p: Project) =>
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar hero">
-        {/* "SINCE …" sengaja tidak ada: tahun berdirinya studio belum saya
-            terima, dan tahun karangan di eyebrow adalah klaim, bukan hiasan. */}
-        <span class="label masuk">ARCHITECTURE STUDIO · INDONESIA</span>
+        <span class="label masuk">
+          ARCHITECTURE STUDIO · INDONESIA · SINCE{" "}
+          {TAHUN_BERDIRI ?? <span class="tunggu">20XX</span>}
+        </span>
         <div class="s24"></div>
         <h1 class="h1">
           <span class="brs"><i>We design buildings you can</i></span>
@@ -176,8 +174,11 @@ const fakta = (p: Project) =>
             </button>
           </div>
           <div class="mq mq--garis">
+            {/* Daftar digandakan supaya gulirannya menyambung tanpa jeda. */}
             <div class="mq__rel" id="mqRel">
-              {[...MITRA, ...MITRA].map((m) => (<div class="mq__i">{m}</div>))}
+              {[...MITRA, ...MITRA].map((m) => (
+                <div class={MITRA_MASIH_PENANDA ? "mq__i tunggu" : "mq__i"}>{m}</div>
+              ))}
             </div>
           </div>
         </div>
@@ -270,8 +271,8 @@ const fakta = (p: Project) =>
       </div>
       <div class="portal-bung">
         <div class="kilau">
-          {/* Gambaran tampilan portal, bukan data proyek siapa pun — angkanya
-              contoh dan namanya sengaja generik. */}
+          {/* Gambaran tampilan portal — angkanya contoh, bukan data proyek
+              yang sedang berjalan. */}
           <div class="panel portal">
             <div class="portal__bar">
               <span class="portal__titik"></span><span class="portal__titik"></span><span class="portal__titik"></span>
@@ -592,6 +593,15 @@ const fakta = (p: Project) =>
   .ajak__judul {
     max-width: 22ch;
     margin-inline: auto;
+  }
+
+  /* Penanda "data ini masih ditunggu". Sengaja tidak mencolok: ia bagian dari
+     rancangan, bukan peringatan galat. Hilang sendiri begitu lib/menunggu.ts
+     diisi. */
+  /* --teks-3, bukan --teks-4: penanda "menunggu" tetap harus terbaca
+     (3,67:1 vs 5,46:1). Ia meredup, bukan menghilang. */
+  .tunggu {
+    color: var(--teks-3);
   }
 
   /* Gambaran portal klien */

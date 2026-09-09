@@ -6,6 +6,7 @@ import {
   CATEGORY_LABELS_EN,
   type Project,
 } from "../../lib/api";
+import { KREDIT_MENUNGGU, BELUM_ADA } from "../../lib/menunggu";
 
 export async function getStaticPaths() {
   const projects = await listProjects({ limit: 200 });
@@ -44,15 +45,27 @@ const bagian = [
   { id: "kredit", label: "Credits" },
 ].filter((x): x is { id: string; label: string } => x !== null);
 
-// Kredit: hanya baris yang datanya ada. Empat baris "Name to be credited" di
-// mockup adalah penanda bahwa datanya belum ada — di situs yang tayang itu
-// cuma membuat halaman tampak belum selesai.
-const kredit = [
+// Kredit. Peran yang belum punya nama TETAP ditampilkan dengan penanda,
+// sesuai rancangan — kredit fotografer khususnya wajib kalau fotonya bukan
+// milik studio. Nama-namanya diisi dari lib/menunggu.ts.
+interface BarisKredit {
+  dt: string;
+  dd: string;
+  tunggu?: boolean;
+}
+const kredit: BarisKredit[] = [
   { dt: "Architecture", dd: project.leadArchitect || studio },
-  project.year ? { dt: "Year", dd: String(project.year) } : null,
-  project.client ? { dt: "Client", dd: project.client } : null,
-  project.areaSqm ? { dt: "Area", dd: `${project.areaSqm.toLocaleString("en-US")} m²` } : null,
-].filter((x): x is { dt: string; dd: string } => x !== null);
+  ...(project.year ? [{ dt: "Year", dd: String(project.year) }] : []),
+  ...KREDIT_MENUNGGU.map((k) => ({ dt: k.peran, dd: k.nama ?? BELUM_ADA, tunggu: !k.nama })),
+  {
+    dt: "Client",
+    dd: project.client || "Withheld at the client’s request",
+    tunggu: !project.client,
+  },
+];
+// Kredit dibagi rata ke tiga kolom, seperti rancangannya.
+const kolomKredit: BarisKredit[][] = [[], [], []];
+kredit.forEach((k, i) => kolomKredit[i % 3].push(k));
 
 const lain = semua.filter((p) => p.slug !== project.slug).slice(0, 2);
 
@@ -251,13 +264,17 @@ const jsonLd = [
   <div class="pita" id="kredit">
     <div class="dalam">
       <div class="isi isi--rapat"><span class="label">CREDITS</span></div>
-      <div class={`baris b${Math.min(kredit.length, 3)}`}>
+      <div class="baris b3">
         {
-          kredit.map((k) => (
+          kolomKredit.map((kolom) => (
             <div class="sel">
               <dl class="kredit">
-                <dt>{k.dt}</dt>
-                <dd>{k.dd}</dd>
+                {kolom.map((k) => (
+                  <>
+                    <dt>{k.dt}</dt>
+                    <dd class={k.tunggu ? "dim" : undefined}>{k.dd}</dd>
+                  </>
+                ))}
               </dl>
             </div>
           ))
