@@ -1,0 +1,246 @@
+---
+/**
+ * Satu tulisan jurnal.
+ *
+ * Isinya markdown di database, dirender DI SINI saat build oleh
+ * @astrojs/markdown-remark. Perendernya sekalian membuat id tiap heading, dan
+ * daftar isi di kolom kiri diturunkan dari daftar heading itu — bukan diurai
+ * ulang sendiri, supaya id di daftar isi dan id di badan tulisan mustahil
+ * menyimpang.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { createMarkdownProcessor } from "@astrojs/markdown-remark";
+import { listJournal, getSettings, type Tulisan, type KategoriJurnal } from "../../lib/api";
+
+export async function getStaticPaths() {
+  const semua = await listJournal();
+  const sekarang = Date.now();
+  /* Hanya yang BENAR-BENAR sudah terbit yang dibuatkan halaman. Yang masih
+     rencana maupun yang tanggalnya di depan tidak punya alamat sama sekali —
+     kalau dibuatkan, isinya kosong dan langsung terindeks mesin pencari. */
+  const terbit = semua.filter(
+    (t) => t.publishedAt && Date.parse(t.publishedAt) <= sekarang && (t.body ?? "").trim(),
+  );
+  return terbit.map((t) => ({ params: { slug: t.slug }, props: { tulisan: t, semua: terbit } }));
+}
+
+interface Props { tulisan: Tulisan; semua: Tulisan[] }
+const { tulisan, semua } = Astro.props;
+
+const KAT: Record<KategoriJurnal, string> = {
+  site: "Site & climate",
+  money: "Money",
+  permit: "Permits",
+  build: "Building",
+};
+
+const settings = await getSettings();
+const studio = settings.studioName?.trim() || "Dirga Pahlevi Architecture";
+/* Jurnal ditulis pemiliknya sendiri; studio ini dua orang dan hanya satu yang
+   menulis. Kalau suatu saat ada penulis kedua, ia jadi kolom di tabelnya. */
+const PENULIS = "Pahlevi Dirga";
+
+const prosesor = await createMarkdownProcessor({});
+const { code: isiHtml, metadata } = await prosesor.render(tulisan.body ?? "");
+
+/* Cuma h2 yang jadi daftar isi. Memasukkan h3 membuat rel kiri jadi dua
+   tingkat dan kehilangan gunanya sebagai peta sekilas. */
+const daftarIsi = (metadata.headings ?? []).filter((h) => h.depth === 2);
+
+/* Jumlah kata dihitung dari markdown-nya, bukan diketik: satu angka yang bisa
+   salah lebih buruk daripada tidak ada angka. */
+const kata = (tulisan.body ?? "").trim().split(/\s+/).filter(Boolean).length;
+
+const tgl = (iso?: string | null) =>
+  iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
+
+const lain = semua.filter((t) => t.slug !== tulisan.slug).slice(0, 1)[0];
+
+const kanonik = new URL(`/jurnal/${tulisan.slug}`, Astro.site ?? "https://pahlevidirgaarchitecture.com").href;
+const ldjson = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: tulisan.title,
+  description: tulisan.excerpt,
+  datePublished: tulisan.publishedAt,
+  dateModified: tulisan.updatedAt,
+  wordCount: kata,
+  articleSection: KAT[tulisan.category] ?? tulisan.category,
+  author: { "@type": "Person", name: PENULIS },
+  publisher: { "@type": "Organization", name: studio },
+  mainEntityOfPage: { "@type": "WebPage", "@id": kanonik },
+};
+---
+
+<BaseLayout title={tulisan.title} description={tulisan.excerpt} jsonLd={[ldjson]}>
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi isi--longgar" style="padding-top:64px;padding-bottom:40px">
+        <a href="/jurnal" class="label" style="text-decoration:none">
+          ← JOURNAL · {(KAT[tulisan.category] ?? tulisan.category).toUpperCase()}
+        </a>
+        <div class="s24"></div>
+        <h1 class="h1" style="font-size:clamp(2rem,3.9vw,3rem);max-width:20ch">{tulisan.title}</h1>
+        <div class="s24"></div>
+        <p class="lead" style="max-width:66ch">{tulisan.excerpt}</p>
+        <div class="s36"></div>
+        <div class="kop-t">
+          <span class="penulis">
+            {/* Foto penulis belum ada — kotaknya tetap dipasang seperti di
+                rancangan, bertanda menunggu, bukan dihilangkan. */}
+            <span>FOTO</span>
+            <span><b>{PENULIS}</b><br />Principal architect</span>
+          </span>
+          <span><b>{tgl(tulisan.publishedAt)}</b><br />Updated when the rules change</span>
+          <span><b>{tulisan.readMinutes} min read</b><br />{kata} words</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita pita--akhir">
+    <div class="dalam">
+      <div class="baris baris-tls">
+        <div class="sel toc-j">
+          {
+            daftarIsi.length > 0 && (
+              <Fragment>
+                <div style="padding:26px 26px 16px">
+                  <span class="label label--redup">IN THIS ARTICLE</span>
+                </div>
+                <nav id="toc">
+                  {daftarIsi.map((h, i) => (
+                    <a href={`#${h.slug}`} class={`kat__b${i === 0 ? " kini" : ""}`}>
+                      {h.text}
+                      <span class="panah-kotak" aria-hidden="true">
+                        <svg width="19" height="19" viewBox="0 0 22 22" fill="none" stroke="currentColor"
+                          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2.6" y="2.6" width="16.8" height="16.8" rx="4.6" />
+                          <path d="M9.4 7.4 13 11l-3.6 3.6" />
+                        </svg>
+                      </span>
+                    </a>
+                  ))}
+                </nav>
+              </Fragment>
+            )
+          }
+          <div style="border-top:1px solid var(--garis);padding:24px 26px">
+            <p class="mut kecil">
+              Checking a plot properly takes an afternoon. Getting it wrong takes the whole project.
+            </p>
+            <div class="s16"></div>
+            <a class="btn btn--penuh" href="/kontak">Ask about your project <span class="ar">→</span></a>
+          </div>
+        </div>
+
+        <div class="sel sel-tls">
+          <article class="tls" set:html={isiHtml} />
+
+          <div class="s36"></div>
+          <div style="border-top:1px solid var(--garis);padding-top:26px;display:flex;
+            gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+            <p class="mut kecil" style="max-width:44ch">
+              {
+                lain
+                  ? `Next: ${lain.title}`
+                  : "Have a project in mind? Send the location and a few photos — we will tell you what we see."
+              }
+            </p>
+            <div class="rowx">
+              <a class="btn btn--isi" href="/kontak">Ask about your project <span class="ar">→</span></a>
+              <a class="btn" href="/jurnal">All journal <span class="ar">→</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* ══ Halaman tulisan ═══════════════════════════════════════════════════
+     Satu tugas: dibaca sampai habis. Ukuran badan teks dinaikkan ke 17px dan
+     lebar barisnya dikunci ~52ch — di bawah itu mata melompat baris, di
+     atasnya mata kehilangan baris berikutnya. */
+  .tls{font-size:17px;line-height:1.78;color:var(--teks-2)}
+  .tls > p,.tls > h2,.tls > h3,.tls > ul,.tls > ol{max-width:52ch}
+  .tls > p{margin:0 0 22px}
+  .tls > p:last-child{margin-bottom:0}
+  .tls strong{color:var(--teks);font-weight:600}
+  .tls h2{font-family:var(--judul);font-size:1.55rem;color:var(--teks);line-height:1.25;
+    margin:44px 0 16px;scroll-margin-top:90px}
+  .tls h2:first-child{margin-top:0}
+  .tls h3{font-family:var(--tubuh);font-size:17px;font-weight:600;color:var(--teks);
+    margin:30px 0 10px}
+  .tls ul,.tls ol{margin:0 0 22px;padding-left:22px}
+  .tls li{margin-bottom:10px}
+  .tls a{color:var(--aksen);text-decoration:none;border-bottom:1px solid rgba(45,212,191,.4)}
+  .tls a:hover{border-bottom-color:var(--aksen)}
+  .tls blockquote{margin:32px 0;padding:22px 26px;border-left:2px solid var(--aksen);
+    background:var(--gelap);font-family:var(--judul);font-size:19px;line-height:1.5;
+    color:var(--teks);max-width:min(760px,100%)}
+  .tls blockquote > p{margin:0}
+  .tls img{margin:32px 0;max-width:min(760px,100%);border:1px solid var(--garis)}
+  .tls code{font-family:var(--font-kode);font-size:.9em;background:var(--gelap);
+    border:1px solid var(--garis);padding:1px 5px}
+  .tls pre{max-width:min(760px,100%);overflow-x:auto;background:var(--gelap);
+    border:1px solid var(--garis);padding:16px 18px;margin:0 0 22px}
+  .tls pre code{border:0;padding:0;background:none}
+  .tls hr{border:0;border-top:1px solid var(--garis);margin:36px 0;max-width:52ch}
+
+  /* Kop tulisan */
+  .kop-t{display:flex;gap:22px;flex-wrap:wrap;align-items:center;font-size:13px;
+    color:var(--teks-3)}
+  .kop-t b{color:var(--teks-2);font-weight:600}
+  .penulis{display:flex;align-items:center;gap:10px}
+  .penulis span:first-child{width:30px;height:30px;flex:none;border:1px solid var(--garis-2);
+    background:var(--gelap);display:grid;place-items:center;font-size:9px;color:var(--teks-3);
+    letter-spacing:.06em}
+
+  /* Daftar isi memakai .kat__b — komponen rel yang sama dengan halaman proyek
+     dan halaman kerja, bukan versi buatan sendiri. Di sini cuma sifat
+     lengketnya yang ditambahkan.
+     TANPA overflow: tanda ⊢ ⊣ pada .kat__b sengaja menonjol 9px keluar
+     kotaknya; digabung overflow:auto ia terbaca sebagai isi yang meluber, dan
+     browser memasang scrollbar mendatar untuk 9px itu. */
+  .toc-j{padding:0;position:sticky;top:0;align-self:start}
+  .toc-j .kat__b{text-decoration:none;letter-spacing:normal;text-transform:none;
+    font-size:13.5px;font-weight:500;padding:18px 22px 18px 26px}
+  .toc-j .kat__b.kini{color:var(--aksen);background:var(--gelap)}
+
+  .baris-tls{grid-template-columns:280px 1fr}
+  .sel-tls{padding:40px 44px 52px}
+  @media (max-width:960px){
+    .baris-tls{grid-template-columns:1fr}
+    .baris-tls > .toc-j{position:static;border-bottom:1px solid var(--garis)}
+    .sel-tls{padding:28px 20px 36px}
+    .tls{font-size:16.5px}
+    .tls blockquote{padding:18px 20px;font-size:17.5px}
+  }
+</style>
+
+<script>
+  /* Penanda daftar isi. Dihitung langsung dari posisi gulir, BUKAN
+     IntersectionObserver: IO hanya berbunyi saat perpotongan berubah, dan pada
+     lompatan gulir besar ia sudah sekali salah di halaman lain proyek ini. */
+  (() => {
+    const toc = document.getElementById("toc");
+    if (!toc) return;
+    const tautan = [...toc.querySelectorAll<HTMLAnchorElement>(".kat__b")];
+    const judul = tautan
+      .map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))))
+      .filter((e): e is HTMLElement => Boolean(e));
+    if (judul.length !== tautan.length) return;
+
+    const perbarui = () => {
+      const garis = 120;
+      let kini = 0;
+      judul.forEach((h, i) => { if (h.getBoundingClientRect().top <= garis) kini = i; });
+      tautan.forEach((a, i) => a.classList.toggle("kini", i === kini));
+    };
+    addEventListener("scroll", perbarui, { passive: true });
+    addEventListener("resize", perbarui, { passive: true });
+    perbarui();
+  })();
+</script>
