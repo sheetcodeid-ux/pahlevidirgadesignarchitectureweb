@@ -102,10 +102,12 @@ const fakta = (p: Project) =>
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar hero">
-        <span class="label masuk">
-          ARCHITECTURE STUDIO · INDONESIA · SINCE{" "}
-          {TAHUN_BERDIRI ?? <span class="tunggu">20XX</span>}
-        </span>
+        {/* Spasi sebelum tahun datang dari baris baru JSX; menambah {" "}
+            membuatnya jadi dua spasi, dan letter-spacing .18em melebarkan
+            spasi kedua itu jadi celah yang terlihat. */}
+        <span class="label masuk"
+          >ARCHITECTURE STUDIO · INDONESIA · SINCE {TAHUN_BERDIRI ?? <span class="tunggu">20XX</span>}</span
+        >
         <div class="s24"></div>
         <h1 class="h1">
           <span class="brs"><i>We design buildings you can</i></span>
@@ -168,7 +170,10 @@ const fakta = (p: Project) =>
       <div class="pita">
         <div class="dalam">
           <div class="isi isi--rapat mq-kop">
-            <span class="label label--redup">MATERIALS &amp; PARTNERS WE SPECIFY</span>
+            {/* Judulnya "clients", bukan "materials & partners", karena yang dikirim
+                pemilik adalah nama klien. Judul lama di atas daftar klien adalah
+                pernyataan yang tidak benar, bukan sekadar salah kata. */}
+            <span class="label label--redup">SELECTED CLIENTS</span>
             <button class="pil" id="mqJeda" type="button" aria-pressed="false">
               <span aria-hidden="true">❙❙</span> Pause
             </button>

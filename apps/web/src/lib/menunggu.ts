@@ -16,39 +16,40 @@
 /* ── Identitas studio ────────────────────────────────────────────────────── */
 
 /** Tahun studio berdiri. Dipakai di eyebrow beranda ("SINCE …") dan di
- *  tonggak pertama garis waktu /studio. */
-export const TAHUN_BERDIRI: number | null = null;
+ *  tonggak pertama garis waktu /studio. Diberikan pemilik. */
+export const TAHUN_BERDIRI: number | null = 2025;
 
-/** Tahun proyek komersial pertama. Tonggak kedua garis waktu /studio. */
-export const TAHUN_KOMERSIAL_PERTAMA: number | null = null;
+/** Tahun proyek komersial pertama. Tonggak kedua garis waktu /studio.
+ *  Diberikan pemilik — tahun yang sama dengan berdirinya studio. */
+export const TAHUN_KOMERSIAL_PERTAMA: number | null = 2025;
 
 /* ── Marquee "materials & partners we specify" di beranda ────────────────── */
 
 /**
- * Sepuluh nama merek material atau mitra yang studio BENAR-BENAR pakai.
+ * Nama-nama yang berjalan di pita marquee beranda.
  *
- * Saran saya tetap: isi dengan merek material, bukan logo klien. Logo klien
- * yang tidak bisa dibuktikan adalah cara tercepat kehilangan kepercayaan
- * klien internasional.
+ * PENTING — pemilik mengirim NAMA KLIEN (kedai kopi), bukan merek material.
+ * Judul pita karena itu diubah jadi "SELECTED CLIENTS"; membiarkannya
+ * berbunyi "materials & partners we specify" berarti mencetak pernyataan
+ * yang tidak benar. Kalau kata "clients" kurang tepat — misalnya sebagian
+ * belum jadi klien — sebutkan, judulnya satu baris di index.astro.
  *
- * Selama masih berisi penanda di bawah, pitanya tetap tampil (sesuai
- * rancangan) tetapi tiap slotnya ditandai belum terisi.
+ * Delapan-delapannya sudah masuk. Urut abjad, bukan urut kirim — supaya
+ * tidak terbaca sebagai peringkat.
  */
 export const MITRA: string[] = [
-  "BRAND 01",
-  "BRAND 02",
-  "BRAND 03",
-  "BRAND 04",
-  "BRAND 05",
-  "BRAND 06",
-  "BRAND 07",
-  "BRAND 08",
-  "BRAND 09",
-  "BRAND 10",
+  "Cano Coffee",
+  "Cattu Coffee",
+  "Elsana Coffee",
+  "Kopi Nomor Dua",
+  "Tropic Coffee",
+  "Twenty Vee",
+  "Two People",
+  "Weng Coffee",
 ];
 
 /** True selama daftar di atas masih berisi penanda, bukan nama sungguhan. */
-export const MITRA_MASIH_PENANDA = MITRA.every((m) => /^BRAND \d\d$/.test(m));
+export const MITRA_MASIH_PENANDA = MITRA.length > 0 && MITRA.every((m) => /^BRAND \d\d$/.test(m));
 
 /* ── Tim di /studio ──────────────────────────────────────────────────────── */
 
