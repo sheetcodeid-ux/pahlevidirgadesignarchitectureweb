@@ -4,8 +4,7 @@ import {
   listProjects,
   getSettings,
   CATEGORY_LABELS_EN,
-  type Project,
-} from "../../lib/api";
+  type Project, subjudulBerguna } from "../../lib/api";
 import { KREDIT_MENUNGGU, BELUM_ADA } from "../../lib/menunggu";
 
 export async function getStaticPaths() {
@@ -124,10 +123,13 @@ const jsonLd = [
         <div class="s24"></div>
         <h1 class="h1 judul-blok__h1">{project.title}</h1>
         {
-          project.subtitle && (
+          /* subjudulBerguna, bukan project.subtitle langsung: subjudul yang
+             isinya sama persis dengan judul akan menumpuk judul yang sama dua
+             baris di sini. Aturannya sama dengan beranda, dari satu fungsi. */
+          subjudulBerguna(project) && (
             <>
               <div class="s16"></div>
-              <p class="tagline">{project.subtitle}</p>
+              <p class="tagline">{subjudulBerguna(project)}</p>
             </>
           )
         }

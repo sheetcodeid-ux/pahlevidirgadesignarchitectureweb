@@ -278,6 +278,33 @@ export interface StudioSettings {
   faqKunjungan?: string | null;
 }
 
+/**
+ * Subjudul proyek yang benar-benar MENAMBAH keterangan.
+ *
+ * Kolom Subjudul di panel gampang terisi sama persis dengan Judul — pemilik
+ * sudah melakukannya sekali, dan akibatnya beranda menulis
+ * "Rumah Kaca — Rumah Kaca" sementara halaman proyek menumpuk judul yang sama
+ * dua baris. Situs tidak seharusnya mengulang dirinya sendiri cuma karena satu
+ * kolom kebetulan diisi sama.
+ *
+ * Satu fungsi dipakai kedua halaman, bukan pemeriksaan yang disalin dua kali:
+ * kedua halaman menampilkan hal yang sama dengan bentuk berbeda, jadi kalau
+ * aturannya berbeda salah satunya akan mengulang lagi suatu hari.
+ *
+ * Dibandingkan setelah dinormalkan. Beda huruf besar-kecil, spasi ganda, dan
+ * tanda baca di ujung tetap dihitung SAMA — bagi yang membacanya memang sama,
+ * dan "Rumah Kaca" lawan "Rumah kaca." bukan subjudul yang menjelaskan apa pun.
+ */
+export function subjudulBerguna(
+  p: { title: string; subtitle?: string | null },
+): string | null {
+  const sub = p.subtitle?.trim();
+  if (!sub) return null;
+  const rapikan = (t: string) =>
+    t.toLowerCase().replace(/\s+/g, " ").replace(/[.,;:!?\u2014\u2013-]+$/, "").trim();
+  return rapikan(sub) === rapikan(p.title) ? null : sub;
+}
+
 /** Satu orang di seksi tim halaman /studio. */
 export interface OrangStudio {
   id: string;

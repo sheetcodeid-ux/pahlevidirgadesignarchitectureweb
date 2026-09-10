@@ -96,6 +96,18 @@ textarea.input { border-radius: var(--radius-md); line-height: 1.6; }
    --bg-sunken (lapis paling gelap), sehingga kotak isiannya justru harus
    lebih terang dari kartunya supaya terbaca sebagai tempat mengetik.
    Border 2px --border-strong menyamai tebal border panelnya. */
+/* Keterangan yang memberi tahu bahwa isian ini TIDAK akan dipakai. Amber,
+   bukan merah: tidak ada yang rusak dan tidak ada yang perlu diperbaiki
+   sekarang — cuma sesuatu yang tidak akan tampil, dan pemilik berhak tahu itu
+   di tempat dia mengetiknya, bukan setelah membuka situsnya. */
+.field__help--peringatan {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--warn);
+}
+.field__help--peringatan svg { flex: none; margin-top: 0.1rem; }
+
 .input--panel { background: var(--surface-raised); border-width: 2px; border-color: var(--border-strong); }
 .input--panel:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
 .input--mono { font-family: var(--font-mono); letter-spacing: 0.02em; }

@@ -87,7 +87,7 @@ function FormTulisan({
         <label className="field__label" htmlFor="j-slug">Alamat</label>
         <input id="j-slug" className="input" value={slugKini}
           onChange={(e) => { setSlugManual(true); setSlug(slugDariJudul(e.target.value)); }} />
-        <p className="field__hint">
+        <p className="field__help">
           pahlevidirgaarchitecture.com/jurnal/<b>{slugKini || "…"}</b>
           {awal?.publishedAt && " · tulisan ini sudah terbit, mengubah alamatnya mematikan tautan yang sudah dibagikan"}
         </p>
@@ -97,34 +97,44 @@ function FormTulisan({
         <label className="field__label" htmlFor="j-pembuka">
           Kalimat pembuka<span className="field__req" aria-hidden="true">*</span>
         </label>
-        <textarea id="j-pembuka" className="input" rows={3} value={pembuka}
+        <textarea id="j-pembuka" className="input input--area" rows={3} value={pembuka}
           onChange={(e) => setPembuka(e.target.value)}
           placeholder="Satu atau dua kalimat yang menjelaskan isinya." />
-        <p className="field__hint">Tampil di daftar jurnal DAN di kepala tulisan — cukup ditulis sekali.</p>
+        <p className="field__help">Tampil di daftar jurnal DAN di kepala tulisan — cukup ditulis sekali.</p>
       </div>
 
-      <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-end" }}>
+      {/* alignItems flex-start, BUKAN flex-end. Dengan flex-end kedua isian
+          diratakan BAWAHNYA — dan karena Lama baca punya keterangan di bawah
+          sementara Kategori tidak, isian Lama baca terdorong ke atas dan kedua
+          labelnya berhenti di ketinggian berbeda. Terlihat jelas di tangkapan
+          layar pemilik.
+
+          Satuan "menit" pindah ke DALAM isiannya sebagai akhiran, memakai
+          .input-affix yang memang sudah ada untuk ini — jadi tidak ada lagi
+          keterangan di bawah yang bisa menggeser apa pun. */}
+      <div className="row" style={{ gap: "var(--space-3)", alignItems: "flex-start" }}>
         <div className="field" style={{ flex: 1, minWidth: 0 }}>
           <label className="field__label" htmlFor="j-kategori">Kategori</label>
           <Select id="j-kategori" ariaLabel="Kategori tulisan" value={kategori}
             onValueChange={(v) => setKategori(v as KategoriJurnal)}
             options={Object.entries(KATEGORI).map(([value, label]) => ({ value, label }))} />
         </div>
-        <div className="field" style={{ width: "9rem" }}>
+        <div className="field" style={{ width: "10rem" }}>
           <label className="field__label" htmlFor="j-menit">Lama baca</label>
-          <input id="j-menit" className="input" type="number" min={1} max={90} value={menit}
-            onChange={(e) => setMenit(e.target.value)} />
-          <p className="field__hint">menit</p>
+          <span className="input-affix">
+            <input id="j-menit" className="input" type="number" min={1} max={90} value={menit}
+              onChange={(e) => setMenit(e.target.value)} />
+            <span className="input-affix__unit" aria-hidden="true">menit</span>
+          </span>
         </div>
       </div>
 
       <div className="field">
         <label className="field__label" htmlFor="j-isi">Isi tulisan</label>
-        <textarea id="j-isi" className="input" rows={16} value={isi}
+        <textarea id="j-isi" className="input input--area jurnal__isi" rows={16} value={isi}
           onChange={(e) => setIsi(e.target.value)}
-          style={{ fontFamily: "var(--font-kode)", fontSize: "13px", lineHeight: 1.7 }}
           placeholder={"## Judul bagian\n\nSatu paragraf.\n\n- poin pertama\n- poin kedua"} />
-        <p className="field__hint">
+        <p className="field__help">
           Ditulis dengan Markdown. <b>## di awal baris</b> membuat judul bagian —
           judul-judul itulah yang jadi daftar isi di halaman tulisannya.
           <b> **tebal**</b>, <b>- </b> untuk poin.

@@ -6,6 +6,7 @@ import { Carousel } from "../ui/data/Carousel";
 import { DatePicker } from "../ui/data/DatePicker";
 import { Tabs } from "../ui/misc/Nav";
 import { PerekamSuara, PemutarSuara, formatDurasi } from "../ui/misc/VoiceNote";
+import { subjudulBerguna } from "../../lib/api";
 import {
   SkeletonDaftar, SkeletonKartu, SkeletonIsian, SkeletonKotak, SkeletonTeks, Balok,
 } from "../ui/Skeleton";
@@ -1700,6 +1701,26 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
         <label className="field__label" htmlFor="ed-sub">Subjudul</label>
         <input id="ed-sub" className="input" value={String(nilai("subtitle") ?? "")}
           onChange={(e) => set("subtitle", e.target.value)} />
+        {/* Peringatan, bukan larangan. Situs sengaja MELEWATKAN subjudul yang
+            isinya sama dengan judul — kalau tidak, beranda menulis
+            "Rumah Kaca — Rumah Kaca" dan halaman proyek menumpuk judul yang
+            sama dua baris. Tapi melewatkannya diam-diam berarti pemilik
+            mengisi sesuatu lalu tidak menemukannya di situs dan menyangka ada
+            yang rusak. Jadi dikatakan di sini, di tempat dia mengetiknya. */}
+        {!subjudulBerguna({
+          title: String(nilai("title") ?? ""),
+          subtitle: String(nilai("subtitle") ?? ""),
+        }) && String(nilai("subtitle") ?? "").trim() !== "" ? (
+          <p className="field__help field__help--peringatan">
+            <Icon name="alert" size={14} />
+            Sama dengan judul, jadi tidak akan ditampilkan. Subjudul gunanya
+            untuk kalimat pelengkap — misalnya “A house that keeps its garden”.
+          </p>
+        ) : (
+          <p className="field__help">
+            Satu baris penjelas di bawah judul. Boleh dikosongkan.
+          </p>
+        )}
       </div>
       <div className="field">
         <label className="field__label" htmlFor="ed-ring">Ringkasan</label>
