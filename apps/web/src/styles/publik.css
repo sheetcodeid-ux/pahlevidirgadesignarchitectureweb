@@ -46,6 +46,11 @@
   /* Kisi titik di margin luar. 8px cukup rapat untuk terbaca sebagai tekstur,
      cukup renggang untuk tidak jadi bidang abu. */
   --dot:8px;
+  /* Panjang garis dan jeda pada rel tegak. Diukur dari zoom acuan pemilik:
+     garisnya kira-kira dua kali jedanya. `border-style:dashed` TIDAK bisa
+     dipakai untuk ini — polanya ditentukan peramban (Chrome: 3px-3px pada
+     bingkai 1px) dan tidak bisa disetel dari CSS. */
+  --rel-garis:8px; --rel-jeda:4px;
   --e-keluar:cubic-bezier(.22,1,.36,1); --e-halus:cubic-bezier(.4,0,.2,1);
   color-scheme:dark;}
 *{box-sizing:border-box}
@@ -85,15 +90,33 @@ h1,h2,h3{hanging-punctuation:first last}
    Warna dituliskan di dalam data URI karena data URI tidak bisa membaca
    custom property. Nilainya cerminan --garis-2 dan --aksen; kalau salah
    satunya diubah, dua baris di bawah ini ikut. */
-:root{--kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
+:root{--rel-img:repeating-linear-gradient(to bottom,var(--garis) 0 var(--rel-garis),
+    transparent var(--rel-garis) calc(var(--rel-garis) + var(--rel-jeda)));
+  --kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
   --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
 .pita{border-top:1px solid var(--garis);position:relative}
 .pita--akhir{border-bottom:1px solid var(--garis)}
 /* Rel tegak kiri-kanan PUTUS-PUTUS; garis mendatar antar-pita tetap utuh.
    Bedanya disengaja: yang mendatar memisahkan isi, yang tegak cuma menandai
-   di mana kolomnya berhenti. */
-.dalam{max-width:var(--lebar);margin-inline:auto;border-inline:1px dashed var(--garis);
-  position:relative}
+   di mana kolomnya berhenti.
+
+   Digambar sebagai LATAR, bukan `border-style:dashed`. Panjang garis dan
+   jeda pada border dashed ditentukan peramban dan tidak bisa disetel — di
+   Chrome polanya 3px-3px pada bingkai 1px, jauh lebih rapat daripada acuan
+   pemilik. Bingkainya tetap ada tapi TRANSPARAN, supaya lebar dan titik nol
+   kotak-padding tidak berubah: seluruh geseran penanda sudut dihitung
+   terhadapnya.
+
+   background-origin/clip: border-box wajib — bawaannya padding-box, dan
+   latar yang mulai dari kotak-padding tidak akan pernah menyentuh area
+   bingkai tempat relnya harus berada. */
+.dalam{max-width:var(--lebar);margin-inline:auto;border-inline:1px solid transparent;
+  position:relative;
+  background-image:var(--rel-img),var(--rel-img);
+  background-repeat:repeat-y,repeat-y;
+  background-position:left top,right top;
+  background-size:1px auto,1px auto;
+  background-origin:border-box;background-clip:border-box}
 
 /* Latar bertitik di bidang kosong KIRI dan KANAN kolom isi.
    Digambar sebagai dua pita di talang, bukan sebagai latar body, karena latar
