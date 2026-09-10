@@ -421,11 +421,18 @@
 /* Dua kolom di layar lebar, satu di sempit. auto-fit dengan lebar minimum,
    BUKAN container query — wadah query terdekatnya tidak membungkus panel ini,
    dan aturan yang tidak pernah menyala adalah jebakan nomor 4 di CLAUDE.md. */
+/* Lebarnya DIBATASI, bukan dibiarkan selebar layar. Dua alasan yang keduanya
+   terukur: pada 1440px tanpa batas ini isiannya jadi tiga kolom, dan empat
+   isian dalam tiga kolom meninggalkan satu berdiri sendiri dengan ruang kosong
+   selebar dua kolom di sebelahnya. Dengan 64rem ia jadi dua kolom yang terisi
+   penuh. Yang kedua: isian teks selebar 500px membuat mata kehilangan awal
+   baris berikutnya. */
 .isihal__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
   gap: var(--space-5);
   align-items: start;
+  max-width: 64rem;
 }
 
 .isihal__kaki {
@@ -434,6 +441,7 @@
   gap: var(--space-3);
   margin-top: var(--space-6);
   padding-top: var(--space-4);
+  max-width: 64rem;
   border-top: 1px solid var(--border);
 }
 
@@ -456,12 +464,18 @@
 
 .tim-foto img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Label slot ("PRINCIPAL", "STAFF") di kotak selebar 52px. Ukuran 2xs plus
+   kerapatan 0,1em membuat PRINCIPAL terpotong jadi "PRINCIP" — terukur di
+   peramban, bukan dikira. Dikecilkan lagi, kerapatan dilepas, dan dibolehkan
+   pecah dua baris: kotaknya 65px tinggi, jadi ruangnya ada. */
 .tim-foto__slot {
-  font-size: var(--text-2xs);
-  letter-spacing: 0.1em;
+  font-size: 8.5px;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
   color: var(--text-faint);
   text-align: center;
-  padding-inline: 0.2rem;
+  padding-inline: 0.15rem;
+  overflow-wrap: anywhere;
 }
 
 /* --- Sebelum & Sesudah ----------------------------------------------------- */

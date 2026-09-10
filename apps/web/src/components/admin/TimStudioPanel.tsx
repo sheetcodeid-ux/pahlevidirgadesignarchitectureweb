@@ -126,11 +126,10 @@ function Isi() {
     <div className="listpage">
       <div className="listpage__pad">
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-end", gap: "var(--space-3)" }}>
-          <p className="t-muted" style={{ maxWidth: "56ch", margin: 0 }}>
-            Orang yang tampil di halaman <strong>Studio</strong>. Peran wajib diisi;
-            nama boleh menyusul — kartunya tetap tampil beserta perannya, bertanda
-            menunggu, supaya bentuk halamannya tidak berubah begitu namanya masuk.
-          </p>
+          {/* Tanpa paragraf keterangan di sini: AdminLayout sudah mencetak
+              description di kepala halaman, dan dua kalimat yang mengatakan hal
+              sama persis berjarak 100px terbaca sebagai kesalahan tempel. */}
+          <span />
           <Dialog
             title="Tambah anggota tim"
             description="Peran dulu; nama dan fotonya bisa menyusul."
