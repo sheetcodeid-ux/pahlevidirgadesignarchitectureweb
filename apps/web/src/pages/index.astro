@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
   listProjects,
+  listClients,
   listTestimonials,
   getSettings,
   CATEGORY_LABELS_EN,
@@ -9,12 +10,16 @@ import {
   type ProjectImage,
 } from "../lib/api";
 import { SOROTAN_FAQ } from "../lib/faq";
-import { MITRA, MITRA_MASIH_PENANDA, TAHUN_BERDIRI } from "../lib/menunggu";
+import { TAHUN_BERDIRI } from "../lib/menunggu";
 
 const settings = await getSettings();
 const kota = settings.city?.trim() || "Indonesia";
 
 const semua = await listProjects({ limit: 200 });
+/* Daftar klien datang dari database, diurus pemilik lewat /admin/klien.
+   Sebelumnya ia daftar teks yang di-hardcode di lib/menunggu.ts — logonya
+   sudah dikirim pemilik tapi yang tayang cuma namanya. */
+const klien = await listClients();
 const testimoni = await listTestimonials(true);
 
 // Showcase: proyek yang diunggulkan lebih dulu, lalu yang terbaru. Maksimal
@@ -166,7 +171,7 @@ const fakta = (p: Project) =>
   </div>
 
   {
-    MITRA.length > 0 && (
+    klien.length > 0 && (
       <div class="pita">
         <div class="dalam">
           <div class="isi isi--rapat mq-kop">
@@ -181,8 +186,14 @@ const fakta = (p: Project) =>
           <div class="mq mq--garis">
             {/* Daftar digandakan supaya gulirannya menyambung tanpa jeda. */}
             <div class="mq__rel" id="mqRel">
-              {[...MITRA, ...MITRA].map((m) => (
-                <div class={MITRA_MASIH_PENANDA ? "mq__i tunggu" : "mq__i"}>{m}</div>
+              {[...klien, ...klien].map((k) => (
+                <div class="mq__i">
+                  {/* Logo kalau ada; kalau belum, namanya sebagai teks —
+                      supaya barisnya tidak pernah bolong. */}
+                  {k.logoUrl
+                    ? <img src={k.logoUrl} alt={k.name} loading="lazy" class="mq__logo" />
+                    : k.name}
+                </div>
               ))}
             </div>
           </div>

@@ -905,3 +905,37 @@ export function slugDariJudul(judul: string): string {
     .slice(0, 120)
     .replace(/-+$/g, "");
 }
+
+// --- Logo klien -----------------------------------------------------------
+
+export interface KlienAdmin {
+  id: string;
+  name: string;
+  /** URL siap-pakai, dibalas server. Kosong = logonya belum diunggah. */
+  logoUrl?: string | null;
+  sortOrder: number;
+}
+
+/** Yang DIKIRIM saat menyimpan. logoKey null berarti "hapus logonya". */
+export interface KlienPatch {
+  name?: string;
+  logoKey?: string | null;
+  sortOrder?: number;
+}
+
+export const daftarKlien = () => panggil<KlienAdmin[]>("/admin/clients");
+
+export const buatKlien = (isi: KlienPatch) =>
+  panggil<{ id: string }>("/admin/clients", { method: "POST", body: JSON.stringify(isi) });
+
+export const ubahKlien = (id: string, patch: KlienPatch) =>
+  panggil<{ updated: boolean }>(`/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusKlien = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/clients/${id}`, { method: "DELETE" });
+
+export const mintaUrlUnggahLogoKlien = (contentType: string) =>
+  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
+    method: "POST",
+    body: JSON.stringify({ scope: "klien", contentType }),
+  });

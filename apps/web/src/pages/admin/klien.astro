@@ -1,0 +1,12 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { ClientLogosPanel } from "../../components/admin/ClientLogosPanel";
+---
+
+<AdminLayout
+  title="Klien"
+  heading="Klien"
+  description="Logo yang berjalan di bagian SELECTED CLIENTS pada beranda. Urutannya menentukan urutan tampil."
+>
+  <ClientLogosPanel client:load />
+</AdminLayout>
