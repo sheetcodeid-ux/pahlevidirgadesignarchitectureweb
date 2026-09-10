@@ -153,6 +153,19 @@
    yang persis terlihat sebagai dua panel yang tidak sejajar. Dengan fixed,
    ketiganya berangkat dari titik yang sama tanpa bergantung pada segmen
    mana yang membungkusnya. */
+/* Jangkar untuk panel yang harus turun di bawah TOMBOLNYA SENDIRI tapi tetap
+   berangkat dari kaki topbar. Berbeda dari .topbar__jangkar yang menambat ke
+   tepi kanan layar: yang ini menambat ke segmen tempat ia hidup —
+   `.topbar__aksi` memang position:relative dan setinggi topbar penuh, jadi
+   inset-block:0 memberi tinggi yang benar tanpa angka tambahan. */
+.topbar__jangkar-segmen {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  width: 0;
+  pointer-events: none;
+}
+
 .topbar__jangkar {
   position: fixed;
   top: 0;
@@ -526,6 +539,63 @@
 .pilihproyek__thcover { width: 4.5rem; }
 .pilihproyek__tdcover { width: 4.5rem; }
 
+/* Tumpukan thumbnail di kolom Foto: sampai tiga foto saling menindih sedikit,
+   dengan angka jumlahnya di ujung. Bentuk tumpukan menyatakan "ada lebih dari
+   satu" tanpa memakan lebar kolom — dan lebar kolom itulah yang harus tetap
+   sempit supaya nama proyek tetap jadi yang paling menonjol. */
+.pilihproyek__tumpuk {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.pilihproyek__tumpuk .pilihproyek__thumb + .pilihproyek__thumb { margin-left: -18px; }
+.pilihproyek__tumpuk:hover .pilihproyek__thumb { border-color: var(--border-strong); }
+.pilihproyek__tumpuk:hover .pilihproyek__thumb:first-child { transform: scale(1.06); }
+.pilihproyek__tumpuk:focus-visible { outline: none; }
+.pilihproyek__tumpuk:focus-visible .pilihproyek__thumb:first-child {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.pilihproyek__jumlahfoto {
+  margin-left: var(--space-2);
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+}
+
+/* Penanda jumlah foto di sudut kartu. */
+.pilihproyek__lihat {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--bg-sunken) 82%, transparent);
+  color: var(--text);
+  font-size: var(--text-2xs);
+  cursor: zoom-in;
+}
+.pilihproyek__lihat:hover { background: var(--bg-sunken); border-color: var(--border-strong); }
+.pilihproyek__lihat:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
+/* Foto di tab Galeri jadi tombol pembuka penampil. Bingkai dan bentuknya
+   tetap milik .aspect — yang ditambahkan cuma sifat tombolnya. */
+.galeri-item__buka {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.galeri-item__buka:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
 .pilihproyek__thumb {
   display: grid;
   place-items: center;
@@ -627,6 +697,7 @@
 /* aspect-ratio, bukan tinggi tetap — bentuk covernya harus sama di lebar
    kolom mana pun (jebakan nomor 3 di CLAUDE.md). */
 .pilihproyek__gambar {
+  position: relative;
   display: grid;
   place-items: center;
   aspect-ratio: 16 / 10;
@@ -935,31 +1006,11 @@
   flex: none;
 }
 
-/* Garis menyapu di kaki tombol selama build berjalan — supaya keadaannya
-   terbaca tanpa harus membuka popover-nya dulu. */
-.topbar__terbit-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  overflow: hidden;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  background: color-mix(in srgb, var(--info) 25%, transparent);
-}
-.topbar__terbit-bar::after {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  width: 40%;
-  background: var(--info);
-  animation: terbit-sapu 1.4s var(--ease) infinite;
-}
-
-@keyframes terbit-sapu {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(250%); }
-}
+/* Tidak ada bar di tombol topbar. Sempat ada, dan lengkungnya tembus:
+   tombolnya ber-radius sementara barnya persegi, jadi ujung barnya menonjol
+   keluar sudut tombol. Dilaporkan pemilik. Yang menyatakan keadaan di tombol
+   itu tinggal warnanya; barnya hidup di dalam popover, tempat ia punya ruang
+   yang cukup untuk terbaca. */
 
 /* Bar di dalam popover. Tak bertentu dengan sengaja: panel ini tidak bisa
    menanyakan GitHub Actions sudah sampai langkah mana, jadi persentase apa
@@ -995,7 +1046,6 @@
 
 /* Gerakan dimatikan, keadaannya tidak: barnya jadi garis penuh yang diam. */
 @media (prefers-reduced-motion: reduce) {
-  .topbar__terbit-bar::after,
   .terbitpop__bar > span { animation: none; width: 100%; }
 }
 
@@ -2321,7 +2371,11 @@
 /* Tombol kembali berdiri sendiri di kiri, tidak melebar mengikuti kolom —
    tombol selebar halaman terbaca sebagai aksi utama, dan yang utama di sini
    adalah menyimpan. */
-.proyek-kembali { align-self: flex-start; }
+/* Tombol kembali menempati barisnya sendiri selebar seluruh grid, jadi kartu
+   di kiri dan panel di kanan sama-sama mulai di baris kedua — sejajar dengan
+   sendirinya, tanpa angka yang harus ditebak. Diminta pemilik: yang sejajar
+   seharusnya dua blok ISI, bukan blok isi dengan tombol navigasi. */
+.proyek-kembali { grid-column: 1 / -1; justify-self: start; }
 .buat-aksi__reset { align-self: center; }
 .buat-aksi__catatan { text-align: center; margin: 0; }
 

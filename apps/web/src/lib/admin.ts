@@ -335,6 +335,9 @@ export interface Proyek {
   lightingDesigner?: string;
   photographer?: string;
   coverImageUrl?: string;
+  /* Foto galeri ikut di daftar proyek — dipakai tabel pemilih untuk
+     menampilkan tumpukan thumbnail tanpa satu permintaan per baris. */
+  images?: GambarProyek[];
   isFeatured: boolean;
   seoTitle?: string;
   seoDescription?: string;

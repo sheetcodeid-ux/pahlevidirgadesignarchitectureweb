@@ -91,7 +91,41 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
     from public.projects p
     left join public.project_progress pr on pr.project_id = p.id
     order by p.sort_order, p.created_at desc`;
-  return rows.map((r) => rowToProject(r, assetBase));
+
+  const proyek = rows.map((r) => rowToProject(r, assetBase));
+
+  /* Foto galeri ikut, lewat SATU query untuk seluruh daftar. Tabel pemilih
+     proyek di panel menampilkan tumpukan thumbnail per baris; tanpa ini ia
+     harus meminta foto per proyek saat digambar — satu permintaan per baris,
+     tiap kali halaman dibuka. */
+  if (proyek.length > 0) {
+    const fotoRows = await sql<
+      { project_id: string; id: string; storage_key: string; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
+    >`
+      select project_id, id, storage_key, alt_text, caption, width, height, blur_data_url, sort_order
+      from public.project_images
+      where project_id = any(${proyek.map((p) => p.id)}::uuid[]) and kind = 'galeri'
+      order by sort_order, created_at`;
+
+    const per = new Map<string, Image[]>();
+    for (const r of fotoRows) {
+      const daftar = per.get(r.project_id) ?? [];
+      daftar.push({
+        id: r.id,
+        url: `${assetBase.replace(/\/$/, "")}/${r.storage_key.replace(/^\//, "")}`,
+        altText: r.alt_text,
+        caption: r.caption,
+        width: r.width,
+        height: r.height,
+        blurDataUrl: r.blur_data_url,
+        sortOrder: r.sort_order,
+      });
+      per.set(r.project_id, daftar);
+    }
+    for (const p of proyek) p.images = per.get(p.id) ?? [];
+  }
+
+  return proyek;
 }
 
 /** Slug dan judul wajib; sisanya menyusul saat disunting. */

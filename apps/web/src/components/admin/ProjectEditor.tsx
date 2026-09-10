@@ -33,6 +33,7 @@ import {
 } from "../../lib/admin";
 import { useCegahPindah } from "../../lib/cegahPindah";
 import { kecilkanFoto, formatByte } from "../../lib/kecilkanFoto";
+import { bukaLightbox } from "../../lib/lightbox";
 import { unduhPdf } from "../../lib/pdf";
 import { formatRupiah } from "../../lib/format";
 
@@ -1011,9 +1012,15 @@ function PanelGaleri({
         <Carousel label={`${kata.judul} proyek`}>
           {gambar.map((g, i) => (
             <div className="galeri-item carousel__slide" key={g.id}>
-              <div className="aspect aspect--4-3">
+              {/* Fotonya dibuka besar di penampil yang sama dengan yang dipakai
+                  tabel proyek dan galeri halaman publik — satu penampil untuk
+                  seluruh situs, bukan tiga yang pasti menyimpang. */}
+              <button type="button" className="aspect aspect--4-3 galeri-item__buka"
+                aria-label={`Lihat foto ${i + 1} besar`}
+                onClick={() => bukaLightbox(
+                  gambar.map((x) => ({ url: x.url, caption: x.caption, altText: x.altText })), i)}>
                 <img src={g.url} alt={g.altText ?? ""} loading="lazy" />
-              </div>
+              </button>
 
               <div className="galeri-item__body">
                 <label className="sr-only" htmlFor={`cap-${g.id}`}>{kata.label} {i + 1}</label>
@@ -1564,6 +1571,16 @@ function judulKapital(t: string): string {
  * Pilihannya disimpan di localStorage: ia kenyamanan per-orang, bukan
  * keadaan yang perlu dibagi atau dibaca ulang oleh siapa pun.
  */
+/* Cover DAN foto galeri jadi satu daftar untuk penampil. Covernya di depan
+   karena itu yang dilihat pengunjung lebih dulu; foto yang sama tidak
+   digandakan kalau kebetulan cover juga ada di galeri. */
+function fotoProyek(p: Proyek): { url: string; caption?: string | null; altText?: string | null }[] {
+  const galeri = (p.images ?? []).map((f) => ({ url: f.url, caption: f.caption, altText: f.altText }));
+  if (!p.coverImageUrl) return galeri;
+  if (galeri.some((f) => f.url === p.coverImageUrl)) return galeri;
+  return [{ url: p.coverImageUrl, caption: "Cover", altText: p.title }, ...galeri];
+}
+
 function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [cari, setCari] = useState("");
@@ -1572,8 +1589,6 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
   // (jebakan nomor 8 di CLAUDE.md). Dipromosikan di useLayoutEffect, sebelum
   // paint, jadi tidak ada kedipan.
   const [tampilan, setTampilan] = useState<Tampilan>("kotak");
-  /* Foto yang sedang dilihat besar. null = penampilnya tertutup. */
-  const [foto, setFoto] = useState<{ url: string; judul: string } | null>(null);
 
   useLayoutEffect(() => {
     try {
@@ -1692,7 +1707,7 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
           <table className="table table--ruled pilihproyek__tabel">
             <thead>
               <tr>
-                <th scope="col" className="pilihproyek__thcover">Cover</th>
+                <th scope="col" className="pilihproyek__thcover">Foto</th>
                 <th scope="col">Proyek</th>
                 <th scope="col">Kategori</th>
                 <th scope="col">Kota</th>
@@ -1707,18 +1722,25 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
                   tabIndex={0} role="button"
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPilih(p.id); } }}>
                   <td className="pilihproyek__tdcover">
-                    {/* stopPropagation: barisnya membuka editor, gambarnya
-                        membuka fotonya. Tanpa ini, satu klik mengerjakan
+                    {/* stopPropagation: barisnya membuka editor, fotonya
+                        membuka penampil. Tanpa ini, satu klik mengerjakan
                         keduanya dan yang menang adalah yang terakhir. */}
-                    {p.coverImageUrl ? (
-                      <button type="button" className="pilihproyek__thumb"
-                        aria-label={`Lihat cover ${p.title}`}
-                        onClick={(e) => { e.stopPropagation(); setFoto({ url: p.coverImageUrl!, judul: p.title }); }}>
-                        <img src={p.coverImageUrl} alt="" loading="lazy" />
+                    {fotoProyek(p).length > 0 ? (
+                      <button type="button" className="pilihproyek__tumpuk"
+                        aria-label={`Lihat ${fotoProyek(p).length} foto ${p.title}`}
+                        onClick={(e) => { e.stopPropagation(); bukaLightbox(fotoProyek(p)); }}>
+                        {fotoProyek(p).slice(0, 3).map((f, i) => (
+                          <span key={f.url} className="pilihproyek__thumb" style={{ zIndex: 3 - i }}>
+                            <img src={f.url} alt="" loading="lazy" />
+                          </span>
+                        ))}
+                        {fotoProyek(p).length > 1 && (
+                          <span className="pilihproyek__jumlahfoto t-mono">{fotoProyek(p).length}</span>
+                        )}
                       </button>
                     ) : (
                       <span className="pilihproyek__thumb pilihproyek__thumb--kosong"
-                        title="Cover belum ada" aria-label="Cover belum ada">
+                        title="Belum ada foto" aria-label="Belum ada foto">
                         <Icon name="imagePlus" size={14} />
                       </span>
                     )}
@@ -1762,6 +1784,18 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
                   {p.coverImageUrl
                     ? <img src={p.coverImageUrl} alt="" loading="lazy" />
                     : <span className="pilihproyek__kosong"><Icon name="imagePlus" size={20} />Cover belum ada</span>}
+                  {fotoProyek(p).length > 0 && (
+                    /* Di kartu, penanda lihat-foto duduk DI ATAS gambarnya —
+                       kartunya sendiri sudah jadi satu tombol besar, dan tombol
+                       di dalam tombol tidak sah di HTML. Karena itu ia dipasang
+                       sebagai span ber-role, bukan <button>. */
+                    <span role="button" tabIndex={0} className="pilihproyek__lihat"
+                      aria-label={`Lihat ${fotoProyek(p).length} foto ${p.title}`}
+                      onClick={(e) => { e.stopPropagation(); bukaLightbox(fotoProyek(p)); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); bukaLightbox(fotoProyek(p)); } }}>
+                      <Icon name="image" size={13} />{fotoProyek(p).length}
+                    </span>
+                  )}
                 </span>
                 <span className="pilihproyek__isi">
                   <span className="pilihproyek__nama">
@@ -1783,22 +1817,6 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
         </ul>
       )}
 
-      {/* Penampil foto memakai Dialog yang sudah ada — perangkap fokus, Esc,
-          dan kunci gulir latar datang dari sana, bukan ditulis ulang. Yang
-          ditambahkan cuma gambarnya sendiri. */}
-      <Dialog
-        title={foto?.judul ?? ""}
-        description="Cover proyek"
-        open={foto !== null}
-        onOpenChange={(o) => { if (!o) setFoto(null); }}
-        footer={foto && (
-          <a className="btn btn--secondary" href={foto.url} target="_blank" rel="noreferrer">
-            <Icon name="external" size={16} />Buka gambar aslinya
-          </a>
-        )}
-      >
-        {foto && <img className="pilihproyek__fotobesar" src={foto.url} alt={`Cover ${foto.judul}`} />}
-      </Dialog>
     </div>
   );
 }
@@ -2049,7 +2067,6 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       <div className="field">
         <label className="field__label" htmlFor="ed-desc">Deskripsi</label>
         <textarea id="ed-desc" className="input input--area" style={{ minHeight: "10rem" }}
-          placeholder={"Contoh:\n\nTapaknya menghadap barat, jadi seluruh ruang duduk digeser ke sisi timur.\n\nMaterial utama bata ekspos dan kayu bengkirai."}
           value={String(nilai("description") ?? "")} onChange={(e) => set("description", e.target.value)} />
       </div>
       <div className="spec-grid spec-grid--rapat">
@@ -2101,10 +2118,6 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
           kontraktornya berganti dari satu karya ke karya berikutnya. */}
       <div className="field">
         <span className="field__label">Kredit &amp; kategori</span>
-        <p className="field__help" style={{ marginTop: 0 }}>
-          Tampil di blok CREDITS halaman proyek. Yang dikosongkan tampil sebagai
-          “Name to be credited”.
-        </p>
       </div>
 
       <div className="spec-grid spec-grid--rapat">
@@ -2116,7 +2129,6 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
             onValueChange={(v) => set("category", v as never)}
             options={Object.entries(KATEGORI).map(([value, label]) => ({ value, label }))}
           />
-          <p className="field__help">Tampil sebagai TYPE di halaman proyek.</p>
         </div>
         <div className="field">
           <label className="field__label" htmlFor="ed-arsitek">Architecture</label>
@@ -2129,7 +2141,6 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
           <input id="ed-klien" className="input" value={String(nilai("client") ?? "")}
             placeholder="CANO Coffee &amp; Dining"
             onChange={(e) => set("client", e.target.value)} />
-          <p className="field__help">Kosongkan kalau klien minta namanya tidak disebut.</p>
         </div>
         <div className="field">
           <label className="field__label" htmlFor="ed-kontraktor">Contractor</label>
@@ -2148,7 +2159,6 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
           <input id="ed-foto" className="input" value={String(nilai("photographer") ?? "")}
             placeholder="Nama fotografer"
             onChange={(e) => set("photographer", e.target.value)} />
-          <p className="field__help">Wajib diisi kalau fotonya bukan milik studio.</p>
         </div>
       </div>
     </div>
@@ -2297,14 +2307,19 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
 
   if (halaman === "publik") {
     return (
-      <div className="buatpage">
-        <div className="buatpage__utama">
-          {/* Satu-satunya jalan kembali ke daftar. Tanpa ini editor jadi
-              ruangan tanpa pintu — persis keluhan pemilik sebelumnya. */}
-          <button type="button" className="btn btn--secondary proyek-kembali" onClick={kembaliKeDaftar}>
-            <Icon name="chevronLeft" size={16} />Semua proyek
-          </button>
+      <div className="buatpage buatpage--berkembali">
+        {/* Anak LANGSUNG .buatpage, bukan penghuni kolom kiri: ia menempati
+            barisnya sendiri selebar dua kolom, jadi baris berikutnya —
+            kartu di kiri dan panel di kanan — berangkat dari garis yang sama
+            dengan sendirinya. Sebelumnya ia tinggal di kolom kiri dan panel
+            kanan harus didorong turun dengan angka tebakan; angka tebakan
+            meleset 4px, dan akan meleset lagi setiap kali tinggi tombolnya
+            berubah. */}
+        <button type="button" className="btn btn--secondary proyek-kembali" onClick={kembaliKeDaftar}>
+          <Icon name="chevronLeft" size={16} />Semua proyek
+        </button>
 
+        <div className="buatpage__utama">
           <section className="buat-kartu">
             <h2 className="buat-kartu__judul">Status terbit</h2>
             <p className="t-muted" style={{ margin: 0, fontSize: "var(--text-sm)" }}>

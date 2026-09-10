@@ -463,19 +463,23 @@ function Terbit({ dibangunPada, aktif, zona }: {
         >
           <Icon name="upload" size={16} />
           <span className="topbar__terbit-teks">Terbitkan</span>
-          {menyala && kirim !== "jalan" && <span className="topbar__terbit-titik" aria-hidden="true" />}
-          {/* Terlihat tanpa membuka popover: selama build berjalan, garis tipis
-              menyapu bagian bawah tombol. */}
-          {kirim === "jalan" && <span className="topbar__terbit-bar" aria-hidden="true" />}
+          {menyala && <span className="topbar__terbit-titik" aria-hidden="true" />}
         </button>
       </RPopover.Trigger>
 
-      {/* Jangkar yang sama dengan lonceng dan panel akun, atas permintaan
-          pemilik: ketiganya sekarang berhenti di garis kanan yang sama.
-          Sebelumnya panel ini menambat ke tombolnya sendiri yang duduk di
-          TENGAH bilah, jadi ia berdiri sendirian jauh dari dua panel lain. */}
+      {/* Jangkar setinggi TOPBAR tapi selebar SEGMEN tombol ini.
+
+          Dua permintaan pemilik yang kelihatannya bertentangan, ternyata
+          bicara tentang dua sumbu yang berbeda: "sejajar dengan notifikasi"
+          soal garis atas (keduanya turun 10px di bawah topbar), "letak di
+          bawah Terbitkan" soal garis samping. Jangkar ini memenuhi keduanya —
+          tingginya diambil dari topbar, sisi kanannya dari segmen tombol.
+
+          Tanpa ini, panel menambat ke tombolnya yang cuma 36px dan mulai 15px
+          MENIMPA topbar. Terukur: puncaknya 53px sementara panel notifikasi
+          78px. */}
       <RPopover.Anchor asChild>
-        <span className="topbar__jangkar" aria-hidden="true" />
+        <span className="topbar__jangkar-segmen" aria-hidden="true" />
       </RPopover.Anchor>
 
       <RPopover.Portal>
