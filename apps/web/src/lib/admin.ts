@@ -330,6 +330,10 @@ export interface Proyek {
   client?: string;
   areaSqm?: number;
   leadArchitect?: string;
+  /* Kredit proyek — tampil di blok CREDITS halaman proyek publik. */
+  contractor?: string;
+  lightingDesigner?: string;
+  photographer?: string;
   coverImageUrl?: string;
   isFeatured: boolean;
   seoTitle?: string;

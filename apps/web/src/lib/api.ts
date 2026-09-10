@@ -73,6 +73,9 @@ export interface Project {
   client?: string;
   areaSqm?: number;
   leadArchitect?: string;
+  contractor?: string;
+  lightingDesigner?: string;
+  photographer?: string;
   coverImageUrl?: string;
   isFeatured: boolean;
   seoTitle?: string;

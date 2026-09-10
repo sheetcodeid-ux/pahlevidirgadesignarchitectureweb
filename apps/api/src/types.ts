@@ -57,6 +57,11 @@ export interface Project {
   client?: string | null;
   areaSqm?: number | null;
   leadArchitect?: string | null;
+  /* Kredit proyek. Ketiganya per proyek, bukan per studio: fotografer dan
+     kontraktor hampir selalu berganti dari satu karya ke karya berikutnya. */
+  contractor?: string | null;
+  lightingDesigner?: string | null;
+  photographer?: string | null;
   coverImageUrl?: string | null;
   isFeatured: boolean;
   seoTitle?: string | null;
@@ -111,6 +116,9 @@ export interface ProjectInput {
   client?: string | null;
   areaSqm?: number | null;
   leadArchitect?: string | null;
+  contractor?: string | null;
+  lightingDesigner?: string | null;
+  photographer?: string | null;
   coverImageKey?: string | null;
   isFeatured?: boolean;
   seoTitle?: string | null;

@@ -2,14 +2,33 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
   listProjects,
+  getProject,
   getSettings,
   CATEGORY_LABELS_EN,
   type Project, subjudulBerguna } from "../../lib/api";
-import { KREDIT_MENUNGGU, BELUM_ADA } from "../../lib/menunggu";
+import { BELUM_ADA } from "../../lib/menunggu";
 
 export async function getStaticPaths() {
   const projects = await listProjects({ limit: 200 });
-  return projects.map((project) => ({
+
+  /* Daftar TIDAK memuat description, materials, maupun SEO — itu milik
+     endpoint detail. Halaman ini dulu memakai baris daftar apa adanya, jadi
+     "The project", "Materials", dan kedua tag SEO selalu kosong di situs yang
+     tayang, tanpa satu pun galat. Sekarang tiap halaman mengambil detailnya
+     sendiri.
+
+     Kalau detailnya gagal diambil, build DIGAGALKAN. Daftarnya baru saja
+     bilang proyek ini ada, jadi detail yang kosong berarti API-nya bermasalah
+     — dan Workers Static Assets MENGGANTI seluruh aset, jadi build yang
+     "berhasil" dengan halaman setengah isi menimpa halaman yang sudah benar
+     (jebakan nomor 12 di CLAUDE.md). */
+  const lengkap = await Promise.all(projects.map(async (baris) => {
+    const detail = await getProject(baris.slug);
+    if (!detail) throw new Error(`Detail proyek "${baris.slug}" gagal diambil — build dihentikan.`);
+    return detail;
+  }));
+
+  return lengkap.map((project) => ({
     params: { slug: project.slug },
     props: { project, semua: projects },
   }));
@@ -52,10 +71,15 @@ interface BarisKredit {
   dd: string;
   tunggu?: boolean;
 }
+/* Ketiga nama ini dulu di-hardcode kosong di lib/menunggu.ts, jadi SETIAP
+   proyek mencetak "Name to be credited" — termasuk yang fotografernya sudah
+   jelas. Sekarang datang dari kolomnya sendiri, diisi pemilik per proyek. */
 const kredit: BarisKredit[] = [
   { dt: "Architecture", dd: project.leadArchitect || studio },
   ...(project.year ? [{ dt: "Year", dd: String(project.year) }] : []),
-  ...KREDIT_MENUNGGU.map((k) => ({ dt: k.peran, dd: k.nama ?? BELUM_ADA, tunggu: !k.nama })),
+  { dt: "Photography", dd: project.photographer || BELUM_ADA, tunggu: !project.photographer },
+  { dt: "Contractor", dd: project.contractor || BELUM_ADA, tunggu: !project.contractor },
+  { dt: "Lighting", dd: project.lightingDesigner || BELUM_ADA, tunggu: !project.lightingDesigner },
   {
     dt: "Client",
     dd: project.client || "Withheld at the client’s request",

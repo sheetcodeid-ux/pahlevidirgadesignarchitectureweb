@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as RPopover from "@radix-ui/react-popover";
 import { Command as Cmdk } from "cmdk";
 import { Icon } from "../ui/Icon";
@@ -357,18 +357,44 @@ function Terbit({ dibangunPada, aktif, zona }: {
   zona: string;
 }) {
   const [berubahPada, setBerubahPada] = useState<string | null | undefined>(undefined);
-  const [kirim, setKirim] = useState<"diam" | "kirim" | "jalan">("diam");
+  const [kirim, setKirim] = useState<"diam" | "kirim" | "jalan" | "tayang">("diam");
   const [galat, setGalat] = useState<string | null>(null);
+  /* Stempel build yang BERLAKU sekarang. Berangkat dari yang dipanggang ke
+     HTML halaman ini, lalu diperbarui sendiri begitu /cap-build.json berganti.
+
+     Ini yang membuat statusnya berubah tanpa perlu memuat ulang. Sebelumnya
+     stempelnya hanya bisa datang dari HTML, dan HTML hanya berganti kalau
+     halamannya dimuat ulang — jadi situsnya sudah tayang sementara panelnya
+     masih menulis "menunggu", persis yang dilaporkan pemilik. */
+  const [capBuild, setCapBuild] = useState(dibangunPada);
+  /* Detik sejak tombol ditekan. Bukan hiasan: build yang tidak menunjukkan
+     apa pun selama satu setengah menit terbaca sebagai build yang gantung. */
+  const [detik, setDetik] = useState(0);
   // Waktu dibaca setelah mount saja: server dan peramban hampir pasti berbeda
   // beberapa detik, dan "3 menit lalu" yang dihitung dua kali dengan hasil
   // berbeda adalah persis ketidakcocokan hidrasi yang dikeluhkan React.
   const [kini, setKini] = useState<Date | null>(null);
+
+  /* Menanyakan stempel build yang sedang tayang. no-store DAN penanda waktu di
+     query: satu saja tidak cukup — proxy di tengah jalan mengabaikan header,
+     peramban mengabaikan query kalau headernya mengizinkan menyimpan. */
+  const periksaBuild = useCallback(async () => {
+    try {
+      const r = await fetch(`/cap-build.json?t=${Date.now()}`, { cache: "no-store" });
+      if (!r.ok) return;
+      const d = (await r.json()) as { dibangunPada?: string };
+      if (d.dibangunPada) setCapBuild(d.dibangunPada);
+    } catch {
+      // Jaringan putus sesaat: stempel yang sudah ada tetap dipakai.
+    }
+  }, []);
 
   useEffect(() => {
     const perbarui = () => {
       statusTerbit()
         .then((d) => setBerubahPada(d.terakhirBerubah))
         .catch(() => setBerubahPada(null));
+      periksaBuild();
     };
     perbarui();
     setKini(new Date());
@@ -386,18 +412,35 @@ function Terbit({ dibangunPada, aktif, zona }: {
       document.removeEventListener("astro:page-load", perbarui);
       window.removeEventListener(PERISTIWA_TULIS, perbarui);
     };
-  }, []);
+  }, [periksaBuild]);
 
-  const belumTayang = Boolean(berubahPada && new Date(berubahPada) > new Date(dibangunPada));
+  /* Selagi build berjalan, stempelnya ditanya tiap lima detik — bukan tiap
+     tiga puluh. Yang ditunggu memang cuma satu menit; menanyakannya jarang
+     berarti statusnya baru berubah lama setelah situsnya benar-benar tayang.
+     Berhenti sendiri begitu selesai, jadi tidak ada polling yang menganggur. */
+  useEffect(() => {
+    if (kirim !== "jalan") return;
+    const jam = setInterval(() => setDetik((n) => n + 1), 1000);
+    const tanya = setInterval(periksaBuild, 5000);
+    return () => { clearInterval(jam); clearInterval(tanya); };
+  }, [kirim, periksaBuild]);
+
+  /* Stempel berganti = build yang dipicu tadi sudah tayang. */
+  useEffect(() => {
+    if (capBuild !== dibangunPada && kirim === "jalan") setKirim("tayang");
+  }, [capBuild, dibangunPada, kirim]);
+
+  const belumTayang = Boolean(berubahPada && new Date(berubahPada) > new Date(capBuild));
   // "jalan" tetap dihitung belum tayang, dan itu memang benar: build sedang
   // berlangsung, jadi yang tayang masih yang lama. Penandanya padam sendiri
   // begitu halaman ini dimuat ulang dari build yang baru — stempel di HTML-nya
   // ikut baru. Tidak ada keadaan yang perlu disimpan di mana pun.
-  const menyala = belumTayang || kirim === "jalan";
+  const menyala = (belumTayang || kirim === "jalan") && kirim !== "tayang";
 
   async function terbitkan() {
     setKirim("kirim");
     setGalat(null);
+    setDetik(0);
     try {
       await terbitkanSitus();
       setKirim("jalan");
@@ -406,6 +449,8 @@ function Terbit({ dibangunPada, aktif, zona }: {
       setKirim("diam");
     }
   }
+
+  const jamMundur = `${Math.floor(detik / 60)}:${String(detik % 60).padStart(2, "0")}`;
 
   return (
     <RPopover.Root>
@@ -418,15 +463,21 @@ function Terbit({ dibangunPada, aktif, zona }: {
         >
           <Icon name="upload" size={16} />
           <span className="topbar__terbit-teks">Terbitkan</span>
-          {menyala && <span className="topbar__terbit-titik" aria-hidden="true" />}
+          {menyala && kirim !== "jalan" && <span className="topbar__terbit-titik" aria-hidden="true" />}
+          {/* Terlihat tanpa membuka popover: selama build berjalan, garis tipis
+              menyapu bagian bawah tombol. */}
+          {kirim === "jalan" && <span className="topbar__terbit-bar" aria-hidden="true" />}
         </button>
       </RPopover.Trigger>
 
-      {/* Tanpa jangkar seperti lonceng dan panel akun. Keduanya duduk di ujung
-          kanan bilah, jadi menambatkan panelnya ke tepi topbar membuat mereka
-          berhenti di garis yang sama. Tombol ini ada di tengah — panelnya
-          menambat ke tombolnya sendiri, supaya jelas benda mana yang barusan
-          ditekan. */}
+      {/* Jangkar yang sama dengan lonceng dan panel akun, atas permintaan
+          pemilik: ketiganya sekarang berhenti di garis kanan yang sama.
+          Sebelumnya panel ini menambat ke tombolnya sendiri yang duduk di
+          TENGAH bilah, jadi ia berdiri sendirian jauh dari dua panel lain. */}
+      <RPopover.Anchor asChild>
+        <span className="topbar__jangkar" aria-hidden="true" />
+      </RPopover.Anchor>
+
       <RPopover.Portal>
         <RPopover.Content className="terbitpop" sideOffset={10} align="end" collisionPadding={12}>
           <div className="terbitpop__kepala">
@@ -464,10 +515,26 @@ function Terbit({ dibangunPada, aktif, zona }: {
             <Icon name={menyala ? "alert" : "check"} size={15} />
             {kirim === "jalan"
               ? "Situs sedang dibangun ulang. Sekitar satu menit lagi perubahannya tampil."
-              : menyala
-                ? "Ada perubahan yang belum tampil di situs publik."
-                : "Situs publik sudah sama dengan data di panel ini."}
+              : kirim === "tayang"
+                ? "Selesai — perubahannya sudah tampil di situs publik."
+                : menyala
+                  ? "Ada perubahan yang belum tampil di situs publik."
+                  : "Situs publik sudah sama dengan data di panel ini."}
           </p>
+
+          {kirim === "jalan" && (
+            /* Bar TAK BERTENTU, bukan persentase. Yang berjalan di sini adalah
+               GitHub Actions, dan panel ini tidak bisa menanyakan sudah sampai
+               langkah mana — persentase apa pun yang saya gambar adalah angka
+               karangan. Yang jujur: gerakannya menyatakan "masih jalan", dan
+               angka detik di sebelahnya menyatakan sudah berapa lama. */
+            <div className="terbitpop__maju">
+              <div className="terbitpop__bar" role="progressbar" aria-label="Membangun ulang situs">
+                <span />
+              </div>
+              <span className="terbitpop__maju-jam t-mono">{jamMundur}</span>
+            </div>
+          )}
 
           {galat && (
             <p className="terbitpop__galat">
@@ -491,10 +558,13 @@ function Terbit({ dibangunPada, aktif, zona }: {
               type="button"
               className="btn btn--primary terbitpop__aksi"
               onClick={terbitkan}
-              disabled={kirim !== "diam" || aktif === undefined}
+              disabled={kirim === "kirim" || kirim === "jalan" || aktif === undefined}
             >
-              <Icon name="upload" size={16} />
-              {kirim === "kirim" ? "Mengirim…" : kirim === "jalan" ? "Sedang dibangun…" : "Terbitkan sekarang"}
+              <Icon name={kirim === "tayang" ? "check" : "upload"} size={16} />
+              {kirim === "kirim" ? "Mengirim…"
+                : kirim === "jalan" ? "Sedang dibangun…"
+                : kirim === "tayang" ? "Sudah tayang"
+                : "Terbitkan sekarang"}
             </button>
           )}
         </RPopover.Content>
