@@ -94,8 +94,17 @@ h1,h2,h3{hanging-punctuation:first last}
     transparent var(--rel-garis) calc(var(--rel-garis) + var(--rel-jeda)));
   --kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
   --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
-.pita{border-top:1px solid var(--garis);position:relative}
-.pita--akhir{border-bottom:1px solid var(--garis)}
+/* Garis mendatar antar-pita dipindah dari `.pita` (selebar layar) ke
+   `.dalam` (selebar kolom isi), diminta pemilik: yang selebar layar
+   memotong latar bertitik di talang, dan talang itu harus penuh titik tanpa
+   sela.
+
+   Bonus yang bukan kebetulan: begitu garis mendatar ikut jadi bingkai
+   `.dalam`, ia duduk sama persis terhadap kotak-padding seperti garis
+   tegaknya — jadi geseran penanda sudut yang tadinya kebetulan sama untuk
+   kedua sumbu sekarang memang HARUS sama. Satu angka, satu alasan. */
+.pita{position:relative}
+.pita--akhir > .dalam{border-bottom:1px solid var(--garis)}
 /* Rel tegak kiri-kanan PUTUS-PUTUS; garis mendatar antar-pita tetap utuh.
    Bedanya disengaja: yang mendatar memisahkan isi, yang tegak cuma menandai
    di mana kolomnya berhenti.
@@ -110,7 +119,8 @@ h1,h2,h3{hanging-punctuation:first last}
    background-origin/clip: border-box wajib — bawaannya padding-box, dan
    latar yang mulai dari kotak-padding tidak akan pernah menyentuh area
    bingkai tempat relnya harus berada. */
-.dalam{max-width:var(--lebar);margin-inline:auto;border-inline:1px solid transparent;
+.dalam{max-width:var(--lebar);margin-inline:auto;
+  border-inline:1px solid transparent;border-top:1px solid var(--garis);
   position:relative;
   background-image:var(--rel-img),var(--rel-img);
   background-repeat:repeat-y,repeat-y;
@@ -153,6 +163,10 @@ h1,h2,h3{hanging-punctuation:first last}
    kotaknya terpotong separuh oleh viewport dan yang terlihat bukan kotak
    melainkan cekungan. Acuannya pun tidak menandai tepi paling atas. */
 .pita--awal .dalam::before{content:none}
+/* Pita pertama juga tidak bergaris atas: yang di atasnya tepi halaman, bukan
+   pita lain. Dulu tidak perlu diatur karena garisnya milik `.pita`, yang
+   memang bertumpuk dengan tepi layar. */
+.pita--awal > .dalam{border-top-color:transparent}
 body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
 .isi{padding:56px 44px}
 .isi--rapat{padding:24px 44px}
