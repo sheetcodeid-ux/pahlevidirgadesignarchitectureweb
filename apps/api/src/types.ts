@@ -443,6 +443,26 @@ export interface JournalPostInput {
   publishedAt?: string | null;
 }
 
+/* ── Logo klien ──────────────────────────────────────────────────────────
+ *
+ * Dipakai marquee "SELECTED CLIENTS" di beranda. logoUrl kosong berarti
+ * logonya belum diunggah — halaman menampilkan namanya sebagai teks, jadi
+ * barisnya tidak pernah bolong.
+ */
+export interface ClientLogo {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+  sortOrder: number;
+}
+
+/** undefined = jangan diubah. null pada logoKey = hapus logonya. */
+export interface ClientLogoInput {
+  name?: string;
+  logoKey?: string | null;
+  sortOrder?: number;
+}
+
 export interface TeamMember {
   id: string;
   name: string;
