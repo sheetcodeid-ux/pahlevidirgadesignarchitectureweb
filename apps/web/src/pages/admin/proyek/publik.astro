@@ -3,6 +3,9 @@ import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { ProyekPanel } from "../../../components/admin/ProjectEditor";
 ---
 
-<AdminLayout title="Halaman Proyek" heading="Halaman Proyek" description="Judul, galeri, dan SEO satu proyek — yang dilihat pengunjung. Pilih proyeknya di bilah atas.">
+{/* Tanpa prop heading: judul halaman raksasa dibuang atas permintaan pemilik.
+    Judulnya tetap ada di breadcrumb topbar (yang membacanya dari `title`),
+    dan panel ini membawa judul kecilnya sendiri seperti gambar referensi. */}
+<AdminLayout title="Halaman Proyek">
   <ProyekPanel client:load halaman="publik" />
 </AdminLayout>

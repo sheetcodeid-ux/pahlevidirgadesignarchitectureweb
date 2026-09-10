@@ -1585,33 +1585,62 @@ function PilihProyek() {
     );
   }
 
+  const jumlahTerbit = proyek.filter((p) => p.status === "published").length;
+
+  /* btn--brand = merah, diminta pemilik. Merah di panel ini juga dipakai untuk
+     aksi merusak, jadi tombol ini SELALU berlabel penuh "Tambah Proyek" —
+     tidak pernah jadi tombol ikon saja, yang akan terbaca sebagai hapus. */
+  const tombolBaru = (
+    <a className="btn btn--brand pilihproyek__baru" href="/admin/proyek/baru">
+      <Icon name="projectPlus" size={18} />Tambah Proyek
+    </a>
+  );
+
   return (
     <div className="pilihproyek">
-      <div className="pilihproyek__kop">
-        <div>
-          <h2 className="t-heading" style={{ margin: 0 }}>Pilih proyek</h2>
-          <p className="t-muted" style={{ margin: 0, maxWidth: "54ch" }}>
-            Yang diisi di sini tampil di beranda dan di halaman proyeknya sendiri:
-            judul, ringkasan, dan foto galeri. Klik salah satu untuk mulai.
-          </p>
+      <div className="pilihproyek__judul">
+        <h2 className="t-subheading" style={{ margin: 0 }}>Semua Proyek</h2>
+        <p className="t-muted" style={{ margin: 0 }}>
+          Judul, ringkasan, dan foto galeri yang dilihat pengunjung. Klik satu untuk mulai.
+        </p>
+      </div>
+
+      {/* Bilah perkakas mengikuti bentuk referensi pemilik: satu kartu, kotak
+          cari selebar penuh di baris atas, lalu baris hitungan + aksi di
+          bawahnya. Bukan .listbar — yang itu full-bleed bergaris tebal dan
+          bentuknya lain. */}
+      <div className="pilihproyek__bar">
+        <div className="pilihproyek__cari">
+          <span className="pilihproyek__cariikon"><Icon name="search" size={20} /></span>
+          <input
+            className="input"
+            type="search"
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+            placeholder="Cari proyek, kategori, kota, tahun, atau status…"
+            aria-label="Cari proyek"
+          />
         </div>
 
-        <div className="row" style={{ gap: "var(--space-3)", flexWrap: "wrap" }}>
-          <div className="input-affix" style={{ width: "16rem", maxWidth: "100%" }}>
-            <input className="input input--ringkas" value={cari} placeholder="Cari proyek…"
-              aria-label="Cari proyek" onChange={(e) => setCari(e.target.value)} />
-          </div>
+        <div className="pilihproyek__meta">
+          <p className="pilihproyek__hitung">
+            <span>Total: <strong>{proyek.length}</strong></span>
+            <span>Terbit: <strong>{jumlahTerbit}</strong></span>
+          </p>
 
-          {/* Kontrol segmented yang sudah ada di sistem, bukan tombol baru. */}
-          <div className="segmented" role="group" aria-label="Cara menampilkan daftar">
-            <button type="button" className="segmented__opt" aria-pressed={tampilan === "kotak"}
-              onClick={() => pilihTampilan("kotak")}>
-              <Icon name="image" size={14} /> Kotak
-            </button>
-            <button type="button" className="segmented__opt" aria-pressed={tampilan === "tabel"}
-              onClick={() => pilihTampilan("tabel")}>
-              <Icon name="list" size={14} /> Tabel
-            </button>
+          <div className="pilihproyek__alat">
+            {/* Kontrol segmented yang sudah ada di sistem, bukan tombol baru. */}
+            <div className="segmented" role="group" aria-label="Cara menampilkan daftar">
+              <button type="button" className="segmented__opt" aria-pressed={tampilan === "kotak"}
+                onClick={() => pilihTampilan("kotak")}>
+                <Icon name="image" size={14} /> Kotak
+              </button>
+              <button type="button" className="segmented__opt" aria-pressed={tampilan === "tabel"}
+                onClick={() => pilihTampilan("tabel")}>
+                <Icon name="list" size={14} /> Tabel
+              </button>
+            </div>
+            {tombolBaru}
           </div>
         </div>
       </div>
@@ -1623,7 +1652,7 @@ function PilihProyek() {
         </div>
       ) : tampilan === "tabel" ? (
         <div className="table-wrap">
-          <table className="table table--ruled">
+          <table className="table table--ruled pilihproyek__tabel">
             <thead>
               <tr>
                 <th scope="col">Proyek</th>
@@ -1631,6 +1660,7 @@ function PilihProyek() {
                 <th scope="col">Kota</th>
                 <th scope="col" className="table__num">Tahun</th>
                 <th scope="col">Status</th>
+                <th scope="col" className="table__actions">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -1639,15 +1669,30 @@ function PilihProyek() {
                   tabIndex={0} role="button"
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); bukaProyek(p.id); } }}>
                   <td>
-                    <span className="pilihproyek__nama">
-                      <strong>{p.title}</strong>
-                      {p.isFeatured && <span className="badge badge--brand">Unggulan</span>}
+                    <span className="pilihproyek__sel">
+                      <span className="pilihproyek__nama">
+                        <strong>{p.title}</strong>
+                        {p.isFeatured && <span className="badge badge--brand">Unggulan</span>}
+                      </span>
+                      <span className="pilihproyek__slug t-mono">/proyek/{p.slug}</span>
                     </span>
                   </td>
                   <td>{judulKapital(p.category)}</td>
                   <td>{p.city ?? "—"}</td>
                   <td className="table__num t-mono">{p.year ?? "—"}</td>
-                  <td>{LABEL_STATUS[p.status] ?? p.status}</td>
+                  <td>
+                    <span className={`badge ${BADGE_STATUS[p.status] ?? ""}`}>
+                      <span className="badge__dot" />{LABEL_STATUS[p.status] ?? p.status}
+                    </span>
+                  </td>
+                  <td className="table__actions">
+                    {/* Barisnya sendiri sudah bisa diklik; tombol ini yang
+                        membuat aksinya TERLIHAT — tanpa penanda, tidak ada
+                        yang menduga baris tabel bisa ditekan. */}
+                    <span className="btn btn--secondary btn--icon btn--boxed" aria-hidden="true">
+                      <Icon name="chevronRight" size={16} />
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1673,7 +1718,9 @@ function PilihProyek() {
                     {p.city ? ` · ${p.city}` : ""}
                     {p.year ? ` · ${p.year}` : ""}
                   </span>
-                  <span className="pilihproyek__status">{LABEL_STATUS[p.status] ?? p.status}</span>
+                  <span className={`badge ${BADGE_STATUS[p.status] ?? ""} pilihproyek__status`}>
+                    <span className="badge__dot" />{LABEL_STATUS[p.status] ?? p.status}
+                  </span>
                 </span>
               </button>
             </li>

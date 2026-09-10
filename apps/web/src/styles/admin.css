@@ -394,16 +394,106 @@
 
 /* --- Memilih proyek di Halaman Proyek -------------------------------------- */
 
-.pilihproyek { display: flex; flex-direction: column; gap: var(--space-5); }
+/* .admin__content:has(.proyekpage) membuang seluruh paddingnya supaya kepala
+   halaman bisa menempel penuh selebar layar. Isinya karena itu membawa
+   napasnya sendiri — tanpa ini, pemilih proyek menempel di garis sidebar.
+   Sudah dilaporkan pemilik. */
+.pilihproyek {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  min-width: 0;
+}
 
-.pilihproyek__kop {
+.pilihproyek__judul { display: flex; flex-direction: column; gap: 2px; }
+.pilihproyek__judul .t-subheading { font-size: var(--text-lg); }
+.pilihproyek__judul .t-muted { font-size: var(--text-sm); max-width: none; }
+
+/* Bilah perkakas: satu kartu berisi kotak cari selebar penuh di baris atas,
+   lalu baris hitungan + aksi di bawahnya. Bentuknya diambil dari gambar
+   referensi pemilik. */
+.pilihproyek__bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+/* Ikon berdiri di atas isian, jadi isiannya sendiri yang diberi padding kiri
+   — bukan dibungkus flex. Kalau dibungkus, isian tidak bisa selebar penuh
+   tanpa menambah aturan lebar lagi. */
+.pilihproyek__cari { position: relative; display: block; }
+
+.pilihproyek__cariikon {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.pilihproyek__cari .input {
+  width: 100%;
+  height: 3.25rem;
+  padding-left: calc(var(--space-4) * 2 + 20px);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-md);
+}
+
+/* Peramban menggambar tombol silang bawaannya sendiri di type=search, dan
+   bentuknya tidak mengikuti tema mana pun. */
+.pilihproyek__cari .input::-webkit-search-cancel-button { appearance: none; }
+
+.pilihproyek__meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
 }
-.pilihproyek__kop .t-muted { font-size: var(--text-sm); }
+
+.pilihproyek__hitung {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  max-width: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.pilihproyek__hitung strong { color: var(--text); font-weight: 600; }
+
+.pilihproyek__alat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Sel dua baris seperti referensi: nama di atas, slug di bawahnya. Slug yang
+   ikut terlihat menjawab pertanyaan yang paling sering muncul di halaman ini
+   — alamat mana yang akan dibuka pengunjung. */
+.pilihproyek__sel { display: flex; flex-direction: column; gap: 2px; }
+
+.pilihproyek__slug {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 40rem) {
+  .pilihproyek { padding: var(--space-4); }
+  .pilihproyek__meta { align-items: stretch; }
+  .pilihproyek__alat,
+  .pilihproyek__hitung { width: 100%; }
+  .pilihproyek__baru { flex: 1; justify-content: center; }
+}
 
 /* Baris tabel yang seluruhnya bisa diklik. Kursor DAN keadaan fokus wajib
    ada: barisnya punya role="button" dan tabIndex, jadi ia bisa dicapai
@@ -490,13 +580,10 @@
 }
 .pilihproyek__nama strong { color: var(--text-strong); }
 
-.pilihproyek__status {
-  margin-top: var(--space-2);
-  font-size: var(--text-2xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
+/* Lencana status di kartu, bukan teks polos — warnanya yang membedakan
+   Draf dari Terbit dalam sekali lihat, dan itu makna yang sudah dipakai di
+   seluruh panel (hijau hidup, amber tertahan, netral disimpan). */
+.pilihproyek__status { align-self: flex-start; margin-top: var(--space-2); }
 
 /* --- Form tulis jurnal ----------------------------------------------------- */
 
