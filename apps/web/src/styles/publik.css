@@ -42,7 +42,7 @@
 
      Sisinya sengaja GANJIL: dengan geseran ini, sisi ganjil membuat tepi
      kotak jatuh di piksel bulat, jadi garisnya tidak pernah tergambar kabur. */
-  --kotak:9px; --kotak-1:-5px;
+  --kotak:13px; --kotak-1:-7px;
   --e-keluar:cubic-bezier(.22,1,.36,1); --e-halus:cubic-bezier(.4,0,.2,1);
   color-scheme:dark;}
 *{box-sizing:border-box}
@@ -82,8 +82,8 @@ h1,h2,h3{hanging-punctuation:first last}
    Warna dituliskan di dalam data URI karena data URI tidak bisa membaca
    custom property. Nilainya cerminan --garis-2 dan --aksen; kalau salah
    satunya diubah, dua baris di bawah ini ikut. */
-:root{--kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9'%3E%3Crect x='0.5' y='0.5' width='8' height='8' rx='3' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
-  --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9'%3E%3Crect x='0.5' y='0.5' width='8' height='8' rx='3' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
+:root{--kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Crect x='0.5' y='0.5' width='12' height='12' rx='4' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
+  --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Crect x='0.5' y='0.5' width='12' height='12' rx='4' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
 .pita{border-top:1px solid var(--garis);position:relative}
 .pita--akhir{border-bottom:1px solid var(--garis)}
 .dalam{max-width:var(--lebar);margin-inline:auto;border-inline:1px solid var(--garis);
