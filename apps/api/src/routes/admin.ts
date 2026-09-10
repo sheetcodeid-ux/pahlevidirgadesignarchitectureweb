@@ -20,6 +20,7 @@ import * as commentsRepo from "../repository/documentComments";
 import * as testimonialsRepo from "../repository/testimonials";
 import * as journalRepo from "../repository/journal";
 import * as clientLogosRepo from "../repository/clientLogos";
+import * as revisiRepo from "../repository/contentRevision";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload, sanitizeSlug } from "../lib/r2";
 import { checkProjectInput, checkJournalInput, ValidationError } from "../lib/validate";
@@ -681,6 +682,24 @@ admin.get("/settings/logo", async (c) => {
   header.set("cache-control", "no-store");
   if (!header.has("content-type")) header.set("content-type", "application/octet-stream");
   return new Response(objek.body, { headers: header });
+});
+
+/**
+ * GET /api/v1/admin/publish-status — apakah ada perubahan yang belum tayang.
+ *
+ * Hanya SATU angka: kapan isi publik terakhir berubah. Pembandingnya — kapan
+ * situs terakhir dibangun — tidak diambil dari sini, melainkan dipanggang ke
+ * dalam halaman panel saat build. Itu bukan penghematan, melainkan satu-
+ * satunya sumber yang benar-benar tahu: halaman panel ini SENDIRI hasil build
+ * yang sama dengan situs publiknya, jadi stempel di dalamnya persis waktu
+ * yang dipakai halaman publik yang sedang tayang. Bertanya ke GitHub soal run
+ * terakhir akan menjawab "kapan build terakhir dimulai", yang bisa saja build
+ * yang gagal atau yang belum selesai — pertanyaan yang mirip, jawaban yang
+ * tidak sama.
+ */
+admin.get("/publish-status", async (c) => {
+  const terakhirBerubah = await withDb(c.env, c.executionCtx, (sql) => revisiRepo.terakhirBerubah(sql));
+  return c.json({ data: { terakhirBerubah } });
 });
 
 /**

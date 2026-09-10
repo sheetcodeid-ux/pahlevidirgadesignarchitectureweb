@@ -9,6 +9,7 @@ import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
 import { bukaProyek, setProyekAktif, proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import {
   ambilSettings, profilTersimpan, hapusSesi, singkatanZona,
+  statusTerbit, terbitkanSitus, PERISTIWA_TULIS,
   type Profil, type Proyek, type StudioSettings,
 } from "../../lib/admin";
 
@@ -313,7 +314,200 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
   );
 }
 
-export function Topbar({ heading: headingAwal }: { heading: string }) {
+/* ── Terbitkan perubahan ─────────────────────────────────────────────────── */
+
+/** "3 menit lalu", "2 jam lalu", "kemarin". Kosong kalau belum ada waktunya. */
+function sejak(iso: string, kini: Date): string {
+  const detik = Math.max(0, (kini.getTime() - new Date(iso).getTime()) / 1000);
+  if (detik < 90) return "baru saja";
+  const menit = Math.round(detik / 60);
+  if (menit < 60) return `${menit} menit lalu`;
+  const jam = Math.round(menit / 60);
+  if (jam < 24) return `${jam} jam lalu`;
+  const hari = Math.round(jam / 24);
+  return hari === 1 ? "kemarin" : `${hari} hari lalu`;
+}
+
+/** "10 Sep, 10.04" dalam zona waktu studio — sama dengan jam di topbar. */
+function jamTanggal(iso: string, zona: string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    hour12: false, timeZone: zona,
+  }).format(new Date(iso)).replace(/\./g, ".").replace(" pukul ", ", ");
+}
+
+/**
+ * Tombol Terbitkan, beserta alasan keberadaannya.
+ *
+ * Halaman publik dibekukan saat build (invarian 4 & 5), jadi mengubah data di
+ * panel ini TIDAK mengubah situs sampai ada build ulang. Selama ini tidak ada
+ * apa pun di panel yang mengatakannya: pemilik mengisi delapan logo klien,
+ * membuka situsnya, dan menyimpulkan fiturnya rusak. Datanya benar seluruhnya
+ * — yang kurang cuma kalimat ini dan tombol di sebelahnya.
+ *
+ * Ditaruh di topbar, bukan di editor proyek, karena perubahan yang perlu
+ * diterbitkan datang dari mana-mana: jurnal, logo klien, info studio,
+ * testimoni. Tombol yang cuma ada di satu halaman berarti staf harus tahu
+ * lebih dulu bahwa ia perlu pergi ke halaman itu.
+ */
+function Terbit({ dibangunPada, aktif, zona }: {
+  dibangunPada: string;
+  /** undefined = settings belum sampai; false = Worker tidak punya tokennya. */
+  aktif: boolean | undefined;
+  zona: string;
+}) {
+  const [berubahPada, setBerubahPada] = useState<string | null | undefined>(undefined);
+  const [kirim, setKirim] = useState<"diam" | "kirim" | "jalan">("diam");
+  const [galat, setGalat] = useState<string | null>(null);
+  // Waktu dibaca setelah mount saja: server dan peramban hampir pasti berbeda
+  // beberapa detik, dan "3 menit lalu" yang dihitung dua kali dengan hasil
+  // berbeda adalah persis ketidakcocokan hidrasi yang dikeluhkan React.
+  const [kini, setKini] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const perbarui = () => {
+      statusTerbit()
+        .then((d) => setBerubahPada(d.terakhirBerubah))
+        .catch(() => setBerubahPada(null));
+    };
+    perbarui();
+    setKini(new Date());
+    const t = setInterval(() => setKini(new Date()), 30_000);
+
+    // Dua kabar, dua alasan berbeda. astro:page-load: staf pindah halaman,
+    // dan topbar tidak ikut dipasang ulang (transition:persist). PERISTIWA_TULIS:
+    // staf menulis sesuatu TANPA pindah halaman — menambah logo klien lalu
+    // tetap di /admin/klien, misalnya. Tanpa yang kedua, penandanya baru
+    // menyala setelah pindah halaman, dan itu justru saat yang paling salah.
+    document.addEventListener("astro:page-load", perbarui);
+    window.addEventListener(PERISTIWA_TULIS, perbarui);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("astro:page-load", perbarui);
+      window.removeEventListener(PERISTIWA_TULIS, perbarui);
+    };
+  }, []);
+
+  const belumTayang = Boolean(berubahPada && new Date(berubahPada) > new Date(dibangunPada));
+  // "jalan" tetap dihitung belum tayang, dan itu memang benar: build sedang
+  // berlangsung, jadi yang tayang masih yang lama. Penandanya padam sendiri
+  // begitu halaman ini dimuat ulang dari build yang baru — stempel di HTML-nya
+  // ikut baru. Tidak ada keadaan yang perlu disimpan di mana pun.
+  const menyala = belumTayang || kirim === "jalan";
+
+  async function terbitkan() {
+    setKirim("kirim");
+    setGalat(null);
+    try {
+      await terbitkanSitus();
+      setKirim("jalan");
+    } catch (e) {
+      setGalat((e as Error).message);
+      setKirim("diam");
+    }
+  }
+
+  return (
+    <RPopover.Root>
+      <RPopover.Trigger asChild>
+        <button
+          type="button"
+          className="topbar__terbit"
+          data-belum={menyala ? "" : undefined}
+          aria-label={menyala ? "Terbitkan perubahan yang belum tayang" : "Terbitkan situs"}
+        >
+          <Icon name="upload" size={16} />
+          <span className="topbar__terbit-teks">Terbitkan</span>
+          {menyala && <span className="topbar__terbit-titik" aria-hidden="true" />}
+        </button>
+      </RPopover.Trigger>
+
+      {/* Tanpa jangkar seperti lonceng dan panel akun. Keduanya duduk di ujung
+          kanan bilah, jadi menambatkan panelnya ke tepi topbar membuat mereka
+          berhenti di garis yang sama. Tombol ini ada di tengah — panelnya
+          menambat ke tombolnya sendiri, supaya jelas benda mana yang barusan
+          ditekan. */}
+      <RPopover.Portal>
+        <RPopover.Content className="terbitpop" sideOffset={10} align="end" collisionPadding={12}>
+          <div className="terbitpop__kepala">
+            <span className="t-subheading">Terbitkan perubahan</span>
+            <p className="t-muted">
+              Halaman publik dibekukan saat situs dibangun. Apa pun yang Anda ubah di
+              sini baru tampil di situs setelah dibangun ulang.
+            </p>
+          </div>
+
+          <dl className="terbitpop__waktu">
+            <div className="terbitpop__baris">
+              <dt><Icon name="globe" size={14} />Situs dibangun</dt>
+              <dd>
+                <span>{kini ? sejak(dibangunPada, kini) : "—"}</span>
+                <span className="terbitpop__jam">{jamTanggal(dibangunPada, zona)}</span>
+              </dd>
+            </div>
+            <div className="terbitpop__baris">
+              <dt><Icon name="edit" size={14} />Data diubah</dt>
+              <dd>
+                {berubahPada
+                  ? <>
+                      <span>{kini ? sejak(berubahPada, kini) : "—"}</span>
+                      <span className="terbitpop__jam">{jamTanggal(berubahPada, zona)}</span>
+                    </>
+                  : <span className="terbitpop__jam">
+                      {berubahPada === undefined ? "Memuat…" : "Belum tercatat"}
+                    </span>}
+              </dd>
+            </div>
+          </dl>
+
+          <p className={`terbitpop__status${menyala ? " terbitpop__status--belum" : " terbitpop__status--sama"}`}>
+            <Icon name={menyala ? "alert" : "check"} size={15} />
+            {kirim === "jalan"
+              ? "Situs sedang dibangun ulang. Sekitar satu menit lagi perubahannya tampil."
+              : menyala
+                ? "Ada perubahan yang belum tampil di situs publik."
+                : "Situs publik sudah sama dengan data di panel ini."}
+          </p>
+
+          {galat && (
+            <p className="terbitpop__galat">
+              <Icon name="alert" size={15} />
+              {galat}
+            </p>
+          )}
+
+          {aktif === false ? (
+            /* Dikatakan terang-terangan, bukan tombol mati tanpa keterangan:
+               yang kurang adalah rahasia GITHUB_DISPATCH_TOKEN di Worker API,
+               dan itu hanya bisa dipasang pemiliknya sendiri. */
+            <p className="terbitpop__kunci">
+              <Icon name="lock" size={15} />
+              Tombol ini belum bisa dipakai: Worker API belum punya token GitHub
+              untuk memicu build. Sementara itu, situs tetap dibangun ulang otomatis
+              setiap kali ada perubahan kode.
+            </p>
+          ) : (
+            <button
+              type="button"
+              className="btn btn--primary terbitpop__aksi"
+              onClick={terbitkan}
+              disabled={kirim !== "diam" || aktif === undefined}
+            >
+              <Icon name="upload" size={16} />
+              {kirim === "kirim" ? "Mengirim…" : kirim === "jalan" ? "Sedang dibangun…" : "Terbitkan sekarang"}
+            </button>
+          )}
+        </RPopover.Content>
+      </RPopover.Portal>
+    </RPopover.Root>
+  );
+}
+
+export function Topbar({ heading: headingAwal, dibangunPada }: {
+  heading: string;
+  /** Stempel waktu build, dipanggang ke HTML oleh AdminLayout.astro. */
+  dibangunPada: string;
+}) {
   /* Topbar memakai transition:persist, jadi prop heading-nya beku di halaman
    * tempat panel pertama kali dibuka. Judulnya dibaca ulang dari
    * data-heading milik <main> setiap kali halaman berganti — satu-satunya
@@ -377,6 +571,9 @@ export function Topbar({ heading: headingAwal }: { heading: string }) {
           lingkarannya menempel rapat ke garis pemisah di kedua sisi sementara
           segmen lain punya napas 12px. Itu yang membuat sisi kanan terbaca
           sesak. */}
+      <span className="topbar__aksi topbar__aksi--terbit">
+        <Terbit dibangunPada={dibangunPada} aktif={settings?.terbitSitusAktif} zona={zona} />
+      </span>
       <span className="topbar__aksi"><ThemeToggle /></span>
       {/* Satu-satunya segmen yang masih berbingkai garis. Pemilik memilih
           lonceng, dan itu masuk akal: ia satu-satunya yang isinya berubah

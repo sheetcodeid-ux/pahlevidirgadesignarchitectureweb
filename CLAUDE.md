@@ -66,7 +66,14 @@ mencabutnya membunuh policy-nya sendiri: sudah dicoba, dan `rls_test.sql`
 langsung jatuh dari **65 assertion lulus jadi 4**, sisanya
 `permission denied for function is_staff`. Fungsinya sendiri tidak bocor
 apa-apa — ia hanya menjawab benar/salah tentang si pemanggil sendiri.
-Jadi kedua peringatan advisor yang tersisa memang sengaja dibiarkan; kalau
+Peringatan ketiga muncul bersama `content_revision` dan juga sengaja:
+advisor melaporkan `rls_enabled_no_policy` (tingkat INFO) karena tabel itu
+menyalakan RLS tanpa satu pun policy. Itu persis maksudnya — tidak ada peran
+yang boleh menyentuhnya selain pemilik database, dan Worker API membacanya
+lewat Hyperdrive yang memang melewati RLS. Menambahkan policy justru berarti
+membuka akses yang sekarang tertutup rapat.
+
+Jadi ketiga peringatan advisor yang tersisa memang sengaja dibiarkan; kalau
 suatu saat jumlahnya bertambah, yang baru itulah yang perlu dilihat.
 
 **Cache query Hyperdrive HARUS mati.** Bawaannya menyala (60 detik) dan itu
@@ -124,7 +131,10 @@ Worker kedua, `pahlevidirga-api`, menjalankan API (`apps/api/wrangler.jsonc`) �
 Postgres diakses lewat binding Hyperdrive (bukan koneksi langsung dari
 Worker), rate limit `/auth/login` dan `/inquiries` lewat KV (bukan in-memory,
 karena Worker tidak menyimpan state antar-request), R2 diakses lewat binding
-`MEDIA` untuk presigned upload. Bucket R2 `pahlevidirga-media` (lokasi APAC)
+`MEDIA` untuk presigned upload. Folder R2 dipisah per jenis aset: `projects/` untuk foto proyek, `studio/` untuk
+logo studio, `klien/` untuk logo klien di marquee beranda — supaya aset yang
+bukan milik proyek tidak ikut terhapus saat proyek dibersihkan.
+Bucket R2 `pahlevidirga-media` (lokasi APAC)
 dengan CORS presigned upload dan widget Turnstile "Form kontak pahlevidirga"
 sudah ada. Domain publik R2 memakai custom domain `media.pahlevidirgaarchitecture.com`
 (bukan lagi `r2.dev` bawaan yang kena rate limit dan sempat gagal SSL di
@@ -535,6 +545,7 @@ skrip; jangan sunting hasilnya.
 
 | Keputusan | Alasan |
 | --- | --- |
+| Tombol Terbitkan di topbar, dengan cap perubahan dari trigger database | Pemilik mengisi delapan logo klien lalu menyimpulkan fiturnya rusak; datanya benar seluruhnya, situsnya saja belum dibangun ulang. Ditaruh di topbar (bukan hanya di editor proyek) karena perubahan yang perlu diterbitkan datang dari jurnal, logo klien, info studio, dan testimoni juga. Yang dibandingkan: cap `content_revision` dari database lawan stempel build yang dipanggang ke HTML panel — panel ini hasil build yang sama dengan situs publiknya, jadi ia satu-satunya sumber yang tahu umur dirinya sendiri. Capnya lewat trigger, bukan `max(updated_at)`, karena MENGHAPUS tidak meninggalkan baris yang bisa dijumlahkan — dan menghapus foto atau menarik tulisan justru perbuatan yang paling bikin panik kalau barangnya masih tampil |
 | Angka di lonceng tidak punya tombol "tandai sudah dibaca" | Dikonfirmasi pemilik. Angkanya diturunkan dari pekerjaan yang benar-benar belum ditangani (pesan belum dibaca, tenggat lewat, testimoni menunggu), jadi ia turun sendiri begitu sumbernya ditangani. Tombol tandai-dibaca butuh tabel keadaan-baca per akun, dan membuat angka bisa nol padahal pekerjaannya masih menumpuk — persis kebalikan dari gunanya |
 | Tab Milestone berisi pencapaian tahap PROYEK, bukan lama berlangganan | Dikonfirmasi pemilik. Aplikasi rujukan memakai milestone anggota (1/2/3/6/12/24 bulan) karena bisnisnya berlangganan; studio arsitektur tidak punya anggota berlangganan, dan yang setara maknanya adalah tahap pipeline yang sudah dilewati sebuah proyek |
 | Hono di Cloudflare Workers, bukan Go Fiber di Cloud Run | Dibalik dari keputusan sebelumnya ("Go Fiber, bukan serverless") atas permintaan eksplisit pemilik — satu platform (Cloudflare) untuk frontend, API, R2, dan DNS, tanpa akun Google Cloud terpisah. Konsekuensinya: seluruh backend ditulis ulang dari Go ke TypeScript, bukan sekadar pindah hosting |
@@ -551,3 +562,7 @@ skrip; jangan sunting hasilnya.
 | Isi tulisan disimpan sebagai MARKDOWN, dirender saat build | Yang mengetik pemilik sendiri, dan HTML dari isian bebas berarti tiap render harus dibersihkan lebih dulu. `@astrojs/markdown-remark` sekalian membuat id tiap heading, dan daftar isi diturunkan dari daftar heading itu — jadi id di rel kiri dan id di badan tulisan mustahil menyimpang |
 | Tulisan berencana TETAP tampil di indeks, ditandai "belum ditulis" | Rancangan yang di-ACC. Mengisi indeks dengan judul palsu yang tidak bisa dibuka adalah cara tercepat kehilangan kepercayaan pembaca yang datang dari pencarian; menyembunyikannya sama sekali membuat jurnal terlihat mati. Yang berencana tidak punya tautan dan tidak dibuatkan halaman |
 | Tidak ada pratinjau markdown di panel admin | Membuatnya berarti dua perender yang pasti menyimpang suatu saat — pola bug yang sudah berkali-kali memakan waktu di proyek ini. Sebagai gantinya ada petunjuk singkat di bawah kotak isian. Kalau pemilik memintanya, kerjakan dengan cara yang TIDAK menduplikasi perendernya |
+| Logo klien jadi tabel + unggah di `/admin/klien`, bukan berkas di repo | Nama-namanya sempat di-hardcode sebagai teks di `lib/menunggu.ts`; pemilik sudah mengirim logonya tapi yang tayang cuma namanya, dan setiap penambahan klien berikutnya berarti mengubah kode. Sekarang dia mengurusnya sendiri, sama seperti proyek dan testimoni |
+| Klien tanpa logo TETAP tampil, sebagai teks nama | Menyaringnya di API akan membuat klien yang baru didaftarkan hilang dari beranda sampai pemilik sempat mengunggah gambarnya. Karena itu `name` wajib dan `logo_key` boleh kosong — kebalikannya yang membuat baris jadi celah |
+| Logo di marquee dibatasi TINGGI, bukan lebar | Logo yang lebar dan yang tinggi harus terlihat sama besar, dan yang menyamakannya tinggi optisnya. Dibuat abu dan baru berwarna saat disentuh: delapan logo berwarna sekaligus menarik perhatian lebih besar daripada karya yang ada di bawahnya |
+| Pindah urutan menukar `sort_order` dua tetangga, bukan menulis ulang daftar | Dua permintaan alih-alih delapan, dan urutan yang lain tidak ikut berubah kalau salah satunya gagal |

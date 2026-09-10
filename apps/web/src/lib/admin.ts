@@ -105,6 +105,15 @@ export function profilTersimpan(): Profil | null {
 
 const PREFIKS_CACHE = "pd-cache:";
 
+/**
+ * Dikirim ke window setiap kali panel MENULIS sesuatu (metode non-GET).
+ *
+ * Yang mendengarkannya adalah bagian panel yang tidak ikut dipasang ulang
+ * saat pindah halaman — topbar — dan karena itu tidak punya cara lain untuk
+ * tahu bahwa datanya sudah bergerak.
+ */
+export const PERISTIWA_TULIS = "pd:tulis";
+
 export function bacaCache<T>(kunci: string): T | null {
   try {
     const raw = sessionStorage.getItem(PREFIKS_CACHE + kunci);
@@ -273,7 +282,14 @@ async function panggil<T>(path: string, init: RequestInit = {}, ulang = true): P
   // Biayanya kecil dan sepadan: studio ini menulis beberapa kali sehari dan
   // membaca puluhan kali, jadi yang dikorbankan cuma satu kali muat setelah
   // menyimpan — bukan setiap kali berpindah halaman.
-  if (init.method && init.method !== "GET") buangCache();
+  if (init.method && init.method !== "GET") {
+    buangCache();
+    // Topbar memakai transition:persist — ia TIDAK dipasang ulang saat staf
+    // pindah halaman, jadi tidak ada satu pun momen alami baginya untuk tahu
+    // bahwa ada yang baru saja ditulis. Penanda "ada perubahan yang belum
+    // tayang" di sana bergantung pada kabar ini.
+    try { window.dispatchEvent(new CustomEvent(PERISTIWA_TULIS)); } catch { /* di luar peramban */ }
+  }
 
   const body = await res.json();
   return body.data as T;
@@ -627,6 +643,16 @@ export interface BarisBulanan {
  * Worker API — halaman ini tidak pernah memegangnya.
  */
 export const terbitkanSitus = () => panggil<{ dimulai: boolean }>("/admin/publish", { method: "POST" });
+
+/**
+ * Kapan isi publik terakhir berubah, menurut database.
+ *
+ * Pembandingnya BUKAN dari sini: waktu build dipanggang ke dalam halaman
+ * panel saat situsnya dibangun (lihat AdminLayout.astro). Halaman panel ini
+ * sendiri hasil build yang sama dengan situs publiknya, jadi stempel di
+ * dalamnya persis waktu yang dipakai halaman publik yang sedang tayang.
+ */
+export const statusTerbit = () => panggil<{ terakhirBerubah: string | null }>("/admin/publish-status");
 
 /** Tanpa projectId berarti "Semua" — seluruh proyek studio. */
 export const ambilRingkasanKeuangan = (projectId?: string | null) =>

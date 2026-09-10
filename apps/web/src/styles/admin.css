@@ -392,6 +392,151 @@
   color: var(--brand);
 }
 
+/* --- Terbitkan perubahan --------------------------------------------------- */
+
+/* Tombol berteks, bukan ikon telanjang seperti tema dan lonceng. Bedanya
+   disengaja: dua tetangganya adalah perkakas yang sudah dikenali dari
+   bentuknya, sementara yang ini memicu pekerjaan yang tidak bisa dibatalkan
+   di tengah jalan. Ia perlu menyebut namanya sendiri. */
+.topbar__terbit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 2.25rem;
+  padding-inline: var(--space-3);
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              background var(--dur) var(--ease);
+}
+
+.topbar__terbit:hover,
+.topbar__terbit[data-state="open"] {
+  color: var(--text-strong);
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+.topbar__terbit:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--border-strong); }
+
+/* Amber, bukan merah: ada perubahan yang belum tayang bukan kerusakan dan
+   bukan tuntutan — situsnya baik-baik saja, cuma belum yang terbaru. Amber
+   di sistem ini berarti "terbatas atau terkunci sebagian", dan itu persis
+   keadaannya. Merah sudah dipakai badge lonceng untuk hal yang memang
+   menunggu ditangani. */
+.topbar__terbit[data-belum] { color: var(--warn); border-color: var(--warn-line); }
+.topbar__terbit[data-belum]:hover,
+.topbar__terbit[data-belum][data-state="open"] { color: var(--warn); border-color: var(--warn); }
+
+.topbar__terbit-titik {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--warn);
+  flex: none;
+}
+
+/* --- Popover terbit ------------------------------------------------------- */
+
+.terbitpop {
+  z-index: 60;
+  width: 22rem;
+  max-width: 92vw;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.terbitpop__kepala {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-bottom: 2px solid var(--border-strong);
+}
+.terbitpop__kepala .t-subheading { font-size: var(--text-md); }
+.terbitpop__kepala .t-muted { margin: 0; font-size: var(--text-xs); line-height: 1.5; }
+
+.terbitpop__waktu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+}
+
+/* Dua kolom, bukan grid berkolom sama: label kiri sepanjang isinya, waktu
+   rata kanan. Yang dibandingkan mata adalah dua waktu di kanan — mereka harus
+   berdiri di garis yang sama. */
+.terbitpop__baris {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.terbitpop__baris dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.terbitpop__baris dt svg { color: var(--text-faint); }
+
+.terbitpop__baris dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-strong);
+  text-align: right;
+}
+
+.terbitpop__jam { font-size: var(--text-2xs); color: var(--text-faint); }
+
+.terbitpop__status,
+.terbitpop__galat,
+.terbitpop__kunci {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.terbitpop__status svg,
+.terbitpop__galat svg,
+.terbitpop__kunci svg { flex: none; margin-top: 0.05rem; }
+
+.terbitpop__status--belum { border-color: var(--warn-line); background: var(--warn-soft); color: var(--warn); }
+.terbitpop__status--sama  { border-color: var(--success); background: var(--success-soft); color: var(--success); }
+.terbitpop__galat         { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); margin-top: var(--space-3); }
+.terbitpop__kunci         { border-color: var(--border); background: var(--tray); color: var(--text-muted); margin-bottom: var(--space-4); }
+
+.terbitpop__aksi {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: calc(100% - var(--space-4) * 2);
+  margin: var(--space-4);
+}
+
 /* --- Popover lonceng ------------------------------------------------------ */
 
 .notifpop,
@@ -554,6 +699,14 @@
 @media (max-width: 71rem) {
   .topbar__combo { display: none !important; }
   .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
+}
+
+/* Teksnya pergi, tombolnya tinggal. Yang hilang cuma namanya — ikon unggah
+   plus titik amber masih menyampaikan keadaannya, dan isinya dijelaskan
+   lengkap begitu ditekan. */
+@media (max-width: 62rem) {
+  .topbar__terbit-teks { display: none; }
+  .topbar__terbit { padding-inline: var(--space-2); }
 }
 
 @media (max-width: 52rem) {
