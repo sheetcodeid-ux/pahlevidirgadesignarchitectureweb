@@ -65,8 +65,38 @@
 .btn--ghost { background: transparent; color: var(--text-muted); }
 .btn--ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text-strong); }
 
-.btn--brand { background: var(--brand); color: var(--brand-ink); }
-.btn--brand:hover:not(:disabled) { filter: brightness(1.08); }
+/* Merah mendapat efek angkat yang sama dengan tombol utama — diminta pemilik
+   supaya semua tombol merah berperilaku seperti satu keluarga. Diberikan di
+   sini, bukan dengan menambahkan .btn--lift di tiap pemakaian: kelas yang
+   harus diingat adalah kelas yang suatu saat terlupa, dan tombol merah
+   berikutnya akan diam-diam jadi satu-satunya yang tidak bergerak.
+
+   Bayangannya MERAH GELAP, bukan --action-hover-shadow yang putih: bayangan
+   putih di belakang tombol merah terbaca sebagai kilau, bukan sebagai benda
+   yang terangkat. */
+.btn--brand {
+  background: var(--brand);
+  color: var(--brand-ink);
+  transition:
+    background-color var(--dur) var(--ease),
+    filter var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+.btn--brand:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--brand) 45%, #000);
+  transform: translate(-2px, -2px);
+}
+.btn--brand:active:not(:disabled) {
+  box-shadow: 0 0 0 color-mix(in srgb, var(--brand) 45%, #000);
+  transform: translate(0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--brand { transition: background-color var(--dur) var(--ease), filter var(--dur) var(--ease); }
+  .btn--brand:hover:not(:disabled) { box-shadow: none; transform: none; }
+}
 
 /* Ungu hanya untuk upgrade dan fitur berbayar — tidak pernah aksi biasa. */
 .btn--upgrade { background: var(--upgrade); color: var(--upgrade-ink); }

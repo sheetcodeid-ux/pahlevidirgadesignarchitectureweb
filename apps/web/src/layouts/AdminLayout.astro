@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { CAP_BUILD } from "../lib/capBuild";
 import "../styles/components.css";
 import "../styles/form.css";
 import "../styles/overlay.css";
@@ -38,7 +39,7 @@ const currentPath = Astro.url.pathname;
  * ulang tiap permintaan. Penanda "belum tayang" karena itu tidak pernah menyala
  * saat dev — yang benar, sebab di dev memang tidak ada yang tertinggal.
  */
-const dibangunPada = new Date().toISOString();
+const dibangunPada = CAP_BUILD;
 ---
 
 <!doctype html>

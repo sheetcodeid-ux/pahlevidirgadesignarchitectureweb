@@ -22,6 +22,9 @@ interface AdminRow {
   client: string | null;
   area_sqm: string | null;
   lead_architect: string | null;
+  contractor: string | null;
+  lighting_designer: string | null;
+  photographer: string | null;
   cover_image_key: string | null;
   is_featured: boolean;
   seo_title: string | null;
@@ -50,6 +53,9 @@ function rowToProject(row: AdminRow, assetBase: string): Project {
     client: row.client,
     areaSqm: row.area_sqm !== null ? Number(row.area_sqm) : null,
     leadArchitect: row.lead_architect,
+    contractor: row.contractor,
+    lightingDesigner: row.lighting_designer,
+    photographer: row.photographer,
     coverImageUrl: url(assetBase, row.cover_image_key),
     isFeatured: row.is_featured,
     seoTitle: row.seo_title,
@@ -68,7 +74,8 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
   const rows = await sql<AdminRow[]>`
     select p.id, p.slug, p.title, p.subtitle, p.summary, p.description, p.category,
            p.status, p.location, p.city, p.year, p.client, p.area_sqm,
-           p.lead_architect, p.cover_image_key, p.is_featured, p.seo_title,
+           p.lead_architect, p.contractor, p.lighting_designer, p.photographer,
+           p.cover_image_key, p.is_featured, p.seo_title,
            p.seo_description, p.published_at, p.pipeline_stage, p.contract_value,
            p.client_whatsapp,
            -- LEFT join: proyek yang belum pernah dibuatkan portal klien belum
@@ -84,7 +91,41 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
     from public.projects p
     left join public.project_progress pr on pr.project_id = p.id
     order by p.sort_order, p.created_at desc`;
-  return rows.map((r) => rowToProject(r, assetBase));
+
+  const proyek = rows.map((r) => rowToProject(r, assetBase));
+
+  /* Foto galeri ikut, lewat SATU query untuk seluruh daftar. Tabel pemilih
+     proyek di panel menampilkan tumpukan thumbnail per baris; tanpa ini ia
+     harus meminta foto per proyek saat digambar — satu permintaan per baris,
+     tiap kali halaman dibuka. */
+  if (proyek.length > 0) {
+    const fotoRows = await sql<
+      { project_id: string; id: string; storage_key: string; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
+    >`
+      select project_id, id, storage_key, alt_text, caption, width, height, blur_data_url, sort_order
+      from public.project_images
+      where project_id = any(${proyek.map((p) => p.id)}::uuid[]) and kind = 'galeri'
+      order by sort_order, created_at`;
+
+    const per = new Map<string, Image[]>();
+    for (const r of fotoRows) {
+      const daftar = per.get(r.project_id) ?? [];
+      daftar.push({
+        id: r.id,
+        url: `${assetBase.replace(/\/$/, "")}/${r.storage_key.replace(/^\//, "")}`,
+        altText: r.alt_text,
+        caption: r.caption,
+        width: r.width,
+        height: r.height,
+        blurDataUrl: r.blur_data_url,
+        sortOrder: r.sort_order,
+      });
+      per.set(r.project_id, daftar);
+    }
+    for (const p of proyek) p.images = per.get(p.id) ?? [];
+  }
+
+  return proyek;
 }
 
 /** Slug dan judul wajib; sisanya menyusul saat disunting. */
@@ -116,6 +157,9 @@ const PLAIN_COLUMNS: [string, keyof ProjectInput][] = [
   ["client", "client"],
   ["area_sqm", "areaSqm"],
   ["lead_architect", "leadArchitect"],
+  ["contractor", "contractor"],
+  ["lighting_designer", "lightingDesigner"],
+  ["photographer", "photographer"],
   ["cover_image_key", "coverImageKey"],
   ["is_featured", "isFeatured"],
   ["seo_title", "seoTitle"],
@@ -127,27 +171,17 @@ const PLAIN_COLUMNS: [string, keyof ProjectInput][] = [
 export async function update(sql: Sql, id: string, input: ProjectInput): Promise<void> {
   const fragments: Fragment[] = [];
 
+  /* Interpolasi identifier postgres.js, bukan switch per-kolom.
+     Bentuk lamanya menuntut tiap kolom didaftarkan DUA kali — sekali di
+     PLAIN_COLUMNS dan sekali di case-nya — dan yang lupa didaftarkan di case
+     akan diam saja: tersimpan menurut panel, tidak berubah di database. Pola
+     yang sama sudah dibereskan lebih dulu di repository settings; ini yang
+     terakhir. sql(column) memakai daftar putih di atas, bukan data dari
+     pengguna. */
   for (const [column, key] of PLAIN_COLUMNS) {
     const value = input[key];
     if (value === undefined || value === null) continue;
-    switch (column) {
-      case "slug": fragments.push(sql`slug = ${value as string}`); break;
-      case "title": fragments.push(sql`title = ${value as string}`); break;
-      case "subtitle": fragments.push(sql`subtitle = ${value as string}`); break;
-      case "summary": fragments.push(sql`summary = ${value as string}`); break;
-      case "description": fragments.push(sql`description = ${value as string}`); break;
-      case "location": fragments.push(sql`location = ${value as string}`); break;
-      case "city": fragments.push(sql`city = ${value as string}`); break;
-      case "year": fragments.push(sql`year = ${value as number}`); break;
-      case "client": fragments.push(sql`client = ${value as string}`); break;
-      case "area_sqm": fragments.push(sql`area_sqm = ${value as number}`); break;
-      case "lead_architect": fragments.push(sql`lead_architect = ${value as string}`); break;
-      case "cover_image_key": fragments.push(sql`cover_image_key = ${value as string}`); break;
-      case "is_featured": fragments.push(sql`is_featured = ${value as boolean}`); break;
-      case "seo_title": fragments.push(sql`seo_title = ${value as string}`); break;
-      case "seo_description": fragments.push(sql`seo_description = ${value as string}`); break;
-      case "contract_value": fragments.push(sql`contract_value = ${value as number}`); break;
-    }
+    fragments.push(sql`${sql(column)} = ${value as string | number | boolean}`);
   }
 
   if (input.category !== undefined && input.category !== null) {

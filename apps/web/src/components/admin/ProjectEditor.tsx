@@ -13,7 +13,7 @@ import {
 import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { proyekAktif, onProyekAktif, bukaProyek } from "../../lib/proyekAktif";
+import { proyekAktif, onProyekAktif, setProyekAktif } from "../../lib/proyekAktif";
 import {
   daftarProyek, simpanProyek, mintaUrlUnggah, type Proyek,
   ambilProgress, ubahFaseProgress, buatUlangTokenProgress,
@@ -27,11 +27,13 @@ import {
   ambilBrief, ubahBrief, type BriefProyek,
   daftarKomentarDokumen, tambahKomentarDokumen, type KomentarDokumen,
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
-  terbitkanSitus, type JenisGambar,
+  type JenisGambar,
   ambilSettings, type StudioSettings,
   bacaCache, tulisCache, jumlahDiingat,
 } from "../../lib/admin";
 import { useCegahPindah } from "../../lib/cegahPindah";
+import { kecilkanFoto, formatByte } from "../../lib/kecilkanFoto";
+import { bukaLightbox } from "../../lib/lightbox";
 import { unduhPdf } from "../../lib/pdf";
 import { formatRupiah } from "../../lib/format";
 
@@ -833,11 +835,16 @@ function PanelGaleri({
   // yang sama, dan tanpa itu panel material akan menampilkan foto galeri.
   useEffect(muat, [proyek.id, jenis]);
 
-  async function unggahSatu(f: File, urutan: number) {
-    const target = await mintaUrlUnggah(proyek.slug, f.type);
-    const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f });
+  async function unggahSatu(f: File, urutan: number): Promise<{ asli: number; kirim: number }> {
+    // Dikecilkan LEBIH DULU: yang menghabiskan waktu bukan permintaan
+    // presign-nya, melainkan megabyte yang naik lewat koneksi rumah.
+    const kecil = await kecilkanFoto(f);
+    const berkas = kecil.berkas;
+    const target = await mintaUrlUnggah(proyek.slug, berkas.type);
+    const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": berkas.type }, body: berkas });
     if (!res.ok) throw new Error(`Penyimpanan menolak ${f.name} (${res.status})`);
     await tambahGambar(proyek.id, target.key, urutan, jenis);
+    return { asli: kecil.byteAsli, kirim: kecil.byteBaru };
   }
 
   async function unggahBanyak(files: FileList | File[]) {
@@ -862,24 +869,53 @@ function PanelGaleri({
     }
 
     setMengunggah(daftar.length);
-    // Berurutan, bukan Promise.all: unggahan paralel dari satu koneksi rumah
-    // justru saling memperlambat, dan urutannya jadi tidak bisa dipastikan.
-    let mulai = (gambar?.length ?? 0);
+
+    /* Urutannya ditetapkan SEKARANG, sebelum satu pun berkas naik. Dengan
+       begitu unggahannya boleh selesai dalam urutan apa pun tanpa mengacak
+       galeri — dulu urutan diberikan sambil berjalan, dan itulah alasan
+       aslinya kenapa harus berurutan satu-satu. */
+    const antre = daftar.map((f, i) => ({ f, urutan: (gambar?.length ?? 0) + i }));
+
+    /* Tiga sekaligus, bukan satu-satu dan bukan sepuluh sekaligus. Satu-satu
+       membuang waktu tunggu jaringan yang bisa ditumpuk; sepuluh sekaligus
+       membuat sepuluh aliran berebut satu jalur unggah rumahan sampai
+       semuanya melambat bersama. */
+    const JALUR = 3;
     let gagal = 0;
-    for (const f of daftar) {
-      try {
-        await unggahSatu(f, mulai);
-        mulai += 1;
-      } catch (e) {
-        gagal += 1;
-        toast({ judul: "Gagal mengunggah", keterangan: (e as Error).message, nada: "gagal" });
-      } finally {
-        setMengunggah((n) => n - 1);
+    let hematAsli = 0;
+    let hematKirim = 0;
+
+    const pekerja = async () => {
+      for (;;) {
+        const tugas = antre.shift();
+        if (!tugas) return;
+        try {
+          const ukuran = await unggahSatu(tugas.f, tugas.urutan);
+          hematAsli += ukuran.asli;
+          hematKirim += ukuran.kirim;
+        } catch (e) {
+          gagal += 1;
+          toast({ judul: "Gagal mengunggah", keterangan: (e as Error).message, nada: "gagal" });
+        } finally {
+          setMengunggah((n) => n - 1);
+        }
       }
-    }
+    };
+    await Promise.all(Array.from({ length: Math.min(JALUR, daftar.length) }, pekerja));
+
     muat();
     const berhasil = daftar.length - gagal;
-    if (berhasil > 0) toast({ judul: `${berhasil} foto terunggah`, nada: "sukses" });
+    if (berhasil > 0) {
+      toast({
+        judul: `${berhasil} foto terunggah`,
+        // Angka penghematannya disebut, bukan diklaim: pemilik yang menunggu
+        // empat menit berhak tahu apa yang berubah.
+        keterangan: hematKirim < hematAsli
+          ? `${formatByte(hematAsli)} dikecilkan jadi ${formatByte(hematKirim)} sebelum dikirim.`
+          : undefined,
+        nada: "sukses",
+      });
+    }
   }
 
   async function simpanKeterangan(g: GambarProyek, caption: string) {
@@ -976,9 +1012,15 @@ function PanelGaleri({
         <Carousel label={`${kata.judul} proyek`}>
           {gambar.map((g, i) => (
             <div className="galeri-item carousel__slide" key={g.id}>
-              <div className="aspect aspect--4-3">
+              {/* Fotonya dibuka besar di penampil yang sama dengan yang dipakai
+                  tabel proyek dan galeri halaman publik — satu penampil untuk
+                  seluruh situs, bukan tiga yang pasti menyimpang. */}
+              <button type="button" className="aspect aspect--4-3 galeri-item__buka"
+                aria-label={`Lihat foto ${i + 1} besar`}
+                onClick={() => bukaLightbox(
+                  gambar.map((x) => ({ url: x.url, caption: x.caption, altText: x.altText })), i)}>
                 <img src={g.url} alt={g.altText ?? ""} loading="lazy" />
-              </div>
+              </button>
 
               <div className="galeri-item__body">
                 <label className="sr-only" htmlFor={`cap-${g.id}`}>{kata.label} {i + 1}</label>
@@ -1529,7 +1571,17 @@ function judulKapital(t: string): string {
  * Pilihannya disimpan di localStorage: ia kenyamanan per-orang, bukan
  * keadaan yang perlu dibagi atau dibaca ulang oleh siapa pun.
  */
-function PilihProyek() {
+/* Cover DAN foto galeri jadi satu daftar untuk penampil. Covernya di depan
+   karena itu yang dilihat pengunjung lebih dulu; foto yang sama tidak
+   digandakan kalau kebetulan cover juga ada di galeri. */
+function fotoProyek(p: Proyek): { url: string; caption?: string | null; altText?: string | null }[] {
+  const galeri = (p.images ?? []).map((f) => ({ url: f.url, caption: f.caption, altText: f.altText }));
+  if (!p.coverImageUrl) return galeri;
+  if (galeri.some((f) => f.url === p.coverImageUrl)) return galeri;
+  return [{ url: p.coverImageUrl, caption: "Cover", altText: p.title }, ...galeri];
+}
+
+function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [cari, setCari] = useState("");
   // Nilai awal TIDAK dibaca dari localStorage: HTML yang dipanggang Astro
@@ -1537,8 +1589,6 @@ function PilihProyek() {
   // (jebakan nomor 8 di CLAUDE.md). Dipromosikan di useLayoutEffect, sebelum
   // paint, jadi tidak ada kedipan.
   const [tampilan, setTampilan] = useState<Tampilan>("kotak");
-  /* Foto yang sedang dilihat besar. null = penampilnya tertutup. */
-  const [foto, setFoto] = useState<{ url: string; judul: string } | null>(null);
 
   useLayoutEffect(() => {
     try {
@@ -1657,7 +1707,7 @@ function PilihProyek() {
           <table className="table table--ruled pilihproyek__tabel">
             <thead>
               <tr>
-                <th scope="col" className="pilihproyek__thcover">Cover</th>
+                <th scope="col" className="pilihproyek__thcover">Foto</th>
                 <th scope="col">Proyek</th>
                 <th scope="col">Kategori</th>
                 <th scope="col">Kota</th>
@@ -1668,22 +1718,29 @@ function PilihProyek() {
             </thead>
             <tbody>
               {tersaring.map((p) => (
-                <tr key={p.id} className="table__klik" onClick={() => bukaProyek(p.id)}
+                <tr key={p.id} className="table__klik" onClick={() => onPilih(p.id)}
                   tabIndex={0} role="button"
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); bukaProyek(p.id); } }}>
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPilih(p.id); } }}>
                   <td className="pilihproyek__tdcover">
-                    {/* stopPropagation: barisnya membuka editor, gambarnya
-                        membuka fotonya. Tanpa ini, satu klik mengerjakan
+                    {/* stopPropagation: barisnya membuka editor, fotonya
+                        membuka penampil. Tanpa ini, satu klik mengerjakan
                         keduanya dan yang menang adalah yang terakhir. */}
-                    {p.coverImageUrl ? (
-                      <button type="button" className="pilihproyek__thumb"
-                        aria-label={`Lihat cover ${p.title}`}
-                        onClick={(e) => { e.stopPropagation(); setFoto({ url: p.coverImageUrl!, judul: p.title }); }}>
-                        <img src={p.coverImageUrl} alt="" loading="lazy" />
+                    {fotoProyek(p).length > 0 ? (
+                      <button type="button" className="pilihproyek__tumpuk"
+                        aria-label={`Lihat ${fotoProyek(p).length} foto ${p.title}`}
+                        onClick={(e) => { e.stopPropagation(); bukaLightbox(fotoProyek(p)); }}>
+                        {fotoProyek(p).slice(0, 3).map((f, i) => (
+                          <span key={f.url} className="pilihproyek__thumb" style={{ zIndex: 3 - i }}>
+                            <img src={f.url} alt="" loading="lazy" />
+                          </span>
+                        ))}
+                        {fotoProyek(p).length > 1 && (
+                          <span className="pilihproyek__jumlahfoto t-mono">{fotoProyek(p).length}</span>
+                        )}
                       </button>
                     ) : (
                       <span className="pilihproyek__thumb pilihproyek__thumb--kosong"
-                        title="Cover belum ada" aria-label="Cover belum ada">
+                        title="Belum ada foto" aria-label="Belum ada foto">
                         <Icon name="imagePlus" size={14} />
                       </span>
                     )}
@@ -1722,11 +1779,23 @@ function PilihProyek() {
         <ul className="pilihproyek__grid">
           {tersaring.map((p) => (
             <li key={p.id}>
-              <button type="button" className="pilihproyek__kartu" onClick={() => bukaProyek(p.id)}>
+              <button type="button" className="pilihproyek__kartu" onClick={() => onPilih(p.id)}>
                 <span className="pilihproyek__gambar">
                   {p.coverImageUrl
                     ? <img src={p.coverImageUrl} alt="" loading="lazy" />
                     : <span className="pilihproyek__kosong"><Icon name="imagePlus" size={20} />Cover belum ada</span>}
+                  {fotoProyek(p).length > 0 && (
+                    /* Di kartu, penanda lihat-foto duduk DI ATAS gambarnya —
+                       kartunya sendiri sudah jadi satu tombol besar, dan tombol
+                       di dalam tombol tidak sah di HTML. Karena itu ia dipasang
+                       sebagai span ber-role, bukan <button>. */
+                    <span role="button" tabIndex={0} className="pilihproyek__lihat"
+                      aria-label={`Lihat ${fotoProyek(p).length} foto ${p.title}`}
+                      onClick={(e) => { e.stopPropagation(); bukaLightbox(fotoProyek(p)); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); bukaLightbox(fotoProyek(p)); } }}>
+                      <Icon name="image" size={13} />{fotoProyek(p).length}
+                    </span>
+                  )}
                 </span>
                 <span className="pilihproyek__isi">
                   <span className="pilihproyek__nama">
@@ -1748,22 +1817,6 @@ function PilihProyek() {
         </ul>
       )}
 
-      {/* Penampil foto memakai Dialog yang sudah ada — perangkap fokus, Esc,
-          dan kunci gulir latar datang dari sana, bukan ditulis ulang. Yang
-          ditambahkan cuma gambarnya sendiri. */}
-      <Dialog
-        title={foto?.judul ?? ""}
-        description="Cover proyek"
-        open={foto !== null}
-        onOpenChange={(o) => { if (!o) setFoto(null); }}
-        footer={foto && (
-          <a className="btn btn--secondary" href={foto.url} target="_blank" rel="noreferrer">
-            <Icon name="external" size={16} />Buka gambar aslinya
-          </a>
-        )}
-      >
-        {foto && <img className="pilihproyek__fotobesar" src={foto.url} alt={`Cover ${foto.judul}`} />}
-      </Dialog>
     </div>
   );
 }
@@ -1776,9 +1829,25 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
   const [draf, setDraf] = useState<Draf>({});
   const [galat, setGalat] = useState<string | null>(null);
   const [menyimpan, setMenyimpan] = useState(false);
-  const [menerbitkan, setMenerbitkan] = useState(false);
   const [id, setId] = useState<string | null>(null);
   const [siapId, setSiapId] = useState(false);
+  /* Halaman Proyek SELALU membuka daftarnya dulu, walaupun ada proyek yang
+     masih terpilih di bilah atas. Sebelumnya tidak: begitu satu proyek pernah
+     dibuka, halaman ini jadi form isian selamanya dan daftarnya tidak bisa
+     dicapai lagi. Pemilik melaporkannya sebagai "kenapa tidak ada tabel, yang
+     ada cuma halaman input".
+
+     Halaman Klien dan Kerja Internal tidak ikut: keduanya memang tampilan satu
+     proyek, dan daftar untuk memilihnya sudah ada di sini. */
+  const [modeDaftar, setModeDaftar] = useState(halaman === "publik");
+  /* Pratinjau cover yang baru dipilih, dari berkas di komputer — BUKAN dari
+     R2. Sebelumnya unggah cover hanya menulis coverImageKey ke draf, sementara
+     yang digambar adalah coverImageUrl yang masih menunjuk gambar LAMA: toast
+     bilang berhasil, matanya melihat gambar sebelumnya. Dilaporkan pemilik.
+
+     Sengaja tidak ikut ke dalam `draf`: apa pun yang masuk draf ikut terkirim
+     saat menyimpan, dan ini cuma tampilan sementara. */
+  const [pratinjauSampul, setPratinjauSampul] = useState<string | null>(null);
   const berkas = useRef<HTMLInputElement>(null);
 
   /* Proyek yang sedang dibuka dibaca SEBELUM paint pertama, bukan sesudah.
@@ -1812,6 +1881,9 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       setId(baru);
       setDraf({});
       setGalat(null);
+      // Memilih proyek dari combobox topbar berarti "buka yang ini" — jadi
+      // daftarnya menyingkir, sama seperti mengklik satu baris di tabel.
+      setModeDaftar(false);
       const dariCache = bacaCache<Proyek[]>("proyek")?.find((x) => x.id === baru);
       setAsli(dariCache ?? null);
     });
@@ -1871,36 +1943,20 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
     }
   }
 
-  /* Situs publik dibekukan saat build, jadi menerbitkan proyek di sini tidak
-     mengubah apa pun sampai ada build ulang. Ini tombolnya. */
-  async function bangunUlangSitus() {
-    setMenerbitkan(true);
-    try {
-      await terbitkanSitus();
-      toast({
-        judul: "Situs sedang dibangun ulang",
-        keterangan: "Sekitar satu menit lagi perubahan tampil di situs publik.",
-        nada: "sukses",
-      });
-    } catch (e) {
-      toast({ judul: "Gagal menerbitkan", keterangan: (e as Error).message, nada: "gagal" });
-    } finally {
-      setMenerbitkan(false);
-    }
-  }
-
   async function unggah(f: File) {
     if (!asli) return;
     try {
-      const target = await mintaUrlUnggah(asli.slug, f.type);
+      const kecil = await kecilkanFoto(f);
+      const target = await mintaUrlUnggah(asli.slug, kecil.berkas.type);
       const res = await fetch(target.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": f.type },
-        body: f,
+        headers: { "Content-Type": kecil.berkas.type },
+        body: kecil.berkas,
       });
       if (!res.ok) throw new Error(`Penyimpanan menolak berkas (${res.status})`);
 
       set("coverImageKey" as keyof Proyek, target.key as never);
+      setPratinjauSampul((lama) => { if (lama) URL.revokeObjectURL(lama); return URL.createObjectURL(f); });
       toast({ judul: "Gambar terunggah", keterangan: "Tekan Simpan untuk menerapkannya.", nada: "sukses" });
     } catch (e) {
       toast({
@@ -1918,7 +1974,26 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
 
      Sekarang daftarnya ADA di sini, dan bisa dilihat dengan dua cara.
      Pilihannya diingat, jadi tidak perlu disetel ulang tiap kali. */
-  if (siapId && !id) return <PilihProyek />;
+  function pilihDariDaftar(idProyek: string) {
+    setProyekAktif(idProyek);
+    setDraf({});
+    setGalat(null);
+    setAsli(bacaCache<Proyek[]>("proyek")?.find((x) => x.id === idProyek) ?? null);
+    setId(idProyek);
+    setPratinjauSampul((lama) => { if (lama) URL.revokeObjectURL(lama); return null; });
+    setModeDaftar(false);
+  }
+
+  function kembaliKeDaftar() {
+    /* useCegahPindah hanya menjaga perpindahan HALAMAN; kembali ke daftar
+       terjadi di dalam satu halaman, jadi penjagaannya harus di sini. */
+    if (adaPerubahan && !confirm(`Ada ${berubah.length} perubahan yang belum disimpan. Tinggalkan?`)) return;
+    setDraf({});
+    setModeDaftar(true);
+  }
+
+  if (halaman === "publik" && modeDaftar) return <PilihProyek onPilih={pilihDariDaftar} />;
+  if (siapId && !id) return <PilihProyek onPilih={pilihDariDaftar} />;
 
   if (galat) {
     return (
@@ -1992,7 +2067,6 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       <div className="field">
         <label className="field__label" htmlFor="ed-desc">Deskripsi</label>
         <textarea id="ed-desc" className="input input--area" style={{ minHeight: "10rem" }}
-          placeholder={"Contoh:\n\nTapaknya menghadap barat, jadi seluruh ruang duduk digeser ke sisi timur.\n\nMaterial utama bata ekspos dan kayu bengkirai."}
           value={String(nilai("description") ?? "")} onChange={(e) => set("description", e.target.value)} />
       </div>
       <div className="spec-grid spec-grid--rapat">
@@ -2033,6 +2107,60 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
           <p className="field__help">Dipakai tombol WA saat mengirim bukti pembayaran.</p>
         </div>
       </div>
+
+      <span className="separator" role="presentation" />
+
+      {/* Kredit. Blok CREDITS di halaman proyek publik sudah menampilkan
+          keenam baris ini sejak awal, tapi tiga di antaranya (kontraktor,
+          lighting, fotografer) di-hardcode kosong di lib/menunggu.ts dan
+          tercetak "Name to be credited" untuk SETIAP proyek. Sekarang diisi
+          per proyek — memang harus per proyek, karena fotografer dan
+          kontraktornya berganti dari satu karya ke karya berikutnya. */}
+      <div className="field">
+        <span className="field__label">Kredit &amp; kategori</span>
+      </div>
+
+      <div className="spec-grid spec-grid--rapat">
+        <div className="field">
+          <span className="field__label">Kategori</span>
+          <Select
+            ariaLabel="Kategori proyek"
+            value={String(nilai("category") ?? "residential")}
+            onValueChange={(v) => set("category", v as never)}
+            options={Object.entries(KATEGORI).map(([value, label]) => ({ value, label }))}
+          />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="ed-arsitek">Architecture</label>
+          <input id="ed-arsitek" className="input" value={String(nilai("leadArchitect") ?? "")}
+            placeholder="Pahlevi Dirga"
+            onChange={(e) => set("leadArchitect", e.target.value)} />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="ed-klien">Client</label>
+          <input id="ed-klien" className="input" value={String(nilai("client") ?? "")}
+            placeholder="CANO Coffee &amp; Dining"
+            onChange={(e) => set("client", e.target.value)} />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="ed-kontraktor">Contractor</label>
+          <input id="ed-kontraktor" className="input" value={String(nilai("contractor") ?? "")}
+            placeholder="CV Karya Bangun"
+            onChange={(e) => set("contractor", e.target.value)} />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="ed-lighting">Lighting</label>
+          <input id="ed-lighting" className="input" value={String(nilai("lightingDesigner") ?? "")}
+            placeholder="Studio Cahaya"
+            onChange={(e) => set("lightingDesigner", e.target.value)} />
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="ed-foto">Photography</label>
+          <input id="ed-foto" className="input" value={String(nilai("photographer") ?? "")}
+            placeholder="Nama fotografer"
+            onChange={(e) => set("photographer", e.target.value)} />
+        </div>
+      </div>
     </div>
   );
 
@@ -2044,10 +2172,10 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
           galeri keluar layar sebelum sempat terlihat. */}
       <div className="cover-baris">
         <div className="cover-baris__gambar">
-          {nilai("coverImageUrl") ? (
+          {pratinjauSampul ? (
+            <img src={pratinjauSampul} alt={`Cover baru ${asli.title}`} />
+          ) : nilai("coverImageUrl") ? (
             <img src={String(nilai("coverImageUrl"))} alt={`Cover ${asli.title}`} />
-          ) : nilai("coverImageKey" as keyof Proyek) ? (
-            <span className="cover-baris__catatan">Belum disimpan</span>
           ) : (
             <Icon name="image" size={22} />
           )}
@@ -2179,7 +2307,18 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
 
   if (halaman === "publik") {
     return (
-      <div className="buatpage">
+      <div className="buatpage buatpage--berkembali">
+        {/* Anak LANGSUNG .buatpage, bukan penghuni kolom kiri: ia menempati
+            barisnya sendiri selebar dua kolom, jadi baris berikutnya —
+            kartu di kiri dan panel di kanan — berangkat dari garis yang sama
+            dengan sendirinya. Sebelumnya ia tinggal di kolom kiri dan panel
+            kanan harus didorong turun dengan angka tebakan; angka tebakan
+            meleset 4px, dan akan meleset lagi setiap kali tinggi tombolnya
+            berubah. */}
+        <button type="button" className="btn btn--secondary proyek-kembali" onClick={kembaliKeDaftar}>
+          <Icon name="chevronLeft" size={16} />Semua proyek
+        </button>
+
         <div className="buatpage__utama">
           <section className="buat-kartu">
             <h2 className="buat-kartu__judul">Status terbit</h2>
@@ -2251,20 +2390,11 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
               </span>
             )}
 
-            <span className="separator" role="presentation" />
-
-            {/* Menyimpan menulis ke database; MENERBITKAN membangun ulang
-                situs publik. Dua hal berbeda, jadi dua tombol berbeda —
-                dipisah garis supaya tidak terbaca sebagai satu urutan. */}
-            <button type="button" className="btn btn--secondary buat-aksi__utama"
-              disabled={menerbitkan} onClick={bangunUlangSitus}>
-              {menerbitkan && <span className="spinner spinner--sm" />}
-              <Icon name="globe" size={16} />Terbitkan situs
-            </button>
-            <p className="t-muted buat-aksi__catatan">
-              Halaman publik dibekukan saat dibangun. Tekan ini setelah selesai
-              mengubah konten — sekitar satu menit sampai tampil.
-            </p>
+            {/* Tombol "Terbitkan situs" DIBUANG dari sini atas permintaan
+                pemilik: tombol yang sama sudah duduk di topbar, terlihat dari
+                setiap halaman, dan yang di topbar juga tahu apakah memang ada
+                yang perlu diterbitkan. Dua tombol untuk satu perbuatan hanya
+                membuat orang menebak mana yang benar. */}
           </>,
         )}
       </div>

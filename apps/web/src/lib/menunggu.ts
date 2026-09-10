@@ -9,32 +9,15 @@
  * bagian-bagian itu berbulan menampilkan penanda "menunggu" di situs yang
  * tayang tanpa ada yang mengingatkan siapa pun.
  *
- * Yang TERSISA di sini cuma dua hal, dan keduanya sengaja:
+ * Kredit proyek yang terakhir menyusul: kontraktor, lighting, dan fotografer
+ * kini punya kolomnya sendiri di public.projects dan diisi per proyek dari tab
+ * Detail — memang harus per proyek, karena fotografernya berganti dari satu
+ * karya ke karya berikutnya.
  *
- * 1. Kalimat penanda yang dipakai di banyak halaman. Ia bukan data yang diisi
- *    pemilik melainkan bagian dari rancangan — satu kalimat, satu tempat,
- *    supaya tidak ada dua versi berbeda di halaman berbeda.
- * 2. Kredit proyek, yang skema database-nya memang belum punya kolomnya.
+ * Yang TERSISA di sini cuma kalimat penandanya. Ia bukan data yang diisi
+ * pemilik melainkan bagian dari rancangan — satu kalimat, satu tempat, supaya
+ * tidak ada dua versi berbeda di halaman berbeda.
  */
-
-/* ── Kredit proyek ───────────────────────────────────────────────────────── */
-
-/**
- * Peran yang selalu ditampilkan di blok kredit halaman proyek, walau namanya
- * belum ada. Kredit fotografer WAJIB kalau fotonya bukan milik studio —
- * selain soal etika, itu juga yang membuat fotografer arsitektur mau memotret
- * proyek Anda berikutnya.
- *
- * Skema proyek belum punya kolom untuk nama-nama ini; selama belum ada, tiap
- * barisnya tampil sebagai "Name to be credited". Kalau suatu saat dibuatkan
- * kolomnya, tempatnya di tab Halaman Publik pada editor proyek — per proyek,
- * bukan satu daftar untuk seluruh studio, karena fotografernya bisa berbeda.
- */
-export const KREDIT_MENUNGGU = [
-  { peran: "Photography", nama: null as string | null },
-  { peran: "Contractor", nama: null as string | null },
-  { peran: "Lighting", nama: null as string | null },
-];
 
 /* ── Kalimat penanda ─────────────────────────────────────────────────────── */
 

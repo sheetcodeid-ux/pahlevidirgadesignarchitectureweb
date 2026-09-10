@@ -2,14 +2,33 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
   listProjects,
+  getProject,
   getSettings,
   CATEGORY_LABELS_EN,
   type Project, subjudulBerguna } from "../../lib/api";
-import { KREDIT_MENUNGGU, BELUM_ADA } from "../../lib/menunggu";
+import { BELUM_ADA } from "../../lib/menunggu";
 
 export async function getStaticPaths() {
   const projects = await listProjects({ limit: 200 });
-  return projects.map((project) => ({
+
+  /* Daftar TIDAK memuat description, materials, maupun SEO — itu milik
+     endpoint detail. Halaman ini dulu memakai baris daftar apa adanya, jadi
+     "The project", "Materials", dan kedua tag SEO selalu kosong di situs yang
+     tayang, tanpa satu pun galat. Sekarang tiap halaman mengambil detailnya
+     sendiri.
+
+     Kalau detailnya gagal diambil, build DIGAGALKAN. Daftarnya baru saja
+     bilang proyek ini ada, jadi detail yang kosong berarti API-nya bermasalah
+     — dan Workers Static Assets MENGGANTI seluruh aset, jadi build yang
+     "berhasil" dengan halaman setengah isi menimpa halaman yang sudah benar
+     (jebakan nomor 12 di CLAUDE.md). */
+  const lengkap = await Promise.all(projects.map(async (baris) => {
+    const detail = await getProject(baris.slug);
+    if (!detail) throw new Error(`Detail proyek "${baris.slug}" gagal diambil — build dihentikan.`);
+    return detail;
+  }));
+
+  return lengkap.map((project) => ({
     params: { slug: project.slug },
     props: { project, semua: projects },
   }));
@@ -52,10 +71,15 @@ interface BarisKredit {
   dd: string;
   tunggu?: boolean;
 }
+/* Ketiga nama ini dulu di-hardcode kosong di lib/menunggu.ts, jadi SETIAP
+   proyek mencetak "Name to be credited" — termasuk yang fotografernya sudah
+   jelas. Sekarang datang dari kolomnya sendiri, diisi pemilik per proyek. */
 const kredit: BarisKredit[] = [
   { dt: "Architecture", dd: project.leadArchitect || studio },
   ...(project.year ? [{ dt: "Year", dd: String(project.year) }] : []),
-  ...KREDIT_MENUNGGU.map((k) => ({ dt: k.peran, dd: k.nama ?? BELUM_ADA, tunggu: !k.nama })),
+  { dt: "Photography", dd: project.photographer || BELUM_ADA, tunggu: !project.photographer },
+  { dt: "Contractor", dd: project.contractor || BELUM_ADA, tunggu: !project.contractor },
+  { dt: "Lighting", dd: project.lightingDesigner || BELUM_ADA, tunggu: !project.lightingDesigner },
   {
     dt: "Client",
     dd: project.client || "Withheld at the client’s request",
@@ -523,6 +547,8 @@ const jsonLd = [
 </style>
 
 <script>
+  import { bukaLightbox } from "../../lib/lightbox";
+
   (() => {
     "use strict";
     const diam = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -580,6 +606,11 @@ const jsonLd = [
     if (!strip || !prog || !film || !info) return;
     const kartu = [...strip.children] as HTMLElement[];
     const ket = kartu.map((k) => k.querySelector(".foto__ket")?.textContent?.trim() ?? "");
+    const semuaFoto = kartu.map((k, i) => {
+      const img = k.querySelector("img") as HTMLImageElement | null;
+      return { url: img?.currentSrc || img?.src || "", caption: ket[i] || null, altText: img?.alt || null };
+    });
+    kartu.forEach((k) => { const i = k.querySelector("img"); if (i) i.style.cursor = "zoom-in"; });
 
     function hitung() {
       const maks = strip!.scrollWidth - strip!.clientWidth;
@@ -602,20 +633,33 @@ const jsonLd = [
     });
 
     let seret = false;
+    let seretJauh = false;
     let mx = 0;
+    let my = 0;
     let kiri = 0;
+    let fotoMulai = -1;
     strip.addEventListener("pointerdown", (e) => {
-      // Hanya tetikus. Di layar sentuh, gulir bawaan sudah menangani ini dan
-      // menimpanya justru membuat geser jadi tersendat.
+      /* Dicatat untuk SEMUA jenis penunjuk, bukan cuma tetikus: yang dipakai
+         membuka penampil adalah pasangan pointerdown/pointerup, dan di layar
+         sentuh justru itu satu-satunya yang tersedia. */
+      mx = e.clientX;
+      my = e.clientY;
+      const el = (e.target as HTMLElement).closest(".foto");
+      fotoMulai = el ? kartu.indexOf(el as HTMLElement) : -1;
+
+      // Seret dengan tetikus. Di layar sentuh, gulir bawaan sudah menangani
+      // ini dan menimpanya justru membuat geser jadi tersendat.
       if (e.pointerType !== "mouse") return;
       seret = true;
-      mx = e.clientX;
+      seretJauh = false;
       kiri = strip.scrollLeft;
       strip.classList.add("tarik");
       strip.setPointerCapture(e.pointerId);
     });
     strip.addEventListener("pointermove", (e) => {
-      if (seret) strip.scrollLeft = kiri - (e.clientX - mx);
+      if (!seret) return;
+      strip.scrollLeft = kiri - (e.clientX - mx);
+      if (Math.abs(e.clientX - mx) > 6) seretJauh = true;
     });
     const lepas = () => {
       if (seret) {
@@ -623,8 +667,20 @@ const jsonLd = [
         strip.classList.remove("tarik");
       }
     };
-    strip.addEventListener("pointerup", lepas);
-    strip.addEventListener("pointercancel", lepas);
+    /* Membuka penampil dari pointerup, BUKAN dari click.
+       strip.setPointerCapture() di atas membelokkan peristiwa click ke strip
+       itu sendiri, jadi listener di masing-masing foto tidak pernah kena —
+       terukur: penampilnya tidak terbuka sama sekali, tanpa satu pun galat.
+       Jarak 8px membedakan ketukan dari seretan; tanpa itu, tiap kali strip
+       diseret penampilnya ikut terbuka begitu tombol dilepas. */
+    strip.addEventListener("pointerup", (e) => {
+      const jarak = Math.hypot(e.clientX - mx, e.clientY - my);
+      const ke = fotoMulai;
+      fotoMulai = -1;
+      lepas();
+      if (ke >= 0 && jarak < 8 && !seretJauh) bukaLightbox(semuaFoto, ke);
+    });
+    strip.addEventListener("pointercancel", () => { fotoMulai = -1; lepas(); });
     strip.tabIndex = 0;
     strip.addEventListener("keydown", (e) => {
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
