@@ -24,6 +24,21 @@ interface Props {
 
 const { title, heading, description, back, backLabel } = Astro.props;
 const currentPath = Astro.url.pathname;
+
+/**
+ * Kapan situs yang sedang tayang ini dibangun.
+ *
+ * Dievaluasi saat build — frontmatter Astro tidak pernah jalan di peramban —
+ * jadi angkanya ikut terpanggang ke dalam HTML dan berumur sama persis dengan
+ * halaman publik yang sedang tayang. Itu sebabnya ia TIDAK diambil dari API:
+ * database tahu kapan datanya berubah, tapi hanya berkas ini yang tahu kapan
+ * ia sendiri dicetak.
+ *
+ * Di `npm run dev` nilainya selalu "barusan", karena halamannya memang dicetak
+ * ulang tiap permintaan. Penanda "belum tayang" karena itu tidak pernah menyala
+ * saat dev — yang benar, sebab di dev memang tidak ada yang tertinggal.
+ */
+const dibangunPada = new Date().toISOString();
 ---
 
 <!doctype html>
@@ -121,7 +136,7 @@ const currentPath = Astro.url.pathname;
       <Sidebar client:load transition:persist currentPath={currentPath} />
 
       <div class="admin__main">
-        <Topbar client:load transition:persist heading={heading ?? title} />
+        <Topbar client:load transition:persist heading={heading ?? title} dibangunPada={dibangunPada} />
 
         {/* transition:animate="none" — pertukaran isinya seketika, tanpa
             lintas-pudar bawaan.

@@ -1093,4 +1093,124 @@ begin
 end;
 $$;
 
+-- Cap perubahan isi -----------------------------------------------------
+--
+-- Tabelnya bukan data publik: ia memberi tahu jam berapa studio terakhir
+-- menyentuh datanya. Yang membacanya cuma Worker API, yang memakai peran
+-- pemilik database dan melewati RLS seluruhnya.
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+  begin
+    perform changed_at from public.content_revision;
+    raise exception 'GAGAL: anon bisa membaca content_revision';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca content_revision';
+  end;
+  reset role;
+end;
+$$;
+
+-- Staf pun tidak. Ia sudah punya panel yang menampilkan angkanya lewat API;
+-- akses langsung cuma menambah permukaan tanpa menambah kemampuan.
+do $$
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  begin
+    update public.content_revision set changed_at = '2000-01-01' where id = 1;
+    raise exception 'GAGAL: staf bisa memundurkan cap content_revision';
+  exception when insufficient_privilege then
+    raise notice 'ok: staf ditolak menulis content_revision langsung';
+  end;
+  reset role;
+end;
+$$;
+
+-- Barisnya satu, selamanya.
+do $$
+begin
+  begin
+    insert into public.content_revision (id) values (2);
+    raise exception 'GAGAL: baris kedua content_revision diterima';
+  exception when check_violation then
+    raise notice 'ok: content_revision menolak baris kedua';
+  end;
+end;
+$$;
+
+-- Inti seluruh mekanismenya: tiga jenis perubahan harus mencap, dan yang
+-- ketiga — MENGHAPUS — justru yang tidak bisa ditangkap max(updated_at).
+do $$
+declare sebelum timestamptz;
+begin
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+
+  insert into public.client_logos (name) values ('Cap Uji');
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'menambah logo klien mencap content_revision');
+
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+
+  update public.client_logos set sort_order = 3 where name = 'Cap Uji';
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'mengubah logo klien mencap content_revision');
+
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+
+  delete from public.client_logos where name = 'Cap Uji';
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'MENGHAPUS logo klien mencap content_revision');
+end;
+$$;
+
+-- Staf menulis lewat kebijakan RLS-nya sendiri, dan trigger definer-nya harus
+-- ikut jalan tanpa menuntut hak apa pun atas content_revision. Kalau baris
+-- ini gagal, sebabnya bukan RLS melainkan trigger yang lupa security definer.
+do $$
+declare sebelum timestamptz; terkena int;
+begin
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  update public.client_logos set sort_order = 4 where name = 'Elsana Coffee';
+  get diagnostics terkena = row_count;
+  reset role;
+
+  perform pg_temp.tolak(terkena <> 1, 'staf tetap bisa menulis meski ada trigger cap');
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'tulisan staf lewat RLS ikut mencap content_revision');
+end;
+$$;
+
+-- Proyek dan gambarnya juga, karena itu yang paling sering berubah.
+do $$
+declare sebelum timestamptz;
+begin
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+
+  update public.projects set title = 'Judul Baru' where slug = 'tes-published';
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'mengubah proyek mencap content_revision');
+
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+
+  delete from public.project_images where storage_key = 'tes/rahasia.jpg';
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'menghapus gambar proyek mencap content_revision');
+end;
+$$;
+
 rollback;

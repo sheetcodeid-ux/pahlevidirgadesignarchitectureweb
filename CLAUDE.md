@@ -66,7 +66,14 @@ mencabutnya membunuh policy-nya sendiri: sudah dicoba, dan `rls_test.sql`
 langsung jatuh dari **65 assertion lulus jadi 4**, sisanya
 `permission denied for function is_staff`. Fungsinya sendiri tidak bocor
 apa-apa — ia hanya menjawab benar/salah tentang si pemanggil sendiri.
-Jadi kedua peringatan advisor yang tersisa memang sengaja dibiarkan; kalau
+Peringatan ketiga muncul bersama `content_revision` dan juga sengaja:
+advisor melaporkan `rls_enabled_no_policy` (tingkat INFO) karena tabel itu
+menyalakan RLS tanpa satu pun policy. Itu persis maksudnya — tidak ada peran
+yang boleh menyentuhnya selain pemilik database, dan Worker API membacanya
+lewat Hyperdrive yang memang melewati RLS. Menambahkan policy justru berarti
+membuka akses yang sekarang tertutup rapat.
+
+Jadi ketiga peringatan advisor yang tersisa memang sengaja dibiarkan; kalau
 suatu saat jumlahnya bertambah, yang baru itulah yang perlu dilihat.
 
 **Cache query Hyperdrive HARUS mati.** Bawaannya menyala (60 detik) dan itu
@@ -538,6 +545,7 @@ skrip; jangan sunting hasilnya.
 
 | Keputusan | Alasan |
 | --- | --- |
+| Tombol Terbitkan di topbar, dengan cap perubahan dari trigger database | Pemilik mengisi delapan logo klien lalu menyimpulkan fiturnya rusak; datanya benar seluruhnya, situsnya saja belum dibangun ulang. Ditaruh di topbar (bukan hanya di editor proyek) karena perubahan yang perlu diterbitkan datang dari jurnal, logo klien, info studio, dan testimoni juga. Yang dibandingkan: cap `content_revision` dari database lawan stempel build yang dipanggang ke HTML panel — panel ini hasil build yang sama dengan situs publiknya, jadi ia satu-satunya sumber yang tahu umur dirinya sendiri. Capnya lewat trigger, bukan `max(updated_at)`, karena MENGHAPUS tidak meninggalkan baris yang bisa dijumlahkan — dan menghapus foto atau menarik tulisan justru perbuatan yang paling bikin panik kalau barangnya masih tampil |
 | Angka di lonceng tidak punya tombol "tandai sudah dibaca" | Dikonfirmasi pemilik. Angkanya diturunkan dari pekerjaan yang benar-benar belum ditangani (pesan belum dibaca, tenggat lewat, testimoni menunggu), jadi ia turun sendiri begitu sumbernya ditangani. Tombol tandai-dibaca butuh tabel keadaan-baca per akun, dan membuat angka bisa nol padahal pekerjaannya masih menumpuk — persis kebalikan dari gunanya |
 | Tab Milestone berisi pencapaian tahap PROYEK, bukan lama berlangganan | Dikonfirmasi pemilik. Aplikasi rujukan memakai milestone anggota (1/2/3/6/12/24 bulan) karena bisnisnya berlangganan; studio arsitektur tidak punya anggota berlangganan, dan yang setara maknanya adalah tahap pipeline yang sudah dilewati sebuah proyek |
 | Hono di Cloudflare Workers, bukan Go Fiber di Cloud Run | Dibalik dari keputusan sebelumnya ("Go Fiber, bukan serverless") atas permintaan eksplisit pemilik — satu platform (Cloudflare) untuk frontend, API, R2, dan DNS, tanpa akun Google Cloud terpisah. Konsekuensinya: seluruh backend ditulis ulang dari Go ke TypeScript, bukan sekadar pindah hosting |
