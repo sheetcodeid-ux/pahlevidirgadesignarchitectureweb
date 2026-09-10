@@ -427,7 +427,23 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     tergambar. Kalau salah satu berkas ditambah aturan sejenis, periksa yang
     satunya.
 
-16. **Menguji CSP dari build LOKAL memberi alarm palsu.** Build lokal
+16. **Array JavaScript TIDAK BISA jadi parameter query.** Worker menyambung
+    dengan `fetch_types: false` (wajib untuk Hyperdrive), jadi postgres.js
+    tidak punya katalog tipe dan tidak bisa menyerialkan array jadi array
+    literal Postgres — yang terkirim string biasa, dan Postgres menolak
+    dengan `malformed array literal`. Jadi `= any(${daftar}::uuid[])`
+    **selalu 500 di produksi** sementara lulus sempurna di mana pun yang
+    memakai setelan postgres.js bawaan. Sudah memerahkan dua deploy
+    berturut-turut dengan seluruh tes lokal hijau; situs lama selamat hanya
+    karena `listProjects()` memakai `wajib()`. Bentuk yang benar:
+    **`in ${sql(daftar)}`**, yang merender satu parameter per elemen.
+    Dijaga `apps/api/test/parameterArray.test.ts`.
+
+    Pelajaran yang lebih luas: **kalau menguji repository di luar Worker,
+    pakai setelan koneksi yang SAMA PERSIS dengan `src/db.ts`.** Setelan
+    bawaan menyembunyikan justru kelas galat yang hanya muncul di produksi.
+
+17. **Menguji CSP dari build LOKAL memberi alarm palsu.** Build lokal
     memanggang `localhost:8787` ke dalam HTML *dan* ke dalam bundel JS.
     Dijalankan di bawah CSP produksi, keduanya jadi "pelanggaran" padahal di
     produksi alamatnya `api.*` dan `media.*` yang memang diizinkan. Petakan

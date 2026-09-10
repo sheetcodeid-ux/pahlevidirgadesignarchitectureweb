@@ -99,12 +99,26 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
      harus meminta foto per proyek saat digambar — satu permintaan per baris,
      tiap kali halaman dibuka. */
   if (proyek.length > 0) {
+    /* `in ${sql(...)}`, BUKAN `= any(${ids}::uuid[])`.
+
+       Worker menyambung dengan fetch_types:false (lihat src/db.ts), jadi
+       postgres.js tidak punya katalog tipe dan tidak bisa menyerialkan sebuah
+       ARRAY JavaScript menjadi array literal Postgres — ia mengirimkannya
+       sebagai string biasa dan Postgres menolak dengan "malformed array
+       literal". Bentuk `in` merender satu parameter per elemen, jadi tidak ada
+       tipe array yang perlu diketahui.
+
+       Terlewat karena uji lokal memakai setelan postgres.js BAWAAN, tempat
+       fetch_types menyala dan array-nya bekerja. Deploy-nya merah, situs lama
+       selamat karena listProjects() memakai wajib(). Sekarang diuji dengan
+       setelan yang sama persis seperti Worker. */
+
     const fotoRows = await sql<
       { project_id: string; id: string; storage_key: string; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
     >`
       select project_id, id, storage_key, alt_text, caption, width, height, blur_data_url, sort_order
       from public.project_images
-      where project_id = any(${proyek.map((p) => p.id)}::uuid[]) and kind = 'galeri'
+      where project_id in ${sql(proyek.map((p) => p.id))} and kind = 'galeri'
       order by sort_order, created_at`;
 
     const per = new Map<string, Image[]>();
