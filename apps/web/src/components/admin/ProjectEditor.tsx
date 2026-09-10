@@ -10,10 +10,10 @@ import { subjudulBerguna } from "../../lib/api";
 import {
   SkeletonDaftar, SkeletonKartu, SkeletonIsian, SkeletonKotak, SkeletonTeks, Balok,
 } from "../ui/Skeleton";
-import { AlertDialog } from "../ui/overlay/Dialog";
+import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
+import { proyekAktif, onProyekAktif, bukaProyek } from "../../lib/proyekAktif";
 import {
   daftarProyek, simpanProyek, mintaUrlUnggah, type Proyek,
   ambilProgress, ubahFaseProgress, buatUlangTokenProgress,
@@ -29,7 +29,7 @@ import {
   daftarGambar, tambahGambar, ubahGambar, hapusGambar, type GambarProyek,
   terbitkanSitus, type JenisGambar,
   ambilSettings, type StudioSettings,
-  bacaCache, tulisCache,
+  bacaCache, tulisCache, jumlahDiingat,
 } from "../../lib/admin";
 import { useCegahPindah } from "../../lib/cegahPindah";
 import { unduhPdf } from "../../lib/pdf";
@@ -1505,6 +1505,269 @@ function PanelProgres({ projectId }: { projectId: string }) {
 
 type Draf = Partial<Proyek>;
 
+/* ── Memilih proyek yang akan diurus ──────────────────────────────────────── */
+
+const KUNCI_TAMPILAN = "pd-proyek-tampilan";
+type Tampilan = "tabel" | "kotak";
+
+/* LABEL_STATUS memakai yang sudah ada di berkas ini, bukan salinan kedua —
+   dua peta untuk hal yang sama pasti menyimpang saat status baru ditambahkan. */
+
+function judulKapital(t: string): string {
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : "—";
+}
+
+/**
+ * Daftar proyek dengan dua cara melihat: tabel dan kotak.
+ *
+ * Dua-duanya, bukan salah satu, karena keduanya menjawab pertanyaan berbeda.
+ * Tabel untuk "yang mana yang belum terbit" — mata menyusuri satu kolom.
+ * Kotak untuk "yang mana yang fotonya belum bagus" — dan itu justru
+ * pertanyaan yang paling sering dibawa orang ke halaman ini, karena yang
+ * diurus di sini memang tampilan.
+ *
+ * Pilihannya disimpan di localStorage: ia kenyamanan per-orang, bukan
+ * keadaan yang perlu dibagi atau dibaca ulang oleh siapa pun.
+ */
+function PilihProyek() {
+  const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
+  const [cari, setCari] = useState("");
+  // Nilai awal TIDAK dibaca dari localStorage: HTML yang dipanggang Astro
+  // tidak tahu isi penyimpanan, dan bedanya jadi ketidakcocokan hidrasi
+  // (jebakan nomor 8 di CLAUDE.md). Dipromosikan di useLayoutEffect, sebelum
+  // paint, jadi tidak ada kedipan.
+  const [tampilan, setTampilan] = useState<Tampilan>("kotak");
+  /* Foto yang sedang dilihat besar. null = penampilnya tertutup. */
+  const [foto, setFoto] = useState<{ url: string; judul: string } | null>(null);
+
+  useLayoutEffect(() => {
+    try {
+      const t = localStorage.getItem(KUNCI_TAMPILAN);
+      if (t === "tabel" || t === "kotak") setTampilan(t);
+    } catch { /* penyimpanan diblokir — bawaan tetap dipakai */ }
+  }, []);
+
+  useEffect(() => {
+    daftarProyek()
+      .then((d) => { tulisCache("proyek", d); setProyek(d); })
+      .catch(() => setProyek((l) => l ?? []));
+  }, []);
+
+  function pilihTampilan(t: Tampilan) {
+    setTampilan(t);
+    try { localStorage.setItem(KUNCI_TAMPILAN, t); } catch { /* abaikan */ }
+  }
+
+  if (proyek === null) {
+    return (
+      <div className="stack" style={{ gap: "var(--space-5)" }}>
+        <Balok tinggi="2.5rem" style={{ borderRadius: "var(--radius-pill)" }} />
+        <SkeletonDaftar jumlah={jumlahDiingat("proyek", 3)} aksi={1} />
+      </div>
+    );
+  }
+
+  const kata = cari.trim().toLowerCase();
+  const tersaring = kata
+    ? proyek.filter((p) =>
+        [p.title, p.city, p.location, p.category].some((v) => (v ?? "").toLowerCase().includes(kata)))
+    : proyek;
+
+  if (proyek.length === 0) {
+    return (
+      <div className="empty">
+        <span className="icon-tile"><Icon name="project" size={22} /></span>
+        <h2 className="t-heading">Belum ada proyek</h2>
+        <p className="t-muted">
+          Halaman publik butuh proyek untuk ditampilkan. Buat satu dulu, lalu isi
+          judul, ringkasan, dan foto galerinya di sini.
+        </p>
+        <a className="btn btn--primary" href="/admin/proyek">Buat proyek pertama</a>
+      </div>
+    );
+  }
+
+  const jumlahTerbit = proyek.filter((p) => p.status === "published").length;
+
+  /* btn--brand = merah, diminta pemilik. Merah di panel ini juga dipakai untuk
+     aksi merusak, jadi tombol ini SELALU berlabel penuh "Tambah Proyek" —
+     tidak pernah jadi tombol ikon saja, yang akan terbaca sebagai hapus. */
+  const tombolBaru = (
+    <a className="btn btn--brand pilihproyek__baru" href="/admin/proyek/baru">
+      <Icon name="projectPlus" size={18} />Tambah Proyek
+    </a>
+  );
+
+  return (
+    <div className="pilihproyek">
+      <div className="pilihproyek__judul">
+        <h2 className="t-subheading" style={{ margin: 0 }}>Semua Proyek</h2>
+        <p className="t-muted" style={{ margin: 0 }}>
+          Judul, ringkasan, dan foto galeri yang dilihat pengunjung. Klik satu untuk mulai.
+        </p>
+      </div>
+
+      {/* Bilah perkakas mengikuti bentuk referensi pemilik: satu kartu, kotak
+          cari selebar penuh di baris atas, lalu baris hitungan + aksi di
+          bawahnya. Bukan .listbar — yang itu full-bleed bergaris tebal dan
+          bentuknya lain. */}
+      <div className="pilihproyek__bar">
+        <div className="pilihproyek__cari">
+          <span className="pilihproyek__cariikon"><Icon name="search" size={20} /></span>
+          <input
+            className="input"
+            type="search"
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+            placeholder="Cari proyek, kategori, kota, tahun, atau status…"
+            aria-label="Cari proyek"
+          />
+        </div>
+
+        <div className="pilihproyek__meta">
+          <p className="pilihproyek__hitung">
+            <span>Total: <strong>{proyek.length}</strong></span>
+            <span>Terbit: <strong>{jumlahTerbit}</strong></span>
+          </p>
+
+          <div className="pilihproyek__alat">
+            {/* Kontrol segmented yang sudah ada di sistem, bukan tombol baru. */}
+            <div className="segmented" role="group" aria-label="Cara menampilkan daftar">
+              <button type="button" className="segmented__opt" aria-pressed={tampilan === "kotak"}
+                onClick={() => pilihTampilan("kotak")}>
+                <Icon name="image" size={14} /> Kotak
+              </button>
+              <button type="button" className="segmented__opt" aria-pressed={tampilan === "tabel"}
+                onClick={() => pilihTampilan("tabel")}>
+                <Icon name="list" size={14} /> Tabel
+              </button>
+            </div>
+            {tombolBaru}
+          </div>
+        </div>
+      </div>
+
+      {tersaring.length === 0 ? (
+        <div className="empty">
+          <span className="icon-tile"><Icon name="search" size={20} /></span>
+          <span className="t-subheading">Tidak ada yang cocok dengan “{cari}”</span>
+        </div>
+      ) : tampilan === "tabel" ? (
+        <div className="table-wrap">
+          <table className="table table--ruled pilihproyek__tabel">
+            <thead>
+              <tr>
+                <th scope="col" className="pilihproyek__thcover">Cover</th>
+                <th scope="col">Proyek</th>
+                <th scope="col">Kategori</th>
+                <th scope="col">Kota</th>
+                <th scope="col" className="table__num">Tahun</th>
+                <th scope="col">Status</th>
+                <th scope="col" className="table__actions">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tersaring.map((p) => (
+                <tr key={p.id} className="table__klik" onClick={() => bukaProyek(p.id)}
+                  tabIndex={0} role="button"
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); bukaProyek(p.id); } }}>
+                  <td className="pilihproyek__tdcover">
+                    {/* stopPropagation: barisnya membuka editor, gambarnya
+                        membuka fotonya. Tanpa ini, satu klik mengerjakan
+                        keduanya dan yang menang adalah yang terakhir. */}
+                    {p.coverImageUrl ? (
+                      <button type="button" className="pilihproyek__thumb"
+                        aria-label={`Lihat cover ${p.title}`}
+                        onClick={(e) => { e.stopPropagation(); setFoto({ url: p.coverImageUrl!, judul: p.title }); }}>
+                        <img src={p.coverImageUrl} alt="" loading="lazy" />
+                      </button>
+                    ) : (
+                      <span className="pilihproyek__thumb pilihproyek__thumb--kosong"
+                        title="Cover belum ada" aria-label="Cover belum ada">
+                        <Icon name="imagePlus" size={14} />
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <span className="pilihproyek__sel">
+                      <span className="pilihproyek__nama">
+                        <strong>{p.title}</strong>
+                        {p.isFeatured && <span className="badge badge--brand">Unggulan</span>}
+                      </span>
+                      <span className="pilihproyek__slug t-mono">/proyek/{p.slug}</span>
+                    </span>
+                  </td>
+                  <td>{judulKapital(p.category)}</td>
+                  <td>{p.city ?? "—"}</td>
+                  <td className="table__num t-mono">{p.year ?? "—"}</td>
+                  <td>
+                    <span className={`badge ${BADGE_STATUS[p.status] ?? ""}`}>
+                      <span className="badge__dot" />{LABEL_STATUS[p.status] ?? p.status}
+                    </span>
+                  </td>
+                  <td className="table__actions">
+                    {/* Barisnya sendiri sudah bisa diklik; tombol ini yang
+                        membuat aksinya TERLIHAT — tanpa penanda, tidak ada
+                        yang menduga baris tabel bisa ditekan. */}
+                    <span className="btn btn--secondary btn--icon btn--boxed" aria-hidden="true">
+                      <Icon name="chevronRight" size={16} />
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <ul className="pilihproyek__grid">
+          {tersaring.map((p) => (
+            <li key={p.id}>
+              <button type="button" className="pilihproyek__kartu" onClick={() => bukaProyek(p.id)}>
+                <span className="pilihproyek__gambar">
+                  {p.coverImageUrl
+                    ? <img src={p.coverImageUrl} alt="" loading="lazy" />
+                    : <span className="pilihproyek__kosong"><Icon name="imagePlus" size={20} />Cover belum ada</span>}
+                </span>
+                <span className="pilihproyek__isi">
+                  <span className="pilihproyek__nama">
+                    <strong>{p.title}</strong>
+                    {p.isFeatured && <span className="badge badge--brand">Unggulan</span>}
+                  </span>
+                  <span className="t-muted">
+                    {judulKapital(p.category)}
+                    {p.city ? ` · ${p.city}` : ""}
+                    {p.year ? ` · ${p.year}` : ""}
+                  </span>
+                  <span className={`badge ${BADGE_STATUS[p.status] ?? ""} pilihproyek__status`}>
+                    <span className="badge__dot" />{LABEL_STATUS[p.status] ?? p.status}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Penampil foto memakai Dialog yang sudah ada — perangkap fokus, Esc,
+          dan kunci gulir latar datang dari sana, bukan ditulis ulang. Yang
+          ditambahkan cuma gambarnya sendiri. */}
+      <Dialog
+        title={foto?.judul ?? ""}
+        description="Cover proyek"
+        open={foto !== null}
+        onOpenChange={(o) => { if (!o) setFoto(null); }}
+        footer={foto && (
+          <a className="btn btn--secondary" href={foto.url} target="_blank" rel="noreferrer">
+            <Icon name="external" size={16} />Buka gambar aslinya
+          </a>
+        )}
+      >
+        {foto && <img className="pilihproyek__fotobesar" src={foto.url} alt={`Cover ${foto.judul}`} />}
+      </Dialog>
+    </div>
+  );
+}
+
 export type HalamanProyek = "publik" | "klien" | "internal";
 
 function Isi({ halaman }: { halaman: HalamanProyek }) {
@@ -1648,19 +1911,14 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
     }
   }
 
-  if (siapId && !id) {
-    return (
-      <div className="empty">
-        <span className="icon-tile"><Icon name="project" size={22} /></span>
-        <h2 className="t-heading">Belum ada proyek yang dibuka</h2>
-        <p className="t-muted">
-          Pilih satu lewat kotak <strong>Cari proyek</strong> di bilah atas, atau dari daftar
-          semua proyek. Halaman ini lalu mengikuti proyek itu sampai Anda memilih yang lain.
-        </p>
-        <a className="btn btn--primary" href="/admin/proyek">Buka daftar proyek</a>
-      </div>
-    );
-  }
+  /* Tanpa proyek terpilih, halaman ini dulu menampilkan keadaan kosong yang
+     menyuruh pergi ke tempat lain — jalan buntu, dan makin terasa sejak
+     tautannya pindah ke kelompok Situs Publik: staf datang untuk mengurus
+     satu karya, lalu disuruh pindah halaman dulu.
+
+     Sekarang daftarnya ADA di sini, dan bisa dilihat dengan dua cara.
+     Pilihannya diingat, jadi tidak perlu disetel ulang tiap kali. */
+  if (siapId && !id) return <PilihProyek />;
 
   if (galat) {
     return (
@@ -1687,11 +1945,13 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       <div className="field">
         <label className="field__label" htmlFor="ed-judul">Judul</label>
         <input id="ed-judul" className="input" value={String(nilai("title") ?? "")}
+          placeholder="Contoh: Rumah Kaca"
           onChange={(e) => set("title", e.target.value)} />
       </div>
       <div className="field">
         <label className="field__label" htmlFor="ed-slug">Slug</label>
         <input id="ed-slug" className="input input--mono" value={String(nilai("slug") ?? "")}
+          placeholder="rumah-kaca"
           onChange={(e) => set("slug", e.target.value)} />
         <p className="field__help">
           Mengubah slug memutus tautan lama ke halaman ini.
@@ -1700,6 +1960,7 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       <div className="field">
         <label className="field__label" htmlFor="ed-sub">Subjudul</label>
         <input id="ed-sub" className="input" value={String(nilai("subtitle") ?? "")}
+          placeholder="Contoh: A house that keeps its garden"
           onChange={(e) => set("subtitle", e.target.value)} />
         {/* Peringatan, bukan larangan. Situs sengaja MELEWATKAN subjudul yang
             isinya sama dengan judul — kalau tidak, beranda menulis
@@ -1725,32 +1986,38 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       <div className="field">
         <label className="field__label" htmlFor="ed-ring">Ringkasan</label>
         <textarea id="ed-ring" className="input input--area" value={String(nilai("summary") ?? "")}
+          placeholder="Contoh: Rumah dua lantai di lahan 8x15 m yang mempertahankan pohon mangga di tengah tapak."
           onChange={(e) => set("summary", e.target.value)} />
       </div>
       <div className="field">
         <label className="field__label" htmlFor="ed-desc">Deskripsi</label>
         <textarea id="ed-desc" className="input input--area" style={{ minHeight: "10rem" }}
+          placeholder={"Contoh:\n\nTapaknya menghadap barat, jadi seluruh ruang duduk digeser ke sisi timur.\n\nMaterial utama bata ekspos dan kayu bengkirai."}
           value={String(nilai("description") ?? "")} onChange={(e) => set("description", e.target.value)} />
       </div>
       <div className="spec-grid spec-grid--rapat">
         <div className="field">
           <label className="field__label" htmlFor="ed-kota">Kota</label>
           <input id="ed-kota" className="input" value={String(nilai("city") ?? "")}
+            placeholder="Pontianak"
             onChange={(e) => set("city", e.target.value)} />
         </div>
         <div className="field">
           <label className="field__label" htmlFor="ed-lok">Lokasi</label>
           <input id="ed-lok" className="input" value={String(nilai("location") ?? "")}
+            placeholder="Jl. KH Wahid Hasyim"
             onChange={(e) => set("location", e.target.value)} />
         </div>
         <div className="field">
           <label className="field__label" htmlFor="ed-tahun">Tahun</label>
           <input id="ed-tahun" className="input" type="number" value={String(nilai("year") ?? "")}
+            placeholder="2026"
             onChange={(e) => set("year", Number(e.target.value) as never)} />
         </div>
         <div className="field">
           <label className="field__label" htmlFor="ed-luas">Luas (m²)</label>
           <input id="ed-luas" className="input" type="number" value={String(nilai("areaSqm") ?? "")}
+            placeholder="100"
             onChange={(e) => set("areaSqm", Number(e.target.value) as never)} />
         </div>
         {/* Nomor WhatsApp klien. Boleh ditempel apa adanya dari kontak
@@ -1843,12 +2110,14 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
       <div className="field">
         <label className="field__label" htmlFor="ed-seot">Judul SEO</label>
         <input id="ed-seot" className="input" value={String(nilai("seoTitle") ?? "")}
+          placeholder="Contoh: Rumah Kaca — rumah tropis di Pontianak"
           onChange={(e) => set("seoTitle", e.target.value)} />
         <p className="field__help">Kosongkan untuk memakai judul proyek.</p>
       </div>
       <div className="field">
         <label className="field__label" htmlFor="ed-seod">Deskripsi SEO</label>
         <textarea id="ed-seod" className="input input--area" value={String(nilai("seoDescription") ?? "")}
+          placeholder="Satu kalimat yang tampil di hasil pencarian Google."
           onChange={(e) => set("seoDescription", e.target.value)} />
       </div>
     </div>

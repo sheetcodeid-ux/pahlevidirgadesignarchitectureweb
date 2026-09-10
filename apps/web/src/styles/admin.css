@@ -392,6 +392,279 @@
   color: var(--brand);
 }
 
+/* --- Memilih proyek di Halaman Proyek -------------------------------------- */
+
+/* .admin__content:has(.proyekpage) membuang seluruh paddingnya supaya kepala
+   halaman bisa menempel penuh selebar layar. Isinya karena itu membawa
+   napasnya sendiri — tanpa ini, pemilih proyek menempel di garis sidebar.
+   Sudah dilaporkan pemilik. */
+.pilihproyek {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  min-width: 0;
+}
+
+.pilihproyek__judul { display: flex; flex-direction: column; gap: 2px; }
+.pilihproyek__judul .t-subheading { font-size: var(--text-lg); }
+.pilihproyek__judul .t-muted { font-size: var(--text-sm); max-width: none; }
+
+/* Bilah perkakas: satu kartu berisi kotak cari selebar penuh di baris atas,
+   lalu baris hitungan + aksi di bawahnya. Bentuknya diambil dari gambar
+   referensi pemilik. */
+.pilihproyek__bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+/* Ikon berdiri di atas isian, jadi isiannya sendiri yang diberi padding kiri
+   — bukan dibungkus flex. Kalau dibungkus, isian tidak bisa selebar penuh
+   tanpa menambah aturan lebar lagi. */
+.pilihproyek__cari { position: relative; display: block; }
+
+.pilihproyek__cariikon {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.pilihproyek__cari .input {
+  width: 100%;
+  height: 3.25rem;
+  padding-left: calc(var(--space-4) * 2 + 20px);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-md);
+}
+
+/* Peramban menggambar tombol silang bawaannya sendiri di type=search, dan
+   bentuknya tidak mengikuti tema mana pun. */
+.pilihproyek__cari .input::-webkit-search-cancel-button { appearance: none; }
+
+.pilihproyek__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.pilihproyek__hitung {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  max-width: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.pilihproyek__hitung strong { color: var(--text); font-weight: 600; }
+
+.pilihproyek__alat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* --- Tabel pemilih proyek ------------------------------------------------ */
+
+/* Baris dipendekkan atas laporan pemilik: bawaan .table--ruled (11px atas dan
+   bawah, ditambah baris kedua) membuat tiap baris ~71px — hampir dua kali
+   proporsi baris di gambar referensinya. Padding dikecilkan dan tinggi baris
+   dikunci ke tinggi thumbnail, bukan dibiarkan mengikuti teks. */
+/* Ditulis `.table.pilihproyek__tabel` (0,2,1) DENGAN sengaja: `.table--ruled
+   td` juga (0,1,1) dan berdiri jauh di bawah berkas ini, jadi aturan
+   berkelas tunggal kalah tanpa satu pun galat — persis jebakan nomor 6 di
+   CLAUDE.md, cuma di tabel. Sudah terukur sekali: paddingnya diubah,
+   tingginya tidak bergerak sedikit pun. */
+.table.pilihproyek__tabel td { padding: var(--space-2) var(--space-4); }
+.table.pilihproyek__tabel thead th { padding: var(--space-3) var(--space-4); }
+
+/* Baris teksnya juga dirapatkan — padding saja tidak cukup, dua baris teks
+   dengan line-height bawaan sudah 46px sendiri. */
+.pilihproyek__sel strong { line-height: 1.3; }
+
+/* Tombol di kolom Aksi diperkecil. Terukur: dialah yang paling tinggi di
+   dalam baris (37,6px) — jadi tinggi baris mengikuti dia, bukan mengikuti
+   teksnya. Diperkecil ke 28px supaya teks dua baris yang jadi penentu. */
+.table.pilihproyek__tabel .table__actions .btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+}
+
+/* Lencana "Unggulan" diperkecil di tabel dengan alasan yang sama: ukuran
+   bawaannya membuat baris proyek unggulan 6px lebih tinggi daripada baris
+   lain — satu baris yang beda sendiri lebih terlihat daripada enam pixel-nya.
+   Di kartu ia tetap ukuran penuh; di sana tidak ada baris tetangga yang
+   harus disamai. */
+.table.pilihproyek__tabel .pilihproyek__nama .badge {
+  padding: 0 var(--space-2);
+  font-size: var(--text-2xs);
+  line-height: 1.5;
+}
+
+/* Kolom cover selebar thumbnail-nya saja; sisanya milik nama proyek. */
+.pilihproyek__thcover { width: 4.5rem; }
+.pilihproyek__tdcover { width: 4.5rem; }
+
+.pilihproyek__thumb {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 30px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  cursor: zoom-in;
+  transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.pilihproyek__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pilihproyek__thumb:hover { border-color: var(--border-strong); transform: scale(1.06); }
+.pilihproyek__thumb:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
+/* Yang belum punya cover bukan tombol — tidak ada yang bisa dibuka. */
+.pilihproyek__thumb--kosong { cursor: default; color: var(--text-faint); }
+.pilihproyek__thumb--kosong:hover { border-color: var(--border); transform: none; }
+
+/* Dialog bawaan selebar 34rem — pas untuk form, sempit untuk melihat foto.
+   Dilebarkan hanya kalau isinya memang foto; :has TANPA ">" karena gambarnya
+   bersarang di dalam badan dialog, bukan anak langsungnya. */
+.ov-dialog:has(.pilihproyek__fotobesar) { width: min(56rem, calc(100vw - 2rem)); }
+
+/* Penampil foto: gambar dibatasi tinggi layar supaya yang tegak tidak
+   memaksa dialognya digulir, dan object-fit contain supaya tidak terpotong. */
+.pilihproyek__fotobesar {
+  display: block;
+  width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+}
+
+/* Sel dua baris seperti referensi: nama di atas, slug di bawahnya. Slug yang
+   ikut terlihat menjawab pertanyaan yang paling sering muncul di halaman ini
+   — alamat mana yang akan dibuka pengunjung. */
+.pilihproyek__sel { display: flex; flex-direction: column; gap: 2px; }
+
+.pilihproyek__slug {
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  line-height: 1.25;
+}
+
+@media (max-width: 40rem) {
+  .pilihproyek { padding: var(--space-4); }
+  .pilihproyek__meta { align-items: stretch; }
+  .pilihproyek__alat,
+  .pilihproyek__hitung { width: 100%; }
+  .pilihproyek__baru { flex: 1; justify-content: center; }
+}
+
+/* Baris tabel yang seluruhnya bisa diklik. Kursor DAN keadaan fokus wajib
+   ada: barisnya punya role="button" dan tabIndex, jadi ia bisa dicapai
+   keyboard — dan tanpa cincin fokus, yang memakai keyboard tidak tahu sedang
+   di baris mana. */
+.table__klik { cursor: pointer; }
+.table__klik:hover td { background: var(--surface-raised); }
+.table__klik:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+/* auto-fill, bukan auto-fit: dengan auto-fit satu kartu sendirian melar
+   selebar seluruh baris, dan kartu proyek selebar 1200px terlihat seperti
+   kesalahan. auto-fill menahan lebar kolomnya. */
+.pilihproyek__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pilihproyek__kartu {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.pilihproyek__kartu:hover { border-color: var(--border-strong); background: var(--surface-raised); }
+.pilihproyek__kartu:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
+/* aspect-ratio, bukan tinggi tetap — bentuk covernya harus sama di lebar
+   kolom mana pun (jebakan nomor 3 di CLAUDE.md). */
+.pilihproyek__gambar {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+.pilihproyek__gambar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Berpola, bukan abu polos: kotak polos terbaca sebagai gambar yang gagal
+   dimuat, sementara pola menyatakan "memang belum ada". Dan di halaman ini
+   cover yang belum ada memang hal yang perlu terlihat. */
+.pilihproyek__kosong {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  background-image: repeating-linear-gradient(45deg, var(--border) 0 1px, transparent 1px 10px);
+}
+
+.pilihproyek__isi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+}
+.pilihproyek__isi .t-muted { font-size: var(--text-xs); }
+
+.pilihproyek__nama {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.pilihproyek__nama strong { color: var(--text-strong); }
+
+/* Lencana status di kartu, bukan teks polos — warnanya yang membedakan
+   Draf dari Terbit dalam sekali lihat, dan itu makna yang sudah dipakai di
+   seluruh panel (hijau hidup, amber tertahan, netral disimpan). */
+.pilihproyek__status { align-self: flex-start; margin-top: var(--space-2); }
+
 /* --- Form tulis jurnal ----------------------------------------------------- */
 
 /* Isi tulisan adalah Markdown — permukaan yang MEMANG kode, jadi ia salah satu
