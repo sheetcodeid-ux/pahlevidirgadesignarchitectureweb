@@ -1019,4 +1019,78 @@ begin
 end;
 $$;
 
+-- client_logos --------------------------------------------------------
+--
+-- Berbeda dari testimonials dan journal_posts: SELURUH barisnya memang untuk
+-- publik, jadi tidak ada syarat status. Yang tetap harus dijaga: anon boleh
+-- MEMBACA tapi tidak boleh menulis, dan non-staf yang punya akun pun tidak.
+
+insert into public.client_logos (name, logo_key, sort_order)
+values ('Elsana Coffee', 'klien/elsana.png', 1),
+       ('Belum ada logonya', null, 2);
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_anon();
+
+  select count(*) into terlihat from public.client_logos;
+  perform pg_temp.tolak(terlihat <> 2,
+    'anon melihat seluruh logo klien, termasuk yang logonya belum diunggah');
+
+  begin
+    insert into public.client_logos (name) values ('anon nyelip');
+    raise exception 'GAGAL: anon berhasil menulis client_logos';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis client_logos';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terkena int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  update public.client_logos set name = 'dibajak' where name = 'Elsana Coffee';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0,
+    'non-staf tidak bisa mengubah logo klien (RLS memfilter, 0 baris)');
+
+  delete from public.client_logos where name = 'Elsana Coffee';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0, 'non-staf tidak bisa menghapus logo klien');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terkena int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  update public.client_logos set sort_order = 9 where name = 'Elsana Coffee';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 1, 'staf bisa mengubah urutan logo klien');
+
+  reset role;
+end;
+$$;
+
+-- Nama kosong tidak boleh masuk: marquee menampilkan nama sebagai teks selama
+-- logonya belum ada, jadi baris tanpa nama akan tampil sebagai celah kosong.
+do $$
+begin
+  begin
+    insert into public.client_logos (name) values ('   ');
+    raise exception 'GAGAL: nama klien kosong diterima';
+  exception when check_violation then
+    raise notice 'ok: nama klien kosong ditolak';
+  end;
+end;
+$$;
+
 rollback;
