@@ -110,6 +110,20 @@ jobs:
   web:
     name: Worker situs statis
     runs-on: ubuntu-latest
+    # Situs statis MEMBACA API saat build — halaman proyek dan jurnal
+    # dibekukan dari jawaban API, bukan diambil di peramban. Tanpa needs,
+    # kedua job jalan paralel dan build situs bisa menembak API versi LAMA.
+    #
+    # Terukur pada run #56: situs ter-deploy 02:16:01, API baru 02:16:33 —
+    # jadi build situs memanggil /api/v1/journal 32 detik SEBELUM endpoint itu
+    # ada. Yang terjadi bukan build merah melainkan daftar kosong yang lolos
+    # diam-diam, karena listJournal() memang sengaja bertoleransi.
+    #
+    # Kali itu tidak merugikan (jurnalnya memang masih kosong), tapi setiap
+    # fitur berikutnya yang menambah endpoint akan tayang setengah jadi pada
+    # deploy pertamanya. Ongkos urutan ini ~30 detik; ongkos kebalikannya satu
+    # putaran deploy yang salah dan sulit dilacak.
+    needs: api
     steps:
       # Ambil ujung branch produksi, bukan commit yang memicu run ini.
       #
