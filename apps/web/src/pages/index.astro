@@ -103,7 +103,7 @@ const fakta = (p: Project) =>
   description={`Houses, cafés and workplaces across ${kota} and Indonesia. You get the drawings, the schedule, and one link that shows exactly where your project stands.`}
   image={sorot[0]?.coverImageUrl}
 >
-  <div class="pita">
+  <div class="pita pita--panel">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar hero">
@@ -514,9 +514,11 @@ const fakta = (p: Project) =>
     font-weight: 600;
     flex: none;
   }
+  /* Garis atasnya dilepas: sejak garis mendatar pindah ke `.dalam`, aturan
+     ini menggambar garis KEDUA yang selebar layar dan memotong talang
+     bertitik — persis yang tidak diinginkan pemilik. */
   .hero-foto {
     position: relative;
-    border-top: 1px solid var(--garis);
   }
   .pita--gelap {
     background: var(--gelap);

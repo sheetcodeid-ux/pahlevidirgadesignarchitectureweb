@@ -101,8 +101,17 @@ const statusTeks = `Taking projects for ${tahunTawar}`;
 <style>
   /* Gaya khusus chrome nav. Sisanya — .pita, .dalam, .isi, .status, .btn —
      datang dari publik.css dan sengaja TIDAK diulang di sini. */
+  /* Tiga kolom, bukan flex: tautan harus duduk di TENGAH BILAH — bukan di
+     tengah sisa ruang setelah merek. Dengan flex, panjang wordmark studio
+     ikut menggeser tautannya, dan wordmark itu datang dari setelan yang bisa
+     diubah pemilik kapan saja.
+
+     Kolomnya disebut satu per satu supaya di ponsel — waktu tautan tengah
+     kena display:none — merek tetap di kiri dan aksinya tetap di kanan,
+     bukan naik ke kolom yang kosong. */
   .nav-baris {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 28px;
   }
@@ -112,6 +121,7 @@ const statusTeks = `Taking projects for ${tahunTawar}`;
     gap: 9px;
     padding: 0;
   }
+
   .merek__logo {
     width: 20px;
     height: 20px;
@@ -121,12 +131,18 @@ const statusTeks = `Taking projects for ${tahunTawar}`;
   .merek__teks {
     letter-spacing: 0.14em;
   }
+  .merek {
+    grid-column: 1;
+    justify-self: start;
+  }
   .nav-tautan {
+    grid-column: 2;
+    justify-self: center;
     gap: 24px;
-    margin-left: 8px;
   }
   .nav-kanan {
-    margin-left: auto;
+    grid-column: 3;
+    justify-self: end;
   }
   .laci__kop {
     display: flex;
