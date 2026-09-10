@@ -447,7 +447,69 @@ export interface StudioSettings {
   terbitSitusAktif?: boolean;
   /** Nama zona IANA (Asia/Jakarta | Asia/Makassar | Asia/Jayapura). */
   timezone?: string;
+
+  /* --- Isi halaman publik ------------------------------------------------
+   * Semuanya boleh kosong, dan halaman publik memang dirancang untuk itu:
+   * bagian yang datanya belum ada tetap dirender dengan penanda "menunggu"
+   * yang ikut dirancang. */
+  foundedYear?: number | null;
+  firstCommercialYear?: number | null;
+  /** URL siap pakai, dibalas server. */
+  beforeUrl?: string | null;
+  afterUrl?: string | null;
+  /** Key R2 dari unggahan terbaru — dikirim saat menyimpan, bukan dibaca. */
+  beforeKey?: string | null;
+  afterKey?: string | null;
+  legalEntity?: string | null;
+  legalAddress?: string | null;
+  retentionMessages?: string | null;
+  retentionDocuments?: string | null;
+  governingLaw?: string | null;
+  faqTarif?: string | null;
+  faqUangMuka?: string | null;
+  faqLamaKerja?: string | null;
+  faqKunjungan?: string | null;
 }
+
+/** Satu orang di halaman /studio. Bukan Tim & Freelancer — itu urusan lain. */
+export interface OrangStudio {
+  id: string;
+  /** Boleh kosong: kartunya tetap tampil beserta peran, bertanda menunggu. */
+  name: string | null;
+  role: string;
+  bio: string | null;
+  photoUrl: string | null;
+  slotLabel: string;
+  sortOrder: number;
+}
+
+export interface OrangStudioInput {
+  name?: string | null;
+  role?: string;
+  bio?: string | null;
+  photoKey?: string | null;
+  slotLabel?: string;
+  sortOrder?: number;
+}
+
+export const daftarOrangStudio = () => panggil<OrangStudio[]>("/admin/studio-team");
+
+export const buatOrangStudio = (input: OrangStudioInput) =>
+  panggil<{ id: string }>("/admin/studio-team", { method: "POST", body: JSON.stringify(input) });
+
+export const ubahOrangStudio = (id: string, input: OrangStudioInput) =>
+  panggil<{ updated: boolean }>(`/admin/studio-team/${id}`, {
+    method: "PATCH", body: JSON.stringify(input),
+  });
+
+export const hapusOrangStudio = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/studio-team/${id}`, { method: "DELETE" });
+
+/** Aset tingkat studio yang BUKAN logo: potret tim, foto sebelum/sesudah. */
+export const mintaUrlUnggahStudio = (contentType: string) =>
+  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
+    method: "POST", body: JSON.stringify({ scope: "studio", contentType }),
+  });
 
 /** Tiga zona Indonesia beserta singkatan yang dibaca manusia. */
 export const ZONA_WAKTU: { id: string; label: string; nama: string; utc: string }[] = [

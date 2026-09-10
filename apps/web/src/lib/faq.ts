@@ -4,10 +4,12 @@
  * tempat lain: dua salinan pasti menyimpang, dan itu bug yang sudah
  * memakan berjam-jam di stylesheet sistem.
  *
- * `menunggu: true` berarti jawabannya sudah benar tapi ANGKANYA belum
- * diberikan pemilik — halaman menandainya dengan lencana "FIGURES ON
- * REQUEST", persis seperti rancangan yang di-ACC. Empat pertanyaan yang
- * masih begitu: tarif, uang muka, lama pengerjaan, dan kunjungan ke lokasi.
+ * `angka` menyebut isian mana di /admin/halaman/faq yang mengisi
+ * angkanya. Selama isian itu kosong, halaman menandai pertanyaannya dengan
+ * lencana "FIGURES ON REQUEST" persis seperti rancangan yang di-ACC; begitu
+ * terisi, lencananya padam dan angkanya ikut dicetak di bawah jawaban —
+ * untuk pertanyaan itu saja. Empat pertanyaan yang begitu: tarif, uang muka,
+ * lama pengerjaan, dan kunjungan ke lokasi.
  */
 export type KategoriFaq = "mulai" | "uang" | "waktu" | "kerja" | "selesai";
 
@@ -26,8 +28,17 @@ export interface Tanya {
   tanya: string;
   /** HTML — jawabannya memuat <p>, <strong>, dan <ul>. */
   jawab: string;
-  /** Angkanya masih ditunggu dari pemilik. */
-  menunggu?: boolean;
+  /**
+   * Angkanya ditunggu dari pemilik, dan INI nama isian yang mengisinya di
+   * /admin/halaman/faq.
+   *
+   * Bukan sekadar `menunggu: boolean` seperti sebelumnya. Boolean cuma bisa
+   * menyalakan lencana "FIGURES ON REQUEST"; ia tidak tahu isian mana yang
+   * memadamkannya, jadi keempat pertanyaan akan menyala atau padam bersamaan
+   * walau pemilik baru mengisi satu. Dengan nama isiannya di sini, tiap
+   * pertanyaan menjawab sendiri apakah angkanya sudah ada.
+   */
+  angka?: "faqTarif" | "faqUangMuka" | "faqLamaKerja" | "faqKunjungan";
 }
 
 export const FAQ: Tanya[] = [
@@ -63,7 +74,7 @@ export const FAQ: Tanya[] = [
     id: "how-much-do-you-charge",
     kat: "uang",
     tanya: "How much do you charge?",
-    menunggu: true,
+    angka: "faqTarif",
     jawab: `<p>Fees are structured one of two ways, and we tell you which one applies before any work starts: <strong>a percentage of the construction cost</strong> for full projects, or <strong>a fixed fee per stage</strong> when the scope is clear and contained.</p>
 <p>Either way the fee is split across stages, and each stage is invoiced only when it is delivered. You are never paying for work that has not arrived yet.</p>
 <p><strong>The actual numbers are not published on this page yet.</strong> Ask in the first message and you will have them in the reply — we would rather quote against your real site than post a figure that fits nobody.</p>`,
@@ -72,7 +83,7 @@ export const FAQ: Tanya[] = [
     id: "how-much-do-you-need",
     kat: "uang",
     tanya: "How much do you need before you start?",
-    menunggu: true,
+    angka: "faqUangMuka",
     jawab: `<p>A deposit at the start of the first stage, then payments as each stage is delivered. The deposit exists because the first stage — measuring, checking regulations, testing what the plot allows — is real work whether or not the project continues.</p>
 <p><strong>The percentage is not published here yet.</strong> It comes with the written proposal, together with the schedule for every later payment, so you see the whole shape before agreeing to any of it.</p>`,
   },
@@ -102,7 +113,7 @@ export const FAQ: Tanya[] = [
     id: "how-long-does-it-take",
     kat: "waktu",
     tanya: "How long does it take?",
-    menunggu: true,
+    angka: "faqLamaKerja",
     jawab: `<p>It is decided by stages, not by a single number: understanding the site, concept, developed design, then construction drawings and permit documents. Each stage ends with something you can hold and approve before the next one starts.</p>
 <p><strong>The typical duration of each stage is not published here yet</strong> — it moves with the size of the building and with how fast permits move in your area, and a made-up range would only mislead. The written proposal carries the dates for your project specifically.</p>`,
   },
@@ -152,7 +163,7 @@ export const FAQ: Tanya[] = [
     id: "do-you-visit-the-site",
     kat: "selesai",
     tanya: "Do you visit the site during construction?",
-    menunggu: true,
+    angka: "faqKunjungan",
     jawab: `<p>Yes. How often depends on the project's size, its distance from us, and what stage the work is at — dense during structure and finishes, lighter in between.</p>
 <p><strong>The visit schedule and who pays travel for distant sites is not fixed on this page yet</strong>, because it changes completely between a site in Pontianak and one in another province. It is written into the proposal so there is no argument about it later.</p>`,
   },

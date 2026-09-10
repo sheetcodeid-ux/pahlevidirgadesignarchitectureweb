@@ -10,7 +10,6 @@ import {
   type ProjectImage,
 } from "../lib/api";
 import { SOROTAN_FAQ } from "../lib/faq";
-import { TAHUN_BERDIRI } from "../lib/menunggu";
 
 const settings = await getSettings();
 const kota = settings.city?.trim() || "Indonesia";
@@ -111,7 +110,7 @@ const fakta = (p: Project) =>
             membuatnya jadi dua spasi, dan letter-spacing .18em melebarkan
             spasi kedua itu jadi celah yang terlihat. */}
         <span class="label masuk"
-          >ARCHITECTURE STUDIO · INDONESIA · SINCE {TAHUN_BERDIRI ?? <span class="tunggu">20XX</span>}</span
+          >ARCHITECTURE STUDIO · INDONESIA · SINCE {settings.foundedYear ?? <span class="tunggu">20XX</span>}</span
         >
         <div class="s24"></div>
         <h1 class="h1">

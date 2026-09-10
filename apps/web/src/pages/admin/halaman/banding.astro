@@ -1,0 +1,12 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { BandingPanel } from "../../../components/admin/BandingPanel";
+---
+
+<AdminLayout
+  title="Sebelum & Sesudah"
+  heading="Sebelum & Sesudah"
+  description="Pembanding foto lokasi di halaman Studio. Keduanya harus ada supaya perbandingannya berarti."
+>
+  <BandingPanel client:load />
+</AdminLayout>

@@ -1,16 +1,16 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { listProjects, getSettings } from "../lib/api";
-import {
-  TAHUN_BERDIRI,
-  TAHUN_KOMERSIAL_PERTAMA,
-  TAHUN_BELUM,
-  TIM,
-  BANDING_SEBELUM,
-  BANDING_SESUDAH,
-} from "../lib/menunggu";
+import { listProjects, getSettings, listTeam } from "../lib/api";
+import { TAHUN_BELUM } from "../lib/menunggu";
 
 const settings = await getSettings();
+
+/* Semuanya dari database sekarang, diurus pemilik lewat /admin/halaman.
+   Dulu di-hardcode di lib/menunggu.ts, yang berarti hanya bisa diubah dengan
+   menyunting repo — dan itu tidak pernah terjadi. */
+const tim = await listTeam();
+const bandingSebelum = settings.beforeUrl ?? null;
+const bandingSesudah = settings.afterUrl ?? null;
 const kota = settings.city?.trim() || "Pontianak";
 const proyek = await listProjects({ limit: 200 });
 
@@ -73,14 +73,14 @@ const prinsip = [
 const proyekTerlama = [...proyek].sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999))[0];
 const garisWaktu = [
   {
-    tahun: TAHUN_BERDIRI ? String(TAHUN_BERDIRI) : TAHUN_BELUM,
-    tunggu: !TAHUN_BERDIRI,
+    tahun: settings.foundedYear ? String(settings.foundedYear) : TAHUN_BELUM,
+    tunggu: !settings.foundedYear,
     judul: "The studio starts",
     teks: "One desk, one drawing table, and the decision to stay small on purpose.",
   },
   {
-    tahun: TAHUN_KOMERSIAL_PERTAMA ? String(TAHUN_KOMERSIAL_PERTAMA) : TAHUN_BELUM,
-    tunggu: !TAHUN_KOMERSIAL_PERTAMA,
+    tahun: settings.firstCommercialYear ? String(settings.firstCommercialYear) : TAHUN_BELUM,
+    tunggu: !settings.firstCommercialYear,
     judul: "First commercial project",
     teks: "The point where the work stopped being houses only and the drawings had to answer to a business as well as a family.",
   },
@@ -108,7 +108,7 @@ const tidak = [
   ["Free concepts to compare studios.", "The first conversation is free and always will be. Drawings are not, for anyone."],
 ];
 
-const bandingSiap = Boolean(BANDING_SEBELUM && BANDING_SESUDAH);
+const bandingSiap = Boolean(bandingSebelum && bandingSesudah);
 
 const jsonLd = [
   {
@@ -190,8 +190,8 @@ const jsonLd = [
                 sebagai slot berpola yang jelas berbeda, supaya penggesernya
                 tetap terbaca bekerja. */}
             <div class={bandingSiap ? "ba__b" : "ba__b ba__b--built"}>
-              {BANDING_SESUDAH ? (
-                <img src={BANDING_SESUDAH} alt="The site after construction" />
+              {bandingSesudah ? (
+                <img src={bandingSesudah} alt="The site after construction" />
               ) : (
                 <span>
                   PHOTO — BUILT
@@ -200,8 +200,8 @@ const jsonLd = [
               )}
             </div>
             <div class={bandingSiap ? "ba__b ba__sebelum" : "ba__b ba__sebelum ba__b--found"} id="baSebelum">
-              {BANDING_SEBELUM ? (
-                <img src={BANDING_SEBELUM} alt="The site as found" />
+              {bandingSebelum ? (
+                <img src={bandingSebelum} alt="The site as found" />
               ) : (
                 <span>
                   PHOTO — SITE AS FOUND
@@ -263,22 +263,22 @@ const jsonLd = [
       </div>
       <div class="baris b2">
         {
-          TIM.map((o) => (
+          tim.map((o) => (
             <div class="sel tim tim--rapat">
-              <div class={o.foto ? "tim__foto" : "tim__foto tim__foto--kosong"}>
-                {o.foto ? (
-                  <img src={o.foto} alt={o.nama ?? o.peran} />
+              <div class={o.photoUrl ? "tim__foto" : "tim__foto tim__foto--kosong"}>
+                {o.photoUrl ? (
+                  <img src={o.photoUrl} alt={o.name ?? o.role} />
                 ) : (
                   <span>
-                    PHOTO — {o.slot}
+                    PHOTO — {o.slotLabel}
                     <small>portrait 4:5</small>
                   </span>
                 )}
               </div>
               <div class="tim__isi">
-                <div class={o.nama ? "tim__nm" : "tim__nm tunggu"}>{o.nama ?? "Name to follow"}</div>
-                <div class={o.nama ? "tim__pr" : "tim__pr tim__pr--tunggu"}>{o.peran}</div>
-                <p class="tim__ket">{o.ket}</p>
+                <div class={o.name ? "tim__nm" : "tim__nm tunggu"}>{o.name ?? "Name to follow"}</div>
+                <div class={o.name ? "tim__pr" : "tim__pr tim__pr--tunggu"}>{o.role}</div>
+                {o.bio && <p class="tim__ket">{o.bio}</p>}
               </div>
             </div>
           ))

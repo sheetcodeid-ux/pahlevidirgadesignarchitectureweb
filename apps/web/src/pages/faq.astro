@@ -1,6 +1,23 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { FAQ, LABEL_FAQ, type KategoriFaq } from "../lib/faq";
+import { getSettings } from "../lib/api";
+import { FAQ, LABEL_FAQ, type KategoriFaq, type Tanya } from "../lib/faq";
+
+const setelan = await getSettings();
+
+/**
+ * Angka yang sudah diisi pemilik di /admin/halaman/faq.
+ *
+ * Dipakai dua kali di bawah dan sengaja dihitung sekali: lencana "FIGURES ON
+ * REQUEST" hanya menyala kalau angkanya BELUM ada, dan angkanya hanya dicetak
+ * kalau SUDAH ada. Dua pemeriksaan yang harus selalu berlawanan — menghitungnya
+ * dua kali adalah cara termudah membuat lencana dan angkanya tampil bersamaan.
+ */
+const angkaFaq = (t: Tanya): string | null => {
+  if (!t.angka) return null;
+  const v = setelan[t.angka];
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+};
 
 const urut: KategoriFaq[] = ["mulai", "uang", "waktu", "kerja", "selesai"];
 const daftar = urut.flatMap((k) => FAQ.filter((t) => t.kat === k));
@@ -102,11 +119,25 @@ const jsonLd = [
                   <span class="tny__t">
                     <span class="tny__kat">{LABEL_FAQ[t.kat]}</span>
                     {t.tanya}
-                    {t.menunggu && <span class="lencana lencana--tanya">FIGURES ON REQUEST</span>}
+                    {t.angka && !angkaFaq(t) && (
+                      <span class="lencana lencana--tanya">FIGURES ON REQUEST</span>
+                    )}
                   </span>
                   <span class="tny__i" aria-hidden="true" />
                 </summary>
-                <div class="tny__b" set:html={t.jawab} />
+                <div class="tny__b">
+                  <Fragment set:html={t.jawab} />
+                  {/* Angkanya dicetak SESUDAH jawaban, bukan disisipkan ke
+                      dalamnya. Menyisipkannya berarti mengarang kalimat di
+                      sekitar angka pemilik; ditaruh di sini, yang dia tulis
+                      tampil apa adanya. */}
+                  {angkaFaq(t) && (
+                    <p class="tny__angka">
+                      <span class="tny__angka-l">The figure</span>
+                      <strong>{angkaFaq(t)}</strong>
+                    </p>
+                  )}
+                </div>
               </details>
             ))
           }

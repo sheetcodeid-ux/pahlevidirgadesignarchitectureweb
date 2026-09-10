@@ -392,6 +392,132 @@
   color: var(--brand);
 }
 
+/* --- Isi halaman publik (Situs Publik) ------------------------------------ */
+
+/* Penanda berapa isian yang masih kosong. Amber, bukan merah: bagian yang
+   belum terisi bukan kerusakan — halamannya tetap tayang dengan penanda
+   "menunggu" yang memang ikut dirancang. Hijau begitu lengkap. */
+.isihal__sisa,
+.banding__grid ~ .isihal__sisa {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--warn-line);
+  border-radius: var(--radius-md);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.isihal__sisa svg { flex: none; margin-top: 0.05rem; }
+.isihal__sisa--penuh {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* Dua kolom di layar lebar, satu di sempit. auto-fit dengan lebar minimum,
+   BUKAN container query — wadah query terdekatnya tidak membungkus panel ini,
+   dan aturan yang tidak pernah menyala adalah jebakan nomor 4 di CLAUDE.md. */
+.isihal__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.isihal__kaki {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+/* --- Potret tim ------------------------------------------------------------ */
+
+/* 4:5 tegak, bentuk yang sama dengan kartu tim di halaman /studio — jadi
+   pemilik melihat proporsi yang benar-benar tayang, bukan kotak sembarang. */
+.tim-foto {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 4.0625rem;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+}
+
+.tim-foto img { width: 100%; height: 100%; object-fit: cover; }
+
+.tim-foto__slot {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  text-align: center;
+  padding-inline: 0.2rem;
+}
+
+/* --- Sebelum & Sesudah ----------------------------------------------------- */
+
+.banding__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  gap: var(--space-5);
+}
+
+.banding__kartu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.banding__judul {
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* aspect-ratio, BUKAN tinggi tetap: kotaknya harus tetap 16:10 berapa pun
+   lebar kolomnya. Jebakan nomor 3 di CLAUDE.md — flex:1 membuat tingginya
+   mengikuti sisa ruang viewport dan bentuknya berubah di layar pendek. */
+.banding__kotak {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.banding__kotak img { width: 100%; height: 100%; object-fit: cover; }
+
+.banding__slot {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-faint);
+  /* Berpola, bukan polos: kotak abu polos terbaca sebagai gambar yang gagal
+     dimuat, sementara pola menyatakan "memang belum ada isinya". */
+  background-image:
+    repeating-linear-gradient(45deg,
+      var(--border) 0 1px, transparent 1px 10px);
+}
+.banding__kartu .field__help { margin: 0; }
+
 /* --- Pratinjau logo klien -------------------------------------------------- */
 
 /* Kelas ini SUDAH dipakai di ClientLogosPanel sejak awal tapi tidak pernah

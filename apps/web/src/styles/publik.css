@@ -264,6 +264,13 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   .mq__i:hover .mq__logo{transform:none}
 }
 @keyframes geser{to{transform:translateX(-50%)}}
+/* Angka FAQ yang sudah diisi pemilik lewat /admin/halaman/faq. Dicetak
+   SESUDAH jawaban, bukan disisipkan ke dalam kalimatnya — menyisipkannya
+   berarti mengarang kalimat di sekitar angka yang dia tulis. */
+.tny__angka{display:flex;align-items:baseline;gap:10px;margin-top:16px;padding:12px 14px;
+  border:1px solid var(--garis-2);border-radius:12px;background:var(--sel)}
+.tny__angka-l{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--teks-3);flex:none}
+.tny__angka strong{color:var(--teks-1);font-size:14px}
 /* ═══ TAB SHOWCASE ════════════════════════════════════════════════════════ */
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--garis);
   position:relative}

@@ -1,0 +1,47 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
+
+/* Empat pertanyaan di /faq yang jawabannya sudah benar dan sudah tayang —
+   yang belum ada cuma angkanya. Selama kosong, pertanyaan itu memakai lencana
+   "FIGURES ON REQUEST"; begitu terisi, lencananya padam untuk pertanyaan itu
+   saja, bukan untuk keempatnya sekaligus. */
+const isian: Isian[] = [
+  {
+    kunci: "faqTarif",
+    label: "Tarif jasa",
+    contoh: "8–12% dari biaya konstruksi",
+    bantuan: 'Menjawab "How much do you charge?" di halaman FAQ.',
+  },
+  {
+    kunci: "faqUangMuka",
+    label: "Uang muka",
+    contoh: "30% di awal tahap pertama",
+    bantuan: 'Menjawab "How much do you need before you start?".',
+  },
+  {
+    kunci: "faqLamaKerja",
+    label: "Lama pengerjaan",
+    contoh: "4–6 bulan untuk rumah tinggal",
+    bantuan: "Perkiraan waktu dari tahap pertama sampai gambar kerja selesai.",
+  },
+  {
+    kunci: "faqKunjungan",
+    label: "Kunjungan ke lokasi",
+    contoh: "Dua kali per tahap, lebih kalau diperlukan",
+    bantuan: "Seberapa sering studio datang ke lokasi selama proyek berjalan.",
+  },
+];
+---
+
+<AdminLayout
+  title="Angka di FAQ"
+  heading="Angka di FAQ"
+  description="Empat pertanyaan yang jawabannya sudah tayang tapi angkanya belum diberikan."
+>
+  <IsiHalamanPanel
+    client:load
+    isian={isian}
+    catatan="Isi dengan kalimat pendek, bukan sekadar bilangan — yang dibaca calon klien adalah kalimatnya. Boleh berupa rentang."
+  />
+</AdminLayout>
