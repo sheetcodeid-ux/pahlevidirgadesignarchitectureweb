@@ -107,6 +107,12 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
+    {/* Menyalakan penanda `js` SEBELUM badan halaman dilukis. Keadaan awal
+        animasi masuk (transparan, turun 18px) hanya berlaku di bawah penanda
+        ini — jadi tanpa JS halamannya tetap terbaca penuh, dan dengan JS
+        tidak pernah ada kedipan "terlihat lalu disembunyikan". */}
+    <script is:inline>document.documentElement.classList.add("js");</script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

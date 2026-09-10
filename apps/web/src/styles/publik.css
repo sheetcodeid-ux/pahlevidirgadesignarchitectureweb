@@ -243,6 +243,53 @@ body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
    garisnya. */
 .kop-seksi{padding:84px 44px 40px;text-align:center}
 .kop-seksi .lead,.kop-seksi p{margin-inline:auto}
+
+/* ═══ MUNCUL SAAT DIGULIR ═════════════════════════════════════════════════
+   Keadaan awalnya HANYA berlaku di bawah `html.js`. Tanpa itu, halaman yang
+   JS-nya gagal termuat akan tinggal bidang kosong — dan halaman ini statis,
+   jadi seluruh isinya sudah ada di HTML dan memang harus terbaca tanpa JS.
+   Penanda `js` dipasang skrip sebaris di <head>, sebelum lukisan pertama,
+   supaya tidak ada kedipan "terlihat lalu disembunyikan". */
+html.js .wahyu{opacity:0;transform:translateY(18px);
+  transition:opacity 620ms var(--e-keluar),transform 620ms var(--e-keluar)}
+html.js .wahyu.tampak{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html.js .wahyu{opacity:1;transform:none;transition:none}
+}
+
+/* ═══ SENTUHAN KURSOR ═════════════════════════════════════════════════════
+   Seluruhnya di dalam (hover:hover). Di layar sentuh, `:hover` menempel
+   setelah satu ketukan dan tidak pernah lepas — keadaan sorot yang macet
+   permanen. Ini saudara dekat jebakan onMouseEnter yang sudah pernah
+   menggigit di ponsel pemilik. */
+@media (hover:hover){
+  .sel{transition:background 220ms var(--e-halus)}
+  .baris .sel:hover{background:rgba(255,255,255,.022)}
+  .kotak-ikon{transition:border-color 220ms var(--e-halus),background 220ms var(--e-halus),
+    box-shadow 220ms var(--e-halus)}
+  .sel:hover .kotak-ikon{border-color:var(--isi);background:rgba(45,212,191,.08);
+    box-shadow:0 0 0 4px rgba(45,212,191,.06)}
+  /* Foto ikut hidup, tapi hanya di dalam kotaknya: .foto sudah overflow
+     tersembunyi, jadi yang membesar tidak pernah melewati tepinya. */
+  .foto--nyata img,.proses__foto img{transition:transform 900ms var(--e-keluar)}
+  .sel:hover .foto--nyata img,.proses__foto:hover img{transform:scale(1.035)}
+}
+
+/* ═══ NOMOR LANGKAH ═══════════════════════════════════════════════════════
+   Angka besar yang nyaris menyatu dengan latar — penanda urutan yang terbaca
+   sekilas tanpa ikut berebut perhatian dengan judul langkahnya. Dihitung
+   CSS, bukan diketik: kalau langkahnya bertambah atau bertukar urutan,
+   nomornya ikut sendiri. */
+.proses-seksi{counter-reset:langkah}
+.proses__teks{counter-increment:langkah;position:relative;overflow:hidden}
+.proses__teks::after{content:counter(langkah,decimal-leading-zero);
+  position:absolute;right:22px;top:6px;z-index:0;pointer-events:none;
+  font-size:104px;font-weight:700;line-height:1;letter-spacing:-.05em;
+  color:var(--sel);opacity:.55}
+.proses__teks > *{position:relative;z-index:1}
+@media (max-width:900px){
+  .proses__teks::after{font-size:72px;right:14px}
+}
 /* Sel: berbagi garis; pemisahnya diberi ⊤ di ujung atas dan ⊥ di ujung bawah,
    karena garis tegak itu memang berhenti di situ. Persis aturan Anda. */
 .baris{display:grid}

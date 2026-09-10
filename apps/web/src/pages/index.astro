@@ -151,7 +151,7 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="baris b3">
+      <div class="baris b3 wahyu">
         {
           janji.map(([d, judul, teks]) => (
             <div class="sel">
@@ -180,7 +180,7 @@ const fakta = (p: Project) =>
     klien.length > 0 && (
       <div class="pita">
         <div class="dalam">
-          <div class="isi kop-seksi mq-kop">
+          <div class="isi kop-seksi wahyu mq-kop">
             {/* Judulnya "clients", bukan "materials & partners", karena yang dikirim
                 pemilik adalah nama klien. Judul lama di atas daftar klien adalah
                 pernyataan yang tidak benar, bukan sekadar salah kata. */}
@@ -349,8 +349,8 @@ const fakta = (p: Project) =>
   </div>
 
   <div class="pita">
-    <div class="dalam">
-      <div class="isi kop-seksi">
+    <div class="dalam proses-seksi">
+      <div class="isi kop-seksi wahyu">
         <span class="label">HOW IT GOES</span>
         <div class="s16"></div>
         <h2 class="h2">Three steps before a single line is drawn.</h2>
@@ -389,14 +389,14 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="isi kop-seksi">
+      <div class="isi kop-seksi wahyu">
         <span class="label">WHY OWNERS ABROAD PICK US</span>
         <div class="s16"></div>
         <h2 class="h2">Distance is a scheduling problem, not a design problem.</h2>
       </div>
       {
         [fitur.slice(0, 3), fitur.slice(3)].map((baris) => (
-          <div class="baris b3">
+          <div class="baris b3 wahyu">
             {baris.map(([ikon, judul, teks]) => (
               <div class="sel">
                 <span class="kotak-ikon">
@@ -416,8 +416,8 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="isi kop-seksi"><span class="label">FROM CLIENTS</span></div>
-      <div class="baris b3">
+      <div class="isi kop-seksi wahyu"><span class="label">FROM CLIENTS</span></div>
+      <div class="baris b3 wahyu">
         {
           testimoni.length > 0
             ? testimoni.slice(0, 3).map((t) => (
@@ -447,7 +447,7 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="baris baris-faq">
+      <div class="baris baris-faq wahyu">
         <div class="sel faq-kiri">
           <span class="label">BEFORE YOU ASK</span>
           <div class="s16"></div>
@@ -863,5 +863,41 @@ const fakta = (p: Project) =>
     });
     hitungSemua();
     addEventListener("resize", hitungSemua);
+  })();
+</script>
+
+<script>
+  /* Blok bertanda .wahyu muncul saat masuk layar. IntersectionObserver, bukan
+     listener scroll: pengamat tidak dipanggil di tiap frame gulir, jadi ia
+     tidak ikut menahan gulir di ponsel.
+
+     Sekali muncul, pengamatannya DILEPAS. Blok yang menghilang lagi saat
+     digulir balik bukan gaya, itu gangguan — dan di halaman sepanjang ini
+     pengunjung sering menggulir naik-turun untuk membandingkan dua bagian. */
+  (() => {
+    "use strict";
+    const blok = document.querySelectorAll<HTMLElement>(".wahyu");
+    if (!blok.length) return;
+
+    // Tanpa IntersectionObserver — peramban tua — semuanya langsung tampil.
+    if (!("IntersectionObserver" in window)) {
+      blok.forEach((b) => b.classList.add("tampak"));
+      return;
+    }
+
+    const pengamat = new IntersectionObserver(
+      (masuk) => {
+        masuk.forEach((e) => {
+          if (!e.isIntersecting) return;
+          (e.target as HTMLElement).classList.add("tampak");
+          pengamat.unobserve(e.target);
+        });
+      },
+      /* rootMargin bawah -8%: blok dianggap masuk sedikit SEBELUM tepi bawah,
+         supaya animasinya sudah selesai waktu mata sampai ke sana. */
+      { threshold: 0.06, rootMargin: "0px 0px -8% 0px" },
+    );
+
+    blok.forEach((b) => pengamat.observe(b));
   })();
 </script>
