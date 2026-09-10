@@ -31,9 +31,13 @@ const NAV: NavItem[] = [
     group: "Utama",
     children: [
       { label: "Semua Proyek", href: "/admin/proyek", icon: "list" },
-      // Ketiganya mengikuti proyek yang dipilih di combobox topbar. Semua
+      // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
       // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
-      { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "image" },
+      //
+      // Yang ketiga, "Halaman Publik", pindah ke kelompok Situs Publik atas
+      // permintaan pemilik: isinya memang yang dilihat pengunjung, dan dia
+      // mencarinya di sana. Halamannya tidak berubah dan tetap mengikuti
+      // combobox yang sama — yang pindah cuma tautannya.
       { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document" },
       { label: "Kerja Internal", href: "/admin/proyek/internal", icon: "checklist" },
     ],
@@ -52,8 +56,10 @@ const NAV: NavItem[] = [
    * Datar karena pemilik datang ke sini untuk MENGISI satu hal tertentu
    * ("tambahkan foto tim"), bukan untuk menjelajah; menu yang harus diklik
    * dua kali menyembunyikan justru daftar yang jadi pengingatnya. Namanya
-   * "Situs Publik", bukan "Halaman Publik", karena label kedua sudah dipakai
-   * submenu Proyek untuk hal yang berbeda — halaman satu proyek.
+   * "Situs Publik", bukan "Halaman Publik", karena label kedua dulu dipakai
+   * submenu Proyek — dan sekarang ia sendiri sudah pindah ke sini sebagai
+   * "Halaman Proyek", jadi dua label serupa di satu kelompok akan lebih
+   * membingungkan lagi.
    *
    * Isinya satu jenis pekerjaan yang jelas: menyunting apa yang dibaca
    * PENGUNJUNG. Bedanya nyata dari sisa panel — halaman di sini dibekukan
@@ -65,6 +71,10 @@ const NAV: NavItem[] = [
    * nama staf kedua, foto tim, foto sebelum/sesudah, empat isian privasi,
    * dan empat angka FAQ sudah berbulan menampilkan penanda "menunggu" di
    * situs yang tayang. */
+  /* Satu-satunya di kelompok ini yang mengikuti proyek terpilih di bilah atas;
+     sisanya berlaku untuk seluruh studio. Ditaruh paling atas karena ia yang
+     paling sering disentuh — judul, galeri, dan SEO tiap karya. */
+  { label: "Halaman Proyek", href: "/admin/proyek/publik", icon: "project", group: "Situs Publik" },
   { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", group: "Situs Publik" },
   { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", group: "Situs Publik" },
   { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", group: "Situs Publik" },
