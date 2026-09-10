@@ -859,3 +859,49 @@ export const ubahTestimoni = (id: string, patch: Partial<TestimoniAdmin>) =>
 
 export const hapusTestimoni = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/testimonials/${id}`, { method: "DELETE" });
+
+// --- Jurnal ---------------------------------------------------------------
+
+export type KategoriJurnal = "site" | "money" | "permit" | "build";
+
+export interface TulisanAdmin {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body?: string | null;
+  category: KategoriJurnal;
+  readMinutes: number;
+  /** null = masih rencana. Tanggal di masa depan = terjadwal. */
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const daftarTulisan = () => panggil<TulisanAdmin[]>("/admin/journal");
+
+export const ambilTulisan = (id: string) => panggil<TulisanAdmin>(`/admin/journal/${id}`);
+
+export const buatTulisan = (isi: Partial<TulisanAdmin>) =>
+  panggil<{ id: string }>("/admin/journal", { method: "POST", body: JSON.stringify(isi) });
+
+export const ubahTulisan = (id: string, patch: Partial<TulisanAdmin>) =>
+  panggil<{ updated: boolean }>(`/admin/journal/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+export const hapusTulisan = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/journal/${id}`, { method: "DELETE" });
+
+/**
+ * Judul jadi slug. Dijalankan di klien supaya pemilik melihat alamatnya
+ * SEBELUM menyimpan — slug ikut ke URL yang dibagikan, dan mengubahnya
+ * setelah tulisan tersebar berarti mematikan setiap tautan yang sudah ada.
+ */
+export function slugDariJudul(judul: string): string {
+  return judul
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // buang aksen
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120)
+    .replace(/-+$/g, "");
+}

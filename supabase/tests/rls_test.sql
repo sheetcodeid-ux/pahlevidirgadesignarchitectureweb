@@ -906,4 +906,117 @@ begin
 end;
 $$;
 
+-- journal_posts -------------------------------------------------------
+--
+-- Pola yang sama dengan testimonials: anon boleh SELECT, tapi RLS membatasi
+-- hanya baris yang BENAR-BENAR sudah terbit. Dua hal yang dijaga di sini dan
+-- tidak dijaga tabel lain: baris "rencana" (published_at null) dan baris yang
+-- tanggal terbitnya masih di depan.
+
+insert into public.journal_posts (slug, title, excerpt, body, category, published_at)
+values
+  ('tapak-sembilan-pertanyaan', 'Sembilan pertanyaan sebelum membeli tanah',
+   'Orientasi, akses, air, dan tembok tetangga menentukan lebih banyak daripada gambar mana pun.',
+   repeat('Isi tulisan yang panjangnya cukup untuk lolos syarat terbit. ', 6),
+   'site', now() - interval '1 day'),
+  ('kemana-anggaran-pergi', 'Ke mana anggaran bangunan sebenarnya pergi',
+   'Porsi yang berakhir di struktur, di finishing, dan di hal-hal yang tidak difoto siapa pun.',
+   null, 'money', null),
+  ('dijadwalkan-besok', 'Tulisan yang dijadwalkan besok',
+   'Belum waktunya tampil, dan tanggalnya masih di depan.',
+   repeat('Isi tulisan yang panjangnya cukup untuk lolos syarat terbit. ', 6),
+   'permit', now() + interval '1 day');
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_anon();
+
+  select count(*) into terlihat from public.journal_posts;
+  perform pg_temp.tolak(terlihat <> 1,
+    'anon hanya melihat tulisan yang sudah terbit (bukan rencana, bukan yang dijadwalkan)');
+
+  select count(*) into terlihat from public.journal_posts
+  where slug = 'kemana-anggaran-pergi';
+  perform pg_temp.tolak(terlihat <> 0, 'anon tidak melihat tulisan berencana');
+
+  select count(*) into terlihat from public.journal_posts
+  where slug = 'dijadwalkan-besok';
+  perform pg_temp.tolak(terlihat <> 0, 'anon tidak melihat tulisan yang tanggalnya masih di depan');
+
+  begin
+    insert into public.journal_posts (slug, title, excerpt)
+    values ('anon-nyelip', 'Judul dari anon', 'Kalimat pembuka yang cukup panjang untuk lolos.');
+    raise exception 'GAGAL: anon berhasil menulis journal_posts';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis journal_posts';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int; terkena int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  select count(*) into terlihat from public.journal_posts;
+  perform pg_temp.tolak(terlihat <> 1,
+    'non-staf hanya melihat tulisan terbit, sama seperti anon');
+
+  update public.journal_posts set title = 'dibajak' where slug = 'tapak-sembilan-pertanyaan';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0,
+    'non-staf tidak bisa mengubah tulisan (RLS memfilter, 0 baris)');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into terlihat from public.journal_posts;
+  perform pg_temp.tolak(terlihat <> 3, 'staf melihat SELURUH tulisan termasuk rencana');
+
+  update public.journal_posts set read_minutes = 9 where slug = 'kemana-anggaran-pergi';
+  perform pg_temp.tolak(
+    (select read_minutes from public.journal_posts where slug = 'kemana-anggaran-pergi') <> 9,
+    'staf bisa mengubah tulisan berencana');
+
+  reset role;
+end;
+$$;
+
+-- Draf kosong tidak boleh diterbitkan. Satu klik "terbitkan" pada draf kosong
+-- menayangkan halaman kosong yang langsung terindeks mesin pencari.
+do $$
+begin
+  begin
+    update public.journal_posts set published_at = now()
+    where slug = 'kemana-anggaran-pergi';
+    raise exception 'GAGAL: tulisan tanpa isi berhasil diterbitkan';
+  exception when check_violation then
+    raise notice 'ok: tulisan tanpa isi ditolak saat diterbitkan';
+  end;
+end;
+$$;
+
+-- Slug dipakai langsung di URL /jurnal/<slug>. Spasi dan huruf besar membuat
+-- tautannya pecah diam-diam begitu dibagikan.
+do $$
+begin
+  begin
+    insert into public.journal_posts (slug, title, excerpt)
+    values ('Slug Dengan Spasi', 'Judul', 'Kalimat pembuka yang cukup panjang untuk lolos.');
+    raise exception 'GAGAL: slug bertanda spasi diterima';
+  exception when check_violation then
+    raise notice 'ok: slug bertanda spasi ditolak';
+  end;
+end;
+$$;
+
 rollback;

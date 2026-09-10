@@ -1,0 +1,216 @@
+---
+/**
+ * Indeks jurnal.
+ *
+ * Menampilkan tulisan yang sudah terbit DAN yang masih rencana. Rancangan
+ * yang di-ACC memang begitu: mengisi indeks dengan judul palsu yang tidak
+ * bisa dibuka adalah cara tercepat kehilangan kepercayaan pembaca yang
+ * datang dari pencarian, jadi yang belum ditulis ditandai dengan tegas
+ * alih-alih disembunyikan.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { listJournal, type KategoriJurnal } from "../../lib/api";
+
+const semua = await listJournal();
+
+const KAT: Record<KategoriJurnal, string> = {
+  site: "Site & climate",
+  money: "Money",
+  permit: "Permits",
+  build: "Building",
+};
+
+const sekarang = Date.now();
+const sudahTerbit = (t: { publishedAt?: string | null }) =>
+  Boolean(t.publishedAt) && Date.parse(t.publishedAt!) <= sekarang;
+
+/* Yang terjadwal diperlakukan sama dengan rencana di halaman publik: belum
+   waktunya dibaca, jadi belum boleh punya tautan yang bisa diklik. */
+const tulisan = semua.map((t) => ({ ...t, siap: sudahTerbit(t) }));
+
+const jumlahKat = (k: string) =>
+  k === "semua" ? tulisan.length : tulisan.filter((t) => t.category === k).length;
+
+const terbit = tulisan.filter((t) => t.siap).length;
+
+const tgl = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+---
+
+<BaseLayout
+  title="Journal"
+  description="What we learned the expensive way, written down so you do not have to — about plots, permits, budgets and builders."
+>
+  <div class="pita">
+    <div class="dalam titik pijar">
+      <span class="pijar-lapis" aria-hidden="true"></span>
+      <div class="isi isi--longgar">
+        <span class="label masuk">JOURNAL</span>
+        <div class="s24"></div>
+        <h1 class="h1" style="font-size:clamp(2.2rem,4.4vw,3.4rem)">
+          <span class="brs"><i>What we learned the</i></span>
+          <span class="brs"><i><span class="ak">expensive way</span>, written down</i></span>
+          <span class="brs"><i>so you do not have to.</i></span>
+        </h1>
+        <div class="s24"></div>
+        <p class="lead masuk masuk--3">
+          Not marketing. These are the things we end up explaining on the phone every few weeks —
+          about plots, permits, budgets and builders. If one of them saves you a mistake before you
+          ever contact us, it did its job.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pita pita--akhir">
+    <div class="dalam">
+      <div class="baris baris-jur">
+        <div class="sel sel-rel-j">
+          <div style="padding:26px 26px 16px"><span class="label label--redup">TOPICS</span></div>
+          <div style="padding:0 26px 24px">
+            <div class="pils" id="pils">
+              <button type="button" class="pil pil--on" data-kat="semua">
+                All <span class="dim">{jumlahKat("semua")}</span>
+              </button>
+              {
+                Object.entries(KAT).map(([k, l]) => (
+                  <button type="button" class="pil" data-kat={k}>
+                    {l} <span class="dim">{jumlahKat(k)}</span>
+                  </button>
+                ))
+              }
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--garis);padding:24px 26px">
+            <span class="label label--redup">HOW OFTEN</span>
+            <div class="s10"></div>
+            <p class="mut kecil">
+              Whenever something is worth writing down — not on a schedule. We do not run a
+              newsletter and will not ask for your email here.
+            </p>
+            <div class="s16"></div>
+            <p class="dim kecil" id="hitung" aria-live="polite" role="status">
+              {terbit} published · {tulisan.length - terbit} planned
+            </p>
+          </div>
+        </div>
+
+        <div class="sel sel-art" id="daftar">
+          {
+            tulisan.map((t) => {
+              const meta = (
+                <div class="art__m">
+                  <b>{KAT[t.category] ?? t.category}</b>
+                  {t.siap ? (
+                    <Fragment>{tgl(t.publishedAt!)}<br />{t.readMinutes} min read</Fragment>
+                  ) : (
+                    <Fragment>Planned<br />~{t.readMinutes} min</Fragment>
+                  )}
+                </div>
+              );
+              const isi = (
+                <div>
+                  <h2 class="art__j">
+                    {t.title}
+                    {!t.siap && <span class="rencana-cap">Not written yet</span>}
+                  </h2>
+                  <p class="art__r">{t.excerpt}</p>
+                </div>
+              );
+              return t.siap ? (
+                <a class="art" href={`/jurnal/${t.slug}`} data-kat={t.category}>{meta}{isi}</a>
+              ) : (
+                <div class="art art--rencana" data-kat={t.category}>{meta}{isi}</div>
+              );
+            })
+          }
+          {
+            tulisan.length === 0 && (
+              <p class="mut kecil" style="padding:26px 0">
+                Nothing here yet. The first pieces are being written.
+              </p>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* ══ Indeks jurnal ═════════════════════════════════════════════════════ */
+  .art{display:grid;grid-template-columns:150px 1fr;gap:0 26px;padding:26px 0;
+    border-top:1px solid var(--garis);position:relative;text-decoration:none;color:inherit}
+  .art:first-of-type{border-top:0}
+  .art__m{font-size:12px;color:var(--teks-3);line-height:1.7}
+  .art__m b{display:block;color:var(--aksen);font-weight:600;font-size:10.5px;
+    letter-spacing:.13em;text-transform:uppercase;margin-bottom:6px}
+  .art__j{font-family:var(--judul);font-size:21px;color:var(--teks);line-height:1.3;
+    margin-bottom:9px;position:relative;display:inline-block}
+  .art__j::after{content:"";position:absolute;left:0;bottom:-3px;height:1px;width:100%;
+    background:var(--aksen);transform:scaleX(0);transform-origin:left;
+    transition:transform 260ms var(--e-keluar)}
+  .art:hover .art__j::after,.art:focus-visible .art__j::after{transform:scaleX(1)}
+  .art__r{font-size:14.5px;color:var(--teks-2);line-height:1.68;max-width:66ch}
+  .art:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--cincin)}
+
+  /* Tulisan yang direncanakan — dibedakan tegas supaya tidak ada yang mengira
+     ia sudah bisa dibaca. Pola yang sama dengan kategori kosong di /work. */
+  .art--rencana{cursor:default;opacity:.72}
+  .art--rencana .art__j{color:var(--teks-2);font-size:19px}
+  .art--rencana .art__j::after{display:none}
+  .art--rencana .art__m b{color:var(--teks-3)}
+  .rencana-cap{display:inline-block;border:1px dashed var(--garis-2);color:var(--teks-3);
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;
+    margin-left:10px;vertical-align:3px;font-weight:600}
+
+  .pils{display:flex;flex-wrap:wrap;gap:8px}
+  .baris-jur{grid-template-columns:280px 1fr}
+  .sel-rel-j{padding:0;position:sticky;top:0;align-self:start}
+  .sel-art{padding:12px 34px 34px}
+  @media (max-width:900px){
+    .baris-jur{grid-template-columns:1fr}
+    .baris-jur > .sel-rel-j{position:static;border-bottom:1px solid var(--garis)}
+    .sel-art{padding:8px 20px 24px}
+    .art{grid-template-columns:1fr;gap:0}
+    .art__m{margin-bottom:10px}
+    .pil{min-height:44px;padding-inline:16px}
+  }
+</style>
+
+<script>
+  /* Saring per kategori. Seluruh tulisan sudah ada di halaman sejak build —
+     yang dilakukan di sini cuma menyembunyikan, bukan mengambil ulang. */
+  (() => {
+    const pils = document.getElementById("pils");
+    const daftar = document.getElementById("daftar");
+    const hitung = document.getElementById("hitung");
+    if (!pils || !daftar || !hitung) return;
+
+    const kartu = [...daftar.querySelectorAll<HTMLElement>("[data-kat]")];
+
+    const terap = (kat: string) => {
+      let terbit = 0, rencana = 0;
+      kartu.forEach((k) => {
+        const cocok = kat === "semua" || k.dataset.kat === kat;
+        k.hidden = !cocok;
+        if (!cocok) return;
+        if (k.classList.contains("art--rencana")) rencana += 1; else terbit += 1;
+      });
+      hitung.textContent = `${terbit} published · ${rencana} planned`;
+      /* Garis atas kartu pertama dimatikan lewat :first-of-type, yang TIDAK
+         ikut menghitung elemen tersembunyi — jadi setelah menyaring, kartu
+         pertama yang terlihat tetap membawa garisnya. Ditandai sendiri. */
+      const tampak = kartu.filter((k) => !k.hidden);
+      kartu.forEach((k) => { k.style.borderTop = ""; });
+      if (tampak[0]) tampak[0].style.borderTop = "0";
+    };
+
+    pils.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>(".pil");
+      if (!b) return;
+      pils.querySelectorAll(".pil").forEach((p) => p.classList.toggle("pil--on", p === b));
+      terap(b.dataset.kat || "semua");
+    });
+  })();
+</script>

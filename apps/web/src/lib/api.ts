@@ -167,6 +167,36 @@ export function listProjects(options: {
   return wajib<Project[]>(`/api/v1/projects?${params}`);
 }
 
+// --- Jurnal ---------------------------------------------------------------
+
+export type KategoriJurnal = "site" | "money" | "permit" | "build";
+
+export interface Tulisan {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  /** Markdown. Kosong pada tulisan yang masih rencana. */
+  body?: string | null;
+  category: KategoriJurnal;
+  readMinutes: number;
+  /** null = masih rencana; indeks menandainya "belum ditulis". */
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Indeks jurnal — TERMASUK yang masih rencana.
+ *
+ * safely(), bukan wajib(): jurnal yang gagal diambil membuat /jurnal kosong,
+ * dan itu memang cuma satu halaman. Daftar proyek beda perkaranya — di sana
+ * kegagalan menghapus setiap /proyek/<slug> yang pernah dibagikan.
+ */
+export function listJournal(): Promise<Tulisan[]> {
+  return safely<Tulisan[]>("/api/v1/journal", []);
+}
+
 export function getProject(slug: string): Promise<Project | null> {
   return safely<Project | null>(`/api/v1/projects/${encodeURIComponent(slug)}`, null);
 }

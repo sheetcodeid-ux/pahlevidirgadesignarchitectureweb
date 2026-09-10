@@ -1,0 +1,12 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { JournalPanel } from "../../components/admin/JournalPanel";
+---
+
+<AdminLayout
+  title="Jurnal"
+  heading="Jurnal"
+  description="Tulisan yang tayang di /jurnal. Bisa disimpan sebagai rencana dulu — judulnya tetap tampil di daftar, isinya menyusul."
+>
+  <JournalPanel client:load />
+</AdminLayout>
