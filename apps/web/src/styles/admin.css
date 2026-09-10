@@ -392,6 +392,22 @@
   color: var(--brand);
 }
 
+/* --- Form tulis jurnal ----------------------------------------------------- */
+
+/* Isi tulisan adalah Markdown — permukaan yang MEMANG kode, jadi ia salah satu
+   dari sedikit tempat yang boleh memakai monospace sungguhan (lihat aturan
+   font di CLAUDE.md). Sebelumnya disetel lewat style inline di komponennya,
+   yang berarti tiga nilai desain hidup di luar sistem token. */
+.jurnal__isi {
+  font-family: var(--font-kode);
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 22rem;
+  /* Tab di Markdown berarti blok kode; 2 spasi lebih masuk akal daripada 8
+     bawaan peramban di kotak selebar ini. */
+  tab-size: 2;
+}
+
 /* --- Isi halaman publik (Situs Publik) ------------------------------------ */
 
 /* Penanda berapa isian yang masih kosong. Amber, bukan merah: bagian yang

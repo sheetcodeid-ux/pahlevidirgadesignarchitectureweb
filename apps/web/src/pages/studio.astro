@@ -351,7 +351,7 @@ const jsonLd = [
           {
             tidak.map(([judul, teks]) => (
               <div class="tidak">
-                <i>
+                <i class="kotak-ikon kotak-ikon--kecil kotak-ikon--redup">
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
                 </i>
                 <span>
@@ -556,14 +556,11 @@ const jsonLd = [
   .tidak:first-child {
     border-top: 0;
   }
+  /* Ukuran dan warnanya datang dari .kotak-ikon--kecil dan --redup di
+     publik.css; yang tersisa di sini cuma penyelarasan terhadap baris teks
+     di sebelahnya. */
   .tidak i {
-    flex: none;
-    width: 17px;
-    height: 17px;
-    margin-top: 2px;
-    display: grid;
-    place-items: center;
-    color: var(--teks-3);
+    margin-top: 1px;
   }
   .tidak span {
     font-size: 14px;

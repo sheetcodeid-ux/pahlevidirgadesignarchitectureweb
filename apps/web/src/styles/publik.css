@@ -149,8 +149,16 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .cek{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--teks-2);margin-bottom:11px}
 .cek i{flex:none;width:17px;height:17px;border-radius:99px;background:rgba(45,212,191,.15);
   display:grid;place-items:center;margin-top:2px}
-.kotak-ikon{width:38px;height:38px;border:1px solid var(--garis-2);display:grid;place-items:center;
+.kotak-ikon{width:38px;height:38px;flex:none;border:1px solid var(--garis-2);display:grid;place-items:center;
   color:var(--aksen);background:var(--gelap)}
+/* Varian kecil untuk ikon yang duduk SEBARIS dengan teksnya, bukan di atasnya.
+   Ukuran penuh 38px di daftar padat membuat empat kotak bertumpuk terbaca
+   sebagai empat tombol, bukan empat penanda. Sama besar dengan
+   .panah-kotak--kecil supaya tidak ada ukuran kotak ketiga di situs ini. */
+.kotak-ikon--kecil{width:28px;height:28px}
+/* Warnanya boleh diwarisi. Aksen teal berarti sesuatu yang positif di sistem
+   ini; di daftar "yang tidak kami kerjakan" ia menyampaikan kebalikannya. */
+.kotak-ikon--redup{color:var(--teks-3)}
 .angka{font-family:var(--judul);font-size:34px;color:var(--sel-2);line-height:1}
 /* ═══ KONTROL — satu-satunya yang melengkung (6px) ════════════════════════ */
 /* line-height dan text-decoration WAJIB disebut: di mockup .btn selalu
