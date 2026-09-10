@@ -10,7 +10,7 @@ import { subjudulBerguna } from "../../lib/api";
 import {
   SkeletonDaftar, SkeletonKartu, SkeletonIsian, SkeletonKotak, SkeletonTeks, Balok,
 } from "../ui/Skeleton";
-import { AlertDialog } from "../ui/overlay/Dialog";
+import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { proyekAktif, onProyekAktif, bukaProyek } from "../../lib/proyekAktif";
@@ -1537,6 +1537,8 @@ function PilihProyek() {
   // (jebakan nomor 8 di CLAUDE.md). Dipromosikan di useLayoutEffect, sebelum
   // paint, jadi tidak ada kedipan.
   const [tampilan, setTampilan] = useState<Tampilan>("kotak");
+  /* Foto yang sedang dilihat besar. null = penampilnya tertutup. */
+  const [foto, setFoto] = useState<{ url: string; judul: string } | null>(null);
 
   useLayoutEffect(() => {
     try {
@@ -1655,6 +1657,7 @@ function PilihProyek() {
           <table className="table table--ruled pilihproyek__tabel">
             <thead>
               <tr>
+                <th scope="col" className="pilihproyek__thcover">Cover</th>
                 <th scope="col">Proyek</th>
                 <th scope="col">Kategori</th>
                 <th scope="col">Kota</th>
@@ -1668,6 +1671,23 @@ function PilihProyek() {
                 <tr key={p.id} className="table__klik" onClick={() => bukaProyek(p.id)}
                   tabIndex={0} role="button"
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); bukaProyek(p.id); } }}>
+                  <td className="pilihproyek__tdcover">
+                    {/* stopPropagation: barisnya membuka editor, gambarnya
+                        membuka fotonya. Tanpa ini, satu klik mengerjakan
+                        keduanya dan yang menang adalah yang terakhir. */}
+                    {p.coverImageUrl ? (
+                      <button type="button" className="pilihproyek__thumb"
+                        aria-label={`Lihat cover ${p.title}`}
+                        onClick={(e) => { e.stopPropagation(); setFoto({ url: p.coverImageUrl!, judul: p.title }); }}>
+                        <img src={p.coverImageUrl} alt="" loading="lazy" />
+                      </button>
+                    ) : (
+                      <span className="pilihproyek__thumb pilihproyek__thumb--kosong"
+                        title="Cover belum ada" aria-label="Cover belum ada">
+                        <Icon name="imagePlus" size={14} />
+                      </span>
+                    )}
+                  </td>
                   <td>
                     <span className="pilihproyek__sel">
                       <span className="pilihproyek__nama">
@@ -1727,6 +1747,23 @@ function PilihProyek() {
           ))}
         </ul>
       )}
+
+      {/* Penampil foto memakai Dialog yang sudah ada — perangkap fokus, Esc,
+          dan kunci gulir latar datang dari sana, bukan ditulis ulang. Yang
+          ditambahkan cuma gambarnya sendiri. */}
+      <Dialog
+        title={foto?.judul ?? ""}
+        description="Cover proyek"
+        open={foto !== null}
+        onOpenChange={(o) => { if (!o) setFoto(null); }}
+        footer={foto && (
+          <a className="btn btn--secondary" href={foto.url} target="_blank" rel="noreferrer">
+            <Icon name="external" size={16} />Buka gambar aslinya
+          </a>
+        )}
+      >
+        {foto && <img className="pilihproyek__fotobesar" src={foto.url} alt={`Cover ${foto.judul}`} />}
+      </Dialog>
     </div>
   );
 }
