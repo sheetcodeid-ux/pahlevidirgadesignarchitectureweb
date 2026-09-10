@@ -426,10 +426,6 @@
   min-width: 0;
 }
 
-.pilihproyek__judul { display: flex; flex-direction: column; gap: 2px; }
-.pilihproyek__judul .t-subheading { font-size: var(--text-lg); }
-.pilihproyek__judul .t-muted { font-size: var(--text-sm); max-width: none; }
-
 /* Bilah perkakas: satu kartu berisi kotak cari selebar penuh di baris atas,
    lalu baris hitungan + aksi di bawahnya. Bentuknya diambil dari gambar
    referensi pemilik. */
@@ -438,9 +434,17 @@
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
+  /* Bingkai tebal yang sama dengan isian dan pengalih di panel ini: 2px
+     --border-strong. Nilainya diambil dari token yang sama persis, bukan
+     ditulis ulang, supaya tidak pernah bisa menyimpang.
+     Sudutnya turun sekali lagi: 26 -> 14 -> --radius-sm (10px). */
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  /* HITAM, bukan --surface. Pemilik menunjuk gambar acuannya: kartunya yang
+     gelap, isiannya yang abu — bukan sebaliknya seperti sebelumnya. Lewat
+     token, jadi di tema terang kartunya jadi putih dan isiannya tetap abu,
+     yang memang maksud --field/--tray sejak awal. */
+  background: var(--bg-sunken);
 }
 
 /* Ikon berdiri di atas isian, jadi isiannya sendiri yang diberi padding kiri
@@ -466,6 +470,11 @@
   border-radius: var(--radius-pill);
   font-size: var(--text-md);
 }
+
+/* Kotak carinya HITAM, sama seperti kartunya — dikembalikan atas permintaan
+   pemilik setelah melihat versi abunya. Tidak ada aturan latar di sini: yang
+   menghitamkannya adalah `.proyekpage .input` yang sudah ada, dan menuliskan
+   ulang di sini cuma menambah satu tempat lagi yang harus ikut diubah nanti. */
 
 /* Peramban menggambar tombol silang bawaannya sendiri di type=search, dan
    bentuknya tidak mengikuti tema mana pun. */
@@ -497,7 +506,59 @@
   gap: var(--space-3);
 }
 
+/* Setinggi segmen breadcrumb di topbar, diminta pemilik. --topbar-h dikurangi
+   dua karena topbar punya garis 1px di atas dan di bawah, jadi kotak segmennya
+   50px sementara bilahnya 52px — yang sejajar di mata adalah segmennya.
+
+   Pengalih tampilan ikut, walaupun yang disebut cuma tombolnya: satu baris
+   berisi dua benda setinggi 50 dan 40 px terbaca sebagai salah pasang. */
+.pilihproyek__alat .segmented,
+.pilihproyek__baru { height: calc(var(--topbar-h) - 2px); }
+
 /* --- Tabel pemilih proyek ------------------------------------------------ */
+
+/* Satu bentuk dengan kartu perkakas di atasnya: sudut --radius-sm, bingkai
+   tebal 2px, dan latar hitam. Dua persegi panjang bertumpuk yang sudutnya berbeda terbaca
+   sebagai dua benda dari sistem yang berlainan.
+
+   .table-wrap sudah punya overflow-x:auto — dan begitu satu sumbu bukan
+   visible, sumbu satunya ikut jadi auto — jadi latar kepala tabel sudah
+   terpotong mengikuti lengkung sudutnya tanpa aturan tambahan. */
+.table-wrap.pilihproyek__wrap {
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+}
+
+/* Garis TEGAK dibuang; yang memisahkan tinggal garis mendatar antar-baris.
+   Bentuk ini yang ditunjuk pemilik lewat gambar acuannya — kolom yang
+   masing-masing berbingkai membuat tabel terbaca seperti kertas milimeter.
+
+   Kekhususan (0,2,2): `.table--ruled td + td` di berkas ini beratnya (0,1,2)
+   dan menang atas satu kelas saja. */
+.table.pilihproyek__tabel th + th,
+.table.pilihproyek__tabel td + td { border-left: 0; }
+
+/* Isi tabel PUTIH. Yang tetap redup hanya teks kecil — slug di bawah judul
+   dan angka jumlah foto — dan keduanya sudah memasang warnanya sendiri, jadi
+   aturan ini tidak menyentuhnya. */
+.table.pilihproyek__tabel td { color: var(--text-strong); }
+
+/* Kekhususan (0,2,2), bukan (0,1,2): `.table--ruled thead th` di berkas ini
+   ditulis belakangan dan akan menang kalau ditandingi dengan satu kelas saja.
+   Jebakan nomor 6, di tempat baru. */
+.table.pilihproyek__tabel thead th { background: var(--surface-raised); }
+
+/* Tema terang bukan pembalikan otomatis (aturan desain nomor 5): di tema
+   terang --surface-raised hampir putih, jadi kepala tabelnya hilang di atas
+   kartu yang juga putih. Abunya diambil dari --surface-hover, yang memang
+   satu-satunya abu yang terbaca di tema itu. */
+:root[data-theme="light"] .table.pilihproyek__tabel thead th { background: var(--surface-hover); }
+
+/* Baris di atas latar hitam: --bg-sunken sebagai warna sentuh jadi tidak
+   berarti apa-apa, karena itu warnanya sendiri. */
+.table.pilihproyek__tabel tbody tr:hover { background: var(--surface); }
+.table.pilihproyek__tabel .table__klik:hover td { background: transparent; }
 
 /* Baris dipendekkan atas laporan pemilik: bawaan .table--ruled (11px atas dan
    bawah, ditambah baris kedua) membuat tiap baris ~71px — hampir dua kali

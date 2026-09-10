@@ -270,10 +270,18 @@ const jsonLd = [
             ))}
           </div>
           <div class="rel"><i id="swProg"></i></div>
+          {/* Rel pemilih foto. Dulu hanya nomor 01..10 di atas latar bergaris
+              miring — pemilik melaporkannya sebagai "kotak kecil 1-10 tidak
+              ada gambarnya, harusnya ada". Memang harus: satu-satunya gunanya
+              adalah melompat ke foto tertentu, dan nomor tidak memberi tahu
+              foto mana. Sekarang tiap kotak memuat fotonya sendiri, nomornya
+              turun jadi penanda kecil di sudut. */}
           <div class="film" id="swFilm" aria-label="Choose a photo">
-            {foto.map((_, i) => (
-              <button type="button" data-ke={i} aria-current={i === 0 ? "true" : "false"}>
-                {String(i + 1).padStart(2, "0")}
+            {foto.map((f, i) => (
+              <button type="button" data-ke={i} aria-current={i === 0 ? "true" : "false"}
+                aria-label={`Photograph ${i + 1} of ${foto.length}`}>
+                <img src={f.url} alt="" loading="lazy" decoding="async" width="160" height="90" />
+                <span class="film__no">{String(i + 1).padStart(2, "0")}</span>
               </button>
             ))}
           </div>

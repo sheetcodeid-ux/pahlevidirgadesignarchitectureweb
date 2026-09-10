@@ -102,6 +102,10 @@ svg[width][height] { flex: none; max-width: none; }
   outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
+  /* Lingkar merah di LUAR cincin putih. Dipakai supaya cincinnya tetap
+     terbaca di atas permukaan yang kebetulan juga putih — tab aktif, tombol
+     aksi utama — tanpa mengembalikan warna yang bukan miliknya. */
+  box-shadow: 0 0 0 7px var(--focus-halo);
 }
 
 ::selection {
