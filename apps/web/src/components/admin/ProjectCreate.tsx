@@ -229,7 +229,7 @@ function Isi() {
         <button type="button" className="btn btn--primary btn--lg btn--lift buat-aksi__utama"
           disabled={!bisaSimpan} onClick={simpan}>
           {menyimpan ? <span className="spinner spinner--sm spinner--on-action" /> : <Icon name="projectPlus" size={18} />}
-          Tambah Proyek
+          Buat Proyek
         </button>
 
         <a className="btn btn--secondary btn--lg buat-aksi__utama" href="/admin/proyek">

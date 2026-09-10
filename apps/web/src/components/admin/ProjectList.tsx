@@ -234,7 +234,7 @@ function Isi() {
 
   const tombolBaru = (
     <a className="btn btn--primary btn--lg btn--lift" href="/admin/proyek/baru">
-      <Icon name="projectPlus" size={20} />Tambah Proyek
+      <Icon name="projectPlus" size={20} />Proyek Baru
     </a>
   );
 
