@@ -12,6 +12,7 @@ import { progress } from "./routes/progress";
 import { settings } from "./routes/settings";
 import { testimonials } from "./routes/testimonials";
 import { journal } from "./routes/journal";
+import { clients } from "./routes/clients";
 import { rateLimit } from "./middleware/rateLimit";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -39,6 +40,7 @@ v1.route("/", projects);
 v1.route("/", settings);
 v1.route("/", testimonials);
 v1.route("/", journal);
+v1.route("/", clients);
 
 // Login dibatasi lebih ketat daripada form kontak: sepuluh percobaan per IP
 // per jam cukup untuk orang yang lupa kata sandinya, tapi tidak cukup untuk

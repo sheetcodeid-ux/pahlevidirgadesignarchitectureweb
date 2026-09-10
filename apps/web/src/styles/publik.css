@@ -219,6 +219,14 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   border-right:1px solid var(--garis);color:var(--teks-3);font-size:11px;letter-spacing:.14em;
   transition:color 180ms,background 180ms}
 .mq__i:hover{color:var(--aksen);background:var(--sel)}
+/* Logo klien di marquee. Tingginya dibatasi, BUKAN lebarnya: logo yang lebar
+   dan yang tinggi harus terlihat sama besar, dan yang menyamakannya adalah
+   tinggi optisnya. `object-fit:contain` menjaga rasio apa pun bentuk aslinya.
+   Dibuat abu dan baru berwarna saat disentuh — delapan logo berwarna sekaligus
+   menarik perhatian lebih besar daripada karya yang ada di bawahnya. */
+.mq__logo{max-height:32px;max-width:150px;width:auto;height:auto;object-fit:contain;
+  filter:grayscale(1);opacity:.62;transition:filter 220ms var(--e-halus),opacity 220ms var(--e-halus)}
+.mq__i:hover .mq__logo{filter:none;opacity:1}
 @keyframes geser{to{transform:translateX(-50%)}}
 /* ═══ TAB SHOWCASE ════════════════════════════════════════════════════════ */
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--garis);

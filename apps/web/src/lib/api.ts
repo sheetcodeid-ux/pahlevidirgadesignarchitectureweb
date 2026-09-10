@@ -197,6 +197,25 @@ export function listJournal(): Promise<Tulisan[]> {
   return safely<Tulisan[]>("/api/v1/journal", []);
 }
 
+// --- Logo klien -----------------------------------------------------------
+
+export interface Klien {
+  id: string;
+  name: string;
+  /** Kosong = logonya belum diunggah; beranda menampilkan namanya sebagai teks. */
+  logoUrl?: string | null;
+  sortOrder: number;
+}
+
+/**
+ * Marquee "SELECTED CLIENTS" di beranda. safely(), bukan wajib(): daftar klien
+ * yang gagal diambil menghilangkan satu pita di beranda — mengganggu, tapi
+ * tidak seperti daftar proyek yang kegagalannya menghapus seluruh portofolio.
+ */
+export function listClients(): Promise<Klien[]> {
+  return safely<Klien[]>("/api/v1/clients", []);
+}
+
 export function getProject(slug: string): Promise<Project | null> {
   return safely<Project | null>(`/api/v1/projects/${encodeURIComponent(slug)}`, null);
 }

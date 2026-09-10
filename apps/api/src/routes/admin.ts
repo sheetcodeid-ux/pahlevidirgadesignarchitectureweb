@@ -19,13 +19,14 @@ import * as briefRepo from "../repository/brief";
 import * as commentsRepo from "../repository/documentComments";
 import * as testimonialsRepo from "../repository/testimonials";
 import * as journalRepo from "../repository/journal";
+import * as clientLogosRepo from "../repository/clientLogos";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload, sanitizeSlug } from "../lib/r2";
 import { checkProjectInput, checkJournalInput, ValidationError } from "../lib/validate";
 import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
   InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput, PaymentInput,
-  ProjectBriefInput, TestimonialInput, JournalPostInput,
+  ProjectBriefInput, TestimonialInput, JournalPostInput, ClientLogoInput,
 } from "../types";
 import {
   VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
@@ -69,6 +70,11 @@ admin.post("/uploads", async (c) => {
   if (body.scope === "logo") {
     // Aset tingkat studio, bukan proyek — satu folder tetap, tidak perlu slug.
     folder = "studio";
+  } else if (body.scope === "klien") {
+    // Logo klien untuk marquee beranda. Folder sendiri, alasan yang sama
+    // seperti `studio`: aset yang bukan milik proyek tidak boleh ikut terhapus
+    // saat proyek dibersihkan.
+    folder = "klien";
   } else {
     const projectSlug = (body.projectSlug ?? "").trim();
     if (!projectSlug) {
@@ -867,6 +873,66 @@ admin.delete("/journal/:id", async (c) => {
   } catch (err) {
     if (err instanceof NotFoundError) {
       return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});
+
+// ── Logo klien ─────────────────────────────────────────────────────────────
+
+admin.get("/clients", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    clientLogosRepo.list(sql, assetBase(c.env)));
+  return c.json({ data });
+});
+
+function periksaKlien(input: ClientLogoInput, wajibNama: boolean): string | null {
+  if (wajibNama || input.name !== undefined) {
+    const n = (input.name ?? "").trim();
+    // Nama wajib karena marquee memakainya sebagai teks selama logonya belum
+    // ada — baris tanpa nama DAN tanpa logo tampil sebagai celah kosong.
+    if (!n) return "nama klien wajib diisi";
+    if (n.length > 120) return "nama klien maksimal 120 karakter";
+  }
+  if (input.sortOrder !== undefined && !Number.isInteger(input.sortOrder)) {
+    return "urutan harus bilangan bulat";
+  }
+  return null;
+}
+
+admin.post("/clients", async (c) => {
+  const input = await c.req.json<ClientLogoInput>().catch(() => ({}) as ClientLogoInput);
+  const salah = periksaKlien(input, true);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+
+  const id = await withDb(c.env, c.executionCtx, (sql) => clientLogosRepo.create(sql, input));
+  return c.json({ data: { id } }, 201);
+});
+
+admin.patch("/clients/:id", async (c) => {
+  const input = await c.req.json<ClientLogoInput>().catch(() => ({}) as ClientLogoInput);
+  const salah = periksaKlien(input, false);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) =>
+      clientLogosRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "klien tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});
+
+admin.delete("/clients/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => clientLogosRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "klien tidak ditemukan" } }, 404);
     }
     throw err;
   }
