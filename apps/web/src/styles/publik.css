@@ -408,14 +408,31 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .film{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(54px,1fr);
   border-top:1px solid var(--garis);overflow-x:auto;scrollbar-width:none}
 .film::-webkit-scrollbar{display:none}
-.film button{width:100%;height:62px;border:0;border-right:1px solid var(--garis);
+/* Latar bergaris miring TETAP ada — sekarang ia yang terlihat kalau fotonya
+   gagal dimuat, jadi kotaknya tidak pernah jadi lubang hitam. */
+.film button{width:100%;height:62px;border:0;border-right:1px solid var(--garis);padding:0;
   background:repeating-linear-gradient(45deg,#212125 0 6px,#1B1B1F 6px 12px);cursor:pointer;
   color:var(--teks-3);font-size:9.5px;font-family:var(--tubuh);letter-spacing:.1em;
-  position:relative;transition:filter 200ms var(--e-halus)}
+  position:relative;overflow:hidden}
 .film button:last-child{border-right:0}
-.film button:hover{filter:brightness(1.5)}
-.film button[aria-current="true"]{box-shadow:inset 0 -2px 0 var(--aksen);color:var(--aksen);
-  filter:brightness(1.4)}
+/* Yang meredupkan foto adalah TIRAI GELAP di atasnya, bukan opacity pada
+   gambarnya: opacity membuat latar bergaris di bawahnya ikut menembus, dan
+   thumbnail jadi berbintik. */
+.film button img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform 500ms var(--e-keluar)}
+.film button:hover img{transform:scale(1.06)}
+/* Nomor turun jadi penanda sudut: yang memilih foto sekarang matanya, bukan
+   angkanya. Tetap ada karena keterangan di bawah strip menyebut "3 / 10". */
+.film__no{position:absolute;left:5px;bottom:4px;z-index:2;padding:1px 4px;
+  background:rgba(9,9,11,.72);line-height:1.5}
+.film button[aria-current="true"] .film__no{background:var(--aksen);color:#09090B}
+/* ::after, bukan inset box-shadow di tombolnya: gambar yang diposisikan
+   absolut adalah ANAK, dan anak menutupi bayangan-dalam induknya. */
+.film button::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:rgba(9,9,11,.48);box-shadow:inset 0 0 0 0 var(--aksen);
+  transition:background 200ms var(--e-halus),box-shadow 200ms var(--e-halus)}
+.film button:hover::after{background:rgba(9,9,11,.14)}
+.film button[aria-current="true"]::after{background:transparent;box-shadow:inset 0 -3px 0 var(--aksen)}
 /* ═══ KEADAAN ISIAN ══════════════════════════════════════════════════════ */
 .bidang{display:block}
 .bidang > label{display:block;font-size:11px;font-weight:600;letter-spacing:.14em;

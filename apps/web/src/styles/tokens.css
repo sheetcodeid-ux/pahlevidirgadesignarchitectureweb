@@ -140,7 +140,12 @@
   --info: #4a8ef0;
   --info-soft: #0e1c30;
 
-  --focus: #8b5cf6;
+  /* Cincin fokus: PUTIH dulu, merah di luarnya, hitam di belakangnya.
+     Sebelumnya ungu (#8b5cf6) — melanggar aturan warna nomor 1: ungu hanya
+     untuk upgrade dan fitur berbayar, tidak pernah untuk aksi biasa. Pemilik
+     melihatnya sendiri di tab Detail dan menyebutnya bug. */
+  --focus: #ffffff;
+  --focus-halo: rgba(239, 43, 38, 0.38);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
@@ -205,7 +210,10 @@
   --info: #1d5fc4;
   --info-soft: #e8f0fd;
 
-  --focus: #6d34d6;
+  /* Tema terang: putih tidak terlihat di atas putih, jadi cincin dalamnya
+     memakai tinta halaman. Merah di luarnya tetap. */
+  --focus: #0d0d0c;
+  --focus-halo: rgba(207, 27, 23, 0.30);
 
   --shadow-sm: 0 1px 2px rgba(13, 13, 12, 0.07);
   --shadow-md: 0 8px 24px rgba(13, 13, 12, 0.1);

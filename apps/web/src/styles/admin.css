@@ -426,10 +426,6 @@
   min-width: 0;
 }
 
-.pilihproyek__judul { display: flex; flex-direction: column; gap: 2px; }
-.pilihproyek__judul .t-subheading { font-size: var(--text-lg); }
-.pilihproyek__judul .t-muted { font-size: var(--text-sm); max-width: none; }
-
 /* Bilah perkakas: satu kartu berisi kotak cari selebar penuh di baris atas,
    lalu baris hitungan + aksi di bawahnya. Bentuknya diambil dari gambar
    referensi pemilik. */

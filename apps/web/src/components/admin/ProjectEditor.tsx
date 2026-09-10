@@ -1588,7 +1588,7 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
   // tidak tahu isi penyimpanan, dan bedanya jadi ketidakcocokan hidrasi
   // (jebakan nomor 8 di CLAUDE.md). Dipromosikan di useLayoutEffect, sebelum
   // paint, jadi tidak ada kedipan.
-  const [tampilan, setTampilan] = useState<Tampilan>("kotak");
+  const [tampilan, setTampilan] = useState<Tampilan>("tabel");
 
   useLayoutEffect(() => {
     try {
@@ -1650,13 +1650,6 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
 
   return (
     <div className="pilihproyek">
-      <div className="pilihproyek__judul">
-        <h2 className="t-subheading" style={{ margin: 0 }}>Semua Proyek</h2>
-        <p className="t-muted" style={{ margin: 0 }}>
-          Judul, ringkasan, dan foto galeri yang dilihat pengunjung. Klik satu untuk mulai.
-        </p>
-      </div>
-
       {/* Bilah perkakas mengikuti bentuk referensi pemilik: satu kartu, kotak
           cari selebar penuh di baris atas, lalu baris hitungan + aksi di
           bawahnya. Bukan .listbar — yang itu full-bleed bergaris tebal dan
@@ -2104,7 +2097,6 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
             placeholder="628123456789"
             value={String(nilai("clientWhatsapp") ?? "")}
             onChange={(e) => set("clientWhatsapp", e.target.value)} />
-          <p className="field__help">Dipakai tombol WA saat mengirim bukti pembayaran.</p>
         </div>
       </div>
 
