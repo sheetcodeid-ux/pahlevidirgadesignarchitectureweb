@@ -770,6 +770,17 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 @media (max-width:900px){
   .nav-tombol{display:grid}
 }
+/* ═══ PENGALIH BAHASA ═════════════════════════════════════════════════════
+   Bentuknya sama dengan yang sudah dipakai portal klien, supaya pengunjung
+   yang pernah melihatnya di sana langsung mengenalinya. */
+.bhs{display:inline-flex;border:1px solid var(--garis-2);border-radius:var(--r-pil);overflow:hidden}
+.bhs button{appearance:none;background:transparent;border:0;font-family:var(--tubuh);
+  font-size:11.5px;font-weight:600;letter-spacing:.08em;color:var(--teks-3);
+  padding:7px 13px;cursor:pointer;transition:background 180ms var(--e-halus),color 180ms var(--e-halus)}
+.bhs button + button{border-left:1px solid var(--garis-2)}
+.bhs button[aria-pressed="true"]{background:rgba(45,212,191,.12);color:var(--aksen)}
+@media (hover:hover){.bhs button:hover{color:var(--teks)}}
+@media (max-width:900px){.bhs button{min-height:44px;padding-inline:18px}}
 /* ═══ KUTIPAN ═════════════════════════════════════════════════════════════ */
 .kutip{font-family:var(--judul);font-size:19px;line-height:1.45}
 .kutip::before{content:"“";color:var(--aksen);margin-right:2px}

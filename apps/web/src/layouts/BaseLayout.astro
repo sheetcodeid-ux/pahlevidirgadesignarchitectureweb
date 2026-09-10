@@ -7,6 +7,7 @@ import "../styles/publik.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { gambarBagikan, getSettings } from "../lib/api";
+import { KAMUS_UMUM } from "../lib/i18n";
 
 interface Props {
   title: string;
@@ -134,5 +135,57 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
       <slot />
     </main>
     <Footer />
+    {/* ═══ PENGALIH BAHASA ══════════════════════════════════════════════
+        Menukar isi tiap elemen bertanda data-t. Yang INGGRIS tidak disimpan
+        di kamus: ia sudah ada di markup, dan disimpan sendiri oleh skrip ini
+        sebelum penukaran pertama — jadi kembali ke EN selalu mengembalikan
+        kalimat yang persis sama, bukan salinan yang bisa menyimpang.
+
+        is:inline + define:vars: kamusnya perlu ikut ke halaman, dan halaman
+        ini statis, jadi tidak ada tempat lain untuk menaruhnya. */}
+    <script is:inline define:vars={{ KAMUS_UMUM }}>
+      (() => {
+        "use strict";
+        const KUNCI = "situs:bhs";
+
+        /* Kamus khusus halaman, kalau halamannya menyediakan. Beranda memuat
+           seluruh kalimat pemasarannya sendiri lewat tag ini. */
+        let kamus = KAMUS_UMUM;
+        const tambahan = document.getElementById("kamus-halaman");
+        if (tambahan && tambahan.textContent) {
+          try { kamus = { ...KAMUS_UMUM, ...JSON.parse(tambahan.textContent) }; }
+          catch { /* JSON rusak: kamus umum saja, halaman tetap jalan */ }
+        }
+
+        const elemen = document.querySelectorAll("[data-t]");
+
+        function pasang(bhs) {
+          elemen.forEach((el) => {
+            /* Simpan aslinya SEKALI, saat pertama disentuh. Kalau disimpan di
+               akhir penukaran, yang tersimpan sudah versi Indonesianya. */
+            if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
+            const id = kamus[el.dataset.t];
+            if (bhs === "id" && id !== undefined) el.innerHTML = id;
+            else el.innerHTML = el.dataset.en;
+          });
+          document.documentElement.lang = bhs === "id" ? "id" : "en";
+          document.querySelectorAll("[data-bhs]").forEach((b) =>
+            b.setAttribute("aria-pressed", String(b.dataset.bhs === bhs)));
+        }
+
+        let bhs = "en";
+        try { if (localStorage.getItem(KUNCI) === "id") bhs = "id"; } catch { /* diblokir */ }
+        if (bhs === "id") pasang("id");
+        else document.querySelectorAll("[data-bhs]").forEach((b) =>
+          b.setAttribute("aria-pressed", String(b.dataset.bhs === "en")));
+
+        document.querySelectorAll("[data-bhs]").forEach((b) =>
+          b.addEventListener("click", () => {
+            const pilih = b.dataset.bhs === "id" ? "id" : "en";
+            pasang(pilih);
+            try { localStorage.setItem(KUNCI, pilih); } catch { /* diblokir */ }
+          }));
+      })();
+    </script>
   </body>
 </html>
