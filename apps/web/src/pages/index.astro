@@ -134,7 +134,7 @@ const fakta = (p: Project) =>
 
   {
     heroFoto && (
-      <div class="pita hero-foto">
+      <div class="pita pita--panel hero-foto">
         <div class="dalam">
           <div class="foto foto--nyata">
             <img src={heroFoto.url} alt={heroFoto.altText ?? ""} width="1600" height="900" fetchpriority="high" decoding="async" />
@@ -149,7 +149,7 @@ const fakta = (p: Project) =>
     )
   }
 
-  <div class="pita">
+  <div class="pita pita--panel">
     <div class="dalam">
       <div class="baris b3">
         {
@@ -178,7 +178,7 @@ const fakta = (p: Project) =>
 
   {
     klien.length > 0 && (
-      <div class="pita">
+      <div class="pita pita--panel">
         <div class="dalam">
           <div class="isi isi--rapat mq-kop">
             {/* Judulnya "clients", bukan "materials & partners", karena yang dikirim
@@ -213,7 +213,7 @@ const fakta = (p: Project) =>
 
   {
     sorot.length > 0 && (
-      <div class="pita" id="kerja">
+      <div class="pita pita--panel" id="kerja">
         <div class="dalam">
           {sorot.map((p, i) => (
             <div class="sorot" data-sorot={i} hidden={i !== 0}>
@@ -279,7 +279,7 @@ const fakta = (p: Project) =>
     )
   }
 
-  <div class="pita pita--gelap">
+  <div class="pita pita--panel pita--gelap">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi">
@@ -348,7 +348,7 @@ const fakta = (p: Project) =>
     </div>
   </div>
 
-  <div class="pita">
+  <div class="pita pita--panel">
     <div class="dalam">
       <div class="isi">
         <span class="label">HOW IT GOES</span>
@@ -387,7 +387,7 @@ const fakta = (p: Project) =>
     </div>
   </div>
 
-  <div class="pita">
+  <div class="pita pita--panel">
     <div class="dalam">
       <div class="isi">
         <span class="label">WHY OWNERS ABROAD PICK US</span>
@@ -414,7 +414,7 @@ const fakta = (p: Project) =>
     </div>
   </div>
 
-  <div class="pita">
+  <div class="pita pita--panel">
     <div class="dalam">
       <div class="isi isi--rapat"><span class="label">FROM CLIENTS</span></div>
       <div class="baris b3">
@@ -445,7 +445,7 @@ const fakta = (p: Project) =>
     </div>
   </div>
 
-  <div class="pita">
+  <div class="pita pita--panel">
     <div class="dalam">
       <div class="baris baris-faq">
         <div class="sel faq-kiri">
@@ -469,7 +469,7 @@ const fakta = (p: Project) =>
     </div>
   </div>
 
-  <div class="pita pita--akhir">
+  <div class="pita pita--panel pita--akhir">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi ajak">

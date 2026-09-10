@@ -31,7 +31,7 @@
   --judul:"Arvo",Georgia,serif; --tubuh:"Maven Pro",system-ui,sans-serif;
   --lebar:1200px; --r:6px; --r-pil:999px;
   /* Panel banner: jarak ke tepi layar dan lengkung sudutnya. */
-  --panel-sisi:16px; --panel-r:18px;
+  --panel-sisi:16px; --panel-r:18px; --panel-jeda:16px;
   --rasio-foto: 16 / 9;   /* 5760×3240 dari fotografer — tepat 16:9 */
   /* Penanda sudut. Dulu tanda silang berlengan 18px; sekarang kotak bersudut
      bulat, sesuai gambar acuan pemilik.
@@ -185,14 +185,45 @@ h1,h2,h3{hanging-punctuation:first last}
    rel tegak dan garis atas tidak boleh memotong panel; penanda sudut tidak
    punya persimpangan untuk ditumpangi; talang bertitik tidak ada lagi karena
    panelnya nyaris selebar layar. */
-.pita--panel{overflow:hidden}
+.pita--panel{overflow:hidden;padding-top:var(--panel-jeda);
+  /* Latar bertitik pindah KE SINI. Waktu tiap pita jadi panel yang berlatar
+     penuh, talang kiri-kanan habis dan titiknya tidak punya tempat lagi —
+     padahal justru sekarang ia paling berguna: ia jadi tanah tempat panelnya
+     berdiri, terlihat di sela antar-panel dan di kedua sisinya.
+     padding-top, bukan margin: jarak antar-panel harus ikut bertitik, dan
+     margin tidak dilatarbelakangi apa pun. */
+  background-image:radial-gradient(var(--garis) 1px,transparent 1px);
+  background-size:var(--dot) var(--dot)}
+.pita--panel:first-child{padding-top:0}
 .pita--panel::before,.pita--panel::after{content:none}
 .pita--panel > .dalam{
   max-width:none;margin-inline:var(--panel-sisi);
-  border-color:transparent;border-radius:var(--panel-r);
+  border:1px solid var(--garis);border-radius:var(--panel-r);
   background-color:var(--gelap);overflow:hidden;
   --rel-img:none}
 .pita--panel > .dalam::before,.pita--panel > .dalam::after{content:none}
+/* Penanda sudut pemisah kolom ikut mati di dalam panel: isinya diwarnai
+   --kanvas, sementara panelnya --gelap, jadi kotaknya akan tampak sebagai
+   bercak yang lebih terang alih-alih lubang. */
+.pita--panel .sel + .sel::before{content:none}
+
+/* Kedalaman panel. Garis terang setipis rambut di tepi ATAS saja — itu yang
+   membuat sebuah bidang gelap terbaca terangkat, bukan bayangan tebal.
+   Bayangan luarnya sengaja lembut dan hampir tak terlihat: aturan desain
+   proyek ini melarang bayangan keras. */
+.pita--panel > .dalam{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045), 0 2px 18px rgba(0,0,0,.45)}
+
+/* Penanda sudut hilang dari beranda begitu semua pitanya jadi panel — tidak
+   ada lagi persimpangan garis untuk ditumpangi. Bentuknya dikembalikan di
+   tempat yang justru lebih terbaca: sebagai penanda di depan label seksi,
+   kotak kecil bersudut bulat yang sama, dalam warna aksen.
+
+   `.isi > .label`, bukan `.label` saja: wordmark di bilah nav juga berkelas
+   .label, dan ia bukan label seksi. */
+.pita--panel .isi > .label{display:inline-flex;align-items:center;gap:10px}
+.pita--panel .isi > .label::before{content:"";width:9px;height:9px;flex:none;
+  border:1px solid var(--aksen);border-radius:3px}
 /* Isinya TETAP selebar kolom biasa walaupun panelnya melebar. Pemilik minta
    tingginya tidak berubah, dan tinggi blok teks yang dirata-tengah ditentukan
    oleh berapa baris ia terpecah — dilepas selebar panel, kalimatnya jadi satu
