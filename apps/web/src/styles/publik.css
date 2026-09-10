@@ -214,16 +214,6 @@ h1,h2,h3{hanging-punctuation:first last}
 .pita--panel > .dalam{
   box-shadow:inset 0 1px 0 rgba(255,255,255,.045), 0 2px 18px rgba(0,0,0,.45)}
 
-/* Penanda sudut hilang dari beranda begitu semua pitanya jadi panel — tidak
-   ada lagi persimpangan garis untuk ditumpangi. Bentuknya dikembalikan di
-   tempat yang justru lebih terbaca: sebagai penanda di depan label seksi,
-   kotak kecil bersudut bulat yang sama, dalam warna aksen.
-
-   `.isi > .label`, bukan `.label` saja: wordmark di bilah nav juga berkelas
-   .label, dan ia bukan label seksi. */
-.pita--panel .isi > .label{display:inline-flex;align-items:center;gap:10px}
-.pita--panel .isi > .label::before{content:"";width:9px;height:9px;flex:none;
-  border:1px solid var(--aksen);border-radius:3px}
 /* Isinya TETAP selebar kolom biasa walaupun panelnya melebar. Pemilik minta
    tingginya tidak berubah, dan tinggi blok teks yang dirata-tengah ditentukan
    oleh berapa baris ia terpecah — dilepas selebar panel, kalimatnya jadi satu
@@ -233,6 +223,13 @@ body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
 .isi{padding:56px 44px}
 .isi--rapat{padding:24px 44px}
 .isi--longgar{padding:96px 44px}
+/* Kepala seksi: judul dan labelnya DI TENGAH, dengan udara di atas dan bawah.
+   Diambil dari tata letak acuan pemilik — di sana tiap seksi dibuka judul
+   yang dirata-tengah, baru barisan isinya di bawah. Napasnya juga lebih lega
+   daripada .isi biasa: itu yang membuat halamannya terbaca rapi, bukan
+   garisnya. */
+.kop-seksi{padding:84px 44px 40px;text-align:center}
+.kop-seksi .lead,.kop-seksi p{margin-inline:auto}
 /* Sel: berbagi garis; pemisahnya diberi ⊤ di ujung atas dan ⊥ di ujung bawah,
    karena garis tegak itu memang berhenti di situ. Persis aturan Anda. */
 .baris{display:grid}
