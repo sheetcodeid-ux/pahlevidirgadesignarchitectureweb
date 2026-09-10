@@ -392,6 +392,112 @@
   color: var(--brand);
 }
 
+/* --- Memilih proyek di Halaman Proyek -------------------------------------- */
+
+.pilihproyek { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.pilihproyek__kop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.pilihproyek__kop .t-muted { font-size: var(--text-sm); }
+
+/* Baris tabel yang seluruhnya bisa diklik. Kursor DAN keadaan fokus wajib
+   ada: barisnya punya role="button" dan tabIndex, jadi ia bisa dicapai
+   keyboard — dan tanpa cincin fokus, yang memakai keyboard tidak tahu sedang
+   di baris mana. */
+.table__klik { cursor: pointer; }
+.table__klik:hover td { background: var(--surface-raised); }
+.table__klik:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--focus);
+}
+
+/* auto-fill, bukan auto-fit: dengan auto-fit satu kartu sendirian melar
+   selebar seluruh baris, dan kartu proyek selebar 1200px terlihat seperti
+   kesalahan. auto-fill menahan lebar kolomnya. */
+.pilihproyek__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pilihproyek__kartu {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.pilihproyek__kartu:hover { border-color: var(--border-strong); background: var(--surface-raised); }
+.pilihproyek__kartu:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
+/* aspect-ratio, bukan tinggi tetap — bentuk covernya harus sama di lebar
+   kolom mana pun (jebakan nomor 3 di CLAUDE.md). */
+.pilihproyek__gambar {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+.pilihproyek__gambar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Berpola, bukan abu polos: kotak polos terbaca sebagai gambar yang gagal
+   dimuat, sementara pola menyatakan "memang belum ada". Dan di halaman ini
+   cover yang belum ada memang hal yang perlu terlihat. */
+.pilihproyek__kosong {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  background-image: repeating-linear-gradient(45deg, var(--border) 0 1px, transparent 1px 10px);
+}
+
+.pilihproyek__isi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+}
+.pilihproyek__isi .t-muted { font-size: var(--text-xs); }
+
+.pilihproyek__nama {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.pilihproyek__nama strong { color: var(--text-strong); }
+
+.pilihproyek__status {
+  margin-top: var(--space-2);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
 /* --- Form tulis jurnal ----------------------------------------------------- */
 
 /* Isi tulisan adalah Markdown — permukaan yang MEMANG kode, jadi ia salah satu
