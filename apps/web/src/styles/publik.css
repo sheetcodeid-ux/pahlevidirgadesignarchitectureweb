@@ -31,9 +31,26 @@
   --judul:"Arvo",Georgia,serif; --tubuh:"Maven Pro",system-ui,sans-serif;
   --lebar:1200px; --r:6px;
   --rasio-foto: 16 / 9;   /* 5760×3240 dari fotografer — tepat 16:9 */
-  /* Tanda silang — DIUKUR dari dua gambar Anda:
-     tebal 3× garis tipis, lengan ±9px dari titik potong. */
-  --xh:18px; --xh-1:-9px;
+  /* Penanda sudut. Dulu tanda silang berlengan 18px; sekarang kotak bersudut
+     bulat, sesuai gambar acuan pemilik.
+
+     Geserannya = -(sisi / 2 + 0,5px), dan angka itu BUKAN sekadar setengah
+     kotak. Pseudo-elemen absolut diukur dari KOTAK-PADDING induknya, bukan
+     kotak-bingkainya — jadi titik nolnya sudah 1px masuk ke dalam terhadap
+     garis tegak yang mau ditumpangi. Setengah kotak saja membuat penandanya
+     meleset 1px ke kanan; terukur, dan pemilik melihatnya dari zoom.
+
+     Sisinya sengaja GANJIL: dengan geseran ini, sisi ganjil membuat tepi
+     kotak jatuh di piksel bulat, jadi garisnya tidak pernah tergambar kabur. */
+  --kotak:17px; --kotak-1:-9px;
+  /* Kisi titik di margin luar. 8px cukup rapat untuk terbaca sebagai tekstur,
+     cukup renggang untuk tidak jadi bidang abu. */
+  --dot:8px;
+  /* Panjang garis dan jeda pada rel tegak. Diukur dari zoom acuan pemilik:
+     garisnya kira-kira dua kali jedanya. `border-style:dashed` TIDAK bisa
+     dipakai untuk ini — polanya ditentukan peramban (Chrome: 3px-3px pada
+     bingkai 1px) dan tidak bisa disetel dari CSS. */
+  --rel-garis:8px; --rel-jeda:4px;
   --e-keluar:cubic-bezier(.22,1,.36,1); --e-halus:cubic-bezier(.4,0,.2,1);
   color-scheme:dark;}
 *{box-sizing:border-box}
@@ -42,10 +59,10 @@
    dan aturan penulis selalu mengalahkan aturan peramban — jadi elemen yang
    disembunyikan dari JS tetap tergambar tanpa satu pun galat. */
 [hidden]{display:none!important}
-/* Bidik silang di sudut `.dalam` sengaja MELEWATI tepinya 9px — begitulah ia
-   duduk di atas garis, bukan di sebelahnya. Di desktop lengan itu jatuh di
-   ruang kosong kiri-kanan; di ponsel `.dalam` selebar layar, jadi lengan
-   kanannya menonjol 8px keluar viewport.
+/* Penanda sudut `.dalam` sengaja MELEWATI tepinya — begitulah ia duduk di
+   ATAS garis, bukan di sebelahnya. Sejak kotak menggantikan tanda silang,
+   tonjolannya turun dari 9px jadi 2px, tapi masalahnya sama: di ponsel
+   `.dalam` selebar layar, jadi sisi kanannya keluar viewport.
    `overflow-x:hidden` di body saja tidak menutupnya: roda tetikus memang
    tertahan, tapi viewport-nya masih bisa digeser 8px — terukur, dan di layar
    sentuh itu berarti halaman bergoyang saat digulir. `clip` di html menutup
@@ -58,27 +75,99 @@ h1,h2,h3{font-family:var(--judul);font-weight:400;letter-spacing:0;line-height:1
   text-wrap:balance}
 p{margin:0;text-wrap:pretty}
 h1,h2,h3{hanging-punctuation:first last}
-/* ═══ TANDA SILANG ════════════════════════════════════════════════════════
-   Tiga bentuk. Lengan hanya digambar ke arah yang benar-benar ada garisnya:
-   4 garis → +   ·   garis lanjut ke bawah saja → ⊤   ·   ke atas saja → ⊥ */
-:root{--xh-plus:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 0v18' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
-  --xh-bawah:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 9v9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
-  --xh-atas:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 0v9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
-  /* Garis MENDATAR yang berhenti di tepi tegak: lengan hanya ke arah yang ada */
-  --xh-kanan:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M9 0v18M9 9h9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");
-  --xh-kiri:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M9 0v18M0 9h9' stroke='%233F3F46' stroke-width='3'/%3E%3C/svg%3E");}
-.pita{border-top:1px solid var(--garis);position:relative}
-.pita--akhir{border-bottom:1px solid var(--garis)}
-.dalam{max-width:var(--lebar);margin-inline:auto;border-inline:1px solid var(--garis);
-  position:relative}
-.dalam::before,.dalam::after{content:"";position:absolute;left:var(--xh-1);right:var(--xh-1);
-  height:var(--xh);z-index:4;pointer-events:none;background-repeat:no-repeat;
+/* ═══ PENANDA SUDUT ═════════════════════════════════════════
+   Kotak berongga di tiap perpotongan garis, menggantikan + ⊤ ⊥ ⊢ ⊣.
+
+   Kotak tidak punya lengan, jadi tidak ada lagi yang perlu diarahkan: lima
+   varian tanda silang yang lama — masing-masing menggambar lengan hanya ke
+   arah yang benar-benar ada garisnya — runtuh jadi SATU bentuk yang dipakai
+   di semua persimpangan. Itu juga berarti aturan khusus .pita--awal dan
+   .pita--akhir tidak diperlukan lagi.
+
+   Isinya diwarnai --kanvas, bukan transparan, supaya garis di bawahnya
+   terpotong dan kotaknya benar-benar terbaca berongga.
+
+   Warna dituliskan di dalam data URI karena data URI tidak bisa membaca
+   custom property. Nilainya cerminan --garis-2 dan --aksen; kalau salah
+   satunya diubah, dua baris di bawah ini ikut. */
+:root{--rel-img:repeating-linear-gradient(to bottom,var(--garis) 0 var(--rel-garis),
+    transparent var(--rel-garis) calc(var(--rel-garis) + var(--rel-jeda)));
+  --kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
+  --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
+/* Garis mendatar antar-pita dipindah dari `.pita` (selebar layar) ke
+   `.dalam` (selebar kolom isi), diminta pemilik: yang selebar layar
+   memotong latar bertitik di talang, dan talang itu harus penuh titik tanpa
+   sela.
+
+   Bonus yang bukan kebetulan: begitu garis mendatar ikut jadi bingkai
+   `.dalam`, ia duduk sama persis terhadap kotak-padding seperti garis
+   tegaknya — jadi geseran penanda sudut yang tadinya kebetulan sama untuk
+   kedua sumbu sekarang memang HARUS sama. Satu angka, satu alasan. */
+.pita{position:relative}
+.pita--akhir > .dalam{border-bottom:1px solid var(--garis)}
+/* Rel tegak kiri-kanan PUTUS-PUTUS; garis mendatar antar-pita tetap utuh.
+   Bedanya disengaja: yang mendatar memisahkan isi, yang tegak cuma menandai
+   di mana kolomnya berhenti.
+
+   Digambar sebagai LATAR, bukan `border-style:dashed`. Panjang garis dan
+   jeda pada border dashed ditentukan peramban dan tidak bisa disetel — di
+   Chrome polanya 3px-3px pada bingkai 1px, jauh lebih rapat daripada acuan
+   pemilik. Bingkainya tetap ada tapi TRANSPARAN, supaya lebar dan titik nol
+   kotak-padding tidak berubah: seluruh geseran penanda sudut dihitung
+   terhadapnya.
+
+   background-origin/clip: border-box wajib — bawaannya padding-box, dan
+   latar yang mulai dari kotak-padding tidak akan pernah menyentuh area
+   bingkai tempat relnya harus berada. */
+.dalam{max-width:var(--lebar);margin-inline:auto;
+  border-inline:1px solid transparent;border-top:1px solid var(--garis);
+  position:relative;
+  background-image:var(--rel-img),var(--rel-img);
+  background-repeat:repeat-y,repeat-y;
+  background-position:left top,right top;
+  background-size:1px auto,1px auto;
+  background-origin:border-box;background-clip:border-box}
+
+/* Latar bertitik di bidang kosong KIRI dan KANAN kolom isi.
+   Digambar sebagai dua pita di talang, bukan sebagai latar body, karena latar
+   body akan menembus juga di dalam kolom — dan menutupnya berarti memberi
+   `.dalam` warna sendiri, yang justru mematikan pita bervarian gelap.
+
+   max(0px, ...): begitu layar lebih sempit dari --lebar, talangnya habis dan
+   perhitungannya jadi negatif. Lebar negatif bukan galat di CSS, ia cuma
+   diabaikan diam-diam bersama seluruh aturannya. */
+.pita::before,.pita::after{content:"";position:absolute;top:0;bottom:0;z-index:0;
+  width:max(0px,calc((100% - var(--lebar)) / 2));pointer-events:none;
+  background-image:radial-gradient(var(--garis) 1px,transparent 1px);
+  background-size:var(--dot) var(--dot)}
+.pita::before{left:0}
+.pita::after{right:0}
+/* HANYA tepi ATAS yang ditandai, plus tepi bawah pita paling bawah.
+   Tiap batas dilewati DUA `.dalam` — yang di atasnya dan yang di bawahnya —
+   dan menandai keduanya menaruh dua kotak berjarak 1-2px. Yang tampak bukan
+   kotak melainkan satu bentuk lonjong bersekat di tengah; persis itu yang
+   dilaporkan pemilik.
+
+   `body > .pita--akhir`, bukan `.pita--akhir` saja: pita terakhir di dalam
+   <main> juga berkelas --akhir, dan kaki halaman yang menyusulnya membawa
+   garis atasnya sendiri — dua garis bertumpuk, jadi dua kotak lagi. Yang
+   benar-benar mengakhiri halaman hanyalah pita yang jadi anak langsung
+   <body>. Terukur di dua belas halaman. */
+.dalam::before,body > .pita--akhir .dalam::after{content:"";position:absolute;
+  left:var(--kotak-1);right:var(--kotak-1);
+  height:var(--kotak);z-index:4;pointer-events:none;background-repeat:no-repeat;
   background-position:left center,right center;
-  background-image:var(--xh-plus),var(--xh-plus)}
-.dalam::before{top:var(--xh-1)}
-.dalam::after{bottom:var(--xh-1)}
-.pita--awal .dalam::before{background-image:var(--xh-bawah),var(--xh-bawah)}
-.pita--akhir .dalam::after{background-image:var(--xh-atas),var(--xh-atas)}
+  background-image:var(--kotak-img),var(--kotak-img)}
+.dalam::before{top:var(--kotak-1)}
+/* Pita PERTAMA tidak ditandai: garis atasnya adalah tepi halaman, jadi
+   kotaknya terpotong separuh oleh viewport dan yang terlihat bukan kotak
+   melainkan cekungan. Acuannya pun tidak menandai tepi paling atas. */
+.pita--awal .dalam::before{content:none}
+/* Pita pertama juga tidak bergaris atas: yang di atasnya tepi halaman, bukan
+   pita lain. Dulu tidak perlu diatur karena garisnya milik `.pita`, yang
+   memang bertumpuk dengan tepi layar. */
+.pita--awal > .dalam{border-top-color:transparent}
+body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
 .isi{padding:56px 44px}
 .isi--rapat{padding:24px 44px}
 .isi--longgar{padding:96px 44px}
@@ -87,10 +176,10 @@ h1,h2,h3{hanging-punctuation:first last}
 .baris{display:grid}
 .sel{position:relative;padding:30px 32px;min-width:0}
 .sel + .sel{border-left:1px solid var(--garis)}
-.sel + .sel::before{content:"";position:absolute;left:var(--xh-1);top:var(--xh-1);
-  bottom:var(--xh-1);width:var(--xh);z-index:4;pointer-events:none;
+.sel + .sel::before{content:"";position:absolute;left:var(--kotak-1);top:var(--kotak-1);
+  bottom:var(--kotak-1);width:var(--kotak);z-index:4;pointer-events:none;
   background-repeat:no-repeat;background-position:center top,center bottom;
-  background-image:var(--xh-bawah),var(--xh-atas)}
+  background-image:var(--kotak-img),var(--kotak-img)}
 .baris + .baris{border-top:1px solid var(--garis)}
 .b2{grid-template-columns:repeat(2,1fr)}
 .b3{grid-template-columns:repeat(3,1fr)}
@@ -348,9 +437,7 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   font-size:12px;color:var(--teks-2);transition:transform 320ms var(--e-keluar)}
 .demo__bar.sembunyi{transform:translateY(-100%)}
 /* Crosshair sel ikut menyala saat selnya disentuh kursor */
-:root{--xh-bawah-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 9v9' stroke='%232DD4BF' stroke-width='3'/%3E%3C/svg%3E");
-  --xh-atas-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18'%3E%3Cpath d='M0 9h18M9 0v9' stroke='%232DD4BF' stroke-width='3'/%3E%3C/svg%3E");}
-.sel:hover::before,.sel:hover + .sel::before{background-image:var(--xh-bawah-ak),var(--xh-atas-ak)}
+.sel:hover::before,.sel:hover + .sel::before{background-image:var(--kotak-ak),var(--kotak-ak)}
 .sel::before{transition:opacity 200ms}
 /* ═══ URUTAN MASUK HALAMAN ════════════════════════════════════════════════ */
 /* padding+margin negatif: topeng animasi harus turun melewati garis dasar,
@@ -477,10 +564,11 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   transition:color 180ms var(--e-halus),background 180ms var(--e-halus)}
 .kat__b:hover{color:var(--teks-2);background:#1C1C20}
 .kat__b[aria-current="true"]{color:var(--aksen);background:var(--gelap)}
-/* Tanda di kedua ujung tiap garis pemisah — inilah bentuk ⊢ dan ⊣ */
-.kat__b::after{content:"";position:absolute;left:-9px;right:-9px;bottom:-9px;height:18px;z-index:3;
+/* Penanda di kedua ujung tiap garis pemisah — kotak yang sama */
+.kat__b::after{content:"";position:absolute;left:var(--kotak-1);right:var(--kotak-1);
+  bottom:var(--kotak-1);height:var(--kotak);z-index:3;
   pointer-events:none;background-repeat:no-repeat;background-position:left center,right center;
-  background-image:var(--xh-kanan),var(--xh-kiri)}
+  background-image:var(--kotak-img),var(--kotak-img)}
 .panah-kotak{position:relative;width:38px;height:38px;flex:none;display:grid;place-items:center;
   background:#0C2A27;color:var(--aksen);
   opacity:0;transform:translateX(-7px);
