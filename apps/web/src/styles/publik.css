@@ -32,10 +32,15 @@
   --lebar:1200px; --r:6px;
   --rasio-foto: 16 / 9;   /* 5760×3240 dari fotografer — tepat 16:9 */
   /* Penanda sudut. Dulu tanda silang berlengan 18px; sekarang kotak kecil
-     berongga, sesuai gambar acuan pemilik. Satu angka yang mengatur semuanya —
-     --kotak-1 adalah setengah selisihnya terhadap garis 1px, supaya pusat
-     kotak duduk TEPAT di titik potong. */
-  --kotak:5px; --kotak-1:-2px;
+     bersudut bulat, sesuai gambar acuan pemilik.
+
+     DUA geseran, bukan satu, karena dua garis yang ditumpangi tidak duduk di
+     tempat yang sama terhadap `.dalam`: garis TEGAK adalah border-inline
+     `.dalam` sendiri (di DALAM kotaknya, pusatnya +0,5px), sedangkan garis
+     MENDATAR adalah border-top `.pita` (di LUAR, pusatnya -0,5px). Dipukul
+     rata dengan satu angka, penandanya meleset 1px — kecil di layar, jelas
+     terlihat begitu di-zoom. */
+  --kotak:7px; --kotak-x:-3px; --kotak-y:-4px;
   --e-keluar:cubic-bezier(.22,1,.36,1); --e-halus:cubic-bezier(.4,0,.2,1);
   color-scheme:dark;}
 *{box-sizing:border-box}
@@ -75,18 +80,30 @@ h1,h2,h3{hanging-punctuation:first last}
    Warna dituliskan di dalam data URI karena data URI tidak bisa membaca
    custom property. Nilainya cerminan --garis-2 dan --aksen; kalau salah
    satunya diubah, dua baris di bawah ini ikut. */
-:root{--kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='5'%3E%3Crect x='0.5' y='0.5' width='4' height='4' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
-  --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='5'%3E%3Crect x='0.5' y='0.5' width='4' height='4' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
+:root{--kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Crect x='0.5' y='0.5' width='6' height='6' rx='2' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
+  --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Crect x='0.5' y='0.5' width='6' height='6' rx='2' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
 .pita{border-top:1px solid var(--garis);position:relative}
 .pita--akhir{border-bottom:1px solid var(--garis)}
 .dalam{max-width:var(--lebar);margin-inline:auto;border-inline:1px solid var(--garis);
   position:relative}
-.dalam::before,.dalam::after{content:"";position:absolute;left:var(--kotak-1);right:var(--kotak-1);
+/* HANYA tepi ATAS yang ditandai, plus tepi bawah pita paling bawah.
+   Tiap batas dilewati DUA `.dalam` — yang di atasnya dan yang di bawahnya —
+   dan menandai keduanya menaruh dua kotak berjarak 1-2px. Yang tampak bukan
+   kotak melainkan satu bentuk lonjong bersekat di tengah; persis itu yang
+   dilaporkan pemilik.
+
+   `body > .pita--akhir`, bukan `.pita--akhir` saja: pita terakhir di dalam
+   <main> juga berkelas --akhir, dan kaki halaman yang menyusulnya membawa
+   garis atasnya sendiri — dua garis bertumpuk, jadi dua kotak lagi. Yang
+   benar-benar mengakhiri halaman hanyalah pita yang jadi anak langsung
+   <body>. Terukur di dua belas halaman. */
+.dalam::before,body > .pita--akhir .dalam::after{content:"";position:absolute;
+  left:var(--kotak-x);right:var(--kotak-x);
   height:var(--kotak);z-index:4;pointer-events:none;background-repeat:no-repeat;
   background-position:left center,right center;
   background-image:var(--kotak-img),var(--kotak-img)}
-.dalam::before{top:var(--kotak-1)}
-.dalam::after{bottom:var(--kotak-1)}
+.dalam::before{top:var(--kotak-y)}
+body > .pita--akhir .dalam::after{bottom:var(--kotak-y)}
 .isi{padding:56px 44px}
 .isi--rapat{padding:24px 44px}
 .isi--longgar{padding:96px 44px}
@@ -95,8 +112,8 @@ h1,h2,h3{hanging-punctuation:first last}
 .baris{display:grid}
 .sel{position:relative;padding:30px 32px;min-width:0}
 .sel + .sel{border-left:1px solid var(--garis)}
-.sel + .sel::before{content:"";position:absolute;left:var(--kotak-1);top:var(--kotak-1);
-  bottom:var(--kotak-1);width:var(--kotak);z-index:4;pointer-events:none;
+.sel + .sel::before{content:"";position:absolute;left:var(--kotak-x);top:var(--kotak-y);
+  bottom:var(--kotak-y);width:var(--kotak);z-index:4;pointer-events:none;
   background-repeat:no-repeat;background-position:center top,center bottom;
   background-image:var(--kotak-img),var(--kotak-img)}
 .baris + .baris{border-top:1px solid var(--garis)}
@@ -484,8 +501,8 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .kat__b:hover{color:var(--teks-2);background:#1C1C20}
 .kat__b[aria-current="true"]{color:var(--aksen);background:var(--gelap)}
 /* Penanda di kedua ujung tiap garis pemisah — kotak yang sama */
-.kat__b::after{content:"";position:absolute;left:var(--kotak-1);right:var(--kotak-1);
-  bottom:var(--kotak-1);height:var(--kotak);z-index:3;
+.kat__b::after{content:"";position:absolute;left:var(--kotak-x);right:var(--kotak-x);
+  bottom:var(--kotak-y);height:var(--kotak);z-index:3;
   pointer-events:none;background-repeat:no-repeat;background-position:left center,right center;
   background-image:var(--kotak-img),var(--kotak-img)}
 .panah-kotak{position:relative;width:38px;height:38px;flex:none;display:grid;place-items:center;
