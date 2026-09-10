@@ -392,6 +392,62 @@
   color: var(--brand);
 }
 
+/* --- Pratinjau logo klien -------------------------------------------------- */
+
+/* Kelas ini SUDAH dipakai di ClientLogosPanel sejak awal tapi tidak pernah
+   punya satu baris CSS pun, jadi <img> di dalamnya tampil seukuran berkas
+   aslinya — logo 1200px memenuhi layar dan mendorong nama serta tombolnya
+   keluar baris. Persis jebakan nomor 5 di CLAUDE.md: markupnya benar, tidak
+   ada satu pun galat, dan hanya terlihat dengan MENJALANKAN halamannya.
+
+   Ukurannya bukan angka bebas: kotak ini replika sel marquee di beranda
+   (200x74) dalam skala yang sama, jadi yang dilihat pemilik di sini adalah
+   yang akan tampil di situs — termasuk logo yang kekecilan atau yang
+   rasionya aneh, yang selama ini baru ketahuan setelah deploy. */
+.klien-logo {
+  display: grid;
+  place-items: center;
+  width: 8.75rem;   /* 140px — 200px sel marquee, dikecilkan 0,7x */
+  height: 3.25rem;  /*  52px —  74px, skala yang sama */
+  flex: none;
+  /* Napas tipis saja. Dengan padding 8px, logo petak yang boleh setinggi 35px
+     tidak muat di kotak setinggi 52px dan ikut terpotong. */
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  /* Latar gelap seperti pita marquee-nya, supaya logo putih transparan tidak
+     lenyap di tema terang — di sinilah pemilik memutuskan logonya layak
+     tayang atau tidak. */
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  overflow: hidden;
+}
+
+/* Batasnya ANGKA TETAP, bukan persen — dan itu sudah menggigit sekali di sini.
+   `max-height: 100%` pada anak grid yang barisnya ber-ukuran auto tidak pernah
+   berlaku: tinggi barisnya ditentukan oleh isinya, sementara isinya menunggu
+   tinggi barisnya, jadi peramban memutus lingkarannya dengan mengabaikan
+   persentasenya. Terukur: logo 200x320 tampil 122x195 di dalam kotak setinggi
+   52px, meluber persis seperti sebelum kelas ini ada.
+
+   Angkanya = batas marquee dikali 0,7, skala kotak ini terhadap sel aslinya.
+   Kelas bentuknya dipasang saat gambarnya termuat, memakai ambang yang sama
+   persis dengan beranda (lib/logoBentuk.ts) — supaya ukuran yang disetujui
+   pemilik di sini adalah ukuran yang benar-benar tayang. */
+.klien-logo img {
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  /* Bawaan sebelum bentuknya diketahui: sama dengan kelas sedang, jadi
+     pergeserannya paling kecil kalau ternyata bukan sedang. */
+  max-height: 25px;
+  max-width: 98px;
+}
+
+.klien-logo img[data-bentuk="lebar"]  { max-height: 17px; max-width: 105px; }
+.klien-logo img[data-bentuk="sedang"] { max-height: 25px; max-width:  98px; }
+.klien-logo img[data-bentuk="petak"]  { max-height: 35px; max-width:  45px; }
+
 /* --- Terbitkan perubahan --------------------------------------------------- */
 
 /* Tombol berteks, bukan ikon telanjang seperti tema dan lonceng. Bedanya

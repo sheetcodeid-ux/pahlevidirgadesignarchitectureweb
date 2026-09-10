@@ -178,10 +178,13 @@ const fakta = (p: Project) =>
             {/* Judulnya "clients", bukan "materials & partners", karena yang dikirim
                 pemilik adalah nama klien. Judul lama di atas daftar klien adalah
                 pernyataan yang tidak benar, bukan sekadar salah kata. */}
+            {/* Tanpa tombol Pause. Mengarahkan kursor ke sebuah logo sudah
+                menghentikan barisnya — itu gerakan yang sama dengan yang
+                dipakai orang untuk membaca logo yang menarik perhatiannya,
+                jadi tombol terpisah menyuruh mereka melakukan dua hal untuk
+                satu maksud. Yang butuh diam permanen sudah ditangani
+                prefers-reduced-motion di CSS, tanpa perlu menekan apa pun. */}
             <span class="label label--redup">SELECTED CLIENTS</span>
-            <button class="pil" id="mqJeda" type="button" aria-pressed="false">
-              <span aria-hidden="true">❙❙</span> Pause
-            </button>
           </div>
           <div class="mq mq--garis">
             {/* Daftar digandakan supaya gulirannya menyambung tanpa jeda. */}
@@ -715,25 +718,41 @@ const fakta = (p: Project) =>
 </style>
 
 <script>
+  import { bentukLogo } from "../lib/logoBentuk";
+
   (() => {
     "use strict";
     const diam = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    /* ── Marquee ──────────────────────────────────────────────────────── */
-    const jeda = document.getElementById("mqJeda");
-    const mq = document.querySelector(".mq");
-    if (jeda && mq) {
-      if (diam) {
-        mq.classList.add("mq--jeda");
-        jeda.setAttribute("aria-pressed", "true");
-      }
-      jeda.addEventListener("click", () => {
-        const kini = mq.classList.toggle("mq--jeda");
-        jeda.setAttribute("aria-pressed", String(kini));
-        jeda.lastChild!.textContent = kini ? " Play" : " Pause";
-        jeda.firstElementChild!.textContent = kini ? "▶" : "❙❙";
-      });
-    }
+    /* ── Ukuran logo klien ────────────────────────────────────────────
+     *
+     * Satu batas tinggi untuk semua logo TERLIHAT tidak konsisten, dan itu
+     * bukan perasaan: wordmark panjang berhenti di batas lebar 150px sementara
+     * logo petak berhenti di batas tinggi 34px, jadi yang petak tampil sebagai
+     * benda mungil di sebelah tetangganya walau berkas aslinya sama besar.
+     * Yang menyamakan bukan satu angka melainkan angka per bentuk.
+     *
+     * Bentuknya dibaca dari berkasnya sendiri, bukan disimpan di database.
+     * Alasannya: rasio adalah sifat gambarnya, bukan keputusan yang perlu
+     * diurus siapa pun — menyimpannya berarti satu kolom yang bisa menyimpang
+     * dari berkas yang diwakilinya, plus migrasi dan pengisian ulang untuk
+     * delapan logo yang sudah telanjur diunggah. Di sini ia selalu benar,
+     * termasuk untuk logo yang diunggah besok.
+     *
+     * Menghentikan animasi dan membesarkan saat disentuh TIDAK ada di sini —
+     * keduanya CSS murni, jadi tetap bekerja walau skrip ini gagal dimuat. */
+    document.querySelectorAll<HTMLImageElement>(".mq__logo").forEach((img) => {
+      // naturalWidth baru terisi setelah berkasnya sampai. Gambar yang sudah
+      // ada di cache peramban melewatkan peristiwa "load" sepenuhnya, jadi
+      // `complete` diperiksa lebih dulu — tanpa itu, memuat ulang halaman
+      // justru membuat separuh logonya tidak pernah dikelompokkan.
+      const pasang = () => {
+        if (!img.naturalWidth || !img.naturalHeight) return;
+        img.classList.add(`mq__logo--${bentukLogo(img.naturalWidth, img.naturalHeight)}`);
+      };
+      if (img.complete) pasang();
+      else img.addEventListener("load", pasang, { once: true });
+    });
 
     /* ── Showcase: tab + strip per proyek ─────────────────────────────── */
     const tabs = document.getElementById("swTabs");

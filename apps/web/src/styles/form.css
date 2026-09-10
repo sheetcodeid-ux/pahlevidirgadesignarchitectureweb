@@ -76,6 +76,20 @@
 
 /* Textarea memakai radius kartu, bukan pill — bentuk pill pada kotak tinggi
    membuat baris pertama dan terakhir terlihat terpotong. */
+/* Radius pil di atas dibuat untuk isian SATU BARIS, tempat 999px berhenti
+   sendiri di setengah tinggi dan menghasilkan ujung stadion. Di textarea
+   setinggi 16 baris ia tidak berhenti di mana pun: sudutnya membulat sampai
+   bertemu di tengah, dan kotak isian jurnal tampil sebagai LINGKARAN.
+   Sudah tayang seperti itu sekali.
+
+   Karena itu diikat ke elemennya, bukan ke kelas varian: kelas yang harus
+   diingat adalah kelas yang suatu saat terlupa, dan gejalanya tidak terlihat
+   sampai ada yang membuka halamannya. Setiap textarea ber-.input aman
+   sekarang, ditulis --area atau tidak. */
+textarea.input { border-radius: var(--radius-md); line-height: 1.6; }
+
+/* --area menambahkan yang tidak bisa disimpulkan dari elemennya: tinggi
+   minimum dan izin ditarik. */
 .input--area { border-radius: var(--radius-md); resize: vertical; min-height: 7.5rem; line-height: 1.6; }
 
 /* Input di dalam panel gelap: dipakai saat kartu di sekitarnya memakai

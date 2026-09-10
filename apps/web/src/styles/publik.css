@@ -214,19 +214,55 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .mq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
   mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
 .mq__rel{display:flex;width:max-content;animation:geser 34s linear infinite}
-.mq:hover .mq__rel,.mq--jeda .mq__rel{animation-play-state:paused}
+/* Berhenti saat kursor masuk ke barisnya — itu satu-satunya cara
+   menghentikannya, dan sengaja: gerakan yang dipakai orang untuk membaca
+   sebuah logo SUDAH gerakan yang menghentikannya. Tombol Pause terpisah
+   dulu ada di sini dan dilepas karena menyuruh mereka melakukan dua hal
+   untuk satu maksud. */
+.mq:hover .mq__rel{animation-play-state:paused}
 .mq__i{display:grid;place-items:center;width:200px;height:74px;flex:none;
   border-right:1px solid var(--garis);color:var(--teks-3);font-size:11px;letter-spacing:.14em;
   transition:color 180ms,background 180ms}
 .mq__i:hover{color:var(--aksen);background:var(--sel)}
-/* Logo klien di marquee. Tingginya dibatasi, BUKAN lebarnya: logo yang lebar
-   dan yang tinggi harus terlihat sama besar, dan yang menyamakannya adalah
-   tinggi optisnya. `object-fit:contain` menjaga rasio apa pun bentuk aslinya.
-   Dibuat abu dan baru berwarna saat disentuh — delapan logo berwarna sekaligus
-   menarik perhatian lebih besar daripada karya yang ada di bawahnya. */
-.mq__logo{max-height:32px;max-width:150px;width:auto;height:auto;object-fit:contain;
-  filter:grayscale(1);opacity:.62;transition:filter 220ms var(--e-halus),opacity 220ms var(--e-halus)}
-.mq__i:hover .mq__logo{filter:none;opacity:1}
+
+/* Logo klien di marquee.
+ *
+ * BERWARNA sejak awal. Sebelumnya abu dan baru berwarna saat disentuh, dengan
+ * alasan delapan logo berwarna menarik perhatian lebih besar daripada karya di
+ * bawahnya. Pemilik membalik keputusan itu: logo klien adalah bukti sosial,
+ * dan bukti sosial yang diredam sampai nyaris tak terbaca tidak membuktikan
+ * apa pun. Yang menahan perhatiannya sekarang bukan warna melainkan ukuran —
+ * seluruh baris ini tetap jauh lebih kecil daripada gambar proyek.
+ *
+ * Ukurannya per kelas rasio, bukan satu batas untuk semua. Satu batas tinggi
+ * membuat logo petak (kucing, kelinci) tampil sebagai benda mungil di samping
+ * wordmark selebar 150px, dan itu ketidakkonsistenan yang terlihat di beranda.
+ * Kelasnya ditentukan dari rasio berkas aslinya, disimpan saat unggah. */
+.mq__logo{width:auto;height:auto;object-fit:contain;
+  max-height:34px;max-width:150px;
+  transition:transform 260ms var(--e-halus)}
+
+/* Wordmark panjang (rasio >= 3:1): lebarnya yang membatasi, tingginya
+   dikecilkan supaya ia tidak menjadi benda terbesar di baris. */
+.mq__logo--lebar{max-height:24px;max-width:150px}
+/* Lockup sedang (1,4:1 sampai 3:1): keduanya berperan. */
+.mq__logo--sedang{max-height:36px;max-width:140px}
+/* Petak atau menjulang (< 1,4:1): dibiarkan jauh lebih tinggi. Tanpa ini ia
+   tampil setengah ukuran tetangganya walau file aslinya sama besar. */
+.mq__logo--petak{max-height:50px;max-width:64px}
+
+/* Membesar saat disentuh, lalu kembali sendiri begitu kursornya pergi.
+   Sepasang dengan barisnya yang ikut berhenti, jadi logo yang sedang
+   diperhatikan diam DAN terbaca lebih besar. */
+.mq__i:hover .mq__logo{transform:scale(1.16)}
+
+/* Yang meminta gerakan minimum: barisnya diam sejak awal dan tidak ada yang
+   membesar. Dulu ini dikerjakan JS lewat tombol Pause; di CSS ia tetap
+   bekerja walau skripnya gagal dimuat. */
+@media (prefers-reduced-motion:reduce){
+  .mq__rel{animation:none}
+  .mq__i:hover .mq__logo{transform:none}
+}
 @keyframes geser{to{transform:translateX(-50%)}}
 /* ═══ TAB SHOWCASE ════════════════════════════════════════════════════════ */
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--garis);

@@ -8,6 +8,7 @@ import {
   daftarKlien, buatKlien, ubahKlien, hapusKlien, mintaUrlUnggahLogoKlien,
   bacaCache, tulisCache, jumlahDiingat, type KlienAdmin,
 } from "../../lib/admin";
+import { bentukLogo } from "../../lib/logoBentuk";
 
 /* Sama dengan logo studio: PNG/JPEG/WebP, maksimal 2 MB. Logo yang lebih
    besar dari itu hampir selalu foto yang salah pilih, bukan logo. */
@@ -166,7 +167,22 @@ function Isi() {
               <li key={k.id} className="item item--bordered">
                 <span className="klien-logo" aria-hidden="true">
                   {k.logoUrl
-                    ? <img src={k.logoUrl} alt="" />
+                    ? (
+                      /* Bentuknya baru bisa diketahui setelah berkasnya sampai,
+                         jadi dipasang di onLoad — bukan dihitung dari data,
+                         yang tidak menyimpan rasio apa pun. Ambangnya diambil
+                         dari lib/logoBentuk supaya sama persis dengan marquee
+                         beranda; kalau berbeda, pemilik menyetujui satu ukuran
+                         di sini lalu mendapat ukuran lain di situs. */
+                      <img
+                        src={k.logoUrl}
+                        alt=""
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          img.dataset.bentuk = bentukLogo(img.naturalWidth, img.naturalHeight);
+                        }}
+                      />
+                    )
                     : <Icon name="image" size={16} />}
                 </span>
                 <span className="item__text">
