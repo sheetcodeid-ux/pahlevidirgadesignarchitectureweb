@@ -23,33 +23,15 @@ export const TAHUN_BERDIRI: number | null = 2025;
  *  Diberikan pemilik — tahun yang sama dengan berdirinya studio. */
 export const TAHUN_KOMERSIAL_PERTAMA: number | null = 2025;
 
-/* ── Marquee "materials & partners we specify" di beranda ────────────────── */
-
-/**
- * Nama-nama yang berjalan di pita marquee beranda.
+/* ── Klien di marquee beranda ─────────────────────────────────────────────
  *
- * PENTING — pemilik mengirim NAMA KLIEN (kedai kopi), bukan merek material.
- * Judul pita karena itu diubah jadi "SELECTED CLIENTS"; membiarkannya
- * berbunyi "materials & partners we specify" berarti mencetak pernyataan
- * yang tidak benar. Kalau kata "clients" kurang tepat — misalnya sebagian
- * belum jadi klien — sebutkan, judulnya satu baris di index.astro.
+ * Daftarnya PINDAH ke database, diurus pemilik lewat /admin/klien, dan
+ * marquee sekarang merender logonya — bukan namanya sebagai teks.
  *
- * Delapan-delapannya sudah masuk. Urut abjad, bukan urut kirim — supaya
- * tidak terbaca sebagai peringkat.
+ * Daftar nama yang dulu ada di sini sengaja dihapus, bukan disimpan sebagai
+ * cadangan: dua sumber untuk hal yang sama pasti menyimpang, dan yang di
+ * berkas ini tidak punya cara memberi tahu siapa pun bahwa ia sudah basi.
  */
-export const MITRA: string[] = [
-  "Cano Coffee",
-  "Cattu Coffee",
-  "Elsana Coffee",
-  "Kopi Nomor Dua",
-  "Tropic Coffee",
-  "Twenty Vee",
-  "Two People",
-  "Weng Coffee",
-];
-
-/** True selama daftar di atas masih berisi penanda, bukan nama sungguhan. */
-export const MITRA_MASIH_PENANDA = MITRA.length > 0 && MITRA.every((m) => /^BRAND \d\d$/.test(m));
 
 /* ── Tim di /studio ──────────────────────────────────────────────────────── */
 
