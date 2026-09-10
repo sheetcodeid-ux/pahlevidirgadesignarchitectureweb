@@ -28,7 +28,11 @@
   --aksen:#2DD4BF; --aksen-3:#5EEAD4; --isi:#0D9488;
   --isi-hover:#047857; --isi-tekan:#065F46; --cincin:#34D399; --merah:#F87171;
     --glow-judul:0 0 30px #26D97F8C;
-  --judul:"Arvo",Georgia,serif; --tubuh:"Maven Pro",system-ui,sans-serif;
+  /* Inter untuk judul DAN tubuh, mengikuti acuan pemilik. Menggantikan
+     Arvo + Maven Pro yang dipilihnya sendiri lewat empat tangkapan layar
+     DevTools — diganti atas permintaan eksplisitnya, dan bisa dikembalikan
+     dengan mengubah dua baris ini plus tautan di BaseLayout. */
+  --judul:"Inter",system-ui,sans-serif; --tubuh:"Inter",system-ui,sans-serif;
   --lebar:1200px; --r:6px; --r-pil:999px;
   /* Panel banner: jarak ke tepi layar dan lengkung sudutnya. */
   --panel-sisi:16px; --panel-r:18px; --panel-jeda:16px;
@@ -73,8 +77,13 @@
 html{overflow-x:clip}
 body{margin:0;background:var(--kanvas);color:var(--teks);font-family:var(--tubuh);
   font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip}
-h1,h2,h3{font-family:var(--judul);font-weight:400;letter-spacing:0;line-height:1.14;margin:0;
-  text-wrap:balance}
+/* Bobot 600 dan kerapatan negatif, BUKAN 400/0 seperti waktu judulnya Arvo.
+   Angka lama itu milik slab serif: Arvo sudah tebal pada reguler dan hurufnya
+   saling bersinggungan kalau dirapatkan. Inter grotesk kebalikannya — pada
+   400 ia terbaca kurus di ukuran besar, dan justru menuntut kerapatan negatif
+   supaya tidak renggang. Persis setelan yang dipakai halaman acuan. */
+h1,h2,h3{font-family:var(--judul);font-weight:600;letter-spacing:-.022em;line-height:1.14;
+  margin:0;text-wrap:balance}
 p{margin:0;text-wrap:pretty}
 h1,h2,h3{hanging-punctuation:first last}
 /* ═══ PENANDA SUDUT ═════════════════════════════════════════
@@ -195,6 +204,10 @@ h1,h2,h3{hanging-punctuation:first last}
   background-image:radial-gradient(var(--garis) 1px,transparent 1px);
   background-size:var(--dot) var(--dot)}
 .pita--panel:first-child{padding-top:0}
+/* Panel penutup berpasangan dengan banner pembuka — bentuk yang sama di
+   kepala dan kaki halaman, seperti di acuan. Ia juga butuh napas di bawahnya,
+   yang tidak dibutuhkan panel pembuka. */
+.pita--panel.pita--akhir{padding-bottom:var(--panel-jeda);border-bottom:0}
 .pita--panel::before,.pita--panel::after{content:none}
 .pita--panel > .dalam{
   max-width:none;margin-inline:var(--panel-sisi);
