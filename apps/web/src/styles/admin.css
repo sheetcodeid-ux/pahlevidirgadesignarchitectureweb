@@ -436,7 +436,11 @@
   padding: var(--space-5);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  background: var(--surface);
+  /* HITAM, bukan --surface. Pemilik menunjuk gambar acuannya: kartunya yang
+     gelap, isiannya yang abu — bukan sebaliknya seperti sebelumnya. Lewat
+     token, jadi di tema terang kartunya jadi putih dan isiannya tetap abu,
+     yang memang maksud --field/--tray sejak awal. */
+  background: var(--bg-sunken);
 }
 
 /* Ikon berdiri di atas isian, jadi isiannya sendiri yang diberi padding kiri
@@ -462,6 +466,21 @@
   border-radius: var(--radius-pill);
   font-size: var(--text-md);
 }
+
+/* TIGA kelas, bukan dua. `.proyekpage .input` di berkas ini berkekhususan
+   (0,2,0) yang sama dan ditulis 2000 baris lebih ke bawah, jadi ia yang
+   menang — kotak carinya tetap hitam padahal aturannya terlihat benar.
+   Jebakan nomor 6 lagi; sudah terukur, bukan ditebak.
+
+   --tray, bukan --field: di atas kartu yang sekarang hitam, #1c1c1c nyaris
+   tidak terbaca sebagai abu. --tray memang token untuk bidang yang harus
+   lebih terang dari semua permukaan lain di tema gelap. */
+.pilihproyek .pilihproyek__cari .input {
+  background: var(--tray);
+  border-color: transparent;
+}
+
+.pilihproyek .pilihproyek__cari .input:hover:not(:disabled) { border-color: var(--border-strong); }
 
 /* Peramban menggambar tombol silang bawaannya sendiri di type=search, dan
    bentuknya tidak mengikuti tema mana pun. */
@@ -494,6 +513,28 @@
 }
 
 /* --- Tabel pemilih proyek ------------------------------------------------ */
+
+/* Satu bentuk dengan kartu perkakas di atasnya: sudut sebesar --radius-xl dan
+   latar hitam. Dua persegi panjang bertumpuk yang sudutnya berbeda terbaca
+   sebagai dua benda dari sistem yang berlainan.
+
+   .table-wrap sudah punya overflow-x:auto — dan begitu satu sumbu bukan
+   visible, sumbu satunya ikut jadi auto — jadi latar kepala tabel sudah
+   terpotong mengikuti lengkung sudutnya tanpa aturan tambahan. */
+.pilihproyek__wrap {
+  border-radius: var(--radius-xl);
+  background: var(--bg-sunken);
+}
+
+/* Kekhususan (0,2,2), bukan (0,1,2): `.table--ruled thead th` di berkas ini
+   ditulis belakangan dan akan menang kalau ditandingi dengan satu kelas saja.
+   Jebakan nomor 6, di tempat baru. */
+.table.pilihproyek__tabel thead th { background: var(--surface-hover); }
+
+/* Baris di atas latar hitam: --bg-sunken sebagai warna sentuh jadi tidak
+   berarti apa-apa, karena itu warnanya sendiri. */
+.table.pilihproyek__tabel tbody tr:hover { background: var(--surface); }
+.table.pilihproyek__tabel .table__klik:hover td { background: transparent; }
 
 /* Baris dipendekkan atas laporan pemilik: bawaan .table--ruled (11px atas dan
    bawah, ditambah baris kedua) membuat tiap baris ~71px — hampir dua kali

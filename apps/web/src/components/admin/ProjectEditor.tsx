@@ -1639,12 +1639,19 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
 
   const jumlahTerbit = proyek.filter((p) => p.status === "published").length;
 
-  /* btn--brand = merah, diminta pemilik. Merah di panel ini juga dipakai untuk
-     aksi merusak, jadi tombol ini SELALU berlabel penuh "Tambah Proyek" —
-     tidak pernah jadi tombol ikon saja, yang akan terbaca sebagai hapus. */
+  /* btn--primary + btn--lift, BUKAN btn--brand: pemilik minta tombolnya putih
+     dulu dan baru merah saat kursor mendekat, dengan bidang putih terangkat di
+     belakangnya. Persis itu yang sudah dijalankan pasangan kelas ini lewat
+     token --action-hover dan --action-hover-shadow, jadi tidak ada gaya baru
+     yang perlu ditulis — tombol ini cuma pindah ke keluarga yang benar.
+
+     Namanya "Proyek Baru", bukan "Tambah Proyek": yang terjadi bukan menambah
+     satu baris ke daftar melainkan membuat satu halaman proyek utuh — detail,
+     galeri, dan SEO-nya. Label pun tetap penuh, tidak pernah jadi tombol ikon
+     saja. */
   const tombolBaru = (
-    <a className="btn btn--brand pilihproyek__baru" href="/admin/proyek/baru">
-      <Icon name="projectPlus" size={18} />Tambah Proyek
+    <a className="btn btn--primary btn--lift pilihproyek__baru" href="/admin/proyek/baru">
+      <Icon name="projectPlus" size={18} />Proyek Baru
     </a>
   );
 
@@ -1696,7 +1703,7 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
           <span className="t-subheading">Tidak ada yang cocok dengan “{cari}”</span>
         </div>
       ) : tampilan === "tabel" ? (
-        <div className="table-wrap">
+        <div className="table-wrap pilihproyek__wrap">
           <table className="table table--ruled pilihproyek__tabel">
             <thead>
               <tr>
