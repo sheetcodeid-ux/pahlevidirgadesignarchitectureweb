@@ -1,0 +1,52 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
+
+/* Lima keterangan yang TIDAK boleh dikarang. Halaman privasi yang salah lebih
+   buruk daripada yang belum lengkap, karena ia berbunyi seperti janji hukum. */
+const isian: Isian[] = [
+  {
+    kunci: "legalEntity",
+    label: "Badan usaha",
+    contoh: "CV Pahlevi Dirga Design Architecture",
+    bantuan: "Nama resmi yang bertanggung jawab atas data di halaman privasi.",
+  },
+  {
+    kunci: "legalAddress",
+    label: "Alamat resmi",
+    contoh: "Jl. ... , Pontianak, Kalimantan Barat",
+    jenis: "panjang",
+    bantuan: "Alamat terdaftar badan usaha, bukan alamat studio sehari-hari kalau berbeda.",
+  },
+  {
+    kunci: "retentionMessages",
+    label: "Lama menyimpan pesan",
+    contoh: "12 bulan",
+    bantuan: "Berapa lama pesan yang tidak jadi proyek disimpan sebelum dihapus.",
+  },
+  {
+    kunci: "retentionDocuments",
+    label: "Lama menyimpan dokumen",
+    contoh: "10 tahun",
+    bantuan: "Berapa lama dokumen proyek yang sudah selesai disimpan.",
+  },
+  {
+    kunci: "governingLaw",
+    label: "Hukum yang berlaku",
+    contoh: "hukum Republik Indonesia",
+    bantuan: "Hukum negara mana yang berlaku atas halaman privasi ini.",
+  },
+];
+---
+
+<AdminLayout
+  title="Halaman Privasi"
+  heading="Halaman Privasi"
+  description="Lima keterangan yang belum bisa diisi tanpa keputusan Anda."
+>
+  <IsiHalamanPanel
+    client:load
+    isian={isian}
+    catatan="Saya sengaja tidak mengarang isian ini: halaman privasi yang salah berbunyi seperti janji hukum. Kalau perlu, tunjukkan halamannya ke notaris Anda — isinya sudah benar secara teknis, yang kurang hanya kelima keterangan ini."
+  />
+</AdminLayout>

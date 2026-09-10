@@ -11,6 +11,10 @@ export default defineConfig({
   // peringkat apa pun yang sudah dikumpulkannya.
   redirects: {
     "/tentang": "/studio",
+    // Pindah ke kelompok Situs Publik di sidebar. Alamat lama tetap hidup:
+    // panel admin sering dibuka dari tab yang sudah dibookmark, dan halaman
+    // yang mendadak 404 terbaca sebagai fitur yang dihapus.
+    "/admin/klien": "/admin/halaman/klien",
   },
   site,
 

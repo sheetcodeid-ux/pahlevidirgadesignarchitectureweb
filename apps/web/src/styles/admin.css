@@ -392,6 +392,202 @@
   color: var(--brand);
 }
 
+/* --- Isi halaman publik (Situs Publik) ------------------------------------ */
+
+/* Penanda berapa isian yang masih kosong. Amber, bukan merah: bagian yang
+   belum terisi bukan kerusakan — halamannya tetap tayang dengan penanda
+   "menunggu" yang memang ikut dirancang. Hijau begitu lengkap. */
+.isihal__sisa,
+.banding__grid ~ .isihal__sisa {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--warn-line);
+  border-radius: var(--radius-md);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.isihal__sisa svg { flex: none; margin-top: 0.05rem; }
+.isihal__sisa--penuh {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+/* Dua kolom di layar lebar, satu di sempit. auto-fit dengan lebar minimum,
+   BUKAN container query — wadah query terdekatnya tidak membungkus panel ini,
+   dan aturan yang tidak pernah menyala adalah jebakan nomor 4 di CLAUDE.md. */
+/* Lebarnya DIBATASI, bukan dibiarkan selebar layar. Dua alasan yang keduanya
+   terukur: pada 1440px tanpa batas ini isiannya jadi tiga kolom, dan empat
+   isian dalam tiga kolom meninggalkan satu berdiri sendiri dengan ruang kosong
+   selebar dua kolom di sebelahnya. Dengan 64rem ia jadi dua kolom yang terisi
+   penuh. Yang kedua: isian teks selebar 500px membuat mata kehilangan awal
+   baris berikutnya. */
+.isihal__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+  gap: var(--space-5);
+  align-items: start;
+  max-width: 64rem;
+}
+
+.isihal__kaki {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  max-width: 64rem;
+  border-top: 1px solid var(--border);
+}
+
+/* --- Potret tim ------------------------------------------------------------ */
+
+/* 4:5 tegak, bentuk yang sama dengan kartu tim di halaman /studio — jadi
+   pemilik melihat proporsi yang benar-benar tayang, bukan kotak sembarang. */
+.tim-foto {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 4.0625rem;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+}
+
+.tim-foto img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Label slot ("PRINCIPAL", "STAFF") di kotak selebar 52px. Ukuran 2xs plus
+   kerapatan 0,1em membuat PRINCIPAL terpotong jadi "PRINCIP" — terukur di
+   peramban, bukan dikira. Dikecilkan lagi, kerapatan dilepas, dan dibolehkan
+   pecah dua baris: kotaknya 65px tinggi, jadi ruangnya ada. */
+.tim-foto__slot {
+  font-size: 8.5px;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  text-align: center;
+  padding-inline: 0.15rem;
+  overflow-wrap: anywhere;
+}
+
+/* --- Sebelum & Sesudah ----------------------------------------------------- */
+
+.banding__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+  gap: var(--space-5);
+}
+
+.banding__kartu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.banding__judul {
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* aspect-ratio, BUKAN tinggi tetap: kotaknya harus tetap 16:10 berapa pun
+   lebar kolomnya. Jebakan nomor 3 di CLAUDE.md — flex:1 membuat tingginya
+   mengikuti sisa ruang viewport dan bentuknya berubah di layar pendek. */
+.banding__kotak {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+.banding__kotak img { width: 100%; height: 100%; object-fit: cover; }
+
+.banding__slot {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-faint);
+  /* Berpola, bukan polos: kotak abu polos terbaca sebagai gambar yang gagal
+     dimuat, sementara pola menyatakan "memang belum ada isinya". */
+  background-image:
+    repeating-linear-gradient(45deg,
+      var(--border) 0 1px, transparent 1px 10px);
+}
+.banding__kartu .field__help { margin: 0; }
+
+/* --- Pratinjau logo klien -------------------------------------------------- */
+
+/* Kelas ini SUDAH dipakai di ClientLogosPanel sejak awal tapi tidak pernah
+   punya satu baris CSS pun, jadi <img> di dalamnya tampil seukuran berkas
+   aslinya — logo 1200px memenuhi layar dan mendorong nama serta tombolnya
+   keluar baris. Persis jebakan nomor 5 di CLAUDE.md: markupnya benar, tidak
+   ada satu pun galat, dan hanya terlihat dengan MENJALANKAN halamannya.
+
+   Ukurannya bukan angka bebas: kotak ini replika sel marquee di beranda
+   (200x74) dalam skala yang sama, jadi yang dilihat pemilik di sini adalah
+   yang akan tampil di situs — termasuk logo yang kekecilan atau yang
+   rasionya aneh, yang selama ini baru ketahuan setelah deploy. */
+.klien-logo {
+  display: grid;
+  place-items: center;
+  width: 8.75rem;   /* 140px — 200px sel marquee, dikecilkan 0,7x */
+  height: 3.25rem;  /*  52px —  74px, skala yang sama */
+  flex: none;
+  /* Napas tipis saja. Dengan padding 8px, logo petak yang boleh setinggi 35px
+     tidak muat di kotak setinggi 52px dan ikut terpotong. */
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  /* Latar gelap seperti pita marquee-nya, supaya logo putih transparan tidak
+     lenyap di tema terang — di sinilah pemilik memutuskan logonya layak
+     tayang atau tidak. */
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  overflow: hidden;
+}
+
+/* Batasnya ANGKA TETAP, bukan persen — dan itu sudah menggigit sekali di sini.
+   `max-height: 100%` pada anak grid yang barisnya ber-ukuran auto tidak pernah
+   berlaku: tinggi barisnya ditentukan oleh isinya, sementara isinya menunggu
+   tinggi barisnya, jadi peramban memutus lingkarannya dengan mengabaikan
+   persentasenya. Terukur: logo 200x320 tampil 122x195 di dalam kotak setinggi
+   52px, meluber persis seperti sebelum kelas ini ada.
+
+   Angkanya = batas marquee dikali 0,7, skala kotak ini terhadap sel aslinya.
+   Kelas bentuknya dipasang saat gambarnya termuat, memakai ambang yang sama
+   persis dengan beranda (lib/logoBentuk.ts) — supaya ukuran yang disetujui
+   pemilik di sini adalah ukuran yang benar-benar tayang. */
+.klien-logo img {
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  /* Bawaan sebelum bentuknya diketahui: sama dengan kelas sedang, jadi
+     pergeserannya paling kecil kalau ternyata bukan sedang. */
+  max-height: 25px;
+  max-width: 98px;
+}
+
+.klien-logo img[data-bentuk="lebar"]  { max-height: 17px; max-width: 105px; }
+.klien-logo img[data-bentuk="sedang"] { max-height: 25px; max-width:  98px; }
+.klien-logo img[data-bentuk="petak"]  { max-height: 35px; max-width:  45px; }
+
 /* --- Terbitkan perubahan --------------------------------------------------- */
 
 /* Tombol berteks, bukan ikon telanjang seperti tema dan lonceng. Bedanya

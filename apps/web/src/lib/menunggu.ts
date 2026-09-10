@@ -1,75 +1,21 @@
 /**
- * SATU TEMPAT UNTUK SEMUA DATA YANG MASIH DITUNGGU DARI PEMILIK.
+ * Sisa data yang masih ditunggu dari pemilik DAN belum punya tempat di panel.
  *
- * Halaman-halaman publik dibangun persis sesuai rancangan yang sudah di-ACC,
- * termasuk bagian yang datanya belum ada. Bagian itu TIDAK dihapus — ia
- * dirender dengan penanda "menunggu" yang memang ikut dirancang, supaya
- * bentuk halamannya tidak berubah begitu datanya masuk.
+ * Berkas ini dulu memuat semuanya: tahun berdiri, daftar klien, tim studio,
+ * foto sebelum/sesudah, empat isian halaman privasi. Semuanya sudah pindah ke
+ * database dan diurus pemilik sendiri lewat kelompok **Situs Publik** di
+ * sidebar panel admin — karena satu-satunya cara mengisi berkas ini adalah
+ * menyunting repo, dan pemilik tidak pernah menyentuh repo. Akibatnya
+ * bagian-bagian itu berbulan menampilkan penanda "menunggu" di situs yang
+ * tayang tanpa ada yang mengingatkan siapa pun.
  *
- * Cara mengisinya: ganti nilainya di bawah ini saja. Setiap nilai yang sudah
- * terisi otomatis mematikan penandanya sendiri; tidak ada berkas lain yang
- * perlu disentuh.
+ * Yang TERSISA di sini cuma dua hal, dan keduanya sengaja:
  *
- * `null` atau array kosong berarti "belum ada".
+ * 1. Kalimat penanda yang dipakai di banyak halaman. Ia bukan data yang diisi
+ *    pemilik melainkan bagian dari rancangan — satu kalimat, satu tempat,
+ *    supaya tidak ada dua versi berbeda di halaman berbeda.
+ * 2. Kredit proyek, yang skema database-nya memang belum punya kolomnya.
  */
-
-/* ── Identitas studio ────────────────────────────────────────────────────── */
-
-/** Tahun studio berdiri. Dipakai di eyebrow beranda ("SINCE …") dan di
- *  tonggak pertama garis waktu /studio. Diberikan pemilik. */
-export const TAHUN_BERDIRI: number | null = 2025;
-
-/** Tahun proyek komersial pertama. Tonggak kedua garis waktu /studio.
- *  Diberikan pemilik — tahun yang sama dengan berdirinya studio. */
-export const TAHUN_KOMERSIAL_PERTAMA: number | null = 2025;
-
-/* ── Klien di marquee beranda ─────────────────────────────────────────────
- *
- * Daftarnya PINDAH ke database, diurus pemilik lewat /admin/klien, dan
- * marquee sekarang merender logonya — bukan namanya sebagai teks.
- *
- * Daftar nama yang dulu ada di sini sengaja dihapus, bukan disimpan sebagai
- * cadangan: dua sumber untuk hal yang sama pasti menyimpang, dan yang di
- * berkas ini tidak punya cara memberi tahu siapa pun bahwa ia sudah basi.
- */
-
-/* ── Tim di /studio ──────────────────────────────────────────────────────── */
-
-export interface OrangStudio {
-  /** null = namanya belum diberikan; halaman menampilkan penanda. */
-  nama: string | null;
-  peran: string;
-  ket: string;
-  /** URL potret 4:5. null = kotak foto tampil sebagai slot kosong. */
-  foto: string | null;
-  /** Label di slot foto yang masih kosong. */
-  slot: string;
-}
-
-export const TIM: OrangStudio[] = [
-  {
-    nama: "Pahlevi Dirga",
-    peran: "Principal architect",
-    ket: "Draws the building and answers the phone. Every project on this site passed through this desk.",
-    foto: null,
-    slot: "PRINCIPAL",
-  },
-  {
-    nama: null,
-    peran: "Project coordinator",
-    ket: "Keeps the client page current — phases, documents, invoices — so that nobody has to ask for a status.",
-    foto: null,
-    slot: "STAFF",
-  },
-];
-
-/* ── Pembanding sebelum/sesudah di /studio ───────────────────────────────── */
-
-/** Foto lokasi sebelum dibangun dan sesudah jadi. Keduanya harus ada supaya
- *  pembandingnya berarti; kalau salah satu kosong, keduanya tampil sebagai
- *  slot berpola. */
-export const BANDING_SEBELUM: string | null = null;
-export const BANDING_SESUDAH: string | null = null;
 
 /* ── Kredit proyek ───────────────────────────────────────────────────────── */
 
@@ -80,7 +26,9 @@ export const BANDING_SESUDAH: string | null = null;
  * proyek Anda berikutnya.
  *
  * Skema proyek belum punya kolom untuk nama-nama ini; selama belum ada, tiap
- * barisnya tampil sebagai "Name to be credited".
+ * barisnya tampil sebagai "Name to be credited". Kalau suatu saat dibuatkan
+ * kolomnya, tempatnya di tab Halaman Publik pada editor proyek — per proyek,
+ * bukan satu daftar untuk seluruh studio, karena fotografernya bisa berbeda.
  */
 export const KREDIT_MENUNGGU = [
   { peran: "Photography", nama: null as string | null },
@@ -88,33 +36,10 @@ export const KREDIT_MENUNGGU = [
   { peran: "Lighting", nama: null as string | null },
 ];
 
-/** Teks yang dipakai di mana pun sebuah nama belum diberikan. Satu kalimat,
- *  satu tempat — supaya tidak ada dua versi yang berbeda di halaman berbeda. */
+/* ── Kalimat penanda ─────────────────────────────────────────────────────── */
+
+/** Dipakai di mana pun sebuah nama belum diberikan. */
 export const BELUM_ADA = "Name to be credited";
+
+/** Dipakai di mana pun sebuah tahun belum diberikan. */
 export const TAHUN_BELUM = "YEAR?";
-
-/* ── Halaman privasi ─────────────────────────────────────────────────────── */
-
-/**
- * Empat hal yang harus diisi sebelum halaman privasi benar-benar lengkap.
- * Saya sengaja tidak mengarangnya: halaman privasi yang SALAH lebih buruk
- * daripada halaman privasi yang belum lengkap, karena ia berbunyi seperti
- * janji hukum. Selama kosong, halamannya tetap tayang dan bagian yang belum
- * ada ditandai apa adanya, bukan disembunyikan.
- *
- * Kalau perlu, tunjukkan halaman itu ke notaris Anda — isinya sudah benar
- * secara teknis; yang kurang hanya keempat keterangan di bawah.
- */
-export const BADAN_USAHA: string | null = null;
-export const ALAMAT_RESMI: string | null = null;
-
-/** Berapa lama pesan yang tidak jadi proyek disimpan sebelum dihapus.
- *  Contoh isian: "12 bulan". */
-export const SIMPAN_PESAN: string | null = null;
-
-/** Berapa lama dokumen proyek yang sudah selesai disimpan.
- *  Contoh isian: "10 tahun". */
-export const SIMPAN_DOKUMEN: string | null = null;
-
-/** Hukum negara mana yang berlaku. Contoh isian: "the laws of Indonesia". */
-export const HUKUM_BERLAKU: string | null = null;

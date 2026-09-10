@@ -1,0 +1,12 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { TimStudioPanel } from "../../../components/admin/TimStudioPanel";
+---
+
+<AdminLayout
+  title="Tim Studio"
+  heading="Tim Studio"
+  description="Orang yang tampil di halaman Studio. Peran wajib; nama dan foto boleh menyusul."
+>
+  <TimStudioPanel client:load />
+</AdminLayout>

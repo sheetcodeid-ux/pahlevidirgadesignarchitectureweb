@@ -21,6 +21,7 @@ import * as testimonialsRepo from "../repository/testimonials";
 import * as journalRepo from "../repository/journal";
 import * as clientLogosRepo from "../repository/clientLogos";
 import * as revisiRepo from "../repository/contentRevision";
+import * as studioTeamRepo from "../repository/studioTeam";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload, sanitizeSlug } from "../lib/r2";
 import { checkProjectInput, checkJournalInput, ValidationError } from "../lib/validate";
@@ -28,6 +29,7 @@ import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
   InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput, PaymentInput,
   ProjectBriefInput, TestimonialInput, JournalPostInput, ClientLogoInput,
+  StudioPersonInput,
 } from "../types";
 import {
   VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
@@ -68,8 +70,12 @@ admin.post("/uploads", async (c) => {
   const body = await c.req.json<UploadBody>().catch((): UploadBody => ({}));
 
   let folder: string;
-  if (body.scope === "logo") {
+  if (body.scope === "logo" || body.scope === "studio") {
     // Aset tingkat studio, bukan proyek — satu folder tetap, tidak perlu slug.
+    // Dua nama untuk folder yang sama: "logo" sudah dipakai panel Info Studio
+    // sejak awal dan tidak diubah supaya versi lama tetap bekerja selama
+    // deploy berjalan, "studio" untuk pemakai baru — potret tim dan foto
+    // sebelum/sesudah, yang juga aset studio tapi jelas bukan logo.
     folder = "studio";
   } else if (body.scope === "klien") {
     // Logo klien untuk marquee beranda. Folder sendiri, alasan yang sama
@@ -892,6 +898,83 @@ admin.delete("/journal/:id", async (c) => {
   } catch (err) {
     if (err instanceof NotFoundError) {
       return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});
+
+// ── Tim studio (halaman publik /studio) ────────────────────────────────────
+//
+// Beda dari /admin/team yang mengurus Tim & Freelancer internal: yang itu soal
+// siapa dibayar berapa untuk proyek mana, yang ini isi halaman "siapa kami"
+// yang dilihat calon klien.
+
+admin.get("/studio-team", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    studioTeamRepo.list(sql, assetBase(c.env)));
+  return c.json({ data });
+});
+
+function periksaOrang(input: StudioPersonInput, wajibPeran: boolean): string | null {
+  if (wajibPeran || input.role !== undefined) {
+    const r = (input.role ?? "").trim();
+    // Peran wajib, nama TIDAK. Kartu tanpa peran tidak menjelaskan apa pun,
+    // sementara kartu tanpa nama masih menjelaskan bahwa posisi itu ada —
+    // dan itu memang keadaan yang sedang berlaku di studio ini.
+    if (!r) return "peran wajib diisi";
+    if (r.length > 120) return "peran maksimal 120 karakter";
+  }
+  if (input.name !== undefined && input.name !== null) {
+    const n = input.name.trim();
+    if (n && n.length < 2) return "nama minimal 2 karakter";
+    if (n.length > 120) return "nama maksimal 120 karakter";
+  }
+  if (input.bio !== undefined && input.bio !== null && input.bio.length > 600) {
+    return "keterangan maksimal 600 karakter";
+  }
+  if (input.slotLabel !== undefined) {
+    const s = input.slotLabel.trim();
+    if (s.length < 2 || s.length > 24) return "label slot antara 2 dan 24 karakter";
+  }
+  if (input.sortOrder !== undefined && !Number.isInteger(input.sortOrder)) {
+    return "urutan harus bilangan bulat";
+  }
+  return null;
+}
+
+admin.post("/studio-team", async (c) => {
+  const input = await c.req.json<StudioPersonInput>().catch(() => ({}) as StudioPersonInput);
+  const salah = periksaOrang(input, true);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+
+  const id = await withDb(c.env, c.executionCtx, (sql) => studioTeamRepo.create(sql, input));
+  return c.json({ data: { id } }, 201);
+});
+
+admin.patch("/studio-team/:id", async (c) => {
+  const input = await c.req.json<StudioPersonInput>().catch(() => ({}) as StudioPersonInput);
+  const salah = periksaOrang(input, false);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+
+  try {
+    await withDb(c.env, c.executionCtx, (sql) =>
+      studioTeamRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "anggota tim tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});
+
+admin.delete("/studio-team/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => studioTeamRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "anggota tim tidak ditemukan" } }, 404);
     }
     throw err;
   }

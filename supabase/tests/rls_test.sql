@@ -1213,4 +1213,149 @@ begin
 end;
 $$;
 
+-- Tim studio ------------------------------------------------------------
+--
+-- Halaman "siapa kami", jadi seluruh barisnya memang publik. Yang dijaga
+-- bukan kerahasiaannya melainkan siapa yang boleh MENGUBAHNYA.
+
+insert into public.studio_team (name, role, slot_label, sort_order)
+values ('Uji Principal', 'Principal architect', 'PRINCIPAL', 0);
+
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_anon();
+
+  select count(*) into terlihat from public.studio_team where name = 'Uji Principal';
+  perform pg_temp.tolak(terlihat <> 1, 'anon melihat anggota tim studio');
+
+  begin
+    insert into public.studio_team (role) values ('anon nyelip');
+    raise exception 'GAGAL: anon berhasil menulis studio_team';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis studio_team';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terkena int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  update public.studio_team set name = 'dibajak' where name = 'Uji Principal';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0, 'non-staf tidak bisa mengubah tim studio');
+
+  delete from public.studio_team where name = 'Uji Principal';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0, 'non-staf tidak bisa menghapus tim studio');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terkena int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  update public.studio_team set sort_order = 5 where name = 'Uji Principal';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 1, 'staf bisa mengubah urutan tim studio');
+
+  reset role;
+end;
+$$;
+
+-- Nama BOLEH kosong — itu inti rancangannya: kartu orang tetap tampil beserta
+-- perannya walau namanya belum diberikan. Kalau assertion ini suatu saat
+-- merah, berarti ada yang menambahkan `not null` dan halaman /studio kehilangan
+-- satu kartu setiap kali seorang staf belum punya nama di sistem.
+do $$
+begin
+  insert into public.studio_team (name, role) values (null, 'Belum bernama');
+  raise notice 'ok: anggota tim tanpa nama diterima (memang boleh)';
+end;
+$$;
+
+-- Peran WAJIB: tanpa peran, kartunya tidak menjelaskan apa pun.
+do $$
+begin
+  begin
+    insert into public.studio_team (name, role) values ('Tanpa peran', '  ');
+    raise exception 'GAGAL: anggota tim tanpa peran diterima';
+  exception when check_violation then
+    raise notice 'ok: anggota tim tanpa peran ditolak';
+  end;
+end;
+$$;
+
+-- Menambah anggota tim ikut mencap content_revision: /studio dibekukan saat
+-- build, jadi tombol Terbitkan harus menyala.
+do $$
+declare sebelum timestamptz;
+begin
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+
+  insert into public.studio_team (name, role) values ('Cap Uji', 'Drafter');
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'menambah anggota tim mencap content_revision');
+end;
+$$;
+
+-- Isi halaman publik yang tunggal ---------------------------------------
+--
+-- Menempel di studio_settings, yang policy-nya sudah diuji di atas. Yang
+-- diperiksa di sini kolomnya: ada, bisa ditulis staf, dan tertutup untuk anon.
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+  begin
+    update public.studio_settings set legal_entity = 'PT Anon';
+    raise exception 'GAGAL: anon bisa mengubah keterangan hukum studio';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak mengubah keterangan hukum studio';
+  end;
+  reset role;
+end;
+$$;
+
+do $$
+declare terkena int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  update public.studio_settings
+     set founded_year = 2025, first_commercial_year = 2025,
+         legal_entity = 'CV Pahlevi Dirga', legal_address = 'Pontianak',
+         retention_messages = '12 bulan', retention_documents = '10 tahun',
+         governing_law = 'the laws of Indonesia',
+         faq_tarif = '8-12%', faq_uang_muka = '30%',
+         faq_lama_kerja = '4-6 bulan', faq_kunjungan = 'Dua kali per tahap';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 1, 'staf bisa mengisi seluruh isi halaman publik');
+
+  reset role;
+end;
+$$;
+
+-- Tahun yang tidak masuk akal ditolak. Bukan menebak umur studio — cuma
+-- menahan salah ketik yang membuat beranda berbunyi "SINCE 225".
+do $$
+begin
+  begin
+    update public.studio_settings set founded_year = 225;
+    raise exception 'GAGAL: tahun berdiri 225 diterima';
+  exception when check_violation then
+    raise notice 'ok: tahun berdiri di luar akal ditolak';
+  end;
+end;
+$$;
+
 rollback;

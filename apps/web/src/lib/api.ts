@@ -212,6 +212,14 @@ export interface Klien {
  * yang gagal diambil menghilangkan satu pita di beranda — mengganggu, tapi
  * tidak seperti daftar proyek yang kegagalannya menghapus seluruh portofolio.
  */
+/**
+ * Seksi tim di /studio. safely(), bukan wajib(): tim yang gagal diambil
+ * membuat satu seksi kosong, bukan situs tanpa satu pun karya.
+ */
+export function listTeam(): Promise<OrangStudio[]> {
+  return safely<OrangStudio[]>("/api/v1/team", []);
+}
+
 export function listClients(): Promise<Klien[]> {
   return safely<Klien[]>("/api/v1/clients", []);
 }
@@ -248,6 +256,38 @@ export interface StudioSettings {
   city?: string | null;
   instagramUrl?: string | null;
   logoUrl?: string | null;
+
+  /* --- Isi halaman publik yang diurus dari /admin/halaman ----------------
+   *
+   * Semuanya boleh kosong, dan halaman memang dirancang untuk itu: bagian
+   * yang datanya belum ada tetap dirender dengan penanda "menunggu" yang
+   * ikut dirancang, supaya bentuk halamannya tidak berubah begitu datanya
+   * masuk. Yang dulu ada di lib/menunggu.ts. */
+  foundedYear?: number | null;
+  firstCommercialYear?: number | null;
+  beforeUrl?: string | null;
+  afterUrl?: string | null;
+  legalEntity?: string | null;
+  legalAddress?: string | null;
+  retentionMessages?: string | null;
+  retentionDocuments?: string | null;
+  governingLaw?: string | null;
+  faqTarif?: string | null;
+  faqUangMuka?: string | null;
+  faqLamaKerja?: string | null;
+  faqKunjungan?: string | null;
+}
+
+/** Satu orang di seksi tim halaman /studio. */
+export interface OrangStudio {
+  id: string;
+  /** Boleh kosong: kartunya tetap tampil beserta peran, bertanda menunggu. */
+  name: string | null;
+  role: string;
+  bio: string | null;
+  photoUrl: string | null;
+  slotLabel: string;
+  sortOrder: number;
 }
 
 const FALLBACK_SETTINGS: StudioSettings = {

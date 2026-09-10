@@ -1,0 +1,33 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
+
+const isian: Isian[] = [
+  {
+    kunci: "foundedYear",
+    label: "Tahun studio berdiri",
+    contoh: "2025",
+    jenis: "tahun",
+    bantuan: 'Tampil sebagai "SINCE ..." di beranda dan tonggak pertama garis waktu Studio.',
+  },
+  {
+    kunci: "firstCommercialYear",
+    label: "Tahun proyek komersial pertama",
+    contoh: "2025",
+    jenis: "tahun",
+    bantuan: "Tonggak kedua garis waktu di halaman Studio.",
+  },
+];
+---
+
+<AdminLayout
+  title="Identitas Studio"
+  heading="Identitas Studio"
+  description="Dua tahun yang dipakai beranda dan garis waktu halaman Studio."
+>
+  <IsiHalamanPanel
+    client:load
+    isian={isian}
+    catatan="Nama studio, email, telepon, dan logo diurus terpisah di Pengaturan → Info Studio, karena keduanya juga dipakai panel admin — bukan hanya halaman publik."
+  />
+</AdminLayout>

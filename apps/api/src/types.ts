@@ -202,6 +202,31 @@ export interface StudioSettings {
   logoUrl?: string | null;
   /** Nama zona IANA, bukan singkatan. Lihat migrasi 20260902000012. */
   timezone: string;
+
+  /* --- Isi halaman publik (migrasi 20260910000021) ------------------------
+   *
+   * Semuanya boleh null, dan halaman publik memang dirancang untuk itu:
+   * bagian yang datanya belum ada tetap dirender dengan penanda "menunggu"
+   * yang ikut dirancang, supaya bentuk halamannya tidak berubah begitu
+   * datanya masuk. */
+
+  /** Dipakai di eyebrow beranda ("SINCE ...") dan garis waktu /studio. */
+  foundedYear?: number | null;
+  firstCommercialYear?: number | null;
+  /** Pembanding sebelum/sesudah di /studio. URL siap pakai, dibalas server. */
+  beforeUrl?: string | null;
+  afterUrl?: string | null;
+  /** Empat keterangan halaman privasi. Tidak boleh dikarang. */
+  legalEntity?: string | null;
+  legalAddress?: string | null;
+  retentionMessages?: string | null;
+  retentionDocuments?: string | null;
+  governingLaw?: string | null;
+  /** Empat angka di FAQ. Teks, bukan bilangan — jawabannya sebuah kalimat. */
+  faqTarif?: string | null;
+  faqUangMuka?: string | null;
+  faqLamaKerja?: string | null;
+  faqKunjungan?: string | null;
 }
 
 /** Field yang boleh diubah lewat panel admin. undefined berarti "jangan diubah". */
@@ -215,6 +240,49 @@ export interface StudioSettingsInput {
   instagramUrl?: string | null;
   logoKey?: string | null;
   timezone?: string;
+
+  foundedYear?: number | null;
+  firstCommercialYear?: number | null;
+  /** Kunci R2 dari unggahan terbaru — dikirim saat menyimpan, bukan dibaca. */
+  beforeKey?: string | null;
+  afterKey?: string | null;
+  legalEntity?: string | null;
+  legalAddress?: string | null;
+  retentionMessages?: string | null;
+  retentionDocuments?: string | null;
+  governingLaw?: string | null;
+  faqTarif?: string | null;
+  faqUangMuka?: string | null;
+  faqLamaKerja?: string | null;
+  faqKunjungan?: string | null;
+}
+
+/**
+ * Satu orang di halaman /studio.
+ *
+ * BUKAN `TeamMember` — nama itu sudah dipakai fitur Tim & Freelancer yang
+ * mengurus siapa dibayar berapa untuk proyek mana. Yang ini murni isi
+ * halaman publik: nama, peran, dan potret yang dilihat calon klien.
+ */
+export interface StudioPerson {
+  id: string;
+  /** Boleh kosong: kartunya tetap tampil beserta perannya, bertanda menunggu. */
+  name: string | null;
+  role: string;
+  bio: string | null;
+  photoUrl: string | null;
+  /** Label di slot foto yang masih kosong ("PRINCIPAL", "STAFF"). */
+  slotLabel: string;
+  sortOrder: number;
+}
+
+export interface StudioPersonInput {
+  name?: string | null;
+  role?: string;
+  bio?: string | null;
+  photoKey?: string | null;
+  slotLabel?: string;
+  sortOrder?: number;
 }
 
 export interface ProjectProgressUpdate {

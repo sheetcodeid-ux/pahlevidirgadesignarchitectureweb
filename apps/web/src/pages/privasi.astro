@@ -1,15 +1,17 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getSettings } from "../lib/api";
-import {
-  BADAN_USAHA,
-  ALAMAT_RESMI,
-  SIMPAN_PESAN,
-  SIMPAN_DOKUMEN,
-  HUKUM_BERLAKU,
-} from "../lib/menunggu";
-
 const settings = await getSettings();
+
+/* Kelima keterangan ini datang dari database, diisi pemilik lewat
+   /admin/halaman/privasi. Sengaja TIDAK ada nilai bawaan: halaman privasi
+   yang salah berbunyi seperti janji hukum, jadi yang belum diisi ditandai apa
+   adanya, bukan ditebak. */
+const badanUsaha = settings.legalEntity?.trim() || null;
+const alamatResmi = settings.legalAddress?.trim() || null;
+const simpanPesan = settings.retentionMessages?.trim() || null;
+const simpanDokumen = settings.retentionDocuments?.trim() || null;
+const hukumBerlaku = settings.governingLaw?.trim() || null;
 const email = settings.email?.trim() || null;
 const studio = settings.studioName?.trim() || "Dirga Pahlevi Architecture";
 
@@ -149,10 +151,10 @@ const belum = "to be confirmed";
             <h2 id="simpan">How long we keep it</h2>
             <p>
               An enquiry that does not become a project is kept for{" "}
-              {SIMPAN_PESAN ? <strong>{SIMPAN_PESAN}</strong> : <em class="belum">{belum}</em>}, then
+              {simpanPesan ? <strong>{simpanPesan}</strong> : <em class="belum">{belum}</em>}, then
               deleted. Documents tied to a completed project — contracts, invoices, drawings — are
               kept for{" "}
-              {SIMPAN_DOKUMEN ? <strong>{SIMPAN_DOKUMEN}</strong> : <em class="belum">{belum}</em>},
+              {simpanDokumen ? <strong>{simpanDokumen}</strong> : <em class="belum">{belum}</em>},
               because they are the record of work that was done and paid for.
             </p>
 
@@ -180,13 +182,13 @@ const belum = "to be confirmed";
             <h2 id="siapa">Who is responsible</h2>
             <p>
               This site is run by{" "}
-              {BADAN_USAHA ? <strong>{BADAN_USAHA}</strong> : <><strong>{studio}</strong> (<em class="belum">registered name {belum}</em>)</>}
-              {ALAMAT_RESMI ? <>, {ALAMAT_RESMI}</> : <>, <em class="belum">registered address {belum}</em></>}.
+              {badanUsaha ? <strong>{badanUsaha}</strong> : <><strong>{studio}</strong> (<em class="belum">registered name {belum}</em>)</>}
+              {alamatResmi ? <>, {alamatResmi}</> : <>, <em class="belum">registered address {belum}</em></>}.
               Questions about anything on this page go to the same address above.
             </p>
             <p>
               This page is governed by{" "}
-              {HUKUM_BERLAKU ? <strong>{HUKUM_BERLAKU}</strong> : <em class="belum">{belum}</em>}.
+              {hukumBerlaku ? <strong>{hukumBerlaku}</strong> : <em class="belum">{belum}</em>}.
             </p>
           </div>
         </div>

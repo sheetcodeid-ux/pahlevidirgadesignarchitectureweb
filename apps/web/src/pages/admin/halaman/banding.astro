@@ -1,0 +1,12 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { BandingPanel } from "../../../components/admin/BandingPanel";
+---
+
+<AdminLayout
+  title="Sebelum & Sesudah"
+  heading="Sebelum & Sesudah"
+  description="Pembanding geser di halaman Studio."
+>
+  <BandingPanel client:load />
+</AdminLayout>

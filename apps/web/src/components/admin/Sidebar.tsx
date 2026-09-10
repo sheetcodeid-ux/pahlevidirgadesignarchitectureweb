@@ -45,7 +45,32 @@ const NAV: NavItem[] = [
   { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Utama" },
   { label: "Testimoni", href: "/admin/testimoni", icon: "quote", group: "Utama" },
   { label: "Jurnal", href: "/admin/jurnal", icon: "document", group: "Utama" },
-  { label: "Klien", href: "/admin/klien", icon: "image", group: "Utama" },
+
+  /* Kelompok sendiri bernama "Situs Publik", datar — bukan menu yang harus
+   * dibuka dulu.
+   *
+   * Datar karena pemilik datang ke sini untuk MENGISI satu hal tertentu
+   * ("tambahkan foto tim"), bukan untuk menjelajah; menu yang harus diklik
+   * dua kali menyembunyikan justru daftar yang jadi pengingatnya. Namanya
+   * "Situs Publik", bukan "Halaman Publik", karena label kedua sudah dipakai
+   * submenu Proyek untuk hal yang berbeda — halaman satu proyek.
+   *
+   * Isinya satu jenis pekerjaan yang jelas: menyunting apa yang dibaca
+   * PENGUNJUNG. Bedanya nyata dari sisa panel — halaman di sini dibekukan
+   * saat build, jadi setiap perubahan di dalamnya perlu tombol Terbitkan
+   * ditekan, sementara Proyek dan Keuangan langsung berlaku.
+   *
+   * Semua isinya dulu di-hardcode di lib/menunggu.ts dan hanya bisa diubah
+   * dengan menyunting repo — yang tidak pernah dilakukan pemilik. Akibatnya
+   * nama staf kedua, foto tim, foto sebelum/sesudah, empat isian privasi,
+   * dan empat angka FAQ sudah berbulan menampilkan penanda "menunggu" di
+   * situs yang tayang. */
+  { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", group: "Situs Publik" },
+  { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", group: "Situs Publik" },
+  { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", group: "Situs Publik" },
+  { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info", group: "Situs Publik" },
+  { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock", group: "Situs Publik" },
+  { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", group: "Situs Publik" },
   {
     label: "Pengaturan",
     icon: "settings",
