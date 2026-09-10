@@ -153,9 +153,13 @@ Langgar ini dan ada yang rusak diam-diam:
    Workers scale-to-zero secara native dan tidak ditagih per-region seperti
    Cloud Run dulu, ini juga yang menjaga biayanya tetap di free tier tanpa
    perlu menimbang region.
-5. **Konten baru butuh build ulang.** Deploy ulang Worker statis setelah
+5. **Jurnal tayang dari database, jadi tulisan baru BARU muncul setelah deploy
+   berikutnya** — bukan langsung seperti data di panel admin. Itu konsekuensi
+   halaman statis, bukan bug; sebutkan ke pemilik kalau dia bertanya kenapa
+   tulisannya belum kelihatan.
+6. **Konten baru butuh build ulang.** Deploy ulang Worker statis setelah
    konten berubah — halaman proyek dibekukan saat build.
-6. **Header keamanan hidup di `apps/web/public/_headers`.** Situs statis
+7. **Header keamanan hidup di `apps/web/public/_headers`.** Situs statis
    tidak menjalankan kode Worker, jadi tidak ada tempat lain untuk menaruhnya.
    Berkas itu disalin apa adanya ke `dist` dan dibaca Workers Static Assets.
    CSP-nya sengaja mengizinkan `'unsafe-inline'` untuk skrip — Astro menaruh
@@ -368,6 +372,58 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     CSS + woff2-nya sekali dengan `curl`, taruh di `dist/_font-uji/`, lalu
     `route.fulfill()` permintaan ke fonts.googleapis.com dengan salinan itu.
 
+11. **Situs statis MEMBACA API saat build, dan kedua job deploy dulu jalan
+    paralel.** Halaman proyek dan jurnal dibekukan dari jawaban API, jadi
+    build yang jalan sebelum Worker API selesai akan memanggang data versi
+    lama — atau kosong, kalau endpointnya memang belum ada. Terukur pada run
+    #56: situs statis `modified_on` 02:16:01, Worker API 02:16:33, jadi
+    situsnya tayang **32 detik sebelum** endpoint yang dibacanya ada.
+    Gejalanya paling sulit dilacak: semuanya hijau, datanya saja tidak ada.
+    Sudah ditutup dengan `needs: api` di `deploy.yml` — jangan dilepas.
+
+12. **Kegagalan mengambil daftar proyek WAJIB menggagalkan build.** Catatan
+    lama di `lib/api.ts` berbunyi "situs lama tetap tayang" — itu tidak
+    benar. Workers Static Assets MENGGANTI seluruh aset, jadi build yang
+    "berhasil" dengan daftar kosong menimpa situs bagus dengan situs tanpa
+    satu pun proyek, dan setiap `/proyek/<slug>` yang pernah dibagikan klien
+    jadi 404 tanpa satu pun langkah merah di tab Actions. `listProjects()`
+    karena itu memakai `wajib()`, bukan `safely()`. Daftar KOSONG dari API
+    yang menjawab benar tetap sah — yang dihentikan hanya kegagalan
+    permintaannya. `listJournal()` sengaja tetap `safely()`: jurnal yang
+    gagal cuma membuat satu halaman kosong.
+
+13. **Bidik silang di sudut `.dalam` menonjol 9px keluar tepi.** Di ponsel
+    `.dalam` selebar layar, jadi lengan kanannya keluar viewport dan halaman
+    bisa digeser mendatar 8px. `overflow-x:hidden` di body TIDAK cukup: roda
+    tetikus memang tertahan, tapi `scrollingElement.scrollLeft` masih bergeser
+    — dan jari di layar sentuh mengikuti yang kedua. Ditutup dengan
+    `overflow-x:clip` di `html`; `clip` dipilih karena ia tidak membuat
+    penampung gulir baru, jadi `position:sticky` di dalamnya tetap hidup.
+    **Ujilah dengan MENGGESER, bukan dengan membaca `scrollWidth`** — nilai
+    itu tetap melaporkan lengan bidik silang yang memang sengaja menonjol.
+
+14. **CSP `media-src` gampang terlupakan.** `img-src` dan `connect-src` sudah
+    memuat domain media, tapi `media-src` sempat hanya `'self' blob:` —
+    sehingga `<audio>` pesan suara klien di portal proyek ditolak peramban.
+    Tanpa satu pun galat di sisi server; gejalanya cuma "suaranya tidak bisa
+    diputar" di ponsel klien. Kalau menambah jenis media baru, periksa
+    direktif yang sesuai, bukan cuma `connect-src`.
+
+15. **`[hidden]` perlu ditegakkan di DUA stylesheet.** `publik.css` dan
+    `global.css` melayani dua sistem yang terpisah (situs publik dan panel
+    admin), jadi `[hidden]{display:none!important}` harus ada di keduanya.
+    Sudah menggigit dua kali: diperbaiki di satu sisi, dan berbulan kemudian
+    satu panel tab di `/admin/ui` setinggi 16.565px ketahuan masih ikut
+    tergambar. Kalau salah satu berkas ditambah aturan sejenis, periksa yang
+    satunya.
+
+16. **Menguji CSP dari build LOKAL memberi alarm palsu.** Build lokal
+    memanggang `localhost:8787` ke dalam HTML *dan* ke dalam bundel JS.
+    Dijalankan di bawah CSP produksi, keduanya jadi "pelanggaran" padahal di
+    produksi alamatnya `api.*` dan `media.*` yang memang diizinkan. Petakan
+    keduanya di alat uji — dan jangan lupa berkas `.js`, karena `/bukti` dan
+    `/progres` mengambil datanya dari sana, bukan dari HTML.
+
 ## Kecepatan panel admin
 
 Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu
@@ -432,7 +488,8 @@ Selalu ukur dengan RTT.
 | `cd apps/web && npm run build` | Build statis |
 | `cd apps/web && npm run dev` + Playwright | Ukur tampilan di browser sungguhan sebelum minta ACC |
 | `./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"` | Periksa skema, RLS, GRANT, akun staf |
-| `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 13 assertion RLS |
+| `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 81 assertion RLS |
+| `./scripts/rls-lokal.sh` | 81 assertion RLS di Postgres lokal, tanpa menyentuh produksi |
 | `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` |
 | `./scripts/setup-fase-04.sh` | Provisioning Hyperdrive + rahasia Worker API, lalu deploy |
 
@@ -490,3 +547,7 @@ skrip; jangan sunting hasilnya.
 | Logo studio di R2 dengan folder `studio/`, bukan tabel terpisah | Satu kolom `logo_key` di `studio_settings` sudah cukup untuk satu logo. Folder dipisah dari `projects/` supaya berkas studio tidak ikut terhapus saat proyek dibersihkan |
 | Laba bersih dihitung dari kas yang BENAR-BENAR masuk, bukan nilai kontrak | Dikonfirmasi pemilik: "uang belum diterima dengan full". Nilai kontrak adalah janji, bukan uang — proyek yang baru DP 50% akan tampak untung besar padahal setengah biayanya sudah keluar. Konsekuensinya: laba bersih sebuah proyek naik bertahap mengikuti termin pembayaran, dan baru benar setelah pelunasan |
 | **Query yang gagal karena koneksi Hyperdrive putus TIDAK diulang otomatis** | Errornya `write CONNECTION_CLOSED ...hyperdrive.local:5432`, dan kata "write" itu **teks tetap** di `errors.connection()` milik postgres.js — bukan penanda operasi yang gagal. Baris pemanggilnya `!hadError && (query \|\| sent.length) && error(...)`, artinya query bisa saja SUDAH sampai dan SUDAH dijalankan saat koneksinya putus. Mengulang secara buta berarti bisa menggandakan penulisan: satu dokumen terunggah dua kali, satu tagihan tercatat dua kali. Kadarnya 3 dari 2.261 permintaan dalam 24 jam (0,13%), semuanya pembacaan, dan panel punya cache jadi sering tidak terlihat. Kalau suatu saat mau ditutup, satu-satunya cara yang aman adalah coba-ulang HANYA untuk unit kerja yang murni membaca — bukan di dalam `withDb` untuk semua pemanggil |
+| Jurnal disimpan di database + ditulis dari panel admin, bukan berkas markdown di repo | Pemilik sudah mengelola proyek, klien, dan keuangan dari `/admin` setiap hari; opsi markdown mengharuskan dia menyentuh repo, yang tidak pernah dia lakukan. Ongkosnya memang lebih besar (migrasi, RLS, endpoint, satu halaman admin), tapi "yang bisa dipahami enam bulan lagi" di sini berarti yang cocok dengan cara kerjanya, bukan yang paling sedikit bagiannya |
+| Isi tulisan disimpan sebagai MARKDOWN, dirender saat build | Yang mengetik pemilik sendiri, dan HTML dari isian bebas berarti tiap render harus dibersihkan lebih dulu. `@astrojs/markdown-remark` sekalian membuat id tiap heading, dan daftar isi diturunkan dari daftar heading itu — jadi id di rel kiri dan id di badan tulisan mustahil menyimpang |
+| Tulisan berencana TETAP tampil di indeks, ditandai "belum ditulis" | Rancangan yang di-ACC. Mengisi indeks dengan judul palsu yang tidak bisa dibuka adalah cara tercepat kehilangan kepercayaan pembaca yang datang dari pencarian; menyembunyikannya sama sekali membuat jurnal terlihat mati. Yang berencana tidak punya tautan dan tidak dibuatkan halaman |
+| Tidak ada pratinjau markdown di panel admin | Membuatnya berarti dua perender yang pasti menyimpang suatu saat — pola bug yang sudah berkali-kali memakan waktu di proyek ini. Sebagai gantinya ada petunjuk singkat di bawah kotak isian. Kalau pemilik memintanya, kerjakan dengan cara yang TIDAK menduplikasi perendernya |
