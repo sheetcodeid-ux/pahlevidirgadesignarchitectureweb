@@ -5,6 +5,7 @@ import {
   listClients,
   listTestimonials,
   getSettings,
+  subjudulBerguna,
   CATEGORY_LABELS_EN,
   type Project,
   type ProjectImage,
@@ -219,7 +220,7 @@ const fakta = (p: Project) =>
               <div class="isi">
                 <span class="label">SELECTED WORK</span>
                 <div class="s16"></div>
-                <h2 class="h2">{p.title}{p.subtitle ? ` — ${p.subtitle}` : ""}</h2>
+                <h2 class="h2">{p.title}{subjudulBerguna(p) ? ` — ${subjudulBerguna(p)}` : ""}</h2>
                 {p.summary && (
                   <>
                     <div class="s16"></div>
