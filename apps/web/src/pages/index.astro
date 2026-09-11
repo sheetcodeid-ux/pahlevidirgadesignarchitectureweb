@@ -384,11 +384,22 @@ const fakta = (p: Project) =>
   <div class="pita pita--gelap">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
-      <div class="isi">
-        <span class="label" data-t="portalLabel">WHILE IT IS BEING BUILT</span>
-        <div class="s16"></div>
-        <h2 class="h2" data-t="portalJudul">The part almost no studio our size gives you.</h2>
-        <div class="s16"></div>
+      {/* Judul di kiri, paragraf di kanan. Sebelumnya keduanya bertumpuk dalam
+          satu kolom: judulnya memenuhi 100% lebar kolom sementara paragrafnya
+          cuma 60% (666px dari 1110px), jadi ada 444px kosong yang menggantung
+          di kanan paragraf — itu yang dilaporkan pemilik sebagai "nanggung".
+
+          Melebarkan paragrafnya sampai selebar judul bukan jawabannya: pada
+          1110px satu barisnya memuat ~138 huruf, jauh di atas batas nyaman
+          membaca. Dibagi dua, tiap kolom 533px — sekitar 66 huruf per baris,
+          persis di tengah rentang yang enak dibaca — dan ruang kosongnya
+          terpakai. */}
+      <div class="isi portal-kop">
+        <div>
+          <span class="label" data-t="portalLabel">WHILE IT IS BEING BUILT</span>
+          <div class="s16"></div>
+          <h2 class="h2" data-t="portalJudul">The part almost no studio our size gives you.</h2>
+        </div>
         <p class="lead">
           If you are sending money across a border to build something you cannot visit every week,
           the real fear isn’t “will it look good”. It is <strong>“will I know what is happening”</strong>.
@@ -679,6 +690,26 @@ const fakta = (p: Project) =>
   }
   .mq--garis {
     border-top: 1px solid var(--garis);
+  }
+  .portal-kop {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 44px;
+    align-items: start;
+  }
+  /* Paragrafnya mengisi kolomnya sendiri — batas 64ch milik .lead sudah
+     tidak berlaku di sini, karena lebarnya sekarang ditentukan kisi. */
+  /* Rata kanan-kiri dan pematiannya di ponsel diurus aturan --rata di
+     publik.css, jadi tidak diulang di sini. Yang tersisa cuma melepas batas
+     64ch milik .lead: lebarnya sekarang ditentukan kisi dua kolom. */
+  .portal-kop .lead {
+    max-width: none;
+  }
+  @media (max-width: 900px) {
+    .portal-kop {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
   }
   .sorot__fakta {
     border-top: 1px solid var(--garis);

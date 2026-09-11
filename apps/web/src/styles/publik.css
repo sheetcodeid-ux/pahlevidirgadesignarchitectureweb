@@ -331,6 +331,52 @@ body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
 .kop-seksi{padding:84px 44px 40px;text-align:center}
 .kop-seksi .lead,.kop-seksi p{margin-inline:auto}
 
+/* ═══ RATA KANAN-KIRI ═════════════════════════════════════════════════════
+   Permintaan pemilik: seluruh teks dibuat rata kanan-kiri, kecuali banner
+   yang tetap rata tengah.
+
+   Dikerjakan lewat SATU properti yang diwariskan, bukan daftar selektor.
+   Alasannya: `main p` menyetel text-align langsung pada paragrafnya, dan
+   aturan langsung selalu mengalahkan warisan dari wadah — jadi
+   `.kop-seksi{text-align:center}` tidak lagi menahannya. Dengan
+   `--rata`, wadah yang memang dirata-tengahkan cukup menyetal nilainya
+   sekali dan SELURUH teks di dalamnya ikut, termasuk teks yang ditambahkan
+   ke situ nanti. Tanpa itu, tiap blok tengah harus diulang sebagai
+   pengecualian di setiap selektor baru — dan satu yang terlewat langsung
+   membuat banner ikut rata kanan-kiri.
+
+   Kekhususan `main p` sengaja serendah mungkin (0,0,2), jadi aturan
+   berkelas mana pun yang sudah ada tetap menang. */
+.kop-seksi,.hero,.ajak,.kosong{--rata:center}
+
+/* Kolom SEMPIT dikembalikan rata kiri. Rata kanan-kiri membagi sisa ruang
+   ke sela antar-kata, jadi makin sedikit kata per baris makin lebar
+   selanya. Terukur di 1440px, ruang yang harus diregangkan pada satu baris:
+
+     kolom 523px (2 kolom)  ->  14-35px   wajar
+     kolom 334px (3 kolom)  ->  38-58px   mulai terlihat
+     kolom 272px (daftar)   ->  sampai 165px
+
+   Batasnya jatuh di sekitar 450px, dan yang di bawahnya semuanya kolom
+   bertingkat tiga/empat atau daftar — jadi yang ditandai strukturnya,
+   bukan angkanya. */
+.b3 .sel,.b4 .sel,.info,.rel-kaki,.kirim-baris,.jam,
+.sel-kontak,.sel-rel-j,.fak{--rata:start}
+
+.isi p,.isi li,.isi dd,.sel p,.sel li,.tls p,.tls li{
+  text-align:var(--rata,justify);
+  /* Penyukuan hanya bisa MEMPERKECIL renggang, jadi dipasang — tapi tidak
+     diandalkan: lebar kolomnya sendiri sudah dipilih supaya renggangnya
+     wajar walau peramban tidak punya kamus penyukuan. */
+  hyphens:auto}
+
+/* Di bawah 900px semua kolom bertumpuk jadi selebar layar dan satu baris
+   cuma memuat ~40 huruf — meregangkan sela kata sependek itu justru
+   mengganggu. Disetel di :root supaya mewarisi ke mana-mana; blok yang
+   menyetel --rata sendiri (banner) tetap menang karena deklarasinya lebih
+   dekat ke elemennya. */
+@media (max-width:900px){:root{--rata:start}}
+
 /* ═══ MUNCUL SAAT DIGULIR ═════════════════════════════════════════════════
    Keadaan awalnya HANYA berlaku di bawah `html.js`. Tanpa itu, halaman yang
    JS-nya gagal termuat akan tinggal bidang kosong — dan halaman ini statis,
