@@ -699,26 +699,16 @@ const fakta = (p: Project) =>
   }
   /* Paragrafnya mengisi kolomnya sendiri — batas 64ch milik .lead sudah
      tidak berlaku di sini, karena lebarnya sekarang ditentukan kisi. */
+  /* Rata kanan-kiri dan pematiannya di ponsel diurus aturan --rata di
+     publik.css, jadi tidak diulang di sini. Yang tersisa cuma melepas batas
+     64ch milik .lead: lebarnya sekarang ditentukan kisi dua kolom. */
   .portal-kop .lead {
     max-width: none;
-    text-align: justify;
-    /* Tanpa penyukuan, rata kanan-kiri memaksa peramban melebarkan spasi
-       sampai muncul "sungai" putih di tengah paragraf. Dengan hyphens:auto ia
-       boleh memenggal kata, jadi jaraknya tetap wajar. Bahasa penyukuannya
-       ikut atribut lang di <html>, yang memang ditukar pengalih bahasa. */
-    hyphens: auto;
   }
-  /* Baris terakhir paragraf rata kiri, bukan ikut diregangkan — itu bawaan
-     text-align:justify dan memang benar; yang salah justru justify-all. */
   @media (max-width: 900px) {
     .portal-kop {
       grid-template-columns: 1fr;
       gap: 18px;
-    }
-    /* Di kolom selebar layar ponsel, rata kanan-kiri menyisakan jarak antar
-       kata yang terlalu lebar karena barisnya cuma memuat ~40 huruf. */
-    .portal-kop .lead {
-      text-align: start;
     }
   }
   .sorot__fakta {
