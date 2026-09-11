@@ -511,6 +511,33 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     menggeser salah satunya supaya keduanya BERIMPIT (`.nav{margin-bottom:
     -1px}`), sehingga penandanya terpusat tepat.
 
+21. **Membaca `scrollHeight` di dalam handler `scroll` memaksa layout tiap
+    frame.** Bar kemajuan baca dulu membaca `document.body.scrollHeight`
+    lalu menulis `style.width` di tiap peristiwa gulir — baca-tulis-baca
+    yang menagih layout sinkron. Terukur lewat penghitung Chrome sendiri
+    (CDP `Performance.getMetrics` → `LayoutCount`): **203 kali layout per
+    satu lintasan gulir beranda.**
+
+    Gejalanya khas dan menyesatkan: "gulir PERTAMA tertahan, yang kedua
+    tidak". Di lintasan pertama gambarnya baru berdatangan sehingga layout
+    selalu kotor dan tiap pembacaan benar-benar menata ulang halaman penuh;
+    di lintasan berikutnya hasilnya sudah bisa dipakai ulang dan ongkosnya
+    nyaris nol. Waktu frame TIDAK menunjukkannya — median 16,7 ms di seluruh
+    pita, dan ablasi marquee/pijar/kilau/gambar sebarannya sebesar bedanya.
+    **Yang menjawab `LayoutCount`, bukan waktu frame.**
+
+    Sudah diganti bar kemajuan bertimeline gulir CSS (`animation-timeline:
+    scroll()`), yang berjalan di luar main thread: 203 → 10 layout. Aturan
+    turunannya: **handler `scroll` tidak boleh membaca satu pun properti
+    geometri** (`scrollHeight`, `offsetTop`, `getBoundingClientRect`).
+    `scrollY` aman — nilainya sudah dipegang peramban.
+
+22. **`conic-gradient` yang beranimasi dilukis ulang tiap frame, selamanya.**
+    Ia tidak bisa dikomposisi, jadi ongkosnya dibayar terus selama elemennya
+    ada di halaman — bukan cuma saat dilihat. `.kilau` sekarang diam dan
+    baru berputar saat disentuh kursor. Berlaku umum: animasi tak berujung
+    pada gradien besar wajib punya alasan, dan hiasan bukan alasan.
+
 ## Kecepatan panel admin
 
 Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu

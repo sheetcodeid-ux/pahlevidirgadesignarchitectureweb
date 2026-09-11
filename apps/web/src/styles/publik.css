@@ -52,6 +52,8 @@
   /* Kisi titik di margin luar. 8px cukup rapat untuk terbaca sebagai tekstur,
      cukup renggang untuk tidak jadi bidang abu. */
   --dot:8px;
+  /* Jarak antar-seksi. Pemilik: "setiap section berjarak jgn digabung". */
+  --sek-jeda:18px;
   /* Panjang garis dan jeda pada rel tegak. Diukur dari zoom acuan pemilik:
      garisnya kira-kira dua kali jedanya. `border-style:dashed` TIDAK bisa
      dipakai untuk ini — polanya ditentukan peramban (Chrome: 3px-3px pada
@@ -75,8 +77,17 @@
    jalurnya tanpa membuat penampung gulir baru, jadi `position:sticky` di
    dalamnya tetap hidup — beda dengan `hidden`, yang mematikannya diam-diam. */
 html{overflow-x:clip}
-body{margin:0;background:var(--kanvas);color:var(--teks);font-family:var(--tubuh);
-  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip}
+/* Latar bertitik adalah TANAH tempat seksi-seksi berdiri, jadi ia milik
+   halaman — bukan milik tiap pita. Dulu ia digambar sebagai dua pita di
+   talang kiri-kanan `.pita`, dan itu berarti ia hanya ada di samping seksi,
+   tidak pernah DI ANTARA dua seksi. Begitu tiap seksi diberi jarak, celah
+   antar-seksi jadi bidang kosong tanpa tekstur — persis yang membuat
+   halaman tampak "digabung" walau sudah renggang. */
+body{margin:0;color:var(--teks);font-family:var(--tubuh);
+  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip;
+  background-color:var(--kanvas);
+  background-image:radial-gradient(var(--garis) 1px,transparent 1px);
+  background-size:var(--dot) var(--dot)}
 /* Bobot 600 dan kerapatan negatif, BUKAN 400/0 seperti waktu judulnya Arvo.
    Angka lama itu milik slab serif: Arvo sudah tebal pada reguler dan hurufnya
    saling bersinggungan kalau dirapatkan. Inter grotesk kebalikannya — pada
@@ -104,7 +115,8 @@ h1,h2,h3{hanging-punctuation:first last}
 :root{--rel-img:repeating-linear-gradient(to bottom,var(--garis) 0 var(--rel-garis),
     transparent var(--rel-garis) calc(var(--rel-garis) + var(--rel-jeda)));
   --kotak-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%233F3F46'/%3E%3C/svg%3E");
-  --kotak-ak:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Crect x='0.5' y='0.5' width='16' height='16' rx='5' fill='%2318181B' stroke='%232DD4BF'/%3E%3C/svg%3E");}
+  /* Varian beraksen sudah dibuang: pemilik minta penanda tidak punya efek
+     menyala sama sekali, jadi ia selalu berwarna garis biasa. */}
 /* Garis mendatar antar-pita dipindah dari `.pita` (selebar layar) ke
    `.dalam` (selebar kolom isi), diminta pemilik: yang selebar layar
    memotong latar bertitik di talang, dan talang itu harus penuh titik tanpa
@@ -115,7 +127,6 @@ h1,h2,h3{hanging-punctuation:first last}
    tegaknya — jadi geseran penanda sudut yang tadinya kebetulan sama untuk
    kedua sumbu sekarang memang HARUS sama. Satu angka, satu alasan. */
 .pita{position:relative}
-.pita--akhir > .dalam{border-bottom:1px solid var(--garis)}
 /* Rel tegak kiri-kanan PUTUS-PUTUS; garis mendatar antar-pita tetap utuh.
    Bedanya disengaja: yang mendatar memisahkan isi, yang tegak cuma menandai
    di mana kolomnya berhenti.
@@ -130,9 +141,13 @@ h1,h2,h3{hanging-punctuation:first last}
    background-origin/clip: border-box wajib — bawaannya padding-box, dan
    latar yang mulai dari kotak-padding tidak akan pernah menyentuh area
    bingkai tempat relnya harus berada. */
+/* Tiap seksi adalah BLOK berdiri sendiri: punya latarnya sendiri (supaya
+   tanah bertitik tidak menembus isinya) dan bergaris di atas DAN di bawah
+   (supaya ujung-ujungnya terbaca, sekarang setelah ia tidak lagi menempel
+   ke tetangganya). */
 .dalam{max-width:var(--lebar);margin-inline:auto;
-  border-inline:1px solid transparent;border-top:1px solid var(--garis);
-  position:relative;
+  border-inline:1px solid transparent;border-block:1px solid var(--garis);
+  position:relative;background-color:var(--kanvas);
   /* TIGA lapis, dan lapis pertama sengaja lewat custom property.
      `.titik` dulu memasang background-image-nya sendiri di elemen yang sama;
      kekhususannya sama (0,1,0) dan ia ditulis belakangan, jadi ia MENIMPA
@@ -145,40 +160,53 @@ h1,h2,h3{hanging-punctuation:first last}
   background-size:var(--lapis-ukuran,auto),1px auto,1px auto;
   background-origin:border-box;background-clip:border-box}
 
-/* Latar bertitik di bidang kosong KIRI dan KANAN kolom isi.
-   Digambar sebagai dua pita di talang, bukan sebagai latar body, karena latar
-   body akan menembus juga di dalam kolom — dan menutupnya berarti memberi
-   `.dalam` warna sendiri, yang justru mematikan pita bervarian gelap.
+/* Jarak antar-seksi. Celahnya memperlihatkan tanah bertitik, jadi seksi
+   yang satu benar-benar berhenti sebelum yang berikutnya mulai.
 
-   max(0px, ...): begitu layar lebih sempit dari --lebar, talangnya habis dan
-   perhitungannya jadi negatif. Lebar negatif bukan galat di CSS, ia cuma
-   diabaikan diam-diam bersama seluruh aturannya. */
-.pita::before,.pita::after{content:"";position:absolute;top:0;bottom:0;z-index:0;
-  width:max(0px,calc((100% - var(--lebar)) / 2));pointer-events:none;
-  background-image:radial-gradient(var(--garis) 1px,transparent 1px);
-  background-size:var(--dot) var(--dot)}
-.pita::before{left:0}
-.pita::after{right:0}
-/* HANYA tepi ATAS yang ditandai, plus tepi bawah pita paling bawah.
-   Tiap batas dilewati DUA `.dalam` — yang di atasnya dan yang di bawahnya —
-   dan menandai keduanya menaruh dua kotak berjarak 1-2px. Yang tampak bukan
-   kotak melainkan satu bentuk lonjong bersekat di tengah; persis itu yang
-   dilaporkan pemilik.
+   Talang bertitik kiri-kanan yang dulu digambar di sini sudah pindah ke
+   `body`. Alasan lamanya — "latar body akan menembus juga di dalam kolom" —
+   sudah tidak berlaku: sekarang `.dalam` memang punya warna latarnya
+   sendiri, yang justru dibutuhkan supaya ia terbaca sebagai blok. */
+.pita + .pita{margin-top:var(--sek-jeda)}
+main > .pita:first-child{margin-top:var(--sek-jeda)}
+/* ── PENANDA SUDUT: DIKURASI ───────────────────────────────────────────
+   Pemilik: "tidak semua menggunakan tanda, kamu atur mana yang bagus dikasi
+   tanda mana yang tidak".
 
-   `body > .pita--akhir`, bukan `.pita--akhir` saja: pita terakhir di dalam
-   <main> juga berkelas --akhir, dan kaki halaman yang menyusulnya membawa
-   garis atasnya sendiri — dua garis bertumpuk, jadi dua kotak lagi. Yang
-   benar-benar mengakhiri halaman hanyalah pita yang jadi anak langsung
-   <body>. Terukur di dua belas halaman. */
-.dalam::before,body > .pita--akhir .dalam::after{content:"";position:absolute;
+   Aturan yang dipakai, dan alasannya: penanda ini tanda registrasi — ia
+   memberi tahu di mana KOLOM isi berhenti. Kolomnya cuma satu dan berlaku
+   untuk seluruh halaman, jadi menandai tiap batas seksi berarti mengulang
+   keterangan yang sama belasan kali; di beranda saja itu 26 kotak. Yang
+   perlu ditandai cuma tiga tempat:
+
+     1. ujung ATAS kolom isi — di mana ia mulai,
+     2. ujung BAWAH kolom isi — di mana ia berhenti,
+     3. seksi bervarian GELAP — satu-satunya seksi yang keluar dari irama
+        warna halaman, jadi tepinya memang perlu dipertegas.
+
+   Semua batas lain dibiarkan polos: garisnya sudah cukup mengatakan bahwa
+   di situ satu seksi berakhir. */
+main > .pita:first-child:not(.pita--panel) > .dalam::before,
+.pita--panel + .pita > .dalam::before,
+.pita--gelap > .dalam::before,
+.pita--gelap > .dalam::after,
+body > .pita--akhir:not(.pita--panel) > .dalam::after{content:"";position:absolute;
   left:var(--kotak-1);right:var(--kotak-1);
   height:var(--kotak);z-index:4;pointer-events:none;background-repeat:no-repeat;
   background-position:left center,right center;
   background-image:var(--kotak-img),var(--kotak-img)}
-.dalam::before{top:var(--kotak-1)}
-/* Pita PERTAMA tidak ditandai: garis atasnya adalah tepi halaman, jadi
-   kotaknya terpotong separuh oleh viewport dan yang terlihat bukan kotak
-   melainkan cekungan. Acuannya pun tidak menandai tepi paling atas. */
+/* Ujung ATAS kolom: seksi pertama halaman. `:not(.pita--panel)` supaya banner
+   bersudut tidak ikut — panel tidak punya persimpangan garis untuk
+   ditunggangi — dan `.pita--panel + .pita` menangkap seksi pertama di
+   halaman yang MEMANG dibuka banner, yaitu beranda. */
+main > .pita:first-child:not(.pita--panel) > .dalam::before,
+.pita--panel + .pita > .dalam::before,
+.pita--gelap > .dalam::before{top:var(--kotak-1)}
+/* Ujung BAWAH kolom: pita terakhir yang jadi anak langsung <body>, yaitu kaki
+   halaman. Pita terakhir di dalam <main> juga berkelas --akhir, jadi
+   `body >` wajib — tanpa itu dua kotak bertumpuk. */
+.pita--gelap > .dalam::after,
+body > .pita--akhir:not(.pita--panel) > .dalam::after{bottom:var(--kotak-1)}
 .pita--awal .dalam::before{content:none}
 /* Pita pertama juga tidak bergaris atas: yang di atasnya tepi halaman, bukan
    pita lain. Dulu tidak perlu diatur karena garisnya milik `.pita`, yang
@@ -207,7 +235,6 @@ h1,h2,h3{hanging-punctuation:first last}
    kepala dan kaki halaman, seperti di acuan. Ia juga butuh napas di bawahnya,
    yang tidak dibutuhkan panel pembuka. */
 .pita--panel.pita--akhir{padding-bottom:var(--panel-jeda);border-bottom:0}
-.pita--panel::before,.pita--panel::after{content:none}
 .pita--panel > .dalam{
   max-width:none;margin-inline:var(--panel-sisi);
   border:1px solid var(--garis);border-radius:var(--panel-r);
@@ -217,7 +244,6 @@ h1,h2,h3{hanging-punctuation:first last}
 /* Penanda sudut pemisah kolom ikut mati di dalam panel: isinya diwarnai
    --kanvas, sementara panelnya --gelap, jadi kotaknya akan tampak sebagai
    bercak yang lebih terang alih-alih lubang. */
-.pita--panel .sel + .sel::before{content:none}
 
 /* Kedalaman panel. Garis terang setipis rambut di tepi ATAS saja — itu yang
    membuat sebuah bidang gelap terbaca terangkat, bukan bayangan tebal.
@@ -258,35 +284,22 @@ h1,h2,h3{hanging-punctuation:first last}
    sementara di sini yang di sebelahnya tepi layar. */
 .nav .isi{padding-inline:32px}
 
-/* Bilah nav ditarik 1px ke bawah supaya garis bawahnya jatuh di BARIS PIKSEL
-   yang sama dengan garis atas `.dalam` pita pertama.
-   Tanpa ini keduanya bertetangga — nav berakhir di baris 85, `.dalam` mulai
-   di baris 86 — dan yang tampil bukan satu garis melainkan garis 2px selebar
-   kolom yang menipis jadi 1px di luar kolom. Persis cacat "dua garis 1px
-   berjarak 1px" yang sudah pernah dilaporkan pemilik pada penanda sudut.
-   Terukur di /proyek, /studio, /kontak, /jurnal, /faq — kelimanya sama.
-
-   Ditarik dengan margin, bukan dengan mematikan salah satu garisnya: kalau
-   garis `.dalam` yang dimatikan, penanda sudut yang menunggangi garis itu
-   tetap terpusat di baris 86 sementara garisnya di 85 — meleset satu piksel,
-   dan itu yang dilihat pemilik dari zoom. Dengan margin, keduanya berimpit
-   dan penandanya terpusat tepat. */
-.nav{margin-bottom:-1px}
+/* Tarikan -1px yang dulu ada di sini sudah dibuang. Ia memaksa garis bawah
+   nav berimpit dengan garis atas seksi pertama, dan itu perlu selama
+   keduanya menempel. Sekarang di antaranya ada jarak antar-seksi, jadi
+   tidak ada lagi yang berdempet. */
 
 /* Banner kepala: tanpa titik, dan dengan napas di atas DAN di bawahnya.
    Titiknya sengaja mati di sini — pemilik minta titik baru muncul setelah
    garis di bawah banner, bukan mengelilinginya. */
 .pita--panel.pita--kepala{background-image:none;padding-bottom:var(--panel-jeda)}
 
-/* Garis selebar layar di bawah banner.
-   Digambar sebagai bayangan-dalam pada pita SESUDAHNYA, bukan sebagai
-   border-bottom pada kepalanya. Alasannya geometri: `.dalam` mulai persis
-   di y=0 pita, jadi bayangan di tepi atas pita jatuh di BARIS PIKSEL YANG
-   SAMA dengan garis atas `.dalam`. Ditaruh sebagai border-bottom kepala, ia
-   akan duduk satu piksel di atasnya — dua garis 1px berjarak 1px, yang tidak
-   terbaca sebagai dua garis melainkan satu garis kabur, dan penanda sudut
-   yang seharusnya menunggangi garis itu jadi meleset separuh piksel. */
-.pita--kepala + .pita{box-shadow:inset 0 1px 0 var(--garis)}
+/* Garis selebar layar di bawah banner, menutup zona kepala halaman.
+   Sekarang ia boleh jadi border-bottom biasa: begitu tiap seksi diberi
+   jarak, seksi di bawahnya tidak lagi menempel, jadi tidak ada lagi dua
+   garis 1px yang berdempet — masalah yang dulu memaksa garis ini digambar
+   sebagai bayangan-dalam pita sesudahnya. */
+.pita--kepala{border-bottom:1px solid var(--garis)}
 body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
 .isi{padding:56px 44px}
 .isi--rapat{padding:24px 44px}
@@ -345,15 +358,14 @@ html.js .wahyu.tampak{opacity:1;transform:none}
 @media (max-width:900px){
   .proses__teks::after{font-size:72px;right:14px}
 }
-/* Sel: berbagi garis; pemisahnya diberi ⊤ di ujung atas dan ⊥ di ujung bawah,
-   karena garis tegak itu memang berhenti di situ. Persis aturan Anda. */
+/* Sel: berbagi garis. Pemisah kolomnya TIDAK lagi diberi penanda di kedua
+   ujungnya. Baris berisi empat sel menghasilkan enam kotak, dan beranda
+   punya beberapa baris seperti itu — jadi yang tadinya tanda registrasi
+   berubah jadi hiasan yang diulang belasan kali. Garis pemisahnya sendiri
+   sudah cukup mengatakan di mana satu kolom berhenti. */
 .baris{display:grid}
 .sel{position:relative;padding:30px 32px;min-width:0}
 .sel + .sel{border-left:1px solid var(--garis)}
-.sel + .sel::before{content:"";position:absolute;left:var(--kotak-1);top:var(--kotak-1);
-  bottom:var(--kotak-1);width:var(--kotak);z-index:4;pointer-events:none;
-  background-repeat:no-repeat;background-position:center top,center bottom;
-  background-image:var(--kotak-img),var(--kotak-img)}
 .baris + .baris{border-top:1px solid var(--garis)}
 .b2{grid-template-columns:repeat(2,1fr)}
 .b3{grid-template-columns:repeat(3,1fr)}
@@ -384,11 +396,21 @@ html.js .wahyu.tampak{opacity:1;transform:none}
     radial-gradient(34% 46% at 50% 0%, rgba(94,234,212,.20), transparent 74%)}
 .pijar--sisi > .pijar-lapis{background:
   radial-gradient(75% 100% at 0% 50%, rgba(45,212,191,.18), transparent 68%)}
-/* Bingkai berkilau: conic-gradient yang berputar di tepi — efek refine */
+/* Bingkai berkilau: conic-gradient di tepi.
+   DIAM secara bawaan, berputar hanya saat disentuh kursor.
+
+   Conic-gradient yang beranimasi tidak bisa dikomposisi — tiap frame ia
+   dilukis ulang di main thread, selamanya, selama elemennya ada di halaman.
+   Untuk hiasan setinggi 500px di tengah beranda itu ongkos tetap yang
+   dibayar setiap orang yang menggulir lewat, termasuk yang tidak melihatnya.
+   Dipasang di hover, ia cuma berjalan saat ada yang memperhatikan — dan di
+   layar sentuh (tanpa hover) tidak pernah berjalan sama sekali. */
 .kilau{position:relative;padding:1px;background:
   linear-gradient(#1E1E22,#1E1E22) padding-box,
   conic-gradient(from var(--sudut),transparent 78%,var(--aksen) 86%,var(--aksen-3) 90%,var(--aksen) 94%,transparent) border-box;
-  border:1px solid transparent;animation:putar 5s linear infinite}
+  border:1px solid transparent}
+@media (hover:hover){.kilau:hover{animation:putar 5s linear infinite}}
+@media (prefers-reduced-motion:reduce){.kilau:hover{animation:none}}
 @keyframes putar{to{--sudut:360deg}}
 /* ═══ TIPE ════════════════════════════════════════════════════════════════ */
 .label{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--aksen)}
@@ -616,9 +638,27 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .tab-data tr:last-child td{border-bottom:0}
 .swat{height:66px;border:1px solid var(--garis-2);display:flex;align-items:flex-end;padding:8px 10px;
   font-size:10px;letter-spacing:.08em}
-/* ═══ BILAH KEMAJUAN ══════════════════════════════════════════════════════ */
-.bar-atas{position:fixed;top:0;left:0;height:2px;background:var(--aksen);z-index:99;width:0;
-  box-shadow:0 0 10px var(--aksen),0 0 5px var(--aksen);transition:width 200ms linear,opacity 300ms}
+/* ═══ BILAH KEMAJUAN ══════════════════════════════════════════════════════
+   Digerakkan TIMELINE GULIR milik CSS, bukan JavaScript. Versi lama menulis
+   `style.width` di tiap peristiwa gulir setelah membaca
+   `document.body.scrollHeight` — baca-tulis-baca yang MEMAKSA layout sinkron
+   tiap frame. Terukur 203 kali layout per satu lintasan gulir beranda.
+
+   Di mesin dengan foto uji kecil ongkosnya cuma 13 ms dan tidak terasa; di
+   situs sungguhan tiap layout paksa itu harus menata ulang halaman berisi
+   ratusan foto, dan pada lintasan PERTAMA — selagi gambarnya baru berdatangan
+   sehingga tidak ada hasil layout yang bisa dipakai ulang — itulah yang
+   dirasakan pemilik sebagai "gulir pertama tertahan, yang kedua tidak".
+
+   scaleX, bukan width: width menyentuh layout, transform hanya komposisi.
+   Tanpa box-shadow menyala — pemilik memintanya hilang. */
+.bar-atas{position:fixed;top:0;left:0;right:0;height:2px;background:var(--aksen);z-index:99;
+  transform:scaleX(0);transform-origin:0 50%;pointer-events:none}
+@keyframes bar-maju{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@supports (animation-timeline:scroll()){
+  .bar-atas{animation:bar-maju linear both;animation-timeline:scroll(root block)}
+}
+@media (prefers-reduced-motion:reduce){.bar-atas{transition:none}}
 .rv{opacity:0;transform:translateY(16px);
   transition:opacity 340ms var(--e-keluar),transform 340ms var(--e-keluar)}
 .rv.tampil{opacity:1;transform:none}
@@ -631,9 +671,6 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   height:46px;background:rgba(9,9,11,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--garis);
   font-size:12px;color:var(--teks-2);transition:transform 320ms var(--e-keluar)}
 .demo__bar.sembunyi{transform:translateY(-100%)}
-/* Crosshair sel ikut menyala saat selnya disentuh kursor */
-.sel:hover::before,.sel:hover + .sel::before{background-image:var(--kotak-ak),var(--kotak-ak)}
-.sel::before{transition:opacity 200ms}
 /* ═══ URUTAN MASUK HALAMAN ════════════════════════════════════════════════ */
 /* padding+margin negatif: topeng animasi harus turun melewati garis dasar,
    kalau tidak ekor huruf g/y/p ikut terpotong setelah animasinya selesai. */
@@ -759,11 +796,8 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   transition:color 180ms var(--e-halus),background 180ms var(--e-halus)}
 .kat__b:hover{color:var(--teks-2);background:#1C1C20}
 .kat__b[aria-current="true"]{color:var(--aksen);background:var(--gelap)}
-/* Penanda di kedua ujung tiap garis pemisah — kotak yang sama */
-.kat__b::after{content:"";position:absolute;left:var(--kotak-1);right:var(--kotak-1);
-  bottom:var(--kotak-1);height:var(--kotak);z-index:3;
-  pointer-events:none;background-repeat:no-repeat;background-position:left center,right center;
-  background-image:var(--kotak-img),var(--kotak-img)}
+/* Tanpa penanda di tiap baris daftar: itu daftar, bukan persimpangan kolom.
+   Sepuluh kategori berarti dua puluh kotak untuk satu keterangan yang sama. */
 .panah-kotak{position:relative;width:38px;height:38px;flex:none;display:grid;place-items:center;
   background:#0C2A27;color:var(--aksen);
   opacity:0;transform:translateX(-7px);
