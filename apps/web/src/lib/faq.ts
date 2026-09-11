@@ -74,10 +74,9 @@ export const FAQ: Tanya[] = [
     id: "how-much-do-you-charge",
     kat: "uang",
     tanya: "How much do you charge?",
-    angka: "faqTarif",
-    jawab: `<p>Fees are structured one of two ways, and we tell you which one applies before any work starts: <strong>a percentage of the construction cost</strong> for full projects, or <strong>a fixed fee per stage</strong> when the scope is clear and contained.</p>
-<p>Either way the fee is split across stages, and each stage is invoiced only when it is delivered. You are never paying for work that has not arrived yet.</p>
-<p><strong>The actual numbers are not published on this page yet.</strong> Ask in the first message and you will have them in the reply — we would rather quote against your real site than post a figure that fits nobody.</p>`,
+    jawab: `<p><strong>The ranges are published on the home page</strong>, split into three tiers for coffee shops and three for houses. Coffee shops run from Rp 15–25 million for concept and plans up to Rp 100–180 million for full service; houses from Rp 10–20 million for a consultation up to Rp 80–200 million for design through to landscape.</p>
+<p>Where you land inside a range depends on the site and how complicated it turns out to be, and we tell you which tier applies before any work starts. The fee is split across stages, and each stage is invoiced only when it is delivered — you are never paying for work that has not arrived yet.</p>
+<p>Above the entry tier we do not price per square metre. A 200 m² café with three bar stations is not half the work of a 400 m² one with a single counter, and pricing by area quietly penalises the projects that need the most thought.</p>`,
   },
   {
     id: "how-much-do-you-need",

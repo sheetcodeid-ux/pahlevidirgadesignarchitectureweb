@@ -265,13 +265,23 @@ const jsonLd = [
           on the first call, on the drawings, and on the message you send at nine on a Sunday.
         </p>
       </div>
-      <div class="baris b2">
+      <div class="tim-rel">
         {
           tim.map((o) => (
-            <div class="sel tim tim--rapat">
-              <div class={o.photoUrl ? "tim__foto" : "tim__foto tim__foto--kosong"}>
+            <div class="tim">
+              {/* Potret disajikan DUA kali dalam satu kotak: <img> sungguhan
+                  di bawah, dan lapisan halftone teal di atasnya sebagai
+                  background pseudo-elemen. Yang memudar saat disentuh kursor
+                  cuma lapisan atasnya — memudarkan `mask-image` langsung
+                  tidak bisa, nilainya tidak bisa diinterpolasi, dan hasilnya
+                  bukan pudar melainkan lompat.
+
+                  URL-nya dititipkan sebagai custom property karena
+                  pseudo-elemen tidak bisa membaca atribut src. */}
+              <div class={o.photoUrl ? "tim__foto" : "tim__foto tim__foto--kosong"}
+                style={o.photoUrl ? `--foto:url("${o.photoUrl}")` : undefined}>
                 {o.photoUrl ? (
-                  <img src={o.photoUrl} alt={o.name ?? o.role} />
+                  <img src={o.photoUrl} alt={o.name ?? o.role} loading="lazy" decoding="async" />
                 ) : (
                   <span>
                     PHOTO — {o.slotLabel}
@@ -395,24 +405,56 @@ const jsonLd = [
 <style>
   /* ── Dari blok CSS khusus halaman di mockup yang di-ACC ──────────────── */
 
-  /* Kartu orang mendatar: potret 4:5 selebar 190px di kiri, keterangan di
-     kanan. Versi bertumpuk sebelumnya membuat slot foto setinggi 460px untuk
-     studio dua orang — berat, dan separuh pitanya kosong. */
+  /* Kartu orang TEGAK: potret besar di atas, nama dan peran di bawah —
+     acuan baru dari pemilik. Menggantikan kartu mendatar 190px yang
+     sebelumnya dipilih untuk menghemat tinggi pita.
+
+     auto-fit, bukan tiga kolom tetap: studio ini dua orang, dan grid tiga
+     kolom akan meninggalkan satu lubang di sebelah kanan. Dengan auto-fit ia
+     jadi dua kolom sekarang dan tiga begitu orang ketiga ditambahkan lewat
+     /admin, tanpa menyentuh CSS lagi. */
+  .tim-rel {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  /* Penanda silang di sudut rel, sama bahasa visualnya dengan .dalam. */
+  .tim-rel::before,
+  .tim-rel::after {
+    content: "";
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--garis-2);
+    pointer-events: none;
+  }
+  .tim-rel::before {
+    left: -5px;
+    top: -5px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .tim-rel::after {
+    right: -5px;
+    bottom: -5px;
+    border-left: 0;
+    border-top: 0;
+  }
   .tim {
     position: relative;
     display: flex;
-    gap: 0;
+    flex-direction: column;
+    padding: 26px 26px 28px;
+    border-left: 1px solid var(--garis);
   }
-  /* align-self:start — tanpa ini flex meregangkan foto setinggi kartunya dan
-     aspect-ratio kalah: dua potret jadi 165px dan 182px. Foto harus sama
-     besar, aturan yang sama seperti di halaman proyek. */
+  .tim:first-child {
+    border-left: 0;
+  }
   .tim__foto {
-    flex: none;
-    align-self: flex-start;
-    width: 190px;
-    aspect-ratio: 4/5;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1;
     background: var(--gelap);
-    border-right: 1px solid var(--garis);
     display: grid;
     place-items: center;
     color: #4b4b52;
@@ -427,6 +469,47 @@ const jsonLd = [
     height: 100%;
     object-fit: cover;
     display: block;
+    /* Abu-abu, sama seperti foto yang tampil saat disentuh di acuan. */
+    filter: grayscale(1) contrast(1.06);
+  }
+  /* Lapisan halftone. sepia+hue-rotate+saturate adalah cara membuat duotone
+     satu warna dari gambar apa pun tanpa menyiapkan aset terpisah; maskernya
+     memotongnya jadi kisi titik 3px. */
+  .tim__foto::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image: var(--foto);
+    background-size: cover;
+    background-position: center;
+    filter: grayscale(1) contrast(1.15) sepia(1) hue-rotate(122deg) saturate(4.2) brightness(0.92);
+    -webkit-mask-image: radial-gradient(circle at center, #000 40%, transparent 42%);
+    mask-image: radial-gradient(circle at center, #000 40%, transparent 42%);
+    -webkit-mask-size: 3px 3px;
+    mask-size: 3px 3px;
+    transition: opacity 340ms var(--e-halus);
+    pointer-events: none;
+  }
+  /* Tanpa foto, tidak ada yang perlu di-halftone — dan var(--foto) yang
+     kosong membuat lapisannya jadi kotak hitam menutupi teks penantinya. */
+  .tim__foto--kosong::before {
+    content: none;
+  }
+  @media (hover: hover) {
+    .tim:hover .tim__foto::before,
+    .tim:focus-within .tim__foto::before {
+      opacity: 0;
+    }
+  }
+  /* Layar sentuh tidak punya hover sama sekali. Tanpa aturan ini, pengunjung
+     dari ponsel — yang jumlahnya paling banyak — tidak pernah melihat satu
+     pun wajah. Jebakan #9 di CLAUDE.md versi diamnya: bukan keadaan yang
+     nyangkut, melainkan keadaan yang tidak pernah tercapai. */
+  @media (hover: none) {
+    .tim__foto::before {
+      opacity: 0;
+    }
   }
   .tim__foto--kosong {
     background: repeating-linear-gradient(45deg, #1c1c20 0 6px, #161619 6px 12px);
@@ -450,16 +533,13 @@ const jsonLd = [
   .ba__sebelum span {
     display: none;
   }
-  .tim--rapat {
-    padding: 0;
-  }
   .tim__isi {
-    padding: 22px 24px;
-    align-self: center;
+    padding: 18px 0 0;
   }
   .tim__nm {
     font-family: var(--judul);
     font-size: 17px;
+    font-weight: 600;
     color: var(--teks);
   }
   .tim__pr {
@@ -748,13 +828,13 @@ const jsonLd = [
     }
   }
   @media (max-width: 560px) {
-    /* 190px foto menyisakan 150px untuk teks di ponsel 390 — "PROJECT
-       COORDINATOR" pecah jadi tiga baris. Fotonya yang mengalah. */
-    .tim__foto {
-      width: 132px;
+    .tim {
+      padding: 20px;
+      border-left: 0;
+      border-top: 1px solid var(--garis);
     }
-    .tim__isi {
-      padding: 18px;
+    .tim:first-child {
+      border-top: 0;
     }
     .tim-catatan {
       padding: 22px 20px;

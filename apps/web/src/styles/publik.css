@@ -503,13 +503,40 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .cek{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--teks-2);margin-bottom:11px}
 .cek i{flex:none;width:17px;height:17px;border-radius:99px;background:rgba(45,212,191,.15);
   display:grid;place-items:center;margin-top:2px}
-.kotak-ikon{width:38px;height:38px;flex:none;border:1px solid var(--garis-2);display:grid;place-items:center;
-  color:var(--aksen);background:var(--gelap)}
+/* Bingkai bracket di empat sudut, bukan kotak penuh — acuan pemilik.
+   Dibuat dari DUA pseudo-elemen: masing-masing menggambar dua sudut
+   berseberangan lewat border yang sebagian dimatikan. Empat elemen terpisah
+   akan lebih lurus dibaca, tapi .kotak-ikon dipakai pada <span>, <i>, dan
+   sekali pada kotak berisi teks — dan tidak semuanya boleh kehilangan
+   isinya. Dua pseudo aman di ketiganya.
+
+   Latarnya teal redup, bukan --gelap: di acuan, kotaknya terbaca sebagai
+   bidang bercahaya, bukan lubang. */
+.kotak-ikon{width:38px;height:38px;flex:none;position:relative;display:grid;place-items:center;
+  color:var(--aksen);
+  background:
+    radial-gradient(120% 120% at 50% 0%,rgba(45,212,191,.16),transparent 70%),
+    var(--gelap)}
+.kotak-ikon::before,.kotak-ikon::after{content:"";position:absolute;width:8px;height:8px;
+  border:1px solid var(--aksen);opacity:.55;pointer-events:none}
+.kotak-ikon::before{left:0;top:0;border-right:0;border-bottom:0;
+  box-shadow:inset 0 0 0 0 transparent}
+.kotak-ikon::after{right:0;bottom:0;border-left:0;border-top:0}
+/* Dua sudut sisanya digambar oleh bayangan kotak pada elemen itu sendiri —
+   satu garis tipis penuh yang JAUH lebih redup, supaya bidangnya tetap
+   terbaca sebagai kotak tanpa mengembalikan border penuh yang dibuang. */
+.kotak-ikon{box-shadow:inset 0 0 0 1px rgba(45,212,191,.14)}
+.kotak-ikon--redup{box-shadow:inset 0 0 0 1px var(--garis)}
+.kotak-ikon--redup::before,.kotak-ikon--redup::after{border-color:var(--teks-4);opacity:.7}
 /* Varian kecil untuk ikon yang duduk SEBARIS dengan teksnya, bukan di atasnya.
    Ukuran penuh 38px di daftar padat membuat empat kotak bertumpuk terbaca
    sebagai empat tombol, bukan empat penanda. Sama besar dengan
    .panah-kotak--kecil supaya tidak ada ukuran kotak ketiga di situs ini. */
 .kotak-ikon--kecil{width:28px;height:28px}
+/* Sudut bracket mewarisi `color`, jadi kotak yang diberi warna lain lewat
+   style inline (merah di /bukti dan /progres) ikut benar tanpa aturan
+   tambahan — itu sebabnya border-nya `currentColor` di bawah. */
+.kotak-ikon::before,.kotak-ikon::after{border-color:currentColor}
 /* Warnanya boleh diwarisi. Aksen teal berarti sesuatu yang positif di sistem
    ini; di daftar "yang tidak kami kerjakan" ia menyampaikan kebalikannya. */
 .kotak-ikon--redup{color:var(--teks-3)}
@@ -536,6 +563,27 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .btn--isi:hover{background:#5EEAD4;border-color:#5EEAD4;color:#18181B}
 .btn--isi:active{background:#14B8A6;border-color:#14B8A6;color:#18181B}
 .btn--penuh{width:100%}
+
+/* Tombol aksi utama bertekstur titik, mengikuti acuan pemilik.
+   Titiknya GELAP di atas hijau, bukan terang: tombolnya berlatar --aksen
+   yang terang, dan titik terang di atasnya tidak terlihat sama sekali.
+   background-image, bukan pseudo-elemen — tombol ini juga dipakai sebagai
+   <a>, dan ::before di dalamnya akan bertabrakan dengan panah .ar. */
+.btn--dot{
+  background-image:radial-gradient(rgba(9,9,11,.22) 1px,transparent 1px);
+  background-size:5px 5px;
+  background-position:0 0;
+}
+/* Latar dasarnya ikut berubah saat hover/aktif, jadi teksturnya harus
+   ditegakkan ulang — `background` shorthand di .btn--isi:hover membuangnya. */
+.btn--dot:hover,.btn--dot:active{
+  background-image:radial-gradient(rgba(9,9,11,.22) 1px,transparent 1px);
+  background-size:5px 5px}
+
+/* Pemisah tegak di bilah nav: satu garis rambut setinggi teks, bukan
+   selebar bilah. */
+.nav-pisah{width:1px;height:20px;background:var(--garis-2);flex:none;
+  margin-inline:4px}
 .btn--bahaya{border-color:#7F1D1D;color:var(--merah)}
 .btn--bahaya:hover{background:rgba(248,113,113,.08);border-color:var(--merah);color:var(--merah)}
 .btn[disabled]{opacity:.35;pointer-events:none}
@@ -952,9 +1000,13 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
    sana display memang harus dikembalikan. */
 .laci a.btn{display:inline-flex;align-items:center;justify-content:center}
 .nav a.btn::after,.laci a.btn::after{display:none}
-/* Pil, mengikuti acuan pemilik. Hanya di bilah nav — tombol di dalam badan
-   halaman tetap bersudut --r supaya sebangun dengan kartu di sekitarnya. */
-.nav a.btn{padding:9px 16px;border-radius:var(--r-pil)}
+/* RECTANGLE, bukan pil. Ini MEMBALIK keputusan sebelumnya di baris yang sama
+   ("Pil, mengikuti acuan pemilik") — acuan navbar yang baru dari pemilik
+   memakai tombol persegi bersudut lembut, dan ia menyebutnya eksplisit:
+   "rectanglenya juga". Kalau suatu saat dikembalikan ke pil, yang diubah
+   cuma baris ini dan .bhs di bawah; keduanya harus berubah bersamaan supaya
+   kelompok aksi di kanan bilah tidak setengah pil setengah kotak. */
+.nav a.btn{padding:9px 16px;border-radius:var(--r)}
 .laci a.btn{padding:11px 19px}
 .nav a.btn:hover,.laci a.btn:hover{background:var(--sel);color:var(--teks)}
 .nav a.btn--isi,.laci a.btn--isi{background:var(--aksen);color:#18181B;font-weight:600}
@@ -962,13 +1014,24 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .nav a.btn:focus-visible,.laci a.btn:focus-visible{color:var(--teks);
   box-shadow:0 0 0 2px var(--cincin)}
 .nav a.btn--isi:focus-visible,.laci a.btn--isi:focus-visible{color:#18181B}
+/* Tekstur titik ditegakkan ULANG di sini, dan itu bukan duplikasi malas.
+   Aturan di atas berkekhususan (0,2,1) karena tombolnya <a> di dalam .nav,
+   sementara `.btn--dot` cuma (0,1,0) — dan `background` shorthand di atas
+   membuang background-image tanpa suara. Terukur: getComputedStyle membalas
+   `none` padahal aturannya jelas ada di berkas. Keluarga jebakan yang sama
+   dengan `.topbar > *:not(...)` di CLAUDE.md. */
+.nav a.btn--dot,.laci a.btn--dot,
+.nav a.btn--dot:hover,.laci a.btn--dot:hover{
+  background-image:radial-gradient(rgba(9,9,11,.22) 1px,transparent 1px);
+  background-size:5px 5px}
 @media (max-width:900px){
   .nav-tombol{display:grid}
 }
 /* ═══ PENGALIH BAHASA ═════════════════════════════════════════════════════
    Bentuknya sama dengan yang sudah dipakai portal klien, supaya pengunjung
    yang pernah melihatnya di sana langsung mengenalinya. */
-.bhs{display:inline-flex;border:1px solid var(--garis-2);border-radius:var(--r-pil);overflow:hidden}
+/* Sebangun dengan tombol di sebelahnya — lihat catatan di .nav a.btn. */
+.bhs{display:inline-flex;border:1px solid var(--garis-2);border-radius:var(--r);overflow:hidden}
 .bhs button{appearance:none;background:transparent;border:0;font-family:var(--tubuh);
   font-size:11.5px;font-weight:600;letter-spacing:.08em;color:var(--teks-3);
   padding:7px 13px;cursor:pointer;transition:background 180ms var(--e-halus),color 180ms var(--e-halus)}
@@ -1034,3 +1097,81 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .langkah{counter-reset:langkah}
 .langkah .no::before{counter-increment:langkah;content:"0" counter(langkah)}
 .btn--memuat[disabled]{opacity:1}
+
+/* ═══ TIER LAYANAN ════════════════════════════════════════════════════════
+   Tiga kartu sebaris per kelompok, yang tengah disorot — bentuk yang dipilih
+   pemilik lewat gambar acuan. Penanda silang di sudut rel mengikuti sistem
+   yang sudah dipakai `.dalam`, jadi seksi ini tidak memperkenalkan bahasa
+   visual baru; ia cuma memakai yang sudah ada di halaman lain. */
+.tier__lead{max-width:64ch}
+.tier-blok{border-top:1px solid var(--garis)}
+.tier-blok:first-of-type{border-top:0}
+.tier-kop{padding-block:26px 18px}
+.tier-kop__k{max-width:58ch;margin-top:8px}
+
+/* Rel kartu. `position:relative` untuk penanda sudut; `align-items:stretch`
+   supaya tiga kartu setinggi yang tertinggi — daftar isinya beda panjang,
+   dan kartu yang tingginya berbeda-beda membuat barisnya terbaca berantakan. */
+.tier-rel{position:relative;display:grid;grid-template-columns:repeat(3,1fr);
+  align-items:stretch;padding-bottom:34px}
+
+/* Penanda silang di keempat sudut rel, sama seperti penanda `.dalam`. */
+.tier-rel::before,.tier-rel::after{content:"";position:absolute;width:9px;height:9px;
+  border:1px solid var(--garis-2);pointer-events:none}
+.tier-rel::before{left:-5px;top:-5px;border-right:0;border-bottom:0}
+.tier-rel::after{right:-5px;top:-5px;border-left:0;border-bottom:0}
+
+.tier{display:flex;flex-direction:column;padding:30px 28px 28px;
+  border-left:1px solid var(--garis);position:relative}
+.tier:first-child{border-left:0}
+
+/* Kartu yang disorot: latar berpendar dari sudut atas, persis pola `.pijar`
+   yang sudah dipakai kepala halaman — bukan bayangan, yang dilarang sistem. */
+.tier--sorot{background:
+  radial-gradient(120% 80% at 50% 0%,rgba(45,212,191,.14),transparent 62%),
+  var(--gelap);
+  border-left:1px solid var(--garis-2);
+  box-shadow:inset 0 0 0 1px var(--garis-2)}
+.tier--sorot + .tier{border-left-color:var(--garis-2)}
+
+.tier__cap{position:absolute;top:26px;right:24px;font-size:9.5px;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--aksen);
+  border:1px solid var(--garis-2);background:var(--gelap);padding:4px 8px}
+.tier__n{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--aksen)}
+.tier__r{font-size:13.5px;color:var(--teks-2);line-height:1.62;margin-top:12px;min-height:3.3em}
+.tier__garis{height:1px;background:var(--garis);margin:20px 0}
+
+/* Nominalnya rata bawah (baseline), bukan rata tengah: "Rp 45–80 million"
+   dan "/ project" punya tinggi huruf berbeda jauh, dan rata tengah membuat
+   yang kecil tampak melayang. */
+.tier__f{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tier__f b{font-family:var(--judul);font-size:23px;font-weight:600;color:var(--teks);
+  letter-spacing:-.018em}
+.tier__f .dim{font-size:13px}
+
+.tier__ik{font-size:12.5px;color:var(--teks-3);margin-bottom:12px}
+.tier__d{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;
+  /* Mendorong blok "Built for" ke dasar kartu, supaya ketiganya sejajar
+     walau daftar isinya beda panjang. */
+  flex:1}
+.tier__d li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;
+  color:var(--teks-2);line-height:1.5}
+.tier__d i{flex:none;width:17px;height:17px;display:grid;place-items:center;margin-top:1px;
+  border-radius:99px;background:rgba(45,212,191,.14);color:var(--aksen)}
+
+.tier__untuk{margin-top:22px;padding-top:16px;border-top:1px solid var(--garis);
+  display:flex;flex-direction:column;gap:4px}
+.tier__untuk .kecil{color:var(--teks-2)}
+.tier-kaki{padding-block:4px 30px}
+.tier-kaki p{max-width:70ch}
+
+@media (max-width:900px){
+  .tier-rel{grid-template-columns:1fr;padding-bottom:24px}
+  .tier{border-left:0;border-top:1px solid var(--garis);padding:26px 20px}
+  .tier:first-child{border-top:0}
+  .tier--sorot{border-left:0;box-shadow:inset 0 0 0 1px var(--garis-2)}
+  .tier--sorot + .tier{border-left-color:var(--garis)}
+  .tier__r{min-height:0}
+  .tier-kop{padding-inline:20px}
+}
