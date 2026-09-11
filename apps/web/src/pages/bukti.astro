@@ -423,7 +423,13 @@ import "../styles/publik.css";
    teks putih di atas putih dan kuitansi kosong. */
 @media print{
   :root{color-scheme:light}
+  html{background:#fff!important}
   body{background:#fff!important;color:#111!important}
+  /* Kisi titik sekarang lapisan `fixed` ber-z-index negatif, bukan latar
+     body — jadi latar putih di atas TIDAK menutupinya lagi, dan ia akan
+     ikut tercetak sebagai raster abu di seluruh kertas. Sama persis dengan
+     alasan garis kisi dimatikan di bawah: itu bahasa layar. */
+  body::before{display:none!important}
   .nav,.struk__aksi,.bar-atas,.lompat{display:none!important}
   /* Garis kisi dan bidik biru cetak sebagai coretan liar di kertas — mereka
      bahasa layar, bukan bahasa dokumen. */

@@ -878,6 +878,25 @@ const fakta = (p: Project) =>
       else img.addEventListener("load", pasang, { once: true });
     });
 
+    /* ── Marquee dijeda saat tidak terlihat ───────────────────────────
+       Animasi CSS tidak berhenti sendiri begitu elemennya keluar layar; ia
+       terus berjalan selama halaman terbuka. Untuk baris logo setinggi 74px
+       di bagian atas halaman, itu berarti compositor tetap disuruh bekerja
+       walau pengunjung sudah membaca bagian paling bawah — pekerjaan yang
+       tidak pernah dilihat siapa pun, dan justru jenis pekerjaan yang
+       membuat perangkat menghangat.
+
+       rootMargin 200px: dijalankan sedikit SEBELUM terlihat, supaya tidak
+       ada yang menangkapnya dalam keadaan diam lalu tiba-tiba bergerak. */
+    const mqWadah = document.querySelector<HTMLElement>(".mq");
+    if (mqWadah && "IntersectionObserver" in window) {
+      mqWadah.classList.add("mq--diam");
+      new IntersectionObserver(
+        ([e]) => mqWadah.classList.toggle("mq--diam", !e.isIntersecting),
+        { rootMargin: "200px 0px" },
+      ).observe(mqWadah);
+    }
+
     /* ── Showcase: tab + strip per proyek ─────────────────────────────── */
     const tabs = document.getElementById("swTabs");
     const ind = document.getElementById("swInd");
