@@ -22,6 +22,10 @@ import type { Kamus } from "./i18n";
 /* ── /jurnal ──────────────────────────────────────────────────────────── */
 
 export const KAMUS_JURNAL: Kamus = {
+  metaJudul: "Jurnal",
+  metaKet:
+    "Yang kami pelajari dengan mahal, ditulis supaya Anda tidak perlu — soal tanah, izin, anggaran, dan tukang.",
+
   jurLabel: "JURNAL",
   jurJudul:
     '<span class="brs"><i>Yang kami pelajari</i></span>' +
@@ -53,6 +57,10 @@ export const KAMUS_JURNAL: Kamus = {
 /* ── /proyek ──────────────────────────────────────────────────────────── */
 
 export const KAMUS_KERJA: Kamus = {
+  metaJudul: "Karya",
+  metaKet:
+    "Tiap proyek dimulai dari bagian brief yang canggung, bukan dari foto jadinya. Karya terbitan studio arsitektur di Pontianak.",
+
   kerjaLabel: "KARYA",
   kerjaJudul: "Bangunan, dan persoalan<br />yang membuatnya dibangun.",
   kerjaLead:
@@ -98,6 +106,10 @@ export const KAMUS_KERJA: Kamus = {
 /* ── /kontak ──────────────────────────────────────────────────────────── */
 
 export const KAMUS_KONTAK: Kamus = {
+  metaJudul: "Mulai proyek",
+  metaKet:
+    "Percakapan pertama tidak dipungut biaya dan tidak mengikat apa pun. Ceritakan tapaknya, anggarannya, dan apa yang mengganjal soal itu.",
+
   konLabel: "KONTAK",
   konJudul:
     'Ceritakan lokasinya, anggarannya,<br />dan <span class="ak">apa yang mengganjal</span> soal itu.',
@@ -201,6 +213,10 @@ export const KAMUS_KONTAK: Kamus = {
  */
 
 export const KAMUS_FAQ: Kamus = {
+  metaJudul: "Pertanyaan sebelum Anda mulai",
+  metaKet:
+    "Biaya, waktu, perizinan, dan apa yang terjadi setelah serah terima — dijawab terus terang, termasuk bagian yang merepotkan kami.",
+
   faqLabel: "PERTANYAAN",
   faqJudul: "Semua yang orang tanyakan sebelum<br />memutuskan untuk mulai.",
   faqLead:
@@ -255,9 +271,9 @@ export const KAMUS_FAQ: Kamus = {
   /* ── Uang ── */
   "faqT-how-much-do-you-charge": "Berapa tarif Anda?",
   "faqJ-how-much-do-you-charge":
-    "<p>Biaya disusun dengan salah satu dari dua cara, dan kami memberi tahu yang mana sebelum satu pun pekerjaan dimulai: <strong>persentase dari biaya konstruksi</strong> untuk proyek penuh, atau <strong>biaya tetap per tahap</strong> kalau lingkupnya jelas dan terbatas.</p>" +
-    "<p>Dengan cara mana pun, biayanya dibagi ke seluruh tahap, dan tiap tahap baru ditagih setelah diserahkan. Anda tidak pernah membayar pekerjaan yang belum sampai.</p>" +
-    "<p><strong>Angka sebenarnya belum diumumkan di halaman ini.</strong> Tanyakan di pesan pertama dan Anda akan mendapatkannya di balasan — kami lebih suka menghitung terhadap tapak Anda yang sungguhan daripada memasang angka yang tidak cocok untuk siapa pun.</p>",
+    "<p><strong>Rentangnya diumumkan di beranda</strong>, dibagi tiga tier untuk coffee shop dan tiga untuk rumah. Coffee shop mulai Rp 15–25 juta untuk konsep dan denah sampai Rp 100–180 juta untuk layanan penuh; rumah mulai Rp 10–20 juta untuk konsultasi sampai Rp 80–200 juta untuk desain sampai lanskap.</p>" +
+    "<p>Di mana Anda mendarat di dalam rentangnya tergantung tapak dan seberapa rumit ia ternyata, dan kami memberi tahu tier mana yang berlaku sebelum satu pun pekerjaan dimulai. Biayanya dibagi ke seluruh tahap, dan tiap tahap baru ditagih setelah diserahkan — Anda tidak pernah membayar pekerjaan yang belum sampai.</p>" +
+    "<p>Di atas tier paling dasar kami tidak menghitung per meter persegi. Kafe 200 m² dengan tiga bar station bukan setengah pekerjaan kafe 400 m² berkonter tunggal, dan menghitung per luas diam-diam menghukum proyek yang justru paling butuh dipikirkan.</p>",
 
   "faqT-how-much-do-you-need": "Berapa yang Anda butuhkan sebelum mulai?",
   "faqJ-how-much-do-you-need":
@@ -337,6 +353,10 @@ export const KAMUS_FAQ: Kamus = {
 /* ── /studio ──────────────────────────────────────────────────────────── */
 
 export const KAMUS_STUDIO: Kamus = {
+  metaJudul: "Studio",
+  metaKet:
+    "Studio arsitektur kecil di Pontianak, sengaja dibuat kecil. Dua orang, dan Anda akan bertemu keduanya.",
+
   stuLabel: "STUDIO",
   /* Judulnya dipotong tiga karena nama kota disisipkan dari setelan studio. */
   stuJudul1: "Studio kecil di",

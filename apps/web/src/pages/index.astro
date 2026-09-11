@@ -11,6 +11,7 @@ import {
   type ProjectImage,
 } from "../lib/api";
 import { SOROTAN_FAQ } from "../lib/faq";
+import { TIER } from "../lib/tier";
 
 const settings = await getSettings();
 const kota = settings.city?.trim() || "Indonesia";
@@ -63,7 +64,7 @@ const proses = [
   {
     no: "01. LISTEN",
     judul: "We start from how you live, not from a style.",
-    teks: "One long conversation, then a written brief you can correct yourself — in your own words, in your own time zone.",
+    teks: "One long conversation, then a written brief you can correct yourself — in your own words, and in your own time.",
   },
   {
     no: "02. DRAW",
@@ -77,21 +78,27 @@ const proses = [
   },
 ];
 
+/* Enam kompetensi yang disebut strategi studio sebagai pembeda yang sulit
+   ditiru studio generalis — alur bar dan dapur, ergonomi barista, akustik,
+   pencahayaan, material tahan lembap — ditambah satu yang memang milik
+   segmen rumah: iklim khatulistiwa. Daftar sebelumnya berisi janji tentang
+   CARA KERJA (zona waktu, portal, kuitansi); itu tetap ada, tapi tempatnya
+   di seksi portal, bukan di seksi yang menjawab "kenapa studio ini". */
 const IKON: Record<string, string> = {
-  globe: "M10 1a9 9 0 100 18 9 9 0 000-18ZM1 10h18M10 1c2.5 2.4 3.8 5.4 3.8 9S12.5 17.6 10 19c-2.5-1.4-3.8-4.4-3.8-9S7.5 3.4 10 1Z",
-  mata: "M1 10s3.3-5.5 9-5.5S19 10 19 10s-3.3 5.5-9 5.5S1 10 1 10Zm9 2.2a2.2 2.2 0 100-4.4 2.2 2.2 0 000 4.4Z",
-  kunci: "M5 9V6.5a5 5 0 0110 0V9M3.5 9h13v8.5h-13V9Z",
-  kirim: "M18.5 1.5 9 11M18.5 1.5 12.5 18.5 9 11 1.5 7.5 18.5 1.5Z",
-  berkas: "M11.5 1.5H4.5v17h11V5.5l-4-4Zm0 0v4h4",
-  jam: "M10 1a9 9 0 100 18 9 9 0 000-18Zm0 4.5V10l3 2",
+  alur: "M2.5 4.5h5v5h-5v-5Zm10 0h5v5h-5v-5Zm-10 6h5v5h-5v-5Zm10 0h5v5h-5v-5ZM7.5 7h5M15 9.5v1",
+  suara: "M3 8v4h3l4 3.5v-11L6 8H3Zm11-1.5a5 5 0 010 7M16.5 4a8.5 8.5 0 010 12",
+  cahaya: "M10 1.5v2M4.4 4.4l1.4 1.4m8.4-1.4-1.4 1.4M10 6.5a4 4 0 00-2 7.4V16h4v-2.1a4 4 0 00-2-7.4ZM8 18h4",
+  lembap: "M10 1.5s5.5 6 5.5 9.5a5.5 5.5 0 11-11 0C4.5 7.5 10 1.5 10 1.5Z",
+  matahari: "M10 5.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9ZM10 1v2m0 14v2M3.6 3.6l1.4 1.4m10 10 1.4 1.4M1 10h2m14 0h2M3.6 16.4 5 15m10-10 1.4-1.4",
+  kursi: "M5 2.5h10v7H5v-7Zm-1.5 7h13v3h-13v-3ZM5.5 12.5v5m9-5v5",
 };
 const fitur: [keyof typeof IKON, string, string][] = [
-  ["globe", "We work across time zones", "Every approval happens in your project page, so nothing waits for office hours in Jakarta."],
-  ["mata", "You always know where it stands", "Phases, documents and site photos are open whenever you open the link."],
-  ["kirim", "Money in is recorded, not promised", "Every payment gets a receipt number you can open yourself from WhatsApp."],
-  ["berkas", "Drawings you can approve or push back", "With the whole thread kept beside them, so no two versions get confused."],
-  ["kunci", "Your project data stays closed", "Only you and the studio can open it. Tested, not assumed."],
-  ["jam", "First reply under 24 hours", "A small studio — which is exactly why your message doesn’t pile up."],
+  ["alur", "We draw the bar before the façade", "Where the barista turns, where the cups land, where the queue stands. A café that photographs well and works badly is a café that closes."],
+  ["suara", "Full of conversation, never loud", "Acoustics planned for a room that will be busy. Hard surfaces look good in renders and make people leave early."],
+  ["cahaya", "Photogenic without looking staged", "Lighting that flatters the room and the food at the same time — and still lets a barista read a scale at 6am."],
+  ["lembap", "Materials chosen for Pontianak", "Extreme humidity ruins finishes that work fine in Jakarta. We specify for the climate you actually have."],
+  ["matahari", "Houses that stay cool on their own", "Orientation, shading and cross-ventilation first. Air conditioning should be a comfort, not a life-support machine."],
+  ["kursi", "Rooms sized from how you use them", "Measured against real furniture and real circulation, not drawn to fill a plot boundary."],
 ];
 
 const janji = [
@@ -104,12 +111,13 @@ const janji = [
    dengan atribut data-t di markup; yang Inggris tidak diulang di sini karena
    ia SUDAH ada di markup dan skrip pengalih menyimpannya sendiri. */
 const KAMUS_BERANDA: Record<string, string> = {
-  heroLabel: "STUDIO ARSITEKTUR · INDONESIA · SEJAK",
+  heroLabel: "STUDIO ARSITEKTUR · PONTIANAK · SEJAK",
   heroJudul:
-    '<span class="brs"><i>Bangunan yang bisa Anda</i></span>' +
-    '<span class="brs"><i>pantau dibangun — <span class="ak glow">dari mana saja</span>.</i></span>',
+    '<span class="brs"><i>Kami merancang ruang hospitality</i></span>' +
+    '<span class="brs"><i>dan rumah tropis untuk</i></span>' +
+    '<span class="brs"><i><span class="ak glow">iklim khatulistiwa</span>.</i></span>',
   heroLead:
-    "Rumah, kafe, dan tempat kerja di seluruh Indonesia. Anda dapat gambarnya, jadwalnya, dan satu tautan yang menunjukkan persis di mana proyek Anda berdiri — minggu ini, bukan kuartal lalu.",
+    "Coffee shop, restoran, dan rumah di Pontianak. Kami merancang untuk panasnya, lembapnya, dan cara sebuah ruang benar-benar dipakai — lalu Anda memantaunya dibangun dari satu tautan, minggu ini, bukan kuartal lalu.",
   heroLihat: 'Lihat karya kami <span class="ar">→</span>',
   heroMulai: 'Mulai proyek <span class="ar">→</span>',
 
@@ -119,13 +127,13 @@ const KAMUS_BERANDA: Record<string, string> = {
   portalLabel: "SELAGI DIBANGUN",
   portalJudul: "Bagian yang hampir tak diberikan studio seukuran kami.",
   portalLead:
-    "Kalau Anda mengirim uang lintas batas untuk membangun sesuatu yang tidak bisa ditengok tiap minggu, ketakutan yang sebenarnya bukan “apakah nanti bagus”. Melainkan <strong>“apakah saya akan tahu apa yang sedang terjadi”</strong>. Karena itu tiap proyek punya halamannya sendiri — tahapan, dokumen yang bisa Anda setujui, tagihan, dan bukti untuk tiap pembayaran yang bisa Anda buka sendiri.",
+    "Entah tapaknya di seberang kota atau di provinsi lain, ketakutan yang sebenarnya bukan “apakah nanti bagus”. Melainkan <strong>“apakah saya akan tahu apa yang sedang terjadi”</strong>. Karena itu tiap proyek punya halamannya sendiri — tahapan, dokumen yang bisa Anda setujui, tagihan, dan bukti untuk tiap pembayaran yang bisa Anda buka sendiri.",
 
   prosesLabel: "BAGAIMANA JALANNYA",
   prosesJudul: "Tiga langkah sebelum satu garis pun ditarik.",
 
-  fiturLabel: "KENAPA PEMILIK DI LUAR NEGERI MEMILIH KAMI",
-  fiturJudul: "Jarak itu soal penjadwalan, bukan soal desain.",
+  fiturLabel: "YANG BENAR-BENAR KAMI KUASAI",
+  fiturJudul: "Studio generalis bisa menggambarnya. Yang bisa membuatnya bekerja jam 7 pagi lebih sedikit.",
 
   testiLabel: "DARI KLIEN",
   testiKosong: "Belum ada testimoni",
@@ -146,22 +154,103 @@ const KAMUS_BERANDA: Record<string, string> = {
   "janji.2.judul": "Bukti yang bisa Anda buka sendiri",
   "janji.2.teks": "Tiap pembayaran dapat tautannya. Tanpa “percaya saja, sudah dicatat”.",
 
-  "fitur.0.judul": "Kami bekerja lintas zona waktu",
-  "fitur.0.teks": "Tiap persetujuan terjadi di halaman proyek Anda, jadi tidak ada yang menunggu jam kantor di Jakarta.",
-  "fitur.1.judul": "Anda selalu tahu posisinya",
-  "fitur.1.teks": "Tahapan, dokumen, dan foto lapangan terbuka kapan pun Anda membuka tautannya.",
-  "fitur.2.judul": "Uang masuk dicatat, bukan dijanjikan",
-  "fitur.2.teks": "Tiap pembayaran dapat nomor bukti yang bisa Anda buka sendiri dari WhatsApp.",
-  "fitur.3.judul": "Gambar yang bisa Anda setujui atau kembalikan",
-  "fitur.3.teks": "Seluruh percakapannya tersimpan di sebelahnya, jadi tidak ada dua versi yang tertukar.",
-  "fitur.4.judul": "Data proyek Anda tertutup",
-  "fitur.4.teks": "Hanya Anda dan studio yang bisa membukanya. Diuji, bukan diasumsikan.",
-  "fitur.5.judul": "Balasan pertama di bawah 24 jam",
-  "fitur.5.teks": "Studio kecil — justru karena itu pesan Anda tidak menumpuk.",
+  "fitur.0.judul": "Kami menggambar barnya sebelum fasadnya",
+  "fitur.0.teks": "Ke mana barista berputar, di mana cangkirnya mendarat, di mana antrean berdiri. Kafe yang bagus difoto tapi buruk dipakai adalah kafe yang tutup.",
+  "fitur.1.judul": "Penuh obrolan, tidak pernah berisik",
+  "fitur.1.teks": "Akustik dirancang untuk ruang yang memang akan ramai. Permukaan keras terlihat bagus di render dan membuat orang pulang lebih cepat.",
+  "fitur.2.judul": "Foto-genik tanpa terasa dibuat-buat",
+  "fitur.2.teks": "Pencahayaan yang memuliakan ruangnya sekaligus makanannya — dan tetap membuat barista bisa membaca timbangan jam 6 pagi.",
+  "fitur.3.judul": "Material dipilih untuk Pontianak",
+  "fitur.3.teks": "Kelembapan ekstrem merusak finishing yang baik-baik saja di Jakarta. Kami menentukan material untuk iklim yang benar-benar Anda hadapi.",
+  "fitur.4.judul": "Rumah yang adem dengan sendirinya",
+  "fitur.4.teks": "Orientasi, pembayangan, dan ventilasi silang lebih dulu. AC seharusnya kenyamanan, bukan alat penyambung hidup.",
+  "fitur.5.judul": "Ruang diukur dari cara Anda memakainya",
+  "fitur.5.teks": "Diukur terhadap perabot sungguhan dan sirkulasi sungguhan, bukan digambar untuk memenuhi batas kavling.",
+
+  /* ── Tier layanan ── */
+  tierLabel: "BERAPA BIAYANYA",
+  tierJudul: "Diumumkan, supaya Anda bisa mencoret kami tanpa perlu bertanya.",
+  tierLead:
+    "Ini rentang, bukan penawaran — angka di dalam rentangnya tergantung tapak Anda dan seberapa rumit ia ternyata. Yang jujur diberitahukan rentang ini adalah apakah kami masuk anggaran Anda sama sekali, dan itu pertanyaan yang di kebanyakan studio harus Anda tanyakan lewat email dulu.",
+
+  tierKkafe: "COFFEE SHOP & F&B",
+  tierKetkafe: "Vertikal yang kami spesialisasi. Sebuah kafe adalah portofolio yang dilewati tiga ratus orang setiap hari.",
+  tierKrumah: "RUMAH TINGGAL",
+  tierKetrumah: "Rumah tropis yang dirancang untuk panas, hujan, dan lembap — bukan diadaptasi dari denah yang digambar untuk tempat yang lebih dingin.",
+
+  tierPopuler: "PALING DIPILIH",
+  tierPer: "/ proyek",
+  tierMulai: "Mulai dari sini",
+  tierUntuk: "Dibuat untuk",
+
+  tierNstarter: "Starter",
+  tierRstarter: "Untuk coffee shop pertama, dengan anggaran yang apa adanya.",
+  tierFstarter: "Rp 15–25 juta",
+  tierUstarter: "Coffee shop pertama, budget terbatas",
+  tierIKstarter: "Yang Anda dapat:",
+  tierDstarter0: "Konsep desain",
+  tierDstarter1: "Denah dan tata ruang",
+  tierDstarter2: "Visualisasi 3D dasar",
+
+  tierNsignature: "Signature",
+  tierRsignature: "Untuk pemilik yang sudah punya gambaran jelas soal ruang yang ingin dikenang.",
+  tierFsignature: "Rp 45–80 juta",
+  tierUsignature: "Visi kuat, target ikonik",
+  tierIKsignature: "Semua di Starter, ditambah:",
+  tierDsignature0: "DED lengkap",
+  tierDsignature1: "Branding ruang dan palet material",
+  tierDsignature2: "Pengarahan dan pendampingan kontraktor",
+  tierDsignature3: "Perencanaan alur bar dan dapur",
+
+  tierNflagship: "Flagship",
+  tierRflagship: "Layanan penuh, dari sketsa pertama sampai foto pembukaan.",
+  tierFflagship: "Rp 100–180 juta",
+  tierUflagship: "Grup F&B yang siap membuka cabang",
+  tierIKflagship: "Semua di Signature, ditambah:",
+  tierDflagship0: "Supervisi konstruksi",
+  tierDflagship1: "Desain furniture custom",
+  tierDflagship2: "Dokumentasi foto profesional",
+
+  tierNkonsultasi: "Konsultasi",
+  tierRkonsultasi: "Untuk pemilik yang akan membangun sendiri bersama tukangnya.",
+  tierFkonsultasi: "Rp 10–20 juta",
+  tierUkonsultasi: "Membangun sendiri, dengan tukang",
+  tierIKkonsultasi: "Yang Anda dapat:",
+  tierDkonsultasi0: "Konsep desain",
+  tierDkonsultasi1: "Denah skematik",
+  tierDkonsultasi2: "Saran orientasi dan ventilasi",
+
+  tierNstandar: "Standar",
+  tierRstandar: "Dari konsep sampai gambar yang bisa dibangun kontraktor tanpa menelepon kami.",
+  tierFstandar: "Rp 35–70 juta",
+  tierUstandar: "100–200 m², budget bangun Rp 500 juta–1,5 miliar",
+  tierIKstandar: "Semua di Konsultasi, ditambah:",
+  tierDstandar0: "DED lengkap",
+  tierDstandar1: "Gambar kerja siap kontraktor",
+  tierDstandar2: "Daftar material dan finishing",
+
+  tierNpremium: "Premium",
+  tierRpremium: "Rumahnya, isinya, dan tanah tempat ia berdiri — diurus sebagai satu proyek.",
+  tierFpremium: "Rp 80–200 juta",
+  tierUpremium: "Di atas 200 m², budget bangun di atas Rp 2 miliar",
+  tierIKpremium: "Semua di Standar, ditambah:",
+  tierDpremium0: "Supervisi konstruksi",
+  tierDpremium1: "Desain interior",
+  tierDpremium2: "Desain lanskap",
+  tierDpremium3: "Dokumentasi foto saat serah terima",
+
+  tierKaki:
+    "Harga berlaku untuk klien baru dan bergerak mengikuti portofolio, jadi rentang yang Anda lihat hari ini adalah rentang yang Anda dapat hari ini. Uang muka, lama tiap tahap, dan jadwal kunjungan lokasi tidak ditetapkan di sini — ketiganya berubah per proyek dan datang bersama proposal tertulis.",
+
+  /* Judul tab dan meta description. Dua kunci khusus yang dibaca pengalih
+     bahasa, bukan atribut data-t — keduanya tinggal di <head>. */
+  metaJudul: "Ruang hospitality dan rumah tropis",
+  metaKet:
+    "Coffee shop, restoran, dan rumah di Pontianak. Kami merancang untuk panasnya, lembapnya, dan cara sebuah ruang benar-benar dipakai — lalu Anda memantaunya dibangun dari satu tautan.",
 
   "proses.0.no": "01. MENDENGAR",
   "proses.0.judul": "Kami mulai dari cara Anda hidup, bukan dari gaya.",
-  "proses.0.teks": "Satu percakapan panjang, lalu brief tertulis yang bisa Anda koreksi sendiri — dengan kata-kata Anda, di zona waktu Anda.",
+  "proses.0.teks": "Satu percakapan panjang, lalu brief tertulis yang bisa Anda koreksi sendiri — dengan kata-kata Anda, dan dengan waktu Anda sendiri.",
   "proses.1.no": "02. MENGGAMBAR",
   "proses.1.judul": "Konsep, denah, dan gambar kerja — semuanya bisa ditinjau dari ponsel.",
   "proses.1.teks": "Tiap dokumen bisa disetujui atau dikembalikan untuk diubah langsung di halaman proyek Anda, dengan seluruh percakapannya tersimpan di sebelahnya.",
@@ -180,8 +269,8 @@ const fakta = (p: Project) =>
 ---
 
 <BaseLayout
-  title="Architecture you can watch being built"
-  description={`Houses, cafés and workplaces across ${kota} and Indonesia. You get the drawings, the schedule, and one link that shows exactly where your project stands.`}
+  title="Hospitality spaces and tropical houses"
+  description={`Coffee shops, restaurants and houses in ${kota}. We design for heat, humidity and the way a room is actually used — then you watch it being built from one link.`}
   image={sorot[0]?.coverImageUrl}
 >
   <div class="pita pita--panel pita--kepala">
@@ -192,17 +281,19 @@ const fakta = (p: Project) =>
             membuatnya jadi dua spasi, dan letter-spacing .18em melebarkan
             spasi kedua itu jadi celah yang terlihat. */}
         <span class="label masuk"
-          ><span data-t="heroLabel">ARCHITECTURE STUDIO · INDONESIA · SINCE</span> {settings.foundedYear ?? <span class="tunggu">20XX</span>}</span
+          ><span data-t="heroLabel">ARCHITECTURE STUDIO · PONTIANAK · SINCE</span> {settings.foundedYear ?? <span class="tunggu">20XX</span>}</span
         >
         <div class="s24"></div>
         <h1 class="h1" data-t="heroJudul">
-          <span class="brs"><i>We design buildings you can</i></span>
-          <span class="brs"><i>watch being built — <span class="ak glow">from anywhere</span>.</i></span>
+          <span class="brs"><i>We design hospitality spaces</i></span>
+          <span class="brs"><i>and tropical houses for the</i></span>
+          <span class="brs"><i><span class="ak glow">equatorial climate</span>.</i></span>
         </h1>
         <div class="s24"></div>
         <p class="lead masuk masuk--3 hero__lead" data-t="heroLead">
-          Houses, cafés and workplaces across Indonesia. You get the drawings, the schedule, and one
-          link that shows you exactly where your project stands — this week, not last quarter.
+          Coffee shops, restaurants and houses in Pontianak. We design for the heat, the humidity and
+          the way a room is actually used — then you watch it being built from one link, this week,
+          not last quarter.
         </p>
         <div class="s36"></div>
         <div class="rowx masuk masuk--4 hero__tombol">
@@ -405,11 +496,11 @@ const fakta = (p: Project) =>
           <div class="s16"></div>
           <h2 class="h2" data-t="portalJudul">The part almost no studio our size gives you.</h2>
         </div>
-        <p class="lead">
-          If you are sending money across a border to build something you cannot visit every week,
-          the real fear isn’t “will it look good”. It is <strong>“will I know what is happening”</strong>.
-          So every project comes with its own page — phases, documents you can approve, invoices, and
-          a receipt for every payment you can open yourself.
+        <p class="lead" data-t="portalLead">
+          Whether the site is across town or in another province, the real fear isn’t “will it look
+          good”. It is <strong>“will I know what is happening”</strong>. So every project comes with
+          its own page — phases, documents you can approve, invoices, and a receipt for every payment
+          you can open yourself.
         </p>
       </div>
       <div class="portal-bung">
@@ -508,9 +599,9 @@ const fakta = (p: Project) =>
   <div class="pita">
     <div class="dalam">
       <div class="isi kop-seksi wahyu">
-        <span class="label" data-t="fiturLabel">WHY OWNERS ABROAD PICK US</span>
+        <span class="label" data-t="fiturLabel">WHAT WE ACTUALLY KNOW</span>
         <div class="s16"></div>
-        <h2 class="h2" data-t="fiturJudul">Distance is a scheduling problem, not a design problem.</h2>
+        <h2 class="h2" data-t="fiturJudul">A generalist can draw it. Fewer can make it work at 7am.</h2>
       </div>
       {
         [fitur.slice(0, 3), fitur.slice(3)].map((baris, brs) => (
@@ -529,6 +620,80 @@ const fakta = (p: Project) =>
           </div>
         ))
       }
+    </div>
+  </div>
+
+  {/* ══ TIER LAYANAN ══════════════════════════════════════════════════════
+      Angkanya diterbitkan, bukan disembunyikan di balik "hubungi kami".
+      Alasannya ada di lib/tier.ts. Dua kelompok, tiga kartu masing-masing —
+      bukan tab, supaya keenamnya terbaca mesin pencari dan terlihat tanpa
+      satu pun klik. */}
+  <div class="pita">
+    <div class="dalam">
+      <div class="isi kop-seksi wahyu">
+        <span class="label" data-t="tierLabel">WHAT IT COSTS</span>
+        <div class="s16"></div>
+        <h2 class="h2" data-t="tierJudul">Published, so you can rule us out without asking.</h2>
+        <div class="s16"></div>
+        <p class="mut tier__lead" data-t="tierLead">
+          Ranges, not quotes — the figure inside a range depends on your site and how complicated it
+          turns out to be. What the range does tell you honestly is whether we are in your budget at
+          all, which is the question most studios make you send an email to find out.
+        </p>
+      </div>
+
+      {
+        TIER.map((k) => (
+          <div class="tier-blok wahyu">
+            <div class="isi isi--rapat tier-kop">
+              <span class="label label--redup" data-t={`tierK${k.kunci}`}>{k.label}</span>
+              <p class="mut kecil tier-kop__k" data-t={`tierKet${k.kunci}`}>{k.ket}</p>
+            </div>
+            <div class="tier-rel">
+              {k.tier.map((t) => (
+                <div class={t.sorot ? "tier tier--sorot" : "tier"}>
+                  {t.sorot && (
+                    <span class="tier__cap" data-t="tierPopuler">MOST CHOSEN</span>
+                  )}
+                  <span class="tier__n" data-t={`tierN${t.kunci}`}>{t.nama}</span>
+                  <p class="tier__r" data-t={`tierR${t.kunci}`}>{t.ringkas}</p>
+                  <div class="tier__garis"></div>
+                  <div class="tier__f">
+                    <b data-t={`tierF${t.kunci}`}>{t.fee}</b>
+                    <span class="dim" data-t="tierPer">/ project</span>
+                  </div>
+                  <a class={t.sorot ? "btn btn--isi btn--penuh" : "btn btn--penuh"} href="/kontak"
+                    data-t="tierMulai">Start here</a>
+                  <div class="tier__garis"></div>
+                  <p class="tier__ik" data-t={`tierIK${t.kunci}`}>{t.isiKop}</p>
+                  <ul class="tier__d">
+                    {t.isi.map((baris, i) => (
+                      <li>
+                        <i aria-hidden="true">
+                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.3 5 8.8l4.5-5" /></svg>
+                        </i>
+                        <span data-t={`tierD${t.kunci}${i}`}>{baris}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div class="tier__untuk">
+                    <span class="dim kecil" data-t="tierUntuk">Built for</span>
+                    <span class="kecil" data-t={`tierU${t.kunci}`}>{t.untuk}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+
+      <div class="isi isi--rapat tier-kaki">
+        <p class="mut kecil" data-t="tierKaki">
+          Prices are for new clients and move with the portfolio, so the range you see today is the
+          range you get quoted today. Deposit terms, stage durations and site-visit schedules are not
+          fixed here — they change per project and come with the written proposal.
+        </p>
+      </div>
     </div>
   </div>
 

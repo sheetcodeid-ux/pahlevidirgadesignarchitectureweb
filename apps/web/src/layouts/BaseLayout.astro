@@ -84,7 +84,10 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark"
+  data-studio={studioName}
+  data-judul-en={title}
+  data-ket-en={description}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -171,6 +174,32 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
           document.documentElement.lang = bhs === "id" ? "id" : "en";
           document.querySelectorAll("[data-bhs]").forEach((b) =>
             b.setAttribute("aria-pressed", String(b.dataset.bhs === bhs)));
+
+          /* Judul tab dan meta description ada di <head>, di luar jangkauan
+             data-t — dan itu yang dilaporkan pemilik: isi halaman sudah
+             Indonesia, judul tabnya masih Inggris. Ditukar di sini, dari dua
+             kunci khusus di kamus halaman.
+
+             Yang HARUS diketahui: og:title dan og:description ikut ditukar,
+             tapi kartu bagikan WhatsApp/Twitter membaca HTML yang DISAJIKAN
+             server, bukan hasil skrip. Jadi kartu bagikannya selalu versi
+             Inggris apa pun yang dipilih pengunjung. Menukarnya butuh rute
+             /id terpisah — yang sudah ditolak di lib/i18n.ts karena dua
+             berkas berisi kalimat yang sama pasti menyimpang. */
+          const akar = document.documentElement;
+          const studio = akar.dataset.studio || "";
+          const id = bhs === "id";
+          const judul = (id && kamus.metaJudul) || akar.dataset.judulEn || "";
+          const ket = (id && kamus.metaKet) || akar.dataset.ketEn || "";
+          document.title = studio ? judul + " \u2014 " + studio : judul;
+          const pasangMeta = (pilih, nilai) => {
+            const m = document.querySelector(pilih);
+            if (m && nilai) m.setAttribute("content", nilai);
+          };
+          pasangMeta('meta[name="description"]', ket);
+          pasangMeta('meta[property="og:title"]', judul);
+          pasangMeta('meta[property="og:description"]', ket);
+          pasangMeta('meta[property="og:locale"]', id ? "id_ID" : "en_US");
           /* Untuk yang TIDAK bisa ditukar lewat kamus karena isinya dibuat
              JS: tanggal yang diformat per-locale, dan angka yang ditulis
              ulang saat menyaring. Halaman yang punya keduanya mendengarkan
