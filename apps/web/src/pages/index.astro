@@ -384,11 +384,22 @@ const fakta = (p: Project) =>
   <div class="pita pita--gelap">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
-      <div class="isi">
-        <span class="label" data-t="portalLabel">WHILE IT IS BEING BUILT</span>
-        <div class="s16"></div>
-        <h2 class="h2" data-t="portalJudul">The part almost no studio our size gives you.</h2>
-        <div class="s16"></div>
+      {/* Judul di kiri, paragraf di kanan. Sebelumnya keduanya bertumpuk dalam
+          satu kolom: judulnya memenuhi 100% lebar kolom sementara paragrafnya
+          cuma 60% (666px dari 1110px), jadi ada 444px kosong yang menggantung
+          di kanan paragraf — itu yang dilaporkan pemilik sebagai "nanggung".
+
+          Melebarkan paragrafnya sampai selebar judul bukan jawabannya: pada
+          1110px satu barisnya memuat ~138 huruf, jauh di atas batas nyaman
+          membaca. Dibagi dua, tiap kolom 533px — sekitar 66 huruf per baris,
+          persis di tengah rentang yang enak dibaca — dan ruang kosongnya
+          terpakai. */}
+      <div class="isi portal-kop">
+        <div>
+          <span class="label" data-t="portalLabel">WHILE IT IS BEING BUILT</span>
+          <div class="s16"></div>
+          <h2 class="h2" data-t="portalJudul">The part almost no studio our size gives you.</h2>
+        </div>
         <p class="lead">
           If you are sending money across a border to build something you cannot visit every week,
           the real fear isn’t “will it look good”. It is <strong>“will I know what is happening”</strong>.
@@ -679,6 +690,36 @@ const fakta = (p: Project) =>
   }
   .mq--garis {
     border-top: 1px solid var(--garis);
+  }
+  .portal-kop {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 44px;
+    align-items: start;
+  }
+  /* Paragrafnya mengisi kolomnya sendiri — batas 64ch milik .lead sudah
+     tidak berlaku di sini, karena lebarnya sekarang ditentukan kisi. */
+  .portal-kop .lead {
+    max-width: none;
+    text-align: justify;
+    /* Tanpa penyukuan, rata kanan-kiri memaksa peramban melebarkan spasi
+       sampai muncul "sungai" putih di tengah paragraf. Dengan hyphens:auto ia
+       boleh memenggal kata, jadi jaraknya tetap wajar. Bahasa penyukuannya
+       ikut atribut lang di <html>, yang memang ditukar pengalih bahasa. */
+    hyphens: auto;
+  }
+  /* Baris terakhir paragraf rata kiri, bukan ikut diregangkan — itu bawaan
+     text-align:justify dan memang benar; yang salah justru justify-all. */
+  @media (max-width: 900px) {
+    .portal-kop {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    /* Di kolom selebar layar ponsel, rata kanan-kiri menyisakan jarak antar
+       kata yang terlalu lebar karena barisnya cuma memuat ~40 huruf. */
+    .portal-kop .lead {
+      text-align: start;
+    }
   }
   .sorot__fakta {
     border-top: 1px solid var(--garis);
