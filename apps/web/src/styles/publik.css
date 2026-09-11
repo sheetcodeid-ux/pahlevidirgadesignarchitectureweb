@@ -203,7 +203,6 @@ h1,h2,h3{hanging-punctuation:first last}
      margin tidak dilatarbelakangi apa pun. */
   background-image:radial-gradient(var(--garis) 1px,transparent 1px);
   background-size:var(--dot) var(--dot)}
-.pita--panel:first-child{padding-top:0}
 /* Panel penutup berpasangan dengan banner pembuka — bentuk yang sama di
    kepala dan kaki halaman, seperti di acuan. Ia juga butuh napas di bawahnya,
    yang tidak dibutuhkan panel pembuka. */
@@ -232,6 +231,62 @@ h1,h2,h3{hanging-punctuation:first last}
    oleh berapa baris ia terpecah — dilepas selebar panel, kalimatnya jadi satu
    baris dan panelnya memendek sendiri. */
 .pita--panel > .dalam > .isi{max-width:var(--lebar);margin-inline:auto}
+
+/* ═══ KEPALA HALAMAN ══════════════════════════════════════════════════════
+   Urutan yang diminta pemilik, dari tepi atas layar ke bawah:
+
+     bilah nav SELEBAR LAYAR
+     ── garis batas selebar layar ──
+     (jarak sedikit)
+     ╭─ banner bersudut ─╮
+     ── garis lagi selebar layar ──
+     baru talang bertitik dimulai
+
+   Sebelumnya isi bilah nav ikut dikurung kolom 1200px, jadi di layar lebar
+   ia berdiri di tengah dengan rel tegak dan talang bertitik di kiri-kanannya
+   — persis yang dibandingkan pemilik dengan acuannya dan disebut "tidak
+   full sampai ujung". */
+
+/* Bilah nav dilepas dari kolom: lebar maksimumnya dibuang, rel tegaknya
+   dipadamkan lewat --rel-img (bukan dengan menghapus bingkainya — bingkai
+   transparan itu yang menjaga titik nol kotak-padding tetap sama), dan
+   talang bertitiknya ditiadakan. */
+.nav > .dalam{max-width:none;margin-inline:0;--rel-img:none}
+.nav::before,.nav::after{content:none}
+/* Isinya tetap bernapas, tapi dengan talang tepi layar — bukan talang kolom.
+   32px, bukan 44px seperti pita isi: yang 44px itu jarak ke GARIS kolom,
+   sementara di sini yang di sebelahnya tepi layar. */
+.nav .isi{padding-inline:32px}
+
+/* Bilah nav ditarik 1px ke bawah supaya garis bawahnya jatuh di BARIS PIKSEL
+   yang sama dengan garis atas `.dalam` pita pertama.
+   Tanpa ini keduanya bertetangga — nav berakhir di baris 85, `.dalam` mulai
+   di baris 86 — dan yang tampil bukan satu garis melainkan garis 2px selebar
+   kolom yang menipis jadi 1px di luar kolom. Persis cacat "dua garis 1px
+   berjarak 1px" yang sudah pernah dilaporkan pemilik pada penanda sudut.
+   Terukur di /proyek, /studio, /kontak, /jurnal, /faq — kelimanya sama.
+
+   Ditarik dengan margin, bukan dengan mematikan salah satu garisnya: kalau
+   garis `.dalam` yang dimatikan, penanda sudut yang menunggangi garis itu
+   tetap terpusat di baris 86 sementara garisnya di 85 — meleset satu piksel,
+   dan itu yang dilihat pemilik dari zoom. Dengan margin, keduanya berimpit
+   dan penandanya terpusat tepat. */
+.nav{margin-bottom:-1px}
+
+/* Banner kepala: tanpa titik, dan dengan napas di atas DAN di bawahnya.
+   Titiknya sengaja mati di sini — pemilik minta titik baru muncul setelah
+   garis di bawah banner, bukan mengelilinginya. */
+.pita--panel.pita--kepala{background-image:none;padding-bottom:var(--panel-jeda)}
+
+/* Garis selebar layar di bawah banner.
+   Digambar sebagai bayangan-dalam pada pita SESUDAHNYA, bukan sebagai
+   border-bottom pada kepalanya. Alasannya geometri: `.dalam` mulai persis
+   di y=0 pita, jadi bayangan di tepi atas pita jatuh di BARIS PIKSEL YANG
+   SAMA dengan garis atas `.dalam`. Ditaruh sebagai border-bottom kepala, ia
+   akan duduk satu piksel di atasnya — dua garis 1px berjarak 1px, yang tidak
+   terbaca sebagai dua garis melainkan satu garis kabur, dan penanda sudut
+   yang seharusnya menunggangi garis itu jadi meleset separuh piksel. */
+.pita--kepala + .pita{box-shadow:inset 0 1px 0 var(--garis)}
 body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
 .isi{padding:56px 44px}
 .isi--rapat{padding:24px 44px}
@@ -495,6 +550,23 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--garis);
   position:relative}
 .tabs::-webkit-scrollbar{display:none}
+/* Tepi yang meredup saat masih ada tab di luar tampak. Atributnya dipasang
+   JS dari scrollWidth; di sini cuma digambar. Sisi kiri DAN kanan, karena
+   begitu digeser ke ujung kanan yang tersembunyi justru yang di kiri.
+
+   MASK, bukan pseudo-elemen berlatar gradien. Pseudo-elemen yang
+   diposisikan absolut di dalam penampung GULIR diukur terhadap kotak isinya
+   yang tergulir, bukan terhadap tepi yang terlihat — jadi `right:0` mendarat
+   di ujung 1037px, jauh di luar layar 390px, dan fade-nya tidak pernah
+   kelihatan. Terukur: atributnya benar, gambarnya tidak ada. Mask berlaku
+   pada kotak tampak penampungnya, jadi ia tetap di tepi layar. */
+.tabs[data-kiri="true"]{-webkit-mask-image:linear-gradient(to right,transparent,#000 44px);
+  mask-image:linear-gradient(to right,transparent,#000 44px)}
+.tabs[data-kanan="true"]{-webkit-mask-image:linear-gradient(to left,transparent,#000 44px);
+  mask-image:linear-gradient(to left,transparent,#000 44px)}
+.tabs[data-kiri="true"][data-kanan="true"]{
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 44px,#000 calc(100% - 44px),transparent);
+  mask-image:linear-gradient(to right,transparent,#000 44px,#000 calc(100% - 44px),transparent)}
 .tab{position:relative;padding:16px 26px;font-size:12.5px;color:var(--teks-3);white-space:nowrap;
   cursor:pointer;background:none;border:0;border-right:1px solid var(--garis);font-family:var(--tubuh);
   transition:color 180ms var(--e-halus),background 180ms var(--e-halus)}
@@ -793,25 +865,6 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   padding:10px 16px;font-weight:600;font-size:13px}
 .lompat:focus{left:12px;top:12px}
 @media (max-width:900px){
-  .b4{grid-template-columns:repeat(2,1fr)}
-  .b3,.b2{grid-template-columns:1fr}
-  .isi{padding:36px 20px}
-  .isi--longgar{padding:56px 20px}
-  .sel{padding:24px 20px}
-  .isi--rapat{padding:16px 20px}
-  .nav-lipat{display:none}
-  .nav-utama{gap:14px}
-  /* Panel produk hero: kolom sidebar dilepas supaya tidak memaksa lebar */
-  .panel > div:last-child{grid-template-columns:1fr!important}
-  .panel > div:last-child > div:first-child{border-right:0;border-bottom:1px solid #2A2A2E}
-  /* Sasaran sentuh minimum 44px */
-  .btn{min-height:44px}
-  .pil{min-height:44px;padding-inline:16px}
-  .film button{width:76px;height:54px}
-  .ba{height:260px}
-  .brs > i{animation:none;transform:none}
-}
-@media (max-width:900px){
   .nav-tombol{display:grid}
   .b4{grid-template-columns:repeat(2,1fr)}
   .b3,.b2{grid-template-columns:1fr}
@@ -819,10 +872,18 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   .isi--longgar{padding:56px 20px}
   .sel{padding:24px 20px}
   .isi--rapat{padding:16px 20px}
+  /* Talang tepi layar untuk bilah nav. WAJIB ditulis dengan kekhususan
+     setara: `.nav .isi` di atas berkekhususan (0,2,0), sementara
+     `.isi--rapat` cuma (0,1,0) — jadi aturan 32px itu menang juga di sini
+     dan wordmark studio patah jadi dua baris di layar 390px. Jebakan yang
+     sama persis dengan `.topbar > *:not(...)` di panel admin. */
+  .nav .isi{padding-inline:20px}
   .nav-lipat{display:none}
   .nav-utama{gap:14px}
+  /* Panel produk hero: kolom sidebar dilepas supaya tidak memaksa lebar */
   .panel > div:last-child{grid-template-columns:1fr!important}
   .panel > div:last-child > div:first-child{border-right:0;border-bottom:1px solid #2A2A2E}
+  /* Sasaran sentuh minimum 44px */
   .btn{min-height:44px}
   .pil{min-height:44px;padding-inline:16px}
   .film button{width:76px;height:54px}
@@ -840,6 +901,7 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   .isi{padding:28px 16px}
   .sel{padding:20px 16px}
   .isi--rapat{padding:14px 16px}
+  .nav .isi{padding-inline:16px}
 }
 .kat__b[aria-current="true"] .panah-kotak,.kat__b:hover .panah-kotak,.kat__b.kini .panah-kotak,
 .baris-daftar:hover .panah-kotak,.baris-daftar:focus-visible .panah-kotak{opacity:1;transform:none}

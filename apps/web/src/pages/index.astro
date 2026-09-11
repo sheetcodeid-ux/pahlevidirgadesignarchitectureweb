@@ -22,12 +22,16 @@ const semua = await listProjects({ limit: 200 });
 const klien = await listClients();
 const testimoni = await listTestimonials(true);
 
-// Showcase: proyek yang diunggulkan lebih dulu, lalu yang terbaru. Maksimal
-// tiga, karena bilah tabnya dirancang untuk tiga.
+/* Showcase: proyek yang diunggulkan lebih dulu, lalu yang terbaru.
+   SELURUHNYA, tidak dipotong. Dulu dipotong tiga dengan alasan "bilah tabnya
+   dirancang untuk tiga" — dan itu keliru dua kali: bilahnya memang bisa
+   digulir mendatar sejak awal, dan pemotongannya membuat pemilik yang sudah
+   memasukkan enam proyek cuma melihat tiga di berandanya sendiri. Kalau
+   suatu saat proyeknya puluhan, yang membatasi harus keputusan sadar di
+   sini, bukan angka yang tertinggal dari rancangan bilah. */
 const tahunDari = (p: Project) => p.year ?? (p.publishedAt ? new Date(p.publishedAt).getFullYear() : 0);
 const sorot = [...semua]
-  .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || tahunDari(b) - tahunDari(a))
-  .slice(0, 3);
+  .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || tahunDari(b) - tahunDari(a));
 
 // Foto yang dipakai di tiga blok proses. Diambil dari proyek yang ada, bukan
 // dari berkas statis — kalau belum ada fotonya, bloknya tetap tampil tanpa
@@ -38,8 +42,15 @@ interface FotoBerlabel extends ProjectImage {
 const semuaFoto: FotoBerlabel[] = sorot.flatMap((p) =>
   (p.images ?? []).map((f) => ({ ...f, proyek: p.title })),
 );
-const fotoProses = [semuaFoto[0], semuaFoto[Math.floor(semuaFoto.length / 2)], semuaFoto[semuaFoto.length - 1]]
-  .filter((f, i, arr) => f && arr.findIndex((x) => x?.id === f.id) === i);
+/* Satu foto per proyek, bukan sepuluh dari proyek yang sama. Waktu showcase
+   masih dipotong tiga, mengambil foto ke-0, tengah, dan terakhir dari daftar
+   gabungan kebetulan menghasilkan tiga proyek berbeda. Dengan enam proyek
+   daftar itu jadi 60 foto dan ketiganya jatuh di proyek yang sama. */
+const fotoPerProyek: FotoBerlabel[] = sorot
+  .map((p) => (p.images ?? [])[0])
+  .filter((f): f is ProjectImage => Boolean(f))
+  .map((f, i) => ({ ...f, proyek: sorot[i].title }));
+const fotoProses = fotoPerProyek.slice(0, 3);
 
 // Foto besar di bawah hero. Diambil dari daftar berlabel yang sama supaya
 // keterangannya bisa menyebut proyek asalnya.
@@ -174,7 +185,7 @@ const fakta = (p: Project) =>
   description={`Houses, cafés and workplaces across ${kota} and Indonesia. You get the drawings, the schedule, and one link that shows exactly where your project stands.`}
   image={sorot[0]?.coverImageUrl}
 >
-  <div class="pita pita--panel">
+  <div class="pita pita--panel pita--kepala">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar hero">
@@ -332,10 +343,18 @@ const fakta = (p: Project) =>
                 ))}
               </div>
               <div class="rel"><i data-prog></i></div>
+              {/* Tiap kotak memuat FOTONYA, nomornya turun jadi penanda kecil
+                  di sudut. Perbaikan yang sama sudah dikerjakan di halaman
+                  /proyek/[slug] dan berhenti di situ — filmstrip beranda ini
+                  ikut dilaporkan pemilik sebagai kotak kosong berangka.
+                  Satu-satunya gunanya melompat ke foto tertentu, dan angka
+                  tidak memberi tahu foto mana. */}
               <div class="film" data-film aria-label="Choose a photo">
-                {(p.images ?? []).map((_, k) => (
-                  <button type="button" data-ke={k} aria-current={k === 0 ? "true" : "false"}>
-                    {String(k + 1).padStart(2, "0")}
+                {(p.images ?? []).map((f, k) => (
+                  <button type="button" data-ke={k} aria-current={k === 0 ? "true" : "false"}
+                    aria-label={`Photograph ${k + 1} of ${(p.images ?? []).length}`}>
+                    <img src={f.url} alt="" loading="lazy" decoding="async" width="160" height="90" />
+                    <span class="film__no">{String(k + 1).padStart(2, "0")}</span>
                   </button>
                 ))}
               </div>
@@ -845,6 +864,12 @@ const fakta = (p: Project) =>
       const blokSorot = [...document.querySelectorAll<HTMLElement>("[data-sorot]")];
       const blokStrip = [...document.querySelectorAll<HTMLElement>("[data-strip]")];
 
+      const bawaKeTampak = (b: HTMLElement) => {
+        const kiri = b.offsetLeft;
+        const kanan = kiri + b.offsetWidth;
+        if (kiri < tabs.scrollLeft) tabs.scrollLeft = kiri - 24;
+        else if (kanan > tabs.scrollLeft + tabs.clientWidth) tabs.scrollLeft = kanan - tabs.clientWidth + 24;
+      };
       const geserInd = (b: HTMLElement) => {
         ind.style.width = b.offsetWidth + "px";
         ind.style.transform = `translateX(${b.offsetLeft}px)`;
@@ -857,12 +882,45 @@ const fakta = (p: Project) =>
         blokSorot.forEach((b, k) => (b.hidden = k !== i));
         blokStrip.forEach((b, k) => (b.hidden = k !== i));
         geserInd(tombol[i]);
+        // Bilah tab bisa lebih panjang daripada layarnya sejak showcase
+        // memuat SELURUH proyek. Tab yang dipilih lewat papan tuts bisa
+        // berada di luar tampak, dan tab aktif yang tak terlihat membuat
+        // bilahnya tampak tidak merespons. scrollIntoView tidak dipakai:
+        // ia ikut menggulir HALAMAN walau diberi block:"nearest".
+        bawaKeTampak(tombol[i]);
+        tandaLuber();
         // Strip yang baru muncul belum pernah dihitung lebarnya selagi
         // tersembunyi — scrollWidth-nya 0 dan bar kemajuannya salah.
         hitungSemua();
       };
       tombol.forEach((b, i) => b.addEventListener("click", () => pilih(i)));
+      /* role="tablist" menjanjikan panah kiri/kanan berpindah tab — itu
+         perjanjian ARIA, bukan tambahan. Selama showcase cuma tiga tab dan
+         semuanya terlihat, ketiadaannya tidak kentara; dengan enam tab yang
+         sebagian di luar layar, ia jadi satu-satunya cara berpindah tanpa
+         tetikus. */
+      tabs.addEventListener("keydown", (e) => {
+        const arah = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!arah) return;
+        e.preventDefault();
+        const kini = tombol.findIndex((b) => b.getAttribute("aria-selected") === "true");
+        const ke = (kini + arah + tombol.length) % tombol.length;
+        pilih(ke);
+        tombol[ke].focus();
+      });
       if (tombol.length) geserInd(tombol[0]);
+      /* Penanda "masih ada tab di sebelah sana". Dipasang dari JS, bukan
+         CSS: yang menentukan meluber atau tidak adalah scrollWidth, dan CSS
+         tidak bisa membacanya. Tanpa ini, di ponsel enam tab terpotong di
+         tepi layar tanpa satu pun tanda bahwa ia bisa digeser — dan tab
+         yang terpotong rata terbaca sebagai daftar yang memang segitu. */
+      const tandaLuber = () => {
+        tabs.dataset.kiri = String(tabs.scrollLeft > 4);
+        tabs.dataset.kanan = String(tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 4);
+      };
+      tandaLuber();
+      tabs.addEventListener("scroll", tandaLuber, { passive: true });
+      addEventListener("resize", tandaLuber);
       addEventListener("resize", () => {
         const aktif = tombol.find((b) => b.getAttribute("aria-selected") === "true");
         if (aktif) geserInd(aktif);

@@ -187,5 +187,58 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
           }));
       })();
     </script>
+
+    <script is:inline>
+      /* ── Gulir yang dicuri penampung mendatar ──────────────────────────
+         Gejalanya yang dilaporkan pemilik: "dari atas geser ke bawah seperti
+         tertahan sedikit lalu jump ke bawah", tertahannya di bagian klien
+         terpilih. Sebabnya bukan patah-patah — frame-nya baik-baik saja.
+
+         Sebabnya penampung yang bisa digulir MENDATAR (galeri foto, bilah
+         tab). Gerakan dua jari di trackpad tidak pernah lurus; begitu ada
+         sedikit komponen mendatar, peramban mengunci SELURUH gerakan itu ke
+         penampung mendatar yang sedang dilewati kursor — termasuk komponen
+         tegaknya. Halamannya lalu berhenti maju sampai gerakannya habis,
+         baru melompat menyusul.
+
+         Terukur di beranda, kursor di tengah layar, gerakan turun 110px
+         serong 6px: halaman berhenti di scrollY 1650 (persis di pita KLIEN
+         TERPILIH) dan tidak maju lagi — 25 dari 40 putaran roda hilang,
+         sementara galerinya bergeser sendiri 15px.
+
+         Yang TIDAK menolong, sudah diuji satu per satu: scroll-snap
+         proximity, mematikan snap sama sekali, dan overscroll-behavior-x —
+         ketiganya tetap 25/40 macet, karena penguncian itu terjadi sebelum
+         snap ikut bicara. Yang menolong hanya meneruskan komponen tegaknya
+         sendiri: 0 dari 40 macet, halaman maju 4400px.
+
+         Syaratnya passive:false — tanpa itu preventDefault diabaikan diam-
+         diam. Dan hanya gerakan yang DIDOMINASI tegak yang diambil alih;
+         geseran mendatar sungguhan tetap milik galerinya. */
+      (() => {
+        "use strict";
+        const mendatar = (el) => {
+          const g = getComputedStyle(el).overflowX;
+          return (g === "auto" || g === "scroll") && el.scrollWidth > el.clientWidth + 2;
+        };
+        addEventListener("wheel", (e) => {
+          if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+          let el = e.target instanceof Element ? e.target : null;
+          for (; el && el !== document.body; el = el.parentElement) {
+            /* Penampung yang bisa digulir TEGAK berhak atas gerakan ini —
+               jangan dirampas darinya (mis. dialog panjang, laci menu). */
+            const g = getComputedStyle(el).overflowY;
+            if ((g === "auto" || g === "scroll") && el.scrollHeight > el.clientHeight + 2) return;
+            if (mendatar(el)) break;
+          }
+          if (!el || el === document.body) return;
+          e.preventDefault();
+          /* deltaMode 1 berarti satuannya BARIS, bukan piksel — Firefox
+             memakainya. Tanpa penyetaraan ini gulirnya jadi 15x lebih pelan. */
+          const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
+          scrollBy({ top: px, behavior: "instant" });
+        }, { passive: false });
+      })();
+    </script>
   </body>
 </html>
