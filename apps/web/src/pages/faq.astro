@@ -260,6 +260,15 @@ const jsonLd = [
   .tny__b :global(p:last-child) {
     margin-bottom: 0;
   }
+  /* Baris "Angkanya" tinggal di LUAR pembungkus jawaban, jadi jarak atasnya
+     harus datang dari dirinya sendiri. `.tny__angka{margin-top:16px}` di
+     publik.css berkekhususan (0,1,0) dan kalah dari `.tny__b :global(p)` di
+     atas — yang, karena Astro menempelkan atribut cakupan pada `.tny__b`,
+     sebenarnya (0,2,1) dan menyetel margin dengan shorthand. Terukur: jarak
+     yang seharusnya 16px terbaca 0px. Ditulis ulang di sini supaya menang. */
+  .tny__b :global(.tny__angka) {
+    margin-top: 16px;
+  }
   .tny__b :global(strong) {
     color: var(--teks);
     font-weight: 600;

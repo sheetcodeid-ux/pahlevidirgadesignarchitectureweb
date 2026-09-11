@@ -614,6 +614,28 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     halaman dalam bahasa Indonesia lalu memeriksanya diam-diam melewatkan
     seluruh kelas cacat ini.
 
+27. **Membungkus teks dengan elemen baru MENGUBAH selektor keturunan dan
+    `:last-child` — dan itu gejalanya jauh dari tempat yang disunting.**
+    Menandai halaman untuk terjemahan berarti membungkus kalimat dengan
+    `<span data-t>`, dan dua kali dalam satu putaran itu merusak sesuatu
+    yang tidak ada hubungannya dengan bahasa:
+
+    - `.ba__b span{position:absolute}` di `/studio` adalah selektor
+      KETURUNAN, jadi span baru di dalamnya ikut diangkat dari alur dan
+      menindih `<small>` miliknya sendiri. Ditutup dengan `> span`.
+    - Jawaban `/faq` dibungkus `<div data-t>`, jadi `p:last-child` berpindah
+      ke dalam div — baris "Angkanya" di luarnya kehilangan jarak atas.
+      Terukur 16px jadi 0px. Ditutup dengan aturan sendiri untuk
+      `.tny__angka`. Sekalian ketahuan: `margin-top:16px` miliknya di
+      `publik.css` memang TIDAK PERNAH berlaku, karena Astro menempelkan
+      atribut cakupan pada `.tny__b` sehingga `.tny__b :global(p)` jadi
+      (0,2,1) dan mengalahkannya dengan shorthand `margin`.
+
+    Aturannya: setiap kali menambah elemen pembungkus, cari selektor yang
+    memakai `>`, `:first-child`, `:last-child`, atau nama tag di bawah
+    wadah itu. Dan **ukur**, jangan lihat — yang kedua di atas tidak
+    kelihatan sama sekali sekarang, karena keempat angkanya masih kosong.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA

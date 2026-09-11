@@ -672,10 +672,20 @@ const jsonLd = [
   .ba__b--built {
     background: radial-gradient(120% 90% at 50% 0%, #20514b, #0f2a27 62%, #0b1f1d) !important;
   }
-  .ba__b span {
+  /* `> span`, bukan `span`: selektor keturunan ikut mengenai span DI DALAM
+     teks pengganti — dan sejak labelnya dibungkus span sendiri supaya bisa
+     ditandai data-t, span dalam itu ikut jadi position:absolute dan menindih
+     <small> miliknya sendiri. Yang harus diangkat dari alur cuma pembungkus
+     terluarnya. */
+  /* Dipusatkan ke SEPARUH KANAN, bukan ke seluruh lebar. Teks pengganti sisi
+     kiri disembunyikan (lihat .ba__sebelum span), jadi yang tersisa cuma
+     label sisi "sudah dibangun" — dan sisi itu tertutup lapisan sebelum
+     sampai garis pemisah. Dipusatkan ke seluruh lebar, ia mendarat tepat DI
+     garis dan terbaca separuh: "H DIBANGUN". */
+  .ba__b > span {
     position: absolute;
     top: 34%;
-    left: 0;
+    left: 50%;
     right: 0;
     text-align: center;
     padding: 0 16px;
