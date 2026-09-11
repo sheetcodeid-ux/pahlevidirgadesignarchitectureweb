@@ -335,9 +335,20 @@ const fakta = (p: Project) =>
           {sorot.map((p, i) => (
             <div data-strip={i} hidden={i !== 0}>
               <div class="strip" data-gulir>
+                {/* Hanya proyek yang SEDANG tampil yang punya `src`. Sisanya
+                    membawa `data-src` dan baru dipasang saat tabnya diklik.
+
+                    Bukan sekadar rapi: dengan enam proyek, showcase ini
+                    merender 120 <img> sekaligus — 60 foto besar dan 60
+                    thumbnail — padahal lima proyek di antaranya tersembunyi.
+                    `loading="lazy"` memang menahan unduhannya, tapi tiap
+                    elemennya tetap ikut dihitung saat layout, dan satu klik
+                    tab langsung membuka sepuluh unduhan resolusi penuh. */}
                 {(p.images ?? []).map((f, k) => (
                   <div class="foto foto--sorot">
-                    <img src={f.url} alt={f.altText ?? ""} loading={i === 0 && k < 2 ? "eager" : "lazy"} decoding="async" width="1600" height="900" />
+                    <img src={i === 0 ? f.url : undefined} data-src={i === 0 ? undefined : f.url}
+                      alt={f.altText ?? ""} loading={i === 0 && k < 2 ? "eager" : "lazy"}
+                      decoding="async" width="1600" height="900" />
                     {f.caption && <span class="foto__ket"><b>{String(k + 1).padStart(2, "0")}</b> {f.caption}</span>}
                   </div>
                 ))}
@@ -353,7 +364,8 @@ const fakta = (p: Project) =>
                 {(p.images ?? []).map((f, k) => (
                   <button type="button" data-ke={k} aria-current={k === 0 ? "true" : "false"}
                     aria-label={`Photograph ${k + 1} of ${(p.images ?? []).length}`}>
-                    <img src={f.url} alt="" loading="lazy" decoding="async" width="160" height="90" />
+                    <img src={i === 0 ? f.url : undefined} data-src={i === 0 ? undefined : f.url}
+                      alt="" loading="lazy" decoding="async" fetchpriority="low" width="160" height="90" />
                     <span class="film__no">{String(k + 1).padStart(2, "0")}</span>
                   </button>
                 ))}
@@ -613,8 +625,12 @@ const fakta = (p: Project) =>
   .hero-foto {
     position: relative;
   }
-  .pita--gelap {
-    background: var(--gelap);
+  /* Warna gelapnya sekarang milik BLOK-nya, bukan pitanya. Sejak tiap seksi
+     berdiri sendiri dengan jarak di antaranya, latar selebar pita akan
+     menutup tanah bertitik di kiri-kanan dan di celah — jadi seksi ini
+     tampak melebar penuh sementara tetangganya tidak. */
+  .pita--gelap > .dalam {
+    background-color: var(--gelap);
   }
   .janji {
     display: flex;
@@ -649,11 +665,17 @@ const fakta = (p: Project) =>
     object-fit: cover;
     display: block;
   }
+  /* Kepala seksi ini cuma memuat satu label, tanpa judul. Napas 84px milik
+     .kop-seksi memang untuk kepala berjudul; di sini ia menyisakan bidang
+     kosong setinggi hampir separuh seksinya — dan sejak tiap seksi berdiri
+     terpisah, bidang kosong itu jadi terlihat sebagai seksi yang hampir
+     tidak berisi apa-apa. */
   .mq-kop {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 16px;
+    padding-block: 34px 24px;
   }
   .mq--garis {
     border-top: 1px solid var(--garis);
@@ -864,6 +886,15 @@ const fakta = (p: Project) =>
       const blokSorot = [...document.querySelectorAll<HTMLElement>("[data-sorot]")];
       const blokStrip = [...document.querySelectorAll<HTMLElement>("[data-strip]")];
 
+      /* Gambar proyek yang belum pernah ditampilkan baru dipasang di sini.
+         Sekali jalan per blok: setelah `src` terisi, `data-src` dibuang, jadi
+         memilih tab yang sama dua kali tidak memicu apa-apa. */
+      const pasangGambar = (blok: HTMLElement | undefined) => {
+        blok?.querySelectorAll<HTMLImageElement>("img[data-src]").forEach((g) => {
+          g.src = g.dataset.src!;
+          delete g.dataset.src;
+        });
+      };
       const bawaKeTampak = (b: HTMLElement) => {
         const kiri = b.offsetLeft;
         const kanan = kiri + b.offsetWidth;
@@ -889,6 +920,7 @@ const fakta = (p: Project) =>
         // ia ikut menggulir HALAMAN walau diberi block:"nearest".
         bawaKeTampak(tombol[i]);
         tandaLuber();
+        pasangGambar(blokStrip[i]);
         // Strip yang baru muncul belum pernah dihitung lebarnya selagi
         // tersembunyi — scrollWidth-nya 0 dan bar kemajuannya salah.
         hitungSemua();

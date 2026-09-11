@@ -165,25 +165,45 @@ const aktif = (href: string) =>
 <script>
   (() => {
     "use strict";
-    const bar = document.getElementById("barAtas");
     const nav = document.getElementById("nav");
     const laci = document.getElementById("laci") as HTMLDialogElement | null;
     const buka = document.getElementById("bukaLaci");
     const tutup = document.getElementById("tutupLaci");
-    if (!bar || !nav || !laci || !buka || !tutup) return;
+    if (!nav || !laci || !buka || !tutup) return;
 
-    // Bar kemajuan baca + nav yang menyingkir saat menggulir ke bawah.
-    // Keduanya menumpang satu listener passive supaya tidak menahan gulir.
+    /* Nav yang menyingkir saat menggulir ke bawah.
+     *
+     * Bar kemajuan TIDAK lagi diurus di sini: ia digerakkan timeline gulir
+     * milik CSS (lihat .bar-atas di publik.css). Versi lama membaca
+     * `document.body.scrollHeight` lalu menulis `bar.style.width` di tiap
+     * peristiwa gulir — baca-tulis-baca yang MEMAKSA layout sinkron tiap
+     * frame. Terukur 203 kali layout per satu lintasan gulir beranda, dan
+     * itulah "gulir pertama tertahan" yang dilaporkan pemilik: pada lintasan
+     * pertama gambarnya baru berdatangan, jadi tiap layout paksa benar-benar
+     * menata ulang halaman penuh alih-alih memakai hasil sebelumnya.
+     *
+     * Yang tersisa di bawah hanya membaca `scrollY` — nilai yang memang sudah
+     * dipegang peramban dan tidak memicu layout apa pun — lalu menyentuh DOM
+     * di dalam rAF, jadi paling banyak sekali tulis per frame.
+     *
+     * Peramban yang belum mendukung `animation-timeline` (Firefox saat ini)
+     * tidak dapat bar kemajuannya. Itu hiasan, bukan isi — dan menghidupkan
+     * kembali jalur JS-nya berarti mengembalikan persis kebiasaan yang baru
+     * saja dibuang. */
     let lalu = 0;
+    let antre = false;
     addEventListener(
       "scroll",
       () => {
-        const maks = document.body.scrollHeight - innerHeight;
-        bar.style.width = (maks > 0 ? (scrollY / maks) * 100 : 0) + "%";
-        const y = scrollY;
-        if (y > 140 && y > lalu) nav.classList.add("nav--sembunyi");
-        else if (y < lalu) nav.classList.remove("nav--sembunyi");
-        lalu = y;
+        if (antre) return;
+        antre = true;
+        requestAnimationFrame(() => {
+          antre = false;
+          const y = scrollY;
+          if (y > 140 && y > lalu) nav.classList.add("nav--sembunyi");
+          else if (y < lalu) nav.classList.remove("nav--sembunyi");
+          lalu = y;
+        });
       },
       { passive: true },
     );
