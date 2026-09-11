@@ -83,9 +83,28 @@ html{overflow-x:clip}
    tidak pernah DI ANTARA dua seksi. Begitu tiap seksi diberi jarak, celah
    antar-seksi jadi bidang kosong tanpa tekstur — persis yang membuat
    halaman tampak "digabung" walau sudah renggang. */
+html{background:var(--kanvas)}
 body{margin:0;color:var(--teks);font-family:var(--tubuh);
-  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip;
-  background-color:var(--kanvas);
+  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip}
+/* Kisi titik sebagai satu lapisan TETAP seukuran layar, bukan latar body.
+
+   Sebagai latar body ia harus dilukis untuk seluruh tinggi halaman — 6.500px
+   di beranda — lalu ditimpa habis oleh blok seksi yang buram, sehingga yang
+   benar-benar terlihat cuma talang kiri-kanan dan celah 18px antar-seksi.
+   Tiap kali peramban perlu melukis ulang sepetak halaman saat digulir, kisi
+   itu ikut dihitung ulang lalu dibuang lagi.
+
+   Sebagai lapisan `fixed`, ia dilukis SEKALI seukuran viewport dan setelah
+   itu cuma ditempel oleh compositor. Titiknya jadi diam terhadap layar alih-
+   alih ikut bergerak — pada kisi 8px yang tiap titiknya serupa, perbedaan itu
+   praktis tidak terlihat, sementara ongkosnya turun dari "seluruh halaman"
+   jadi "satu layar".
+
+   z-index -1 membuatnya dilukis sebelum blok-blok di aliran normal, jadi
+   seksi tetap menutupinya. Warna dasarnya pindah ke <html> — kalau ia tetap
+   di <body>, latar body itu justru menutupi pseudo-elemen ber-z-index negatif
+   miliknya sendiri. */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background-image:radial-gradient(var(--garis) 1px,transparent 1px);
   background-size:var(--dot) var(--dot)}
 /* Bobot 600 dan kerapatan negatif, BUKAN 400/0 seperti waktu judulnya Arvo.
@@ -508,8 +527,23 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .panel{background:linear-gradient(180deg,#202024,#141417);border:1px solid var(--garis-2);
   box-shadow:0 0 0 1px #09090B, 0 30px 80px -20px rgba(45,212,191,.18)}
 /* ═══ MARQUEE ═════════════════════════════════════════════════════════════ */
-.mq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
-  mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+/* Tepi yang meluruh digambar sebagai DUA TIRAI gradien, bukan mask.
+   Mask pada wadah yang isinya beranimasi terus memaksa lapisan itu disusun
+   ulang tiap frame — mask harus dihitung terhadap isi yang baru bergeser.
+   Dua tirai statis cukup dilukis sekali lalu ikut dikomposisi begitu saja.
+   Hasilnya sama persis di mata karena latar seksinya memang rata --kanvas.
+   Terukur -37 ms per 60 putaran roda. */
+.mq{overflow:hidden;position:relative}
+.mq::before,.mq::after{content:"";position:absolute;top:0;bottom:0;width:9%;z-index:2;
+  pointer-events:none}
+.mq::before{left:0;background:linear-gradient(90deg,var(--kanvas),transparent)}
+.mq::after{right:0;background:linear-gradient(270deg,var(--kanvas),transparent)}
+/* Dijeda saat barisnya tidak terlihat. Tanpa ini ia berjalan terus selama
+   halaman terbuka — termasuk saat pengunjung sudah jauh di bawah dan tidak
+   akan pernah melihatnya. Kelas, bukan style inline: style inline
+   mengalahkan aturan :hover di bawah, jadi barisnya tidak bisa lagi
+   dihentikan dengan mengarahkan kursor. */
+.mq--diam .mq__rel{animation-play-state:paused}
 .mq__rel{display:flex;width:max-content;animation:geser 34s linear infinite}
 /* Berhenti saat kursor masuk ke barisnya — itu satu-satunya cara
    menghentikannya, dan sengaja: gerakan yang dipakai orang untuk membaca
@@ -817,8 +851,22 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .pk__aksi .panah-kotak--kecil{color:#18181B}
 .baris-daftar__isi{flex:1;min-width:0}
 /* ═══ NAVBAR ══════════════════════════════════════════════════════════════ */
-.nav{position:sticky;top:0;z-index:70;background:rgba(24,24,27,.82);
-  backdrop-filter:blur(14px) saturate(140%);border-bottom:1px solid var(--garis);
+/* TANPA backdrop-filter.
+   Ia satu-satunya properti di situs ini yang memaksa compositor mengulang
+   pekerjaan berat tiap frame gulir: salin bidang di belakang bilah, perkecil,
+   kaburkan dua arah, naikkan saturasi, tempel lagi. Pada layar Retina 1440px
+   itu ~2880x172 piksel diproses ulang enam puluh kali sedetik selama jari
+   masih menggeser — dan itu pekerjaan GPU, yang tidak muncul di penghitung
+   main thread mana pun tapi terasa sebagai perangkat yang menghangat.
+
+   Yang hilang cuma sedikit: bilah ini berdiri di atas latar gelap yang nyaris
+   rata, jadi kabur di belakangnya hampir tidak pernah terlihat. Latarnya
+   dinaikkan ke .94 supaya isi yang lewat di bawahnya tidak membayang.
+
+   Terukur di main thread saja sudah -25 ms per 60 putaran roda; ongkos GPU-nya
+   tidak bisa saya ukur dari sesi ini dan besarnya kemungkinan lebih besar. */
+.nav{position:sticky;top:0;z-index:70;background:rgba(24,24,27,.94);
+  border-bottom:1px solid var(--garis);
   transition:transform 320ms var(--e-keluar)}
 .nav--sembunyi{transform:translateY(-101%)}
 .nav a{position:relative;text-decoration:none;color:var(--teks-3);font-size:13px;

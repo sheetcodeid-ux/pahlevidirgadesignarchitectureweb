@@ -538,6 +538,53 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     baru berputar saat disentuh kursor. Berlaku umum: animasi tak berujung
     pada gradien besar wajib punya alasan, dan hiasan bukan alasan.
 
+23. **`backdrop-filter` pada bilah lengket adalah pemanas perangkat.** Tiap
+    frame gulir compositor harus menyalin bidang di belakang bilah,
+    memperkecilnya, mengaburkan dua arah, menaikkan saturasi, lalu menempel
+    lagi — pada layar Retina 1440px itu ~2880x172 piksel, enam puluh kali
+    sedetik selama jari masih menggeser. **Ini kerja GPU, dan TIDAK MUNCUL
+    di penghitung main thread mana pun** — jadi jangan menyimpulkan ia murah
+    karena `TaskDuration` tidak berubah. Sudah dibuang dari `.nav`; latarnya
+    dinaikkan ke `rgba(24,24,27,.94)` dan tangkapan layar sebelum/sesudah
+    tidak bisa dibedakan, karena isi di belakang bilah memang nyaris rata
+    gelap. Jangan dikembalikan.
+
+    Sekeluarga dengannya: **`mask-image` pada wadah yang isinya beranimasi
+    terus** (marquee logo) memaksa lapisan itu disusun ulang tiap frame.
+    Diganti dua tirai gradien statis — sama persis di mata.
+
+24. **Latar berpola pada `body` dilukis untuk SELURUH tinggi halaman, lalu
+    ditimpa.** Kisi titik di situs ini cuma terlihat di talang kiri-kanan
+    dan di celah 18px antar-seksi, tapi sebagai latar `body` ia dihitung
+    untuk 6.500px penuh dan ditutup habis oleh blok seksi yang buram.
+    Dipindah jadi `body::before{position:fixed;inset:0;z-index:-1}` — dilukis
+    sekali seukuran viewport, sisanya cuma ditempel compositor. Titiknya jadi
+    diam terhadap layar; pada kisi 8px yang tiap titiknya serupa itu tidak
+    terlihat.
+
+    Dua hal yang wajib ikut, keduanya sudah menggigit sekali:
+    - Warna dasar halaman harus pindah ke `<html>`. Kalau tetap di `<body>`,
+      latar body menutupi pseudo-elemen ber-z-index negatif miliknya sendiri
+      dan titiknya hilang sama sekali.
+    - **Mode cetak harus mematikannya** (`body::before{display:none}` di
+      `@media print`). Latar body putih TIDAK lagi menutupinya, jadi kisi
+      titik ikut tercetak sebagai raster abu di seluruh kertas kuitansi.
+
+25. **Animasi CSS tidak berhenti saat elemennya keluar layar.** Marquee logo
+    berjalan terus selama halaman terbuka, termasuk saat pengunjung sudah
+    jauh di bawah. Dijeda lewat IntersectionObserver yang menyetel KELAS,
+    bukan `style.animationPlayState` — style inline mengalahkan aturan
+    `:hover` yang menghentikan barisnya saat kursor masuk.
+
+**Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
+harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
+jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
+dan BARU **berselang-seling dalam satu proses**, empat putaran, lalu
+bandingkan median. Dengan cara itu beda 26% terbaca bersih (501 ms lawan
+371 ms per 60 putaran roda) sementara sebaran tiap kondisi tetap lebar.
+Keadaan lama direkonstruksi sebagai CSS `!important` di atas build baru,
+bukan dengan mem-build ulang commit lama.
+
 ## Kecepatan panel admin
 
 Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu
