@@ -213,37 +213,3 @@ svg[width][height] { flex: none; max-width: none; }
     scroll-behavior: auto !important;
   }
 }
-
-/* ═══ RATA KANAN-KIRI ══════════════════════════════════════════════════════
-   Cerminan aturan yang sama di `publik.css`. Dituliskan dua kali dengan
-   sengaja: situs publik dan panel admin dua sistem stylesheet yang terpisah,
-   dan yang satu tidak pernah memuat yang lain — persis alasan
-   `[hidden]{display:none!important}` juga harus ada di keduanya. Kalau salah
-   satunya diubah, ubah yang satunya.
-
-   Mekanismenya lewat satu properti yang diwariskan, bukan daftar selektor:
-   aturan di bawah menyetel text-align LANGSUNG pada paragrafnya, dan aturan
-   langsung selalu mengalahkan warisan dari wadahnya — jadi wadah yang
-   dirata-tengahkan tidak lagi menahannya. Dengan --rata, wadah itu cukup
-   menyatakannya sekali dan seluruh isinya ikut, termasuk yang ditambahkan
-   ke situ nanti. */
-.t-center,.kosong,.ov-kaki,.msk{--rata:center}
-
-/* Kolom SEMPIT tetap rata kiri. Rata kanan-kiri membagi sisa ruang ke sela
-   antar-kata, jadi makin sedikit kata per baris makin lebar selanya — dan
-   panel admin penuh kolom sempit: sel tabel, isian form, rel sisi, kartu
-   ringkas. Yang ditandai strukturnya, bukan angkanya. */
-.table,.sidebar,.rel,.kartu--rapat,.bidang,.field,.pil,.chip,.badge,.tt,
-.ov-kepala,.topbar,.dash-rel{--rata:start}
-
-/* `.field` ikut dikecualikan walau isiannya selebar 500px: teks di bawah
-   sebuah isian itu KETERANGAN isian, bukan teks berjalan. Merentangkannya
-   sampai rata kanan membuatnya terbaca seperti paragraf tersendiri alih-alih
-   catatan yang menempel pada isiannya. */
-.panel p,.kartu p,.ov-isi p,.seksi p,.page-head p,.listpage__pad > p{
-  text-align:var(--rata,justify);
-  hyphens:auto}
-
-/* Di bawah 900px seluruh kolom bertumpuk jadi selebar layar dan satu baris
-   cuma memuat sedikit kata; meregangkan selanya justru mengganggu. */
-@media (max-width:900px){:root{--rata:start}}

@@ -24,18 +24,8 @@
   min-height: var(--topbar-h);
   padding: 0;
   padding-left: 3rem;
-  /* TANPA backdrop-filter — alasannya sama persis dengan bilah nav situs
-     publik, dan di sini justru lebih penting: panel ini yang dibuka pemilik
-     tiap hari. Tiap frame gulir compositor harus menyalin bidang di belakang
-     topbar, memperkecil, mengaburkan dua arah, lalu menempel lagi — pada
-     layar Retina itu ribuan piksel diproses ulang enam puluh kali sedetik
-     selama jari masih menggeser. Kerja GPU, tidak muncul di penghitung main
-     thread mana pun, tapi terasa sebagai perangkat yang menghangat.
-
-     Latarnya dinaikkan dari 88% ke 96% supaya isi yang lewat di bawahnya
-     tidak membayang; sisa 4% menjaga topbar tetap terbaca menyatu dengan
-     halaman alih-alih jadi bilah tempelan. */
-  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
   border-bottom: 2px solid var(--border-strong);
 }
 
