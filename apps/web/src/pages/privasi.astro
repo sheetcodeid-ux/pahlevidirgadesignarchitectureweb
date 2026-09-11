@@ -357,6 +357,8 @@ const belum = "to be confirmed";
 </style>
 
 <script>
+  import { relSpy } from "../lib/relspy";
+
   (() => {
     "use strict";
     /* Rel menandai bagian yang sedang dibaca. Matematika gulir langsung,
@@ -374,19 +376,6 @@ const belum = "to be confirmed";
       .map((a) => document.querySelector(a.getAttribute("href") || ""))
       .filter((x): x is Element => Boolean(x));
     if (!bagian.length) return;
-    const GARIS = () => innerHeight * 0.14;
-    const tandai = () => {
-      let ke = 0;
-      bagian.forEach((b, k) => {
-        if (b.getBoundingClientRect().top <= GARIS() + 1) ke = k;
-      });
-      // Bagian terakhir tidak pernah melewati garis kalau halaman sudah mentok
-      // di bawah — tanpa ini ia tidak pernah menyala.
-      if (innerHeight + scrollY >= document.body.scrollHeight - 4) ke = bagian.length - 1;
-      tautan.forEach((t, k) => t.classList.toggle("kini", k === ke));
-    };
-    addEventListener("scroll", tandai, { passive: true });
-    addEventListener("resize", tandai);
-    tandai();
+    relSpy({ bagian, tautan });
   })();
 </script>

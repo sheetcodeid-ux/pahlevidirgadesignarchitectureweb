@@ -550,12 +550,18 @@ import "../../styles/publik.css";
     uang: ikon('<rect x="2.5" y="5" width="15" height="10" rx="1.5"/><circle cx="10" cy="10" r="2.2"/>'),
   };
 
-  /* ── Bilah kemajuan gulir ── */
-  const bar = wajib("barAtas");
-  addEventListener("scroll", () => {
-    const m = document.body.scrollHeight - innerHeight;
-    bar.style.width = (m > 0 ? (scrollY / m) * 100 : 0) + "%";
-  }, { passive: true });
+  /* Bilah kemajuan gulir TIDAK diurus di sini lagi.
+   *
+   * Ia digerakkan timeline gulir milik CSS (lihat .bar-atas di publik.css),
+   * dan versi JS-nya di bawah bukan cuma mubazir melainkan SALAH: sejak
+   * bilahnya memakai `transform: scaleX()`, menulis `style.width` di sini
+   * membuat dua hal menggerakkan elemen yang sama — lebarnya dipotong JS
+   * lalu hasilnya diskala lagi oleh CSS, jadi bilahnya berhenti menunjukkan
+   * kemajuan yang sebenarnya.
+   *
+   * Yang dibuang juga membawa cacat lama: ia membaca
+   * `document.body.scrollHeight` di tiap peristiwa gulir, menagih layout
+   * sinkron tiap frame — jebakan #21. */
 
   /* ── Tahap ── */
   const tahapEl = wajib("tahap");
@@ -821,16 +827,35 @@ import "../../styles/publik.css";
   };
   /* Bilah hanya muncul setelah panel "menunggu Anda" tergulir lewat — sebelum
      itu panelnya sendiri masih terlihat dan bilahnya cuma menutupi halaman.
-     Dihitung langsung dari posisi gulir, bukan IntersectionObserver: IO hanya
-     berbunyi saat perpotongan BERUBAH, dan pada lompatan gulir besar ia sudah
-     sekali salah di halaman ini. */
+     Dihitung dari POSISI gulir, bukan IntersectionObserver: IO hanya berbunyi
+     saat perpotongan BERUBAH, dan pada lompatan gulir besar ia sudah sekali
+     salah di halaman ini.
+
+     Posisinya diukur SEKALI lalu disimpan, bukan dibaca ulang tiap peristiwa
+     gulir. Membaca `getBoundingClientRect()` di jalur gulir menagih layout
+     sinkron tiap frame — jebakan #21, cacat yang sama dengan bar kemajuan
+     baca di beranda. Diukur ulang hanya saat ukuran halaman berubah. */
+  let bawahPanel = 0;
+  const ukurPanel = () => {
+    const p = panel();
+    bawahPanel = p ? p.getBoundingClientRect().bottom + scrollY : 0;
+  };
   const perbaruiLengket = () => {
     const perlu = Number(lengket.dataset.n || 0) > 0;
-    const lewat = panel().getBoundingClientRect().bottom < 0;
-    lengket.classList.toggle("lengket--tampil", perlu && lewat);
+    lengket.classList.toggle("lengket--tampil", perlu && scrollY > bawahPanel);
   };
-  addEventListener("scroll", perbaruiLengket, { passive: true });
-  addEventListener("resize", () => { gambarLengket(); perbaruiLengket(); gambarTahap(); }, { passive: true });
+  let antreLengket = false;
+  const jadwalLengket = () => {
+    if (antreLengket) return;
+    antreLengket = true;
+    requestAnimationFrame(() => { antreLengket = false; perbaruiLengket(); });
+  };
+  ukurPanel();
+  addEventListener("scroll", jadwalLengket, { passive: true });
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(() => { ukurPanel(); perbaruiLengket(); }).observe(document.documentElement);
+  }
+  addEventListener("resize", () => { gambarLengket(); ukurPanel(); perbaruiLengket(); gambarTahap(); }, { passive: true });
   wajib("lengketB").addEventListener("click", () =>
     panel().scrollIntoView({ block: "center", behavior: "smooth" }));
 
@@ -1213,8 +1238,14 @@ textarea.isian{min-height:96px;resize:vertical;line-height:1.6;font-family:var(-
 
 /* Bilah lengket: begitu ada yang menunggu klien, ia ikut turun bersama gulir
    supaya tidak hilang setelah dilewati sekali. */
-.lengket{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(9,9,11,.95);
-  backdrop-filter:blur(10px);border-top:1px solid var(--garis-2);
+/* TANPA backdrop-filter — jebakan #23 di CLAUDE.md, alasannya sama seperti
+   di .nav. Bilah ini `position:fixed`, jadi selama jari masih menggeser
+   compositor harus menyalin bidang di belakangnya, mengaburkannya dua arah,
+   lalu menempelkannya lagi — tiap frame, dan itu kerja GPU yang tidak muncul
+   di penghitung main thread mana pun. Latarnya dinaikkan ke .97 sebagai
+   gantinya; yang lewat di belakang bilah ini memang blok gelap. */
+.lengket{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(9,9,11,.97);
+  border-top:1px solid var(--garis-2);
   transform:translateY(101%);transition:transform 260ms var(--e-keluar);
   pointer-events:none}
 .lengket--tampil{transform:none;pointer-events:auto}
