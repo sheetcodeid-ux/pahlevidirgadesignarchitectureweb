@@ -464,6 +464,53 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     keduanya di alat uji — dan jangan lupa berkas `.js`, karena `/bukti` dan
     `/progres` mengambil datanya dari sana, bukan dari HTML.
 
+    Sisi lain dari jebakan yang sama: **build dengan alamat produksi TIDAK
+    BISA diselesaikan dari sesi ini sama sekali.** `listProjects()` memakai
+    `wajib()` (jebakan #12), dan API produksi tidak bisa dihubungi, jadi
+    build-nya memang gagal — bukan salah setelan. Artinya CSP produksi tidak
+    bisa diuji utuh dari sini. Kalau perubahannya tidak menambah host, jenis
+    aset, maupun `_headers`, katakan itu apa adanya; jangan mengaku sudah
+    memeriksa CSP.
+
+18. **Penampung yang bisa digulir MENDATAR mencuri gulir halaman.** Gerakan
+    dua jari di trackpad tidak pernah lurus. Begitu ada sedikit komponen
+    mendatar, peramban mengunci SELURUH gerakan itu ke penampung mendatar
+    yang sedang dilewati kursor — termasuk komponen tegaknya. Halamannya
+    berhenti maju sampai gerakannya habis, lalu melompat menyusul. Gejalanya
+    dilaporkan pemilik sebagai "tertahan sedikit lalu jump ke bawah".
+
+    Terukur di beranda, kursor di tengah, turun 110px serong 6px: halaman
+    berhenti di scrollY 1650 dan **25 dari 40** putaran roda hilang,
+    sementara galerinya bergeser sendiri 15px.
+
+    **Ini BUKAN soal frame.** Median frame 16,7 ms di seluruh pita, dan
+    mematikan animasi marquee tidak mengubah apa pun — dugaan pertama yang
+    terbukti salah. Yang juga TIDAK menolong, diuji satu per satu:
+    `scroll-snap: x proximity`, mematikan snap sama sekali, dan
+    `overscroll-behavior-x` — ketiganya tetap 25/40 macet, karena
+    penguncian terjadi sebelum snap ikut bicara. Yang menolong hanya
+    handler `wheel` ber-`passive:false` yang meneruskan komponen tegaknya
+    sendiri (0/40 macet). Sudah terpasang di `BaseLayout.astro` untuk
+    seluruh situs publik — jangan dilepas, dan kalau menambah penampung
+    mendatar baru ia otomatis ikut terlindungi.
+
+19. **Pseudo-elemen absolut di dalam penampung gulir mendarat di ujung ISI,
+    bukan di tepi tampak.** `.tabs::after{position:absolute;right:0}` pada
+    bilah selebar 1037px di layar 388px mendarat di 1037 — jauh di luar
+    layar, dan fade tepinya tidak pernah kelihatan. Atributnya benar,
+    gambarnya tidak ada, tanpa satu pun galat. Untuk memudarkan tepi
+    penampung gulir pakai `mask-image`: mask berlaku pada kotak tampaknya.
+
+20. **Dua garis 1px yang bertetangga bukan dua garis, melainkan satu garis
+    kabur.** Bilah nav berakhir di baris piksel 85 dan `.dalam` pita
+    berikutnya mulai di baris 86, jadi di bawah navbar sebenarnya ada garis
+    2px selebar kolom yang menipis jadi 1px di luar kolom. Terukur sama di
+    lima halaman. Mematikan salah satunya bukan jawabannya: penanda sudut
+    yang menunggangi garis itu tetap terpusat di baris yang lama dan jadi
+    meleset satu piksel — persis yang dilihat pemilik dari zoom. Yang benar
+    menggeser salah satunya supaya keduanya BERIMPIT (`.nav{margin-bottom:
+    -1px}`), sehingga penandanya terpusat tepat.
+
 ## Kecepatan panel admin
 
 Panel admin adalah situs **statis tanpa router sisi klien**: tiap klik menu
