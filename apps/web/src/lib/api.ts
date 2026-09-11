@@ -51,6 +51,9 @@ export const CATEGORY_BLURBS_EN: Record<ProjectCategory, string> = {
 export interface ProjectImage {
   id: string;
   url: string;
+  /** Versi kecil untuk rel pemilih foto. Kosong pada foto yang diunggah
+   *  sebelum thumbnail ada — pemakainya jatuh kembali ke `url`. */
+  thumbUrl?: string | null;
   altText?: string;
   caption?: string;
   width?: number;

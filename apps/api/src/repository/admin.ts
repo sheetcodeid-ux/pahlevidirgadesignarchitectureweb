@@ -114,9 +114,9 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
        setelan yang sama persis seperti Worker. */
 
     const fotoRows = await sql<
-      { project_id: string; id: string; storage_key: string; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
+      { project_id: string; id: string; storage_key: string; thumb_key: string | null; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
     >`
-      select project_id, id, storage_key, alt_text, caption, width, height, blur_data_url, sort_order
+      select project_id, id, storage_key, thumb_key, alt_text, caption, width, height, blur_data_url, sort_order
       from public.project_images
       where project_id in ${sql(proyek.map((p) => p.id))} and kind = 'galeri'
       order by sort_order, created_at`;
@@ -127,6 +127,7 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
       daftar.push({
         id: r.id,
         url: `${assetBase.replace(/\/$/, "")}/${r.storage_key.replace(/^\//, "")}`,
+        thumbUrl: url(assetBase, r.thumb_key),
         altText: r.alt_text,
         caption: r.caption,
         width: r.width,
@@ -241,8 +242,8 @@ export async function addImage(sql: Sql, projectID: string, input: ImageInput): 
   // yang tidak menyebut kind tetap berperilaku persis seperti sebelumnya.
   const kind = input.kind === "material" ? "material" : "galeri";
   const rows = await sql<{ id: string }[]>`
-    insert into public.project_images (project_id, storage_key, alt_text, caption, width, height, sort_order, kind)
-    values (${projectID}::uuid, ${input.storageKey}, ${input.altText ?? null}, ${input.caption ?? null}, ${input.width ?? null}, ${input.height ?? null}, ${input.sortOrder}, ${kind})
+    insert into public.project_images (project_id, storage_key, thumb_key, alt_text, caption, width, height, sort_order, kind)
+    values (${projectID}::uuid, ${input.storageKey}, ${input.thumbKey ?? null}, ${input.altText ?? null}, ${input.caption ?? null}, ${input.width ?? null}, ${input.height ?? null}, ${input.sortOrder}, ${kind})
     returning id`;
   return rows[0].id;
 }
@@ -261,10 +262,10 @@ export async function listImages(
   kind: "galeri" | "material" = "galeri",
 ): Promise<(Image & { storageKey: string })[]> {
   const rows = await sql<
-    { id: string; storage_key: string; alt_text: string | null; caption: string | null;
+    { id: string; storage_key: string; thumb_key: string | null; alt_text: string | null; caption: string | null;
       width: number | null; height: number | null; sort_order: number }[]
   >`
-    select id, storage_key, alt_text, caption, width, height, sort_order
+    select id, storage_key, thumb_key, alt_text, caption, width, height, sort_order
     from public.project_images
     where project_id = ${projectID}::uuid and kind = ${kind}
     order by sort_order, created_at`;
@@ -273,6 +274,7 @@ export async function listImages(
     id: r.id,
     storageKey: r.storage_key,
     url: url(assetBase, r.storage_key) ?? "",
+    thumbUrl: url(assetBase, r.thumb_key),
     altText: r.alt_text,
     caption: r.caption,
     width: r.width,

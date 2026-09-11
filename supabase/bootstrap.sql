@@ -1558,6 +1558,36 @@ comment on column public.projects.photographer is
   'Nama fotografer arsitektur. Wajib diisi kalau fotonya bukan milik studio.';
 
 -- ----------------------------------------------------------------------------
+-- 20260911000023_thumbnail_foto.sql
+-- ----------------------------------------------------------------------------
+
+-- Thumbnail foto galeri.
+--
+-- Rel pemilih foto di bawah galeri (kotak 120x62, sepuluh buah) memuat foto
+-- yang SAMA dengan foto besar di atasnya. Berkasnya sudah dikecilkan di
+-- browser saat diunggah — sisi terpanjang 2560px, lihat
+-- apps/web/src/lib/kecilkanFoto.ts — tapi 2560px yang dilukis ke dalam kotak
+-- selebar 120px tetap berarti peramban mendekode sekitar dua puluh kali
+-- piksel yang dipakainya. Sepuluh kali, di halaman yang sama, di ponsel klien.
+--
+-- Kolom ini menyimpan key R2 dari versi kecilnya. NULLABLE dengan sengaja:
+-- foto yang sudah telanjur diunggah tidak punya thumbnail, dan situsnya harus
+-- tetap menampilkannya — yang kosong jatuh kembali ke foto penuh, persis
+-- seperti sekarang. Thumbnail hanya dibuat untuk unggahan baru.
+--
+-- Tidak ada GRANT baru: ini kolom pada tabel yang sudah ada, dan GRANT di
+-- Postgres berlaku per tabel. Hak yang dipasang 20260818000002 untuk
+-- public.project_images otomatis mencakup kolom ini.
+
+alter table public.project_images
+  add column thumb_key text;
+
+comment on column public.project_images.thumb_key is
+  'Key R2 versi kecil foto ini (sisi panjang 400px, WebP), dipakai rel pemilih '
+  'foto di halaman proyek dan beranda. NULL = belum punya; pemakainya jatuh '
+  'kembali ke storage_key.';
+
+-- ----------------------------------------------------------------------------
 -- Catat di riwayat migrasi Supabase
 -- ----------------------------------------------------------------------------
 --
@@ -1599,7 +1629,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260910000019', 'logo_klien'),
   ('20260910000020', 'cap_perubahan_isi'),
   ('20260910000021', 'isi_halaman_publik'),
-  ('20260910000022', 'kredit_proyek')
+  ('20260910000022', 'kredit_proyek'),
+  ('20260911000023', 'thumbnail_foto')
 on conflict (version) do update set name = excluded.name;
 
 commit;

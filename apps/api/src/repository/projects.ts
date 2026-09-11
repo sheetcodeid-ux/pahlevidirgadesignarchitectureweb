@@ -105,9 +105,9 @@ async function lampirkanFoto(sql: Sql, assetBase: string, proyek: Project[]): Pr
      selamat karena listProjects() memakai wajib(). Sekarang diuji dengan
      setelan yang sama persis seperti Worker. */
   const rows = await sql<
-    { project_id: string; id: string; storage_key: string; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
+    { project_id: string; id: string; storage_key: string; thumb_key: string | null; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
   >`
-    select project_id, id, storage_key, alt_text, caption, width, height, blur_data_url, sort_order
+    select project_id, id, storage_key, thumb_key, alt_text, caption, width, height, blur_data_url, sort_order
     from public.project_images
       where project_id in ${sql(ids)} and kind = 'galeri'
     order by sort_order, created_at`;
@@ -118,6 +118,7 @@ async function lampirkanFoto(sql: Sql, assetBase: string, proyek: Project[]): Pr
     daftar.push({
       id: r.id,
       url: projectUrl(assetBase, r.storage_key) ?? "",
+      thumbUrl: projectUrl(assetBase, r.thumb_key),
       altText: r.alt_text,
       caption: r.caption,
       width: r.width,
@@ -171,9 +172,9 @@ async function imagesFor(
   kind: "galeri" | "material" = "galeri",
 ): Promise<Image[]> {
   const rows = await sql<
-    { id: string; storage_key: string; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
+    { id: string; storage_key: string; thumb_key: string | null; alt_text: string | null; caption: string | null; width: number | null; height: number | null; blur_data_url: string | null; sort_order: number }[]
   >`
-    select id, storage_key, alt_text, caption, width, height, blur_data_url, sort_order
+    select id, storage_key, thumb_key, alt_text, caption, width, height, blur_data_url, sort_order
     from public.project_images
     where project_id = ${projectID} and kind = ${kind}
     order by sort_order, created_at`;
@@ -181,6 +182,7 @@ async function imagesFor(
   return rows.map((r) => ({
     id: r.id,
     url: projectUrl(assetBase, r.storage_key) ?? "",
+    thumbUrl: projectUrl(assetBase, r.thumb_key),
     altText: r.alt_text,
     caption: r.caption,
     width: r.width,

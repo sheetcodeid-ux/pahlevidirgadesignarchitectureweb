@@ -33,6 +33,10 @@ values ('tes-published', 'Proyek Tes Published', 'published', 'tes/cover.jpg', n
 insert into public.project_images (project_id, storage_key)
 select id, 'tes/rahasia.jpg' from public.projects where slug = 'tes-draft';
 
+insert into public.project_images (project_id, storage_key, thumb_key)
+select id, 'tes/tampak.jpg', 'tes/tampak-kecil.webp'
+from public.projects where slug = 'tes-published';
+
 -- Helper ----------------------------------------------------------------
 
 create or replace function pg_temp.jadi_anon() returns void language plpgsql as $$
@@ -70,6 +74,19 @@ begin
 
   select count(*) into terlihat from public.project_images where storage_key = 'tes/rahasia.jpg';
   perform pg_temp.tolak(terlihat <> 0, 'anon tidak melihat gambar proyek draft');
+
+  /* Kolom thumb_key ikut terbawa GRANT tabelnya — tidak ada GRANT per-kolom
+     yang perlu ditambah, dan assertion ini yang membuktikannya, bukan
+     anggapan. Kalau suatu saat seseorang memasang column-level privilege di
+     project_images, baris ini yang merah duluan. */
+  select count(*) into terlihat
+  from public.project_images
+  where storage_key = 'tes/tampak.jpg' and thumb_key = 'tes/tampak-kecil.webp';
+  perform pg_temp.tolak(terlihat <> 1, 'anon bisa membaca thumb_key gambar proyek published');
+
+  select count(*) into terlihat
+  from public.project_images where thumb_key is not null and storage_key = 'tes/rahasia.jpg';
+  perform pg_temp.tolak(terlihat <> 0, 'thumb_key tidak membocorkan gambar proyek draft');
 
   reset role;
 end;

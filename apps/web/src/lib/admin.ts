@@ -838,6 +838,8 @@ export interface GambarProyek {
   /** Kunci berkas di penyimpanan — dipakai saat menjadikan gambar ini cover. */
   storageKey: string;
   url: string;
+  /** URL versi kecil. Kosong pada foto yang diunggah sebelum thumbnail ada. */
+  thumbUrl?: string | null;
   altText?: string | null;
   caption?: string | null;
   width?: number | null;
@@ -856,10 +858,13 @@ export const tambahGambar = (
   storageKey: string,
   sortOrder: number,
   kind: JenisGambar = "galeri",
+  /* Kosong kalau panel gagal membuat versi kecilnya — bukan galat: situsnya
+     jatuh kembali ke foto penuh, persis seperti sebelum kolomnya ada. */
+  thumbKey?: string | null,
 ) =>
   panggil<{ id: string }>(`/admin/projects/${projectId}/images`, {
     method: "POST",
-    body: JSON.stringify({ storageKey, sortOrder, kind }),
+    body: JSON.stringify({ storageKey, sortOrder, kind, thumbKey: thumbKey ?? null }),
   });
 
 export const ubahGambar = (id: string, patch: { altText?: string | null; caption?: string | null; sortOrder?: number }) =>

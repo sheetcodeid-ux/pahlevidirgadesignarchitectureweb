@@ -86,6 +86,9 @@ export interface Project {
 export interface Image {
   id: string;
   url: string;
+  /** URL versi kecil foto ini, untuk rel pemilih foto. Kosong pada foto yang
+   *  diunggah sebelum kolom thumb_key ada — pemakainya memakai `url`. */
+  thumbUrl?: string | null;
   altText?: string | null;
   caption?: string | null;
   width?: number | null;
@@ -172,6 +175,9 @@ export type ImageKind = "galeri" | "material";
 
 export interface ImageInput {
   storageKey: string;
+  /** Key R2 versi kecil. Kosong = panel tidak berhasil membuatnya; pemakainya
+   *  jatuh kembali ke foto penuh. */
+  thumbKey?: string | null;
   altText?: string | null;
   caption?: string | null;
   width?: number | null;

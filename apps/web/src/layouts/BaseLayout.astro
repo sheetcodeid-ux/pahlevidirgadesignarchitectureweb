@@ -171,6 +171,11 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
           document.documentElement.lang = bhs === "id" ? "id" : "en";
           document.querySelectorAll("[data-bhs]").forEach((b) =>
             b.setAttribute("aria-pressed", String(b.dataset.bhs === bhs)));
+          /* Untuk yang TIDAK bisa ditukar lewat kamus karena isinya dibuat
+             JS: tanggal yang diformat per-locale, dan angka yang ditulis
+             ulang saat menyaring. Halaman yang punya keduanya mendengarkan
+             peristiwa ini; yang tidak, tidak terpengaruh. */
+          dispatchEvent(new CustomEvent("situs:bahasa", { detail: bhs }));
         }
 
         let bhs = "en";
