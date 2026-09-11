@@ -32,7 +32,7 @@ import {
   bacaCache, tulisCache, jumlahDiingat,
 } from "../../lib/admin";
 import { useCegahPindah } from "../../lib/cegahPindah";
-import { kecilkanFoto, formatByte } from "../../lib/kecilkanFoto";
+import { kecilkanFoto, buatThumb, formatByte } from "../../lib/kecilkanFoto";
 import { bukaLightbox } from "../../lib/lightbox";
 import { unduhPdf } from "../../lib/pdf";
 import { formatRupiah } from "../../lib/format";
@@ -843,7 +843,29 @@ function PanelGaleri({
     const target = await mintaUrlUnggah(proyek.slug, berkas.type);
     const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": berkas.type }, body: berkas });
     if (!res.ok) throw new Error(`Penyimpanan menolak ${f.name} (${res.status})`);
-    await tambahGambar(proyek.id, target.key, urutan, jenis);
+
+    /* Versi kecil untuk rel pemilih foto. SESUDAH foto besarnya naik, bukan
+       sebelum: kalau yang besar gagal, thumbnailnya tidak berguna dan hanya
+       menyisakan objek yatim di R2.
+
+       Seluruhnya dibungkus try: thumbnail adalah percepatan, bukan syarat.
+       Kegagalannya — peramban tua, kuota R2, jaringan putus di detik
+       terakhir — tidak boleh menggagalkan unggahan yang fotonya sudah
+       selamat sampai tujuan. Yang tanpa thumbnail tetap tampil, memakai
+       foto penuhnya. */
+    let thumbKey: string | null = null;
+    try {
+      const kecilnya = await buatThumb(berkas);
+      if (kecilnya) {
+        const sasaran = await mintaUrlUnggah(proyek.slug, kecilnya.type);
+        const balas = await fetch(sasaran.uploadUrl, {
+          method: "PUT", headers: { "Content-Type": kecilnya.type }, body: kecilnya,
+        });
+        if (balas.ok) thumbKey = sasaran.key;
+      }
+    } catch { /* foto besarnya sudah aman — itu yang penting */ }
+
+    await tambahGambar(proyek.id, target.key, urutan, jenis, thumbKey);
     return { asli: kecil.byteAsli, kirim: kecil.byteBaru };
   }
 

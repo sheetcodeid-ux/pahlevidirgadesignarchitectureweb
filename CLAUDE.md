@@ -597,6 +597,45 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     bukan `style.animationPlayState` — style inline mengalahkan aturan
     `:hover` yang menghentikan barisnya saat kursor masuk.
 
+26. **Salinan teks yang diambil sekali saat muat jadi basi begitu bahasa
+    ditukar.** Tiga tempat menyimpan innerHTML sebagai cadangan: teks bantuan
+    form kontak (dipulihkan setelah galat validasi hilang), dan sorot
+    pencarian /faq (menyimpan teks asli supaya pencarian kedua tidak menyorot
+    di dalam `<mark>` sendiri). Salinan itu membeku pada bahasa yang kebetulan
+    aktif saat skripnya jalan — dan sekali pengunjung menukar bahasa,
+    memulihkannya menempelkan kalimat berbahasa salah yang **tidak pernah
+    ditukar lagi**, karena pengalih sudah selesai bekerja. Keduanya sekarang
+    diambil ulang lewat `situs:bahasa`. Indeks pencarian /faq kena hal yang
+    sama: tanpa diambil ulang, mencari "uang muka" di halaman Indonesia tidak
+    menemukan apa-apa karena indeksnya masih Inggris.
+
+    Cara mengujinya yang benar: tukar bahasa DULU, baru lakukan hal yang
+    memicu penulisan ulang — klik kategori, cari, kirim form kosong. Memuat
+    halaman dalam bahasa Indonesia lalu memeriksanya diam-diam melewatkan
+    seluruh kelas cacat ini.
+
+27. **Membungkus teks dengan elemen baru MENGUBAH selektor keturunan dan
+    `:last-child` — dan itu gejalanya jauh dari tempat yang disunting.**
+    Menandai halaman untuk terjemahan berarti membungkus kalimat dengan
+    `<span data-t>`, dan dua kali dalam satu putaran itu merusak sesuatu
+    yang tidak ada hubungannya dengan bahasa:
+
+    - `.ba__b span{position:absolute}` di `/studio` adalah selektor
+      KETURUNAN, jadi span baru di dalamnya ikut diangkat dari alur dan
+      menindih `<small>` miliknya sendiri. Ditutup dengan `> span`.
+    - Jawaban `/faq` dibungkus `<div data-t>`, jadi `p:last-child` berpindah
+      ke dalam div — baris "Angkanya" di luarnya kehilangan jarak atas.
+      Terukur 16px jadi 0px. Ditutup dengan aturan sendiri untuk
+      `.tny__angka`. Sekalian ketahuan: `margin-top:16px` miliknya di
+      `publik.css` memang TIDAK PERNAH berlaku, karena Astro menempelkan
+      atribut cakupan pada `.tny__b` sehingga `.tny__b :global(p)` jadi
+      (0,2,1) dan mengalahkannya dengan shorthand `margin`.
+
+    Aturannya: setiap kali menambah elemen pembungkus, cari selektor yang
+    memakai `>`, `:first-child`, `:last-child`, atau nama tag di bawah
+    wadah itu. Dan **ukur**, jangan lihat — yang kedua di atas tidak
+    kelihatan sama sekali sekarang, karena keempat angkanya masih kosong.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -737,4 +776,6 @@ skrip; jangan sunting hasilnya.
 | Logo klien jadi tabel + unggah di `/admin/klien`, bukan berkas di repo | Nama-namanya sempat di-hardcode sebagai teks di `lib/menunggu.ts`; pemilik sudah mengirim logonya tapi yang tayang cuma namanya, dan setiap penambahan klien berikutnya berarti mengubah kode. Sekarang dia mengurusnya sendiri, sama seperti proyek dan testimoni |
 | Klien tanpa logo TETAP tampil, sebagai teks nama | Menyaringnya di API akan membuat klien yang baru didaftarkan hilang dari beranda sampai pemilik sempat mengunggah gambarnya. Karena itu `name` wajib dan `logo_key` boleh kosong — kebalikannya yang membuat baris jadi celah |
 | Logo di marquee dibatasi TINGGI, bukan lebar | Logo yang lebar dan yang tinggi harus terlihat sama besar, dan yang menyamakannya tinggi optisnya. Dibuat abu dan baru berwarna saat disentuh: delapan logo berwarna sekaligus menarik perhatian lebih besar daripada karya yang ada di bawahnya |
+| Thumbnail foto dibuat di BROWSER saat unggah, bukan di Worker API | Worker tidak pernah memegang berkasnya: unggahan memakai presigned URL, jadi panel meminta URL ke API lalu mengirim bytes-nya LANGSUNG ke R2. Menaruh pembuatan thumbnail di Worker berarti seluruh foto harus lewat Worker dulu — dan runtime Workers juga tidak punya kanvas untuk mendekode JPEG. Di browser, bytes-nya sudah di tangan. Ongkosnya satu decode tambahan di mesin staf saat mengunggah, ditukar dengan sepuluh decode di tiap ponsel klien yang membuka halaman proyek. Terukur pada foto 2560x1440: thumbnail 400px = 41x lebih sedikit piksel didekode, 19x lebih sedikit byte. Kolom `thumb_key` NULLABLE dengan sengaja — foto yang sudah telanjur diunggah tidak punya thumbnail dan jatuh kembali ke foto penuh |
+| Terjemahan: satu markup ber-`data-t` + kamus, BUKAN rute /id kembar | Sudah dicatat di `lib/i18n.ts` dan tetap berlaku. Yang perlu diketahui sebelum menambah halaman: "mesinnya sudah siap" TIDAK berarti tinggal menulis kamus — markup halamannya juga harus ditandai `data-t` satu per satu, dan itu bagian yang paling makan waktu. Yang lebih mudah lagi terlewat: kalimat yang dirakit JAVASCRIPT (jumlah hasil saring, pesan galat form, tanggal berformat locale) muncul SESUDAH kamus dijalankan, jadi pengalih tidak pernah menyentuhnya. Untuk itu ada `lib/i18nRuntime.ts`, yang membaca kamus halaman dari DOM — bukan menyalinnya — dan `situs:bahasa` di BaseLayout yang memberi tahu halaman kapan harus menggambar ulang |
 | Pindah urutan menukar `sort_order` dua tetangga, bukan menulis ulang daftar | Dua permintaan alih-alih delapan, dan urutan yang lain tidak ikut berubah kalau salah satunya gagal |

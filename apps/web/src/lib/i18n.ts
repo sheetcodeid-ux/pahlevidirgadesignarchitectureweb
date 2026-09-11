@@ -28,6 +28,9 @@ export const KAMUS_UMUM: Kamus = {
   navContact: "Kontak",
   mulaiProyek: "Mulai proyek",
   mulaiProyekPanah: "Mulai proyek →",
+  /* Dipakai di beranda DAN /proyek. Di kamus umum, bukan disalin ke dua
+     kamus halaman — dua salinan pasti menyimpang suatu saat. */
+  ajakEmail: "Kirim email saja",
   lompat: "Lewati ke konten",
 
   kakiStudio: "Studio arsitektur",

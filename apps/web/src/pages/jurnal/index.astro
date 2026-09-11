@@ -10,6 +10,7 @@
  */
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { listJournal, type KategoriJurnal } from "../../lib/api";
+import { KAMUS_JURNAL } from "../../lib/i18nHalaman";
 
 const semua = await listJournal();
 
@@ -45,15 +46,15 @@ const tgl = (iso: string) =>
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar">
-        <span class="label masuk">JOURNAL</span>
+        <span class="label masuk" data-t="jurLabel">JOURNAL</span>
         <div class="s24"></div>
-        <h1 class="h1" style="font-size:clamp(2.2rem,4.4vw,3.4rem)">
+        <h1 class="h1" style="font-size:clamp(2.2rem,4.4vw,3.4rem)" data-t="jurJudul">
           <span class="brs"><i>What we learned the</i></span>
           <span class="brs"><i><span class="ak">expensive way</span>, written down</i></span>
           <span class="brs"><i>so you do not have to.</i></span>
         </h1>
         <div class="s24"></div>
-        <p class="lead masuk masuk--3">
+        <p class="lead masuk masuk--3" data-t="jurLead">
           Not marketing. These are the things we end up explaining on the phone every few weeks —
           about plots, permits, budgets and builders. If one of them saves you a mistake before you
           ever contact us, it did its job.
@@ -66,31 +67,32 @@ const tgl = (iso: string) =>
     <div class="dalam">
       <div class="baris baris-jur">
         <div class="sel sel-rel-j">
-          <div style="padding:26px 26px 16px"><span class="label label--redup">TOPICS</span></div>
+          <div style="padding:26px 26px 16px"><span class="label label--redup" data-t="jurTopik">TOPICS</span></div>
           <div style="padding:0 26px 24px">
             <div class="pils" id="pils">
               <button type="button" class="pil pil--on" data-kat="semua">
-                All <span class="dim">{jumlahKat("semua")}</span>
+                <span data-t="jurSemua">All</span> <span class="dim">{jumlahKat("semua")}</span>
               </button>
               {
                 Object.entries(KAT).map(([k, l]) => (
                   <button type="button" class="pil" data-kat={k}>
-                    {l} <span class="dim">{jumlahKat(k)}</span>
+                    <span data-t={`jurKat${k}`}>{l}</span> <span class="dim">{jumlahKat(k)}</span>
                   </button>
                 ))
               }
             </div>
           </div>
           <div style="border-top:1px solid var(--garis);padding:24px 26px">
-            <span class="label label--redup">HOW OFTEN</span>
+            <span class="label label--redup" data-t="jurSering">HOW OFTEN</span>
             <div class="s10"></div>
-            <p class="mut kecil">
+            <p class="mut kecil" data-t="jurSeringKet">
               Whenever something is worth writing down — not on a schedule. We do not run a
               newsletter and will not ask for your email here.
             </p>
             <div class="s16"></div>
-            <p class="dim kecil" id="hitung" aria-live="polite" role="status">
-              {terbit} published · {tulisan.length - terbit} planned
+            <p class="dim kecil" aria-live="polite" role="status">
+              <span id="hitungT">{terbit}</span> <span data-t="jurTerbit">published</span>
+              · <span id="hitungR">{tulisan.length - terbit}</span> <span data-t="jurRencana">planned</span>
             </p>
           </div>
         </div>
@@ -100,11 +102,11 @@ const tgl = (iso: string) =>
             tulisan.map((t) => {
               const meta = (
                 <div class="art__m">
-                  <b>{KAT[t.category] ?? t.category}</b>
+                  <b data-t={`jurKat${t.category}`}>{KAT[t.category] ?? t.category}</b>
                   {t.siap ? (
-                    <Fragment>{tgl(t.publishedAt!)}<br />{t.readMinutes} min read</Fragment>
+                    <Fragment><span data-tgl={t.publishedAt!}>{tgl(t.publishedAt!)}</span><br />{t.readMinutes} <span data-t="jurMenitBaca">min read</span></Fragment>
                   ) : (
-                    <Fragment>Planned<br />~{t.readMinutes} min</Fragment>
+                    <Fragment><span data-t="jurBelum">Planned</span><br />~{t.readMinutes} <span data-t="jurMenit">min</span></Fragment>
                   )}
                 </div>
               );
@@ -112,7 +114,7 @@ const tgl = (iso: string) =>
                 <div>
                   <h2 class="art__j">
                     {t.title}
-                    {!t.siap && <span class="rencana-cap">Not written yet</span>}
+                    {!t.siap && <span class="rencana-cap" data-t="jurBelumCap">Not written yet</span>}
                   </h2>
                   <p class="art__r">{t.excerpt}</p>
                 </div>
@@ -126,7 +128,7 @@ const tgl = (iso: string) =>
           }
           {
             tulisan.length === 0 && (
-              <p class="mut kecil" style="padding:26px 0">
+              <p class="mut kecil" style="padding:26px 0" data-t="jurKosong">
                 Nothing here yet. The first pieces are being written.
               </p>
             )
@@ -135,6 +137,7 @@ const tgl = (iso: string) =>
       </div>
     </div>
   </div>
+  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_JURNAL)} is:inline />
 </BaseLayout>
 
 <style is:global>
@@ -184,8 +187,9 @@ const tgl = (iso: string) =>
   (() => {
     const pils = document.getElementById("pils");
     const daftar = document.getElementById("daftar");
-    const hitung = document.getElementById("hitung");
-    if (!pils || !daftar || !hitung) return;
+    const hitungT = document.getElementById("hitungT");
+    const hitungR = document.getElementById("hitungR");
+    if (!pils || !daftar || !hitungT || !hitungR) return;
 
     const kartu = [...daftar.querySelectorAll<HTMLElement>("[data-kat]")];
 
@@ -197,7 +201,11 @@ const tgl = (iso: string) =>
         if (!cocok) return;
         if (k.classList.contains("art--rencana")) rencana += 1; else terbit += 1;
       });
-      hitung.textContent = `${terbit} published · ${rencana} planned`;
+      /* Angkanya saja. Kata "published"/"planned" hidup di span ber-data-t
+         di sebelahnya dan diurus pengalih bahasa — kalau ditulis dari sini,
+         menyaring akan mengembalikannya ke Inggris tanpa bisa ditukar lagi. */
+      hitungT.textContent = String(terbit);
+      hitungR.textContent = String(rencana);
       /* Garis atas kartu pertama dimatikan lewat :first-of-type, yang TIDAK
          ikut menghitung elemen tersembunyi — jadi setelah menyaring, kartu
          pertama yang terlihat tetap membawa garisnya. Ditandai sendiri. */
@@ -212,5 +220,22 @@ const tgl = (iso: string) =>
       pils.querySelectorAll(".pil").forEach((p) => p.classList.toggle("pil--on", p === b));
       terap(b.dataset.kat || "semua");
     });
+
+    /* Tanggal tidak bisa ditukar lewat kamus: isinya berbeda tiap tulisan.
+       Yang disimpan di markup adalah ISO-nya, dan yang ditampilkan diformat
+       ulang mengikuti bahasa yang sedang dipilih. Tanpa ini "3 Oct 2026"
+       tetap Inggris di tengah halaman Indonesia. */
+    const tanggal = [...document.querySelectorAll<HTMLElement>("[data-tgl]")];
+    const formatUlang = (bhs: string) => {
+      tanggal.forEach((el) => {
+        const iso = el.dataset.tgl;
+        if (!iso) return;
+        el.textContent = new Date(iso).toLocaleDateString(bhs === "id" ? "id-ID" : "en-GB", {
+          day: "numeric", month: "short", year: "numeric",
+        });
+      });
+    };
+    addEventListener("situs:bahasa", (e) => formatUlang((e as CustomEvent<string>).detail));
+    if (document.documentElement.lang === "id") formatUlang("id");
   })();
 </script>

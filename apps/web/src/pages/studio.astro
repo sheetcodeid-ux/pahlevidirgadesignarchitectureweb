@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { listProjects, getSettings, listTeam } from "../lib/api";
 import { TAHUN_BELUM } from "../lib/menunggu";
+import { KAMUS_STUDIO } from "../lib/i18nHalaman";
 
 const settings = await getSettings();
 
@@ -129,15 +130,18 @@ const jsonLd = [
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar">
-        <span class="label masuk">STUDIO</span>
+        <span class="label masuk" data-t="stuLabel">STUDIO</span>
         <div class="s24"></div>
+        {/* Nama kotanya datang dari setelan studio, jadi judul ini tidak
+             bisa jadi satu kalimat utuh di kamus — kotanya disisipkan, dan
+             yang diterjemahkan potongan di sekelilingnya. */}
         <h1 class="h1 kepala__judul">
-          <span class="brs"><i>A small studio in {kota}</i></span>
-          <span class="brs"><i>that would rather <span class="ak">show you the work</span></i></span>
-          <span class="brs"><i>than describe it.</i></span>
+          <span class="brs"><i><span data-t="stuJudul1">A small studio in</span> {kota}</i></span>
+          <span class="brs"><i data-t="stuJudul2">that would rather <span class="ak">show you the work</span></i></span>
+          <span class="brs"><i data-t="stuJudul3">than describe it.</i></span>
         </h1>
         <div class="s24"></div>
-        <p class="lead masuk masuk--3">
+        <p class="lead masuk masuk--3" data-t="stuLead">
           We are deliberately small. That is not modesty — it is how the person who draws your
           building stays the person who answers your messages. Everything below is what that
           actually means in practice, including the parts that are inconvenient for us.
@@ -150,11 +154,11 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris b4">
         {
-          angka.map((a) => (
+          angka.map((a, i) => (
             <div class="sel fak">
               <span class={a.tunggu ? "fak__n fak__n--tunggu" : "fak__n"}>{a.n}</span>
-              <div class="fak__l">{a.label}</div>
-              <p class="fak__k">{a.ket}</p>
+              <div class="fak__l" data-t={`stuAngka${i}L`}>{a.label}</div>
+              <p class="fak__k" data-t={`stuAngka${i}K`}>{a.ket}</p>
             </div>
           ))
         }
@@ -166,23 +170,23 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-studio">
         <div class="sel sel-teks">
-          <span class="label">HOW WE WORK</span>
+          <span class="label" data-t="stuKerja">HOW WE WORK</span>
           <div class="s16"></div>
-          <h2 class="h2">You do not have to ask where the project is.</h2>
+          <h2 class="h2" data-t="stuKerjaJudul">You do not have to ask where the project is.</h2>
           <div class="s16"></div>
-          <p class="mut">
+          <p class="mut" data-t="stuKerjaP1">
             Most of the anxiety in a building project is not about design. It is about not knowing.
             Which stage are we in, what was decided last week, how much has been paid, what is the
             next thing waiting on me.
           </p>
           <div class="s16"></div>
-          <p class="mut">
+          <p class="mut" data-t="stuKerjaP2">
             So every client gets a page. Phases, drawings, invoices, and the comments thread all
             live there. It updates when we update it, not when you ask. It needs no password and no
             app — the link we send you is the login.
           </p>
           <div class="s24"></div>
-          <a class="btn" href="/progres">See how the client page works <span class="ar">→</span></a>
+          <a class="btn" href="/progres" data-t="stuLihatPortal">See how the client page works <span class="ar">→</span></a>
         </div>
         <div class="sel sel-ba">
           <div class="ba" id="ba">
@@ -194,8 +198,8 @@ const jsonLd = [
                 <img src={bandingSesudah} alt="The site after construction" />
               ) : (
                 <span>
-                  PHOTO — BUILT
-                  <small>waiting for the studio’s photograph</small>
+                  <span data-t="stuFotoJadi">PHOTO — BUILT</span>
+                  <small data-t="stuFotoTunggu">waiting for the studio’s photograph</small>
                 </span>
               )}
             </div>
@@ -204,13 +208,13 @@ const jsonLd = [
                 <img src={bandingSebelum} alt="The site as found" />
               ) : (
                 <span>
-                  PHOTO — SITE AS FOUND
-                  <small>waiting for the studio’s photograph</small>
+                  <span data-t="stuFotoAwal">PHOTO — SITE AS FOUND</span>
+                  <small data-t="stuFotoTunggu">waiting for the studio’s photograph</small>
                 </span>
               )}
             </div>
-            <span class="ba__tag ba__tag--kiri">AS FOUND</span>
-            <span class="ba__tag ba__tag--kanan">BUILT</span>
+            <span class="ba__tag ba__tag--kiri" data-t="stuTagAwal">AS FOUND</span>
+            <span class="ba__tag ba__tag--kanan" data-t="stuTagJadi">BUILT</span>
             <div class="ba__garis" id="baGaris"></div>
             <button class="ba__pegang" id="baPegang" role="slider" aria-label="Compare before and after"
               aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
@@ -225,9 +229,9 @@ const jsonLd = [
   <div class="pita">
     <div class="dalam">
       <div class="isi isi--rapat">
-        <span class="label">WHAT WE BELIEVE</span>
+        <span class="label" data-t="stuYakin">WHAT WE BELIEVE</span>
         <div class="s16"></div>
-        <h2 class="h2">Four positions we do not negotiate.</h2>
+        <h2 class="h2" data-t="stuYakinJudul">Four positions we do not negotiate.</h2>
       </div>
       <div class="baris b2">
         {
@@ -237,8 +241,8 @@ const jsonLd = [
                 <div class="prin">
                   <span class="prin__n">{p.no}</span>
                   <div>
-                    <h3>{p.judul}</h3>
-                    <p>{p.teks}</p>
+                    <h3 data-t={`stuPrinsip${p.no}J`}>{p.judul}</h3>
+                    <p data-t={`stuPrinsip${p.no}T`}>{p.teks}</p>
                   </div>
                 </div>
               ))}
@@ -252,11 +256,11 @@ const jsonLd = [
   <div class="pita">
     <div class="dalam">
       <div class="isi isi--rapat">
-        <span class="label">OUR TEAM</span>
+        <span class="label" data-t="stuTim">OUR TEAM</span>
         <div class="s16"></div>
-        <h2 class="h2">Two people, and you will meet both.</h2>
+        <h2 class="h2" data-t="stuTimJudul">Two people, and you will meet both.</h2>
         <div class="s16"></div>
-        <p class="mut tim__intro">
+        <p class="mut tim__intro" data-t="stuTimLead">
           There is no account manager between you and the person drawing. The same two names appear
           on the first call, on the drawings, and on the message you send at nine on a Sunday.
         </p>
@@ -271,7 +275,7 @@ const jsonLd = [
                 ) : (
                   <span>
                     PHOTO — {o.slotLabel}
-                    <small>portrait 4:5</small>
+                    <small data-t="stuPotret">portrait 4:5</small>
                   </span>
                 )}
               </div>
@@ -290,8 +294,8 @@ const jsonLd = [
             <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 4v12M4 10h12" /></svg>
           </span>
           <div>
-            <div class="tim__nm">Everyone else comes in by project</div>
-            <p class="tim__ket tim__ket--lebar">
+            <div class="tim__nm" data-t="stuLainnya">Everyone else comes in by project</div>
+            <p class="tim__ket tim__ket--lebar" data-t="stuLainnyaKet">
               Structural engineers, MEP, renderers and a photographer are hired per project and
               named in that project’s credits — not listed here as if they sat in this room. You
               will know who touched your drawings.
@@ -306,25 +310,28 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-studio">
         <div class="sel sel-teks">
-          <span class="label">HOW IT WENT</span>
+          <span class="label" data-t="stuRiwayat">HOW IT WENT</span>
           <div class="s16"></div>
-          <h2 class="h2">The short version.</h2>
+          <h2 class="h2" data-t="stuRiwayatJudul">The short version.</h2>
           <div class="s16"></div>
-          <p class="mut">
+          <p class="mut" data-t="stuRiwayatLead">
             Written as it happened, not as a growth story. Anything with a year on it should be
             checkable against a project page on this site.
           </p>
         </div>
         <div class="sel sel-teks">
           {
-            garisWaktu.map((t) => (
+            garisWaktu.map((t, i) => (
               <div class="thn">
                 <span class="thn__d"></span>
                 <span class="thn__g"></span>
                 <span class={t.tunggu ? "thn__t thn__t--tunggu" : "thn__t"}>{t.tahun}</span>
+                {/* Tonggak ketiga judulnya nama proyek dari database, jadi
+                     ia sengaja TIDAK diberi data-t — nama karya tidak
+                     diterjemahkan. */}
                 <div>
-                  <h3>{t.judul}</h3>
-                  <p>{t.teks}</p>
+                  <h3 data-t={i === 2 ? undefined : `stuTonggak${i}J`}>{t.judul}</h3>
+                  <p data-t={`stuTonggak${i}T`}>{t.teks}</p>
                 </div>
               </div>
             ))
@@ -338,23 +345,23 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-studio">
         <div class="sel sel-teks">
-          <span class="label">HONESTLY</span>
+          <span class="label" data-t="stuJujur">HONESTLY</span>
           <div class="s16"></div>
-          <h2 class="h2">Things we are not the right studio for.</h2>
+          <h2 class="h2" data-t="stuJujurJudul">Things we are not the right studio for.</h2>
           <div class="s16"></div>
-          <p class="mut">
+          <p class="mut" data-t="stuJujurLead">
             Reading this list costs you two minutes. Finding out the same thing in month three costs
             considerably more.
           </p>
         </div>
         <div class="sel sel-teks">
           {
-            tidak.map(([judul, teks]) => (
+            tidak.map(([judul, teks], i) => (
               <div class="tidak">
                 <i class="kotak-ikon kotak-ikon--kecil kotak-ikon--redup">
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
                 </i>
-                <span>
+                <span data-t={`stuTidak${i}`}>
                   <b>{judul}</b> {teks}
                 </span>
               </div>
@@ -368,20 +375,21 @@ const jsonLd = [
   <div class="pita pita--akhir">
     <div class="dalam titik">
       <div class="isi isi--longgar ajak">
-        <h2 class="h2">Still the right studio for you?</h2>
+        <h2 class="h2" data-t="stuAjakJudul">Still the right studio for you?</h2>
         <div class="s16"></div>
-        <p class="mut ajak__lead">
+        <p class="mut ajak__lead" data-t="stuAjakLead">
           Tell us the site and the budget. If we are not the right fit we will say so in the first
           reply, and point you somewhere better.
         </p>
         <div class="s24"></div>
         <div class="rowx ajak__tombol">
-          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
-          <a class="btn" href="/proyek">See the work <span class="ar">→</span></a>
+          <a class="btn btn--isi" href="/kontak" data-t="mulaiProyekPanah">Start a project <span class="ar">→</span></a>
+          <a class="btn" href="/proyek" data-t="stuLihatKarya">See the work <span class="ar">→</span></a>
         </div>
       </div>
     </div>
   </div>
+  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_STUDIO)} is:inline />
 </BaseLayout>
 
 <style>
@@ -664,10 +672,20 @@ const jsonLd = [
   .ba__b--built {
     background: radial-gradient(120% 90% at 50% 0%, #20514b, #0f2a27 62%, #0b1f1d) !important;
   }
-  .ba__b span {
+  /* `> span`, bukan `span`: selektor keturunan ikut mengenai span DI DALAM
+     teks pengganti — dan sejak labelnya dibungkus span sendiri supaya bisa
+     ditandai data-t, span dalam itu ikut jadi position:absolute dan menindih
+     <small> miliknya sendiri. Yang harus diangkat dari alur cuma pembungkus
+     terluarnya. */
+  /* Dipusatkan ke SEPARUH KANAN, bukan ke seluruh lebar. Teks pengganti sisi
+     kiri disembunyikan (lihat .ba__sebelum span), jadi yang tersisa cuma
+     label sisi "sudah dibangun" — dan sisi itu tertutup lapisan sebelum
+     sampai garis pemisah. Dipusatkan ke seluruh lebar, ia mendarat tepat DI
+     garis dan terbaca separuh: "H DIBANGUN". */
+  .ba__b > span {
     position: absolute;
     top: 34%;
-    left: 0;
+    left: 50%;
     right: 0;
     text-align: center;
     padding: 0 16px;

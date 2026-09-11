@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getSettings } from "../lib/api";
 import { FAQ, LABEL_FAQ, type KategoriFaq, type Tanya } from "../lib/faq";
+import { KAMUS_FAQ } from "../lib/i18nHalaman";
 
 const setelan = await getSettings();
 
@@ -57,13 +58,13 @@ const jsonLd = [
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi kepala">
-        <span class="label">QUESTIONS</span>
+        <span class="label" data-t="faqLabel">QUESTIONS</span>
         <div class="s24"></div>
-        <h1 class="h1 kepala__judul">
+        <h1 class="h1 kepala__judul" data-t="faqJudul">
           Everything people ask before<br />they decide to start.
         </h1>
         <div class="s24"></div>
-        <p class="lead">
+        <p class="lead" data-t="faqLead">
           Nineteen questions, answered the way we would answer them on a call. Where a number is not
           published yet, it says so instead of pretending.
         </p>
@@ -75,7 +76,7 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-faq2">
         <div class="sel sel-rel">
-          <div class="rel-judul"><span class="label label--redup">FIND AN ANSWER</span></div>
+          <div class="rel-judul"><span class="label label--redup" data-t="faqCariLabel">FIND AN ANSWER</span></div>
           <div class="rel-kop">
             <div class="cari">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.6" /><path d="M10.5 10.5 14 14" /></svg>
@@ -89,25 +90,25 @@ const jsonLd = [
               {
                 pils.map((p, i) => (
                   <button class={i === 0 ? "pil pil--on" : "pil"} data-kat={p.kat}>
-                    {p.label} <span class="dim">{hitung(p.kat)}</span>
+                    <span data-t={`faqKat${p.kat}`}>{p.label}</span> <span class="dim">{hitung(p.kat)}</span>
                   </button>
                 ))
               }
             </div>
             <div class="s16"></div>
             <p class="dim kecil" id="hitung" aria-live="polite" role="status">
-              {FAQ.length} questions
+              {FAQ.length} <span data-t="faqPertanyaan">questions</span>
             </p>
           </div>
           <div class="rel-kaki">
-            <span class="label label--redup">NOT HERE?</span>
+            <span class="label label--redup" data-t="faqTidakAda">NOT HERE?</span>
             <div class="s10"></div>
-            <p class="mut kecil">
+            <p class="mut kecil" data-t="faqTidakAdaKet">
               Ask it directly. The reply comes from the person who would draw your building, not from
               a form.
             </p>
             <div class="s16"></div>
-            <a class="btn" href="/kontak">Ask us instead <span class="ar">→</span></a>
+            <a class="btn" href="/kontak" data-t="faqTanya">Ask us instead <span class="ar">→</span></a>
           </div>
         </div>
 
@@ -117,23 +118,26 @@ const jsonLd = [
               <details class="tny" data-kat={t.kat} id={t.id}>
                 <summary>
                   <span class="tny__t">
-                    <span class="tny__kat">{LABEL_FAQ[t.kat]}</span>
-                    {t.tanya}
+                    <span class="tny__kat" data-t={`faqKat${t.kat}`}>{LABEL_FAQ[t.kat]}</span>
+                    <span data-t={`faqT-${t.id}`}>{t.tanya}</span>
                     {t.angka && !angkaFaq(t) && (
-                      <span class="lencana lencana--tanya">FIGURES ON REQUEST</span>
+                      <span class="lencana lencana--tanya" data-t="faqLencana">FIGURES ON REQUEST</span>
                     )}
                   </span>
                   <span class="tny__i" aria-hidden="true" />
                 </summary>
                 <div class="tny__b">
-                  <Fragment set:html={t.jawab} />
+                  {/* Jawabannya HTML (memuat <p>, <strong>, <ul>), jadi
+                      terjemahannya juga HTML — pengalih menukar innerHTML,
+                      bukan teks. */}
+                  <div data-t={`faqJ-${t.id}`} set:html={t.jawab} />
                   {/* Angkanya dicetak SESUDAH jawaban, bukan disisipkan ke
                       dalamnya. Menyisipkannya berarti mengarang kalimat di
                       sekitar angka pemilik; ditaruh di sini, yang dia tulis
                       tampil apa adanya. */}
                   {angkaFaq(t) && (
                     <p class="tny__angka">
-                      <span class="tny__angka-l">The figure</span>
+                      <span class="tny__angka-l" data-t="faqAngka">The figure</span>
                       <strong>{angkaFaq(t)}</strong>
                     </p>
                   )}
@@ -148,16 +152,17 @@ const jsonLd = [
             <span class="kotak-ikon">
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5.6" /><path d="M13 13l4 4" /></svg>
             </span>
-            <p class="mut">
+            <p class="mut" data-t="faqKosong">
               Nothing here uses that word. The question is probably still a good one — send it and
               you will have an answer within a day.
             </p>
-            <a class="btn" href="/kontak">Ask us instead <span class="ar">→</span></a>
+            <a class="btn" href="/kontak" data-t="faqTanya">Ask us instead <span class="ar">→</span></a>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_FAQ)} is:inline />
 </BaseLayout>
 
 <style>
@@ -254,6 +259,15 @@ const jsonLd = [
   }
   .tny__b :global(p:last-child) {
     margin-bottom: 0;
+  }
+  /* Baris "Angkanya" tinggal di LUAR pembungkus jawaban, jadi jarak atasnya
+     harus datang dari dirinya sendiri. `.tny__angka{margin-top:16px}` di
+     publik.css berkekhususan (0,1,0) dan kalah dari `.tny__b :global(p)` di
+     atas — yang, karena Astro menempelkan atribut cakupan pada `.tny__b`,
+     sebenarnya (0,2,1) dan menyetel margin dengan shorthand. Terukur: jarak
+     yang seharusnya 16px terbaca 0px. Ditulis ulang di sini supaya menang. */
+  .tny__b :global(.tny__angka) {
+    margin-top: 16px;
   }
   .tny__b :global(strong) {
     color: var(--teks);
@@ -393,8 +407,11 @@ const jsonLd = [
 </style>
 
 <script>
+  import { penerjemah } from "../lib/i18nRuntime";
+
   (() => {
     "use strict";
+    const { t: tr, saatTukar } = penerjemah();
     const daftar = document.getElementById("daftar");
     const cari = document.getElementById("cari") as HTMLInputElement | null;
     const cariX = document.getElementById("cariX");
@@ -407,6 +424,7 @@ const jsonLd = [
       el: HTMLDetailsElement;
       t: HTMLElement;
       b: HTMLElement;
+      /* Bukan readonly: ketiganya diambil ulang setiap kali bahasa ditukar. */
       ht: string;
       hb: string;
       cari: string;
@@ -426,6 +444,19 @@ const jsonLd = [
       };
     });
     let kat = "semua";
+
+    /* Salinan di atas dan indeks pencariannya dibuat dari kalimat yang
+       KEBETULAN tampil saat skrip ini jalan. Begitu bahasanya ditukar,
+       keduanya basi: mencari "uang muka" tidak akan menemukan apa-apa karena
+       indeksnya masih Inggris, dan menghapus kata kunci akan memulihkan
+       kalimat Inggris di atas halaman Indonesia. Jadi keduanya diambil ulang. */
+    const ambilUlang = () => {
+      semua.forEach((d) => {
+        d.ht = d.t.innerHTML;
+        d.hb = d.b.innerHTML;
+        d.cari = (d.t.textContent + " " + d.b.textContent).toLowerCase();
+      });
+    };
 
     const lolos = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const sorot = (el: HTMLElement, asli: string, q: string) => {
@@ -462,12 +493,28 @@ const jsonLd = [
       });
       hitung.textContent =
         n === 0
-          ? "No question matches — try a shorter word, or just ask us."
+          ? tr("faqTakCocok", "No question matches — try a shorter word, or just ask us.")
           : n === 1
-            ? "1 question"
-            : n + " questions";
+            ? tr("faqSatu", "1 question")
+            : n + " " + tr("faqPertanyaan", "questions");
       kosong.hidden = n > 0;
     };
+
+    /* placeholder dan aria-label adalah ATRIBUT, bukan isi elemen; pengalih
+       bahasa hanya menukar innerHTML, jadi keduanya diurus di sini. */
+    const cariX_el = cariX as HTMLElement;
+    const pasangAtribut = () => {
+      cari.placeholder = tr("faqCariPlaceholder", "Search, e.g. “deposit”");
+      cari.setAttribute("aria-label", tr("faqCariAria", "Search the questions"));
+      cariX_el.setAttribute("aria-label", tr("faqHapusCari", "Clear search"));
+    };
+    pasangAtribut();
+
+    saatTukar(() => {
+      ambilUlang();
+      pasangAtribut();
+      saring();
+    });
 
     cari.addEventListener("input", saring);
     cariX.addEventListener("click", () => {

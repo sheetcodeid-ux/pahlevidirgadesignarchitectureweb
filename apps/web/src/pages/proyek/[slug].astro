@@ -280,12 +280,17 @@ const jsonLd = [
             {foto.map((f, i) => (
               <button type="button" data-ke={i} aria-current={i === 0 ? "true" : "false"}
                 aria-label={`Photograph ${i + 1} of ${foto.length}`}>
-                {/* fetchpriority="low" — sama seperti filmstrip beranda.
-                    Kotak ini 120x62 tapi sumbernya foto asli fotografer
-                    (5760x3240), jadi ia bersaing memperebutkan jalur unduh
-                    dengan foto besar yang justru sedang dilihat orang.
-                    Diturunkan prioritasnya supaya yang terlihat menang dulu. */}
-                <img src={f.url} alt="" loading="lazy" decoding="async"
+                {/* Versi kecil (400px, WebP), bukan fotonya. Kotak ini
+                    120x62 sementara foto besarnya 2560px — memakainya di sini
+                    berarti peramban mendekode sekitar dua puluh kali piksel
+                    yang dipakainya, sepuluh kali di halaman yang sama.
+
+                    `?? f.url` disengaja: foto yang diunggah sebelum kolom
+                    thumb_key ada tidak punya versi kecil, dan halaman ini
+                    harus tetap menampilkannya. fetchpriority="low" tetap
+                    dipertahankan supaya foto yang sedang dilihat orang
+                    menang duluan memperebutkan jalur unduh. */}
+                <img src={f.thumbUrl ?? f.url} alt="" loading="lazy" decoding="async"
                   fetchpriority="low" width="160" height="90" />
                 <span class="film__no">{String(i + 1).padStart(2, "0")}</span>
               </button>
