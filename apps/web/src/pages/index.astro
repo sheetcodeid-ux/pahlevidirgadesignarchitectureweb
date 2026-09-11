@@ -874,6 +874,7 @@ const fakta = (p: Project) =>
 
 <script>
   import { bentukLogo } from "../lib/logoBentuk";
+  import { pantauStrip, type Kendali } from "../lib/strip";
 
   (() => {
     "use strict";
@@ -1011,36 +1012,35 @@ const fakta = (p: Project) =>
 
     /* ── Strip foto (dipakai tiap blok showcase) ──────────────────────── */
     const strips = [...document.querySelectorAll<HTMLElement>("[data-gulir]")];
-    const hitungStrip = (strip: HTMLElement) => {
+    /* Satu kendali per strip, dibuat sekali. Strip yang tersembunyi tetap
+       dipasang — yang tidak sah cuma ANGKA-nya, dan itu diperbarui lewat
+       `ukur()` begitu tabnya dibuka. */
+    const kendali = new Map<HTMLElement, Kendali>();
+    strips.forEach((strip) => {
       const induk = strip.parentElement!;
-      const prog = induk.querySelector<HTMLElement>("[data-prog]");
-      const film = induk.querySelector<HTMLElement>("[data-film]");
-      const info = induk.querySelector<HTMLElement>("[data-info]");
       const kartu = [...strip.children] as HTMLElement[];
-      if (!prog || !film || !info || !kartu.length) return;
-      const maks = strip.scrollWidth - strip.clientWidth;
-      const rasio = maks > 0 ? strip.scrollLeft / maks : 0;
-      const lebar = Math.max(8, (strip.clientWidth / strip.scrollWidth) * 100);
-      prog.style.width = lebar + "%";
-      prog.style.marginLeft = rasio * (100 - lebar) + "%";
-      let ke = 0;
-      kartu.forEach((el, i) => {
-        if (el.offsetLeft - strip.scrollLeft <= 40) ke = i;
-      });
-      const ket = kartu[ke].querySelector(".foto__ket")?.textContent?.trim() ?? "";
-      info.textContent = `${ke + 1} / ${kartu.length}${ket ? ` — ${ket}` : ""}`;
-      [...film.children].forEach((b, i) => b.setAttribute("aria-current", String(i === ke)));
-    };
+      if (!kartu.length) return;
+      /* Keterangan foto dibaca SEKALI di sini, bukan tiap kali penandanya
+         berpindah: isinya tidak pernah berubah, dan membacanya dari DOM di
+         tengah gerakan jari berarti menyentuh pohon yang sedang digulir. */
+      const ket = kartu.map((k) => k.querySelector(".foto__ket")?.textContent?.trim() ?? "");
+      kendali.set(strip, pantauStrip({
+        strip,
+        prog: induk.querySelector<HTMLElement>("[data-prog]"),
+        film: induk.querySelector<HTMLElement>("[data-film]"),
+        info: induk.querySelector<HTMLElement>("[data-info]"),
+        teks: (ke, jumlah) => `${ke + 1} / ${jumlah}${ket[ke] ? ` — ${ket[ke]}` : ""}`,
+      }));
+    });
     function hitungSemua() {
       strips.forEach((s) => {
         const blok = s.closest<HTMLElement>("[data-strip]");
-        if (blok && !blok.hidden) hitungStrip(s);
+        if (blok && !blok.hidden) kendali.get(s)?.ukur();
       });
     }
     strips.forEach((strip) => {
       const induk = strip.parentElement!;
       const kartu = [...strip.children] as HTMLElement[];
-      strip.addEventListener("scroll", () => hitungStrip(strip), { passive: true });
       induk.querySelector("[data-film]")?.addEventListener("click", (e) => {
         const b = (e.target as HTMLElement).closest("button");
         if (!b) return;
@@ -1076,7 +1076,6 @@ const fakta = (p: Project) =>
       });
     });
     hitungSemua();
-    addEventListener("resize", hitungSemua);
   })();
 </script>
 

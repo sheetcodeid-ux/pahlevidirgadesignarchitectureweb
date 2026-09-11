@@ -221,6 +221,8 @@ const ldjson = {
 </style>
 
 <script>
+  import { relSpy } from "../../lib/relspy";
+
   /* Penanda daftar isi. Dihitung langsung dari posisi gulir, BUKAN
      IntersectionObserver: IO hanya berbunyi saat perpotongan berubah, dan pada
      lompatan gulir besar ia sudah sekali salah di halaman lain proyek ini. */
@@ -233,14 +235,6 @@ const ldjson = {
       .filter((e): e is HTMLElement => Boolean(e));
     if (judul.length !== tautan.length) return;
 
-    const perbarui = () => {
-      const garis = 120;
-      let kini = 0;
-      judul.forEach((h, i) => { if (h.getBoundingClientRect().top <= garis) kini = i; });
-      tautan.forEach((a, i) => a.classList.toggle("kini", i === kini));
-    };
-    addEventListener("scroll", perbarui, { passive: true });
-    addEventListener("resize", perbarui, { passive: true });
-    perbarui();
+    relSpy({ bagian: judul, tautan, garis: () => 120 });
   })();
 </script>

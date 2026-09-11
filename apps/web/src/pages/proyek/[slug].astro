@@ -280,7 +280,13 @@ const jsonLd = [
             {foto.map((f, i) => (
               <button type="button" data-ke={i} aria-current={i === 0 ? "true" : "false"}
                 aria-label={`Photograph ${i + 1} of ${foto.length}`}>
-                <img src={f.url} alt="" loading="lazy" decoding="async" width="160" height="90" />
+                {/* fetchpriority="low" — sama seperti filmstrip beranda.
+                    Kotak ini 120x62 tapi sumbernya foto asli fotografer
+                    (5760x3240), jadi ia bersaing memperebutkan jalur unduh
+                    dengan foto besar yang justru sedang dilihat orang.
+                    Diturunkan prioritasnya supaya yang terlihat menang dulu. */}
+                <img src={f.url} alt="" loading="lazy" decoding="async"
+                  fetchpriority="low" width="160" height="90" />
                 <span class="film__no">{String(i + 1).padStart(2, "0")}</span>
               </button>
             ))}
@@ -555,6 +561,9 @@ const jsonLd = [
 </style>
 
 <script>
+  import { relSpy } from "../../lib/relspy";
+  import { pantauStrip } from "../../lib/strip";
+
   import { bukaLightbox } from "../../lib/lightbox";
 
   (() => {
@@ -574,22 +583,7 @@ const jsonLd = [
     const bagian = tautan
       .map((a) => document.querySelector(a.getAttribute("href") || ""))
       .filter((x): x is Element => Boolean(x));
-    if (bagian.length) {
-      const GARIS = () => innerHeight * 0.14;
-      const tandai = () => {
-        let ke = 0;
-        bagian.forEach((b, k) => {
-          if (b.getBoundingClientRect().top <= GARIS() + 1) ke = k;
-        });
-        // Bagian terakhir tidak pernah melewati garis kalau halamannya sudah
-        // mentok di bawah — tanpa ini ia tidak pernah menyala.
-        if (innerHeight + scrollY >= document.body.scrollHeight - 4) ke = bagian.length - 1;
-        tautan.forEach((t, k) => t.classList.toggle("kini", k === ke));
-      };
-      addEventListener("scroll", tandai, { passive: true });
-      addEventListener("resize", tandai);
-      tandai();
-    }
+    relSpy({ bagian, tautan });
 
     /* ── Salin tautan ──────────────────────────────────────────────────── */
     const salin = document.getElementById("salinTautan");
@@ -620,20 +614,10 @@ const jsonLd = [
     });
     kartu.forEach((k) => { const i = k.querySelector("img"); if (i) i.style.cursor = "zoom-in"; });
 
-    function hitung() {
-      const maks = strip!.scrollWidth - strip!.clientWidth;
-      const rasio = maks > 0 ? strip!.scrollLeft / maks : 0;
-      const lebar = Math.max(8, (strip!.clientWidth / strip!.scrollWidth) * 100);
-      prog!.style.width = lebar + "%";
-      prog!.style.marginLeft = rasio * (100 - lebar) + "%";
-      let ke = 0;
-      kartu.forEach((el, i) => {
-        if (el.offsetLeft - strip!.scrollLeft <= 40) ke = i;
-      });
-      info!.textContent = `${ke + 1} / ${kartu.length}${ket[ke] ? ` — ${ket[ke]}` : ""}`;
-      [...film!.children].forEach((b, i) => b.setAttribute("aria-current", String(i === ke)));
-    }
-    strip.addEventListener("scroll", hitung, { passive: true });
+    pantauStrip({
+      strip, prog, film, info,
+      teks: (ke, jumlah) => `${ke + 1} / ${jumlah}${ket[ke] ? ` — ${ket[ke]}` : ""}`,
+    });
     film.addEventListener("click", (e) => {
       const b = (e.target as HTMLElement).closest("button");
       if (!b) return;
@@ -695,7 +679,5 @@ const jsonLd = [
       e.preventDefault();
       strip.scrollBy({ left: (e.key === "ArrowRight" ? 1 : -1) * 460, behavior: diam ? "auto" : "smooth" });
     });
-    hitung();
-    addEventListener("resize", hitung);
   })();
 </script>

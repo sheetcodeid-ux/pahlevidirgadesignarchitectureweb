@@ -532,6 +532,21 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     geometri** (`scrollHeight`, `offsetTop`, `getBoundingClientRect`).
     `scrollY` aman — nilainya sudah dipegang peramban.
 
+    **Berlaku sama untuk penampung yang digulir MENDATAR**, dan di sana ia
+    sempat luput: galeri foto di beranda dan `/proyek/[slug]` membaca
+    `scrollWidth`, menulis lebar bar kemajuan, lalu membaca `offsetLeft`
+    sepuluh kartu — baca-tulis-baca di tengah gerakan jari. Terukur pada 60
+    langkah seret: 840 pembacaan geometri dan 121 layout paksa, jadi 0
+    pembacaan dan 61 layout setelah posisinya di-cache. Sisa 61 itu memang
+    satu per frame, bukan paksaan.
+
+    Keduanya sekarang memakai modul bersama supaya cacatnya tidak tumbuh
+    lagi dari salinan yang menyimpang: `lib/relspy.ts` untuk penanda rel
+    daftar isi (`/privasi`, `/jurnal/[slug]`, `/proyek/[slug]`) dan
+    `lib/strip.ts` untuk galeri mendatar (beranda, `/proyek/[slug]`).
+    Portal klien `/progres` memakai pola yang sama ditulis di tempat: 30
+    pembacaan geometri per lintasan gulir jadi 0.
+
 22. **`conic-gradient` yang beranimasi dilukis ulang tiap frame, selamanya.**
     Ia tidak bisa dikomposisi, jadi ongkosnya dibayar terus selama elemennya
     ada di halaman — bukan cuma saat dilihat. `.kilau` sekarang diam dan
@@ -548,6 +563,12 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     dinaikkan ke `rgba(24,24,27,.94)` dan tangkapan layar sebelum/sesudah
     tidak bisa dibedakan, karena isi di belakang bilah memang nyaris rata
     gelap. Jangan dikembalikan.
+
+    Satu lagi ketinggalan satu putaran dan sudah ikut dibuang: bilah lengket
+    `.lengket` di portal klien `/progres`, yang `position:fixed` selebar
+    layar — persis bentuk yang paling mahal. Latarnya dinaikkan ke
+    `rgba(9,9,11,.97)`. Kalau menambah bilah lengket baru, periksa direktif
+    ini lebih dulu.
 
     Sekeluarga dengannya: **`mask-image` pada wadah yang isinya beranimasi
     terus** (marquee logo) memaksa lapisan itu disusun ulang tiap frame.

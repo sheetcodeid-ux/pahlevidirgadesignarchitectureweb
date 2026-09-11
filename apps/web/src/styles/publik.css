@@ -746,11 +746,6 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
   .rv{opacity:1;transform:none}
 }
-.demo{height:220px;overflow-y:auto;border:1px solid var(--garis-2);position:relative;background:var(--gelap)}
-.demo__bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;padding:0 16px;
-  height:46px;background:rgba(9,9,11,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--garis);
-  font-size:12px;color:var(--teks-2);transition:transform 320ms var(--e-keluar)}
-.demo__bar.sembunyi{transform:translateY(-100%)}
 /* ═══ URUTAN MASUK HALAMAN ════════════════════════════════════════════════ */
 /* padding+margin negatif: topeng animasi harus turun melewati garis dasar,
    kalau tidak ekor huruf g/y/p ikut terpotong setelah animasinya selesai. */
