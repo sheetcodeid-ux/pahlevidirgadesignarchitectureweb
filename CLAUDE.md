@@ -218,7 +218,21 @@ Aturan yang mengikat:
    destruktif, amber = terbatas atau terkunci sebagian, ungu = upgrade dan
    fitur berbayar, hijau = status hidup dan konfirmasi, biru = penjelasan.
    Ungu tidak pernah dipakai untuk aksi biasa.
-2. **Arvo untuk judul halaman; Maven Pro untuk SELURUH sisanya, termasuk
+2. **SITUS PUBLIK memakai Inter — judul dan tubuh.** Diganti atas permintaan
+   eksplisit pemilik supaya menyamai halaman acuannya. Judulnya berbobot
+   **600** dengan `letter-spacing: -0.022em`, bukan 400/0: angka lama itu
+   milik slab serif. Kalau suatu saat dikembalikan ke Arvo, kembalikan juga
+   dua angka itu — Arvo sudah tebal pada reguler dan hurufnya bersinggungan
+   kalau dirapatkan.
+
+   **PANEL ADMIN masih Arvo + Maven Pro** dan sengaja belum diikutkan;
+   permintaannya menyangkut tampilan situs publik. Kalau suatu saat ikut
+   diganti, tautan fontnya ada di `AdminLayout.astro`.
+
+   Aturan di bawah ini adalah setelan LAMA, disimpan karena riwayat
+   penolakannya masih berlaku kalau fontnya dikembalikan:
+
+   **Arvo untuk judul halaman; Maven Pro untuk SELURUH sisanya, termasuk
    nominal.** Dipilih pemilik sendiri lewat empat tangkapan layar DevTools.
    `--font-mono` menunjuk Maven Pro juga — itu memang permintaannya; monospace
    sungguhan (`--font-kode`) hanya untuk permukaan yang memang kode: nama token

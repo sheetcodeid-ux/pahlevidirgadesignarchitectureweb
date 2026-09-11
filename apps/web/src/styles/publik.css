@@ -28,8 +28,14 @@
   --aksen:#2DD4BF; --aksen-3:#5EEAD4; --isi:#0D9488;
   --isi-hover:#047857; --isi-tekan:#065F46; --cincin:#34D399; --merah:#F87171;
     --glow-judul:0 0 30px #26D97F8C;
-  --judul:"Arvo",Georgia,serif; --tubuh:"Maven Pro",system-ui,sans-serif;
-  --lebar:1200px; --r:6px;
+  /* Inter untuk judul DAN tubuh, mengikuti acuan pemilik. Menggantikan
+     Arvo + Maven Pro yang dipilihnya sendiri lewat empat tangkapan layar
+     DevTools — diganti atas permintaan eksplisitnya, dan bisa dikembalikan
+     dengan mengubah dua baris ini plus tautan di BaseLayout. */
+  --judul:"Inter",system-ui,sans-serif; --tubuh:"Inter",system-ui,sans-serif;
+  --lebar:1200px; --r:6px; --r-pil:999px;
+  /* Panel banner: jarak ke tepi layar dan lengkung sudutnya. */
+  --panel-sisi:16px; --panel-r:18px; --panel-jeda:16px;
   --rasio-foto: 16 / 9;   /* 5760×3240 dari fotografer — tepat 16:9 */
   /* Penanda sudut. Dulu tanda silang berlengan 18px; sekarang kotak bersudut
      bulat, sesuai gambar acuan pemilik.
@@ -71,8 +77,13 @@
 html{overflow-x:clip}
 body{margin:0;background:var(--kanvas);color:var(--teks);font-family:var(--tubuh);
   font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:clip}
-h1,h2,h3{font-family:var(--judul);font-weight:400;letter-spacing:0;line-height:1.14;margin:0;
-  text-wrap:balance}
+/* Bobot 600 dan kerapatan negatif, BUKAN 400/0 seperti waktu judulnya Arvo.
+   Angka lama itu milik slab serif: Arvo sudah tebal pada reguler dan hurufnya
+   saling bersinggungan kalau dirapatkan. Inter grotesk kebalikannya — pada
+   400 ia terbaca kurus di ukuran besar, dan justru menuntut kerapatan negatif
+   supaya tidak renggang. Persis setelan yang dipakai halaman acuan. */
+h1,h2,h3{font-family:var(--judul);font-weight:600;letter-spacing:-.022em;line-height:1.14;
+  margin:0;text-wrap:balance}
 p{margin:0;text-wrap:pretty}
 h1,h2,h3{hanging-punctuation:first last}
 /* ═══ PENANDA SUDUT ═════════════════════════════════════════
@@ -122,10 +133,16 @@ h1,h2,h3{hanging-punctuation:first last}
 .dalam{max-width:var(--lebar);margin-inline:auto;
   border-inline:1px solid transparent;border-top:1px solid var(--garis);
   position:relative;
-  background-image:var(--rel-img),var(--rel-img);
-  background-repeat:repeat-y,repeat-y;
-  background-position:left top,right top;
-  background-size:1px auto,1px auto;
+  /* TIGA lapis, dan lapis pertama sengaja lewat custom property.
+     `.titik` dulu memasang background-image-nya sendiri di elemen yang sama;
+     kekhususannya sama (0,1,0) dan ia ditulis belakangan, jadi ia MENIMPA
+     rel — bukan menumpuk. Sepuluh pita di situs ini kehilangan rel tegaknya
+     tanpa satu pun galat. Sekarang `.titik` cuma mengisi lapisnya, dan
+     urutan lapis diputuskan di sini. */
+  background-image:var(--lapis,none),var(--rel-img),var(--rel-img);
+  background-repeat:var(--lapis-ulang,no-repeat),repeat-y,repeat-y;
+  background-position:var(--lapis-posisi,0 0),left top,right top;
+  background-size:var(--lapis-ukuran,auto),1px auto,1px auto;
   background-origin:border-box;background-clip:border-box}
 
 /* Latar bertitik di bidang kosong KIRI dan KANAN kolom isi.
@@ -167,10 +184,112 @@ h1,h2,h3{hanging-punctuation:first last}
    pita lain. Dulu tidak perlu diatur karena garisnya milik `.pita`, yang
    memang bertumpuk dengan tepi layar. */
 .pita--awal > .dalam{border-top-color:transparent}
+
+/* ═══ PITA PANEL ══════════════════════════════════════════════════════════
+   Banner yang keluar dari kolom isi jadi satu panel melebar bersudut bulat,
+   mengikuti acuan pemilik. Tingginya TIDAK disentuh — yang menentukan tetap
+   padding .isi--longgar, jadi bandingannya dengan versi lama tetap sah.
+
+   Semua chrome kolom dimatikan di sini, dan masing-masing punya alasannya:
+   rel tegak dan garis atas tidak boleh memotong panel; penanda sudut tidak
+   punya persimpangan untuk ditumpangi; talang bertitik tidak ada lagi karena
+   panelnya nyaris selebar layar. */
+.pita--panel{overflow:hidden;padding-top:var(--panel-jeda);
+  /* Latar bertitik pindah KE SINI. Waktu tiap pita jadi panel yang berlatar
+     penuh, talang kiri-kanan habis dan titiknya tidak punya tempat lagi —
+     padahal justru sekarang ia paling berguna: ia jadi tanah tempat panelnya
+     berdiri, terlihat di sela antar-panel dan di kedua sisinya.
+     padding-top, bukan margin: jarak antar-panel harus ikut bertitik, dan
+     margin tidak dilatarbelakangi apa pun. */
+  background-image:radial-gradient(var(--garis) 1px,transparent 1px);
+  background-size:var(--dot) var(--dot)}
+.pita--panel:first-child{padding-top:0}
+/* Panel penutup berpasangan dengan banner pembuka — bentuk yang sama di
+   kepala dan kaki halaman, seperti di acuan. Ia juga butuh napas di bawahnya,
+   yang tidak dibutuhkan panel pembuka. */
+.pita--panel.pita--akhir{padding-bottom:var(--panel-jeda);border-bottom:0}
+.pita--panel::before,.pita--panel::after{content:none}
+.pita--panel > .dalam{
+  max-width:none;margin-inline:var(--panel-sisi);
+  border:1px solid var(--garis);border-radius:var(--panel-r);
+  background-color:var(--gelap);overflow:hidden;
+  --rel-img:none}
+.pita--panel > .dalam::before,.pita--panel > .dalam::after{content:none}
+/* Penanda sudut pemisah kolom ikut mati di dalam panel: isinya diwarnai
+   --kanvas, sementara panelnya --gelap, jadi kotaknya akan tampak sebagai
+   bercak yang lebih terang alih-alih lubang. */
+.pita--panel .sel + .sel::before{content:none}
+
+/* Kedalaman panel. Garis terang setipis rambut di tepi ATAS saja — itu yang
+   membuat sebuah bidang gelap terbaca terangkat, bukan bayangan tebal.
+   Bayangan luarnya sengaja lembut dan hampir tak terlihat: aturan desain
+   proyek ini melarang bayangan keras. */
+.pita--panel > .dalam{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045), 0 2px 18px rgba(0,0,0,.45)}
+
+/* Isinya TETAP selebar kolom biasa walaupun panelnya melebar. Pemilik minta
+   tingginya tidak berubah, dan tinggi blok teks yang dirata-tengah ditentukan
+   oleh berapa baris ia terpecah — dilepas selebar panel, kalimatnya jadi satu
+   baris dan panelnya memendek sendiri. */
+.pita--panel > .dalam > .isi{max-width:var(--lebar);margin-inline:auto}
 body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
 .isi{padding:56px 44px}
 .isi--rapat{padding:24px 44px}
 .isi--longgar{padding:96px 44px}
+/* Kepala seksi: judul dan labelnya DI TENGAH, dengan udara di atas dan bawah.
+   Diambil dari tata letak acuan pemilik — di sana tiap seksi dibuka judul
+   yang dirata-tengah, baru barisan isinya di bawah. Napasnya juga lebih lega
+   daripada .isi biasa: itu yang membuat halamannya terbaca rapi, bukan
+   garisnya. */
+.kop-seksi{padding:84px 44px 40px;text-align:center}
+.kop-seksi .lead,.kop-seksi p{margin-inline:auto}
+
+/* ═══ MUNCUL SAAT DIGULIR ═════════════════════════════════════════════════
+   Keadaan awalnya HANYA berlaku di bawah `html.js`. Tanpa itu, halaman yang
+   JS-nya gagal termuat akan tinggal bidang kosong — dan halaman ini statis,
+   jadi seluruh isinya sudah ada di HTML dan memang harus terbaca tanpa JS.
+   Penanda `js` dipasang skrip sebaris di <head>, sebelum lukisan pertama,
+   supaya tidak ada kedipan "terlihat lalu disembunyikan". */
+html.js .wahyu{opacity:0;transform:translateY(18px);
+  transition:opacity 620ms var(--e-keluar),transform 620ms var(--e-keluar)}
+html.js .wahyu.tampak{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html.js .wahyu{opacity:1;transform:none;transition:none}
+}
+
+/* ═══ SENTUHAN KURSOR ═════════════════════════════════════════════════════
+   Seluruhnya di dalam (hover:hover). Di layar sentuh, `:hover` menempel
+   setelah satu ketukan dan tidak pernah lepas — keadaan sorot yang macet
+   permanen. Ini saudara dekat jebakan onMouseEnter yang sudah pernah
+   menggigit di ponsel pemilik. */
+@media (hover:hover){
+  .sel{transition:background 220ms var(--e-halus)}
+  .baris .sel:hover{background:rgba(255,255,255,.022)}
+  .kotak-ikon{transition:border-color 220ms var(--e-halus),background 220ms var(--e-halus),
+    box-shadow 220ms var(--e-halus)}
+  .sel:hover .kotak-ikon{border-color:var(--isi);background:rgba(45,212,191,.08);
+    box-shadow:0 0 0 4px rgba(45,212,191,.06)}
+  /* Foto ikut hidup, tapi hanya di dalam kotaknya: .foto sudah overflow
+     tersembunyi, jadi yang membesar tidak pernah melewati tepinya. */
+  .foto--nyata img,.proses__foto img{transition:transform 900ms var(--e-keluar)}
+  .sel:hover .foto--nyata img,.proses__foto:hover img{transform:scale(1.035)}
+}
+
+/* ═══ NOMOR LANGKAH ═══════════════════════════════════════════════════════
+   Angka besar yang nyaris menyatu dengan latar — penanda urutan yang terbaca
+   sekilas tanpa ikut berebut perhatian dengan judul langkahnya. Dihitung
+   CSS, bukan diketik: kalau langkahnya bertambah atau bertukar urutan,
+   nomornya ikut sendiri. */
+.proses-seksi{counter-reset:langkah}
+.proses__teks{counter-increment:langkah;position:relative;overflow:hidden}
+.proses__teks::after{content:counter(langkah,decimal-leading-zero);
+  position:absolute;right:22px;top:6px;z-index:0;pointer-events:none;
+  font-size:104px;font-weight:700;line-height:1;letter-spacing:-.05em;
+  color:var(--sel);opacity:.55}
+.proses__teks > *{position:relative;z-index:1}
+@media (max-width:900px){
+  .proses__teks::after{font-size:72px;right:14px}
+}
 /* Sel: berbagi garis; pemisahnya diberi ⊤ di ujung atas dan ⊥ di ujung bawah,
    karena garis tegak itu memang berhenti di situ. Persis aturan Anda. */
 .baris{display:grid}
@@ -192,8 +311,12 @@ body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
    titik-titik yang bisa dihitung. Ini yang membedakan dari versi sebelumnya
    (22px) yang titiknya kelihatan satu per satu. */
 :root{--titik:#2C2C32; --titik-jarak:4px}
-.titik{background-image:radial-gradient(circle at 0.5px 0.5px,var(--titik) .5px,transparent 0);
-  background-size:var(--titik-jarak) var(--titik-jarak)}
+/* Mengisi LAPIS, bukan memasang background-image sendiri — lihat catatan di
+   `.dalam`. Dipakai hanya pada `.dalam`; kalau suatu saat dipakai di elemen
+   lain, elemen itu harus ikut menyusun lapisnya. */
+.titik{--lapis:radial-gradient(circle at 0.5px 0.5px,var(--titik) .5px,transparent 0);
+  --lapis-ulang:repeat;
+  --lapis-ukuran:var(--titik-jarak) var(--titik-jarak)}
 .titik--renggang{--titik-jarak:8px}
 /* Pijar teal: satu kubah cahaya dari tepi atas, meredup ke bawah.
    Dipasang DI ATAS titik supaya titik di dekat pusatnya ikut kehijauan —
@@ -598,13 +721,16 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   transform:scaleX(0);transform-origin:left;transition:transform 260ms var(--e-keluar)}
 .nav a:hover,.nav a[aria-current="page"]{color:var(--teks)}
 .nav a:hover::after,.nav a[aria-current="page"]::after{transform:scaleX(1)}
+/* Pil, sekeluarga dengan tombol di sebelahnya — di acuan pemilik seluruh
+   kelompok aksi di kanan bilah berbentuk pil. */
 .status{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--teks-2);border:1px solid var(--garis-2);padding:5px 11px}
+  text-transform:uppercase;color:var(--teks-2);border:1px solid var(--garis-2);padding:5px 11px;
+  border-radius:var(--r-pil)}
 .status i{width:6px;height:6px;background:var(--aksen);border-radius:99px;flex:none;
   animation:denyut 2.2s ease-in-out infinite}
 @keyframes denyut{0%,100%{opacity:1}50%{opacity:.35}}
 .nav-tombol{display:none;width:44px;height:44px;border:1px solid var(--garis-2);background:none;
-  color:var(--teks);cursor:pointer;place-items:center}
+  border-radius:var(--r-pil);color:var(--teks);cursor:pointer;place-items:center}
 .laci{border:0;padding:0;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;
   background:var(--kanvas);color:var(--teks)}
 .laci::backdrop{background:rgba(9,9,11,.75)}
@@ -631,7 +757,9 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
    sana display memang harus dikembalikan. */
 .laci a.btn{display:inline-flex;align-items:center;justify-content:center}
 .nav a.btn::after,.laci a.btn::after{display:none}
-.nav a.btn{padding:9px 16px}
+/* Pil, mengikuti acuan pemilik. Hanya di bilah nav — tombol di dalam badan
+   halaman tetap bersudut --r supaya sebangun dengan kartu di sekitarnya. */
+.nav a.btn{padding:9px 16px;border-radius:var(--r-pil)}
 .laci a.btn{padding:11px 19px}
 .nav a.btn:hover,.laci a.btn:hover{background:var(--sel);color:var(--teks)}
 .nav a.btn--isi,.laci a.btn--isi{background:var(--aksen);color:#18181B;font-weight:600}
@@ -642,6 +770,17 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 @media (max-width:900px){
   .nav-tombol{display:grid}
 }
+/* ═══ PENGALIH BAHASA ═════════════════════════════════════════════════════
+   Bentuknya sama dengan yang sudah dipakai portal klien, supaya pengunjung
+   yang pernah melihatnya di sana langsung mengenalinya. */
+.bhs{display:inline-flex;border:1px solid var(--garis-2);border-radius:var(--r-pil);overflow:hidden}
+.bhs button{appearance:none;background:transparent;border:0;font-family:var(--tubuh);
+  font-size:11.5px;font-weight:600;letter-spacing:.08em;color:var(--teks-3);
+  padding:7px 13px;cursor:pointer;transition:background 180ms var(--e-halus),color 180ms var(--e-halus)}
+.bhs button + button{border-left:1px solid var(--garis-2)}
+.bhs button[aria-pressed="true"]{background:rgba(45,212,191,.12);color:var(--aksen)}
+@media (hover:hover){.bhs button:hover{color:var(--teks)}}
+@media (max-width:900px){.bhs button{min-height:44px;padding-inline:18px}}
 /* ═══ KUTIPAN ═════════════════════════════════════════════════════════════ */
 .kutip{font-family:var(--judul);font-size:19px;line-height:1.45}
 .kutip::before{content:"“";color:var(--aksen);margin-right:2px}

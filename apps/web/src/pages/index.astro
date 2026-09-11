@@ -89,6 +89,77 @@ const janji = [
   ["M2.5 5.5h15v9h-15zM2.5 9h15M5.5 12h3", "Receipts you can open yourself", "Every payment gets a link. No “trust me, it’s recorded”."],
 ];
 
+/* Terjemahan Indonesia seluruh kalimat pemasaran beranda. Kuncinya sama
+   dengan atribut data-t di markup; yang Inggris tidak diulang di sini karena
+   ia SUDAH ada di markup dan skrip pengalih menyimpannya sendiri. */
+const KAMUS_BERANDA: Record<string, string> = {
+  heroLabel: "STUDIO ARSITEKTUR · INDONESIA · SEJAK",
+  heroJudul:
+    '<span class="brs"><i>Bangunan yang bisa Anda</i></span>' +
+    '<span class="brs"><i>pantau dibangun — <span class="ak glow">dari mana saja</span>.</i></span>',
+  heroLead:
+    "Rumah, kafe, dan tempat kerja di seluruh Indonesia. Anda dapat gambarnya, jadwalnya, dan satu tautan yang menunjukkan persis di mana proyek Anda berdiri — minggu ini, bukan kuartal lalu.",
+  heroLihat: 'Lihat karya kami <span class="ar">→</span>',
+  heroMulai: 'Mulai proyek <span class="ar">→</span>',
+
+  klienLabel: "KLIEN TERPILIH",
+  karyaLabel: "KARYA TERPILIH",
+
+  portalLabel: "SELAGI DIBANGUN",
+  portalJudul: "Bagian yang hampir tak diberikan studio seukuran kami.",
+  portalLead:
+    "Kalau Anda mengirim uang lintas batas untuk membangun sesuatu yang tidak bisa ditengok tiap minggu, ketakutan yang sebenarnya bukan “apakah nanti bagus”. Melainkan <strong>“apakah saya akan tahu apa yang sedang terjadi”</strong>. Karena itu tiap proyek punya halamannya sendiri — tahapan, dokumen yang bisa Anda setujui, tagihan, dan bukti untuk tiap pembayaran yang bisa Anda buka sendiri.",
+
+  prosesLabel: "BAGAIMANA JALANNYA",
+  prosesJudul: "Tiga langkah sebelum satu garis pun ditarik.",
+
+  fiturLabel: "KENAPA PEMILIK DI LUAR NEGERI MEMILIH KAMI",
+  fiturJudul: "Jarak itu soal penjadwalan, bukan soal desain.",
+
+  testiLabel: "DARI KLIEN",
+  testiKosong: "Belum ada testimoni",
+  testiKosongKet: "Ini terisi sendiri dari portal klien — kami tidak menuliskannya",
+
+  faqLabel: "SEBELUM ANDA BERTANYA",
+  faqJudul: "Lima pertanyaan yang paling sering kami terima.",
+  faqSemua: 'Semua pertanyaan <span class="ar">→</span>',
+
+  ajakJudul:
+    'Ceritakan lokasinya, anggarannya, dan <span class="ak">apa yang mengganjal</span> soal itu.',
+  ajakLead: "Balasan pertama biasanya dalam 24 jam. Percakapan pertama tidak dipungut biaya.",
+  ajakEmail: "Kirim email saja",
+
+  "janji.0.judul": "Balasan dalam 24 jam",
+  "janji.0.teks": "Studio kecil — justru karena itu pesan Anda tidak mengantre.",
+  "janji.1.judul": "Tiap gambar disetujui daring",
+  "janji.1.teks": "Setujui atau minta perubahan dari ponsel, seluruh percakapannya tersimpan.",
+  "janji.2.judul": "Bukti yang bisa Anda buka sendiri",
+  "janji.2.teks": "Tiap pembayaran dapat tautannya. Tanpa “percaya saja, sudah dicatat”.",
+
+  "fitur.0.judul": "Kami bekerja lintas zona waktu",
+  "fitur.0.teks": "Tiap persetujuan terjadi di halaman proyek Anda, jadi tidak ada yang menunggu jam kantor di Jakarta.",
+  "fitur.1.judul": "Anda selalu tahu posisinya",
+  "fitur.1.teks": "Tahapan, dokumen, dan foto lapangan terbuka kapan pun Anda membuka tautannya.",
+  "fitur.2.judul": "Uang masuk dicatat, bukan dijanjikan",
+  "fitur.2.teks": "Tiap pembayaran dapat nomor bukti yang bisa Anda buka sendiri dari WhatsApp.",
+  "fitur.3.judul": "Gambar yang bisa Anda setujui atau kembalikan",
+  "fitur.3.teks": "Seluruh percakapannya tersimpan di sebelahnya, jadi tidak ada dua versi yang tertukar.",
+  "fitur.4.judul": "Data proyek Anda tertutup",
+  "fitur.4.teks": "Hanya Anda dan studio yang bisa membukanya. Diuji, bukan diasumsikan.",
+  "fitur.5.judul": "Balasan pertama di bawah 24 jam",
+  "fitur.5.teks": "Studio kecil — justru karena itu pesan Anda tidak menumpuk.",
+
+  "proses.0.no": "01. MENDENGAR",
+  "proses.0.judul": "Kami mulai dari cara Anda hidup, bukan dari gaya.",
+  "proses.0.teks": "Satu percakapan panjang, lalu brief tertulis yang bisa Anda koreksi sendiri — dengan kata-kata Anda, di zona waktu Anda.",
+  "proses.1.no": "02. MENGGAMBAR",
+  "proses.1.judul": "Konsep, denah, dan gambar kerja — semuanya bisa ditinjau dari ponsel.",
+  "proses.1.teks": "Tiap dokumen bisa disetujui atau dikembalikan untuk diubah langsung di halaman proyek Anda, dengan seluruh percakapannya tersimpan di sebelahnya.",
+  "proses.2.no": "03. MEMBANGUN & MENDAMPINGI",
+  "proses.2.judul": "Anda tahu posisi proyeknya, tiap minggu.",
+  "proses.2.teks": "Foto lapangan, tagihan, dan bukti pembayaran mendarat di halaman yang sama. Tidak ada kabar yang hilang antara utas WhatsApp dan lembar kerja.",
+};
+
 const fakta = (p: Project) =>
   [
     { label: "LOCATION", nilai: p.location || p.city },
@@ -103,7 +174,7 @@ const fakta = (p: Project) =>
   description={`Houses, cafés and workplaces across ${kota} and Indonesia. You get the drawings, the schedule, and one link that shows exactly where your project stands.`}
   image={sorot[0]?.coverImageUrl}
 >
-  <div class="pita">
+  <div class="pita pita--panel">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar hero">
@@ -111,22 +182,22 @@ const fakta = (p: Project) =>
             membuatnya jadi dua spasi, dan letter-spacing .18em melebarkan
             spasi kedua itu jadi celah yang terlihat. */}
         <span class="label masuk"
-          >ARCHITECTURE STUDIO · INDONESIA · SINCE {settings.foundedYear ?? <span class="tunggu">20XX</span>}</span
+          ><span data-t="heroLabel">ARCHITECTURE STUDIO · INDONESIA · SINCE</span> {settings.foundedYear ?? <span class="tunggu">20XX</span>}</span
         >
         <div class="s24"></div>
-        <h1 class="h1">
+        <h1 class="h1" data-t="heroJudul">
           <span class="brs"><i>We design buildings you can</i></span>
           <span class="brs"><i>watch being built — <span class="ak glow">from anywhere</span>.</i></span>
         </h1>
         <div class="s24"></div>
-        <p class="lead masuk masuk--3 hero__lead">
+        <p class="lead masuk masuk--3 hero__lead" data-t="heroLead">
           Houses, cafés and workplaces across Indonesia. You get the drawings, the schedule, and one
           link that shows you exactly where your project stands — this week, not last quarter.
         </p>
         <div class="s36"></div>
         <div class="rowx masuk masuk--4 hero__tombol">
-          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
-          <a class="btn" href="/proyek">See our work <span class="ar">→</span></a>
+          <a class="btn btn--isi" href="/kontak" data-t="heroMulai">Start a project <span class="ar">→</span></a>
+          <a class="btn" href="/proyek" data-t="heroLihat">See our work <span class="ar">→</span></a>
         </div>
       </div>
     </div>
@@ -151,9 +222,9 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="baris b3">
+      <div class="baris b3 wahyu">
         {
-          janji.map(([d, judul, teks]) => (
+          janji.map(([d, judul, teks], i) => (
             <div class="sel">
               <div class="janji">
                 {/* Berkotak, sama dengan daftar fitur di halaman yang sama.
@@ -164,9 +235,9 @@ const fakta = (p: Project) =>
                   <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d={d} /></svg>
                 </span>
                 <span>
-                  <span class="hs">{judul}</span>
+                  <span class="hs" data-t={`janji.${i}.judul`}>{judul}</span>
                   <div class="s6"></div>
-                  <span class="mut kecil">{teks}</span>
+                  <span class="mut kecil" data-t={`janji.${i}.teks`}>{teks}</span>
                 </span>
               </div>
             </div>
@@ -180,7 +251,7 @@ const fakta = (p: Project) =>
     klien.length > 0 && (
       <div class="pita">
         <div class="dalam">
-          <div class="isi isi--rapat mq-kop">
+          <div class="isi kop-seksi wahyu mq-kop">
             {/* Judulnya "clients", bukan "materials & partners", karena yang dikirim
                 pemilik adalah nama klien. Judul lama di atas daftar klien adalah
                 pernyataan yang tidak benar, bukan sekadar salah kata. */}
@@ -190,7 +261,7 @@ const fakta = (p: Project) =>
                 jadi tombol terpisah menyuruh mereka melakukan dua hal untuk
                 satu maksud. Yang butuh diam permanen sudah ditangani
                 prefers-reduced-motion di CSS, tanpa perlu menekan apa pun. */}
-            <span class="label label--redup">SELECTED CLIENTS</span>
+            <span class="label label--redup" data-t="klienLabel">SELECTED CLIENTS</span>
           </div>
           <div class="mq mq--garis">
             {/* Daftar digandakan supaya gulirannya menyambung tanpa jeda. */}
@@ -218,7 +289,7 @@ const fakta = (p: Project) =>
           {sorot.map((p, i) => (
             <div class="sorot" data-sorot={i} hidden={i !== 0}>
               <div class="isi">
-                <span class="label">SELECTED WORK</span>
+                <span class="label" data-t="karyaLabel">SELECTED WORK</span>
                 <div class="s16"></div>
                 <h2 class="h2">{p.title}{subjudulBerguna(p) ? ` — ${subjudulBerguna(p)}` : ""}</h2>
                 {p.summary && (
@@ -283,9 +354,9 @@ const fakta = (p: Project) =>
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi">
-        <span class="label">WHILE IT IS BEING BUILT</span>
+        <span class="label" data-t="portalLabel">WHILE IT IS BEING BUILT</span>
         <div class="s16"></div>
-        <h2 class="h2">The part almost no studio our size gives you.</h2>
+        <h2 class="h2" data-t="portalJudul">The part almost no studio our size gives you.</h2>
         <div class="s16"></div>
         <p class="lead">
           If you are sending money across a border to build something you cannot visit every week,
@@ -349,22 +420,22 @@ const fakta = (p: Project) =>
   </div>
 
   <div class="pita">
-    <div class="dalam">
-      <div class="isi">
-        <span class="label">HOW IT GOES</span>
+    <div class="dalam proses-seksi">
+      <div class="isi kop-seksi wahyu">
+        <span class="label" data-t="prosesLabel">HOW IT GOES</span>
         <div class="s16"></div>
-        <h2 class="h2">Three steps before a single line is drawn.</h2>
+        <h2 class="h2" data-t="prosesJudul">Three steps before a single line is drawn.</h2>
       </div>
       {
         proses.map((l, i) => {
           const f = fotoProses[i];
           const teksSel = (
             <div class="sel proses__teks">
-              <span class="label">{l.no}</span>
+              <span class="label" data-t={`proses.${i}.no`}>{l.no}</span>
               <div class="s16"></div>
-              <h3 class="h3">{l.judul}</h3>
+              <h3 class="h3" data-t={`proses.${i}.judul`}>{l.judul}</h3>
               <div class="s16"></div>
-              <p class="mut kecil">{l.teks}</p>
+              <p class="mut kecil" data-t={`proses.${i}.teks`}>{l.teks}</p>
             </div>
           );
           const fotoSel = f ? (
@@ -389,23 +460,23 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="isi">
-        <span class="label">WHY OWNERS ABROAD PICK US</span>
+      <div class="isi kop-seksi wahyu">
+        <span class="label" data-t="fiturLabel">WHY OWNERS ABROAD PICK US</span>
         <div class="s16"></div>
-        <h2 class="h2">Distance is a scheduling problem, not a design problem.</h2>
+        <h2 class="h2" data-t="fiturJudul">Distance is a scheduling problem, not a design problem.</h2>
       </div>
       {
-        [fitur.slice(0, 3), fitur.slice(3)].map((baris) => (
-          <div class="baris b3">
-            {baris.map(([ikon, judul, teks]) => (
+        [fitur.slice(0, 3), fitur.slice(3)].map((baris, brs) => (
+          <div class="baris b3 wahyu">
+            {baris.map(([ikon, judul, teks], k) => (
               <div class="sel">
                 <span class="kotak-ikon">
                   <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d={IKON[ikon]} /></svg>
                 </span>
                 <div class="s16"></div>
-                <p class="hs">{judul}</p>
+                <p class="hs" data-t={`fitur.${brs * 3 + k}.judul`}>{judul}</p>
                 <div class="s6"></div>
-                <p class="mut kecil">{teks}</p>
+                <p class="mut kecil" data-t={`fitur.${brs * 3 + k}.teks`}>{teks}</p>
               </div>
             ))}
           </div>
@@ -416,8 +487,8 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="isi isi--rapat"><span class="label">FROM CLIENTS</span></div>
-      <div class="baris b3">
+      <div class="isi kop-seksi wahyu"><span class="label" data-t="testiLabel">FROM CLIENTS</span></div>
+      <div class="baris b3 wahyu">
         {
           testimoni.length > 0
             ? testimoni.slice(0, 3).map((t) => (
@@ -431,9 +502,9 @@ const fakta = (p: Project) =>
               <>
                 <div class="sel sel--kosong kutip-kosong">
                   <span class="kecil kutip-kosong__t">
-                    No testimonials yet
+                    <span data-t="testiKosong">No testimonials yet</span>
                     <br />
-                    <span class="dim">This fills itself from the client portal — we do not write them</span>
+                    <span class="dim" data-t="testiKosongKet">This fills itself from the client portal — we do not write them</span>
                   </span>
                 </div>
                 <div class="sel sel--kosong kutip-kosong"><span class="dim kecil">—</span></div>
@@ -447,13 +518,13 @@ const fakta = (p: Project) =>
 
   <div class="pita">
     <div class="dalam">
-      <div class="baris baris-faq">
+      <div class="baris baris-faq wahyu">
         <div class="sel faq-kiri">
-          <span class="label">BEFORE YOU ASK</span>
+          <span class="label" data-t="faqLabel">BEFORE YOU ASK</span>
           <div class="s16"></div>
-          <h3 class="h3">The five questions we get most.</h3>
+          <h3 class="h3" data-t="faqJudul">The five questions we get most.</h3>
           <div class="s16"></div>
-          <a class="btn" href="/faq">All questions <span class="ar">→</span></a>
+          <a class="btn" href="/faq" data-t="faqSemua">All questions <span class="ar">→</span></a>
         </div>
         <div class="sel faq-kanan">
           {
@@ -469,25 +540,28 @@ const fakta = (p: Project) =>
     </div>
   </div>
 
-  <div class="pita pita--akhir">
+  <div class="pita pita--panel pita--akhir">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi ajak">
-        <h2 class="h2 ajak__judul">
+        <h2 class="h2 ajak__judul" data-t="ajakJudul">
           Tell us the site, the budget, and <span class="ak">what bothers you</span> about it.
         </h2>
         <div class="s16"></div>
-        <p class="lead ajak__lead">
+        <p class="lead ajak__lead" data-t="ajakLead">
           First reply usually within 24 hours. The first conversation costs nothing.
         </p>
         <div class="s36"></div>
         <div class="rowx ajak__tombol">
-          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
-          {settings.email && <a class="btn" href={`mailto:${settings.email}`}>Email us instead</a>}
+          <a class="btn btn--isi" href="/kontak" data-t="heroMulai">Start a project <span class="ar">→</span></a>
+          {settings.email && <a class="btn" href={`mailto:${settings.email}`} data-t="ajakEmail">Email us instead</a>}
         </div>
       </div>
     </div>
   </div>
+  {/* Kamus beranda dititipkan sebagai JSON, dibaca skrip pengalih di
+      BaseLayout. Bukan <script> biasa: isinya data, bukan kode. */}
+  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_BERANDA)} is:inline />
 </BaseLayout>
 
 <style>
@@ -514,9 +588,11 @@ const fakta = (p: Project) =>
     font-weight: 600;
     flex: none;
   }
+  /* Garis atasnya dilepas: sejak garis mendatar pindah ke `.dalam`, aturan
+     ini menggambar garis KEDUA yang selebar layar dan memotong talang
+     bertitik — persis yang tidak diinginkan pemilik. */
   .hero-foto {
     position: relative;
-    border-top: 1px solid var(--garis);
   }
   .pita--gelap {
     background: var(--gelap);
@@ -861,5 +937,41 @@ const fakta = (p: Project) =>
     });
     hitungSemua();
     addEventListener("resize", hitungSemua);
+  })();
+</script>
+
+<script>
+  /* Blok bertanda .wahyu muncul saat masuk layar. IntersectionObserver, bukan
+     listener scroll: pengamat tidak dipanggil di tiap frame gulir, jadi ia
+     tidak ikut menahan gulir di ponsel.
+
+     Sekali muncul, pengamatannya DILEPAS. Blok yang menghilang lagi saat
+     digulir balik bukan gaya, itu gangguan — dan di halaman sepanjang ini
+     pengunjung sering menggulir naik-turun untuk membandingkan dua bagian. */
+  (() => {
+    "use strict";
+    const blok = document.querySelectorAll<HTMLElement>(".wahyu");
+    if (!blok.length) return;
+
+    // Tanpa IntersectionObserver — peramban tua — semuanya langsung tampil.
+    if (!("IntersectionObserver" in window)) {
+      blok.forEach((b) => b.classList.add("tampak"));
+      return;
+    }
+
+    const pengamat = new IntersectionObserver(
+      (masuk) => {
+        masuk.forEach((e) => {
+          if (!e.isIntersecting) return;
+          (e.target as HTMLElement).classList.add("tampak");
+          pengamat.unobserve(e.target);
+        });
+      },
+      /* rootMargin bawah -8%: blok dianggap masuk sedikit SEBELUM tepi bawah,
+         supaya animasinya sudah selesai waktu mata sampai ke sana. */
+      { threshold: 0.06, rootMargin: "0px 0px -8% 0px" },
+    );
+
+    blok.forEach((b) => pengamat.observe(b));
   })();
 </script>
