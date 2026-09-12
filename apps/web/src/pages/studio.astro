@@ -2,7 +2,6 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { listProjects, getSettings, listTeam } from "../lib/api";
 import { TAHUN_BELUM } from "../lib/menunggu";
-import { KAMUS_STUDIO } from "../lib/i18nHalaman";
 
 const settings = await getSettings();
 
@@ -22,49 +21,49 @@ const proyek = await listProjects({ limit: 200 });
 const angka = [
   {
     n: "2",
-    label: "People, total",
-    ket: "Not a headcount we are working to grow. Two is the number where nothing gets handed to someone you never met.",
+    label: "Orang, seluruhnya",
+    ket: "Bukan jumlah yang sedang kami usahakan bertambah. Dua adalah angka saat tidak ada satu pun pekerjaan yang dioper ke orang yang belum pernah Anda temui.",
   },
   {
     n: "~7",
-    label: "Conversations a month",
-    ket: "We take a fraction of them. Saying no early is cheaper for you than finding out in month three.",
+    label: "Percakapan per bulan",
+    ket: "Yang kami ambil hanya sebagian. Mengatakan tidak lebih awal lebih murah buat Anda daripada mengetahuinya di bulan ketiga.",
   },
   {
     n: "24 h",
-    label: "Reply time",
-    ket: "Weekends included. It is the one promise a studio this size can actually keep, so we keep it.",
+    label: "Waktu balasan",
+    ket: "Termasuk akhir pekan. Ini satu-satunya janji yang benar-benar bisa ditepati studio seukuran ini, jadi kami menepatinya.",
   },
   {
     n: proyek.length ? String(proyek.length) : "—",
     tunggu: proyek.length === 0,
-    label: "Projects delivered",
+    label: "Proyek diserahkan",
     ket: proyek.length
-      ? "Every one of them has a page on this site. A number you cannot open is not a number worth printing."
-      : "Left blank on purpose until the real count is in the database. A number we cannot show you a page for is not a number worth printing.",
+      ? "Tiap satu punya halamannya sendiri di situs ini. Angka yang tidak bisa Anda buka bukan angka yang layak dicetak."
+      : "Sengaja dikosongkan sampai jumlah sungguhannya ada di basis data. Angka yang halamannya tidak bisa kami tunjukkan bukan angka yang layak dicetak.",
   },
 ];
 
 const prinsip = [
   {
     no: "01",
-    judul: "The site decides more than we do",
-    teks: "Orientation, wind, the neighbour’s wall, where the water goes in March. We start by measuring what is already there, because a plan that ignores it will be corrected by the building itself — expensively, later.",
+    judul: "Tapaknya lebih menentukan daripada kami",
+    teks: "Orientasi, angin, dinding tetangga, ke mana airnya pergi bulan Maret. Kami mulai dengan mengukur apa yang sudah ada, karena rencana yang mengabaikannya akan dikoreksi oleh bangunannya sendiri — dengan mahal, belakangan.",
   },
   {
     no: "02",
-    judul: "One material rule per level",
-    teks: "A floor reads as one idea, or it reads as a catalogue. Deciding the rule early is what keeps a modest budget from looking modest.",
+    judul: "Satu aturan material per lantai",
+    teks: "Sebuah lantai terbaca sebagai satu gagasan, atau terbaca sebagai katalog. Menetapkan aturannya lebih awal itulah yang menjaga anggaran sederhana tidak terlihat sederhana.",
   },
   {
     no: "03",
-    judul: "Money is a design constraint, not a taboo",
-    teks: "We put the number on the table in the first call. A design you cannot afford to finish is not a design — it is a drawing.",
+    judul: "Uang itu batasan desain, bukan hal tabu",
+    teks: "Kami menaruh angkanya di meja sejak panggilan pertama. Desain yang tidak sanggup Anda selesaikan bukanlah desain — itu gambar.",
   },
   {
     no: "04",
-    judul: "Drawings are for builders, not for us",
-    teks: "If the contractor has to call us to understand a detail, the detail was not finished. We would rather spend the extra week on paper than on site.",
+    judul: "Gambar dibuat untuk tukang, bukan untuk kami",
+    teks: "Kalau kontraktor harus menelepon kami untuk memahami sebuah detail, detail itu belum selesai. Kami lebih rela menghabiskan satu minggu tambahan di atas kertas daripada di lokasi.",
   },
 ];
 
@@ -76,14 +75,14 @@ const garisWaktu = [
   {
     tahun: settings.foundedYear ? String(settings.foundedYear) : TAHUN_BELUM,
     tunggu: !settings.foundedYear,
-    judul: "The studio starts",
-    teks: "One desk, one drawing table, and the decision to stay small on purpose.",
+    judul: "Studionya dimulai",
+    teks: "Satu meja, satu meja gambar, dan keputusan untuk tetap kecil dengan sengaja.",
   },
   {
     tahun: settings.firstCommercialYear ? String(settings.firstCommercialYear) : TAHUN_BELUM,
     tunggu: !settings.firstCommercialYear,
-    judul: "First commercial project",
-    teks: "The point where the work stopped being houses only and the drawings had to answer to a business as well as a family.",
+    judul: "Proyek komersial pertama",
+    teks: "Titik saat pekerjaannya berhenti jadi rumah saja, dan gambarnya harus menjawab kepada sebuah usaha, bukan cuma kepada sebuah keluarga.",
   },
   ...(proyekTerlama
     ? [
@@ -91,22 +90,22 @@ const garisWaktu = [
           tahun: proyekTerlama.year ? String(proyekTerlama.year) : TAHUN_BELUM,
           tunggu: !proyekTerlama.year,
           judul: `${proyekTerlama.title}${proyekTerlama.location ? `, ${proyekTerlama.location}` : ""}`,
-          teks: "The first project documented photograph by photograph on this site rather than summarised in a paragraph.",
+          teks: "Proyek pertama yang didokumentasikan foto demi foto di situs ini, bukan diringkas jadi satu paragraf.",
         },
       ]
     : []),
   {
     tahun: "2026",
-    judul: "The client page goes live",
-    teks: "Phases, drawings and invoices in one place. Built because answering “where are we?” five times a week is a design problem, not an admin one.",
+    judul: "Halaman klien mulai tayang",
+    teks: "Tahapan, gambar, dan tagihan di satu tempat. Dibuat karena menjawab “sekarang sampai mana?” lima kali seminggu adalah persoalan desain, bukan persoalan administrasi.",
   },
 ];
 
 const tidak = [
-  ["Drawings only, no involvement.", "If the plan is to take the file and build it without us, another studio will serve you better and charge you less."],
-  ["A design in two weeks.", "Concept alone takes longer than that once the site has been measured properly. We would rather lose the job than promise the date."],
-  ["Copying a building you saw.", "We will read the reference with you and take the idea underneath it, but a copy on a different site stops working on day one."],
-  ["Free concepts to compare studios.", "The first conversation is free and always will be. Drawings are not, for anyone."],
+  `<b>Gambar saja, tanpa pendampingan.</b> Kalau rencananya mengambil berkasnya lalu membangun tanpa kami, studio lain akan melayani Anda lebih baik dengan biaya lebih murah.`,
+  `<b>Desain dalam dua minggu.</b> Konsep saja memakan waktu lebih lama dari itu begitu tapaknya diukur dengan benar. Kami lebih rela kehilangan pekerjaannya daripada menjanjikan tanggalnya.`,
+  `<b>Menyalin bangunan yang Anda lihat.</b> Kami akan membaca acuannya bersama Anda dan mengambil gagasan di baliknya, tapi salinan di tapak yang berbeda berhenti bekerja sejak hari pertama.`,
+  `<b>Konsep gratis untuk membandingkan studio.</b> Percakapan pertama gratis dan akan selalu begitu. Gambar tidak, untuk siapa pun.`,
 ];
 
 const bandingSiap = Boolean(bandingSebelum && bandingSesudah);
@@ -122,30 +121,26 @@ const jsonLd = [
 ---
 
 <BaseLayout
-  title="The Studio"
-  description={`A deliberately small architecture studio in ${kota}, Indonesia. Two people, and you will meet both.`}
+  title="Studio"
+  description={`Studio arsitektur yang sengaja dibuat kecil, berkantor di ${kota}. Anda akan bertemu orang yang menggambar, bukan perantaranya.`}
   jsonLd={jsonLd}
 >
   <div class="pita">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar">
-        <span class="label masuk" data-t="stuLabel">STUDIO</span>
+        <span class="label masuk">STUDIO</span>
         <div class="s24"></div>
         {/* Nama kotanya datang dari setelan studio, jadi judul ini tidak
              bisa jadi satu kalimat utuh di kamus — kotanya disisipkan, dan
              yang diterjemahkan potongan di sekelilingnya. */}
         <h1 class="h1 kepala__judul">
-          <span class="brs"><i><span data-t="stuJudul1">A small studio in</span> {kota}</i></span>
-          <span class="brs"><i data-t="stuJudul2">that would rather <span class="ak">show you the work</span></i></span>
-          <span class="brs"><i data-t="stuJudul3">than describe it.</i></span>
+          <span class="brs"><i><span>Studio kecil di</span> {kota}</i></span>
+          <span class="brs"><i>yang lebih suka <span class="ak">menunjukkan karyanya</span></i></span>
+          <span class="brs"><i>daripada menjelaskannya.</i></span>
         </h1>
         <div class="s24"></div>
-        <p class="lead masuk masuk--3" data-t="stuLead">
-          We are deliberately small. That is not modesty — it is how the person who draws your
-          building stays the person who answers your messages. Everything below is what that
-          actually means in practice, including the parts that are inconvenient for us.
-        </p>
+        <p class="lead masuk masuk--3">Kami memang sengaja kecil. Itu bukan kerendahan hati — itu cara supaya orang yang menggambar bangunan Anda tetap orang yang membalas pesan Anda. Semua yang di bawah ini adalah apa artinya itu dalam praktik, termasuk bagian yang merepotkan kami sendiri.</p>
       </div>
     </div>
   </div>
@@ -157,8 +152,8 @@ const jsonLd = [
           angka.map((a, i) => (
             <div class="sel fak">
               <span class={a.tunggu ? "fak__n fak__n--tunggu" : "fak__n"}>{a.n}</span>
-              <div class="fak__l" data-t={`stuAngka${i}L`}>{a.label}</div>
-              <p class="fak__k" data-t={`stuAngka${i}K`}>{a.ket}</p>
+              <div class="fak__l">{a.label}</div>
+              <p class="fak__k">{a.ket}</p>
             </div>
           ))
         }
@@ -170,23 +165,15 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-studio">
         <div class="sel sel-teks">
-          <span class="label" data-t="stuKerja">HOW WE WORK</span>
+          <span class="label">CARA KAMI BEKERJA</span>
           <div class="s16"></div>
-          <h2 class="h2" data-t="stuKerjaJudul">You do not have to ask where the project is.</h2>
+          <h2 class="h2">Anda tidak perlu bertanya proyeknya sampai mana.</h2>
           <div class="s16"></div>
-          <p class="mut" data-t="stuKerjaP1">
-            Most of the anxiety in a building project is not about design. It is about not knowing.
-            Which stage are we in, what was decided last week, how much has been paid, what is the
-            next thing waiting on me.
-          </p>
+          <p class="mut">Sebagian besar kecemasan dalam proyek bangunan bukan soal desain, melainkan soal tidak tahu. Sekarang di tahap mana, apa yang diputuskan minggu lalu, sudah terbayar berapa, apa hal berikutnya yang menunggu saya.</p>
           <div class="s16"></div>
-          <p class="mut" data-t="stuKerjaP2">
-            So every client gets a page. Phases, drawings, invoices, and the comments thread all
-            live there. It updates when we update it, not when you ask. It needs no password and no
-            app — the link we send you is the login.
-          </p>
+          <p class="mut">Karena itu tiap klien mendapat satu halaman. Tahapan, gambar, tagihan, dan seluruh percakapannya tinggal di sana. Ia diperbarui saat kami memperbaruinya, bukan saat Anda bertanya. Tidak perlu kata sandi dan tidak perlu aplikasi — tautan yang kami kirim itulah loginnya.</p>
           <div class="s24"></div>
-          <a class="btn" href="/progres" data-t="stuLihatPortal">See how the client page works <span class="ar">→</span></a>
+          <a class="btn" href="/progres">Lihat cara halaman klien bekerja <span class="ar">→</span></a>
         </div>
         <div class="sel sel-ba">
           <div class="ba" id="ba">
@@ -195,28 +182,28 @@ const jsonLd = [
                 tetap terbaca bekerja. */}
             <div class={bandingSiap ? "ba__b" : "ba__b ba__b--built"}>
               {bandingSesudah ? (
-                <img src={bandingSesudah} alt="The site after construction" />
+                <img src={bandingSesudah} alt="Tapak setelah dibangun" />
               ) : (
                 <span>
-                  <span data-t="stuFotoJadi">PHOTO — BUILT</span>
-                  <small data-t="stuFotoTunggu">waiting for the studio’s photograph</small>
+                  <span>FOTO — SUDAH DIBANGUN</span>
+                  <small>menunggu foto dari studio</small>
                 </span>
               )}
             </div>
             <div class={bandingSiap ? "ba__b ba__sebelum" : "ba__b ba__sebelum ba__b--found"} id="baSebelum">
               {bandingSebelum ? (
-                <img src={bandingSebelum} alt="The site as found" />
+                <img src={bandingSebelum} alt="Tapak seperti saat ditemukan" />
               ) : (
                 <span>
-                  <span data-t="stuFotoAwal">PHOTO — SITE AS FOUND</span>
-                  <small data-t="stuFotoTunggu">waiting for the studio’s photograph</small>
+                  <span>FOTO — TAPAK APA ADANYA</span>
+                  <small>menunggu foto dari studio</small>
                 </span>
               )}
             </div>
-            <span class="ba__tag ba__tag--kiri" data-t="stuTagAwal">AS FOUND</span>
-            <span class="ba__tag ba__tag--kanan" data-t="stuTagJadi">BUILT</span>
+            <span class="ba__tag ba__tag--kiri">APA ADANYA</span>
+            <span class="ba__tag ba__tag--kanan">SUDAH DIBANGUN</span>
             <div class="ba__garis" id="baGaris"></div>
-            <button class="ba__pegang" id="baPegang" role="slider" aria-label="Compare before and after"
+            <button class="ba__pegang" id="baPegang" role="slider" aria-label="Bandingkan sebelum dan sesudah"
               aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
               <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5 3.5 10 8 15M12 5l4.5 5-4.5 5" /></svg>
             </button>
@@ -229,9 +216,9 @@ const jsonLd = [
   <div class="pita">
     <div class="dalam">
       <div class="isi isi--rapat">
-        <span class="label" data-t="stuYakin">WHAT WE BELIEVE</span>
+        <span class="label">APA YANG KAMI YAKINI</span>
         <div class="s16"></div>
-        <h2 class="h2" data-t="stuYakinJudul">Four positions we do not negotiate.</h2>
+        <h2 class="h2">Empat sikap yang tidak kami tawar.</h2>
       </div>
       <div class="baris b2">
         {
@@ -241,8 +228,8 @@ const jsonLd = [
                 <div class="prin">
                   <span class="prin__n">{p.no}</span>
                   <div>
-                    <h3 data-t={`stuPrinsip${p.no}J`}>{p.judul}</h3>
-                    <p data-t={`stuPrinsip${p.no}T`}>{p.teks}</p>
+                    <h3>{p.judul}</h3>
+                    <p>{p.teks}</p>
                   </div>
                 </div>
               ))}
@@ -255,15 +242,12 @@ const jsonLd = [
 
   <div class="pita">
     <div class="dalam">
-      <div class="isi isi--rapat">
-        <span class="label" data-t="stuTim">OUR TEAM</span>
-        <div class="s16"></div>
-        <h2 class="h2" data-t="stuTimJudul">Two people, and you will meet both.</h2>
-        <div class="s16"></div>
-        <p class="mut tim__intro" data-t="stuTimLead">
-          There is no account manager between you and the person drawing. The same two names appear
-          on the first call, on the drawings, and on the message you send at nine on a Sunday.
-        </p>
+      {/* Kepala seksi sengaja HANYA judul — tanpa eyebrow, tanpa paragraf
+          pengantar. Acuan pemilik (refine.dev/about) memang begitu, dan ia
+          memintanya eksplisit: "hanya nama dan jabatan, tidak perlu ada
+          text lain". */}
+      <div class="isi isi--rapat tim-kop">
+        <h2 class="h2">Tim kami</h2>
       </div>
       <div class="tim-rel">
         {
@@ -284,15 +268,14 @@ const jsonLd = [
                   <img src={o.photoUrl} alt={o.name ?? o.role} loading="lazy" decoding="async" />
                 ) : (
                   <span>
-                    PHOTO — {o.slotLabel}
-                    <small data-t="stuPotret">portrait 4:5</small>
+                    FOTO — {o.slotLabel}
+                    <small>potret 4:5</small>
                   </span>
                 )}
               </div>
               <div class="tim__isi">
-                <div class={o.name ? "tim__nm" : "tim__nm tunggu"}>{o.name ?? "Name to follow"}</div>
-                <div class={o.name ? "tim__pr" : "tim__pr tim__pr--tunggu"}>{o.role}</div>
-                {o.bio && <p class="tim__ket">{o.bio}</p>}
+                <div class={o.name ? "tim__nm" : "tim__nm tunggu"}>{o.name ?? "Nama menyusul"}</div>
+                <div class="tim__pr">{o.role}</div>
               </div>
             </div>
           ))
@@ -304,12 +287,8 @@ const jsonLd = [
             <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 4v12M4 10h12" /></svg>
           </span>
           <div>
-            <div class="tim__nm" data-t="stuLainnya">Everyone else comes in by project</div>
-            <p class="tim__ket tim__ket--lebar" data-t="stuLainnyaKet">
-              Structural engineers, MEP, renderers and a photographer are hired per project and
-              named in that project’s credits — not listed here as if they sat in this room. You
-              will know who touched your drawings.
-            </p>
+            <div class="tim__nm">Selebihnya masuk per proyek</div>
+            <p class="tim__ket tim__ket--lebar">Ahli struktur, MEP, perender, dan fotografer disewa per proyek dan dicantumkan di kredit proyek itu — bukan didaftar di sini seolah mereka duduk di ruangan ini. Anda akan tahu siapa yang menyentuh gambar Anda.</p>
           </div>
         </div>
       </div>
@@ -320,14 +299,11 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-studio">
         <div class="sel sel-teks">
-          <span class="label" data-t="stuRiwayat">HOW IT WENT</span>
+          <span class="label">BAGAIMANA JALANNYA</span>
           <div class="s16"></div>
-          <h2 class="h2" data-t="stuRiwayatJudul">The short version.</h2>
+          <h2 class="h2">Versi singkatnya.</h2>
           <div class="s16"></div>
-          <p class="mut" data-t="stuRiwayatLead">
-            Written as it happened, not as a growth story. Anything with a year on it should be
-            checkable against a project page on this site.
-          </p>
+          <p class="mut">Ditulis apa adanya, bukan sebagai kisah pertumbuhan. Apa pun yang bertahun di sini seharusnya bisa diperiksa terhadap halaman proyeknya di situs ini.</p>
         </div>
         <div class="sel sel-teks">
           {
@@ -340,8 +316,8 @@ const jsonLd = [
                      ia sengaja TIDAK diberi data-t — nama karya tidak
                      diterjemahkan. */}
                 <div>
-                  <h3 data-t={i === 2 ? undefined : `stuTonggak${i}J`}>{t.judul}</h3>
-                  <p data-t={`stuTonggak${i}T`}>{t.teks}</p>
+                  <h3>{t.judul}</h3>
+                  <p>{t.teks}</p>
                 </div>
               </div>
             ))
@@ -355,25 +331,20 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-studio">
         <div class="sel sel-teks">
-          <span class="label" data-t="stuJujur">HONESTLY</span>
+          <span class="label">JUJURNYA</span>
           <div class="s16"></div>
-          <h2 class="h2" data-t="stuJujurJudul">Things we are not the right studio for.</h2>
+          <h2 class="h2">Hal-hal yang membuat kami bukan studio yang tepat.</h2>
           <div class="s16"></div>
-          <p class="mut" data-t="stuJujurLead">
-            Reading this list costs you two minutes. Finding out the same thing in month three costs
-            considerably more.
-          </p>
+          <p class="mut">Membaca daftar ini memakan dua menit. Mengetahui hal yang sama di bulan ketiga jauh lebih mahal.</p>
         </div>
         <div class="sel sel-teks">
           {
-            tidak.map(([judul, teks], i) => (
+            tidak.map((baris) => (
               <div class="tidak">
                 <i class="kotak-ikon kotak-ikon--kecil kotak-ikon--redup">
                   <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
                 </i>
-                <span data-t={`stuTidak${i}`}>
-                  <b>{judul}</b> {teks}
-                </span>
+                <span set:html={baris} />
               </div>
             ))
           }
@@ -385,21 +356,17 @@ const jsonLd = [
   <div class="pita pita--akhir">
     <div class="dalam titik">
       <div class="isi isi--longgar ajak">
-        <h2 class="h2" data-t="stuAjakJudul">Still the right studio for you?</h2>
+        <h2 class="h2">Masih merasa kami studio yang tepat?</h2>
         <div class="s16"></div>
-        <p class="mut ajak__lead" data-t="stuAjakLead">
-          Tell us the site and the budget. If we are not the right fit we will say so in the first
-          reply, and point you somewhere better.
-        </p>
+        <p class="mut ajak__lead">Ceritakan tapaknya dan anggarannya. Kalau kami bukan yang cocok, kami akan mengatakannya di balasan pertama, dan menunjukkan tempat yang lebih baik.</p>
         <div class="s24"></div>
         <div class="rowx ajak__tombol">
-          <a class="btn btn--isi" href="/kontak" data-t="mulaiProyekPanah">Start a project <span class="ar">→</span></a>
-          <a class="btn" href="/proyek" data-t="stuLihatKarya">See the work <span class="ar">→</span></a>
+          <a class="btn btn--isi" href="/kontak">Mulai proyek →</a>
+          <a class="btn" href="/proyek">Lihat karyanya <span class="ar">→</span></a>
         </div>
       </div>
     </div>
   </div>
-  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_STUDIO)} is:inline />
 </BaseLayout>
 
 <style>
@@ -413,10 +380,15 @@ const jsonLd = [
      kolom akan meninggalkan satu lubang di sebelah kanan. Dengan auto-fit ia
      jadi dua kolom sekarang dan tiga begitu orang ketiga ditambahkan lewat
      /admin, tanpa menyentuh CSS lagi. */
+  .tim-kop {
+    padding-bottom: 30px;
+  }
   .tim-rel {
     position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    border-top: 1px solid var(--garis);
+    border-bottom: 1px solid var(--garis);
   }
   /* Penanda silang di sudut rel, sama bahasa visualnya dengan .dalam. */
   .tim-rel::before,
@@ -444,16 +416,45 @@ const jsonLd = [
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 26px 26px 28px;
+    padding: 34px 30px 36px;
     border-left: 1px solid var(--garis);
   }
   .tim:first-child {
     border-left: 0;
   }
+  /* Penanda silang di ujung atas dan bawah tiap garis pemisah kolom, persis
+     acuan pemilik. Digambar dengan dua gradien linear di satu kotak 9x9 —
+     satu batang tegak, satu batang mendatar — bukan dua pseudo-elemen
+     bersarang, karena tiap kartu cuma punya dua pseudo-elemen dan keduanya
+     sudah terpakai untuk ujung atas dan ujung bawah. */
+  .tim:not(:first-child)::before,
+  .tim:not(:first-child)::after {
+    content: "";
+    position: absolute;
+    left: -5px;
+    width: 9px;
+    height: 9px;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--garis-2), var(--garis-2)),
+      linear-gradient(var(--garis-2), var(--garis-2));
+    background-size: 1px 9px, 9px 1px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+  }
+  .tim:not(:first-child)::before {
+    top: -5px;
+  }
+  .tim:not(:first-child)::after {
+    bottom: -5px;
+  }
+  /* Potret 4:5, bukan persegi — acuan pemilik memakai potret tegak, dan
+     wajah yang dipotong persegi kehilangan bahu dan jadi terbaca sebagai
+     foto identitas. */
   .tim__foto {
     position: relative;
     width: 100%;
-    aspect-ratio: 1/1;
+    aspect-ratio: 4/5;
     background: var(--gelap);
     display: grid;
     place-items: center;
@@ -534,24 +535,22 @@ const jsonLd = [
     display: none;
   }
   .tim__isi {
-    padding: 18px 0 0;
+    padding: 22px 0 0;
   }
   .tim__nm {
     font-family: var(--judul);
-    font-size: 17px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
     color: var(--teks);
   }
+  /* Abu biasa, bukan teal berhuruf besar. Acuan pemilik menaruh jabatan
+     sebagai baris abu di bawah nama — huruf besar teal membuatnya terbaca
+     sebagai label sistem, bukan sebagai jabatan seseorang. */
   .tim__pr {
-    font-size: 12px;
-    color: var(--aksen);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-top: 5px;
-    font-weight: 600;
-  }
-  .tim__pr--tunggu {
-    color: var(--teks-3);
+    font-size: 14.5px;
+    color: var(--teks-2);
+    margin-top: 7px;
   }
   .tim__ket {
     margin-top: 10px;

@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getSettings } from "../lib/api";
-import { KAMUS_KONTAK } from "../lib/i18nHalaman";
 
 const settings = await getSettings();
 const email = settings.email?.trim() || null;
@@ -27,38 +26,38 @@ if (import.meta.env.PROD && !turnstileSiteKey) {
 }
 
 const jenisProyek = [
-  "A house",
-  "A café or restaurant",
-  "A workspace or office",
-  "Retail",
-  "A renovation",
-  "Something else",
+  "Rumah",
+  "Kafe atau restoran",
+  "Ruang kerja atau kantor",
+  "Ritel",
+  "Renovasi",
+  "Lainnya",
 ];
 const rentangAnggaran = [
-  "Not sure yet",
-  "Under Rp 500 million",
-  "Rp 500 million – 1,5 billion",
-  "Rp 1,5 – 5 billion",
-  "Above Rp 5 billion",
+  "Belum tahu",
+  "Di bawah Rp 500 juta",
+  "Rp 500 juta – 1,5 miliar",
+  "Rp 1,5 – 5 miliar",
+  "Di atas Rp 5 miliar",
 ];
 const langkah = [
   [
-    "We read it and reply within a day",
-    "Usually with two or three questions, because the first message never contains everything — and that is fine.",
+    "Kami baca dan balas dalam sehari",
+    "Biasanya dengan dua tiga pertanyaan, karena pesan pertama tidak pernah memuat semuanya — dan itu wajar.",
   ],
   [
-    "One call, about an hour",
-    "Video or WhatsApp, whichever your connection likes. We talk about the site, the money, and the timeline honestly.",
+    "Satu panggilan, sekitar sejam",
+    "Video atau WhatsApp, mana pun yang disukai koneksi Anda. Kita bicara soal tapak, uang, dan jadwal secara jujur.",
   ],
   [
-    "A written proposal",
-    "Scope, fee, and stages in writing. You decide after reading it — not during the call.",
+    "Proposal tertulis",
+    "Lingkup, biaya, dan tahapannya hitam di atas putih. Anda memutuskan setelah membacanya — bukan saat panggilan berlangsung.",
   ],
 ];
 const bantu = [
-  "Land size and orientation",
-  "Photos of the site as it is now",
-  "Roughly when you want to start",
+  "Luas dan orientasi tanah",
+  "Foto tapaknya seperti sekarang",
+  "Kira-kira kapan ingin mulai",
 ];
 
 const jsonLd = [
@@ -72,24 +71,19 @@ const jsonLd = [
 ---
 
 <BaseLayout
-  title="Start a project"
-  description="The first conversation costs nothing and commits you to nothing. Tell us the site, the budget, and what bothers you about it."
+  title="Mulai proyek"
+  description="Percakapan pertama tidak dipungut biaya dan tidak mengikat apa pun. Ceritakan tapaknya, anggarannya, dan apa yang mengganjal soal itu."
   jsonLd={jsonLd}
 >
   <div class="pita">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi kepala">
-        <span class="label" data-t="konLabel">CONTACT</span>
+        <span class="label">KONTAK</span>
         <div class="s24"></div>
-        <h1 class="h1 kepala__judul" data-t="konJudul">
-          Tell us the site, the budget,<br />and <span class="ak">what bothers you</span> about it.
-        </h1>
+        <h1 class="h1 kepala__judul">Ceritakan lokasinya, anggarannya,<br />dan <span class="ak">apa yang mengganjal</span> soal itu.</h1>
         <div class="s24"></div>
-        <p class="lead" data-t="konLead">
-          The first conversation costs nothing and commits you to nothing. Even if you decide not to
-          build, you will leave it knowing what the project would realistically take.
-        </p>
+        <p class="lead">Percakapan pertama tidak dipungut biaya dan tidak mengikat apa pun. Bahkan kalau Anda akhirnya memutuskan tidak membangun, Anda pulang tahu kira-kira apa yang sebenarnya dibutuhkan proyek itu.</p>
       </div>
     </div>
   </div>
@@ -99,31 +93,30 @@ const jsonLd = [
       <div class="baris baris-kontak">
         <div class="sel sel-kontak">
           <dl class="info">
-            <dt data-t="konBalas">Reply time</dt>
+            <dt>Waktu balasan</dt>
             <dd>
-              <span data-t="konBalasNilai">Under 24 hours</span><small data-t="konBalasKet"
-                >Including weekends. A small studio is slower at many things and faster at this
-                one.</small
+              <span>Di bawah 24 jam</span><small
+                >Termasuk akhir pekan. Studio kecil lebih lambat dalam banyak hal, dan lebih cepat dalam yang satu ini.</small
               >
             </dd>
-            <dt data-t="konJam">Working hours</dt>
+            <dt>Jam kerja</dt>
             <dd class="jam">
               09:00 – 18:00 WIB <span class="dim">(UTC+7)</span>
               <small id="jamKini">—</small>
             </dd>
-            <dt data-t="konBahasa">Languages</dt>
+            <dt>Bahasa</dt>
             <dd>
-              English &amp; Bahasa Indonesia<small data-t="konBahasaKet"
-                >Write in whichever is easier. We answer in the same one.</small
+              English &amp; Bahasa Indonesia<small
+                >Tulis dengan yang mana pun yang lebih mudah. Kami menjawab dengan bahasa yang sama.</small
               >
             </dd>
             {
               (email || telp) && (
                 <>
-                  <dt data-t="konLangsung">Direct</dt>
+                  <dt>Langsung</dt>
                   <dd>
                     {email ? <a class="tl" href={`mailto:${email}`}>{email}</a> : "WhatsApp"}
-                    {telp && <small data-t="konLangsungKet">Or WhatsApp, if that is faster for you.</small>}
+                    {telp && <small>Atau WhatsApp, kalau itu lebih cepat buat Anda.</small>}
                   </dd>
                 </>
               )
@@ -132,7 +125,7 @@ const jsonLd = [
           <div class="s16"></div>
           <div class="garis-tipis"></div>
           <div class="s24"></div>
-          <span class="label label--redup" data-t="konBantu">HELPFUL, NOT REQUIRED</span>
+          <span class="label label--redup">MEMBANTU, TIDAK WAJIB</span>
           <div class="s16"></div>
           {
             bantu.map((b, i) => (
@@ -140,61 +133,61 @@ const jsonLd = [
                 <i>
                   <svg width="9" height="9" viewBox="0 0 10 10"><path d="M1 5l3 3 5-6" stroke="#2DD4BF" stroke-width="1.8" fill="none" /></svg>
                 </i>
-                <span data-t={`konBantu${i}`}>{b}</span>
+                <span>{b}</span>
               </div>
             ))
           }
           <div class="s10"></div>
-          <p class="dim kecil" data-t="konBantuKet">None of it is required to write. Send what you have.</p>
+          <p class="dim kecil">Tidak ada yang wajib untuk menulis. Kirim saja yang Anda punya.</p>
         </div>
 
         <div class="sel sel-form">
           <form id="formKontak" novalidate>
             <div class="dua">
               <div class="bidang" data-bidang="nama">
-                <label for="f-nama"><span data-t="konNama">Your name</span><span class="wajib">*</span></label>
+                <label for="f-nama"><span>Nama Anda</span><span class="wajib">*</span></label>
                 <input class="isian" id="f-nama" name="nama" autocomplete="name" placeholder="Jane Wijaya" />
                 <p class="bantu" data-pesan>&nbsp;</p>
               </div>
               <div class="bidang" data-bidang="email">
-                <label for="f-email"><span data-t="konEmail">Email</span><span class="wajib">*</span></label>
+                <label for="f-email"><span>Email</span><span class="wajib">*</span></label>
                 <input class="isian" id="f-email" name="email" type="email" autocomplete="email" placeholder="jane@example.com" />
-                <p class="bantu" data-pesan data-t="konEmailKet">We reply here.</p>
+                <p class="bantu" data-pesan>Balasan kami kirim ke sini.</p>
               </div>
             </div>
             <div class="dua">
               <div class="bidang" data-bidang="wa">
-                <label for="f-wa" data-t="konWa">WhatsApp</label>
+                <label for="f-wa">WhatsApp</label>
                 <input class="isian" id="f-wa" name="wa" inputmode="tel" autocomplete="tel" placeholder="+62 …" />
-                <p class="bantu" data-pesan data-t="konWaKet">Optional. Faster for quick questions.</p>
+                <p class="bantu" data-pesan>Opsional. Lebih cepat untuk pertanyaan singkat.</p>
               </div>
               <div class="bidang" data-bidang="lokasi">
-                <label for="f-lokasi"><span data-t="konLokasi">Where is the site?</span><span class="wajib">*</span></label>
+                <label for="f-lokasi"><span>Di mana tapaknya?</span><span class="wajib">*</span></label>
                 <input class="isian" id="f-lokasi" name="lokasi" placeholder="Pontianak, Indonesia" />
-                <p class="bantu" data-pesan data-t="konLokasiKet">City is enough.</p>
+                <p class="bantu" data-pesan>Nama kota saja sudah cukup.</p>
               </div>
             </div>
             <div class="dua">
               <div class="bidang" data-bidang="jenis">
-                <label for="f-jenis"><span data-t="konJenis">What are you building?</span><span class="wajib">*</span></label>
+                <label for="f-jenis"><span>Anda membangun apa?</span><span class="wajib">*</span></label>
                 <select class="isian" id="f-jenis" name="jenis">
-                  <option value="" data-t="konPilih">Choose one…</option>
-                  {jenisProyek.map((j, i) => (<option data-t={`konJenis${i}`}>{j}</option>))}
+                  <option value="">Pilih satu…</option>
+                  {jenisProyek.map((j) => (<option>{j}</option>))}
                 </select>
                 <p class="bantu" data-pesan>&nbsp;</p>
               </div>
               <div class="bidang" data-bidang="anggaran">
-                <label for="f-anggaran" data-t="konAnggaran">Budget range</label>
+                <label for="f-anggaran">Rentang anggaran</label>
                 <select class="isian" id="f-anggaran" name="anggaran">
-                  {rentangAnggaran.map((a, i) => (<option data-t={`konAnggaran${i}`}>{a}</option>))}
+                  {rentangAnggaran.map((a) => (<option>{a}</option>))}
                 </select>
-                <p class="bantu" data-pesan data-t="konAnggaranKet">“Not sure yet” is a normal answer.</p>
+                <p class="bantu" data-pesan>“Belum tahu” itu jawaban yang wajar.</p>
               </div>
             </div>
             <div class="bidang" data-bidang="pesan">
-              <label for="f-pesan"><span data-t="konPesan">Tell us about it</span><span class="wajib">*</span></label>
+              <label for="f-pesan"><span>Ceritakan</span><span class="wajib">*</span></label>
               <textarea class="isian" id="f-pesan" name="pesan" placeholder="What is the site like? What is the part you are unsure about?"></textarea>
-              <p class="bantu" data-pesan data-t="konPesanKet">The awkward part of the brief is the useful part.</p>
+              <p class="bantu" data-pesan>Bagian brief yang canggung justru bagian yang berguna.</p>
             </div>
 
             {/* Perangkap bot: manusia tidak pernah melihatnya, jadi apa pun yang
@@ -202,7 +195,7 @@ const jsonLd = [
                 display:none inline, supaya tetap ada di pohon aksesibilitas
                 sebagai isian yang jelas-jelas tidak perlu diisi. */}
             <div class="jebakan" aria-hidden="true">
-              <label for="f-website" data-t="konJebakan">Leave this empty</label>
+              <label for="f-website">Biarkan kosong</label>
               <input id="f-website" name="website" tabindex="-1" autocomplete="off" />
             </div>
 
@@ -216,12 +209,8 @@ const jsonLd = [
             }
             <div class="s24"></div>
             <div class="kirim-baris">
-              <p class="dim kecil kirim-baris__ket" data-t="konPrivasi">
-                We never share your details, and we do not send newsletters.
-              </p>
-              <button class="btn btn--isi" type="submit" id="kirim" data-t="konKirim">
-                Send message <span class="ar">→</span>
-              </button>
+              <p class="dim kecil kirim-baris__ket">Kami tidak pernah membagikan data Anda, dan tidak mengirim buletin.</p>
+              <button class="btn btn--isi" type="submit" id="kirim">Kirim pesan <span class="ar">→</span></button>
             </div>
             <div id="hasil" role="status" aria-live="polite" hidden></div>
           </form>
@@ -233,9 +222,9 @@ const jsonLd = [
   <div class="pita">
     <div class="dalam">
       <div class="isi isi--rapat">
-        <span class="label" data-t="konSetelah">AFTER YOU PRESS SEND</span>
+        <span class="label">SETELAH ANDA MENEKAN KIRIM</span>
         <div class="s16"></div>
-        <h2 class="h2" data-t="konSetelahJudul">Three steps, and none of them cost anything.</h2>
+        <h2 class="h2">Tiga langkah, dan tidak satu pun berbayar.</h2>
       </div>
       <div class="baris b3 langkah">
         {
@@ -243,9 +232,9 @@ const jsonLd = [
             <div class="sel">
               <span class="angka no"></span>
               <div class="s16"></div>
-              <p class="hs" data-t={`konLangkah${i}J`}>{judul}</p>
+              <p class="hs">{judul}</p>
               <div class="s6"></div>
-              <p class="mut kecil" data-t={`konLangkah${i}T`}>{teks}</p>
+              <p class="mut kecil">{teks}</p>
             </div>
           ))
         }
@@ -257,37 +246,28 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris b2">
         <div class="sel sel-tutup">
-          <span class="label label--redup" data-t="konKlien">ALREADY A CLIENT?</span>
+          <span class="label label--redup">SUDAH JADI KLIEN?</span>
           <div class="s16"></div>
-          <p class="mut kecil" data-t="konKlienKet">
-            Your project page has the phases, documents and invoices. Use the link we sent you — it
-            does not need a password.
-          </p>
+          <p class="mut kecil">Halaman proyek Anda memuat tahapan, dokumen, dan tagihan. Pakai tautan yang kami kirim — tidak perlu kata sandi.</p>
           <div class="s16"></div>
-          <a class="btn" href="/progres" data-t="konPortal">Open project portal <span class="ar">→</span></a>
+          <a class="btn" href="/progres">Buka portal proyek <span class="ar">→</span></a>
         </div>
         <div class="sel sel-tutup">
-          <span class="label label--redup" data-t="konTanpaForm">RATHER NOT FILL A FORM?</span>
+          <span class="label label--redup">TIDAK INGIN MENGISI FORM?</span>
           <div class="s16"></div>
-          <p class="mut kecil" data-t="konTanpaFormKet">
-            Write one line on WhatsApp. “I have a plot in Pontianak and no idea where to start” is a
-            perfectly good first message.
-          </p>
+          <p class="mut kecil">Tulis satu baris di WhatsApp. “Saya punya tanah di Pontianak dan belum tahu harus mulai dari mana” sudah jadi pesan pertama yang sangat baik.</p>
           <div class="s16"></div>
           {
             telp ? (
-              <a class="btn" href={waTautan(telp)} rel="noopener noreferrer" target="_blank" data-t="konWaTombol">
-                Message on WhatsApp <span class="ar">→</span>
-              </a>
+              <a class="btn" href={waTautan(telp)} rel="noopener noreferrer" target="_blank">Kirim lewat WhatsApp <span class="ar">→</span></a>
             ) : email ? (
-              <a class="btn" href={`mailto:${email}`} data-t="konEmailTombol">Email us instead <span class="ar">→</span></a>
+              <a class="btn" href={`mailto:${email}`}>Kirim email saja <span class="ar">→</span></a>
             ) : null
           }
         </div>
       </div>
     </div>
   </div>
-  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_KONTAK)} is:inline />
 </BaseLayout>
 
 {turnstileSiteKey && <script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js" />}
@@ -452,16 +432,9 @@ const jsonLd = [
 
 <script>
   import { submitInquiry } from "../lib/api";
-  import { penerjemah } from "../lib/i18nRuntime";
 
   (() => {
     "use strict";
-
-    /* Halaman ini punya banyak kalimat yang DITULIS JS: jam studio, tiap pesan
-       galat validasi, dan kotak hasil kirim. Semuanya muncul sesudah kamus
-       dijalankan, jadi tidak bisa ditukar oleh pengalih — harus tahu bahasanya
-       sendiri. Kalimat Inggrisnya tetap di sini, terjemahannya di kamus. */
-    const { t, saatTukar } = penerjemah();
 
     /* Jam studio dihitung dari zona waktu PENGUNJUNG — supaya orang di Singapura
        atau Belanda langsung tahu apakah sekarang jam kerja di sini. */
@@ -472,17 +445,16 @@ const jsonLd = [
       const j = wib.getHours();
       const buka = j >= 9 && j < 18;
       jam.innerHTML =
-        t("konJamAwal", "It is") +
+        "Sekarang pukul" +
         ` <strong class="${buka ? "ak" : "mut"}">` +
         `${String(j).padStart(2, "0")}:${String(wib.getMinutes()).padStart(2, "0")}</strong> ` +
-        t("konJamTengah", "in the studio right now —") + " " +
+        "di studio —" + " " +
         (buka
-          ? t("konJamBuka", "we are working")
-          : t("konJamTutup", "outside hours, but the message still lands")) + ".";
+          ? "kami sedang bekerja"
+          : "di luar jam kerja, tapi pesannya tetap masuk") + ".";
     };
     perbaruiJam();
     setInterval(perbaruiJam, 30000);
-    saatTukar(perbaruiJam);
 
     const form = document.getElementById("formKontak") as HTMLFormElement | null;
     const hasil = document.getElementById("hasil");
@@ -490,22 +462,19 @@ const jsonLd = [
     if (!form || !hasil || !kirim) return;
 
     /* Pesan galat menyebut APA yang salah dan APA yang harus dilakukan. */
-    /* Pesannya diambil lewat t() SAAT DIPAKAI, bukan saat aturan ini dibuat:
-       kalau diambil sekali di awal, menukar bahasa tidak akan mengubah galat
-       yang muncul sesudahnya. */
     const ATURAN: Record<string, (v: string) => true | string> = {
       nama: (v) =>
-        v.trim().length >= 2 || t("konSalahNama", "Please write the name we should call you."),
+        v.trim().length >= 2 || "Tuliskan nama yang bisa kami pakai menyapa Anda.",
       email: (v) =>
         /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) ||
-        t("konSalahEmail", "This address is missing the part after the dot."),
+        "Alamat ini kehilangan bagian setelah titiknya.",
       lokasi: (v) =>
-        v.trim().length >= 2 || t("konSalahLokasi", "Even just the city helps us answer properly."),
+        v.trim().length >= 2 || "Nama kotanya saja sudah cukup membantu kami menjawab dengan benar.",
       jenis: (v) =>
-        v !== "" || t("konSalahJenis", "Pick the closest one — you can change your mind later."),
+        v !== "" || "Pilih yang paling mendekati — nanti masih bisa diubah.",
       pesan: (v) =>
         v.trim().length >= 20 ||
-        t("konSalahPesan", "A little more, please — at least a sentence about the site."),
+        "Tambah sedikit lagi — minimal satu kalimat tentang tapaknya.",
     };
     const isian = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
     const bidang = (n: string) => form.querySelector<HTMLElement>(`[data-bidang="${n}"]`)!;
@@ -527,15 +496,12 @@ const jsonLd = [
         pulihkanBantu(p);
       }
     };
-    /* Teks bantuan dipulihkan dari KAMUS, bukan dari salinan yang diambil saat
-       skrip ini mulai. Salinan itu membeku pada bahasa yang kebetulan aktif
-       waktu itu; sekali pengunjung menukar bahasa, memulihkannya berarti
-       menempelkan kalimat berbahasa salah yang tidak pernah ditukar lagi.
-       `data-en` disimpan pengalih, `data-asli` jadi cadangan untuk pengunjung
-       yang belum pernah menukar sama sekali. */
+    /* Teks bantuan dipulihkan dari salinan yang diambil saat skrip mulai.
+       Dulu ia harus lewat kamus karena bahasanya bisa ditukar di tengah
+       jalan; sejak situs ini hanya berbahasa Indonesia, salinannya tidak
+       bisa lagi jadi basi. */
     const pulihkanBantu = (p: HTMLElement) => {
-      const en = p.dataset.en ?? p.dataset.asli ?? "&nbsp;";
-      p.innerHTML = p.dataset.t ? t(p.dataset.t, en) : en;
+      p.innerHTML = p.dataset.asli ?? "&nbsp;";
     };
     form.querySelectorAll<HTMLElement>("[data-pesan]").forEach((p) => {
       p.dataset.asli = p.innerHTML;
@@ -550,45 +516,12 @@ const jsonLd = [
       });
     });
 
-    /* Kotak hasil ikut digambar ulang saat bahasa ditukar — kalau tidak,
-       "Sent. It is in the studio inbox." tetap Inggris di halaman Indonesia,
-       dan justru kalimat itu yang paling dibaca orang. */
-    let hasilKini: { jenis: "ok" | "salah"; kJudul: string; kTeks: string; enJudul: string; enTeks: string } | null = null;
     /* Diisi hanya oleh cabang galat jaringan, dan dibersihkan oleh yang lain —
        tanpa itu, satu kegagalan akan menempel di kotak sukses berikutnya. */
     let galatApi = "";
 
-    const gambarHasil = () => {
-      if (!hasilKini) return;
-      pesanKotak(
-        hasilKini.jenis,
-        t(hasilKini.kJudul, hasilKini.enJudul),
-        galatApi + t(hasilKini.kTeks, hasilKini.enTeks),
-      );
-    };
-
-    const tampilkanHasil = (
-      jenis: "ok" | "salah", kJudul: string, enJudul: string, kTeks: string, enTeks: string,
-    ) => {
-      hasilKini = { jenis, kJudul, kTeks, enJudul, enTeks };
-      gambarHasil();
-    };
-
-    saatTukar(() => {
-      gambarHasil();
-      /* Galat validasi yang sedang tampil juga ditulis JS. Yang bidangnya
-         sedang bertanda salah dijalankan ulang aturannya; yang tidak,
-         teks bantuannya dipulihkan dari kamus. */
-      Object.keys(ATURAN).forEach((n) => {
-        const b = bidang(n);
-        if (!b.classList.contains("bidang--salah")) return;
-        const h = ATURAN[n](isian(n).value);
-        tandai(n, h === true ? "" : h);
-      });
-      form.querySelectorAll<HTMLElement>("[data-pesan]").forEach((p) => {
-        if (p.classList.contains("bantu")) pulihkanBantu(p);
-      });
-    });
+    const tampilkanHasil = (jenis: "ok" | "salah", judul: string, teks: string) =>
+      pesanKotak(jenis, judul, galatApi + teks);
 
     const pesanKotak = (jenis: "ok" | "salah", judul: string, teks: string) => {
       const warna = jenis === "ok" ? "#2DD4BF" : "#F87171";
@@ -614,12 +547,8 @@ const jsonLd = [
       }
       if (pertamaSalah) {
         galatApi = "";
-        tampilkanHasil(
-          "salah",
-          "konHasilBelumJ", "Nothing was sent yet.",
-          "konHasilBelumT",
-          "A few fields still need something — they are marked above. Fix those and press send again.",
-        );
+        tampilkanHasil("salah", "Belum ada yang terkirim.",
+          "Beberapa isian masih perlu dilengkapi — sudah ditandai di atas. Perbaiki, lalu tekan kirim lagi.");
         const el = isian(pertamaSalah);
         el.focus({ preventScroll: true });
         el.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -648,23 +577,16 @@ const jsonLd = [
         form.reset();
         form.querySelectorAll(".bidang").forEach((b) => b.classList.remove("bidang--benar"));
         galatApi = "";
-        tampilkanHasil(
-          "ok",
-          "konHasilOkJ", "Sent. It is in the studio inbox.",
-          "konHasilOkT", "You will get a reply within a day, usually with two or three questions.",
-        );
+        tampilkanHasil("ok", "Terkirim. Sudah masuk ke kotak masuk studio.",
+          "Anda akan dapat balasan dalam sehari, biasanya dengan dua tiga pertanyaan.");
       } catch (err) {
         /* Pesan dari API tetap apa adanya — itu keterangan teknis yang
            berguna untuk disalin, bukan kalimat pemasaran. Yang diterjemahkan
            kalimat di sekelilingnya, dan ia disambung saat digambar supaya
            ikut benar kalau bahasanya ditukar sesudah galatnya muncul. */
         galatApi = (err as Error).message;
-        tampilkanHasil(
-          "salah",
-          "konHasilGagalJ", "It did not go through.",
-          "konHasilGagalT",
-          " Try again in a moment, or write to us directly — the address is on the left.",
-        );
+        tampilkanHasil("salah", "Tidak berhasil terkirim.",
+          " Coba lagi sebentar, atau tulis langsung ke kami — alamatnya ada di sebelah kiri.");
         // Token Turnstile sekali pakai; minta yang baru supaya percobaan
         // berikutnya tidak ditolak karena token yang sudah terpakai.
         (window as unknown as { turnstile?: { reset: () => void } }).turnstile?.reset();

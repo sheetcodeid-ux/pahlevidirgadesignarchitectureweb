@@ -6,7 +6,7 @@ import {
   listTestimonials,
   getSettings,
   subjudulBerguna,
-  CATEGORY_LABELS_EN,
+  KATEGORI_LABEL,
   type Project,
   type ProjectImage,
 } from "../lib/api";
@@ -62,28 +62,27 @@ const heroFoto: FotoBerlabel | null = semuaFoto[0] ?? null;
 
 const proses = [
   {
-    no: "01. LISTEN",
-    judul: "We start from how you live, not from a style.",
-    teks: "One long conversation, then a written brief you can correct yourself — in your own words, and in your own time.",
+    no: "01. DENGAR",
+    judul: "Mulai dari cara Anda memakai ruangnya.",
+    teks: "Satu percakapan, lalu brief tertulis yang bisa Anda koreksi sendiri.",
   },
   {
-    no: "02. DRAW",
-    judul: "Concept, plans and construction drawings — all reviewable from a phone.",
-    teks: "Every document can be approved or sent back for changes right in your project page, with the whole conversation kept next to it.",
+    no: "02. GAMBAR",
+    judul: "Konsep sampai gambar kerja, bisa ditinjau dari ponsel.",
+    teks: "Setujui atau minta revisi langsung di halaman proyek Anda.",
   },
   {
-    no: "03. BUILD & STAY",
-    judul: "You know where the project is, every week.",
-    teks: "Site photos, invoices and payment receipts land in the same page. No news gets lost between a WhatsApp thread and a spreadsheet.",
+    no: "03. BANGUN",
+    judul: "Anda tahu posisi proyeknya tiap minggu.",
+    teks: "Foto lapangan, tagihan, dan kuitansi mendarat di halaman yang sama.",
   },
 ];
 
-/* Enam kompetensi yang disebut strategi studio sebagai pembeda yang sulit
-   ditiru studio generalis — alur bar dan dapur, ergonomi barista, akustik,
-   pencahayaan, material tahan lembap — ditambah satu yang memang milik
-   segmen rumah: iklim khatulistiwa. Daftar sebelumnya berisi janji tentang
-   CARA KERJA (zona waktu, portal, kuitansi); itu tetap ada, tapi tempatnya
-   di seksi portal, bukan di seksi yang menjawab "kenapa studio ini". */
+/* Enam kompetensi yang disebut dokumen strategi sebagai pembeda yang sulit
+   ditiru studio generalis (§2.2): alur bar dan dapur, ergonomi barista,
+   akustik, pencahayaan, material tahan lembap — ditambah dua yang memang
+   milik segmen rumah. Kalimatnya sengaja pendek: pemilik meminta halaman
+   ini "to the point", dengan acuan refine.dev. */
 const IKON: Record<string, string> = {
   alur: "M2.5 4.5h5v5h-5v-5Zm10 0h5v5h-5v-5Zm-10 6h5v5h-5v-5Zm10 0h5v5h-5v-5ZM7.5 7h5M15 9.5v1",
   suara: "M3 8v4h3l4 3.5v-11L6 8H3Zm11-1.5a5 5 0 010 7M16.5 4a8.5 8.5 0 010 12",
@@ -93,212 +92,61 @@ const IKON: Record<string, string> = {
   kursi: "M5 2.5h10v7H5v-7Zm-1.5 7h13v3h-13v-3ZM5.5 12.5v5m9-5v5",
 };
 const fitur: [keyof typeof IKON, string, string][] = [
-  ["alur", "We draw the bar before the façade", "Where the barista turns, where the cups land, where the queue stands. A café that photographs well and works badly is a café that closes."],
-  ["suara", "Full of conversation, never loud", "Acoustics planned for a room that will be busy. Hard surfaces look good in renders and make people leave early."],
-  ["cahaya", "Photogenic without looking staged", "Lighting that flatters the room and the food at the same time — and still lets a barista read a scale at 6am."],
-  ["lembap", "Materials chosen for Pontianak", "Extreme humidity ruins finishes that work fine in Jakarta. We specify for the climate you actually have."],
-  ["matahari", "Houses that stay cool on their own", "Orientation, shading and cross-ventilation first. Air conditioning should be a comfort, not a life-support machine."],
-  ["kursi", "Rooms sized from how you use them", "Measured against real furniture and real circulation, not drawn to fill a plot boundary."],
+  ["alur", "Bar digambar sebelum fasad", "Ke mana barista berputar, di mana antrean berdiri, di mana cangkir mendarat."],
+  ["suara", "Ramai, tapi tidak berisik", "Akustik dirancang untuk ruang yang memang akan penuh obrolan."],
+  ["cahaya", "Foto-genik tanpa terasa dibuat-buat", "Bagus untuk ruangnya, untuk makanannya, dan untuk barista jam 6 pagi."],
+  ["lembap", "Material dipilih untuk iklim tapaknya", "Finishing yang aman di kota kering bisa rusak di pesisir yang lembap."],
+  ["matahari", "Rumah yang adem dengan sendirinya", "Orientasi, pembayangan, dan ventilasi silang dulu — baru AC."],
+  ["kursi", "Ruang diukur dari cara dipakai", "Terhadap perabot dan sirkulasi nyata, bukan untuk memenuhi kavling."],
 ];
 
 const janji = [
-  ["M10 1a9 9 0 100 18 9 9 0 000-18ZM10 5.5V10l3 2", "A reply within 24 hours", "Small studio — which is exactly why your message doesn’t queue."],
-  ["M11.5 1.5h-7v17h11V5.5l-4-4Zm0 0v4h4M7 11h6M7 14h4", "Every drawing approved online", "Approve or request changes from your phone, with the whole thread kept."],
-  ["M2.5 5.5h15v9h-15zM2.5 9h15M5.5 12h3", "Receipts you can open yourself", "Every payment gets a link. No “trust me, it’s recorded”."],
+  ["M10 1a9 9 0 100 18 9 9 0 000-18ZM10 5.5V10l3 2", "Dibalas dalam 24 jam", "Studio kecil — justru karena itu pesan Anda tidak mengantre."],
+  ["M11.5 1.5h-7v17h11V5.5l-4-4Zm0 0v4h4M7 11h6M7 14h4", "Gambar disetujui daring", "Setujui atau minta revisi dari ponsel, percakapannya tersimpan."],
+  ["M2.5 5.5h15v9h-15zM2.5 9h15M5.5 12h3", "Bukti tiap pembayaran", "Sekali bayar, satu tautan kuitansi yang bisa Anda buka sendiri."],
 ];
-
-/* Terjemahan Indonesia seluruh kalimat pemasaran beranda. Kuncinya sama
-   dengan atribut data-t di markup; yang Inggris tidak diulang di sini karena
-   ia SUDAH ada di markup dan skrip pengalih menyimpannya sendiri. */
-const KAMUS_BERANDA: Record<string, string> = {
-  heroLabel: "STUDIO ARSITEKTUR · PONTIANAK · SEJAK",
-  heroJudul:
-    '<span class="brs"><i>Kami merancang ruang hospitality</i></span>' +
-    '<span class="brs"><i>dan rumah tropis untuk</i></span>' +
-    '<span class="brs"><i><span class="ak glow">iklim khatulistiwa</span>.</i></span>',
-  heroLead:
-    "Coffee shop, restoran, dan rumah di Pontianak. Kami merancang untuk panasnya, lembapnya, dan cara sebuah ruang benar-benar dipakai — lalu Anda memantaunya dibangun dari satu tautan, minggu ini, bukan kuartal lalu.",
-  heroLihat: 'Lihat karya kami <span class="ar">→</span>',
-  heroMulai: 'Mulai proyek <span class="ar">→</span>',
-
-  klienLabel: "KLIEN TERPILIH",
-  karyaLabel: "KARYA TERPILIH",
-
-  portalLabel: "SELAGI DIBANGUN",
-  portalJudul: "Bagian yang hampir tak diberikan studio seukuran kami.",
-  portalLead:
-    "Entah tapaknya di seberang kota atau di provinsi lain, ketakutan yang sebenarnya bukan “apakah nanti bagus”. Melainkan <strong>“apakah saya akan tahu apa yang sedang terjadi”</strong>. Karena itu tiap proyek punya halamannya sendiri — tahapan, dokumen yang bisa Anda setujui, tagihan, dan bukti untuk tiap pembayaran yang bisa Anda buka sendiri.",
-
-  prosesLabel: "BAGAIMANA JALANNYA",
-  prosesJudul: "Tiga langkah sebelum satu garis pun ditarik.",
-
-  fiturLabel: "YANG BENAR-BENAR KAMI KUASAI",
-  fiturJudul: "Studio generalis bisa menggambarnya. Yang bisa membuatnya bekerja jam 7 pagi lebih sedikit.",
-
-  testiLabel: "DARI KLIEN",
-  testiKosong: "Belum ada testimoni",
-  testiKosongKet: "Ini terisi sendiri dari portal klien — kami tidak menuliskannya",
-
-  faqLabel: "SEBELUM ANDA BERTANYA",
-  faqJudul: "Lima pertanyaan yang paling sering kami terima.",
-  faqSemua: 'Semua pertanyaan <span class="ar">→</span>',
-
-  ajakJudul:
-    'Ceritakan lokasinya, anggarannya, dan <span class="ak">apa yang mengganjal</span> soal itu.',
-  ajakLead: "Balasan pertama biasanya dalam 24 jam. Percakapan pertama tidak dipungut biaya.",
-
-  "janji.0.judul": "Balasan dalam 24 jam",
-  "janji.0.teks": "Studio kecil — justru karena itu pesan Anda tidak mengantre.",
-  "janji.1.judul": "Tiap gambar disetujui daring",
-  "janji.1.teks": "Setujui atau minta perubahan dari ponsel, seluruh percakapannya tersimpan.",
-  "janji.2.judul": "Bukti yang bisa Anda buka sendiri",
-  "janji.2.teks": "Tiap pembayaran dapat tautannya. Tanpa “percaya saja, sudah dicatat”.",
-
-  "fitur.0.judul": "Kami menggambar barnya sebelum fasadnya",
-  "fitur.0.teks": "Ke mana barista berputar, di mana cangkirnya mendarat, di mana antrean berdiri. Kafe yang bagus difoto tapi buruk dipakai adalah kafe yang tutup.",
-  "fitur.1.judul": "Penuh obrolan, tidak pernah berisik",
-  "fitur.1.teks": "Akustik dirancang untuk ruang yang memang akan ramai. Permukaan keras terlihat bagus di render dan membuat orang pulang lebih cepat.",
-  "fitur.2.judul": "Foto-genik tanpa terasa dibuat-buat",
-  "fitur.2.teks": "Pencahayaan yang memuliakan ruangnya sekaligus makanannya — dan tetap membuat barista bisa membaca timbangan jam 6 pagi.",
-  "fitur.3.judul": "Material dipilih untuk Pontianak",
-  "fitur.3.teks": "Kelembapan ekstrem merusak finishing yang baik-baik saja di Jakarta. Kami menentukan material untuk iklim yang benar-benar Anda hadapi.",
-  "fitur.4.judul": "Rumah yang adem dengan sendirinya",
-  "fitur.4.teks": "Orientasi, pembayangan, dan ventilasi silang lebih dulu. AC seharusnya kenyamanan, bukan alat penyambung hidup.",
-  "fitur.5.judul": "Ruang diukur dari cara Anda memakainya",
-  "fitur.5.teks": "Diukur terhadap perabot sungguhan dan sirkulasi sungguhan, bukan digambar untuk memenuhi batas kavling.",
-
-  /* ── Tier layanan ── */
-  tierLabel: "BERAPA BIAYANYA",
-  tierJudul: "Diumumkan, supaya Anda bisa mencoret kami tanpa perlu bertanya.",
-  tierLead:
-    "Ini rentang, bukan penawaran — angka di dalam rentangnya tergantung tapak Anda dan seberapa rumit ia ternyata. Yang jujur diberitahukan rentang ini adalah apakah kami masuk anggaran Anda sama sekali, dan itu pertanyaan yang di kebanyakan studio harus Anda tanyakan lewat email dulu.",
-
-  tierKkafe: "COFFEE SHOP & F&B",
-  tierKetkafe: "Vertikal yang kami spesialisasi. Sebuah kafe adalah portofolio yang dilewati tiga ratus orang setiap hari.",
-  tierKrumah: "RUMAH TINGGAL",
-  tierKetrumah: "Rumah tropis yang dirancang untuk panas, hujan, dan lembap — bukan diadaptasi dari denah yang digambar untuk tempat yang lebih dingin.",
-
-  tierPopuler: "PALING DIPILIH",
-  tierPer: "/ proyek",
-  tierMulai: "Mulai dari sini",
-  tierUntuk: "Dibuat untuk",
-
-  tierNstarter: "Starter",
-  tierRstarter: "Untuk coffee shop pertama, dengan anggaran yang apa adanya.",
-  tierFstarter: "Rp 15–25 juta",
-  tierUstarter: "Coffee shop pertama, budget terbatas",
-  tierIKstarter: "Yang Anda dapat:",
-  tierDstarter0: "Konsep desain",
-  tierDstarter1: "Denah dan tata ruang",
-  tierDstarter2: "Visualisasi 3D dasar",
-
-  tierNsignature: "Signature",
-  tierRsignature: "Untuk pemilik yang sudah punya gambaran jelas soal ruang yang ingin dikenang.",
-  tierFsignature: "Rp 45–80 juta",
-  tierUsignature: "Visi kuat, target ikonik",
-  tierIKsignature: "Semua di Starter, ditambah:",
-  tierDsignature0: "DED lengkap",
-  tierDsignature1: "Branding ruang dan palet material",
-  tierDsignature2: "Pengarahan dan pendampingan kontraktor",
-  tierDsignature3: "Perencanaan alur bar dan dapur",
-
-  tierNflagship: "Flagship",
-  tierRflagship: "Layanan penuh, dari sketsa pertama sampai foto pembukaan.",
-  tierFflagship: "Rp 100–180 juta",
-  tierUflagship: "Grup F&B yang siap membuka cabang",
-  tierIKflagship: "Semua di Signature, ditambah:",
-  tierDflagship0: "Supervisi konstruksi",
-  tierDflagship1: "Desain furniture custom",
-  tierDflagship2: "Dokumentasi foto profesional",
-
-  tierNkonsultasi: "Konsultasi",
-  tierRkonsultasi: "Untuk pemilik yang akan membangun sendiri bersama tukangnya.",
-  tierFkonsultasi: "Rp 10–20 juta",
-  tierUkonsultasi: "Membangun sendiri, dengan tukang",
-  tierIKkonsultasi: "Yang Anda dapat:",
-  tierDkonsultasi0: "Konsep desain",
-  tierDkonsultasi1: "Denah skematik",
-  tierDkonsultasi2: "Saran orientasi dan ventilasi",
-
-  tierNstandar: "Standar",
-  tierRstandar: "Dari konsep sampai gambar yang bisa dibangun kontraktor tanpa menelepon kami.",
-  tierFstandar: "Rp 35–70 juta",
-  tierUstandar: "100–200 m², budget bangun Rp 500 juta–1,5 miliar",
-  tierIKstandar: "Semua di Konsultasi, ditambah:",
-  tierDstandar0: "DED lengkap",
-  tierDstandar1: "Gambar kerja siap kontraktor",
-  tierDstandar2: "Daftar material dan finishing",
-
-  tierNpremium: "Premium",
-  tierRpremium: "Rumahnya, isinya, dan tanah tempat ia berdiri — diurus sebagai satu proyek.",
-  tierFpremium: "Rp 80–200 juta",
-  tierUpremium: "Di atas 200 m², budget bangun di atas Rp 2 miliar",
-  tierIKpremium: "Semua di Standar, ditambah:",
-  tierDpremium0: "Supervisi konstruksi",
-  tierDpremium1: "Desain interior",
-  tierDpremium2: "Desain lanskap",
-  tierDpremium3: "Dokumentasi foto saat serah terima",
-
-  tierKaki:
-    "Harga berlaku untuk klien baru dan bergerak mengikuti portofolio, jadi rentang yang Anda lihat hari ini adalah rentang yang Anda dapat hari ini. Uang muka, lama tiap tahap, dan jadwal kunjungan lokasi tidak ditetapkan di sini — ketiganya berubah per proyek dan datang bersama proposal tertulis.",
-
-  /* Judul tab dan meta description. Dua kunci khusus yang dibaca pengalih
-     bahasa, bukan atribut data-t — keduanya tinggal di <head>. */
-  metaJudul: "Ruang hospitality dan rumah tropis",
-  metaKet:
-    "Coffee shop, restoran, dan rumah di Pontianak. Kami merancang untuk panasnya, lembapnya, dan cara sebuah ruang benar-benar dipakai — lalu Anda memantaunya dibangun dari satu tautan.",
-
-  "proses.0.no": "01. MENDENGAR",
-  "proses.0.judul": "Kami mulai dari cara Anda hidup, bukan dari gaya.",
-  "proses.0.teks": "Satu percakapan panjang, lalu brief tertulis yang bisa Anda koreksi sendiri — dengan kata-kata Anda, dan dengan waktu Anda sendiri.",
-  "proses.1.no": "02. MENGGAMBAR",
-  "proses.1.judul": "Konsep, denah, dan gambar kerja — semuanya bisa ditinjau dari ponsel.",
-  "proses.1.teks": "Tiap dokumen bisa disetujui atau dikembalikan untuk diubah langsung di halaman proyek Anda, dengan seluruh percakapannya tersimpan di sebelahnya.",
-  "proses.2.no": "03. MEMBANGUN & MENDAMPINGI",
-  "proses.2.judul": "Anda tahu posisi proyeknya, tiap minggu.",
-  "proses.2.teks": "Foto lapangan, tagihan, dan bukti pembayaran mendarat di halaman yang sama. Tidak ada kabar yang hilang antara utas WhatsApp dan lembar kerja.",
-};
 
 const fakta = (p: Project) =>
   [
-    { label: "LOCATION", nilai: p.location || p.city },
-    { label: "YEAR", nilai: p.year ? String(p.year) : null, mono: true },
-    { label: "TYPE", nilai: CATEGORY_LABELS_EN[p.category] },
-    { label: "AREA", nilai: p.areaSqm ? `${p.areaSqm.toLocaleString("en-US")} m²` : null, mono: true },
+    { label: "LOKASI", nilai: p.location || p.city },
+    { label: "TAHUN", nilai: p.year ? String(p.year) : null, mono: true },
+    { label: "JENIS", nilai: KATEGORI_LABEL[p.category] },
+    { label: "LUAS", nilai: p.areaSqm ? `${p.areaSqm.toLocaleString("id-ID")} m²` : null, mono: true },
   ].filter((f) => f.nilai);
 ---
 
 <BaseLayout
-  title="Hospitality spaces and tropical houses"
-  description={`Coffee shops, restaurants and houses in ${kota}. We design for heat, humidity and the way a room is actually used — then you watch it being built from one link.`}
+  title="Coffee shop dan rumah tropis untuk iklim Indonesia"
+  description="Studio arsitektur spesialis coffee shop, restoran, dan rumah tropis. Kami merancang untuk panas dan lembapnya — lalu Anda memantau pembangunannya dari satu tautan."
   image={sorot[0]?.coverImageUrl}
 >
   <div class="pita pita--panel pita--kepala">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar hero">
-        {/* Spasi sebelum tahun datang dari baris baru JSX; menambah {" "}
-            membuatnya jadi dua spasi, dan letter-spacing .18em melebarkan
-            spasi kedua itu jadi celah yang terlihat. */}
-        <span class="label masuk"
-          ><span data-t="heroLabel">ARCHITECTURE STUDIO · PONTIANAK · SINCE</span> {settings.foundedYear ?? <span class="tunggu">20XX</span>}</span
-        >
+        {/* Lencana pembuka, mengikuti acuan pemilik (refine.dev): kotak
+            bergaris teal berisi ikon, satu kalimat penempatan, lalu tautan
+            berwarna ke tujuannya. Menggantikan eyebrow lama
+            "STUDIO ARSITEKTUR · PONTIANAK · SEJAK 20XX", yang menyebut kota
+            sebagai batas layanan — padahal studionya melayani seluruh
+            Indonesia. Pontianak tetap disebut, tapi di seksi studio, sebagai
+            tempat ia berkantor. */}
+        <a class="hero-lencana masuk" href="#tarif">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 1.3 14.2 4.9v7.2L8 15.7 1.8 12.1V4.9L8 1.3Z" stroke="currentColor" stroke-width="1.3" />
+            <path d="M8 5.4 11.3 7.3v3.4L8 12.6 4.7 10.7V7.3L8 5.4Z" fill="currentColor" fill-opacity=".3" />
+          </svg>
+          <span>Spesialis coffee shop &amp; rumah tropis</span>
+          <b>Lihat tarif <span class="ar">→</span></b>
+        </a>
         <div class="s24"></div>
-        <h1 class="h1" data-t="heroJudul">
-          <span class="brs"><i>We design hospitality spaces</i></span>
-          <span class="brs"><i>and tropical houses for the</i></span>
-          <span class="brs"><i><span class="ak glow">equatorial climate</span>.</i></span>
-        </h1>
+        <h1 class="h1"><span class="brs"><i>Coffee shop dan rumah tropis</i></span><span class="brs"><i>untuk <span class="ak glow">iklim Indonesia</span>.</i></span></h1>
         <div class="s24"></div>
-        <p class="lead masuk masuk--3 hero__lead" data-t="heroLead">
-          Coffee shops, restaurants and houses in Pontianak. We design for the heat, the humidity and
-          the way a room is actually used — then you watch it being built from one link, this week,
-          not last quarter.
-        </p>
+        <p class="lead masuk masuk--3 hero__lead">Kami merancang ruang yang tetap adem saat panas dan tetap bekerja saat ramai — lalu Anda memantau pembangunannya dari satu tautan.</p>
         <div class="s36"></div>
         <div class="rowx masuk masuk--4 hero__tombol">
-          <a class="btn btn--isi" href="/kontak" data-t="heroMulai">Start a project <span class="ar">→</span></a>
-          <a class="btn" href="/proyek" data-t="heroLihat">See our work <span class="ar">→</span></a>
+          <a class="btn btn--dot" href="/kontak">Mulai proyek <span class="ar">→</span></a>
+          <a class="btn" href="/proyek">Lihat karya kami <span class="ar">→</span></a>
         </div>
       </div>
     </div>
@@ -336,9 +184,9 @@ const fakta = (p: Project) =>
                   <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d={d} /></svg>
                 </span>
                 <span>
-                  <span class="hs" data-t={`janji.${i}.judul`}>{judul}</span>
+                  <span class="hs">{judul}</span>
                   <div class="s6"></div>
-                  <span class="mut kecil" data-t={`janji.${i}.teks`}>{teks}</span>
+                  <span class="mut kecil">{teks}</span>
                 </span>
               </div>
             </div>
@@ -362,7 +210,7 @@ const fakta = (p: Project) =>
                 jadi tombol terpisah menyuruh mereka melakukan dua hal untuk
                 satu maksud. Yang butuh diam permanen sudah ditangani
                 prefers-reduced-motion di CSS, tanpa perlu menekan apa pun. */}
-            <span class="label label--redup" data-t="klienLabel">SELECTED CLIENTS</span>
+            <span class="label label--redup">KLIEN TERPILIH</span>
           </div>
           <div class="mq mq--garis">
             {/* Daftar digandakan supaya gulirannya menyambung tanpa jeda. */}
@@ -390,7 +238,7 @@ const fakta = (p: Project) =>
           {sorot.map((p, i) => (
             <div class="sorot" data-sorot={i} hidden={i !== 0}>
               <div class="isi">
-                <span class="label" data-t="karyaLabel">SELECTED WORK</span>
+                <span class="label">KARYA TERPILIH</span>
                 <div class="s16"></div>
                 <h2 class="h2">{p.title}{subjudulBerguna(p) ? ` — ${subjudulBerguna(p)}` : ""}</h2>
                 {p.summary && (
@@ -450,7 +298,7 @@ const fakta = (p: Project) =>
                   ikut dilaporkan pemilik sebagai kotak kosong berangka.
                   Satu-satunya gunanya melompat ke foto tertentu, dan angka
                   tidak memberi tahu foto mana. */}
-              <div class="film" data-film aria-label="Choose a photo">
+              <div class="film" data-film aria-label="Pilih foto">
                 {(p.images ?? []).map((f, k) => (
                   <button type="button" data-ke={k} aria-current={k === 0 ? "true" : "false"}
                     aria-label={`Photograph ${k + 1} of ${(p.images ?? []).length}`}>
@@ -492,16 +340,11 @@ const fakta = (p: Project) =>
           terpakai. */}
       <div class="isi portal-kop">
         <div>
-          <span class="label" data-t="portalLabel">WHILE IT IS BEING BUILT</span>
+          <span class="label">SELAGI DIBANGUN</span>
           <div class="s16"></div>
-          <h2 class="h2" data-t="portalJudul">The part almost no studio our size gives you.</h2>
+          <h2 class="h2">Bagian yang hampir tak diberikan studio seukuran kami.</h2>
         </div>
-        <p class="lead" data-t="portalLead">
-          Whether the site is across town or in another province, the real fear isn’t “will it look
-          good”. It is <strong>“will I know what is happening”</strong>. So every project comes with
-          its own page — phases, documents you can approve, invoices, and a receipt for every payment
-          you can open yourself.
-        </p>
+        <p class="lead">Entah tapaknya di seberang kota atau di provinsi lain, ketakutan yang sebenarnya bukan “apakah nanti bagus”. Melainkan <strong>“apakah saya akan tahu apa yang sedang terjadi”</strong>. Karena itu tiap proyek punya halamannya sendiri — tahapan, dokumen yang bisa Anda setujui, tagihan, dan bukti untuk tiap pembayaran yang bisa Anda buka sendiri.</p>
       </div>
       <div class="portal-bung">
         <div class="kilau">
@@ -514,16 +357,16 @@ const fakta = (p: Project) =>
             </div>
             <div class="portal__isi">
               <div class="portal__rel">
-                <span class="label label--redup portal__kecil">YOUR PROJECT</span>
+                <span class="label label--redup portal__kecil">PROYEK ANDA</span>
                 <div class="s16"></div>
-                <div class="hs portal__nama">Your project</div>
+                <div class="hs portal__nama">Proyek Anda</div>
                 <div class="s16"></div>
                 {[
                   ["Brief", "cek"],
-                  ["Concept", "cek"],
-                  ["Construction drawings", "kini"],
-                  ["On site", "nanti"],
-                  ["Handover", "nanti"],
+                  ["Konsep", "cek"],
+                  ["Gambar kerja", "kini"],
+                  ["Di lapangan", "nanti"],
+                  ["Serah terima", "nanti"],
                 ].map(([t, s]) => (
                   <div class="cek">
                     <i class={`cek--${s}`}>
@@ -537,7 +380,7 @@ const fakta = (p: Project) =>
               </div>
               <div class="portal__kanan">
                 <div class="portal__angka">
-                  {[["PHASE", "3 / 5", false], ["PAID", "50%", true], ["DOCUMENTS", "12", false]].map(([l, v, ak]) => (
+                  {[["TAHAP", "3 / 5", false], ["TERBAYAR", "50%", true], ["DOKUMEN", "12", false]].map(([l, v, ak]) => (
                     <div class="portal__kotak">
                       <span class="label label--redup portal__mini">{l}</span>
                       <div class="s6"></div>
@@ -560,20 +403,20 @@ const fakta = (p: Project) =>
   <div class="pita">
     <div class="dalam proses-seksi">
       <div class="isi kop-seksi wahyu">
-        <span class="label" data-t="prosesLabel">HOW IT GOES</span>
+        <span class="label">BAGAIMANA JALANNYA</span>
         <div class="s16"></div>
-        <h2 class="h2" data-t="prosesJudul">Three steps before a single line is drawn.</h2>
+        <h2 class="h2">Tiga langkah sebelum satu garis pun ditarik.</h2>
       </div>
       {
         proses.map((l, i) => {
           const f = fotoProses[i];
           const teksSel = (
             <div class="sel proses__teks">
-              <span class="label" data-t={`proses.${i}.no`}>{l.no}</span>
+              <span class="label">{l.no}</span>
               <div class="s16"></div>
-              <h3 class="h3" data-t={`proses.${i}.judul`}>{l.judul}</h3>
+              <h3 class="h3">{l.judul}</h3>
               <div class="s16"></div>
-              <p class="mut kecil" data-t={`proses.${i}.teks`}>{l.teks}</p>
+              <p class="mut kecil">{l.teks}</p>
             </div>
           );
           const fotoSel = f ? (
@@ -599,9 +442,9 @@ const fakta = (p: Project) =>
   <div class="pita">
     <div class="dalam">
       <div class="isi kop-seksi wahyu">
-        <span class="label" data-t="fiturLabel">WHAT WE ACTUALLY KNOW</span>
+        <span class="label">YANG BENAR-BENAR KAMI KUASAI</span>
         <div class="s16"></div>
-        <h2 class="h2" data-t="fiturJudul">A generalist can draw it. Fewer can make it work at 7am.</h2>
+        <h2 class="h2">Studio generalis bisa menggambarnya. Yang bisa membuatnya bekerja jam 7 pagi lebih sedikit.</h2>
       </div>
       {
         [fitur.slice(0, 3), fitur.slice(3)].map((baris, brs) => (
@@ -612,9 +455,9 @@ const fakta = (p: Project) =>
                   <svg width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d={IKON[ikon]} /></svg>
                 </span>
                 <div class="s16"></div>
-                <p class="hs" data-t={`fitur.${brs * 3 + k}.judul`}>{judul}</p>
+                <p class="hs">{judul}</p>
                 <div class="s6"></div>
-                <p class="mut kecil" data-t={`fitur.${brs * 3 + k}.teks`}>{teks}</p>
+                <p class="mut kecil">{teks}</p>
               </div>
             ))}
           </div>
@@ -623,83 +466,101 @@ const fakta = (p: Project) =>
     </div>
   </div>
 
-  {/* ══ TIER LAYANAN ══════════════════════════════════════════════════════
+  {/* ══ TARIF ═════════════════════════════════════════════════════════════
       Angkanya diterbitkan, bukan disembunyikan di balik "hubungi kami".
-      Alasannya ada di lib/tier.ts. Dua kelompok, tiga kartu masing-masing —
-      bukan tab, supaya keenamnya terbaca mesin pencari dan terlihat tanpa
-      satu pun klik. */}
-  <div class="pita">
+      Alasannya ada di lib/tier.ts.
+
+      Dua kelompok dipisah jadi TAB, bukan enam kartu ditumpuk — enam kartu
+      sekaligus adalah dinding yang tidak dibaca siapa pun, dan yang membaca
+      seksi ini sudah tahu ia sedang membangun kafe atau rumah, bukan
+      keduanya.
+
+      Yang HARUS dijaga: kedua kelompok dirender penuh ke HTML, dan yang
+      tidak aktif disembunyikan oleh SKRIP, bukan oleh atribut di markup.
+      Jadi mesin pencari — dan pengunjung tanpa JS — tetap melihat keenam
+      tier beserta angkanya. Membalik ini jadi `hidden` di markup berarti
+      separuh daftar harga hilang dari hasil pencarian tanpa satu pun
+      tanda. */}
+  <div class="pita" id="tarif">
     <div class="dalam">
       <div class="isi kop-seksi wahyu">
-        <span class="label" data-t="tierLabel">WHAT IT COSTS</span>
+        <span class="label">TARIF</span>
         <div class="s16"></div>
-        <h2 class="h2" data-t="tierJudul">Published, so you can rule us out without asking.</h2>
+        <h2 class="h2">Angkanya kami umumkan.</h2>
         <div class="s16"></div>
-        <p class="mut tier__lead" data-t="tierLead">
-          Ranges, not quotes — the figure inside a range depends on your site and how complicated it
-          turns out to be. What the range does tell you honestly is whether we are in your budget at
-          all, which is the question most studios make you send an email to find out.
-        </p>
+        <p class="mut tarif__lead">Ini rentang, bukan penawaran. Gunanya satu: Anda tahu sejak awal apakah kami masuk anggaran Anda.</p>
       </div>
 
-      {
-        TIER.map((k) => (
-          <div class="tier-blok wahyu">
-            <div class="isi isi--rapat tier-kop">
-              <span class="label label--redup" data-t={`tierK${k.kunci}`}>{k.label}</span>
-              <p class="mut kecil tier-kop__k" data-t={`tierKet${k.kunci}`}>{k.ket}</p>
-            </div>
-            <div class="tier-rel">
-              {k.tier.map((t) => (
-                <div class={t.sorot ? "tier tier--sorot" : "tier"}>
-                  {t.sorot && (
-                    <span class="tier__cap" data-t="tierPopuler">MOST CHOSEN</span>
-                  )}
-                  <span class="tier__n" data-t={`tierN${t.kunci}`}>{t.nama}</span>
-                  <p class="tier__r" data-t={`tierR${t.kunci}`}>{t.ringkas}</p>
-                  <div class="tier__garis"></div>
-                  <div class="tier__f">
-                    <b data-t={`tierF${t.kunci}`}>{t.fee}</b>
-                    <span class="dim" data-t="tierPer">/ project</span>
-                  </div>
-                  <a class={t.sorot ? "btn btn--isi btn--penuh" : "btn btn--penuh"} href="/kontak"
-                    data-t="tierMulai">Start here</a>
-                  <div class="tier__garis"></div>
-                  <p class="tier__ik" data-t={`tierIK${t.kunci}`}>{t.isiKop}</p>
-                  <ul class="tier__d">
-                    {t.isi.map((baris, i) => (
-                      <li>
-                        <i aria-hidden="true">
-                          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.3 5 8.8l4.5-5" /></svg>
-                        </i>
-                        <span data-t={`tierD${t.kunci}${i}`}>{baris}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div class="tier__untuk">
-                    <span class="dim kecil" data-t="tierUntuk">Built for</span>
-                    <span class="kecil" data-t={`tierU${t.kunci}`}>{t.untuk}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))
-      }
+      <div class="isi isi--rapat tarif-alih-bung wahyu">
+        <div class="tarif-alih" id="tarifAlih" role="tablist" aria-label="Kelompok layanan">
+          {TIER.map((k, i) => (
+            <button type="button" role="tab" data-grup={k.kunci}
+              aria-selected={i === 0 ? "true" : "false"}
+              aria-controls={`tarif-${k.kunci}`}>{k.tab}</button>
+          ))}
+        </div>
+      </div>
 
-      <div class="isi isi--rapat tier-kaki">
-        <p class="mut kecil" data-t="tierKaki">
-          Prices are for new clients and move with the portfolio, so the range you see today is the
-          range you get quoted today. Deposit terms, stage durations and site-visit schedules are not
-          fixed here — they change per project and come with the written proposal.
-        </p>
+      {TIER.map((k, i) => (
+        <div class="tarif-grup" id={`tarif-${k.kunci}`} data-grup={k.kunci} role="tabpanel">
+          <div class="isi isi--rapat tarif-grup__kop">
+            <p class="mut kecil">{k.ket}</p>
+          </div>
+          <div class="tarif-rel">
+            {k.tier.map((t) => (
+              <article class={t.sorot ? "tarif tarif--sorot" : "tarif"}>
+                <span class="tarif__cap">{t.sorot ? "PALING DIPILIH" : ""}</span>
+                <h3 class="tarif__n">{t.nama}</h3>
+                <p class="tarif__r">{t.ringkas}</p>
+                <div class="tarif__harga">
+                  <span class="tarif__mata">Rp</span>
+                  <b>{t.fee}</b>
+                  <span class="tarif__sat">juta</span>
+                </div>
+                <span class="dim kecil tarif__per">rentang per proyek</span>
+                <a class={t.sorot ? "btn btn--dot btn--penuh tarif__b" : "btn btn--penuh tarif__b"}
+                  href="/kontak">Mulai dari sini <span class="ar">→</span></a>
+                <p class="tarif__ik">{t.isiKop}</p>
+                <ul class="tarif__d">
+                  {t.isi.map((baris) => (
+                    <li>
+                      <i aria-hidden="true">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.3 5 8.8l4.5-5" /></svg>
+                      </i>
+                      <span>{baris}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div class="tarif__untuk">
+                  <span class="dim kecil">Cocok untuk</span>
+                  <span class="kecil">{t.untuk}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div class="isi isi--rapat tarif-kaki wahyu">
+        <div class="tarif-kaki__b">
+          <span class="label label--redup">BERLAKU HARI INI</span>
+          <p class="mut kecil">Harga bergerak mengikuti portofolio. Rentang yang Anda lihat sekarang adalah rentang yang Anda dapat sekarang.</p>
+        </div>
+        <div class="tarif-kaki__b">
+          <span class="label label--redup">TIDAK DITETAPKAN DI SINI</span>
+          <p class="mut kecil">Uang muka, lama tiap tahap, dan jadwal kunjungan lokasi berubah per proyek — ketiganya datang bersama proposal tertulis.</p>
+        </div>
+        <div class="tarif-kaki__b">
+          <span class="label label--redup">DI LUAR KOTA</span>
+          <p class="mut kecil">Kami mengerjakan proyek di seluruh Indonesia. Biaya perjalanan dihitung terpisah dan disebut di proposal, bukan dimunculkan belakangan.</p>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="pita">
     <div class="dalam">
-      <div class="isi kop-seksi wahyu"><span class="label" data-t="testiLabel">FROM CLIENTS</span></div>
+      <div class="isi kop-seksi wahyu"><span class="label">DARI KLIEN</span></div>
       <div class="baris b3 wahyu">
         {
           testimoni.length > 0
@@ -714,9 +575,9 @@ const fakta = (p: Project) =>
               <>
                 <div class="sel sel--kosong kutip-kosong">
                   <span class="kecil kutip-kosong__t">
-                    <span data-t="testiKosong">No testimonials yet</span>
+                    <span>Belum ada testimoni</span>
                     <br />
-                    <span class="dim" data-t="testiKosongKet">This fills itself from the client portal — we do not write them</span>
+                    <span class="dim">Ini terisi sendiri dari portal klien — kami tidak menuliskannya</span>
                   </span>
                 </div>
                 <div class="sel sel--kosong kutip-kosong"><span class="dim kecil">—</span></div>
@@ -732,11 +593,11 @@ const fakta = (p: Project) =>
     <div class="dalam">
       <div class="baris baris-faq wahyu">
         <div class="sel faq-kiri">
-          <span class="label" data-t="faqLabel">BEFORE YOU ASK</span>
+          <span class="label">SEBELUM ANDA BERTANYA</span>
           <div class="s16"></div>
-          <h3 class="h3" data-t="faqJudul">The five questions we get most.</h3>
+          <h3 class="h3">Lima pertanyaan yang paling sering kami terima.</h3>
           <div class="s16"></div>
-          <a class="btn" href="/faq" data-t="faqSemua">All questions <span class="ar">→</span></a>
+          <a class="btn" href="/faq">Semua pertanyaan <span class="ar">→</span></a>
         </div>
         <div class="sel faq-kanan">
           {
@@ -756,24 +617,19 @@ const fakta = (p: Project) =>
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi ajak">
-        <h2 class="h2 ajak__judul" data-t="ajakJudul">
-          Tell us the site, the budget, and <span class="ak">what bothers you</span> about it.
-        </h2>
+        <h2 class="h2 ajak__judul">Ceritakan lokasinya, anggarannya, dan <span class="ak">apa yang mengganjal</span> soal itu.</h2>
         <div class="s16"></div>
-        <p class="lead ajak__lead" data-t="ajakLead">
-          First reply usually within 24 hours. The first conversation costs nothing.
-        </p>
+        <p class="lead ajak__lead">Balasan pertama biasanya dalam 24 jam. Percakapan pertama tidak dipungut biaya.</p>
         <div class="s36"></div>
         <div class="rowx ajak__tombol">
-          <a class="btn btn--isi" href="/kontak" data-t="heroMulai">Start a project <span class="ar">→</span></a>
-          {settings.email && <a class="btn" href={`mailto:${settings.email}`} data-t="ajakEmail">Email us instead</a>}
+          <a class="btn btn--isi" href="/kontak">Mulai proyek <span class="ar">→</span></a>
+          {settings.email && <a class="btn" href={`mailto:${settings.email}`}>Kirim email saja</a>}
         </div>
       </div>
     </div>
   </div>
   {/* Kamus beranda dititipkan sebagai JSON, dibaca skrip pengalih di
       BaseLayout. Bukan <script> biasa: isinya data, bukan kode. */}
-  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_BERANDA)} is:inline />
 </BaseLayout>
 
 <style>
@@ -1282,5 +1138,45 @@ const fakta = (p: Project) =>
     );
 
     blok.forEach((b) => pengamat.observe(b));
+  })();
+</script>
+
+<script>
+  /* ── Tab kelompok tarif ───────────────────────────────────────────────
+     Kedua kelompok dirender penuh ke HTML; yang tidak aktif disembunyikan
+     DI SINI, bukan lewat atribut `hidden` di markup. Bedanya penting: HTML
+     yang disajikan server tetap memuat keenam tier beserta angkanya, jadi
+     mesin pencari dan pengunjung tanpa JS melihat seluruh daftar harga.
+     Kalau suatu saat ini dipindah ke markup, separuh daftarnya hilang dari
+     hasil pencarian tanpa satu pun tanda.
+
+     `hidden`, bukan style.display: publik.css menegakkan
+     [hidden]{display:none!important}, dan memakai atributnya berarti
+     panelnya juga hilang dari pembaca layar dan urutan fokus. */
+  (() => {
+    "use strict";
+    const alih = document.getElementById("tarifAlih");
+    if (!alih) return;
+    const tombol = [...alih.querySelectorAll<HTMLButtonElement>("[data-grup]")];
+    const panel = [...document.querySelectorAll<HTMLElement>(".tarif-grup")];
+    if (tombol.length < 2 || panel.length < 2) return;
+
+    const pilih = (kunci: string) => {
+      tombol.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.grup === kunci)));
+      panel.forEach((p) => { p.hidden = p.dataset.grup !== kunci; });
+    };
+    pilih(tombol[0].dataset.grup!);
+    alih.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-grup]");
+      if (b) pilih(b.dataset.grup!);
+    });
+    /* Panah kiri-kanan, perilaku baku tablist. */
+    alih.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const i = tombol.findIndex((b) => b.getAttribute("aria-selected") === "true");
+      const ke = tombol[(i + (e.key === "ArrowRight" ? 1 : tombol.length - 1)) % tombol.length];
+      pilih(ke.dataset.grup!);
+      ke.focus();
+    });
   })();
 </script>

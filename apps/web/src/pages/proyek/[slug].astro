@@ -4,7 +4,7 @@ import {
   listProjects,
   getProject,
   getSettings,
-  CATEGORY_LABELS_EN,
+  KATEGORI_LABEL,
   type Project, subjudulBerguna } from "../../lib/api";
 import { BELUM_ADA } from "../../lib/menunggu";
 
@@ -57,10 +57,10 @@ const bahan = [...(project.materials ?? [])].sort((a, b) => a.sortOrder - b.sort
 
 // Daftar isi hanya memuat bagian yang benar-benar ada di halaman ini.
 const bagian = [
-  paragraf.length ? { id: "cerita", label: "The project" } : null,
-  bahan.length ? { id: "bahan", label: "Materials" } : null,
-  foto.length ? { id: "galeri", label: "Gallery" } : null,
-  { id: "kredit", label: "Credits" },
+  paragraf.length ? { id: "cerita", label: "Tentang proyek" } : null,
+  bahan.length ? { id: "bahan", label: "Material" } : null,
+  foto.length ? { id: "galeri", label: "Galeri" } : null,
+  { id: "kredit", label: "Kredit" },
 ].filter((x): x is { id: string; label: string } => x !== null);
 
 // Kredit. Peran yang belum punya nama TETAP ditampilkan dengan penanda,
@@ -75,14 +75,14 @@ interface BarisKredit {
    proyek mencetak "Name to be credited" — termasuk yang fotografernya sudah
    jelas. Sekarang datang dari kolomnya sendiri, diisi pemilik per proyek. */
 const kredit: BarisKredit[] = [
-  { dt: "Architecture", dd: project.leadArchitect || studio },
-  ...(project.year ? [{ dt: "Year", dd: String(project.year) }] : []),
-  { dt: "Photography", dd: project.photographer || BELUM_ADA, tunggu: !project.photographer },
-  { dt: "Contractor", dd: project.contractor || BELUM_ADA, tunggu: !project.contractor },
-  { dt: "Lighting", dd: project.lightingDesigner || BELUM_ADA, tunggu: !project.lightingDesigner },
+  { dt: "Arsitektur", dd: project.leadArchitect || studio },
+  ...(project.year ? [{ dt: "Tahun", dd: String(project.year) }] : []),
+  { dt: "Fotografi", dd: project.photographer || BELUM_ADA, tunggu: !project.photographer },
+  { dt: "Kontraktor", dd: project.contractor || BELUM_ADA, tunggu: !project.contractor },
+  { dt: "Pencahayaan", dd: project.lightingDesigner || BELUM_ADA, tunggu: !project.lightingDesigner },
   {
-    dt: "Client",
-    dd: project.client || "Withheld at the client’s request",
+    dt: "Klien",
+    dd: project.client || "Tidak disebutkan atas permintaan klien",
     tunggu: !project.client,
   },
 ];
@@ -93,10 +93,10 @@ kredit.forEach((k, i) => kolomKredit[i % 3].push(k));
 const lain = semua.filter((p) => p.slug !== project.slug).slice(0, 2);
 
 const fakta = [
-  { label: "LOCATION", nilai: project.location || project.city },
-  { label: "COMPLETED", nilai: project.year ? String(project.year) : null, mono: true },
-  { label: "TYPE", nilai: CATEGORY_LABELS_EN[project.category] },
-  { label: "AREA", nilai: project.areaSqm ? `${project.areaSqm.toLocaleString("en-US")} m²` : null, mono: true },
+  { label: "LOKASI", nilai: project.location || project.city },
+  { label: "SELESAI", nilai: project.year ? String(project.year) : null, mono: true },
+  { label: "JENIS", nilai: KATEGORI_LABEL[project.category] },
+  { label: "LUAS", nilai: project.areaSqm ? `${project.areaSqm.toLocaleString("id-ID")} m²` : null, mono: true },
 ].filter((f) => f.nilai);
 
 const jsonLd = [
@@ -140,8 +140,8 @@ const jsonLd = [
     <div class="dalam">
       <div class="isi judul-blok">
         <span class="dim kecil">
-          <a class="remah" href="/proyek">Work</a> <span class="dim">/</span>
-          {CATEGORY_LABELS_EN[project.category]} <span class="dim">/</span>
+          <a class="remah" href="/proyek">Karya</a> <span class="dim">/</span>
+          {KATEGORI_LABEL[project.category]} <span class="dim">/</span>
           <span class="mut">{project.title}</span>
         </span>
         <div class="s24"></div>
@@ -193,9 +193,9 @@ const jsonLd = [
           <div class="baris baris-toc">
             <div class="sel toc toc--rapat">
               <div class="toc__kop">
-                <span class="label label--redup">ON THIS PAGE</span>
+                <span class="label label--redup">DI HALAMAN INI</span>
               </div>
-              <nav id="toc" aria-label="On this page">
+              <nav id="toc" aria-label="Di halaman ini">
                 {bagian.map((b, i) => (
                   <a href={`#${b.id}`} class={i === 0 ? "kat__b kini" : "kat__b"}>
                     {b.label}
@@ -206,10 +206,10 @@ const jsonLd = [
                 ))}
               </nav>
               <div class="toc__bagi">
-                <span class="label label--redup">SHARE</span>
+                <span class="label label--redup">BAGIKAN</span>
                 <div class="s10"></div>
                 <div class="rowx">
-                  <button class="pil" type="button" id="salinTautan">Copy link</button>
+                  <button class="pil" type="button" id="salinTautan">Salin tautan</button>
                 </div>
               </div>
             </div>
@@ -217,7 +217,7 @@ const jsonLd = [
             <div class="sel teks-panel">
               {paragraf.length > 0 && (
                 <div class="isi-teks">
-                  <h2 class="h3" id="cerita">The project</h2>
+                  <h2 class="h3" id="cerita">Tentang proyek</h2>
                   {paragraf.map((p) => (
                     <p class="mut">{p}</p>
                   ))}
@@ -257,9 +257,9 @@ const jsonLd = [
         <div class="dalam">
           <div class="isi isi--rapat galeri-kop">
             <span class="label">
-              GALLERY · {foto.length} {foto.length === 1 ? "PHOTOGRAPH" : "PHOTOGRAPHS"}
+              GALERI · {foto.length} FOTO
             </span>
-            <span class="dim kecil">drag · scroll · arrow keys</span>
+            <span class="dim kecil">seret · gulir · tombol panah</span>
           </div>
           <div class="strip strip--galeri" id="swStrip">
             {foto.map((f, i) => (
@@ -276,7 +276,7 @@ const jsonLd = [
               adalah melompat ke foto tertentu, dan nomor tidak memberi tahu
               foto mana. Sekarang tiap kotak memuat fotonya sendiri, nomornya
               turun jadi penanda kecil di sudut. */}
-          <div class="film" id="swFilm" aria-label="Choose a photo">
+          <div class="film" id="swFilm" aria-label="Pilih foto">
             {foto.map((f, i) => (
               <button type="button" data-ke={i} aria-current={i === 0 ? "true" : "false"}
                 aria-label={`Photograph ${i + 1} of ${foto.length}`}>
@@ -308,7 +308,7 @@ const jsonLd = [
 
   <div class="pita" id="kredit">
     <div class="dalam">
-      <div class="isi isi--rapat"><span class="label">CREDITS</span></div>
+      <div class="isi isi--rapat"><span class="label">KREDIT</span></div>
       <div class="baris b3">
         {
           kolomKredit.map((kolom) => (
@@ -332,7 +332,7 @@ const jsonLd = [
     lain.length > 0 && (
       <div class="pita">
         <div class="dalam">
-          <div class="isi isi--rapat"><span class="label">MORE WORK</span></div>
+          <div class="isi isi--rapat"><span class="label">KARYA LAIN</span></div>
           <div class="baris b2">
             {lain.map((p) => (
               <a class="sel pk pk--tautan" href={`/proyek/${p.slug}`}>
@@ -344,11 +344,11 @@ const jsonLd = [
                       <span>NO COVER YET</span>
                     )}
                   </div>
-                  <span class="pk__aksi">Open project</span>
+                  <span class="pk__aksi">Buka proyek</span>
                 </div>
                 <div class="pk__isi">
                   <span class="label label--redup">
-                    {[CATEGORY_LABELS_EN[p.category], p.year].filter(Boolean).join(" · ").toUpperCase()}
+                    {[KATEGORI_LABEL[p.category], p.year].filter(Boolean).join(" · ").toUpperCase()}
                   </span>
                   <div class="s10"></div>
                   <span class="pk__nm">{p.title}</span>
@@ -376,12 +376,12 @@ const jsonLd = [
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi ajak">
         <h2 class="h2 ajak__judul">
-          Building something that has to be <span class="ak">more than one thing</span>?
+          Membangun sesuatu yang harus <span class="ak">lebih dari satu hal</span>?
         </h2>
         <div class="s24"></div>
         <div class="rowx ajak__tombol">
-          <a class="btn btn--isi" href="/kontak">Start a project <span class="ar">→</span></a>
-          <a class="btn" href="/proyek">See all work <span class="ar">→</span></a>
+          <a class="btn btn--dot" href="/kontak">Mulai proyek <span class="ar">→</span></a>
+          <a class="btn" href="/proyek">Lihat semua karya <span class="ar">→</span></a>
         </div>
       </div>
     </div>

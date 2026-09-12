@@ -3,12 +3,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
   listProjects,
   getSettings,
-  CATEGORY_LABELS_EN,
-  CATEGORY_BLURBS_EN,
+  KATEGORI_LABEL,
+  KATEGORI_KET,
   type Project,
   type ProjectCategory,
 } from "../../lib/api";
-import { KAMUS_KERJA } from "../../lib/i18nHalaman";
 
 const settings = await getSettings();
 const semua = await listProjects({ limit: 200 });
@@ -31,8 +30,8 @@ const urutKat: ProjectCategory[] = [
   ...(["landscape", "masterplan"] as ProjectCategory[]).filter((k) => terpakai.includes(k)),
 ];
 const kategori = [
-  { kunci: "all", label: "All work", ket: "Everything the studio has published so far." },
-  ...urutKat.map((k) => ({ kunci: k, label: CATEGORY_LABELS_EN[k], ket: CATEGORY_BLURBS_EN[k] })),
+  { kunci: "all", label: "Semua karya", ket: "Semua yang sudah diterbitkan studio ini sejauh ini." },
+  ...urutKat.map((k) => ({ kunci: k, label: KATEGORI_LABEL[k], ket: KATEGORI_KET[k] })),
 ];
 const hitung = (kunci: string) =>
   kunci === "all" ? proyek.length : proyek.filter((p) => p.category === kunci).length;
@@ -40,7 +39,7 @@ const kata = (n: number) => (n === 1 ? "1 project" : `${n} projects`);
 
 // Baris di bawah judul: kategori · tempat · tahun, hanya bagian yang terisi.
 const meta = (p: Project) =>
-  [CATEGORY_LABELS_EN[p.category], p.location || p.city, p.year].filter(Boolean).join(" · ");
+  [KATEGORI_LABEL[p.category], p.location || p.city, p.year].filter(Boolean).join(" · ");
 
 const jsonLd = [
   {
@@ -60,22 +59,19 @@ const jsonLd = [
 ---
 
 <BaseLayout
-  title="Work"
-  description="Every project starts with the awkward part of the brief, not the finished photograph. The published work of an architecture studio in Pontianak, Indonesia."
+  title="Karya"
+  description="Tiap proyek dimulai dari bagian brief yang canggung, bukan dari foto jadinya. Karya terbitan studio arsitektur yang bekerja di seluruh Indonesia."
   jsonLd={jsonLd}
 >
   <div class="pita">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi kepala">
-        <span class="label" data-t="kerjaLabel">WORK</span>
+        <span class="label">KARYA</span>
         <div class="s24"></div>
-        <h1 class="h1 kepala__judul" data-t="kerjaJudul">Buildings, and the problems<br />they were built to solve.</h1>
+        <h1 class="h1 kepala__judul">Bangunan, dan persoalan<br />yang membuatnya dibangun.</h1>
         <div class="s24"></div>
-        <p class="lead" data-t="kerjaLead">
-          Every project here starts with the awkward part of the brief, not the finished photograph.
-          If a page does not tell you what was difficult, it is not worth reading.
-        </p>
+        <p class="lead">Tiap proyek di sini dimulai dari bagian brief yang canggung, bukan dari foto jadinya. Kalau sebuah halaman tidak memberi tahu apa yang sulit, ia tidak layak dibaca.</p>
       </div>
     </div>
   </div>
@@ -84,12 +80,12 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-kat">
         <div class="sel kat kat--rapat">
-          <div class="kat__kop"><span class="label label--redup" data-t="kerjaKategori">CATEGORIES</span></div>
-          <nav id="relKat" aria-label="Filter by category">
+          <div class="kat__kop"><span class="label label--redup">KATEGORI</span></div>
+          <nav id="relKat" aria-label="Saring menurut kategori">
             {
               kategori.map((k, i) => (
-                <button class="kat__b" type="button" data-kat={k.kunci} data-label={k.label} data-ket={k.ket} data-tk={`kerjaKat${k.kunci}`} data-tket={`kerjaKet${k.kunci}`} aria-current={i === 0 ? "true" : "false"}>
-                  <span data-t={`kerjaKat${k.kunci}`}>{k.label}</span>
+                <button class="kat__b" type="button" data-kat={k.kunci} data-label={k.label} data-ket={k.ket} aria-current={i === 0 ? "true" : "false"}>
+                  <span>{k.label}</span>
                   <span class="hitung">{hitung(k.kunci)}</span>
                   <span class="panah-kotak" aria-hidden="true">
                     <svg width="19" height="19" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="16.8" height="16.8" rx="4.6" /><path d="M9.4 7.4 13 11l-3.6 3.6" /></svg>
@@ -99,21 +95,21 @@ const jsonLd = [
             }
           </nav>
           <div class="kat__urut">
-            <span class="label label--redup" data-t="kerjaUrut">SORT</span>
+            <span class="label label--redup">URUTAN</span>
             <div class="s10"></div>
             <div class="rowx">
-              <button class="pil pil--on" type="button" data-urut="baru" data-t="kerjaBaru">Newest</button>
-              <button class="pil" type="button" data-urut="lama" data-t="kerjaLama">Oldest</button>
+              <button class="pil pil--on" type="button" data-urut="baru">Terbaru</button>
+              <button class="pil" type="button" data-urut="lama">Terlama</button>
             </div>
           </div>
         </div>
 
         <div class="sel kerja-panel">
           <div class="kerja-kop">
-            <h2 class="h3 ak kerja-kop__judul" id="katJudul" data-t="kerjaKatall">ALL WORK</h2>
+            <h2 class="h3 ak kerja-kop__judul" id="katJudul">Semua karya</h2>
             <span class="dim kecil" id="katHitung">{kata(proyek.length)}</span>
           </div>
-          <div class="kerja-ket"><p class="mut kecil" id="katKet" data-t="kerjaKetall">{kategori[0].ket}</p></div>
+          <div class="kerja-ket"><p class="mut kecil" id="katKet">Semua yang sudah diterbitkan studio ini sejauh ini.</p></div>
 
           <div id="katDaftar" class="kerja-daftar">
             {
@@ -123,7 +119,7 @@ const jsonLd = [
                     {p.coverImageUrl ? (
                       <img src={p.coverImageUrl} alt="" loading="lazy" decoding="async" width="640" height="360" />
                     ) : (
-                      <span data-t="kerjaTanpaSampul">NO COVER YET</span>
+                      <span>BELUM ADA SAMPUL</span>
                     )}
                   </div>
                   <div>
@@ -151,12 +147,10 @@ const jsonLd = [
                 <svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2.5 4.5h15v11h-15zM2.5 12l4-3.5 3.5 3 3-2.5 4.5 4" /><circle cx="7" cy="7.5" r="1.2" /></svg>
               </span>
               <p class="hs" id="kosongJudul">
-                {proyek.length ? "No published work here yet" : "No published work yet"}
+                {proyek.length ? "Belum ada karya yang diterbitkan di sini" : "Belum ada karya yang diterbitkan"}
               </p>
-              <p class="mut kecil" data-t="kerjaKosongKet">
-                It is coming. In the meantime, the rest of the studio&rsquo;s work is one click away.
-              </p>
-              <button class="btn" type="button" data-semua data-t="kerjaLihatSemua">See all work</button>
+              <p class="mut kecil">Sedang menuju ke sana. Sementara itu, karya studio yang lain cuma satu klik jauhnya.</p>
+              <button class="btn" type="button" data-semua>Lihat semua karya</button>
             </div>
           </div>
         </div>
@@ -168,18 +162,15 @@ const jsonLd = [
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi ajak">
-        <h2 class="h2 ajak__judul" data-t="kerjaAjakJudul">
-          Yours could be the next <span class="ak">awkward brief</span> on this page.
-        </h2>
+        <h2 class="h2 ajak__judul">Punya Anda bisa jadi <span class="ak">brief canggung</span> berikutnya di halaman ini.</h2>
         <div class="s24"></div>
         <div class="rowx ajak__tombol">
-          <a class="btn btn--isi" href="/kontak" data-t="mulaiProyekPanah">Start a project <span class="ar">→</span></a>
-          {settings.email && <a class="btn" href={`mailto:${settings.email}`} data-t="ajakEmail">Email us instead</a>}
+          <a class="btn btn--isi" href="/kontak">Mulai proyek →</a>
+          {settings.email && <a class="btn" href={`mailto:${settings.email}`}>Kirim email saja</a>}
         </div>
       </div>
     </div>
   </div>
-  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_KERJA)} is:inline />
 </BaseLayout>
 
 <style>
@@ -318,7 +309,6 @@ const jsonLd = [
 </style>
 
 <script>
-  import { penerjemah } from "../../lib/i18nRuntime";
 
   (() => {
     "use strict";
@@ -341,13 +331,6 @@ const jsonLd = [
     let katKini = "all";
     let urutKini: "baru" | "lama" = "baru";
 
-    /* Judul panel, keterangannya, jumlah proyek, dan judul keadaan kosong
-       semuanya DITULIS ULANG saat menyaring — sesudah kamus dijalankan. Jadi
-       keempatnya harus tahu bahasa yang sedang dipilih sendiri; kalau tidak,
-       satu klik kategori mengembalikan panel ini ke Inggris di tengah halaman
-       Indonesia, dan tidak ada yang menukarnya kembali. */
-    const { t, saatTukar } = penerjemah();
-
     const tampil = () => {
       let n = 0;
       baris.forEach((b) => {
@@ -359,8 +342,8 @@ const jsonLd = [
          bukan satu dengan tempelan "s" — karena tempelan itu yang membuat
          terjemahan jadi "6 proyeks". */
       hitungN.textContent = n === 1
-        ? t("kerjaProyekSatu", "1 project")
-        : `${n} ${t("kerjaProyekBanyak", "projects")}`;
+        ? "1 proyek"
+        : `${n} ${"proyek"}`;
       kosong.hidden = n > 0;
       // Garis bawah baris terakhir dimatikan lewat :last-child, dan
       // :last-child tidak peduli elemen di depannya disembunyikan atau tidak.
@@ -380,18 +363,15 @@ const jsonLd = [
       urut.forEach((b) => daftar.insertBefore(b, kosong));
     };
 
-    /* Dipisah jadi fungsi sendiri karena dipanggil dua kali: saat kategori
-       diklik, dan saat bahasa ditukar sementara kategorinya tidak berubah.
-
-       const, bukan `function`: deklarasi function di-hoist keluar dari
+    /* const, bukan `function`: deklarasi function di-hoist keluar dari
        cakupan penyempitan tipe, jadi TypeScript lupa keempat elemen ini sudah
        dijamin bukan null oleh penjaga di awal blok. */
     const gambarKepala = (b: HTMLButtonElement) => {
-      judul.textContent = t(b.dataset.tk || "", b.dataset.label || "").toUpperCase();
-      ket.textContent = t(b.dataset.tket || "", ketKat.get(katKini) || "");
+      judul.textContent = (b.dataset.label || "").toUpperCase();
+      ket.textContent = ketKat.get(katKini) || "";
       kosongJudul.textContent = katKini === "all"
-        ? t("kerjaKosongSemua", "No published work yet")
-        : t("kerjaKosongKat", "No published work here yet");
+        ? "Belum ada karya yang diterbitkan"
+        : "Belum ada karya yang diterbitkan di sini";
     };
 
     rel.addEventListener("click", (e) => {
@@ -400,12 +380,6 @@ const jsonLd = [
       katKini = b.dataset.kat!;
       tombol.forEach((x) => x.setAttribute("aria-current", String(x === b)));
       gambarKepala(b);
-      tampil();
-    });
-
-    saatTukar(() => {
-      const aktif = tombol.find((x) => x.getAttribute("aria-current") === "true");
-      if (aktif) gambarKepala(aktif);
       tampil();
     });
 

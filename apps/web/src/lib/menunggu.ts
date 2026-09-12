@@ -22,7 +22,7 @@
 /* ── Kalimat penanda ─────────────────────────────────────────────────────── */
 
 /** Dipakai di mana pun sebuah nama belum diberikan. */
-export const BELUM_ADA = "Name to be credited";
+export const BELUM_ADA = "Nama menyusul";
 
 /** Dipakai di mana pun sebuah tahun belum diberikan. */
-export const TAHUN_BELUM = "YEAR?";
+export const TAHUN_BELUM = "TAHUN?";

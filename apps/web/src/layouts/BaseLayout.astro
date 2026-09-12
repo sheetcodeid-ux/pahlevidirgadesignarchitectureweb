@@ -7,7 +7,6 @@ import "../styles/publik.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { gambarBagikan, getSettings } from "../lib/api";
-import { KAMUS_UMUM } from "../lib/i18n";
 
 interface Props {
   title: string;
@@ -20,7 +19,7 @@ interface Props {
 
 const {
   title,
-  description = "An architecture studio in Pontianak, Indonesia, working on hospitality interiors and tropical houses for the equatorial climate.",
+  description = "Studio arsitektur yang merancang ruang hospitality dan rumah tropis untuk iklim Indonesia — coffee shop, restoran, dan rumah tinggal.",
   image,
   noindex = false,
   jsonLd = [],
@@ -84,10 +83,7 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark"
-  data-studio={studioName}
-  data-judul-en={title}
-  data-ket-en={description}>
+<html lang="id" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -102,7 +98,7 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
     {ogImage && <meta property="og:image" content={ogImage} />}
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale" content="id_ID" />
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -138,90 +134,6 @@ const dataTerstruktur = [kontakStudio, ...jsonLd];
       <slot />
     </main>
     <Footer />
-    {/* ═══ PENGALIH BAHASA ══════════════════════════════════════════════
-        Menukar isi tiap elemen bertanda data-t. Yang INGGRIS tidak disimpan
-        di kamus: ia sudah ada di markup, dan disimpan sendiri oleh skrip ini
-        sebelum penukaran pertama — jadi kembali ke EN selalu mengembalikan
-        kalimat yang persis sama, bukan salinan yang bisa menyimpang.
-
-        is:inline + define:vars: kamusnya perlu ikut ke halaman, dan halaman
-        ini statis, jadi tidak ada tempat lain untuk menaruhnya. */}
-    <script is:inline define:vars={{ KAMUS_UMUM }}>
-      (() => {
-        "use strict";
-        const KUNCI = "situs:bhs";
-
-        /* Kamus khusus halaman, kalau halamannya menyediakan. Beranda memuat
-           seluruh kalimat pemasarannya sendiri lewat tag ini. */
-        let kamus = KAMUS_UMUM;
-        const tambahan = document.getElementById("kamus-halaman");
-        if (tambahan && tambahan.textContent) {
-          try { kamus = { ...KAMUS_UMUM, ...JSON.parse(tambahan.textContent) }; }
-          catch { /* JSON rusak: kamus umum saja, halaman tetap jalan */ }
-        }
-
-        const elemen = document.querySelectorAll("[data-t]");
-
-        function pasang(bhs) {
-          elemen.forEach((el) => {
-            /* Simpan aslinya SEKALI, saat pertama disentuh. Kalau disimpan di
-               akhir penukaran, yang tersimpan sudah versi Indonesianya. */
-            if (el.dataset.en === undefined) el.dataset.en = el.innerHTML;
-            const id = kamus[el.dataset.t];
-            if (bhs === "id" && id !== undefined) el.innerHTML = id;
-            else el.innerHTML = el.dataset.en;
-          });
-          document.documentElement.lang = bhs === "id" ? "id" : "en";
-          document.querySelectorAll("[data-bhs]").forEach((b) =>
-            b.setAttribute("aria-pressed", String(b.dataset.bhs === bhs)));
-
-          /* Judul tab dan meta description ada di <head>, di luar jangkauan
-             data-t — dan itu yang dilaporkan pemilik: isi halaman sudah
-             Indonesia, judul tabnya masih Inggris. Ditukar di sini, dari dua
-             kunci khusus di kamus halaman.
-
-             Yang HARUS diketahui: og:title dan og:description ikut ditukar,
-             tapi kartu bagikan WhatsApp/Twitter membaca HTML yang DISAJIKAN
-             server, bukan hasil skrip. Jadi kartu bagikannya selalu versi
-             Inggris apa pun yang dipilih pengunjung. Menukarnya butuh rute
-             /id terpisah — yang sudah ditolak di lib/i18n.ts karena dua
-             berkas berisi kalimat yang sama pasti menyimpang. */
-          const akar = document.documentElement;
-          const studio = akar.dataset.studio || "";
-          const id = bhs === "id";
-          const judul = (id && kamus.metaJudul) || akar.dataset.judulEn || "";
-          const ket = (id && kamus.metaKet) || akar.dataset.ketEn || "";
-          document.title = studio ? judul + " \u2014 " + studio : judul;
-          const pasangMeta = (pilih, nilai) => {
-            const m = document.querySelector(pilih);
-            if (m && nilai) m.setAttribute("content", nilai);
-          };
-          pasangMeta('meta[name="description"]', ket);
-          pasangMeta('meta[property="og:title"]', judul);
-          pasangMeta('meta[property="og:description"]', ket);
-          pasangMeta('meta[property="og:locale"]', id ? "id_ID" : "en_US");
-          /* Untuk yang TIDAK bisa ditukar lewat kamus karena isinya dibuat
-             JS: tanggal yang diformat per-locale, dan angka yang ditulis
-             ulang saat menyaring. Halaman yang punya keduanya mendengarkan
-             peristiwa ini; yang tidak, tidak terpengaruh. */
-          dispatchEvent(new CustomEvent("situs:bahasa", { detail: bhs }));
-        }
-
-        let bhs = "en";
-        try { if (localStorage.getItem(KUNCI) === "id") bhs = "id"; } catch { /* diblokir */ }
-        if (bhs === "id") pasang("id");
-        else document.querySelectorAll("[data-bhs]").forEach((b) =>
-          b.setAttribute("aria-pressed", String(b.dataset.bhs === "en")));
-
-        document.querySelectorAll("[data-bhs]").forEach((b) =>
-          b.addEventListener("click", () => {
-            const pilih = b.dataset.bhs === "id" ? "id" : "en";
-            pasang(pilih);
-            try { localStorage.setItem(KUNCI, pilih); } catch { /* diblokir */ }
-          }));
-      })();
-    </script>
-
     <script is:inline>
       /* ── Gulir yang dicuri penampung mendatar ──────────────────────────
          Gejalanya yang dilaporkan pemilik: "dari atas geser ke bawah seperti
