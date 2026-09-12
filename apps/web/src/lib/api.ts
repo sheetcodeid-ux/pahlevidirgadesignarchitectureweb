@@ -25,27 +25,28 @@ export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
   renovation: "Renovasi",
 };
 
-// Situs publik berbahasa Inggris (pasarnya internasional); panel admin tetap
-// Indonesia. Dua peta, bukan satu peta yang diterjemahkan di tempat pakai —
-// supaya label admin tidak ikut berubah kalau salinan publiknya diubah.
-export const CATEGORY_LABELS_EN: Record<ProjectCategory, string> = {
-  residential: "Residential",
-  commercial: "Commercial",
+// Label kategori untuk SITUS PUBLIK. Dipisah dari peta milik panel admin
+// dengan sengaja: label yang dilihat pengunjung dan label yang dilihat staf
+// boleh berbeda kalimatnya, dan menggabungkannya berarti mengubah satu
+// diam-diam mengubah yang lain.
+export const KATEGORI_LABEL: Record<ProjectCategory, string> = {
+  residential: "Hunian",
+  commercial: "Komersial",
   interior: "Interior",
-  landscape: "Landscape",
+  landscape: "Lanskap",
   masterplan: "Masterplan",
-  renovation: "Renovation",
+  renovation: "Renovasi",
 };
 
 // Kalimat pengantar tiap kategori di rel /proyek. Ditulis di sini, bukan di
 // halaman, supaya halaman proyek dan beranda menyebut hal yang sama.
-export const CATEGORY_BLURBS_EN: Record<ProjectCategory, string> = {
-  residential: "Houses, and the way people actually live in them.",
-  commercial: "Places that have to keep working after the opening week.",
-  interior: "Work inside buildings that already stand.",
-  landscape: "The ground around a building, treated as part of it.",
-  masterplan: "How several buildings agree to sit on one site.",
-  renovation: "Buildings given more years instead of being replaced.",
+export const KATEGORI_KET: Record<ProjectCategory, string> = {
+  residential: "Rumah, dan cara orang benar-benar tinggal di dalamnya.",
+  commercial: "Tempat yang harus tetap bekerja setelah minggu pembukaan lewat.",
+  interior: "Pekerjaan di dalam bangunan yang sudah berdiri.",
+  landscape: "Tanah di sekeliling bangunan, diperlakukan sebagai bagian darinya.",
+  masterplan: "Bagaimana beberapa bangunan bersepakat duduk di satu tapak.",
+  renovation: "Bangunan yang diberi tahun-tahun tambahan alih-alih diganti.",
 };
 
 export interface ProjectImage {

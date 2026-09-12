@@ -218,7 +218,13 @@ Aturan yang mengikat:
    destruktif, amber = terbatas atau terkunci sebagian, ungu = upgrade dan
    fitur berbayar, hijau = status hidup dan konfirmasi, biru = penjelasan.
    Ungu tidak pernah dipakai untuk aksi biasa.
-2. **SITUS PUBLIK memakai Inter — judul dan tubuh.** Diganti atas permintaan
+2. **SITUS PUBLIK hanya berbahasa Indonesia.** Tidak ada pengalih bahasa dan
+   tidak ada atribut `data-t`; kalimatnya ditulis langsung di markup. Kalau
+   menambah halaman publik, tulis Indonesianya di tempat — jangan menghidupkan
+   lagi kamus terjemahan. Portal klien (`/progres`, `/bukti`) dan halaman
+   masuk admin adalah pengecualian yang sengaja: ketiganya berdiri di luar
+   BaseLayout dan punya pengalihnya sendiri.
+3. **SITUS PUBLIK memakai Inter — judul dan tubuh.** Diganti atas permintaan
    eksplisit pemilik supaya menyamai halaman acuannya. Judulnya berbobot
    **600** dengan `letter-spacing: -0.022em`, bukan 400/0: angka lama itu
    milik slab serif. Kalau suatu saat dikembalikan ke Arvo, kembalikan juga
@@ -252,13 +258,13 @@ Aturan yang mengikat:
      tabular-nums` tidak mengubah apa pun padanya. Terukur: seluruh digitnya
      sama lebar KECUALI `1`, yang 0,36px lebih sempit pada 13px — jadi kolom
      rupiah tetap sejajar dalam praktik, tapi jangan mengandalkan `tnum`.
-3. **Ikon selalu SVG inline** dari `apps/web/src/components/ui/Icon.tsx`. Tanpa
+4. **Ikon selalu SVG inline** dari `apps/web/src/components/ui/Icon.tsx`. Tanpa
    emoji, tanpa icon-font. Ikon wajib cocok maknanya dengan label di sebelahnya.
-4. **Tidak ada nilai warna literal di komponen.** Semuanya menunjuk token di
+5. **Tidak ada nilai warna literal di komponen.** Semuanya menunjuk token di
    `apps/web/src/styles/tokens.css`.
-5. **Tema terang bukan pembalikan otomatis.** Tiap warna semantik punya nilai
+6. **Tema terang bukan pembalikan otomatis.** Tiap warna semantik punya nilai
    sendiri per tema, karena amber dan hijau versi gelap pudar di atas putih.
-6. **Responsif wajib**, termasuk ponsel sempit. Tidak boleh ada gulir
+7. **Responsif wajib**, termasuk ponsel sempit. Tidak boleh ada gulir
    horizontal pada badan halaman.
 
 **Halaman UI Component (`/admin/ui`) adalah satu-satunya sumber kebenaran
@@ -636,6 +642,19 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     wadah itu. Dan **ukur**, jangan lihat — yang kedua di atas tidak
     kelihatan sama sekali sekarang, karena keempat angkanya masih kosong.
 
+28. **Server uji lokal ikut mengirim CSP produksi, dan itu memblokir foto
+    uji.** `npx http-server` membaca `dist/_headers` dan menyajikannya sebagai
+    header sungguhan, jadi `img-src` produksi menolak `localhost:8787` —
+    alamat API yang dipanggang ke build lokal. Gejalanya menyesatkan: seluruh
+    foto jadi kotak kosong bertanda gambar rusak, endpoint-nya sendiri
+    membalas 200 kalau di-curl, dan tidak ada satu pun galat di konsol
+    Playwright kecuali `requestfailed` dengan alasan `csp`. Ini sisi lain
+    jebakan #17. Yang bekerja: sajikan `dist` dengan
+    `python3 -m http.server`, yang tidak mengenal `_headers` sama sekali.
+    Mencegat respons dengan `route.fulfill` untuk melepas headernya TIDAK
+    bekerja — `route.fetch()` masuk ke handler-nya sendiri dan navigasinya
+    menggantung sampai timeout.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -777,9 +796,10 @@ skrip; jangan sunting hasilnya.
 | Klien tanpa logo TETAP tampil, sebagai teks nama | Menyaringnya di API akan membuat klien yang baru didaftarkan hilang dari beranda sampai pemilik sempat mengunggah gambarnya. Karena itu `name` wajib dan `logo_key` boleh kosong — kebalikannya yang membuat baris jadi celah |
 | Logo di marquee dibatasi TINGGI, bukan lebar | Logo yang lebar dan yang tinggi harus terlihat sama besar, dan yang menyamakannya tinggi optisnya. Dibuat abu dan baru berwarna saat disentuh: delapan logo berwarna sekaligus menarik perhatian lebih besar daripada karya yang ada di bawahnya |
 | Thumbnail foto dibuat di BROWSER saat unggah, bukan di Worker API | Worker tidak pernah memegang berkasnya: unggahan memakai presigned URL, jadi panel meminta URL ke API lalu mengirim bytes-nya LANGSUNG ke R2. Menaruh pembuatan thumbnail di Worker berarti seluruh foto harus lewat Worker dulu — dan runtime Workers juga tidak punya kanvas untuk mendekode JPEG. Di browser, bytes-nya sudah di tangan. Ongkosnya satu decode tambahan di mesin staf saat mengunggah, ditukar dengan sepuluh decode di tiap ponsel klien yang membuka halaman proyek. Terukur pada foto 2560x1440: thumbnail 400px = 41x lebih sedikit piksel didekode, 19x lebih sedikit byte. Kolom `thumb_key` NULLABLE dengan sengaja — foto yang sudah telanjur diunggah tidak punya thumbnail dan jatuh kembali ke foto penuh |
-| Terjemahan: satu markup ber-`data-t` + kamus, BUKAN rute /id kembar | Sudah dicatat di `lib/i18n.ts` dan tetap berlaku. Yang perlu diketahui sebelum menambah halaman: "mesinnya sudah siap" TIDAK berarti tinggal menulis kamus — markup halamannya juga harus ditandai `data-t` satu per satu, dan itu bagian yang paling makan waktu. Yang lebih mudah lagi terlewat: kalimat yang dirakit JAVASCRIPT (jumlah hasil saring, pesan galat form, tanggal berformat locale) muncul SESUDAH kamus dijalankan, jadi pengalih tidak pernah menyentuhnya. Untuk itu ada `lib/i18nRuntime.ts`, yang membaca kamus halaman dari DOM — bukan menyalinnya — dan `situs:bahasa` di BaseLayout yang memberi tahu halaman kapan harus menggambar ulang |
+| **Situs publik hanya berbahasa INDONESIA; sistem `data-t` DIBUANG** | Membalik keputusan terjemahan sebelumnya, atas permintaan eksplisit pemilik: "halaman ini hanya dibuat dengan bahasa indonesia saja". Yang dibuang bukan cuma tombol EN/ID — melainkan seluruh mesinnya: `lib/i18n.ts`, `lib/i18nHalaman.ts`, `lib/i18nRuntime.ts`, dan 259 atribut `data-t` di 11 berkas. Kalimat Indonesianya ditulis LANGSUNG di markup, dan itulah yang memperbaiki bug SEO yang dilaporkan pemilik: judul tab, meta description, DAN kartu bagikan sekarang Indonesia karena HTML yang disajikan server memang sudah Indonesia — bukan hasil skrip. Konversinya diskripkan, bukan disunting tangan, supaya tidak ada kalimat yang hilang; sisa bahasa Inggris dicari ulang dengan memindai `dist/**/index.html`, bukan dengan membaca berkas sumbernya. Portal klien `/progres`, `/bukti`, dan `/admin/masuk` TETAP dwibahasa — ketiganya berdiri di luar BaseLayout dengan pengalihnya sendiri, dan klien asing memang mungkin membukanya |
 | Kalimat landing page diturunkan dari dokumen strategi, bukan dari tesis "klien luar negeri" | Dokumen `STRATEGI_BISNIS` milik pemilik menetapkan positioning: "studio arsitektur Pontianak yang mendesain ruang hospitality dan rumah tropis dengan pendekatan iklim khatulistiwa", dengan pasar Pontianak dan dua segmen — coffee shop sebagai mesin reputasi, rumah tinggal sebagai pilar margin. Beranda sebelumnya berdiri di atas tesis yang sama sekali berbeda (klien luar negeri, "mengirim uang lintas batas", "jarak itu soal penjadwalan"), dan dokumen itu tidak pernah menyebut klien luar negeri sebagai target. Hero, seksi portal, dan seksi "kenapa kami" ditulis ulang. Enam kompetensi di seksi "yang benar-benar kami kuasai" diambil apa adanya dari §2.2: alur bar dan dapur, ergonomi barista, akustik, pencahayaan, material tahan lembap Pontianak |
 | **Harga DIUMUMKAN di beranda** — membalik sikap sebelumnya | Enam tier dari §3.1 dan §3.2 lengkap dengan rentang fee, di `lib/tier.ts`. Ini membalik jawaban FAQ lama yang berbunyi "angka sebenarnya belum diumumkan di halaman ini", dan **jawaban itu sudah ikut diubah** — dua tempat yang menyebut harga harus selalu sepakat, kalau tidak yang membaca berhenti percaya keduanya. Yang TETAP tidak diumumkan dan tetap bertanda "ditanyakan": persentase uang muka, lama tiap tahap, dan jadwal kunjungan lokasi; ketiganya memang berubah per proyek dan dokumen strategi tidak menetapkannya. Kalau harga naik (aturannya di §3.3: tiap 3 proyek selesai pada satu tier, naik 10–15% untuk klien baru), yang diubah cuma `lib/tier.ts` |
-| Tombol navbar RECTANGLE, bukan pil | Membalik keputusan sebelumnya yang juga dari acuan pemilik ("Pil, mengikuti acuan pemilik"). Acuan navbar yang baru memakai tombol persegi bersudut lembut dan pemilik menyebutnya eksplisit. `.nav a.btn` dan `.bhs` harus selalu berubah bersamaan — kalau tidak, kelompok aksi di kanan bilah jadi setengah pil setengah kotak |
+| **`.btn--dot` = kotak GELAP bergaris teal, bukan tombol teal pejal** | Membalik bentuk sebelumnya (latar teal, titik gelap), yang ditolak pemilik dengan acuan tombol "Sign up for free" refine.dev: latar gelap, garis teal, teks teal, tekstur titik teal. Bentuk yang sama dipakai tiga tempat supaya satu bahasa visual untuk "ini aksi utama / ini tujuannya": tombol nav, lencana pembuka hero (`.hero-lencana`), dan tab tarif yang sedang aktif. Kalau salah satunya diubah, ketiganya harus ikut. Tombol navbar tetap RECTANGLE, bukan pil |
 | Judul tab dan meta description ikut bahasa; kartu bagikan TIDAK | Dilaporkan pemilik sebagai bug SEO: isi halaman sudah Indonesia, judul tab masih Inggris. Diperbaiki lewat dua kunci khusus `metaJudul` dan `metaKet` di tiap kamus halaman, dibaca pengalih bahasa — bukan `data-t`, karena keduanya tinggal di `<head>`. Yang **tidak bisa** diperbaiki dengan cara ini: kartu bagikan WhatsApp/Twitter membaca HTML yang DISAJIKAN server, bukan hasil skrip, jadi kartunya selalu versi Inggris. Menukarnya butuh rute `/id` terpisah — yang sudah ditolak karena dua berkas berisi kalimat yang sama pasti menyimpang |
+| **Positioning NASIONAL, bukan Pontianak saja** | Permintaan eksplisit pemilik: "jangan buat ini patokan di pontianak aja tapi ini untuk 1 indonesia". Ini BERBEDA dari dokumen strategi, yang seluruhnya menganalisis pasar Pontianak — jadi kalau suatu saat ada yang membandingkan situs dengan PDF-nya, perbedaannya memang sengaja dan pemilik yang memutuskan. Pontianak tetap disebut sebagai tempat studio berkantor (dan itu yang menjelaskan keahlian iklim lembapnya), bukan sebagai batas layanan. Yang ikut berubah: eyebrow hero, kalimat material, meta description tiap halaman, dan satu catatan di kaki seksi tarif tentang biaya perjalanan |
 | Pindah urutan menukar `sort_order` dua tetangga, bukan menulis ulang daftar | Dua permintaan alih-alih delapan, dan urutan yang lain tidak ikut berubah kalau salah satunya gagal |

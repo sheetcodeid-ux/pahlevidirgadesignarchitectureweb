@@ -15,15 +15,15 @@ const waTautan = (nomor: string) => {
 };
 
 const situs = [
-  { href: "/proyek", label: "Work", t: "navWork" },
-  { href: "/studio", label: "Studio", t: "navStudio" },
-  { href: "/jurnal", label: "Journal", t: "navJournal" },
-  { href: "/kontak", label: "Contact", t: "navContact" },
+  { href: "/proyek", label: "Karya" },
+  { href: "/studio", label: "Studio" },
+  { href: "/jurnal", label: "Jurnal" },
+  { href: "/kontak", label: "Kontak" },
 ];
 const klien = [
-  { href: "/progres", label: "Project portal", t: "kakiPortal" },
-  { href: "/bukti", label: "Payment receipt", t: "kakiBukti" },
-  { href: "/faq", label: "FAQ", t: "kakiFaq" },
+  { href: "/progres", label: "Portal proyek" },
+  { href: "/bukti", label: "Bukti pembayaran" },
+  { href: "/faq", label: "Tanya jawab" },
 ];
 // Baris kontak yang datanya belum diisi pemilik DIHILANGKAN, bukan ditulis
 // kosong — tautan mati lebih buruk daripada tautan yang tidak ada.
@@ -53,27 +53,27 @@ const luar = (href: string) => /^https?:\/\//.test(href);
           <span class="label kaki-nama">{nama.toUpperCase()}</span>
         </span>
         <div class="s16"></div>
-        <p class="dim kecil"><span data-t="kakiStudio">Architecture studio</span><br />{kota}</p>
+        <p class="dim kecil"><span>Studio arsitektur</span><br />{kota}</p>
       </div>
 
       <div class="sel">
-        <span class="label label--redup" data-t="kakiSitus">SITE</span>
+        <span class="label label--redup">SITUS</span>
         <div class="s16"></div>
         <ul class="kaki-tautan">
-          {situs.map((t) => (<li><a href={t.href} data-t={t.t}>{t.label}</a></li>))}
+          {situs.map((t) => (<li><a href={t.href}>{t.label}</a></li>))}
         </ul>
       </div>
 
       <div class="sel">
-        <span class="label label--redup" data-t="kakiKlien">CLIENTS</span>
+        <span class="label label--redup">KLIEN</span>
         <div class="s16"></div>
         <ul class="kaki-tautan">
-          {klien.map((t) => (<li><a href={t.href} data-t={t.t}>{t.label}</a></li>))}
+          {klien.map((t) => (<li><a href={t.href}>{t.label}</a></li>))}
         </ul>
       </div>
 
       <div class="sel">
-        <span class="label label--redup" data-t="kakiKontak">CONTACT</span>
+        <span class="label label--redup">KONTAK</span>
         <div class="s16"></div>
         {
           kontak.length ? (
@@ -91,7 +91,7 @@ const luar = (href: string) => /^https?:\/\//.test(href);
               ))}
             </ul>
           ) : (
-            <p class="dim kecil" data-t="kakiKontakKosong">Contact details are set in the studio panel.</p>
+            <p class="dim kecil">Detail kontak diatur di panel studio.</p>
           )
         }
       </div>
@@ -100,7 +100,7 @@ const luar = (href: string) => /^https?:\/\//.test(href);
     <div class="baris">
       <div class="sel kaki-bawah">
         <span class="dim kecil">© {tahun} {nama}</span>
-        <a class="dim kecil kaki-privasi" href="/privasi" data-t="kakiPrivasi">Privacy</a>
+        <a class="dim kecil kaki-privasi" href="/privasi">Privasi</a>
       </div>
     </div>
   </div>

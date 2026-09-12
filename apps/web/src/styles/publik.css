@@ -302,6 +302,10 @@ body > .pita--akhir:not(.pita--panel) > .dalam::after{bottom:var(--kotak-1)}
    32px, bukan 44px seperti pita isi: yang 44px itu jarak ke GARIS kolom,
    sementara di sini yang di sebelahnya tepi layar. */
 .nav .isi{padding-inline:32px}
+/* Bilah nav lebih pendek. `.nav .isi--rapat` berkekhususan (0,2,0) dan
+   .isi--rapat cuma (0,1,0), jadi ia menang tanpa !important. Yang menentukan
+   tinggi bilah tinggal padding ini ditambah tombol tertinggi di dalamnya. */
+.nav .isi--rapat{padding-block:13px}
 
 /* Tarikan -1px yang dulu ada di sini sudah dibuang. Ia memaksa garis bawah
    nav berimpit dengan garis atas seksi pertama, dan itu perlu selama
@@ -360,8 +364,12 @@ body > .pita--akhir .dalam::after{bottom:var(--kotak-1)}
    Batasnya jatuh di sekitar 450px, dan yang di bawahnya semuanya kolom
    bertingkat tiga/empat atau daftar — jadi yang ditandai strukturnya,
    bukan angkanya. */
+/* .tarif-grup__kop dan .tarif-kaki__b ikut di sini karena isinya keterangan
+   pendek — satu baris di bawah sebuah kendali, dan tiga kolom sempit di kaki
+   seksi tarif. Pada ukuran sependek itu perataan penuh meninggalkan celah
+   antar-kata selebar dua huruf. */
 .b3 .sel,.b4 .sel,.info,.rel-kaki,.kirim-baris,.jam,
-.sel-kontak,.sel-rel-j,.fak{--rata:start}
+.sel-kontak,.sel-rel-j,.fak,.tarif-grup__kop,.tarif-kaki__b{--rata:start}
 
 .isi p,.isi li,.isi dd,.sel p,.sel li,.tls p,.tls li{
   text-align:var(--rata,justify);
@@ -564,21 +572,65 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .btn--isi:active{background:#14B8A6;border-color:#14B8A6;color:#18181B}
 .btn--penuh{width:100%}
 
-/* Tombol aksi utama bertekstur titik, mengikuti acuan pemilik.
-   Titiknya GELAP di atas hijau, bukan terang: tombolnya berlatar --aksen
-   yang terang, dan titik terang di atasnya tidak terlihat sama sekali.
-   background-image, bukan pseudo-elemen — tombol ini juga dipakai sebagai
-   <a>, dan ::before di dalamnya akan bertabrakan dengan panah .ar. */
+/* Tombol aksi utama, mengikuti acuan pemilik (gambar 4): kotak GELAP
+   bergaris teal dengan tekstur titik teal dan teks teal — bukan tombol teal
+   pejal. Versi sebelumnya kebalikannya (latar teal, titik gelap) dan itulah
+   yang ditolak.
+
+   background-image, bukan pseudo-elemen: tombol ini juga dipakai sebagai
+   <a>, dan ::before di dalamnya akan bertabrakan dengan panah .ar.
+   Titiknya 1px pada kisi 5px, cukup terbaca sebagai tekstur tanpa membuat
+   teks di atasnya jadi bergetar. */
 .btn--dot{
-  background-image:radial-gradient(rgba(9,9,11,.22) 1px,transparent 1px);
+  background-color:rgba(45,212,191,.055);
+  background-image:radial-gradient(rgba(45,212,191,.30) 1px,transparent 1px);
   background-size:5px 5px;
   background-position:0 0;
+  border-color:rgba(45,212,191,.45);
+  color:var(--aksen);
+  font-weight:600;
+  box-shadow:inset 0 0 18px rgba(45,212,191,.10);
 }
-/* Latar dasarnya ikut berubah saat hover/aktif, jadi teksturnya harus
-   ditegakkan ulang — `background` shorthand di .btn--isi:hover membuangnya. */
-.btn--dot:hover,.btn--dot:active{
-  background-image:radial-gradient(rgba(9,9,11,.22) 1px,transparent 1px);
-  background-size:5px 5px}
+/* `background` shorthand di aturan hover mana pun membuang background-image
+   tanpa suara, jadi teksturnya ditegakkan ulang di tiap keadaan. */
+.btn--dot:hover,.btn--dot:active,.btn--dot:focus-visible{
+  background-color:rgba(45,212,191,.12);
+  background-image:radial-gradient(rgba(45,212,191,.34) 1px,transparent 1px);
+  background-size:5px 5px;
+  border-color:var(--aksen);
+  color:var(--aksen-3);
+  box-shadow:inset 0 0 22px rgba(45,212,191,.16)}
+.btn--dot:focus-visible{box-shadow:inset 0 0 22px rgba(45,212,191,.16),
+  0 0 0 2px var(--kanvas),0 0 0 4px var(--cincin)}
+
+/* ── Lencana pembuka hero ─────────────────────────────────────────────────
+   Acuan pemilik (refine.dev): kotak bergaris teal di atas judul, berisi ikon
+   kecil, satu kalimat penempatan, lalu tautan berwarna ke tujuannya.
+   Menggantikan eyebrow .label yang cuma teks teal berjarak lebar.
+
+   inline-flex, bukan block: ia harus selebar isinya dan berada di tengah
+   kolom hero yang memang rata tengah. */
+.hero-lencana{display:inline-flex;align-items:center;gap:9px;
+  padding:8px 15px;border:1px solid rgba(45,212,191,.4);border-radius:var(--r);
+  background-color:rgba(45,212,191,.055);
+  background-image:radial-gradient(rgba(45,212,191,.22) 1px,transparent 1px);
+  background-size:5px 5px;
+  box-shadow:inset 0 0 22px rgba(45,212,191,.10);
+  color:var(--teks-2);font-size:13px;line-height:normal;text-decoration:none;
+  transition:border-color 200ms var(--e-halus),background-color 200ms var(--e-halus)}
+.hero-lencana svg{color:var(--aksen);flex:none}
+.hero-lencana b{color:var(--aksen);font-weight:600;white-space:nowrap}
+.hero-lencana .ar{display:inline-block;transition:transform 180ms var(--e-keluar)}
+.hero-lencana:hover{border-color:var(--aksen);background-color:rgba(45,212,191,.12)}
+.hero-lencana:hover .ar{transform:translateX(3px)}
+.hero-lencana:focus-visible{outline:none;box-shadow:inset 0 0 22px rgba(45,212,191,.10),
+  0 0 0 2px var(--kanvas),0 0 0 4px var(--cincin)}
+/* Di ponsel kalimatnya dan tautannya tidak muat sebaris; yang dipertahankan
+   kalimat penempatannya, karena tautan tarif juga ada di menu seksi. */
+@media (max-width:560px){
+  .hero-lencana{font-size:12px;padding:7px 12px;gap:7px}
+  .hero-lencana b{display:none}
+}
 
 /* Pemisah tegak di bilah nav: satu garis rambut setinggi teks, bukan
    selebar bilah. */
@@ -958,11 +1010,14 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
   border-bottom:1px solid var(--garis);
   transition:transform 320ms var(--e-keluar)}
 .nav--sembunyi{transform:translateY(-101%)}
-.nav a{position:relative;text-decoration:none;color:var(--teks-3);font-size:13px;
-  padding:6px 0;transition:color 180ms var(--e-halus)}
+/* Putih, bukan abu — permintaan eksplisit pemilik dengan acuan refine.dev.
+   Yang membedakan halaman aktif karena itu bukan lagi warnanya (dua-duanya
+   sudah putih) melainkan garis teal di bawahnya. */
+.nav a{position:relative;text-decoration:none;color:var(--teks);font-size:14px;
+  font-weight:500;padding:6px 0;transition:color 180ms var(--e-halus)}
 .nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--aksen);
   transform:scaleX(0);transform-origin:left;transition:transform 260ms var(--e-keluar)}
-.nav a:hover,.nav a[aria-current="page"]{color:var(--teks)}
+.nav a:hover,.nav a[aria-current="page"]{color:var(--aksen)}
 .nav a:hover::after,.nav a[aria-current="page"]::after{transform:scaleX(1)}
 /* Pil, sekeluarga dengan tombol di sebelahnya — di acuan pemilik seluruh
    kelompok aksi di kanan bilah berbentuk pil. */
@@ -1020,10 +1075,21 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
    membuang background-image tanpa suara. Terukur: getComputedStyle membalas
    `none` padahal aturannya jelas ada di berkas. Keluarga jebakan yang sama
    dengan `.topbar > *:not(...)` di CLAUDE.md. */
-.nav a.btn--dot,.laci a.btn--dot,
-.nav a.btn--dot:hover,.laci a.btn--dot:hover{
-  background-image:radial-gradient(rgba(9,9,11,.22) 1px,transparent 1px);
-  background-size:5px 5px}
+.nav a.btn--dot,.laci a.btn--dot{
+  background-color:rgba(45,212,191,.055);
+  background-image:radial-gradient(rgba(45,212,191,.30) 1px,transparent 1px);
+  background-size:5px 5px;
+  border-color:rgba(45,212,191,.45);
+  color:var(--aksen);
+  font-weight:600;
+  box-shadow:inset 0 0 18px rgba(45,212,191,.10)}
+.nav a.btn--dot:hover,.laci a.btn--dot:hover,
+.nav a.btn--dot:focus-visible,.laci a.btn--dot:focus-visible{
+  background-color:rgba(45,212,191,.12);
+  background-image:radial-gradient(rgba(45,212,191,.34) 1px,transparent 1px);
+  background-size:5px 5px;
+  border-color:var(--aksen);
+  color:var(--aksen-3)}
 @media (max-width:900px){
   .nav-tombol{display:grid}
 }
@@ -1098,80 +1164,129 @@ ul.rapi strong,p strong{color:var(--teks);font-weight:600}
 .langkah .no::before{counter-increment:langkah;content:"0" counter(langkah)}
 .btn--memuat[disabled]{opacity:1}
 
-/* ═══ TIER LAYANAN ════════════════════════════════════════════════════════
-   Tiga kartu sebaris per kelompok, yang tengah disorot — bentuk yang dipilih
-   pemilik lewat gambar acuan. Penanda silang di sudut rel mengikuti sistem
-   yang sudah dipakai `.dalam`, jadi seksi ini tidak memperkenalkan bahasa
-   visual baru; ia cuma memakai yang sudah ada di halaman lain. */
-.tier__lead{max-width:64ch}
-.tier-blok{border-top:1px solid var(--garis)}
-.tier-blok:first-of-type{border-top:0}
-.tier-kop{padding-block:26px 18px}
-.tier-kop__k{max-width:58ch;margin-top:8px}
+/* ═══ TARIF ═══════════════════════════════════════════════════════════════
+   Tab kelompok, lalu tiga kartu sebaris dengan yang tengah disorot.
 
-/* Rel kartu. `position:relative` untuk penanda sudut; `align-items:stretch`
-   supaya tiga kartu setinggi yang tertinggi — daftar isinya beda panjang,
-   dan kartu yang tingginya berbeda-beda membuat barisnya terbaca berantakan. */
-.tier-rel{position:relative;display:grid;grid-template-columns:repeat(3,1fr);
+   Versi sebelumnya menumpuk KEENAM kartu sekaligus dan pemiliknya menilainya
+   satu dari seratus. Tiga hal yang diubah, dan ketiganya alasan ia jadi
+   terbaca: kelompoknya dipisah jadi tab sehingga yang tampak cuma tiga;
+   nominalnya dibesarkan dan dipisah dari satuannya sehingga angkanya bisa
+   dibandingkan sekilas tanpa membaca kalimat; dan kartu sorotnya diberi
+   bingkai teal penuh, bukan cuma latar berpendar yang nyaris tak terlihat. */
+.tarif__lead{max-width:56ch}
+
+/* ── Tab kelompok ── */
+.tarif-alih-bung{padding-block:0 22px}
+.tarif-alih{display:inline-flex;gap:4px;padding:4px;
+  border:1px solid var(--garis);border-radius:var(--r);background:var(--gelap)}
+.tarif-alih button{appearance:none;border:0;background:transparent;cursor:pointer;
+  font-family:var(--tubuh);font-size:13.5px;font-weight:500;line-height:normal;
+  color:var(--teks-2);padding:9px 18px;border-radius:calc(var(--r) - 2px);
+  white-space:nowrap;
+  transition:background 200ms var(--e-halus),color 200ms var(--e-halus)}
+.tarif-alih button:hover{color:var(--teks)}
+/* Tab terpilih: kotak teal bertekstur titik, sekeluarga dengan .btn--dot dan
+   lencana hero. Satu bahasa visual untuk "ini yang aktif / ini tujuannya". */
+.tarif-alih button[aria-selected="true"]{
+  color:var(--aksen);font-weight:600;
+  background-color:rgba(45,212,191,.10);
+  background-image:radial-gradient(rgba(45,212,191,.28) 1px,transparent 1px);
+  background-size:5px 5px;
+  box-shadow:inset 0 0 0 1px rgba(45,212,191,.4)}
+.tarif-alih button:focus-visible{outline:none;
+  box-shadow:0 0 0 2px var(--kanvas),0 0 0 4px var(--cincin)}
+
+.tarif-grup__kop{padding-block:0 20px}
+/* Rata KIRI, bukan rata kanan-kiri seperti paragraf badan lainnya. Ini satu
+   baris keterangan di bawah sebuah kendali, bukan paragraf yang dibaca —
+   dan pada ukuran sependek itu perataan penuh meninggalkan celah antar-kata
+   selebar dua huruf. */
+.tarif-grup__kop p{max-width:62ch}
+
+/* Rel kartu. `align-items:stretch` supaya tiga kartu setinggi yang tertinggi —
+   daftar isinya beda panjang, dan tinggi yang berbeda-beda membuat barisnya
+   terbaca berantakan. */
+.tarif-rel{position:relative;display:grid;grid-template-columns:repeat(3,1fr);
   align-items:stretch;padding-bottom:34px}
-
-/* Penanda silang di keempat sudut rel, sama seperti penanda `.dalam`. */
-.tier-rel::before,.tier-rel::after{content:"";position:absolute;width:9px;height:9px;
+/* Penanda silang di sudut rel, sama seperti penanda `.dalam` — seksi ini
+   tidak memperkenalkan bahasa visual baru. */
+.tarif-rel::before,.tarif-rel::after{content:"";position:absolute;width:9px;height:9px;
   border:1px solid var(--garis-2);pointer-events:none}
-.tier-rel::before{left:-5px;top:-5px;border-right:0;border-bottom:0}
-.tier-rel::after{right:-5px;top:-5px;border-left:0;border-bottom:0}
+.tarif-rel::before{left:-5px;top:-5px;border-right:0;border-bottom:0}
+.tarif-rel::after{right:-5px;top:-5px;border-left:0;border-bottom:0}
 
-.tier{display:flex;flex-direction:column;padding:30px 28px 28px;
+.tarif{display:flex;flex-direction:column;padding:28px 26px 26px;
   border-left:1px solid var(--garis);position:relative}
-.tier:first-child{border-left:0}
+.tarif:first-child{border-left:0}
 
-/* Kartu yang disorot: latar berpendar dari sudut atas, persis pola `.pijar`
-   yang sudah dipakai kepala halaman — bukan bayangan, yang dilarang sistem. */
-.tier--sorot{background:
-  radial-gradient(120% 80% at 50% 0%,rgba(45,212,191,.14),transparent 62%),
+/* Kartu yang disorot: bingkai teal PENUH plus pendar dari sudut atas.
+   Sebelumnya hanya pendarnya, dan pada layar yang tidak dikalibrasi
+   kartu itu tidak terlihat berbeda sama sekali. */
+.tarif--sorot{background:
+  radial-gradient(130% 90% at 50% 0%,rgba(45,212,191,.16),transparent 64%),
   var(--gelap);
-  border-left:1px solid var(--garis-2);
-  box-shadow:inset 0 0 0 1px var(--garis-2)}
-.tier--sorot + .tier{border-left-color:var(--garis-2)}
+  border-left-color:transparent;
+  box-shadow:inset 0 0 0 1px rgba(45,212,191,.42)}
+.tarif--sorot + .tarif{border-left-color:transparent}
 
-.tier__cap{position:absolute;top:26px;right:24px;font-size:9.5px;font-weight:600;
-  letter-spacing:.13em;text-transform:uppercase;color:var(--aksen);
-  border:1px solid var(--garis-2);background:var(--gelap);padding:4px 8px}
-.tier__n{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--aksen)}
-.tier__r{font-size:13.5px;color:var(--teks-2);line-height:1.62;margin-top:12px;min-height:3.3em}
-.tier__garis{height:1px;background:var(--garis);margin:20px 0}
+/* Lencana selalu ada di markup — juga pada kartu yang tidak disorot, di mana
+   ia kosong. Itu yang menjaga judul ketiga kartu tetap sebaris: lencana yang
+   cuma muncul di satu kartu akan mendorong judulnya turun sendirian. */
+.tarif__cap{display:block;min-height:15px;font-size:9.5px;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--aksen)}
+.tarif__n{font-family:var(--judul);font-size:19px;font-weight:600;
+  letter-spacing:-.02em;color:var(--teks);margin-top:10px}
+.tarif__r{font-size:13px;color:var(--teks-2);line-height:1.58;margin-top:8px;
+  min-height:3.2em}
 
-/* Nominalnya rata bawah (baseline), bukan rata tengah: "Rp 45–80 million"
-   dan "/ project" punya tinggi huruf berbeda jauh, dan rata tengah membuat
-   yang kecil tampak melayang. */
-.tier__f{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.tier__f b{font-family:var(--judul);font-size:23px;font-weight:600;color:var(--teks);
-  letter-spacing:-.018em}
-.tier__f .dim{font-size:13px}
+/* Nominal. Rata bawah (baseline), bukan rata tengah: "Rp", angkanya, dan
+   "juta" punya tinggi huruf yang berbeda jauh, dan rata tengah membuat yang
+   kecil tampak melayang. tabular-nums supaya digit ketiga kartu sejajar. */
+.tarif__harga{display:flex;align-items:baseline;gap:6px;margin-top:22px;
+  font-variant-numeric:tabular-nums}
+.tarif__harga b{font-family:var(--judul);font-size:34px;font-weight:600;
+  color:var(--teks);letter-spacing:-.03em;line-height:1}
+.tarif__mata{font-size:15px;color:var(--teks-2)}
+.tarif__sat{font-size:15px;color:var(--teks-2)}
+.tarif__per{display:block;margin-top:6px}
+.tarif__b{margin-top:20px}
 
-.tier__ik{font-size:12.5px;color:var(--teks-3);margin-bottom:12px}
-.tier__d{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;
-  /* Mendorong blok "Built for" ke dasar kartu, supaya ketiganya sejajar
+.tarif__ik{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--teks-3);margin-top:24px;padding-top:18px;
+  border-top:1px solid var(--garis)}
+.tarif__d{list-style:none;padding:0;margin:14px 0 0;display:flex;flex-direction:column;
+  gap:10px;
+  /* Mendorong blok "Cocok untuk" ke dasar kartu, supaya ketiganya sejajar
      walau daftar isinya beda panjang. */
   flex:1}
-.tier__d li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;
+.tarif__d li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;
   color:var(--teks-2);line-height:1.5}
-.tier__d i{flex:none;width:17px;height:17px;display:grid;place-items:center;margin-top:1px;
+.tarif__d i{flex:none;width:17px;height:17px;display:grid;place-items:center;margin-top:1px;
   border-radius:99px;background:rgba(45,212,191,.14);color:var(--aksen)}
 
-.tier__untuk{margin-top:22px;padding-top:16px;border-top:1px solid var(--garis);
+.tarif__untuk{margin-top:22px;padding-top:16px;border-top:1px solid var(--garis);
   display:flex;flex-direction:column;gap:4px}
-.tier__untuk .kecil{color:var(--teks-2)}
-.tier-kaki{padding-block:4px 30px}
-.tier-kaki p{max-width:70ch}
+.tarif__untuk .kecil{color:var(--teks-2)}
+
+/* Kaki: tiga catatan sebaris, bukan satu paragraf panjang. Yang panjang
+   tidak pernah dibaca, dan ketiganya menjawab pertanyaan yang berbeda. */
+.tarif-kaki{padding-block:6px 30px;display:grid;
+  grid-template-columns:repeat(3,1fr);gap:26px;border-top:1px solid var(--garis)}
+.tarif-kaki__b p{margin-top:9px}
 
 @media (max-width:900px){
-  .tier-rel{grid-template-columns:1fr;padding-bottom:24px}
-  .tier{border-left:0;border-top:1px solid var(--garis);padding:26px 20px}
-  .tier:first-child{border-top:0}
-  .tier--sorot{border-left:0;box-shadow:inset 0 0 0 1px var(--garis-2)}
-  .tier--sorot + .tier{border-left-color:var(--garis)}
-  .tier__r{min-height:0}
-  .tier-kop{padding-inline:20px}
+  .tarif-rel{grid-template-columns:1fr;padding-bottom:24px}
+  .tarif{border-left:0;border-top:1px solid var(--garis);padding:24px 20px}
+  .tarif:first-child{border-top:0}
+  .tarif--sorot{border-top-color:transparent}
+  .tarif--sorot + .tarif{border-top-color:var(--garis)}
+  .tarif__r{min-height:0}
+  .tarif-grup__kop,.tarif-alih-bung{padding-inline:20px}
+  .tarif-kaki{grid-template-columns:1fr;gap:22px}
+}
+/* Di ponsel sempit dua tab tidak muat sebaris dalam satu pil; dibiarkan
+   melebar penuh dan dibagi rata, bukan digulir. */
+@media (max-width:480px){
+  .tarif-alih{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .tarif-alih button{padding-inline:10px;font-size:12.5px}
 }

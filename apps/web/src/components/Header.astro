@@ -12,10 +12,10 @@ const EKOR = /\s+(architecture|architects|architect|studio|design|designs)$/i;
 const wordmark = nama.replace(EKOR, "").toUpperCase();
 
 const tautan = [
-  { href: "/proyek", label: "Work", t: "navWork" },
-  { href: "/studio", label: "Studio", t: "navStudio" },
-  { href: "/jurnal", label: "Journal", t: "navJournal" },
-  { href: "/kontak", label: "Contact", t: "navContact" },
+  { href: "/proyek", label: "Karya" },
+  { href: "/studio", label: "Studio" },
+  { href: "/jurnal", label: "Jurnal" },
+  { href: "/kontak", label: "Kontak" },
 ];
 
 const kini = Astro.url.pathname;
@@ -24,7 +24,7 @@ const aktif = (href: string) =>
 
 ---
 
-<a href="#isi" class="lompat" data-t="lompat">Skip to content</a>
+<a href="#isi" class="lompat">Lewati ke konten</a>
 <div class="bar-atas" id="barAtas"></div>
 
 <div class="pita pita--awal nav" id="nav">
@@ -47,13 +47,13 @@ const aktif = (href: string) =>
             </svg>
           )
         }
-        <span class="label merek__teks">{wordmark}</span>
+        <span class="merek__teks">{wordmark}</span>
       </a>
 
-      <nav class="rowx nav-lipat nav-tautan" aria-label="Main">
+      <nav class="rowx nav-lipat nav-tautan" aria-label="Navigasi utama">
         {
           tautan.map((t) => (
-            <a href={t.href} aria-current={aktif(t.href) ? "page" : undefined} data-t={t.t}>
+            <a href={t.href} aria-current={aktif(t.href) ? "page" : undefined}>
               {t.label}
             </a>
           ))
@@ -61,16 +61,12 @@ const aktif = (href: string) =>
       </nav>
 
       <span class="rowx nav-kanan">
-        {/* Pemisah tegak antara tautan navigasi dan kelompok aksi, mengikuti
+        {/* Pemisah tegak antara tautan navigasi dan tombol aksi, mengikuti
             acuan pemilik. Disembunyikan bersama .nav-lipat di ponsel — di
             sana kelompok kirinya memang tidak ada. */}
         <span class="nav-pisah nav-lipat" aria-hidden="true"></span>
-        <span class="bhs nav-lipat" role="group" aria-label="Language">
-          <button type="button" data-bhs="en" aria-pressed="true">EN</button>
-          <button type="button" data-bhs="id" aria-pressed="false">ID</button>
-        </span>
-        <a class="btn btn--isi btn--dot nav-lipat" href="/kontak" data-t="mulaiProyek">Start a project</a>
-        <button class="nav-tombol" id="bukaLaci" aria-label="Open menu" aria-expanded="false">
+        <a class="btn btn--dot nav-lipat" href="/kontak">Mulai proyek</a>
+        <button class="nav-tombol" id="bukaLaci" aria-label="Buka menu" aria-expanded="false">
           <svg width="19" height="19" viewBox="0 0 20 20" stroke="currentColor" stroke-width="1.6"
             ><path d="M2 6h16M2 14h16"></path></svg
           >
@@ -82,24 +78,16 @@ const aktif = (href: string) =>
 
 <dialog class="laci" id="laci" aria-label="Menu">
   <div class="laci__kop">
-    <span class="label merek__teks">{wordmark}</span>
-    <button class="nav-tombol laci__x" id="tutupLaci" aria-label="Close menu">
+    <span class="merek__teks">{wordmark}</span>
+    <button class="nav-tombol laci__x" id="tutupLaci" aria-label="Tutup menu">
       <svg width="19" height="19" viewBox="0 0 20 20" stroke="currentColor" stroke-width="1.6"
         ><path d="M5 5l10 10M15 5L5 15"></path></svg
       >
     </button>
   </div>
-  {tautan.map((t) => (<a href={t.href}><span data-t={t.t}>{t.label}</span> <span class="ak">→</span></a>))}
+  {tautan.map((t) => (<a href={t.href}><span>{t.label}</span> <span class="ak">→</span></a>))}
   <div class="laci__kaki">
-        <a class="btn btn--isi btn--dot btn--penuh" href="/kontak" data-t="mulaiProyekPanah">Start a project →</a>
-        <div class="s16"></div>
-        {/* Pengalihnya juga di laci: di ponsel yang di bilah atas disembunyikan
-            .nav-lipat, dan tanpa ini bahasa tidak bisa diganti dari ponsel
-            sama sekali. */}
-        <span class="bhs" role="group" aria-label="Language">
-          <button type="button" data-bhs="en" aria-pressed="true">EN</button>
-          <button type="button" data-bhs="id" aria-pressed="false">ID</button>
-        </span>
+        <a class="btn btn--dot btn--penuh" href="/kontak">Mulai proyek →</a>
   </div>
 </dialog>
 
@@ -133,8 +121,15 @@ const aktif = (href: string) =>
     flex: none;
     object-fit: contain;
   }
+  /* Wordmark: putih dan tebal, seperti acuan pemilik. Sebelumnya ia
+     menumpang kelas .label — 11px, teal, letter-spacing .18em — yang dibuat
+     untuk eyebrow seksi, bukan untuk identitas studio di bilah nav. */
   .merek__teks {
-    letter-spacing: 0.14em;
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--teks);
+    white-space: nowrap;
   }
   .merek {
     grid-column: 1;

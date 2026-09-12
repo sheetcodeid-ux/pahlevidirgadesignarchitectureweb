@@ -52,7 +52,7 @@ const daftarIsi = (metadata.headings ?? []).filter((h) => h.depth === 2);
 const kata = (tulisan.body ?? "").trim().split(/\s+/).filter(Boolean).length;
 
 const tgl = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
+  iso ? new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "";
 
 const lain = semua.filter((t) => t.slug !== tulisan.slug).slice(0, 1)[0];
 
@@ -91,8 +91,8 @@ const ldjson = {
             <span>FOTO</span>
             <span><b>{PENULIS}</b><br />Principal architect</span>
           </span>
-          <span><b>{tgl(tulisan.publishedAt)}</b><br />Updated when the rules change</span>
-          <span><b>{tulisan.readMinutes} min read</b><br />{kata} words</span>
+          <span><b>{tgl(tulisan.publishedAt)}</b><br />Diperbarui kalau aturannya berubah</span>
+          <span><b>{tulisan.readMinutes} menit baca</b><br />{kata} kata</span>
         </div>
       </div>
     </div>
@@ -106,7 +106,7 @@ const ldjson = {
             daftarIsi.length > 0 && (
               <Fragment>
                 <div style="padding:26px 26px 16px">
-                  <span class="label label--redup">IN THIS ARTICLE</span>
+                  <span class="label label--redup">DI TULISAN INI</span>
                 </div>
                 <nav id="toc">
                   {daftarIsi.map((h, i) => (
@@ -127,10 +127,10 @@ const ldjson = {
           }
           <div style="border-top:1px solid var(--garis);padding:24px 26px">
             <p class="mut kecil">
-              Checking a plot properly takes an afternoon. Getting it wrong takes the whole project.
+              Memeriksa sebidang tanah dengan benar makan waktu satu sore. Salah memeriksanya makan seluruh proyek.
             </p>
             <div class="s16"></div>
-            <a class="btn btn--penuh" href="/kontak">Ask about your project <span class="ar">→</span></a>
+            <a class="btn btn--penuh" href="/kontak">Tanyakan proyek Anda <span class="ar">→</span></a>
           </div>
         </div>
 
@@ -143,13 +143,13 @@ const ldjson = {
             <p class="mut kecil" style="max-width:44ch">
               {
                 lain
-                  ? `Next: ${lain.title}`
-                  : "Have a project in mind? Send the location and a few photos — we will tell you what we see."
+                  ? `Selanjutnya: ${lain.title}`
+                  : "Punya rencana proyek? Kirim lokasinya dan beberapa foto — kami akan bilang apa yang kami lihat."
               }
             </p>
             <div class="rowx">
-              <a class="btn btn--isi" href="/kontak">Ask about your project <span class="ar">→</span></a>
-              <a class="btn" href="/jurnal">All journal <span class="ar">→</span></a>
+              <a class="btn btn--dot" href="/kontak">Tanyakan proyek Anda <span class="ar">→</span></a>
+              <a class="btn" href="/jurnal">Semua tulisan <span class="ar">→</span></a>
             </div>
           </div>
         </div>

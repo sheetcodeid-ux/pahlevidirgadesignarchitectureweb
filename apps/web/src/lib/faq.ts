@@ -14,11 +14,11 @@
 export type KategoriFaq = "mulai" | "uang" | "waktu" | "kerja" | "selesai";
 
 export const LABEL_FAQ: Record<KategoriFaq, string> = {
-  mulai: "Getting started",
-  uang: "Money",
-  waktu: "Time",
-  kerja: "Working together",
-  selesai: "After handover",
+  mulai: "Memulai",
+  uang: "Uang",
+  waktu: "Waktu",
+  kerja: "Bekerja sama",
+  selesai: "Setelah serah terima",
 };
 
 export interface Tanya {
@@ -45,140 +45,119 @@ export const FAQ: Tanya[] = [
   {
     id: "we-only-own-land-is",
     kat: "mulai",
-    tanya: "We only own land. Is it too early to talk to an architect?",
-    jawab: `<p>It is the best possible time. Half of what decides a good building — where it sits on the plot, which way it faces, where the water goes, how high you can build — is settled before a single line is drawn.</p>
-<p>Coming to us with a finished idea is not a problem either. But coming with only land means nothing has been decided wrongly yet.</p>`,
+    tanya: "Kami baru punya tanah. Apa terlalu dini bicara dengan arsitek?",
+    jawab: `<p>Justru ini waktu terbaiknya. Setengah dari hal yang menentukan bangunan yang baik — di mana ia diletakkan di kavling, menghadap ke mana, ke mana airnya pergi, boleh setinggi apa — sudah ditentukan sebelum satu garis pun ditarik.</p><p>Datang dengan gagasan yang sudah jadi juga bukan masalah. Tapi datang hanya dengan tanah berarti belum ada satu pun keputusan yang salah diambil.</p>`,
   },
   {
     id: "do-you-work-with-clients",
     kat: "mulai",
-    tanya: "Do you work with clients outside Indonesia?",
-    jawab: `<p>Yes. We work in English and in Bahasa Indonesia, whichever is easier for you, and we answer in the same one you write in.</p>
-<p>Distance changes the mechanics, not the work: calls by video or WhatsApp, drawings and invoices on your project page, and a written record of every decision so nothing depends on who remembers what. What distance does not remove is the need for someone to stand on the site — at some point that is either us travelling or a person you trust locally.</p>`,
+    tanya: "Apakah Anda melayani klien di luar Indonesia?",
+    jawab: `<p>Ya. Kami bekerja dalam bahasa Inggris dan Indonesia, mana pun yang lebih mudah buat Anda, dan kami menjawab dengan bahasa yang sama seperti yang Anda pakai menulis.</p><p>Jarak mengubah caranya, bukan pekerjaannya: panggilan lewat video atau WhatsApp, gambar dan tagihan di halaman proyek Anda, dan catatan tertulis untuk tiap keputusan sehingga tidak ada yang bergantung pada siapa yang masih ingat. Yang tidak bisa dihapus jarak adalah keharusan seseorang berdiri di tapaknya — pada satu titik itu berarti kami yang berangkat, atau orang lokal yang Anda percaya.</p>`,
   },
   {
     id: "what-do-you-need-from",
     kat: "mulai",
-    tanya: "What do you need from us in the first message?",
-    jawab: `<p>Three things, and none of them need to be precise: <strong>where the site is</strong>, <strong>roughly what you can spend</strong>, and <strong>what you are unsure about</strong>.</p>
-<p>That third one is the useful one. “I have a corner plot and no idea whether to build up or out” tells us more than a page of requirements.</p>`,
+    tanya: "Apa yang Anda butuhkan dari kami di pesan pertama?",
+    jawab: `<p>Tiga hal, dan tidak satu pun harus presisi: <strong>di mana tapaknya</strong>, <strong>kira-kira berapa yang bisa Anda keluarkan</strong>, dan <strong>apa yang membuat Anda ragu</strong>.</p><p>Yang ketiga itu yang paling berguna. “Saya punya kavling sudut dan belum tahu sebaiknya naik ke atas atau melebar” memberi tahu kami lebih banyak daripada satu halaman daftar kebutuhan.</p>`,
   },
   {
     id: "is-the-first-conversation-free",
     kat: "mulai",
-    tanya: "Is the first conversation free?",
-    jawab: `<p>Yes, and it always will be. About an hour, video or WhatsApp, where we talk about the site, the money and the timeline honestly. You leave it knowing what your project would realistically take, whether or not you work with us.</p>
-<p>Drawings are not free — for anyone. We do not produce concepts so that studios can be compared side by side.</p>`,
+    tanya: "Apakah percakapan pertama gratis?",
+    jawab: `<p>Ya, dan akan selalu begitu. Sekitar sejam, lewat video atau WhatsApp, membicarakan tapak, uang, dan jadwalnya secara jujur. Anda pulang tahu kira-kira apa yang sebenarnya dibutuhkan proyek Anda, mau bekerja dengan kami atau tidak.</p><p>Gambar tidak gratis — untuk siapa pun. Kami tidak membuat konsep supaya studio bisa dibanding-bandingkan berdampingan.</p>`,
   },
   {
     id: "how-much-do-you-charge",
     kat: "uang",
-    tanya: "How much do you charge?",
-    jawab: `<p><strong>The ranges are published on the home page</strong>, split into three tiers for coffee shops and three for houses. Coffee shops run from Rp 15–25 million for concept and plans up to Rp 100–180 million for full service; houses from Rp 10–20 million for a consultation up to Rp 80–200 million for design through to landscape.</p>
-<p>Where you land inside a range depends on the site and how complicated it turns out to be, and we tell you which tier applies before any work starts. The fee is split across stages, and each stage is invoiced only when it is delivered — you are never paying for work that has not arrived yet.</p>
-<p>Above the entry tier we do not price per square metre. A 200 m² café with three bar stations is not half the work of a 400 m² one with a single counter, and pricing by area quietly penalises the projects that need the most thought.</p>`,
+    tanya: "Berapa tarif Anda?",
+    jawab: `<p><strong>Rentangnya diumumkan di beranda</strong>, dibagi tiga tier untuk coffee shop dan tiga untuk rumah. Coffee shop mulai Rp 15–25 juta untuk konsep dan denah sampai Rp 100–180 juta untuk layanan penuh; rumah mulai Rp 10–20 juta untuk konsultasi sampai Rp 80–200 juta untuk desain sampai lanskap.</p><p>Di mana Anda mendarat di dalam rentangnya tergantung tapak dan seberapa rumit ia ternyata, dan kami memberi tahu tier mana yang berlaku sebelum satu pun pekerjaan dimulai. Biayanya dibagi ke seluruh tahap, dan tiap tahap baru ditagih setelah diserahkan — Anda tidak pernah membayar pekerjaan yang belum sampai.</p><p>Di atas tier paling dasar kami tidak menghitung per meter persegi. Kafe 200 m² dengan tiga bar station bukan setengah pekerjaan kafe 400 m² berkonter tunggal, dan menghitung per luas diam-diam menghukum proyek yang justru paling butuh dipikirkan.</p>`,
   },
   {
     id: "how-much-do-you-need",
     kat: "uang",
-    tanya: "How much do you need before you start?",
+    tanya: "Berapa yang Anda butuhkan sebelum mulai?",
     angka: "faqUangMuka",
-    jawab: `<p>A deposit at the start of the first stage, then payments as each stage is delivered. The deposit exists because the first stage — measuring, checking regulations, testing what the plot allows — is real work whether or not the project continues.</p>
-<p><strong>The percentage is not published here yet.</strong> It comes with the written proposal, together with the schedule for every later payment, so you see the whole shape before agreeing to any of it.</p>`,
+    jawab: `<p>Uang muka di awal tahap pertama, lalu pembayaran setiap kali satu tahap diserahkan. Uang muka itu ada karena tahap pertama — mengukur, memeriksa aturan, menguji apa yang diizinkan kavlingnya — adalah pekerjaan sungguhan, mau proyeknya dilanjutkan atau tidak.</p><p><strong>Persentasenya belum diumumkan di sini.</strong> Ia datang bersama proposal tertulis, lengkap dengan jadwal setiap pembayaran berikutnya, jadi Anda melihat seluruh bentuknya sebelum menyetujui bagian mana pun.</p>`,
   },
   {
     id: "what-if-our-budget-turns",
     kat: "uang",
-    tanya: "What if our budget turns out to be too small?",
-    jawab: `<p>We will say so in the first reply, not in month three. A design you cannot afford to finish is not a design — it is a drawing.</p>
-<p>Often the honest answer is not “no” but “not this size”, or “not this finish”, or “yes, but in two phases”. Those are useful answers and they cost you nothing to hear.</p>`,
+    tanya: "Bagaimana kalau anggaran kami ternyata terlalu kecil?",
+    jawab: `<p>Kami akan mengatakannya di balasan pertama, bukan di bulan ketiga. Desain yang tidak sanggup Anda selesaikan bukanlah desain — itu gambar.</p><p>Sering kali jawaban jujurnya bukan “tidak”, melainkan “tidak sebesar ini”, atau “tidak dengan finishing ini”, atau “bisa, tapi dua tahap”. Itu jawaban yang berguna, dan mendengarnya tidak memakan biaya apa pun.</p>`,
   },
   {
     id: "are-there-costs-beyond-your",
     kat: "uang",
-    tanya: "Are there costs beyond your fee?",
-    jawab: `<p>Yes, and they are on the table from the first proposal. Depending on the project, expect some of:</p>
-<p><ul><li>Land survey and soil investigation</li><li>Structural and MEP engineers</li><li>Permits and government fees</li><li>3D renders, if you want them for approval or for selling</li><li>Printing and document legalisation</li></ul></p>
-<p>These are paid to the people who do them, not to us with a margin added.</p>`,
+    tanya: "Adakah biaya di luar jasa Anda?",
+    jawab: `<p>Ada, dan semuanya terbuka sejak proposal pertama. Tergantung proyeknya, siapkan sebagian dari:</p><p><ul><li>Survei tanah dan penyelidikan lapisan tanah</li><li>Ahli struktur dan MEP</li><li>Perizinan dan retribusi pemerintah</li><li>Render 3D, kalau Anda memerlukannya untuk persetujuan atau untuk menjual</li><li>Pencetakan dan legalisasi dokumen</li></ul></p><p>Semuanya dibayarkan kepada yang mengerjakannya, bukan kepada kami dengan margin ditambahkan.</p>`,
   },
   {
     id: "do-you-take-a-commission",
     kat: "uang",
-    tanya: "Do you take a commission from contractors or suppliers?",
-    jawab: `<p>No. Not from contractors, not from material suppliers, not from anyone.</p>
-<p>This matters more than it sounds. A studio earning a percentage on materials has a quiet reason to specify the expensive tile. Our fee comes from you, so the only reason to specify anything is that it is right for the building.</p>`,
+    tanya: "Apakah Anda mengambil komisi dari kontraktor atau pemasok?",
+    jawab: `<p>Tidak. Tidak dari kontraktor, tidak dari pemasok material, tidak dari siapa pun.</p><p>Ini lebih penting daripada kedengarannya. Studio yang mendapat persentase dari material punya alasan diam-diam untuk menentukan keramik yang mahal. Biaya kami datang dari Anda, jadi satu-satunya alasan menentukan sesuatu adalah karena itu yang benar untuk bangunannya.</p>`,
   },
   {
     id: "how-long-does-it-take",
     kat: "waktu",
-    tanya: "How long does it take?",
+    tanya: "Berapa lama pengerjaannya?",
     angka: "faqLamaKerja",
-    jawab: `<p>It is decided by stages, not by a single number: understanding the site, concept, developed design, then construction drawings and permit documents. Each stage ends with something you can hold and approve before the next one starts.</p>
-<p><strong>The typical duration of each stage is not published here yet</strong> — it moves with the size of the building and with how fast permits move in your area, and a made-up range would only mislead. The written proposal carries the dates for your project specifically.</p>`,
+    jawab: `<p>Ditentukan per tahap, bukan oleh satu angka: memahami tapak, konsep, pengembangan desain, lalu gambar kerja dan dokumen perizinan. Tiap tahap berakhir dengan sesuatu yang bisa Anda pegang dan setujui sebelum tahap berikutnya dimulai.</p><p><strong>Lama khas tiap tahap belum diumumkan di sini</strong> — ia bergerak mengikuti besar bangunan dan mengikuti secepat apa izin bergerak di daerah Anda, dan rentang yang dikarang hanya akan menyesatkan. Proposal tertulis memuat tanggal untuk proyek Anda secara khusus.</p>`,
   },
   {
     id: "can-you-do-it-faster",
     kat: "waktu",
-    tanya: "Can you do it faster?",
-    jawab: `<p>Concept alone takes longer than two weeks once the site has been measured properly, so we would rather lose the job than promise a date we would then miss.</p>
-<p>What can genuinely be shortened is the waiting: decisions made in days instead of weeks, one person who can answer instead of three. That is why the studio is small.</p>`,
+    tanya: "Bisa lebih cepat?",
+    jawab: `<p>Konsep saja memakan waktu lebih dari dua minggu begitu tapaknya diukur dengan benar, jadi kami lebih rela kehilangan pekerjaannya daripada menjanjikan tanggal yang kemudian kami lewatkan.</p><p>Yang benar-benar bisa dipersingkat adalah menunggunya: keputusan diambil dalam hitungan hari alih-alih minggu, satu orang yang bisa menjawab alih-alih tiga. Itu sebabnya studionya kecil.</p>`,
   },
   {
     id: "what-if-we-have-to",
     kat: "waktu",
-    tanya: "What if we have to pause the project?",
-    jawab: `<p>Pausing is normal — permits stall, funding moves, families change their minds. Nothing is lost. Your drawings, documents and decisions stay on your project page, and the page stays live.</p>
-<p>When you come back, we start from the last approved stage rather than from the beginning.</p>`,
+    tanya: "Bagaimana kalau kami harus menunda proyeknya?",
+    jawab: `<p>Menunda itu wajar — izin tersendat, pendanaan bergeser, keluarga berubah pikiran. Tidak ada yang hilang. Gambar, dokumen, dan keputusan Anda tetap ada di halaman proyek Anda, dan halamannya tetap hidup.</p><p>Saat Anda kembali, kami mulai dari tahap terakhir yang sudah disetujui, bukan dari awal.</p>`,
   },
   {
     id: "how-do-we-know-what",
     kat: "kerja",
-    tanya: "How do we know what is happening?",
-    jawab: `<p>Every client gets a project page. Phases, drawings, invoices and the comment thread all live there, and it updates when we update it — not when you ask.</p>
-<p>It needs no password and no app. The link we send you is the login, which also means you can forward it to whoever else needs to see it.</p>`,
+    tanya: "Bagaimana kami tahu apa yang sedang terjadi?",
+    jawab: `<p>Tiap klien mendapat halaman proyek. Tahapan, gambar, tagihan, dan seluruh percakapannya tinggal di sana, dan ia diperbarui saat kami memperbaruinya — bukan saat Anda bertanya.</p><p>Tidak perlu kata sandi dan tidak perlu aplikasi. Tautan yang kami kirim itulah loginnya, yang juga berarti Anda bisa meneruskannya ke siapa pun yang perlu melihat.</p>`,
   },
   {
     id: "how-many-revisions-do-we",
     kat: "kerja",
-    tanya: "How many revisions do we get?",
-    jawab: `<p>Revisions belong to a stage, not to the whole project. Inside a stage we work until you are satisfied; once you approve that stage and we move on, reopening it is a change of scope and is quoted as one.</p>
-<p>This is not us being rigid. Unlimited revisions across stages is exactly how projects end up eighteen months late with a design nobody chose deliberately.</p>`,
+    tanya: "Berapa kali revisi yang kami dapat?",
+    jawab: `<p>Revisi milik sebuah tahap, bukan milik seluruh proyek. Di dalam satu tahap kami bekerja sampai Anda puas; begitu Anda menyetujui tahap itu dan kami lanjut, membukanya kembali adalah perubahan lingkup dan dihitung sebagai perubahan lingkup.</p><p>Ini bukan kami yang kaku. Revisi tanpa batas lintas tahap justru cara persis bagaimana proyek berakhir terlambat delapan belas bulan dengan desain yang tidak pernah dipilih siapa pun dengan sengaja.</p>`,
   },
   {
     id: "do-you-work-with-our",
     kat: "kerja",
-    tanya: "Do you work with our contractor, or do you bring one?",
-    jawab: `<p>Both work. If you already have a contractor you trust, we draw for them and answer their questions directly — a detail the builder has to phone about was not finished.</p>
-<p>If you do not have one, we can introduce contractors we have worked with. We do not take a fee for the introduction, and you hire them, not us.</p>`,
+    tanya: "Apakah Anda bekerja dengan kontraktor kami, atau membawa sendiri?",
+    jawab: `<p>Dua-duanya bisa. Kalau Anda sudah punya kontraktor yang Anda percaya, kami menggambar untuk mereka dan menjawab pertanyaannya langsung — detail yang sampai harus ditelepon tukang berarti belum selesai.</p><p>Kalau belum punya, kami bisa mengenalkan kontraktor yang pernah bekerja dengan kami. Kami tidak mengambil biaya untuk pengenalan itu, dan Anda yang mempekerjakan mereka, bukan kami.</p>`,
   },
   {
     id: "can-we-take-the-drawings",
     kat: "kerja",
-    tanya: "Can we take the drawings and build without you?",
-    jawab: `<p>You can, and if that is the plan you should say so early — another studio will serve you better and charge you less.</p>
-<p>We stay involved because drawings are not the building. Someone has to answer the question the contractor asks on a Tuesday morning, and if that is nobody, the answer gets invented on site.</p>`,
+    tanya: "Bisakah kami ambil gambarnya lalu membangun tanpa Anda?",
+    jawab: `<p>Bisa, dan kalau memang itu rencananya sebaiknya disampaikan sejak awal — studio lain akan melayani Anda lebih baik dengan biaya lebih murah.</p><p>Kami tetap terlibat karena gambar bukanlah bangunan. Harus ada yang menjawab pertanyaan yang diajukan kontraktor pada Selasa pagi, dan kalau itu tidak ada, jawabannya dikarang di lokasi.</p>`,
   },
   {
     id: "do-you-visit-the-site",
     kat: "selesai",
-    tanya: "Do you visit the site during construction?",
+    tanya: "Apakah Anda datang ke lokasi selama pembangunan?",
     angka: "faqKunjungan",
-    jawab: `<p>Yes. How often depends on the project's size, its distance from us, and what stage the work is at — dense during structure and finishes, lighter in between.</p>
-<p><strong>The visit schedule and who pays travel for distant sites is not fixed on this page yet</strong>, because it changes completely between a site in Pontianak and one in another province. It is written into the proposal so there is no argument about it later.</p>`,
+    jawab: `<p>Ya. Seberapa sering tergantung besar proyeknya, jaraknya dari kami, dan sedang di tahap apa pekerjaannya — rapat saat struktur dan finishing, lebih longgar di antaranya.</p><p><strong>Jadwal kunjungan dan siapa yang menanggung perjalanan untuk lokasi jauh belum ditetapkan di halaman ini</strong>, karena keduanya berubah total antara tapak di Pontianak dan tapak di provinsi lain. Itu dituliskan di proposal supaya tidak jadi perdebatan belakangan.</p>`,
   },
   {
     id: "do-we-get-the-files",
     kat: "selesai",
-    tanya: "Do we get the files after handover?",
-    jawab: `<p>Yes. You receive the drawing set as PDF, and the working files where they are yours to have. They are your building's documents; withholding them to guarantee future work is not how we operate.</p>
-<p>Your project page also stays live after handover, so the drawings and invoices remain findable years later — which is usually when somebody actually needs them.</p>`,
+    tanya: "Apakah kami mendapat berkasnya setelah serah terima?",
+    jawab: `<p>Ya. Anda menerima satu set gambar dalam PDF, dan berkas kerjanya sejauh itu memang hak Anda. Itu dokumen bangunan Anda; menahannya demi menjamin pekerjaan berikutnya bukan cara kami bekerja.</p><p>Halaman proyek Anda juga tetap hidup setelah serah terima, jadi gambar dan tagihannya masih bisa ditemukan bertahun-tahun kemudian — yang biasanya justru saat seseorang benar-benar membutuhkannya.</p>`,
   },
   {
     id: "will-our-project-appear-on",
     kat: "selesai",
-    tanya: "Will our project appear on this website?",
-    jawab: `<p>Only if you say yes. We ask after handover, and no is a complete answer that changes nothing about how we worked with you.</p>
-<p>If you agree, we agree together on what is shown: some clients are happy with everything, some want the building without the address, some want nothing that identifies them.</p>`,
+    tanya: "Apakah proyek kami akan tampil di situs ini?",
+    jawab: `<p>Hanya kalau Anda mengizinkan. Kami menanyakannya setelah serah terima, dan “tidak” adalah jawaban yang utuh dan tidak mengubah apa pun tentang cara kami bekerja dengan Anda.</p><p>Kalau Anda setuju, kita sepakati bersama apa yang ditampilkan: sebagian klien senang semuanya tampil, sebagian ingin bangunannya saja tanpa alamat, sebagian tidak ingin apa pun yang mengenali mereka.</p>`,
   },
 ];
 

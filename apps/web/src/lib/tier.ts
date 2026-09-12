@@ -1,5 +1,5 @@
 /**
- * Tier layanan — sumber tunggal untuk seksi harga di beranda.
+ * Tier layanan — sumber tunggal untuk seksi tarif di beranda.
  *
  * Angkanya datang dari dokumen strategi studio (§3.1 dan §3.2), bukan dikarang
  * di sini. Kalau pemilik menaikkan harga — dokumen itu menyebut aturannya:
@@ -17,16 +17,18 @@
  */
 
 export interface Tier {
-  /** Dipakai sebagai kunci data-t: tierS<kunci>… */
   kunci: string;
   nama: string;
   ringkas: string;
-  /** Rentang fee apa adanya, sudah diformat. */
+  /** Rentang fee TANPA satuan — "15–25". Satuannya ("juta") sama untuk
+   *  keenam tier, jadi ia dicetak sekali oleh markup dengan ukuran huruf
+   *  yang lebih kecil. Dipisah supaya angkanya bisa dibuat besar dan
+   *  sejajar antar-kartu; satu string "Rp 15–25 juta" tidak bisa. */
   fee: string;
   /** Untuk siapa tier ini. Tampil sebagai baris terakhir kartu. */
   untuk: string;
   isi: string[];
-  /** Satu per kelompok. Kartunya ditinggikan dan diberi lencana. */
+  /** Satu per kelompok. Kartunya diberi lencana dan bingkai teal. */
   sorot?: boolean;
   /** Kalimat kecil di atas daftar isi. */
   isiKop: string;
@@ -34,7 +36,8 @@ export interface Tier {
 
 export interface KelompokTier {
   kunci: string;
-  label: string;
+  /** Nama tab. Pendek — ia harus muat di satu baris di ponsel. */
+  tab: string;
   ket: string;
   tier: Tier[];
 }
@@ -42,96 +45,96 @@ export interface KelompokTier {
 export const TIER: KelompokTier[] = [
   {
     kunci: "kafe",
-    label: "COFFEE SHOP & F&B",
-    ket: "The vertical we specialise in. A café is a portfolio piece that three hundred people walk through every day.",
+    tab: "Coffee shop & F&B",
+    ket: "Vertikal yang kami spesialisasi. Sebuah kafe adalah portofolio yang dilewati ratusan orang tiap hari.",
     tier: [
       {
         kunci: "starter",
         nama: "Starter",
-        ringkas: "For a first coffee shop, working to a budget that is real.",
-        fee: "Rp 15–25 million",
-        untuk: "A first coffee shop, tight budget",
-        isiKop: "What you get:",
+        ringkas: "Untuk coffee shop pertama, dengan anggaran yang apa adanya.",
+        fee: "15–25",
+        untuk: "Coffee shop pertama, budget terbatas",
+        isiKop: "Yang Anda dapat",
         isi: [
-          "Concept design",
-          "Floor plan and layout",
-          "Basic 3D visuals",
+          "Konsep desain",
+          "Denah dan tata ruang",
+          "Visualisasi 3D dasar",
         ],
       },
       {
         kunci: "signature",
         nama: "Signature",
-        ringkas: "For owners with a clear picture of the room they want to be known for.",
-        fee: "Rp 45–80 million",
-        untuk: "Strong vision, aiming for iconic",
+        ringkas: "Untuk pemilik yang sudah punya gambaran jelas soal ruang yang ingin dikenang.",
+        fee: "45–80",
+        untuk: "Visi kuat, target ikonik",
         sorot: true,
-        isiKop: "Everything in Starter, plus:",
+        isiKop: "Semua di Starter, ditambah",
         isi: [
-          "Full construction drawings (DED)",
-          "Spatial branding and material palette",
-          "Contractor briefing and support",
-          "Bar and kitchen workflow planning",
+          "Gambar kerja lengkap (DED)",
+          "Branding ruang dan palet material",
+          "Pengarahan dan pendampingan kontraktor",
+          "Perencanaan alur bar dan dapur",
         ],
       },
       {
         kunci: "flagship",
         nama: "Flagship",
-        ringkas: "Full service, from the first sketch through to the opening photographs.",
-        fee: "Rp 100–180 million",
-        untuk: "F&B groups opening more branches",
-        isiKop: "Everything in Signature, plus:",
+        ringkas: "Layanan penuh, dari sketsa pertama sampai foto pembukaan.",
+        fee: "100–180",
+        untuk: "Grup F&B yang siap membuka cabang",
+        isiKop: "Semua di Signature, ditambah",
         isi: [
-          "Construction supervision",
-          "Custom furniture design",
-          "Professional photo documentation",
+          "Supervisi konstruksi",
+          "Desain furnitur custom",
+          "Dokumentasi foto profesional",
         ],
       },
     ],
   },
   {
     kunci: "rumah",
-    label: "HOUSES",
-    ket: "Tropical houses designed for heat, rain and humidity — not adapted from a plan drawn for somewhere colder.",
+    tab: "Rumah tinggal",
+    ket: "Rumah tropis yang dirancang untuk panas, hujan, dan lembap — bukan diadaptasi dari denah yang digambar untuk tempat yang lebih dingin.",
     tier: [
       {
         kunci: "konsultasi",
-        nama: "Consultation",
-        ringkas: "For owners who will build it themselves with their own tukang.",
-        fee: "Rp 10–20 million",
-        untuk: "Building it yourself, with a tukang",
-        isiKop: "What you get:",
+        nama: "Konsultasi",
+        ringkas: "Untuk pemilik yang akan membangun sendiri bersama tukangnya.",
+        fee: "10–20",
+        untuk: "Membangun sendiri, dengan tukang",
+        isiKop: "Yang Anda dapat",
         isi: [
-          "Design concept",
-          "Schematic floor plan",
-          "Orientation and ventilation advice",
+          "Konsep desain",
+          "Denah skematik",
+          "Saran orientasi dan ventilasi",
         ],
       },
       {
         kunci: "standar",
-        nama: "Standard",
-        ringkas: "Concept through to drawings a contractor can build from without phoning us.",
-        fee: "Rp 35–70 million",
-        untuk: "100–200 m², build budget Rp 500 M – 1.5 B",
+        nama: "Standar",
+        ringkas: "Dari konsep sampai gambar yang bisa dibangun kontraktor tanpa menelepon kami.",
+        fee: "35–70",
+        untuk: "100–200 m², budget bangun Rp 500 juta–1,5 miliar",
         sorot: true,
-        isiKop: "Everything in Consultation, plus:",
+        isiKop: "Semua di Konsultasi, ditambah",
         isi: [
-          "Full construction drawings (DED)",
-          "Contractor-ready working drawings",
-          "Material and finish schedule",
+          "Gambar kerja lengkap (DED)",
+          "Gambar kerja siap kontraktor",
+          "Daftar material dan finishing",
         ],
       },
       {
         kunci: "premium",
         nama: "Premium",
-        ringkas: "The house, the inside of it, and the ground it sits on — handled as one project.",
-        fee: "Rp 80–200 million",
-        untuk: "Over 200 m², build budget above Rp 2 B",
-        isiKop: "Everything in Standard, plus:",
+        ringkas: "Rumahnya, isinya, dan tanah tempat ia berdiri — diurus sebagai satu proyek.",
+        fee: "80–200",
+        untuk: "Di atas 200 m², budget bangun di atas Rp 2 miliar",
+        isiKop: "Semua di Standar, ditambah",
         isi: [
-          "Construction supervision",
-          "Interior design",
-          "Landscape design",
-          "Photo documentation at handover",
+          "Supervisi konstruksi",
+          "Desain interior",
+          "Desain lanskap",
+          "Dokumentasi foto saat serah terima",
         ],
       },
     ],

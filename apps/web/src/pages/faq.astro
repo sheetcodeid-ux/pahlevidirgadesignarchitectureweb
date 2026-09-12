@@ -2,7 +2,6 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getSettings } from "../lib/api";
 import { FAQ, LABEL_FAQ, type KategoriFaq, type Tanya } from "../lib/faq";
-import { KAMUS_FAQ } from "../lib/i18nHalaman";
 
 const setelan = await getSettings();
 
@@ -23,7 +22,7 @@ const angkaFaq = (t: Tanya): string | null => {
 const urut: KategoriFaq[] = ["mulai", "uang", "waktu", "kerja", "selesai"];
 const daftar = urut.flatMap((k) => FAQ.filter((t) => t.kat === k));
 const hitung = (k: string) => (k === "semua" ? FAQ.length : FAQ.filter((t) => t.kat === k).length);
-const pils = [{ kat: "semua", label: "All" }, ...urut.map((k) => ({ kat: k, label: LABEL_FAQ[k] }))];
+const pils = [{ kat: "semua", label: "Semua" }, ...urut.map((k) => ({ kat: k, label: LABEL_FAQ[k] }))];
 
 // JSON-LD dibangkitkan dari data yang SAMA dengan yang dirender, jadi jawaban
 // di hasil pencarian tidak pernah menyimpang dari halamannya. Tag dibuang dan
@@ -50,24 +49,19 @@ const jsonLd = [
 ---
 
 <BaseLayout
-  title="Questions before you start"
-  description="Fees, timing, permits and what happens after handover — answered plainly, including the parts that are inconvenient for us."
+  title="Pertanyaan sebelum Anda mulai"
+  description="Tarif, jadwal, perizinan, dan apa yang terjadi setelah serah terima — dijawab apa adanya, termasuk bagian yang tidak enak buat kami."
   jsonLd={jsonLd}
 >
   <div class="pita">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi kepala">
-        <span class="label" data-t="faqLabel">QUESTIONS</span>
+        <span class="label">PERTANYAAN</span>
         <div class="s24"></div>
-        <h1 class="h1 kepala__judul" data-t="faqJudul">
-          Everything people ask before<br />they decide to start.
-        </h1>
+        <h1 class="h1 kepala__judul">Semua yang orang tanyakan sebelum<br />memutuskan untuk mulai.</h1>
         <div class="s24"></div>
-        <p class="lead" data-t="faqLead">
-          Nineteen questions, answered the way we would answer them on a call. Where a number is not
-          published yet, it says so instead of pretending.
-        </p>
+        <p class="lead">Sembilan belas pertanyaan, dijawab seperti kami menjawabnya lewat telepon. Kalau ada angka yang belum diumumkan, kami bilang begitu alih-alih berpura-pura.</p>
       </div>
     </div>
   </div>
@@ -76,12 +70,12 @@ const jsonLd = [
     <div class="dalam">
       <div class="baris baris-faq2">
         <div class="sel sel-rel">
-          <div class="rel-judul"><span class="label label--redup" data-t="faqCariLabel">FIND AN ANSWER</span></div>
+          <div class="rel-judul"><span class="label label--redup">CARI JAWABAN</span></div>
           <div class="rel-kop">
             <div class="cari">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.6" /><path d="M10.5 10.5 14 14" /></svg>
-              <input class="isian" id="cari" type="search" placeholder="Search, e.g. “deposit”" aria-label="Search the questions" autocomplete="off" />
-              <button class="cari__x" id="cariX" hidden aria-label="Clear search">
+              <input class="isian" id="cari" type="search" placeholder="Cari, misalnya “uang muka”" aria-label="Cari di daftar pertanyaan" autocomplete="off" />
+              <button class="cari__x" id="cariX" hidden aria-label="Hapus pencarian">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
               </button>
             </div>
@@ -90,25 +84,22 @@ const jsonLd = [
               {
                 pils.map((p, i) => (
                   <button class={i === 0 ? "pil pil--on" : "pil"} data-kat={p.kat}>
-                    <span data-t={`faqKat${p.kat}`}>{p.label}</span> <span class="dim">{hitung(p.kat)}</span>
+                    <span>{p.label}</span> <span class="dim">{hitung(p.kat)}</span>
                   </button>
                 ))
               }
             </div>
             <div class="s16"></div>
             <p class="dim kecil" id="hitung" aria-live="polite" role="status">
-              {FAQ.length} <span data-t="faqPertanyaan">questions</span>
+              {FAQ.length} <span>pertanyaan</span>
             </p>
           </div>
           <div class="rel-kaki">
-            <span class="label label--redup" data-t="faqTidakAda">NOT HERE?</span>
+            <span class="label label--redup">TIDAK ADA DI SINI?</span>
             <div class="s10"></div>
-            <p class="mut kecil" data-t="faqTidakAdaKet">
-              Ask it directly. The reply comes from the person who would draw your building, not from
-              a form.
-            </p>
+            <p class="mut kecil">Tanyakan langsung. Balasannya datang dari orang yang akan menggambar bangunan Anda, bukan dari sebuah form.</p>
             <div class="s16"></div>
-            <a class="btn" href="/kontak" data-t="faqTanya">Ask us instead <span class="ar">→</span></a>
+            <a class="btn" href="/kontak">Tanyakan langsung <span class="ar">→</span></a>
           </div>
         </div>
 
@@ -118,10 +109,10 @@ const jsonLd = [
               <details class="tny" data-kat={t.kat} id={t.id}>
                 <summary>
                   <span class="tny__t">
-                    <span class="tny__kat" data-t={`faqKat${t.kat}`}>{LABEL_FAQ[t.kat]}</span>
-                    <span data-t={`faqT-${t.id}`}>{t.tanya}</span>
+                    <span class="tny__kat">{LABEL_FAQ[t.kat]}</span>
+                    <span>{t.tanya}</span>
                     {t.angka && !angkaFaq(t) && (
-                      <span class="lencana lencana--tanya" data-t="faqLencana">FIGURES ON REQUEST</span>
+                      <span class="lencana lencana--tanya">ANGKA DIBERIKAN SAAT DITANYA</span>
                     )}
                   </span>
                   <span class="tny__i" aria-hidden="true" />
@@ -130,14 +121,14 @@ const jsonLd = [
                   {/* Jawabannya HTML (memuat <p>, <strong>, <ul>), jadi
                       terjemahannya juga HTML — pengalih menukar innerHTML,
                       bukan teks. */}
-                  <div data-t={`faqJ-${t.id}`} set:html={t.jawab} />
+                  <div set:html={t.jawab} />
                   {/* Angkanya dicetak SESUDAH jawaban, bukan disisipkan ke
                       dalamnya. Menyisipkannya berarti mengarang kalimat di
                       sekitar angka pemilik; ditaruh di sini, yang dia tulis
                       tampil apa adanya. */}
                   {angkaFaq(t) && (
                     <p class="tny__angka">
-                      <span class="tny__angka-l" data-t="faqAngka">The figure</span>
+                      <span class="tny__angka-l">Angkanya</span>
                       <strong>{angkaFaq(t)}</strong>
                     </p>
                   )}
@@ -152,17 +143,13 @@ const jsonLd = [
             <span class="kotak-ikon">
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5.6" /><path d="M13 13l4 4" /></svg>
             </span>
-            <p class="mut" data-t="faqKosong">
-              Nothing here uses that word. The question is probably still a good one — send it and
-              you will have an answer within a day.
-            </p>
-            <a class="btn" href="/kontak" data-t="faqTanya">Ask us instead <span class="ar">→</span></a>
+            <p class="mut">Tidak ada yang memakai kata itu di sini. Pertanyaannya kemungkinan besar tetap bagus — kirimkan dan Anda akan dapat jawabannya dalam sehari.</p>
+            <a class="btn" href="/kontak">Tanyakan langsung <span class="ar">→</span></a>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <script type="application/json" id="kamus-halaman" set:html={JSON.stringify(KAMUS_FAQ)} is:inline />
 </BaseLayout>
 
 <style>
@@ -407,11 +394,9 @@ const jsonLd = [
 </style>
 
 <script>
-  import { penerjemah } from "../lib/i18nRuntime";
 
   (() => {
     "use strict";
-    const { t: tr, saatTukar } = penerjemah();
     const daftar = document.getElementById("daftar");
     const cari = document.getElementById("cari") as HTMLInputElement | null;
     const cariX = document.getElementById("cariX");
@@ -493,10 +478,10 @@ const jsonLd = [
       });
       hitung.textContent =
         n === 0
-          ? tr("faqTakCocok", "No question matches — try a shorter word, or just ask us.")
+          ? "Tidak ada pertanyaan yang memuat kata itu — coba kata yang lebih pendek, atau tanyakan langsung."
           : n === 1
-            ? tr("faqSatu", "1 question")
-            : n + " " + tr("faqPertanyaan", "questions");
+            ? "1 pertanyaan"
+            : n + " " + "pertanyaan";
       kosong.hidden = n > 0;
     };
 
@@ -504,17 +489,11 @@ const jsonLd = [
        bahasa hanya menukar innerHTML, jadi keduanya diurus di sini. */
     const cariX_el = cariX as HTMLElement;
     const pasangAtribut = () => {
-      cari.placeholder = tr("faqCariPlaceholder", "Search, e.g. “deposit”");
-      cari.setAttribute("aria-label", tr("faqCariAria", "Search the questions"));
-      cariX_el.setAttribute("aria-label", tr("faqHapusCari", "Clear search"));
+      cari.placeholder = "Cari, misalnya “uang muka”";
+      cari.setAttribute("aria-label", "Cari di daftar pertanyaan");
+      cariX_el.setAttribute("aria-label", "Hapus pencarian");
     };
     pasangAtribut();
-
-    saatTukar(() => {
-      ambilUlang();
-      pasangAtribut();
-      saring();
-    });
 
     cari.addEventListener("input", saring);
     cariX.addEventListener("click", () => {

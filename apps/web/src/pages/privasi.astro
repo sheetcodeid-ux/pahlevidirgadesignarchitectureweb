@@ -16,52 +16,52 @@ const email = settings.email?.trim() || null;
 const studio = settings.studioName?.trim() || "Dirga Pahlevi Architecture";
 
 const bagian = [
-  { id: "kirim", label: "If you send us something" },
-  { id: "klien", label: "If you are a client" },
-  { id: "peramban", label: "What your browser stores" },
-  { id: "pihak", label: "Who else sees it" },
-  { id: "simpan", label: "How long we keep it" },
-  { id: "tidak", label: "What we never do" },
-  { id: "hak", label: "Asking us to delete it" },
-  { id: "siapa", label: "Who is responsible" },
+  { id: "kirim", label: "Kalau Anda mengirim sesuatu" },
+  { id: "klien", label: "Kalau Anda klien kami" },
+  { id: "peramban", label: "Yang disimpan peramban Anda" },
+  { id: "pihak", label: "Siapa lagi yang melihatnya" },
+  { id: "simpan", label: "Berapa lama kami menyimpannya" },
+  { id: "tidak", label: "Yang tidak pernah kami lakukan" },
+  { id: "hak", label: "Meminta kami menghapusnya" },
+  { id: "siapa", label: "Siapa yang bertanggung jawab" },
 ];
 
 const pihak = [
-  ["Cloudflare", "Serves the site and stores images", "Your IP address and browser, as with any website; project photographs"],
-  ["Cloudflare Turnstile", "Blocks bots on the contact form", "A signal that you are a person. Not your message"],
-  ["Supabase", "Database and staff sign-in", "Your enquiry, and everything on a client project page"],
-  ["Resend", "Delivers our email", "Your email address and the message you sent"],
+  ["Cloudflare", "Menyajikan situs dan menyimpan gambar", "Alamat IP dan peramban Anda, seperti di situs mana pun; foto proyek"],
+  ["Cloudflare Turnstile", "Menahan bot di form kontak", "Sinyal bahwa Anda manusia. Bukan isi pesan Anda"],
+  ["Supabase", "Basis data dan login staf", "Pesan Anda, dan semua yang ada di halaman proyek klien"],
+  ["Resend", "Mengirimkan email kami", "Alamat email Anda dan pesan yang Anda kirim"],
 ];
 
 const tidak = [
-  ["No analytics.", "Not Google Analytics, not any replacement. We genuinely do not know how many people read this page."],
-  ["No advertising pixels", "and no remarketing. Nothing you do here follows you anywhere else."],
-  ["No newsletter", "and no marketing email. We reply to what you send; that is the whole correspondence."],
-  ["Nothing sold or shared", "with anyone outside the services listed above."],
+  ["Tanpa analitik.", "Bukan Google Analytics, bukan penggantinya. Kami betul-betul tidak tahu berapa orang membaca halaman ini."],
+  ["Tanpa piksel iklan", "dan tanpa remarketing. Tidak ada yang Anda lakukan di sini mengikuti Anda ke tempat lain."],
+  ["Tanpa newsletter", "dan tanpa email pemasaran. Kami membalas yang Anda kirim; itu saja seluruh suratnya."],
+  ["Tidak ada yang dijual atau dibagikan", "ke pihak mana pun di luar layanan yang disebut di atas."],
 ];
 
 // Kalimat yang butuh keterangan dari pemilik. Selama belum ada, kalimatnya
 // TETAP ada tapi bagian yang kosong ditandai — halaman privasi yang mengarang
 // angka penyimpanan berbunyi seperti janji hukum yang tidak bisa ditepati.
-const belum = "to be confirmed";
+const belum = "belum ditetapkan";
 ---
 
 <BaseLayout
-  title="Privacy"
-  description="A contact form, a project page for clients, and nothing else. No analytics, no advertising pixels, no newsletter, and nothing sold to anyone."
+  title="Privasi"
+  description="Satu form kontak, satu halaman proyek untuk klien, dan tidak ada yang lain. Tanpa analitik, tanpa piksel iklan, tanpa newsletter, dan tidak ada yang dijual ke siapa pun."
 >
   <div class="pita">
     <div class="dalam titik pijar">
       <span class="pijar-lapis" aria-hidden="true"></span>
       <div class="isi isi--longgar kepala">
-        <span class="label">PRIVACY</span>
+        <span class="label">PRIVASI</span>
         <div class="s24"></div>
-        <h1 class="h1 kepala__judul">What this website knows about you, in plain words</h1>
+        <h1 class="h1 kepala__judul">Apa yang situs ini tahu tentang Anda, dengan kata-kata biasa</h1>
         <div class="s24"></div>
         <p class="lead">
-          Short version: a contact form, a project page for clients, and nothing else. No analytics,
-          no advertising pixels, no newsletter, and nothing sold to anyone. The long version is
-          below, and it is short too.
+          Versi pendeknya: satu form kontak, satu halaman proyek untuk klien, dan tidak ada yang
+          lain. Tanpa analitik, tanpa piksel iklan, tanpa newsletter, dan tidak ada yang dijual ke
+          siapa pun. Versi panjangnya ada di bawah, dan itu juga pendek.
         </p>
       </div>
     </div>
@@ -71,8 +71,8 @@ const belum = "to be confirmed";
     <div class="dalam">
       <div class="baris baris-pv">
         <div class="sel rel-pv">
-          <div class="rel-pv__kop"><span class="label label--redup">ON THIS PAGE</span></div>
-          <nav id="toc" aria-label="On this page">
+          <div class="rel-pv__kop"><span class="label label--redup">DI HALAMAN INI</span></div>
+          <nav id="toc" aria-label="Di halaman ini">
             {
               bagian.map((b, i) => (
                 <a href={`#${b.id}`} class={i === 0 ? "kat__b kini" : "kat__b"}>
@@ -88,55 +88,56 @@ const belum = "to be confirmed";
 
         <div class="sel sel-pv">
           <div class="pv">
-            <h2 id="kirim">If you send us something</h2>
+            <h2 id="kirim">Kalau Anda mengirim sesuatu</h2>
             <p>
-              The contact form asks for your <strong>name, email, phone number, where the site is,
-              what you are building, a budget range, and your message</strong>. Only the name, email,
-              location, project type and message are required — the rest exist because they make our
-              first reply more useful to you.
+              Form kontak menanyakan <strong>nama, email, nomor telepon, lokasi tapak, apa yang
+              Anda bangun, rentang anggaran, dan pesan Anda</strong>. Yang wajib hanya nama, email,
+              lokasi, jenis proyek, dan pesan — sisanya ada karena membuat balasan pertama kami
+              lebih berguna buat Anda.
             </p>
             <p>
-              That message reaches us as an email and is stored in our own database so we can find it
-              again. It is read by the two people who work here. It is not read by anyone else.
-            </p>
-
-            <h2 id="klien">If you are a client</h2>
-            <p>
-              Your project page holds what the project needs: the drawings and documents we send you,
-              the invoices, the phases, your brief, and the comment threads. It also holds the
-              <strong>link that opens it</strong> — that link is the credential, which is why we say
-              to send it only to people who should see the project.
-            </p>
-            <p>
-              Photographs of your building are stored with us. We ask before any of them appear
-              publicly on this site, and <strong>no is a complete answer</strong> that changes
-              nothing about how we work with you.
+              Pesan itu sampai ke kami sebagai email dan disimpan di basis data kami sendiri supaya
+              bisa dicari lagi. Yang membacanya dua orang yang bekerja di sini. Tidak ada orang lain
+              yang membacanya.
             </p>
 
-            <h2 id="peramban">What your browser stores</h2>
+            <h2 id="klien">Kalau Anda klien kami</h2>
             <p>
-              No tracking cookies, because there is no tracking. What is stored stays on your own
-              device and never reaches us:
+              Halaman proyek Anda memuat apa yang proyeknya butuhkan: gambar dan dokumen yang kami
+              kirim, tagihan, tahapan, brief Anda, dan utas komentarnya. Ia juga memuat
+              <strong>tautan yang membukanya</strong> — tautan itulah kuncinya, dan karena itu kami
+              minta ia hanya dikirim ke orang yang memang boleh melihat proyeknya.
+            </p>
+            <p>
+              Foto bangunan Anda disimpan pada kami. Kami bertanya dulu sebelum satu pun tampil di
+              situs ini, dan <strong>“tidak” adalah jawaban yang utuh</strong> — ia tidak mengubah
+              apa pun tentang cara kami bekerja dengan Anda.
+            </p>
+
+            <h2 id="peramban">Yang disimpan peramban Anda</h2>
+            <p>
+              Tidak ada cookie pelacak, karena memang tidak ada pelacakan. Yang tersimpan tetap di
+              perangkat Anda sendiri dan tidak pernah sampai ke kami:
             </p>
             <div class="tanpa">
               <i>▸</i>
-              <span><b>Your language choice</b> — remembered so a client page opens in the language you last read it in.</span>
+              <span><b>Pilihan bahasa Anda</b> — diingat supaya halaman klien terbuka dalam bahasa yang terakhir Anda pakai.</span>
             </div>
             <div class="tanpa">
               <i>▸</i>
-              <span><b>For staff only:</b> a sign-in token, a light-or-dark preference for the studio panel, and a short cache of panel data, so moving between admin pages does not reload everything.</span>
+              <span><b>Khusus staf:</b> token login, pilihan tema terang atau gelap untuk panel studio, dan cache singkat data panel, supaya berpindah halaman admin tidak memuat ulang semuanya.</span>
             </div>
-            <p class="pv__lanjut">Clearing your browser data removes all of it, and nothing breaks.</p>
+            <p class="pv__lanjut">Menghapus data peramban menghapus semuanya, dan tidak ada yang rusak.</p>
 
-            <h2 id="pihak">Who else sees it</h2>
+            <h2 id="pihak">Siapa lagi yang melihatnya</h2>
             <p>
-              We run this site on services rather than our own machines. Each one sees only the part
-              it needs to do its job:
+              Situs ini berjalan di atas layanan pihak lain, bukan di mesin kami sendiri. Masing-masing
+              hanya melihat bagian yang ia butuhkan untuk bekerja:
             </p>
             <div class="pihak-bung">
               <table class="pihak">
                 <thead>
-                  <tr><th>Service</th><th>What it does</th><th>What reaches it</th></tr>
+                  <tr><th>Layanan</th><th>Gunanya</th><th>Yang sampai ke sana</th></tr>
                 </thead>
                 <tbody>
                   {pihak.map(([a, b, c]) => (<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>))}
@@ -144,21 +145,21 @@ const belum = "to be confirmed";
               </table>
             </div>
             <p>
-              We chose these because they are ordinary, not because they are clever. If any of them
-              changes, this page changes with it.
+              Keempatnya dipilih karena biasa saja, bukan karena canggih. Kalau salah satunya
+              berubah, halaman ini ikut berubah.
             </p>
 
-            <h2 id="simpan">How long we keep it</h2>
+            <h2 id="simpan">Berapa lama kami menyimpannya</h2>
             <p>
-              An enquiry that does not become a project is kept for{" "}
-              {simpanPesan ? <strong>{simpanPesan}</strong> : <em class="belum">{belum}</em>}, then
-              deleted. Documents tied to a completed project — contracts, invoices, drawings — are
-              kept for{" "}
+              Pesan yang tidak berlanjut jadi proyek disimpan selama{" "}
+              {simpanPesan ? <strong>{simpanPesan}</strong> : <em class="belum">{belum}</em>},
+              lalu dihapus. Dokumen yang terikat pada proyek yang sudah selesai — kontrak, tagihan,
+              gambar — disimpan selama{" "}
               {simpanDokumen ? <strong>{simpanDokumen}</strong> : <em class="belum">{belum}</em>},
-              because they are the record of work that was done and paid for.
+              karena itulah catatan pekerjaan yang sudah dikerjakan dan dibayar.
             </p>
 
-            <h2 id="tidak">What we never do</h2>
+            <h2 id="tidak">Yang tidak pernah kami lakukan</h2>
             {
               tidak.map(([tebal, sisa]) => (
                 <div class="tanpa">
@@ -168,26 +169,26 @@ const belum = "to be confirmed";
               ))
             }
 
-            <h2 id="hak">Asking us to delete it</h2>
+            <h2 id="hak">Meminta kami menghapusnya</h2>
             <p>
-              Write to {email ? <a href={`mailto:${email}`}>{email}</a> : "the studio"} and say what
-              you want removed. We will do it and tell you when it is done. You do not need to give a
-              reason, and it does not affect a project that is running.
+              Tulis ke {email ? <a href={`mailto:${email}`}>{email}</a> : "studio"} dan sebutkan apa
+              yang ingin dihapus. Kami akan menghapusnya dan memberi tahu Anda begitu selesai. Anda
+              tidak perlu menyebutkan alasan, dan itu tidak memengaruhi proyek yang sedang jalan.
             </p>
             <p>
-              One exception, stated plainly: documents tied to a completed project we keep for the
-              period above. Everything else goes.
+              Satu pengecualian, disebut terus terang: dokumen yang terikat pada proyek selesai kami
+              simpan selama jangka waktu di atas. Selebihnya dihapus.
             </p>
 
-            <h2 id="siapa">Who is responsible</h2>
+            <h2 id="siapa">Siapa yang bertanggung jawab</h2>
             <p>
-              This site is run by{" "}
-              {badanUsaha ? <strong>{badanUsaha}</strong> : <><strong>{studio}</strong> (<em class="belum">registered name {belum}</em>)</>}
-              {alamatResmi ? <>, {alamatResmi}</> : <>, <em class="belum">registered address {belum}</em></>}.
-              Questions about anything on this page go to the same address above.
+              Situs ini dijalankan oleh{" "}
+              {badanUsaha ? <strong>{badanUsaha}</strong> : <><strong>{studio}</strong> (<em class="belum">nama badan usaha {belum}</em>)</>}
+              {alamatResmi ? <>, {alamatResmi}</> : <>, <em class="belum">alamat resmi {belum}</em></>}.
+              Pertanyaan soal apa pun di halaman ini dikirim ke alamat yang sama di atas.
             </p>
             <p>
-              This page is governed by{" "}
+              Halaman ini tunduk pada{" "}
               {hukumBerlaku ? <strong>{hukumBerlaku}</strong> : <em class="belum">{belum}</em>}.
             </p>
           </div>
