@@ -138,6 +138,16 @@
   --success-soft: #0d2416;
 
   --info: #4a8ef0;
+  /* Aksen SITUS PUBLIK, bukan bagian palet admin. Dipakai hanya di dalam
+     `.situs-pratinjau` — kotak yang memang meniru tampilan situs, dan yang
+     harus memakai warna situs supaya pratinjaunya tidak berbohong. Di luar
+     kotak itu, palet admin yang berlaku.
+
+     SENGAJA tanpa nilai tandingan di tema terang, dan itu bukan kelalaian:
+     bidang yang memakainya selalu gelap — ia meniru situs publik, yang tidak
+     punya tema terang sama sekali. Memberinya varian terang berarti pratinjau
+     berubah warna sementara halaman yang ditirunya tidak. */
+  --situs-aksen: #2DD4BF;
   --info-soft: #0e1c30;
 
   /* Cincin fokus: PUTIH dulu, merah di luarnya, hitam di belakangnya.

@@ -3,10 +3,10 @@ import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { ClientLogosPanel } from "../../../components/admin/ClientLogosPanel";
 ---
 
-<AdminLayout
-  title="Logo Klien"
-  heading="Logo Klien"
-  description="Logo yang berjalan di bagian SELECTED CLIENTS pada beranda. Urutannya menentukan urutan tampil."
->
+{/* Tanpa prop heading, sama seperti Halaman Proyek: judul halaman raksasa
+    sudah dibuang atas permintaan pemilik. Judulnya tetap ada di breadcrumb
+    topbar (yang membacanya dari `title`), dan panel ini membawa judul kecil
+    per kartu plus panel kanan yang menyebut bagian situsnya. */}
+<AdminLayout title="Logo Klien">
   <ClientLogosPanel client:load />
 </AdminLayout>
