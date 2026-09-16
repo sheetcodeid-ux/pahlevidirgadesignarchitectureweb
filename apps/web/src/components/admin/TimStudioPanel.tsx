@@ -4,7 +4,7 @@ import { SkeletonDaftar } from "../ui/Skeleton";
 import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { CatatanTerbit, SisiSitus } from "./SisiSitus";
+import { CatatanTerbit, KepalaSitus, SisiSitus } from "./SisiSitus";
 import {
   daftarOrangStudio, buatOrangStudio, ubahOrangStudio, hapusOrangStudio,
   mintaUrlUnggahStudio, bacaCache, tulisCache, jumlahDiingat, type OrangStudio,
@@ -133,9 +133,27 @@ function Isi() {
   const berfoto = orang.filter((o) => o.photoUrl).length;
   const bernama = orang.filter((o) => o.name).length;
   const total = orang.length;
+  /* Satu orang disebut lengkap kalau punya nama DAN foto — bukan salah
+     satunya. Versi sebelumnya memakai min(berfoto, bernama), yang menghitung
+     dua orang setengah-lengkap sebagai satu orang lengkap. */
+  const lengkapBenar = orang.filter((o) => o.photoUrl && o.name).length;
 
   return (
     <div className="buatpage buatpage--situs">
+      <KepalaSitus
+        judul="Tim studio"
+        letak="Seksi Tim kami di halaman Studio"
+        ikon="team"
+        tautan="/studio/"
+        terisi={lengkapBenar}
+        dari={total}
+        status={
+          total === 0 ? "Belum ada anggota"
+            : lengkapBenar === total ? "Semua lengkap"
+            : `${total - lengkapBenar} masih kurang`
+        }
+      />
+
       <div className="buatpage__utama">
         {/* Pratinjau kartu tim persis seperti di /studio: potret 4:5, nama
             tebal, peran abu di bawahnya. Halaman ini mengurus tampilan, jadi
@@ -179,36 +197,46 @@ function Isi() {
               <p className="t-muted">Seksi tim di halaman Studio kosong sampai ada yang ditambahkan.</p>
             </div>
           ) : (
-            <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0, margin: 0 }}>
+            /* Grid kartu berpotret 4:5, sama bentuknya dengan kartu tim di
+               /studio. Daftar baris memampatkan fotonya jadi kotak 24px —
+               dan foto wajah adalah satu-satunya hal di halaman ini yang
+               benar-benar perlu dilihat sebelum diterbitkan. */
+            <div className="kartugrid kartugrid--potret">
               {orang.map((o, i) => (
-                <li key={o.id} className="item item--bordered">
-                  <span className="tim-foto" aria-hidden="true">
+                <article className={`kartugrid__sel${o.photoUrl ? "" : " kartugrid__sel--kosong"}`} key={o.id}>
+                  <header className="kartugrid__kop">
+                    <span className="kartugrid__urut t-num">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="kartugrid__pindah">
+                      <button type="button" className="btn btn--ghost btn--icon btn--sm"
+                        disabled={i === 0} onClick={() => geser(i, -1)}
+                        aria-label={`Naikkan ${o.name ?? o.role}`}>
+                        <Icon name="chevronUp" size={14} />
+                      </button>
+                      <button type="button" className="btn btn--ghost btn--icon btn--sm"
+                        disabled={i === orang.length - 1} onClick={() => geser(i, 1)}
+                        aria-label={`Turunkan ${o.name ?? o.role}`}>
+                        <Icon name="chevronDown" size={14} />
+                      </button>
+                    </span>
+                  </header>
+
+                  <span className="kartugrid__gambar kartugrid__gambar--potret">
                     {o.photoUrl
                       ? <img src={o.photoUrl} alt="" />
                       : <span className="tim-foto__slot">{o.slotLabel}</span>}
                   </span>
-                  <span className="item__text">
-                    <span className="item__title">
-                      {o.name ?? <span className="t-muted">Nama belum diisi</span>}
-                    </span>
-                    <span className="item__desc">
-                      {`Urutan ${i + 1} · ${o.role}`}
-                      {!o.photoUrl && " — fotonya belum diunggah"}
-                    </span>
+
+                  <span className="kartugrid__nama">
+                    {o.name ?? <em className="t-muted">Nama belum diisi</em>}
                   </span>
+                  <span className="kartugrid__ket">{o.role}</span>
+                  {!o.photoUrl && (
+                    <span className="kartugrid__ket kartugrid__ket--kurang">
+                      <Icon name="alert" size={12} />Fotonya belum diunggah
+                    </span>
+                  )}
 
-                  <span className="row" style={{ gap: "4px", flexWrap: "nowrap" }}>
-                    <button type="button" className="btn btn--ghost btn--icon"
-                      disabled={i === 0} onClick={() => geser(i, -1)}
-                      aria-label={`Naikkan ${o.name ?? o.role}`}>
-                      <Icon name="chevronUp" size={15} />
-                    </button>
-                    <button type="button" className="btn btn--ghost btn--icon"
-                      disabled={i === orang.length - 1} onClick={() => geser(i, 1)}
-                      aria-label={`Turunkan ${o.name ?? o.role}`}>
-                      <Icon name="chevronDown" size={15} />
-                    </button>
-
+                  <footer className="kartugrid__aksi">
                     <input type="file" accept="image/png,image/jpeg,image/webp" hidden
                       ref={(el) => { berkasRef.current[o.id] = el; }}
                       onChange={(e) => {
@@ -216,17 +244,19 @@ function Isi() {
                         e.target.value = "";
                         if (f) unggah(o, f);
                       }} />
-                    <button type="button" className="btn btn--secondary"
+                    <button type="button" className="btn btn--secondary btn--sm"
                       disabled={mengunggah === o.id}
                       onClick={() => berkasRef.current[o.id]?.click()}>
-                      {mengunggah === o.id && <span className="spinner spinner--sm" />}
-                      {o.photoUrl ? "Ganti foto" : "Unggah foto"}
+                      {mengunggah === o.id
+                        ? <span className="spinner spinner--sm" />
+                        : <Icon name="upload" size={14} />}
+                      {o.photoUrl ? "Ganti" : "Unggah"}
                     </button>
 
                     {o.photoUrl && (
-                      <button type="button" className="btn btn--ghost btn--icon"
+                      <button type="button" className="btn btn--ghost btn--icon btn--sm"
                         onClick={() => hapusFoto(o)} aria-label={`Hapus foto ${o.name ?? o.role}`}>
-                        <Icon name="close" size={15} />
+                        <Icon name="close" size={14} />
                       </button>
                     )}
 
@@ -237,37 +267,26 @@ function Isi() {
                       confirmLabel="Hapus"
                       onConfirm={() => hapus(o.id)}
                       trigger={
-                        <button type="button" className="btn btn--ghost btn--icon btn--hapus"
+                        <button type="button" className="btn btn--ghost btn--icon btn--sm btn--hapus"
                           aria-label={`Hapus ${o.name ?? o.role}`}>
-                          <Icon name="trash" size={15} />
+                          <Icon name="trash" size={14} />
                         </button>
                       }
                     />
-                  </span>
-                </li>
+                  </footer>
+                </article>
               ))}
-            </ul>
+            </div>
           )}
         </section>
       </div>
 
       <SisiSitus
-        judul="Tim studio"
-        letak="Seksi Tim kami di halaman Studio"
-        ikon="team"
-        lengkap={total > 0 && berfoto === total && bernama === total}
-        status={
-          total === 0 ? "Belum ada anggota"
-            : berfoto === total && bernama === total ? "Semua lengkap"
-            : `${total - Math.min(berfoto, bernama)} masih kurang`
-        }
         fakta={[
           { label: "Jumlah orang", nilai: <span className="t-num">{total}</span> },
           { label: "Sudah berfoto", nilai: <span className="t-num">{berfoto}</span> },
           { label: "Sudah bernama", nilai: <span className="t-num">{bernama}</span> },
         ]}
-        tautan="/studio/"
-        tautanLabel="Lihat di halaman Studio"
       >
         <Dialog
           title="Tambah anggota tim"

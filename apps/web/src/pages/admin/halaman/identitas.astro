@@ -4,6 +4,11 @@ import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalama
 
 /* Dua tahun yang dipakai garis waktu di halaman Studio.
 
+   `tanya` adalah judul tonggaknya dan `kalimat` kalimat di bawahnya, keduanya
+   disalin apa adanya dari `garisWaktu` di pages/studio.astro. Selama tahunnya
+   kosong, situs mencetak "TAHUN?" — itu juga yang ditiru pratinjau, bukan
+   penanda karangan sendiri.
+
    `foundedYear` dulu juga tampil sebagai "SINCE 20XX" di eyebrow beranda.
    Eyebrow itu sudah diganti lencana "Spesialis coffee shop & rumah tropis",
    jadi keterangannya diperbaiki di sini — isian yang mengaku tampil di tempat
@@ -17,7 +22,8 @@ const isian: Isian[] = [
     jenis: "tahun",
     grup: "Garis waktu studio",
     bantuan: "Tonggak pertama di garis waktu halaman Studio.",
-    kalimat: "%s — Studionya dimulai. Satu meja, satu meja gambar, dan keputusan untuk tetap kecil dengan sengaja.",
+    tanya: "Studionya dimulai",
+    kalimat: "Satu meja, satu meja gambar, dan keputusan untuk tetap kecil dengan sengaja.",
   },
   {
     kunci: "firstCommercialYear",
@@ -26,7 +32,8 @@ const isian: Isian[] = [
     jenis: "tahun",
     grup: "Garis waktu studio",
     bantuan: "Tonggak kedua di garis waktu halaman Studio.",
-    kalimat: "%s — Proyek komersial pertama. Titik saat pekerjaannya berhenti jadi rumah saja.",
+    tanya: "Proyek komersial pertama",
+    kalimat: "Titik saat pekerjaannya berhenti jadi rumah saja, dan gambarnya harus menjawab kepada sebuah usaha, bukan cuma kepada sebuah keluarga.",
   },
 ];
 ---
@@ -35,12 +42,13 @@ const isian: Isian[] = [
   <IsiHalamanPanel
     client:load
     isian={isian}
+    pratinjau="garis-waktu"
+    pratinjauJudul="Seperti yang tampil di garis waktu halaman Studio"
     situs={{
       judul: "Identitas studio",
       letak: "Garis waktu di halaman Studio",
       ikon: "building",
       tautan: "/studio/",
-      tautanLabel: "Lihat halaman Studio",
     }}
     catatan="Nama studio, email, telepon, dan logo diurus terpisah di Pengaturan → Info Studio, karena keempatnya juga dipakai panel admin — bukan hanya halaman publik. Yang ada di sini cuma dua tahun yang tidak bisa ditebak dari data lain."
   />

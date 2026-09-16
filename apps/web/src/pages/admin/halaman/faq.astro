@@ -3,9 +3,9 @@ import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
 
 /* Pertanyaan di /faq yang jawabannya sudah benar dan sudah tayang — yang belum
-   ada cuma angkanya. Selama kosong, pertanyaan itu memakai lencana "angka
-   ditanyakan"; begitu terisi, lencananya padam untuk pertanyaan itu saja,
-   bukan untuk ketiganya sekaligus.
+   ada cuma angkanya. Selama kosong, pertanyaan itu memakai lencana "ANGKA
+   DIBERIKAN SAAT DITANYA"; begitu terisi, lencananya padam untuk pertanyaan
+   itu saja, bukan untuk ketiganya sekaligus.
 
    TIGA, bukan empat. "Tarif jasa" (faqTarif) dibuang dari halaman ini karena
    tarifnya sekarang DITERBITKAN di beranda lewat lib/tier.ts, dan jawaban FAQ
@@ -13,8 +13,11 @@ import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalama
    dibaca siapa pun lebih buruk daripada isian yang tidak ada: ia mengundang
    diisi, lalu diam-diam tidak muncul di mana pun.
 
-   `kalimat` mencetak pertanyaan aslinya dari /faq dengan nilainya tersisip,
-   jadi yang diketik di sini bisa dibaca sebagai jawabannya sebelum disimpan. */
+   TANPA `kalimat`. Halaman /faq sengaja TIDAK menyisipkan angkanya ke dalam
+   kalimat mana pun — ia mencetaknya sesudah jawaban sebagai baris "Angkanya"
+   tersendiri, supaya yang ditulis pemilik tampil apa adanya. Versi pertama
+   halaman ini mengarang kalimat pembungkusnya, dan itu membuat pratinjau
+   menjanjikan bentuk yang tidak pernah tayang. */
 const isian: Isian[] = [
   {
     kunci: "faqUangMuka",
@@ -22,7 +25,7 @@ const isian: Isian[] = [
     contoh: "30% di awal tahap pertama",
     grup: "Uang",
     bantuan: 'Menjawab "Berapa yang Anda butuhkan sebelum mulai?" di halaman FAQ.',
-    kalimat: "Uang muka %s, lalu pembayaran setiap kali satu tahap diserahkan.",
+    tanya: "Berapa yang Anda butuhkan sebelum mulai?",
   },
   {
     kunci: "faqLamaKerja",
@@ -30,7 +33,7 @@ const isian: Isian[] = [
     contoh: "4–6 bulan untuk rumah tinggal",
     grup: "Waktu",
     bantuan: 'Menjawab "Berapa lama pengerjaannya?".',
-    kalimat: "Dari tahap pertama sampai gambar kerja selesai: %s.",
+    tanya: "Berapa lama pengerjaannya?",
   },
   {
     kunci: "faqKunjungan",
@@ -38,7 +41,7 @@ const isian: Isian[] = [
     contoh: "Dua kali per tahap, lebih kalau diperlukan",
     grup: "Waktu",
     bantuan: 'Menjawab "Apakah Anda datang ke lokasi selama pembangunan?".',
-    kalimat: "Kunjungan ke lokasi selama proyek berjalan: %s.",
+    tanya: "Apakah Anda datang ke lokasi selama pembangunan?",
   },
 ];
 ---
@@ -47,12 +50,13 @@ const isian: Isian[] = [
   <IsiHalamanPanel
     client:load
     isian={isian}
+    pratinjau="tanya-jawab"
+    pratinjauJudul="Seperti yang tampil di halaman Tanya Jawab"
     situs={{
       judul: "Angka di FAQ",
       letak: "Tiga jawaban di halaman Tanya Jawab",
       ikon: "info",
       tautan: "/faq/",
-      tautanLabel: "Lihat halaman FAQ",
     }}
     catatan="Isi dengan kalimat pendek, bukan sekadar bilangan — yang dibaca calon klien adalah kalimatnya, dan boleh berupa rentang. Tarif jasa tidak ada di sini lagi: sejak rentangnya diumumkan di beranda, jawaban FAQ soal tarif menunjuk ke sana."
   />
