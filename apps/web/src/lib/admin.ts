@@ -607,10 +607,25 @@ export const hapusCatatanProgress = (id: string) =>
 
 // --- Tim & freelancer -----------------------------------------------------
 
+/** Empat jenis dari §5.2 dan §5.3 dokumen strategi. */
+export type JenisAnggota = "partner" | "inti" | "proyek" | "staf";
+
+export const LABEL_JENIS_ANGGOTA: Record<JenisAnggota, string> = {
+  partner: "Partner",
+  inti: "Freelancer inti",
+  proyek: "Freelancer proyek",
+  staf: "Staf tetap",
+};
+
 export interface AnggotaTim {
   id: string;
   name: string;
   role?: string | null;
+  kind: JenisAnggota;
+  /** Tarif acuan, bukan nominal yang mengikat. */
+  rate?: number | null;
+  phone?: string | null;
+  active: boolean;
 }
 
 export const daftarTim = () => panggil<AnggotaTim[]>("/admin/team");
@@ -760,11 +775,51 @@ export const hapusInvoice = (id: string) =>
 export interface BiayaProyek {
   id: string;
   projectId: string;
+  /** Ikut terbawa oleh daftar lintas proyek, tidak oleh daftar per proyek. */
+  projectTitle?: string;
   label: string;
   category: string;
   amount: number;
   /** Tanggal biaya benar-benar terjadi (YYYY-MM-DD), bukan kapan diketik. */
   incurredOn: string;
+  /** Siapa yang dibayar. Kosong untuk biaya operasional yang bukan milik orang. */
+  teamMemberId?: string | null;
+  teamMemberName?: string | null;
+}
+
+/** Satu orang dalam satu bulan: gaji yang diketik + fee yang dijumlahkan. */
+export interface BarisGajiBulan {
+  teamMemberId: string;
+  name: string;
+  kind: JenisAnggota;
+  role?: string | null;
+  salaryId?: string | null;
+  salaryAmount?: number | null;
+  salaryPaidOn?: string | null;
+  salaryNote?: string | null;
+  feeAmount: number;
+  feeCount: number;
+  total: number;
+}
+
+export interface FeeProyek {
+  projectId: string;
+  projectTitle: string;
+  contractValue: number | null;
+  feeTotal: number;
+  feeTanpaNama: number;
+  feeShare: number | null;
+  orang: { teamMemberId: string; name: string; kind: JenisAnggota; amount: number }[];
+}
+
+export interface FeeOrang {
+  teamMemberId: string;
+  name: string;
+  kind: JenisAnggota;
+  role?: string | null;
+  total: number;
+  projectCount: number;
+  lastOn: string | null;
 }
 
 export const daftarBiaya = (projectId: string) => panggil<BiayaProyek[]>(`/admin/projects/${projectId}/costs`);
@@ -779,6 +834,50 @@ export const tambahBiaya = (
 
 export const hapusBiaya = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/costs/${id}`, { method: "DELETE" });
+
+/* ── Satu pintu: biaya lintas proyek ──────────────────────────────────────
+ *
+ * Sejak "Kerja Internal" dibuang, halaman Kas & Biaya adalah SATU-SATUNYA
+ * tempat mencatat pengeluaran. Proyeknya dipilih dari dropdown di dialog,
+ * bukan ditentukan oleh halaman mana staf kebetulan berada. */
+
+export const semuaBiaya = () => panggil<BiayaProyek[]>("/admin/costs");
+
+export const catatBiaya = (b: {
+  projectId: string; label: string; category: string;
+  amount: number; incurredOn?: string; teamMemberId?: string | null;
+}) => panggil<{ id: string }>("/admin/costs", { method: "POST", body: JSON.stringify(b) });
+
+/* ── Fee proyek ───────────────────────────────────────────────────────── */
+
+export const feePerProyek = (r: { dari?: string; sampai?: string } = {}) =>
+  panggil<FeeProyek[]>(`/admin/fee/projects${kueri(r)}`);
+
+export const feePerOrang = (r: { dari?: string; sampai?: string } = {}) =>
+  panggil<FeeOrang[]>(`/admin/fee/people${kueri(r)}`);
+
+/* ── Gaji ─────────────────────────────────────────────────────────────── */
+
+export const gajiBulan = (period: string) =>
+  panggil<BarisGajiBulan[]>(`/admin/payroll/month?period=${encodeURIComponent(period)}`);
+
+export const catatGaji = (g: {
+  teamMemberId: string; period: string; amount: number; paidOn?: string | null; note?: string | null;
+}) => panggil<{ id: string }>("/admin/payroll", { method: "POST", body: JSON.stringify(g) });
+
+export const ubahGaji = (
+  id: string, g: { amount?: number; paidOn?: string | null; note?: string | null },
+) => panggil<{ updated: boolean }>(`/admin/payroll/${id}`, { method: "PATCH", body: JSON.stringify(g) });
+
+export const hapusGaji = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/payroll/${id}`, { method: "DELETE" });
+
+/** Rentang opsional jadi query string; yang kosong tidak ikut dikirim. */
+function kueri(r: Record<string, string | undefined>): string {
+  const q = Object.entries(r).filter(([, v]) => v).map(
+    ([k, v]) => `${k}=${encodeURIComponent(v as string)}`);
+  return q.length ? `?${q.join("&")}` : "";
+}
 
 // --- Dokumen proyek (dilihat & disetujui klien lewat link token) ----------
 

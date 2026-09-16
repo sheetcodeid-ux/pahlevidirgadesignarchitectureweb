@@ -5,10 +5,17 @@ import { ChartArusKas, type TitikArus } from "../ui/data/ChartArusKas";
 import { KartuDonat, type IrisDonat } from "../ui/data/KartuDonat";
 import { ChartBandingTahun, type TitikBanding } from "../ui/data/ChartBandingTahun";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
+import { Select } from "../ui/overlay/Select";
+import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
+import { InputRupiah } from "../ui/InputRupiah";
+import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
+import { PanelKeuangan } from "./ProjectEditor";
 import {
   ambilRingkasanKeuangan, ambilBulanan, bacaCache, tulisCache,
+  semuaBiaya, catatBiaya, hapusBiaya, daftarProyek, daftarTim,
   type BarisBulanan, type FinanceOverview, type FinanceOverviewRow,
+  type BiayaProyek, type Proyek, type AnggotaTim,
 } from "../../lib/admin";
 import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
@@ -57,6 +64,12 @@ function deretBulan(data: BarisBulanan[], jumlah: number): BarisBulanan[] {
     keluar.push(peta.get(kunci) ?? { bulan: kunci, kasMasuk: 0, biaya: 0, labaBersih: 0, proyekAktif: 0 });
   }
   return keluar;
+}
+
+/** '2026-09-08' → '8 Sep 2026'. Tanggal biaya selalu tanggal kejadiannya. */
+function tanggalPendek(iso: string): string {
+  const [t, b, h] = iso.split("-");
+  return `${Number(h)} ${BULAN_PENDEK[Number(b) - 1]} ${t}`;
 }
 
 function namaBulan(kunci: string, panjang = false) {
@@ -110,7 +123,17 @@ function Rangka() {
 
 /* --- Isi -------------------------------------------------------------------- */
 
-type Tab = "ringkasan" | "proyek";
+type Tab = "ringkasan" | "proyek" | "biaya" | "tagihan";
+
+/**
+ * Margin minimum yang direkomendasikan dokumen strategi §6.3: 35-45% setelah
+ * biaya freelancer dan overhead, dengan saran menolak proyek di bawahnya.
+ *
+ * Di sini ia MENANDAI, bukan memblokir. Panel ini mencatat apa yang sudah
+ * terjadi; menolak proyek adalah keputusan pemilik, dan angka yang sudah
+ * telanjur tercatat tidak bisa ditolak oleh sebuah tabel.
+ */
+const MARGIN_MINIMUM = 35;
 
 function Isi() {
   const [proyekId, setProyekId] = useState<string | null>(() => proyekAktif());
@@ -124,6 +147,25 @@ function Isi() {
   const [bulanan, setBulanan] = useState<BarisBulanan[] | null>(() => bacaCache<BarisBulanan[]>(kunciBulan));
 
   useEffect(() => onProyekAktif(setProyekId), []);
+
+  /* Satu pintu: daftar biaya lintas proyek, plus dua daftar yang mengisi
+     dropdown dialognya. Ketiganya tidak bergantung pada proyek yang sedang
+     dipilih di topbar — halaman ini memang tidak lagi terikat satu proyek. */
+  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() => bacaCache<BiayaProyek[]>("biaya-semua"));
+  const [proyek, setProyek] = useState<Proyek[]>(() => bacaCache<Proyek[]>("proyek") ?? []);
+  const [tim, setTim] = useState<AnggotaTim[]>(() => bacaCache<AnggotaTim[]>("tim") ?? []);
+
+  function muatBiaya() {
+    semuaBiaya()
+      .then((d) => { tulisCache("biaya-semua", d); setBiaya(d); })
+      .catch(() => setBiaya((l) => l ?? []));
+  }
+
+  useEffect(() => {
+    muatBiaya();
+    daftarProyek().then((d) => { tulisCache("proyek", d); setProyek(d); }).catch(() => {});
+    daftarTim().then((d) => { tulisCache("tim", d); setTim(d); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let batal = false;
@@ -142,6 +184,9 @@ function Isi() {
 
     return () => { batal = true; };
   }, [proyekId, kunci, kunciBulan]);
+
+  const proyekTerpilih = useMemo(
+    () => proyek.find((p) => p.id === proyekId) ?? null, [proyek, proyekId]);
 
   const rapat24 = useMemo(() => deretBulan(bulanan ?? [], 24), [bulanan]);
   const rapat = useMemo(
@@ -192,8 +237,52 @@ function Isi() {
     { judul: "Biaya", kelas: "table__num", lebar: "8rem", render: (b) => formatRupiah(b.costsTotal) },
     { judul: "Laba bersih", kelas: "table__num", lebar: "8rem",
       render: (b) => <span className={b.labaBersih < 0 ? "angka-minus" : undefined}>{formatRupiah(b.labaBersih)}</span> },
-    { judul: "Marjin", kelas: "table__num", lebar: "5rem",
-      render: (b) => (b.marginPct === null ? "—" : `${b.marginPct.toFixed(1).replace(".", ",")}%`) },
+    /* Dokumen strategi §6.3 menyarankan margin minimum 35-45%. Yang di bawah
+       ambang ditandai amber — bukan merah: proyeknya tidak rusak, ia cuma
+       lebih tipis dari yang direkomendasikan, dan merah di sistem warna ini
+       berarti brand dan destruktif. */
+    { judul: "Marjin", kelas: "table__num", lebar: "6rem",
+      render: (b) => {
+        if (b.marginPct === null) return "—";
+        const teks = `${b.marginPct.toFixed(1).replace(".", ",")}%`;
+        return b.marginPct < MARGIN_MINIMUM
+          ? <span className="badge badge--warn" title={`Di bawah margin minimum ${MARGIN_MINIMUM}% (strategi §6.3)`}>{teks}</span>
+          : teks;
+      } },
+  ];
+
+  const kolomBiaya: Kolom<BiayaProyek>[] = [
+    { judul: "Tanggal", lebar: "7rem",
+      render: (b) => <span className="t-num t-muted">{tanggalPendek(b.incurredOn)}</span> },
+    { judul: "Proyek", render: (b) => <span className="t-strong">{b.projectTitle ?? "—"}</span> },
+    { judul: "Keterangan", render: (b) => b.label },
+    { judul: "Kategori", lebar: "10rem",
+      render: (b) => <span className="badge">{KATEGORI[b.category]?.label ?? b.category}</span> },
+    /* Kolom yang membuat halaman Fee mungkin. Yang kosong ditulis apa adanya —
+       biaya operasional memang bukan milik siapa pun, dan baris lama dicatat
+       sebelum kolomnya ada. */
+    { judul: "Untuk", lebar: "10rem",
+      render: (b) => (b.teamMemberName
+        ? <span className="row" style={{ gap: "var(--space-1)" }}><Icon name="user" size={13} />{b.teamMemberName}</span>
+        : <span className="t-faint">—</span>) },
+    { judul: "Nominal", kelas: "table__num", lebar: "8rem",
+      render: (b) => formatRupiah(b.amount) },
+    { judul: "", lebar: "3rem", kelas: "table__aksi",
+      render: (b) => (
+        <AlertDialog
+          destructive
+          title="Hapus biaya ini?"
+          description={`${b.label} — ${formatRupiah(b.amount)}. Laba bersih proyeknya ikut berubah.`}
+          confirmLabel="Ya, hapus"
+          onConfirm={async () => { await hapusBiaya(b.id); muatBiaya(); }}
+          trigger={
+            <button type="button" className="btn btn--ghost btn--icon btn--sm btn--hapus"
+              aria-label={`Hapus ${b.label}`}>
+              <Icon name="trash" size={14} />
+            </button>
+          }
+        />
+      ) },
   ];
 
   function ekspor() {
@@ -222,10 +311,24 @@ function Isi() {
             onClick={() => setTab("proyek")}>
             <Icon name="project" size={16} />Per Proyek
           </button>
+          <button type="button" className="segmented__opt" aria-pressed={tab === "biaya"}
+            onClick={() => setTab("biaya")}>
+            <Icon name="receipt" size={16} />Kas &amp; Biaya
+          </button>
+          <button type="button" className="segmented__opt" aria-pressed={tab === "tagihan"}
+            onClick={() => setTab("tagihan")}>
+            <Icon name="cash" size={16} />Tagihan
+          </button>
         </div>
-        <button type="button" className="btn btn--secondary keu__ekspor" onClick={ekspor}>
-          <Icon name="download" size={15} />Export
-        </button>
+        <div className="row" style={{ gap: "var(--space-2)" }}>
+          {/* Aksi utama halaman ini, dan satu-satunya pintu mencatat
+              pengeluaran sejak "Kerja Internal" dibuang. Proyeknya dipilih di
+              dalam dialog — staf tidak perlu berpindah halaman dulu. */}
+          <DialogBiaya proyek={proyek} tim={tim} onSelesai={muatBiaya} />
+          <button type="button" className="btn btn--secondary keu__ekspor" onClick={ekspor}>
+            <Icon name="download" size={15} />Export
+          </button>
+        </div>
       </div>
 
       {tab === "ringkasan" ? (
@@ -300,7 +403,7 @@ function Isi() {
             data={banding}
           />
         </>
-      ) : (
+      ) : tab === "proyek" ? (
         <DataTable
           data={ringkas.proyek}
           kunci={(b) => b.projectId}
@@ -316,15 +419,179 @@ function Isi() {
             keterangan: "Isi Nilai Kontrak di halaman proyek supaya angkanya muncul di sini.",
           }}
         />
+      ) : tab === "tagihan" ? (
+        /* Tagihan dan nilai kontrak TERIKAT pada satu proyek — tidak seperti
+           biaya, yang proyeknya cukup dipilih di dialog. Jadi tab ini memakai
+           proyek yang sedang dipilih di bilah atas, dan mengatakannya kalau
+           belum ada yang dipilih. */
+        proyekTerpilih ? (
+          <PanelKeuangan
+            proyek={proyekTerpilih}
+            onUbahKontrak={(v) => setProyek((l) =>
+              l.map((x) => (x.id === proyekTerpilih.id ? { ...x, contractValue: v } : x)))}
+          />
+        ) : (
+          <div className="empty">
+            <span className="icon-tile"><Icon name="cash" size={22} /></span>
+            <span className="t-subheading">Pilih proyeknya dulu</span>
+            <p className="t-muted">
+              Tagihan dan nilai kontrak milik satu proyek. Pilih proyek di
+              pemilih proyek pada bilah atas, lalu kembali ke tab ini.
+            </p>
+          </div>
+        )
+      ) : (
+        <DataTable
+          data={biaya}
+          kolom={kolomBiaya}
+          kunci={(b) => b.id}
+          cariPada={(b) => [b.label, b.projectTitle, b.teamMemberName]}
+          placeholderCari="Cari biaya, proyek, atau nama…"
+          labelCari="Cari biaya"
+          satuan="biaya"
+          barisSkeleton={6}
+          kosong={{
+            ikon: "receipt",
+            judul: "Belum ada pengeluaran tercatat",
+            keterangan: "Tekan Catat pengeluaran di atas. Proyeknya dipilih di dalam dialog.",
+          }}
+        />
       )}
     </div>
+  );
+}
+
+/* ── Dialog catat pengeluaran ─────────────────────────────────────────────
+ *
+ * Inti dari "satu pintu": proyeknya DIPILIH DI SINI, bukan ditentukan oleh
+ * halaman mana staf kebetulan berada. Sebelumnya pengeluaran hanya bisa
+ * dicatat dari "Kerja Internal" milik satu proyek — jadi mencatat tiga nota
+ * untuk tiga proyek berarti tiga kali berpindah halaman.
+ */
+function DialogBiaya(
+  { proyek, tim, onSelesai }: { proyek: Proyek[]; tim: AnggotaTim[]; onSelesai: () => void },
+) {
+  const toast = useToast();
+  const [idProyek, setIdProyek] = useState("");
+  const [label, setLabel] = useState("");
+  const [kategori, setKategori] = useState("freelancer");
+  const [orang, setOrang] = useState("");
+  const [nominal, setNominal] = useState<number | null>(null);
+  const [tanggal, setTanggal] = useState("");
+  const [kirim, setKirim] = useState(false);
+
+  /* Kategori yang memang bayaran ke ORANG. Di luar keduanya, dropdown nama
+     disembunyikan — menanyakan "untuk siapa" pada tagihan listrik cuma
+     membuat isian yang selalu dikosongkan. */
+  const perluOrang = kategori === "freelancer" || kategori === "prinsipal";
+  const siap = idProyek && label.trim().length >= 2 && (nominal ?? 0) > 0;
+
+  async function simpan() {
+    if (!siap) return;
+    setKirim(true);
+    try {
+      await catatBiaya({
+        projectId: idProyek, label: label.trim(), category: kategori,
+        amount: nominal as number, incurredOn: tanggal || undefined,
+        teamMemberId: perluOrang ? (orang || null) : null,
+      });
+      setLabel(""); setNominal(null); setTanggal(""); setOrang("");
+      onSelesai();
+      toast({ judul: "Pengeluaran tercatat", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal mencatat", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setKirim(false);
+    }
+  }
+
+  return (
+    <Dialog
+      title="Catat pengeluaran"
+      description="Pilih proyeknya di sini — tidak perlu membuka halaman proyeknya dulu."
+      trigger={
+        <button type="button" className="btn btn--primary btn--lift">
+          <Icon name="plus" size={15} />Catat pengeluaran
+        </button>
+      }
+      footer={
+        <button type="button" className="btn btn--primary" disabled={!siap || kirim} onClick={simpan}>
+          {kirim && <span className="spinner spinner--sm spinner--on-action" />}Simpan
+        </button>
+      }
+    >
+      <div className="stack">
+        <div className="field">
+          <label className="field__label" htmlFor="bi-proyek">
+            Proyek<span className="field__req" aria-hidden="true">*</span>
+          </label>
+          <Select
+            id="bi-proyek"
+            ariaLabel="Proyek"
+            value={idProyek}
+            onValueChange={setIdProyek}
+            placeholder="Pilih proyek…"
+            options={proyek.map((p) => ({ value: p.id, label: p.title }))}
+          />
+        </div>
+
+        <div className="spec-grid spec-grid--rapat spec-grid--tiga">
+          <div className="field">
+            <label className="field__label" htmlFor="bi-label">Label</label>
+            <input id="bi-label" className="input" value={label}
+              onChange={(e) => setLabel(e.target.value)} placeholder="Contoh: Fee gambar kerja" />
+          </div>
+          <div className="field">
+            <label className="field__label" htmlFor="bi-kategori">Kategori</label>
+            <Select id="bi-kategori" ariaLabel="Kategori biaya" value={kategori}
+              onValueChange={setKategori}
+              options={Object.entries(KATEGORI).map(([value, k]) => ({ value, label: k.label }))} />
+          </div>
+          <div className="field">
+            <label className="field__label" htmlFor="bi-nominal">Nominal</label>
+            <InputRupiah id="bi-nominal" value={nominal} onChange={setNominal} />
+          </div>
+        </div>
+
+        {perluOrang && (
+          <div className="field">
+            <label className="field__label" htmlFor="bi-orang">Untuk siapa</label>
+            <Select
+              id="bi-orang"
+              ariaLabel="Penerima fee"
+              value={orang}
+              onValueChange={setOrang}
+              placeholder="Belum ditentukan"
+              /* Yang sudah tidak aktif tidak ditawarkan lagi, TAPI namanya
+                 tetap tercetak di biaya lama — disembunyikan dari dropdown,
+                 bukan dihapus dari riwayat. */
+              options={tim.filter((t) => t.active).map((t) => ({
+                value: t.id, label: t.role ? `${t.name} — ${t.role}` : t.name,
+              }))}
+            />
+            <p className="field__help">
+              Inilah yang membuat halaman Fee bisa menjawab “orang ini sudah
+              terima berapa”. Boleh dikosongkan.
+            </p>
+          </div>
+        )}
+
+        <div className="field">
+          <label className="field__label" htmlFor="bi-tanggal">Tanggal biaya</label>
+          <input id="bi-tanggal" className="input input--ringkas" type="date" value={tanggal}
+            onChange={(e) => setTanggal(e.target.value)}
+            max={new Date().toISOString().slice(0, 10)} />
+          <p className="field__help">Kosongkan kalau hari ini.</p>
+        </div>
+      </div>
+    </Dialog>
   );
 }
 
 export function FinancePanel() {
   return (
     <RequireAuth skeleton={<Rangka />}>
-      <Isi />
+      <ToastProvider><Isi /></ToastProvider>
     </RequireAuth>
   );
 }
