@@ -76,18 +76,29 @@
    sama yang sudah dicatat dua kali di berkas ini, dan ini kali ketiga. */
 .topbar > .topbar__id::before { content: none; }
 
-/* Garis miring BERHENTI setelah penghitung proyek. Permintaan pemilik, dan
-   alasannya terbaca sendiri di bilahnya: kelompok kiri adalah satu kalimat
-   keadaan — di mana kita, jam berapa, tanggal berapa, berapa proyek — dan
-   garis miring adalah tanda baca kalimat itu. Combobox dan tombol di kanan
-   bukan bagian dari kalimat itu; mereka perkakas. Memberi mereka tanda baca
-   yang sama menyambung dua hal yang tidak bersambung.
+/* Garis miring JALAN TERUS sampai ujung kanan bilah.
+
+   Ini MEMBALIK keputusan sebelumnya ("garis miring berhenti setelah
+   penghitung proyek"), atas permintaan pemilik: "breadcrumb dibuat sampai
+   ujung seperti pipeline itu jadi keliatannya rapi". Yang dirujuknya bilah
+   Fase proyek — satu bilah yang selnya terbagi rata dari tepi ke tepi.
+
+   Terukur pada bilah 1168px sebelum perubahan: tanda bacanya berhenti di
+   747px, jadi 693px sisanya — combobox, Terbitkan, tombol tema — berdiri
+   tanpa satu pun pemisah. Itu yang membuat separuh kanan bilah terbaca
+   sebagai barang yang tercecer, bukan sebagai lanjutan barisnya.
+
+   Dua sel sengaja TETAP tanpa garis miring, dan keduanya bukan pengecualian
+   melainkan sudah punya pemisahnya sendiri:
+     lonceng   — dikurung garis tegak 2px di kiri dan kanan. Garis miring di
+                 tepi kirinya akan mendarat tepat di atas garis itu.
+     panel akun — dipisah oleh garis KANAN milik lonceng, yang berdiri persis
+                 di batas keduanya.
 
    Ditulis `.topbar > .x` supaya kekhususannya (0,2,0), setara aturan umum di
-   atas. Dengan `.x::before` saja aturan umum menang — jebakan yang sudah
-   tercatat di CLAUDE.md. */
-.topbar > .topbar__combo::before,
-.topbar > .topbar__aksi::before { content: none; }
+   atas, dan ditaruh SESUDAHNYA supaya menang. Dengan `.x::before` saja aturan
+   umum menang — jebakan yang sudah tercatat di CLAUDE.md. */
+.topbar > .topbar__aksi--lonceng::before { content: none; }
 
 /* Semua segmen dirata-tengahkan secara vertikal dan diberi napas sendiri.
 
@@ -1402,6 +1413,18 @@
 @media (max-width: 71rem) {
   .topbar__combo { display: none !important; }
   .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
+
+  /* Pendorong tidak punya tanda baca, jadi segmen SESUDAHNYA tidak boleh
+     punya juga: garis miringnya akan berdiri sendirian di seberang ruang
+     kosong — persis bentuk "tercecer" yang diperbaiki di aturan garis miring
+     di atas, cuma pindah lebar.
+
+     Ditulis DI SINI, bukan di dekat aturan garis miringnya, karena selektor
+     tetangga tidak peduli `display`: di layar lebar pendorongnya memang
+     `display:none` tapi ia TETAP saudara di DOM, jadi aturan yang sama di
+     luar media query ikut mematikan garis miring tombol Terbitkan pada
+     1440px. Sudah terukur sekali begitu. */
+  .topbar > .topbar__dorong + *::before { content: none; }
 }
 
 /* Teksnya pergi, tombolnya tinggal. Yang hilang cuma namanya — ikon unggah
