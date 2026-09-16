@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
-import type { IconName } from "../ui/Icon";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { CatatanTerbit, KepalaSitus, SisiSitus } from "./SisiSitus";
+import { CatatanTerbit, SisiSitus } from "./SisiSitus";
 import {
   ambilSettings, simpanSettings, bacaCache, tulisCache, type StudioSettings,
 } from "../../lib/admin";
@@ -92,11 +91,12 @@ export interface IsiHalamanProps {
   pratinjau: BentukPratinjau;
   /** Judul kartu pratinjau — menyebut halaman aslinya. */
   pratinjauJudul: string;
-  /** Untuk kepala halaman: bagian situs yang diurus halaman ini. */
-  situs: { judul: string; letak: string; ikon: IconName; tautan: string };
+  /** Alamat halaman publik yang menampilkan isian-isian ini. */
+  tautan: string;
+  tautanLabel: string;
 }
 
-function Isi({ isian, catatan, pratinjau, pratinjauJudul, situs }: IsiHalamanProps) {
+function Isi({ isian, catatan, pratinjau, pratinjauJudul, tautan, tautanLabel }: IsiHalamanProps) {
   const toast = useToast();
   const [asli, setAsli] = useState<StudioSettings | null>(
     () => bacaCache<StudioSettings>("settings"),
@@ -313,16 +313,6 @@ function Isi({ isian, catatan, pratinjau, pratinjauJudul, situs }: IsiHalamanPro
 
   return (
     <div className="buatpage buatpage--situs">
-      <KepalaSitus
-        judul={situs.judul}
-        letak={situs.letak}
-        ikon={situs.ikon}
-        tautan={situs.tautan}
-        terisi={terisi}
-        dari={isian.length}
-        status={belumTerisi === 0 ? "Semua sudah terisi" : `${belumTerisi} belum terisi`}
-      />
-
       <div className="buatpage__utama">
         <section className="buat-kartu">
           <h2 className="buat-kartu__judul">{pratinjauJudul}</h2>
@@ -349,6 +339,10 @@ function Isi({ isian, catatan, pratinjau, pratinjauJudul, situs }: IsiHalamanPro
       </div>
 
       <SisiSitus
+        lengkap={belumTerisi === 0}
+        status={belumTerisi === 0 ? "Semua sudah terisi" : `${belumTerisi} belum terisi`}
+        tautan={tautan}
+        tautanLabel={tautanLabel}
         fakta={[
           { label: "Sudah terisi", nilai: <span className="t-num">{terisi} / {isian.length}</span> },
           {

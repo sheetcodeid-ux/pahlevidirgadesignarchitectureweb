@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { CatatanTerbit, KepalaSitus, SisiSitus } from "./SisiSitus";
+import { CatatanTerbit, SisiSitus } from "./SisiSitus";
 import {
   ambilSettings, simpanSettings, mintaUrlUnggahStudio,
   bacaCache, tulisCache, type StudioSettings,
@@ -111,16 +111,6 @@ function Isi() {
 
   return (
     <div className="buatpage buatpage--situs">
-      <KepalaSitus
-        judul="Sebelum & sesudah"
-        letak="Pembanding geser di halaman Studio"
-        ikon="camera"
-        tautan="/studio/"
-        terisi={ada}
-        dari={2}
-        status={lengkap ? "Tampil di situs" : ada === 1 ? "Baru satu foto" : "Belum ada foto"}
-      />
-
       <div className="buatpage__utama">
         {/* Pembanding geser yang BENAR-BENAR bisa digeser, bukan dua foto
             berdampingan. Ini satu-satunya cara memeriksa hal yang menentukan
@@ -209,6 +199,10 @@ function Isi() {
       </div>
 
       <SisiSitus
+        lengkap={lengkap}
+        status={lengkap ? "Tampil di situs" : ada === 1 ? "Baru satu foto" : "Belum ada foto"}
+        tautan="/studio/"
+        tautanLabel="Lihat di halaman Studio"
         fakta={[
           { label: "Sebelum", nilai: url("before")
             ? <span className="badge badge--success">Ada</span>

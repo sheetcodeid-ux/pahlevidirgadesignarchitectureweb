@@ -4,7 +4,7 @@ import { SkeletonDaftar } from "../ui/Skeleton";
 import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { CatatanTerbit, KepalaSitus, SisiSitus } from "./SisiSitus";
+import { CatatanTerbit, SisiSitus } from "./SisiSitus";
 import {
   daftarKlien, buatKlien, ubahKlien, hapusKlien, mintaUrlUnggahLogoKlien,
   bacaCache, tulisCache, jumlahDiingat, type KlienAdmin,
@@ -126,20 +126,6 @@ function Isi() {
 
   return (
     <div className="buatpage buatpage--situs">
-      <KepalaSitus
-        judul="Logo klien"
-        letak="Pita berjalan di beranda"
-        ikon="image"
-        tautan="/"
-        terisi={berlogo}
-        dari={total}
-        status={
-          total === 0 ? "Belum ada klien"
-            : berlogo === total ? "Semua logo terpasang"
-            : `${total - berlogo} belum punya logo`
-        }
-      />
-
       <div className="buatpage__utama">
         {/* Pratinjau pita marquee. Ini bagian yang benar-benar dibutuhkan
             halaman ini: sampai sekarang satu-satunya cara memeriksa apakah
@@ -278,6 +264,14 @@ function Isi() {
       </div>
 
       <SisiSitus
+        lengkap={total > 0 && berlogo === total}
+        status={
+          total === 0 ? "Belum ada klien"
+            : berlogo === total ? "Semua logo terpasang"
+            : `${total - berlogo} belum punya logo`
+        }
+        tautan="/"
+        tautanLabel="Lihat di beranda"
         fakta={[
           { label: "Jumlah klien", nilai: <span className="t-num">{total}</span> },
           { label: "Sudah berlogo", nilai: <span className="t-num">{berlogo}</span> },

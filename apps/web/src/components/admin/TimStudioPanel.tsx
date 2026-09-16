@@ -4,7 +4,7 @@ import { SkeletonDaftar } from "../ui/Skeleton";
 import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
-import { CatatanTerbit, KepalaSitus, SisiSitus } from "./SisiSitus";
+import { CatatanTerbit, SisiSitus } from "./SisiSitus";
 import {
   daftarOrangStudio, buatOrangStudio, ubahOrangStudio, hapusOrangStudio,
   mintaUrlUnggahStudio, bacaCache, tulisCache, jumlahDiingat, type OrangStudio,
@@ -140,20 +140,6 @@ function Isi() {
 
   return (
     <div className="buatpage buatpage--situs">
-      <KepalaSitus
-        judul="Tim studio"
-        letak="Seksi Tim kami di halaman Studio"
-        ikon="team"
-        tautan="/studio/"
-        terisi={lengkapBenar}
-        dari={total}
-        status={
-          total === 0 ? "Belum ada anggota"
-            : lengkapBenar === total ? "Semua lengkap"
-            : `${total - lengkapBenar} masih kurang`
-        }
-      />
-
       <div className="buatpage__utama">
         {/* Pratinjau kartu tim persis seperti di /studio: potret 4:5, nama
             tebal, peran abu di bawahnya. Halaman ini mengurus tampilan, jadi
@@ -282,6 +268,14 @@ function Isi() {
       </div>
 
       <SisiSitus
+        lengkap={total > 0 && lengkapBenar === total}
+        status={
+          total === 0 ? "Belum ada anggota"
+            : lengkapBenar === total ? "Semua lengkap"
+            : `${total - lengkapBenar} masih kurang`
+        }
+        tautan="/studio/"
+        tautanLabel="Lihat di halaman Studio"
         fakta={[
           { label: "Jumlah orang", nilai: <span className="t-num">{total}</span> },
           { label: "Sudah berfoto", nilai: <span className="t-num">{berfoto}</span> },
