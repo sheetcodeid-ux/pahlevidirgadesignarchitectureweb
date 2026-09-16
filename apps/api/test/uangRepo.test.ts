@@ -3,13 +3,12 @@
    Hyperdrive dan yang menyembunyikan seluruh kelas galat kalau dipakai
    setelan bawaan (jebakan #16 di CLAUDE.md). */
 import { it, expect } from "vitest";
-import { existsSync } from "node:fs";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import postgres from "postgres";
-import * as payroll from "../src/repository/payroll.ts";
-import * as fee from "../src/repository/fee.ts";
-import * as costs from "../src/repository/costs.ts";
-import * as team from "../src/repository/team.ts";
+import * as payroll from "../src/repository/payroll";
+import * as fee from "../src/repository/fee";
+import * as costs from "../src/repository/costs";
+import * as team from "../src/repository/team";
 
 /**
  * Repository uang diuji terhadap Postgres SUNGGUHAN, dengan setelan koneksi
@@ -41,9 +40,11 @@ it.skipIf(!adaPostgres)("repository uang jalan dengan setelan koneksi produksi",
   // Skema bersih dari bootstrap (sudah memuat migrasi baru).
   await sql.unsafe("drop schema if exists public cascade; create schema public;");
   await sql.unsafe("drop schema if exists auth cascade;");
-  const baca = (p: string) => readFileSync(p, "utf8");
-  await sql.unsafe(baca("/home/user/pahlevidirgadesignarchitectureweb/supabase/tests/shim-lokal.sql"));
-  await sql.unsafe(baca("/home/user/pahlevidirgadesignarchitectureweb/supabase/bootstrap.sql"));
+  // Relatif terhadap berkas ini, bukan path absolut: path absolut mengikat tes
+  // ke satu mesin, dan container sesi ini bukan mesin pemilik.
+  const baca = (p: string) => readFileSync(new URL(p, import.meta.url), "utf8");
+  await sql.unsafe(baca("../../../supabase/tests/shim-lokal.sql"));
+  await sql.unsafe(baca("../../../supabase/bootstrap.sql"));
 
   // ── Fixture ────────────────────────────────────────────────────────────────
   const [proyek] = await sql<{ id: string }[]>`
