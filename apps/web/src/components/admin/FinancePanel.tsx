@@ -267,7 +267,11 @@ function Isi() {
         : <span className="t-faint">—</span>) },
     { judul: "Nominal", kelas: "table__num", lebar: "8rem",
       render: (b) => formatRupiah(b.amount) },
-    { judul: "", lebar: "3rem", kelas: "table__aksi",
+    /* "Aksi" dan .table__actions, sama seperti kolom terakhir di Halaman
+       Proyek: kelasnya yang memberi rata-tengah dan ukuran tombol 28px,
+       dan .table__aksi yang dipakai sebelumnya tidak ada di satu pun
+       stylesheet — jadi selama ini kolomnya memang tanpa aturan sama sekali. */
+    { judul: "Aksi", lebar: "3rem", kelas: "table__actions",
       render: (b) => (
         <AlertDialog
           destructive
@@ -318,15 +322,6 @@ function Isi() {
           <button type="button" className="segmented__opt" aria-pressed={tab === "tagihan"}
             onClick={() => setTab("tagihan")}>
             <Icon name="cash" size={16} />Tagihan
-          </button>
-        </div>
-        <div className="row" style={{ gap: "var(--space-2)" }}>
-          {/* Aksi utama halaman ini, dan satu-satunya pintu mencatat
-              pengeluaran sejak "Kerja Internal" dibuang. Proyeknya dipilih di
-              dalam dialog — staf tidak perlu berpindah halaman dulu. */}
-          <DialogBiaya proyek={proyek} tim={tim} onSelesai={muatBiaya} />
-          <button type="button" className="btn btn--secondary keu__ekspor" onClick={ekspor}>
-            <Icon name="download" size={15} />Export
           </button>
         </div>
       </div>
@@ -413,6 +408,16 @@ function Isi() {
           labelCari="Cari proyek"
           satuan="proyek"
           barisSkeleton={5}
+          bentuk="kartu"
+          /* Tombolnya duduk DI DALAM bilah tabelnya, bukan di bilah tab —
+             bentuk yang sama dengan "Proyek Baru" di Halaman Proyek, yang
+             jadi acuan pemilik. Sekalian jadi benar maknanya: Export
+             menurunkan tabel INI, jadi ia milik tabel ini. */
+          aksi={
+            <button type="button" className="btn btn--secondary keu__ekspor" onClick={ekspor}>
+              <Icon name="download" size={15} />Export
+            </button>
+          }
           kosong={{
             ikon: "finance",
             judul: "Belum ada proyek berkontrak",
@@ -450,6 +455,12 @@ function Isi() {
           labelCari="Cari biaya"
           satuan="biaya"
           barisSkeleton={6}
+          bentuk="kartu"
+          /* Satu-satunya pintu mencatat pengeluaran sejak "Kerja Internal"
+             dibuang, dan sekarang ia berdiri tepat di atas daftar yang
+             ditambahnya. Proyeknya dipilih di dalam dialog — staf tidak
+             perlu berpindah halaman dulu. */
+          aksi={<DialogBiaya proyek={proyek} tim={tim} onSelesai={muatBiaya} />}
           kosong={{
             ikon: "receipt",
             judul: "Belum ada pengeluaran tercatat",
