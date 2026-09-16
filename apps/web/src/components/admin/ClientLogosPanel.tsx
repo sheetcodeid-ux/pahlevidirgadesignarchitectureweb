@@ -172,47 +172,53 @@ function Isi() {
               <p className="t-muted">Tambahkan namanya dulu, logonya bisa menyusul.</p>
             </div>
           ) : (
-            <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0, margin: 0 }}>
+            /* Grid kartu, bukan baris teks. Halaman ini mengurus GAMBAR:
+               daftar baris menyembunyikan logonya di kotak 24px dan yang
+               terbaca cuma namanya — persis keterangan yang paling tidak
+               dibutuhkan di sini. Kartu memberi logonya ruang seukuran yang
+               dipakai menilainya. */
+            <div className="kartugrid">
               {klien.map((k, i) => (
-                <li key={k.id} className="item item--bordered">
-                  <span className="klien-logo" aria-hidden="true">
+                <article className={`kartugrid__sel${k.logoUrl ? "" : " kartugrid__sel--kosong"}`} key={k.id}>
+                  <header className="kartugrid__kop">
+                    <span className="kartugrid__urut t-num">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="kartugrid__pindah">
+                      <button type="button" className="btn btn--ghost btn--icon btn--sm"
+                        disabled={i === 0} onClick={() => geser(i, -1)}
+                        aria-label={`Naikkan ${k.name}`}>
+                        <Icon name="chevronUp" size={14} />
+                      </button>
+                      <button type="button" className="btn btn--ghost btn--icon btn--sm"
+                        disabled={i === klien.length - 1} onClick={() => geser(i, 1)}
+                        aria-label={`Turunkan ${k.name}`}>
+                        <Icon name="chevronDown" size={14} />
+                      </button>
+                    </span>
+                  </header>
+
+                  <span className="kartugrid__gambar kartugrid__gambar--logo">
                     {k.logoUrl
                       ? (
                         /* Bentuknya baru bisa diketahui setelah berkasnya sampai,
                            jadi dipasang di onLoad — bukan dihitung dari data,
                            yang tidak menyimpan rasio apa pun. */
-                        <img
-                          src={k.logoUrl}
-                          alt=""
+                        <img src={k.logoUrl} alt=""
                           onLoad={(e) => {
                             const img = e.currentTarget;
                             img.dataset.bentuk = bentukLogo(img.naturalWidth, img.naturalHeight);
-                          }}
-                        />
+                          }} />
                       )
-                      : <Icon name="image" size={16} />}
-                  </span>
-                  <span className="item__text">
-                    <span className="item__title">{k.name}</span>
-                    <span className="item__desc">
-                      {k.logoUrl
-                        ? `Urutan ${i + 1} · logo terpasang`
-                        : `Urutan ${i + 1} · tampil sebagai teks`}
-                    </span>
+                      : <Icon name="image" size={24} />}
                   </span>
 
-                  <span className="row" style={{ gap: "4px", flexWrap: "nowrap" }}>
-                    <button type="button" className="btn btn--ghost btn--icon"
-                      disabled={i === 0} onClick={() => geser(i, -1)}
-                      aria-label={`Naikkan ${k.name}`}>
-                      <Icon name="chevronUp" size={15} />
-                    </button>
-                    <button type="button" className="btn btn--ghost btn--icon"
-                      disabled={i === klien.length - 1} onClick={() => geser(i, 1)}
-                      aria-label={`Turunkan ${k.name}`}>
-                      <Icon name="chevronDown" size={15} />
-                    </button>
+                  <span className="kartugrid__nama">{k.name}</span>
+                  <span className="kartugrid__ket">
+                    {k.logoUrl
+                      ? <><Icon name="check" size={12} />Logo terpasang</>
+                      : <><Icon name="alert" size={12} />Tampil sebagai teks nama</>}
+                  </span>
 
+                  <footer className="kartugrid__aksi">
                     <input type="file" accept="image/png,image/jpeg,image/webp" hidden
                       ref={(el) => { berkasRef.current[k.id] = el; }}
                       onChange={(e) => {
@@ -220,17 +226,19 @@ function Isi() {
                         e.target.value = "";
                         if (f) unggah(k, f);
                       }} />
-                    <button type="button" className="btn btn--secondary"
+                    <button type="button" className="btn btn--secondary btn--sm"
                       disabled={mengunggah === k.id}
                       onClick={() => berkasRef.current[k.id]?.click()}>
-                      {mengunggah === k.id && <span className="spinner spinner--sm" />}
-                      {k.logoUrl ? "Ganti logo" : "Unggah logo"}
+                      {mengunggah === k.id
+                        ? <span className="spinner spinner--sm" />
+                        : <Icon name="upload" size={14} />}
+                      {k.logoUrl ? "Ganti" : "Unggah"}
                     </button>
 
                     {k.logoUrl && (
-                      <button type="button" className="btn btn--ghost btn--icon"
+                      <button type="button" className="btn btn--ghost btn--icon btn--sm"
                         onClick={() => hapusLogo(k)} aria-label={`Hapus logo ${k.name}`}>
-                        <Icon name="close" size={15} />
+                        <Icon name="close" size={14} />
                       </button>
                     )}
 
@@ -241,37 +249,34 @@ function Isi() {
                       confirmLabel="Ya, hapus"
                       onConfirm={() => hapus(k.id)}
                       trigger={
-                        <button type="button" className="btn btn--ghost btn--icon btn--hapus"
+                        <button type="button" className="btn btn--ghost btn--icon btn--sm btn--hapus"
                           aria-label={`Hapus ${k.name}`}>
-                          <Icon name="trash" size={15} />
+                          <Icon name="trash" size={14} />
                         </button>
                       }
                     />
-                  </span>
-                </li>
+                  </footer>
+                </article>
               ))}
-            </ul>
+            </div>
           )}
         </section>
       </div>
 
       <SisiSitus
-        judul="Logo klien"
-        letak="Pita berjalan di beranda"
-        ikon="image"
         lengkap={total > 0 && berlogo === total}
         status={
           total === 0 ? "Belum ada klien"
             : berlogo === total ? "Semua logo terpasang"
             : `${total - berlogo} belum punya logo`
         }
+        tautan="/"
+        tautanLabel="Lihat di beranda"
         fakta={[
           { label: "Jumlah klien", nilai: <span className="t-num">{total}</span> },
           { label: "Sudah berlogo", nilai: <span className="t-num">{berlogo}</span> },
           { label: "Tampil teks", nilai: <span className="t-num">{total - berlogo}</span> },
         ]}
-        tautan="/"
-        tautanLabel="Lihat di beranda"
       >
         <Dialog
           title="Tambah klien"

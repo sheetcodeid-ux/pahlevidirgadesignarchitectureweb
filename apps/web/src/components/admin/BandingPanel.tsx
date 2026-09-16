@@ -66,10 +66,19 @@ function Isi() {
 
   const url = (sisi: Sisi) => (sisi === "before" ? setelan?.beforeUrl : setelan?.afterUrl) ?? null;
   const lengkap = Boolean(url("before") && url("after"));
+  const ada = (url("before") ? 1 : 0) + (url("after") ? 1 : 0);
 
-  const kartu = (sisi: Sisi, judul: string, bantu: string) => (
-    <div className="banding__kartu">
-      <span className="banding__judul">{judul}</span>
+  const kartu = (sisi: Sisi, no: string, judul: string, bantu: string) => (
+    <div className={`banding__kartu${url(sisi) ? " banding__kartu--ada" : ""}`}>
+      {/* Bernomor, karena kedua kartu ini memang berurutan: yang kedua tidak
+          berarti apa-apa tanpa yang pertama, dan pembandingnya baru bisa
+          digambar setelah keduanya ada. */}
+      <span className="banding__judul">
+        <b className="banding__no t-num">{no}</b>{judul}
+        {url(sisi)
+          ? <span className="badge badge--success">Ada</span>
+          : <span className="badge badge--warn">Kosong</span>}
+      </span>
       <span className="banding__kotak">
         {url(sisi)
           ? <img src={url(sisi) as string} alt="" />
@@ -141,6 +150,22 @@ function Isi() {
                   onChange={(e) => setBelah(Number(e.target.value))}
                 />
               </div>
+              {/* Pembacaan posisi dan tiga loncatan cepat. Memeriksa kesejajaran
+                  berarti membandingkan ujung ke ujung, dan menyeret sampai
+                  mentok dua kali tiap pemeriksaan adalah pekerjaan yang tidak
+                  perlu ada. */}
+              <div className="bandinguji__kendali">
+                <span className="bandinguji__angka t-num">{belah}%</span>
+                <span className="row" style={{ gap: "var(--space-2)" }}>
+                  {[0, 50, 100].map((n) => (
+                    <button type="button" key={n}
+                      className={`btn btn--ghost btn--sm${belah === n ? " is-active" : ""}`}
+                      onClick={() => setBelah(n)}>
+                      {n === 0 ? "Sebelum penuh" : n === 100 ? "Sesudah penuh" : "Tengah"}
+                    </button>
+                  ))}
+                </span>
+              </div>
               <p className="field__help" style={{ margin: 0 }}>
                 Geser gagangnya. Kalau garis atap, tepi jalan, atau tiang tidak
                 bertemu saat gagangnya lewat, kedua foto diambil dari titik yang
@@ -167,21 +192,17 @@ function Isi() {
             sama — perbandingan dari dua sudut berbeda tidak membuktikan apa pun.
           </p>
           <div className="banding__grid">
-            {kartu("before", "Sebelum", "Lokasi apa adanya sebelum pekerjaan dimulai.")}
-            {kartu("after", "Sesudah", "Bangunan yang sudah jadi, dari titik yang sama.")}
+            {kartu("before", "01", "Sebelum", "Lokasi apa adanya sebelum pekerjaan dimulai.")}
+            {kartu("after", "02", "Sesudah", "Bangunan yang sudah jadi, dari titik yang sama.")}
           </div>
         </section>
       </div>
 
       <SisiSitus
-        judul="Sebelum & sesudah"
-        letak="Pembanding geser di halaman Studio"
-        ikon="camera"
         lengkap={lengkap}
-        status={
-          lengkap ? "Tampil di situs"
-            : url("before") || url("after") ? "Baru satu foto" : "Belum ada foto"
-        }
+        status={lengkap ? "Tampil di situs" : ada === 1 ? "Baru satu foto" : "Belum ada foto"}
+        tautan="/studio/"
+        tautanLabel="Lihat di halaman Studio"
         fakta={[
           { label: "Sebelum", nilai: url("before")
             ? <span className="badge badge--success">Ada</span>
@@ -191,8 +212,6 @@ function Isi() {
             : <span className="badge badge--warn">Kosong</span> },
           { label: "Batas berkas", nilai: <span className="t-num">6 MB</span> },
         ]}
-        tautan="/studio/"
-        tautanLabel="Lihat di halaman Studio"
       >
         <CatatanTerbit />
       </SisiSitus>

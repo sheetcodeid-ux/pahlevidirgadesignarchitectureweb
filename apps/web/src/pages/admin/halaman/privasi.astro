@@ -7,15 +7,24 @@ import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalama
 
    `kalimat` diambil APA ADANYA dari kalimat di /privasi — bukan diparafrase.
    Itu yang membuat halaman ini berguna: pemilik bisa membaca kalimat hukumnya
-   utuh, dengan angkanya sudah tersisip, sebelum menyetujuinya. */
+   utuh, dengan angkanya sudah tersisip, sebelum menyetujuinya. Kalau kalimat
+   di halaman publiknya berubah, yang di sini harus ikut.
+
+   Urutannya mengikuti urutan di SITUS, bukan urutan yang enak diisi: badan
+   usaha dan alamatnya berbagi satu kalimat, hukum yang berlaku jadi paragraf
+   kedua di seksi yang sama, dan lama simpan berdiri di seksi berikutnya.
+   `grup` (kartu isian) sengaja boleh berbeda dari `judulSitus` (seksi di
+   halaman aslinya) — "Hukum" enak berdiri sendiri saat diisi, padahal di
+   situs ia satu seksi dengan badan usaha. */
 const isian: Isian[] = [
   {
     kunci: "legalEntity",
     label: "Badan usaha",
     contoh: "CV Pahlevi Dirga Design Architecture",
     grup: "Siapa yang bertanggung jawab",
+    judulSitus: "Siapa yang bertanggung jawab",
     bantuan: "Nama resmi yang bertanggung jawab atas data di halaman privasi.",
-    kalimat: "Situs ini dijalankan oleh %s.",
+    kalimat: "Situs ini dijalankan oleh %s",
   },
   {
     kunci: "legalAddress",
@@ -23,14 +32,26 @@ const isian: Isian[] = [
     contoh: "Jl. ... , Pontianak, Kalimantan Barat",
     jenis: "panjang",
     grup: "Siapa yang bertanggung jawab",
+    judulSitus: "Siapa yang bertanggung jawab",
+    sambung: true,
     bantuan: "Alamat terdaftar badan usaha, bukan alamat studio sehari-hari kalau berbeda.",
-    kalimat: "…, beralamat di %s. Pertanyaan soal apa pun di halaman ini dikirim ke alamat email di atas.",
+    kalimat: ", %s. Pertanyaan soal apa pun di halaman ini dikirim ke alamat yang sama di atas.",
+  },
+  {
+    kunci: "governingLaw",
+    label: "Hukum yang berlaku",
+    contoh: "hukum Republik Indonesia",
+    grup: "Hukum",
+    judulSitus: "Siapa yang bertanggung jawab",
+    bantuan: "Hukum negara mana yang berlaku atas halaman privasi ini.",
+    kalimat: "Halaman ini tunduk pada %s.",
   },
   {
     kunci: "retentionMessages",
     label: "Lama menyimpan pesan",
     contoh: "12 bulan",
     grup: "Berapa lama data disimpan",
+    judulSitus: "Berapa lama kami menyimpannya",
     bantuan: "Pesan yang masuk lewat form kontak tapi tidak berlanjut jadi proyek.",
     kalimat: "Pesan yang tidak berlanjut jadi proyek disimpan selama %s, lalu dihapus.",
   },
@@ -39,16 +60,10 @@ const isian: Isian[] = [
     label: "Lama menyimpan dokumen",
     contoh: "10 tahun",
     grup: "Berapa lama data disimpan",
+    judulSitus: "Berapa lama kami menyimpannya",
+    sambung: true,
     bantuan: "Kontrak, tagihan, dan gambar milik proyek yang sudah selesai.",
-    kalimat: "Dokumen yang terikat pada proyek yang sudah selesai disimpan selama %s, karena itulah catatan pekerjaan yang sudah dikerjakan dan dibayar.",
-  },
-  {
-    kunci: "governingLaw",
-    label: "Hukum yang berlaku",
-    contoh: "hukum Republik Indonesia",
-    grup: "Hukum",
-    bantuan: "Hukum negara mana yang berlaku atas halaman privasi ini.",
-    kalimat: "Halaman ini tunduk pada %s.",
+    kalimat: " Dokumen yang terikat pada proyek yang sudah selesai — kontrak, tagihan, gambar — disimpan selama %s, karena itulah catatan pekerjaan yang sudah dikerjakan dan dibayar.",
   },
 ];
 ---
@@ -57,13 +72,10 @@ const isian: Isian[] = [
   <IsiHalamanPanel
     client:load
     isian={isian}
-    situs={{
-      judul: "Halaman privasi",
-      letak: "Lima keterangan hukum di /privasi",
-      ikon: "lock",
-      tautan: "/privasi/",
-      tautanLabel: "Lihat halaman privasi",
-    }}
+    pratinjau="dokumen"
+    pratinjauJudul="Seperti yang tercetak di halaman Privasi"
+    tautan="/privasi/"
+    tautanLabel="Lihat halaman privasi"
     catatan="Kelima isian ini sengaja tidak saya karang: halaman privasi yang salah berbunyi seperti janji hukum. Baca kalimat di bawah tiap isian — itu kalimat yang benar-benar tercetak di situs. Kalau perlu, tunjukkan halamannya ke notaris Anda; isinya sudah benar secara teknis, yang kurang hanya kelima keterangan ini."
   />
 </AdminLayout>
