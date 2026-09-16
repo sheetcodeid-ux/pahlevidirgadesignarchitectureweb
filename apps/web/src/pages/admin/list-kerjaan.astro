@@ -10,10 +10,6 @@ import { TaskBoard } from "../../components/admin/TaskBoard";
     Rutenya TIDAK ikut diganti: /admin/list-kerjaan sudah pernah dibuka dan
     mungkin tersimpan di riwayat peramban pemilik, dan mengganti alamat demi
     kerapian nama adalah ongkos yang ditanggung orang lain. */}
-<AdminLayout
-  title="Tugas"
-  heading="Tugas"
-  description="Seluruh tugas dari semua proyek, dalam satu halaman. Saring per proyek lewat tombol saringan."
->
+<AdminLayout title="Tugas">
   <TaskBoard client:load />
 </AdminLayout>

@@ -3,10 +3,6 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 import { NotifikasiPanel } from "../../components/admin/NotifikasiPanel";
 ---
 
-<AdminLayout
-  title="Notifikasi"
-  heading="Notifikasi"
-  description="Pesan masuk, tenggat kerjaan, dan pencapaian proyek."
->
+<AdminLayout title="Notifikasi">
   <NotifikasiPanel client:load />
 </AdminLayout>

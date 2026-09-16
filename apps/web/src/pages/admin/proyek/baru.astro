@@ -1,17 +1,14 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { ProjectCreate } from "../../../components/admin/ProjectCreate";
-import { getSettings } from "../../../lib/api";
-
-const settings = await getSettings();
 ---
 
-<AdminLayout
-  title="Proyek Baru"
-  heading="Proyek baru"
-  back="/admin/proyek"
-  backLabel="Kembali ke semua proyek"
-  description={settings.studioName}
->
+{/* `description` dibuang bersama judul halaman, dan getSettings() ikut:
+    satu-satunya pemakainya adalah description itu, jadi yang tersisa cuma
+    panggilan API saat build yang hasilnya tidak dipakai siapa pun.
+
+    `back` TETAP — halaman ini satu-satunya yang punya tombol Kembali, dan
+    sejak judulnya dibuang tombol itulah isi blok kepalanya. */}
+<AdminLayout title="Proyek Baru" back="/admin/proyek" backLabel="Kembali ke semua proyek">
   <ProjectCreate client:load />
 </AdminLayout>

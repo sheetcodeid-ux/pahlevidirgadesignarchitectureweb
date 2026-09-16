@@ -150,20 +150,28 @@ const dibangunPada = CAP_BUILD;
             jadi tidak ada yang berkedip. */}
         <main id="konten" class="admin__content" data-heading={heading ?? title}
           transition:animate="none">
+          {/* Judul halaman DIBUANG dari seluruh panel admin, atas permintaan
+              pemilik. Alasannya terbaca sendiri begitu dilihat: nama halaman
+              sudah tercetak dua kali di layar yang sama — di sidebar sebagai
+              menu yang sedang aktif, dan di remah roti topbar — jadi yang
+              ketiga cuma memakan tinggi sebelum isi yang sebenarnya.
+
+              Syaratnya karena itu `back`, bukan lagi `heading`: tombol
+              Kembali hidup di dalam blok ini, dan kalau syaratnya tetap
+              judul maka satu-satunya halaman yang memakainya (Proyek baru)
+              kehilangan jalan pulangnya tanpa satu pun galat.
+
+              `heading` TIDAK dihapus dari props: Topbar masih membacanya
+              untuk remah roti lewat data-heading di atas, dan halaman yang
+              tidak mengirimnya jatuh ke `title`. */}
           {
-            heading && (
-              <div class="page-head">
+            back && (
+              <div class="page-head page-head--kosong">
                 <div class="page-head__baris">
-                  {back && (
-                    <a class="btn btn--secondary btn--icon btn--boxed page-head__back" href={back}
-                      aria-label={backLabel ?? "Kembali"}>
-                      <Icon name="chevronLeft" size={18} />
-                    </a>
-                  )}
-                  <div class="page-head__teks">
-                    <h1 class="t-title">{heading}</h1>
-                    {description && <p class="t-muted">{description}</p>}
-                  </div>
+                  <a class="btn btn--secondary btn--icon btn--boxed page-head__back" href={back}
+                    aria-label={backLabel ?? "Kembali"}>
+                    <Icon name="chevronLeft" size={18} />
+                  </a>
                 </div>
               </div>
             )

@@ -53,11 +53,7 @@ const ikonBerpasangan = [
 ] as const;
 ---
 
-<AdminLayout
-  title="UI Component"
-  heading="UI Component"
-  description="Sumber kebenaran komponen. Fitur baru mengambil dari sini — jangan membuat komponen baru tanpa mendaftarkannya."
->
+<AdminLayout title="UI Component">
   <MasterGuard client:load target="galeri" />
 
   <div id="galeri" hidden class="stack" style="gap: var(--space-7)">
