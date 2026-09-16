@@ -2424,9 +2424,21 @@
   border-bottom: 2px solid var(--border-strong);
 }
 
+/* Sejak judul dibuang, blok ini isinya cuma tombol Kembali — paddingnya
+   dirapatkan supaya bilahnya tidak jadi pita hitam tinggi yang kosong. */
+.page-head--kosong { padding-block: var(--space-4) !important; }
+
 .buatpage {
-  /* Tinggi kepala form, dipakai panel aksi untuk menempel tepat di bawahnya. */
-  --kepala-form-h: 8.5rem;
+  /* Tinggi kepala form, dipakai panel aksi untuk menempel tepat di bawahnya.
+     8,5rem dulu adalah tinggi kepala yang berisi JUDUL dan keterangannya;
+     sejak judul dibuang dari seluruh panel, isinya tinggal tombol Kembali.
+     Terukur 72px di browser SETELAH paddingnya dirapatkan, jadi 4,5rem.
+     Angka lama tidak membuat apa pun merah — panel aksinya cuma menempel
+     64px terlalu rendah, dan itu jenis salah yang tidak pernah kelihatan
+     tanpa diukur. Diukur dua kali dengan sengaja: nilai 6,5rem sempat
+     ditulis dari pengukuran SEBELUM paddingnya dirapatkan, dan langsung
+     basi begitu paddingnya berubah. */
+  --kepala-form-h: 4.5rem;
   display: grid;
   gap: var(--space-6);
   align-items: start;

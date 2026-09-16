@@ -490,6 +490,13 @@ function DialogBiaya(
   const [nominal, setNominal] = useState<number | null>(null);
   const [tanggal, setTanggal] = useState("");
   const [kirim, setKirim] = useState(false);
+  /* Dialog dikendalikan, bukan dibiarkan Radix yang mengurus sendiri: footer
+     `Dialog` dirender apa adanya tanpa RDialog.Close, jadi tombol Simpan
+     menyimpan TAPI dialognya tetap terbuka. Di halaman uang akibatnya bukan
+     cuma canggung — staf yang mengira belum tersimpan menekan Simpan sekali
+     lagi dan pengeluarannya tercatat dua kali, lalu laba bersih proyeknya
+     salah. Pola ini sama dengan Direktori dan Tim. */
+  const [buka, setBuka] = useState(false);
 
   /* Kategori yang memang bayaran ke ORANG. Di luar keduanya, dropdown nama
      disembunyikan — menanyakan "untuk siapa" pada tagihan listrik cuma
@@ -506,7 +513,8 @@ function DialogBiaya(
         amount: nominal as number, incurredOn: tanggal || undefined,
         teamMemberId: perluOrang ? (orang || null) : null,
       });
-      setLabel(""); setNominal(null); setTanggal(""); setOrang("");
+      setLabel(""); setNominal(null); setTanggal(""); setOrang(""); setIdProyek("");
+      setBuka(false);
       onSelesai();
       toast({ judul: "Pengeluaran tercatat", nada: "sukses" });
     } catch (e) {
@@ -518,6 +526,8 @@ function DialogBiaya(
 
   return (
     <Dialog
+      open={buka}
+      onOpenChange={setBuka}
       title="Catat pengeluaran"
       description="Pilih proyeknya di sini — tidak perlu membuka halaman proyeknya dulu."
       trigger={
