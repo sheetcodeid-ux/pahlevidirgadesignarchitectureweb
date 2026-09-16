@@ -22,6 +22,8 @@ import * as journalRepo from "../repository/journal";
 import * as clientLogosRepo from "../repository/clientLogos";
 import * as revisiRepo from "../repository/contentRevision";
 import * as studioTeamRepo from "../repository/studioTeam";
+import * as payrollRepo from "../repository/payroll";
+import * as feeRepo from "../repository/fee";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload, sanitizeSlug } from "../lib/r2";
 import { checkProjectInput, checkJournalInput, ValidationError } from "../lib/validate";
@@ -29,7 +31,7 @@ import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
   InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput, PaymentInput,
   ProjectBriefInput, TestimonialInput, JournalPostInput, ClientLogoInput,
-  StudioPersonInput,
+  StudioPersonInput, PayrollInput,
 } from "../types";
 import {
   VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
@@ -431,6 +433,128 @@ admin.post("/projects/:id/costs", async (c) => {
     return c.json({ data: { id } }, 201);
   } catch (err) {
     return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+/**
+ * GET /api/v1/admin/costs — seluruh biaya lintas proyek.
+ *
+ * Halaman Kas & Biaya adalah SATU-SATUNYA pintu mencatat pengeluaran sejak
+ * "Kerja Internal" dibuang, jadi ia butuh daftar yang tidak terikat satu
+ * proyek. Proyeknya dipilih dari dropdown saat mencatat, bukan dari halaman
+ * mana staf kebetulan berada.
+ */
+admin.get("/costs", async (c) => {
+  const limit = Number(c.req.query("limit") ?? 200);
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    costsRepo.listAll(sql, Number.isFinite(limit) ? limit : 200));
+  return c.json({ data });
+});
+
+/** POST /api/v1/admin/costs — proyeknya di badan permintaan, bukan di jalur. */
+admin.post("/costs", async (c) => {
+  const input = await c.req.json<ProjectCostInput>().catch(() => ({}) as ProjectCostInput);
+  const proyek = (input.projectId ?? "").trim();
+  if (!proyek) return c.json({ error: { status: 422, message: "proyek wajib dipilih" } }, 422);
+  if (input.category !== undefined && !VALID_COST_CATEGORY.has(input.category)) {
+    return c.json({ error: { status: 422, message: "kategori biaya tidak dikenal" } }, 422);
+  }
+
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => costsRepo.create(sql, proyek, input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+/* ── Fee proyek ────────────────────────────────────────────────────────────
+ * Dibaca dari project_costs, bukan tabel sendiri. Tidak ada nominal kedua
+ * yang diketik di tempat lain, jadi tidak ada yang bisa menyimpang. */
+
+admin.get("/fee/projects", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      feeRepo.perProyek(sql, { dari: c.req.query("dari"), sampai: c.req.query("sampai") }));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.get("/fee/people", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      feeRepo.perOrang(sql, { dari: c.req.query("dari"), sampai: c.req.query("sampai") }));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+/* ── Gaji ──────────────────────────────────────────────────────────────────
+ * HANYA gaji bulanan tetap. Bayaran freelancer tidak pernah ditulis ke sini —
+ * `/payroll/month` menjumlahkannya dari biaya proyek. */
+
+admin.get("/payroll", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      payrollRepo.list(sql, c.req.query("period")));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.get("/payroll/month", async (c) => {
+  const period = c.req.query("period");
+  if (!period) return c.json({ error: { status: 422, message: "periode wajib diisi" } }, 422);
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) => payrollRepo.bulan(sql, period));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.post("/payroll", async (c) => {
+  const input = await c.req.json<PayrollInput>().catch(() => ({}) as PayrollInput);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => payrollRepo.create(sql, input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    const pesan = (err as Error).message;
+    // Pelanggaran unique (team_member_id, period) adalah penjaga yang memang
+    // diinginkan, bukan galat sistem — jadi dijawab dengan kalimat yang bisa
+    // dipahami staf, bukan pesan Postgres.
+    const ganda = /duplicate key|unique/i.test(pesan);
+    return c.json({
+      error: {
+        status: 422,
+        message: ganda ? "orang ini sudah punya baris gaji di bulan tersebut" : pesan,
+      },
+    }, 422);
+  }
+});
+
+admin.patch("/payroll/:id", async (c) => {
+  const input = await c.req.json<PayrollInput>().catch(() => ({}) as PayrollInput);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => payrollRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "gaji tidak ditemukan" } }, 404);
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.delete("/payroll/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => payrollRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "gaji tidak ditemukan" } }, 404);
+    throw err;
   }
 });
 

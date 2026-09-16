@@ -728,8 +728,8 @@ Selalu ukur dengan RTT.
 | `cd apps/web && npm run build` | Build statis |
 | `cd apps/web && npm run dev` + Playwright | Ukur tampilan di browser sungguhan sebelum minta ACC |
 | `./scripts/verify-supabase.sh "$SUPABASE_DIRECT_URL"` | Periksa skema, RLS, GRANT, akun staf |
-| `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 81 assertion RLS |
-| `./scripts/rls-lokal.sh` | 81 assertion RLS di Postgres lokal, tanpa menyentuh produksi |
+| `psql "$SUPABASE_DIRECT_URL" -f supabase/tests/rls_test.sql` | 122 assertion RLS |
+| `./scripts/rls-lokal.sh` | 122 assertion RLS di Postgres lokal, tanpa menyentuh produksi. **Jalankan sekali** dan `test/uangRepo.test.ts` ikut hidup — ia melewati dirinya sendiri kalau Postgres lokal belum ada |
 | `./scripts/build-bootstrap.sh` | Regenerate `supabase/bootstrap.sql` |
 | `./scripts/setup-fase-04.sh` | Provisioning Hyperdrive + rahasia Worker API, lalu deploy |
 
