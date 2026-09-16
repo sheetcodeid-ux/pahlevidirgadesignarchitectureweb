@@ -655,6 +655,34 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     bekerja — `route.fetch()` masuk ke handler-nya sendiri dan navigasinya
     menggantung sampai timeout.
 
+29. **Selektor tetangga (`+`) tidak peduli `display:none`.** Elemen yang
+    disembunyikan CSS TETAP saudara di DOM, jadi `.a + *` tetap mencocok
+    lewatnya. Sudah menggigit di topbar: aturan untuk mematikan garis miring
+    sesudah ruang pendorong — yang cuma muncul di bawah 71rem — ikut
+    mematikan garis miring tombol Terbitkan pada 1440px, tempat pendorongnya
+    `display:none`. Tidak kelihatan dari membaca CSS-nya; yang menjawab
+    hanya menghitung garis miring yang benar-benar tergambar di beberapa
+    lebar. Aturan yang bergantung pada elemen yang kadang disembunyikan
+    HARUS ditulis di dalam media query yang menampilkannya.
+
+30. **Vitest menerima impor yang ditolak `tsc`, jadi tes hijau tidak berarti
+    typecheck hijau.** Dua bentuk yang lolos vitest dan merah di `tsc`:
+    impor berakhiran `.ts` (TS5097), dan modul Node seperti `node:fs` yang
+    memang TIDAK diberi tipe di `apps/api/tsconfig.json` — `types` di situ
+    sengaja cuma workers-types + vitest, supaya kode Worker tidak bisa
+    menyentuh API Node tanpa ketahuan. Jangan menambal dengan `@types/node`:
+    itu membuka pintunya untuk SELURUH `src`. Yang benar satu berkas
+    deklarasi kecil di `test/` berisi fungsi yang memang dipakai. Dan
+    **jalankan `npm run typecheck` sebelum push ke branch produksi** — di
+    repo ini typecheck adalah langkah CI, jadi yang merah bukan cuma
+    lapornya melainkan seluruh deploy-nya.
+
+    Sekalian dua hal yang ikut ketahuan di berkas yang sama: path absolut
+    `/home/user/...` mengikat tes ke satu mesin (pakai
+    `new URL(p, import.meta.url)`), dan `pkill` yang dirangkai dalam satu
+    perintah Bash majemuk membunuh shell-nya sendiri (exit 144) — jalankan
+    lewat `bash skrip.sh` atau `sh -c`.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -806,3 +834,8 @@ skrip; jangan sunting hasilnya.
 | Pemutar pesan suara memakai kulit sendiri di atas `<audio>` SUNGGUHAN | Catatan lama di `progres/index.astro` memilih `<audio controls>` bawaan supaya perilakunya tidak bisa rusak diam-diam. Alasan itu masih benar dan tetap dijaga — elemen `<audio>`-nya masih ada, cuma disembunyikan, dan pendekodean, pencarian posisi, serta penanganan jaringan tetap milik peramban. Yang diganti kulitnya: `controls` bawaan menggambar widget abu Chrome selebar kartu yang bentuknya berbeda di tiap peramban, dan di halaman yang dilihat klien itu hal pertama yang terlihat salah. Kelas `.suara__p`/`.suara__bar`/`.suara__w` sudah ada di stylesheet sejak mockup pertama dan tidak pernah dipakai |
 | Dokumen di portal klien menampilkan PRATINJAU isinya, bukan ikon generik | Studio arsitektur mengirim gambar; kotak ikon 38px yang sama untuk denah, tampak, dan potongan membuat empat dokumen berbeda terlihat identik sampai judulnya dibaca satu per satu. Berkas gambar menampilkan isinya, yang bukan mencetak jenisnya besar-besar. Yang menunggu tanggapan diberi garis kiri amber — terbaca sebelum satu pun kata dibaca |
 | Pindah urutan menukar `sort_order` dua tetangga, bukan menulis ulang daftar | Dua permintaan alih-alih delapan, dan urutan yang lain tidak ikut berubah kalau salah satunya gagal |
+| **Keuangan jadi satu pintu; halaman "Kerja Internal" dibuang** | Pemilik melaporkannya sebagai "sangat membingungkan". Sebabnya bukan tata letak: halaman itu tidak punya isi sendiri — ia potongan dua halaman lintas-proyek yang disaring ke satu proyek, jadi tugas, biaya, dan pipeline masing-masing punya DUA pintu masuk. Sekarang pengeluaran dicatat dari satu tempat dengan dropdown proyek di dalam dialognya |
+| **Fee menulis, Gaji membaca** | Pemilik memilih fee per proyek ke orang DAN halaman gaji yang memuat freelancer — dua jawaban yang kalau diikuti mentah membuat satu bayaran freelancer bisa diketik dua kali, dan beban studio tercatat ganda. Ditutup di lapisan data, bukan di UI: tabel `payroll` secara struktur TIDAK BISA memuat bayaran proyek, dan baris freelancer di halaman Gaji diturunkan SQL dari `project_costs`. Jadi angka ganda bukan cuma tidak dianjurkan — ia tidak bisa terjadi |
+| Biaya proyek menyimpan SIAPA yang dibayar, dan boleh kosong | Tanpa kolom itu pertanyaan "orang ini tahun ini terima berapa dari semua proyek" tidak pernah bisa dijawab. Boleh kosong dua kali disengaja: biaya operasional memang bukan milik siapa pun, dan puluhan baris lama tidak punya nama — menautkannya satu per satu memakan waktu pemilik untuk angka yang sudah lewat. `on delete set null`, bukan cascade: menghapus freelancer tidak boleh menghapus biaya yang sudah keluar |
+| **Tabel daftar baru memakai bentuk Halaman Proyek, bukan Semua Proyek** | Koreksi eksplisit pemilik. `DataTable` punya prop `bentuk`: `listbar` (bilah full-bleed bergaris tebal, berkolom nomor — enam daftar lama) dan `kartu` (kartu hitam bingkai 2px, kotak cari pil selebar penuh, tabel berkartu, tanpa kolom nomor). Aturan CSS-nya TIDAK disalin: tiap aturan `.pilihproyek__*` memuat pasangan `.kartudaftar__*`-nya di selektor yang sama — satu blok, dua nama. Tombol aksi utama duduk DI DALAM bilah tabelnya, seperti "Proyek Baru" |
+| **Garis miring topbar jalan sampai ujung kanan** | Membalik keputusan pemilik sebelumnya ("berhenti setelah penghitung proyek"). Terukur: tanda bacanya berhenti di 747px dari bilah 1168px, jadi 693px sisanya berdiri tanpa pemisah dan terbaca sebagai barang tercecer. Lonceng dan panel akun tetap tanpa garis miring karena garis tegak 2px milik lonceng sudah memisahkan keduanya |
