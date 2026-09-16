@@ -4,6 +4,7 @@ import { SkeletonDaftar } from "../ui/Skeleton";
 import { AlertDialog, Dialog } from "../ui/overlay/Dialog";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
+import { CatatanTerbit, SisiSitus } from "./SisiSitus";
 import {
   daftarKlien, buatKlien, ubahKlien, hapusKlien, mintaUrlUnggahLogoKlien,
   bacaCache, tulisCache, jumlahDiingat, type KlienAdmin,
@@ -120,130 +121,184 @@ function Isi() {
     }
   }
 
+  const berlogo = klien?.filter((k) => k.logoUrl).length ?? 0;
+  const total = klien?.length ?? 0;
+
   return (
-    <div className="listpage">
-      <div className="listpage__pad">
-        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-end", gap: "var(--space-3)" }}>
-          <p className="t-muted" style={{ maxWidth: "52ch", margin: 0 }}>
-            Logo yang tampil berjalan di beranda. Nama wajib diisi; selama logonya
-            belum diunggah, yang tampil namanya sebagai teks — jadi barisnya tidak
-            pernah bolong.
-          </p>
-          <Dialog
-            title="Tambah klien"
-            description="Nama dulu; logonya bisa diunggah setelah barisnya ada."
-            trigger={<button type="button" className="btn btn--primary"><Icon name="plus" size={15} /> Tambah klien</button>}
-            footer={
-              <button type="button" className="btn btn--primary"
-                disabled={nama.trim().length < 1 || menambah} onClick={tambah}>
-                {menambah && <span className="spinner spinner--sm spinner--on-action" />}
-                Tambah
-              </button>
-            }
-          >
-            <div className="field">
-              <label className="field__label" htmlFor="kl-nama">
-                Nama klien<span className="field__req" aria-hidden="true">*</span>
-              </label>
-              <input id="kl-nama" className="input" value={nama}
-                onChange={(e) => setNama(e.target.value)} placeholder="Contoh: Elsana Coffee" />
-            </div>
-          </Dialog>
-        </div>
-
-        <div className="s16" />
-
-        {klien === null ? (
-          <SkeletonDaftar jumlah={jumlahDiingat("klien", 4)} aksi={3} />
-        ) : klien.length === 0 ? (
-          <div className="empty empty--sm">
-            <span className="icon-tile"><Icon name="image" size={20} /></span>
-            <span className="t-subheading">Belum ada klien</span>
-            <p className="t-muted">Tambahkan namanya dulu, logonya bisa menyusul.</p>
-          </div>
-        ) : (
-          <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
-            {klien.map((k, i) => (
-              <li key={k.id} className="item item--bordered">
-                <span className="klien-logo" aria-hidden="true">
-                  {k.logoUrl
-                    ? (
-                      /* Bentuknya baru bisa diketahui setelah berkasnya sampai,
-                         jadi dipasang di onLoad — bukan dihitung dari data,
-                         yang tidak menyimpan rasio apa pun. Ambangnya diambil
-                         dari lib/logoBentuk supaya sama persis dengan marquee
-                         beranda; kalau berbeda, pemilik menyetujui satu ukuran
-                         di sini lalu mendapat ukuran lain di situs. */
-                      <img
-                        src={k.logoUrl}
-                        alt=""
-                        onLoad={(e) => {
-                          const img = e.currentTarget;
-                          img.dataset.bentuk = bentukLogo(img.naturalWidth, img.naturalHeight);
-                        }}
-                      />
-                    )
-                    : <Icon name="image" size={16} />}
-                </span>
-                <span className="item__text">
-                  <span className="item__title">{k.name}</span>
-                  <span className="item__desc">
-                    {k.logoUrl ? "Logo terpasang" : "Tampil sebagai teks — logonya belum diunggah"}
+    <div className="buatpage buatpage--situs">
+      <div className="buatpage__utama">
+        {/* Pratinjau pita marquee. Ini bagian yang benar-benar dibutuhkan
+            halaman ini: sampai sekarang satu-satunya cara memeriksa apakah
+            delapan logo terlihat sepadan adalah membuka beranda, dan beranda
+            baru berubah setelah build berikutnya. Kotaknya memakai kelas
+            .klien-logo yang sama dengan baris di bawah, dan ambang bentuknya
+            dari lib/logoBentuk — satu sumber dengan marquee sungguhan. */}
+        <section className="buat-kartu">
+          <h2 className="buat-kartu__judul">Seperti yang tampil di beranda</h2>
+          {total === 0 ? (
+            <p className="t-muted" style={{ margin: 0 }}>Belum ada yang bisa ditampilkan.</p>
+          ) : (
+            <div className="situs-pratinjau situs-pratinjau--pita">
+              <div className="klienpita">
+                {klien!.map((k) => (
+                  <span className="klienpita__sel" key={k.id}>
+                    {k.logoUrl
+                      ? <img src={k.logoUrl} alt=""
+                          onLoad={(e) => {
+                            const img = e.currentTarget;
+                            img.dataset.bentuk = bentukLogo(img.naturalWidth, img.naturalHeight);
+                          }} />
+                      : <b className="klienpita__teks">{k.name}</b>}
                   </span>
-                </span>
+                ))}
+              </div>
+            </div>
+          )}
+          <p className="field__help" style={{ margin: 0 }}>
+            Abu-abu seperti di beranda; warnanya baru muncul saat pengunjung
+            mengarahkan kursor. Klien tanpa logo tampil sebagai teks nama.
+          </p>
+        </section>
 
-                <span className="row" style={{ gap: "4px", flexWrap: "nowrap" }}>
-                  <button type="button" className="btn btn--ghost btn--icon"
-                    disabled={i === 0} onClick={() => geser(i, -1)}
-                    aria-label={`Naikkan ${k.name}`}>
-                    <Icon name="chevronUp" size={15} />
-                  </button>
-                  <button type="button" className="btn btn--ghost btn--icon"
-                    disabled={i === klien.length - 1} onClick={() => geser(i, 1)}
-                    aria-label={`Turunkan ${k.name}`}>
-                    <Icon name="chevronDown" size={15} />
-                  </button>
+        <section className="buat-kartu">
+          <h2 className="buat-kartu__judul">Daftar klien</h2>
 
-                  <input type="file" accept="image/png,image/jpeg,image/webp" hidden
-                    ref={(el) => { berkasRef.current[k.id] = el; }}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (f) unggah(k, f);
-                    }} />
-                  <button type="button" className="btn btn--secondary"
-                    disabled={mengunggah === k.id}
-                    onClick={() => berkasRef.current[k.id]?.click()}>
-                    {mengunggah === k.id && <span className="spinner spinner--sm" />}
-                    {k.logoUrl ? "Ganti logo" : "Unggah logo"}
-                  </button>
+          {klien === null ? (
+            <SkeletonDaftar jumlah={jumlahDiingat("klien", 4)} aksi={3} />
+          ) : klien.length === 0 ? (
+            <div className="empty empty--sm">
+              <span className="icon-tile"><Icon name="image" size={20} /></span>
+              <span className="t-subheading">Belum ada klien</span>
+              <p className="t-muted">Tambahkan namanya dulu, logonya bisa menyusul.</p>
+            </div>
+          ) : (
+            <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0, margin: 0 }}>
+              {klien.map((k, i) => (
+                <li key={k.id} className="item item--bordered">
+                  <span className="klien-logo" aria-hidden="true">
+                    {k.logoUrl
+                      ? (
+                        /* Bentuknya baru bisa diketahui setelah berkasnya sampai,
+                           jadi dipasang di onLoad — bukan dihitung dari data,
+                           yang tidak menyimpan rasio apa pun. */
+                        <img
+                          src={k.logoUrl}
+                          alt=""
+                          onLoad={(e) => {
+                            const img = e.currentTarget;
+                            img.dataset.bentuk = bentukLogo(img.naturalWidth, img.naturalHeight);
+                          }}
+                        />
+                      )
+                      : <Icon name="image" size={16} />}
+                  </span>
+                  <span className="item__text">
+                    <span className="item__title">{k.name}</span>
+                    <span className="item__desc">
+                      {k.logoUrl
+                        ? `Urutan ${i + 1} · logo terpasang`
+                        : `Urutan ${i + 1} · tampil sebagai teks`}
+                    </span>
+                  </span>
 
-                  {k.logoUrl && (
+                  <span className="row" style={{ gap: "4px", flexWrap: "nowrap" }}>
                     <button type="button" className="btn btn--ghost btn--icon"
-                      onClick={() => hapusLogo(k)} aria-label={`Hapus logo ${k.name}`}>
-                      <Icon name="close" size={15} />
+                      disabled={i === 0} onClick={() => geser(i, -1)}
+                      aria-label={`Naikkan ${k.name}`}>
+                      <Icon name="chevronUp" size={15} />
                     </button>
-                  )}
+                    <button type="button" className="btn btn--ghost btn--icon"
+                      disabled={i === klien.length - 1} onClick={() => geser(i, 1)}
+                      aria-label={`Turunkan ${k.name}`}>
+                      <Icon name="chevronDown" size={15} />
+                    </button>
 
-                  <AlertDialog
-                    destructive
-                    title={`Hapus ${k.name}?`}
-                    description="Klien ini hilang dari beranda. Berkas logonya tetap di penyimpanan."
-                    confirmLabel="Ya, hapus"
-                    onConfirm={() => hapus(k.id)}
-                    trigger={
-                      <button type="button" className="btn btn--ghost btn--icon btn--hapus"
-                        aria-label={`Hapus ${k.name}`}>
-                        <Icon name="trash" size={15} />
+                    <input type="file" accept="image/png,image/jpeg,image/webp" hidden
+                      ref={(el) => { berkasRef.current[k.id] = el; }}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        e.target.value = "";
+                        if (f) unggah(k, f);
+                      }} />
+                    <button type="button" className="btn btn--secondary"
+                      disabled={mengunggah === k.id}
+                      onClick={() => berkasRef.current[k.id]?.click()}>
+                      {mengunggah === k.id && <span className="spinner spinner--sm" />}
+                      {k.logoUrl ? "Ganti logo" : "Unggah logo"}
+                    </button>
+
+                    {k.logoUrl && (
+                      <button type="button" className="btn btn--ghost btn--icon"
+                        onClick={() => hapusLogo(k)} aria-label={`Hapus logo ${k.name}`}>
+                        <Icon name="close" size={15} />
                       </button>
-                    }
-                  />
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+                    )}
+
+                    <AlertDialog
+                      destructive
+                      title={`Hapus ${k.name}?`}
+                      description="Klien ini hilang dari beranda. Berkas logonya tetap di penyimpanan."
+                      confirmLabel="Ya, hapus"
+                      onConfirm={() => hapus(k.id)}
+                      trigger={
+                        <button type="button" className="btn btn--ghost btn--icon btn--hapus"
+                          aria-label={`Hapus ${k.name}`}>
+                          <Icon name="trash" size={15} />
+                        </button>
+                      }
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
+
+      <SisiSitus
+        judul="Logo klien"
+        letak="Pita berjalan di beranda"
+        ikon="image"
+        lengkap={total > 0 && berlogo === total}
+        status={
+          total === 0 ? "Belum ada klien"
+            : berlogo === total ? "Semua logo terpasang"
+            : `${total - berlogo} belum punya logo`
+        }
+        fakta={[
+          { label: "Jumlah klien", nilai: <span className="t-num">{total}</span> },
+          { label: "Sudah berlogo", nilai: <span className="t-num">{berlogo}</span> },
+          { label: "Tampil teks", nilai: <span className="t-num">{total - berlogo}</span> },
+        ]}
+        tautan="/"
+        tautanLabel="Lihat di beranda"
+      >
+        <Dialog
+          title="Tambah klien"
+          description="Nama dulu; logonya bisa diunggah setelah barisnya ada."
+          trigger={
+            <button type="button" className="btn btn--primary btn--lift buat-aksi__utama">
+              <Icon name="plus" size={15} /> Tambah klien
+            </button>
+          }
+          footer={
+            <button type="button" className="btn btn--primary"
+              disabled={nama.trim().length < 1 || menambah} onClick={tambah}>
+              {menambah && <span className="spinner spinner--sm spinner--on-action" />}
+              Tambah
+            </button>
+          }
+        >
+          <div className="field">
+            <label className="field__label" htmlFor="kl-nama">
+              Nama klien<span className="field__req" aria-hidden="true">*</span>
+            </label>
+            <input id="kl-nama" className="input" value={nama}
+              onChange={(e) => setNama(e.target.value)} placeholder="Contoh: Elsana Coffee" />
+          </div>
+        </Dialog>
+        <CatatanTerbit />
+      </SisiSitus>
     </div>
   );
 }
@@ -252,8 +307,10 @@ export function ClientLogosPanel() {
   return (
     <RequireAuth
       skeleton={
-        <div className="listpage"><div className="listpage__pad">
-          <SkeletonDaftar jumlah={jumlahDiingat("klien", 4)} aksi={3} />
+        <div className="buatpage buatpage--situs"><div className="buatpage__utama">
+          <section className="buat-kartu">
+            <SkeletonDaftar jumlah={jumlahDiingat("klien", 4)} aksi={3} />
+          </section>
         </div></div>
       }
     >

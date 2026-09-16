@@ -2,46 +2,58 @@
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
 
-/* Empat pertanyaan di /faq yang jawabannya sudah benar dan sudah tayang —
-   yang belum ada cuma angkanya. Selama kosong, pertanyaan itu memakai lencana
-   "FIGURES ON REQUEST"; begitu terisi, lencananya padam untuk pertanyaan itu
-   saja, bukan untuk keempatnya sekaligus. */
+/* Pertanyaan di /faq yang jawabannya sudah benar dan sudah tayang — yang belum
+   ada cuma angkanya. Selama kosong, pertanyaan itu memakai lencana "angka
+   ditanyakan"; begitu terisi, lencananya padam untuk pertanyaan itu saja,
+   bukan untuk ketiganya sekaligus.
+
+   TIGA, bukan empat. "Tarif jasa" (faqTarif) dibuang dari halaman ini karena
+   tarifnya sekarang DITERBITKAN di beranda lewat lib/tier.ts, dan jawaban FAQ
+   soal tarif sudah ditulis ulang untuk menunjuk ke sana. Isian yang tidak lagi
+   dibaca siapa pun lebih buruk daripada isian yang tidak ada: ia mengundang
+   diisi, lalu diam-diam tidak muncul di mana pun.
+
+   `kalimat` mencetak pertanyaan aslinya dari /faq dengan nilainya tersisip,
+   jadi yang diketik di sini bisa dibaca sebagai jawabannya sebelum disimpan. */
 const isian: Isian[] = [
-  {
-    kunci: "faqTarif",
-    label: "Tarif jasa",
-    contoh: "8–12% dari biaya konstruksi",
-    bantuan: 'Menjawab "How much do you charge?" di halaman FAQ.',
-  },
   {
     kunci: "faqUangMuka",
     label: "Uang muka",
     contoh: "30% di awal tahap pertama",
-    bantuan: 'Menjawab "How much do you need before you start?".',
+    grup: "Uang",
+    bantuan: 'Menjawab "Berapa yang Anda butuhkan sebelum mulai?" di halaman FAQ.',
+    kalimat: "Uang muka %s, lalu pembayaran setiap kali satu tahap diserahkan.",
   },
   {
     kunci: "faqLamaKerja",
     label: "Lama pengerjaan",
     contoh: "4–6 bulan untuk rumah tinggal",
-    bantuan: "Perkiraan waktu dari tahap pertama sampai gambar kerja selesai.",
+    grup: "Waktu",
+    bantuan: 'Menjawab "Berapa lama pengerjaannya?".',
+    kalimat: "Dari tahap pertama sampai gambar kerja selesai: %s.",
   },
   {
     kunci: "faqKunjungan",
     label: "Kunjungan ke lokasi",
     contoh: "Dua kali per tahap, lebih kalau diperlukan",
-    bantuan: "Seberapa sering studio datang ke lokasi selama proyek berjalan.",
+    grup: "Waktu",
+    bantuan: 'Menjawab "Apakah Anda datang ke lokasi selama pembangunan?".',
+    kalimat: "Kunjungan ke lokasi selama proyek berjalan: %s.",
   },
 ];
 ---
 
-<AdminLayout
-  title="Angka di FAQ"
-  heading="Angka di FAQ"
-  description="Empat pertanyaan yang jawabannya sudah tayang tapi angkanya belum diberikan."
->
+<AdminLayout title="Angka di FAQ">
   <IsiHalamanPanel
     client:load
     isian={isian}
-    catatan="Isi dengan kalimat pendek, bukan sekadar bilangan — yang dibaca calon klien adalah kalimatnya. Boleh berupa rentang."
+    situs={{
+      judul: "Angka di FAQ",
+      letak: "Tiga jawaban di halaman Tanya Jawab",
+      ikon: "info",
+      tautan: "/faq/",
+      tautanLabel: "Lihat halaman FAQ",
+    }}
+    catatan="Isi dengan kalimat pendek, bukan sekadar bilangan — yang dibaca calon klien adalah kalimatnya, dan boleh berupa rentang. Tarif jasa tidak ada di sini lagi: sejak rentangnya diumumkan di beranda, jawaban FAQ soal tarif menunjuk ke sana."
   />
 </AdminLayout>

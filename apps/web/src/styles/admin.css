@@ -3293,3 +3293,269 @@
 @media (max-width: 30rem) {
   .terima__pilihan--dua { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* --- Halaman Situs Publik: bahasa visual Halaman Proyek -------------------
+   Keenam halaman (Logo Klien, Tim Studio, Sebelum & Sesudah, Angka di FAQ,
+   Halaman Privasi, Identitas Studio) memakai kerangka `.buatpage` yang sama
+   dengan Halaman Proyek — kartu bergaris 2px di kiri, panel menempel di
+   kanan. Yang di bawah ini cuma yang BELUM ada di kerangka itu.
+
+   Diminta pemilik: "UI UX harus menyesuaikan Halaman proyek tapi menyesuaikan
+   kebutuhannya". Yang disamakan bentuk dan bahasanya; yang disesuaikan isi
+   tiap kartunya. */
+
+/* Keenamnya tidak punya tombol "Semua proyek" di baris pertama, jadi kolomnya
+   mulai langsung di baris satu — tanpa ini grid mewarisi `--berkembali` dan
+   meninggalkan satu baris kosong di atas kartu pertama. */
+.buatpage--situs { grid-template-rows: auto; }
+
+/* Kotak pratinjau: bidang GELAP tempat potongan situs ditiru. Dibedakan dari
+   kartu di sekitarnya supaya terbaca sebagai "ini hasilnya", bukan sebagai
+   isian lain. Titik-titiknya meniru kisi halaman publik. */
+.situs-pratinjau {
+  position: relative;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background-color: #18181b;
+  background-image: radial-gradient(rgba(255, 255, 255, .055) 1px, transparent 1px);
+  background-size: 8px 8px;
+  padding: var(--space-5);
+  overflow: hidden;
+}
+
+/* --- Pratinjau pita logo klien -------------------------------------------- */
+
+/* Sejajar mendatar dan BOLEH digulir kalau logonya banyak — di beranda ia
+   memang berjalan terus, dan memaksanya membungkus jadi dua baris akan
+   menampilkan bentuk yang tidak pernah tayang. */
+.situs-pratinjau--pita { padding-inline: 0; }
+.klienpita {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.klienpita::-webkit-scrollbar { display: none; }
+
+/* Sel selebar 200px seperti marquee sungguhan, dikecilkan 0,7x sama seperti
+   .klien-logo supaya perbandingan antar-logo di sini sama dengan di situs. */
+.klienpita__sel {
+  display: grid;
+  place-items: center;
+  width: 8.75rem;
+  height: 3.25rem;
+  flex: none;
+  border-right: 1px solid var(--border);
+}
+.klienpita__sel:last-child { border-right: 0; }
+
+/* Abu-abu, persis seperti bawaan marquee. Warnanya baru muncul saat disentuh
+   kursor — dan itu ditiru di sini juga, supaya pemilik bisa memeriksa kedua
+   keadaan tanpa membuka beranda. */
+.klienpita__sel img {
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  max-height: 25px;
+  max-width: 98px;
+  filter: grayscale(1);
+  opacity: .72;
+  transition: filter var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.klienpita__sel img[data-bentuk="lebar"]  { max-height: 17px; max-width: 105px; }
+.klienpita__sel img[data-bentuk="sedang"] { max-height: 25px; max-width:  98px; }
+.klienpita__sel img[data-bentuk="petak"]  { max-height: 35px; max-width:  45px; }
+.klienpita__sel:hover img { filter: none; opacity: 1; }
+
+/* Klien tanpa logo tampil sebagai teks nama — sama seperti di beranda, dan
+   itulah alasan barisnya tidak pernah bolong. */
+.klienpita__teks {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-faint);
+  text-align: center;
+  padding-inline: var(--space-2);
+}
+
+/* --- Pratinjau kartu tim -------------------------------------------------- */
+
+.timpratinjau {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-4);
+}
+.timpratinjau__sel { display: flex; flex-direction: column; min-width: 0; }
+.timpratinjau__foto {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 5;   /* Sama dengan kartu tim di /studio. */
+  overflow: hidden;
+  background: #09090b;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.timpratinjau__foto img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); }
+.timpratinjau__nm {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+.timpratinjau__pr {
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: #a1a1aa;
+  overflow-wrap: anywhere;
+}
+
+/* --- Pembanding sebelum/sesudah yang bisa digeser -------------------------- */
+
+.bandinguji {
+  padding: 0;
+  aspect-ratio: 16 / 9;
+  /* Wadah pengukur untuk kedua lapisan foto; keduanya absolut di atasnya. */
+  display: block;
+}
+.bandinguji img { display: block; }
+.bandinguji__bawah { width: 100%; height: 100%; object-fit: cover; }
+
+/* Lapisan atas SEUKURAN penuh, dipotong dengan clip-path. Bukan lebar +
+   overflow:hidden: dengan lebar, gambar di dalamnya ikut menyempit saat
+   gagangnya digeser, dan yang dibandingkan berubah jadi dua gambar berbeda
+   skala. Garis pemisahnya digambar .bandinguji__garis, bukan border lapisan
+   ini — border ikut terpotong clip-path. */
+.bandinguji__atas { position: absolute; inset: 0; }
+.bandinguji__atas img { width: 100%; height: 100%; object-fit: cover; }
+
+.bandinguji__garis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--situs-aksen);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+/* Gagang PERSEGI bergaris teal, sama persis dengan .ba__pegang di halaman
+   Studio — bukan lingkaran merah. Pratinjau yang mengaku "seperti di halaman
+   Studio" lalu memakai bentuk dan warna lain adalah pratinjau yang berbohong,
+   dan merah di sistem warna proyek ini berarti brand dan destruktif. */
+.bandinguji__garis i {
+  display: grid;
+  grid-auto-flow: column;
+  place-items: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  border: 2px solid var(--situs-aksen);
+  background: #18181b;
+  color: var(--situs-aksen);
+}
+
+.bandinguji__cap {
+  position: absolute;
+  top: var(--space-3);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  color: #fff;
+  background: rgba(9, 9, 11, .72);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+.bandinguji__cap--kiri { left: var(--space-3); }
+.bandinguji__cap--kanan { right: var(--space-3); }
+
+/* <input type=range> asli, dibuat tak terlihat tapi tetap selebar pembanding.
+   Bukan penyeret buatan sendiri: yang asli sudah bisa dipakai keyboard dan
+   sudah dibacakan pembaca layar, dan perilakunya tidak bisa rusak diam-diam. */
+.bandinguji__geser {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  appearance: none;
+  background: transparent;
+}
+.bandinguji__geser:focus-visible { outline: none; }
+.bandinguji:has(.bandinguji__geser:focus-visible) { box-shadow: 0 0 0 3px var(--ring); }
+
+/* --- Isian isi halaman ---------------------------------------------------- */
+
+/* Kartu catatan pembuka: ikon di kiri, kalimatnya di kanan. */
+.isihal__catatan { flex-direction: row; align-items: flex-start; gap: var(--space-3); }
+
+/* Satu kolom, bukan dua. Tiap isian sekarang membawa kalimat situsnya sendiri
+   di bawahnya, dan dua kolom membuat kalimat itu terpotong jadi lima baris
+   sempit yang justru tidak terbaca — padahal ia alasan blok ini ada. */
+.isihal__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 52rem;
+}
+.isihal__baris { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Penanda kecil di sebelah label, bukan kalimat di bawah: yang perlu diketahui
+   cuma "yang ini belum", dan ia harus terbaca saat mata melintasi labelnya. */
+.isihal__tanda {
+  margin-left: var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--warn);
+}
+
+/* Kalimat yang benar-benar tercetak di situs, dengan nilainya tersisip.
+   Dibuat berbeda dari isian di atasnya: ini bukan tempat mengetik. */
+/* Garis kiri NETRAL saat terisi, amber saat kosong. Bukan merah: di sistem
+   warna proyek ini merah berarti brand dan destruktif, dan nilai yang sudah
+   benar diisi tidak boleh terbaca sebagai kesalahan. Yang perlu ditandai
+   warna cuma yang belum lengkap. */
+.isihal__situs {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--border-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--surface-raised);
+}
+.isihal__situs figcaption {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.isihal__situs blockquote {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text);
+  max-width: none;
+}
+.isihal__situs strong { color: var(--text); font-weight: 700; }
+.isihal__situs--kosong { border-left-color: var(--warn); }
+.isihal__tunggu { color: var(--warn); font-style: italic; }
+
+/* --- Panel kanan bersama -------------------------------------------------- */
+
+.sisi-situs__status { align-self: flex-start; gap: var(--space-1); }
+
+@media (max-width: 60rem) {
+  /* Di layar sempit panel kanan turun ke bawah dan tidak lagi menempel —
+     kerangka .buatpage sudah mengurusnya. Yang perlu ditambah cuma jarak
+     pratinjau supaya tidak berdempet dengan tepi layar. */
+  .situs-pratinjau { padding: var(--space-4); }
+  .situs-pratinjau--pita { padding-inline: 0; }
+}

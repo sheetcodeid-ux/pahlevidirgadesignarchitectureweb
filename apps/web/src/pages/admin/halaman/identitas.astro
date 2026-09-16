@@ -2,32 +2,46 @@
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
 
+/* Dua tahun yang dipakai garis waktu di halaman Studio.
+
+   `foundedYear` dulu juga tampil sebagai "SINCE 20XX" di eyebrow beranda.
+   Eyebrow itu sudah diganti lencana "Spesialis coffee shop & rumah tropis",
+   jadi keterangannya diperbaiki di sini — isian yang mengaku tampil di tempat
+   yang sudah tidak ada adalah cara tercepat membuat panel ini berhenti
+   dipercaya. */
 const isian: Isian[] = [
   {
     kunci: "foundedYear",
     label: "Tahun studio berdiri",
     contoh: "2025",
     jenis: "tahun",
-    bantuan: 'Tampil sebagai "SINCE ..." di beranda dan tonggak pertama garis waktu Studio.',
+    grup: "Garis waktu studio",
+    bantuan: "Tonggak pertama di garis waktu halaman Studio.",
+    kalimat: "%s — Studionya dimulai. Satu meja, satu meja gambar, dan keputusan untuk tetap kecil dengan sengaja.",
   },
   {
     kunci: "firstCommercialYear",
     label: "Tahun proyek komersial pertama",
     contoh: "2025",
     jenis: "tahun",
-    bantuan: "Tonggak kedua garis waktu di halaman Studio.",
+    grup: "Garis waktu studio",
+    bantuan: "Tonggak kedua di garis waktu halaman Studio.",
+    kalimat: "%s — Proyek komersial pertama. Titik saat pekerjaannya berhenti jadi rumah saja.",
   },
 ];
 ---
 
-<AdminLayout
-  title="Identitas Studio"
-  heading="Identitas Studio"
-  description="Dua tahun yang dipakai beranda dan garis waktu halaman Studio."
->
+<AdminLayout title="Identitas Studio">
   <IsiHalamanPanel
     client:load
     isian={isian}
-    catatan="Nama studio, email, telepon, dan logo diurus terpisah di Pengaturan → Info Studio, karena keduanya juga dipakai panel admin — bukan hanya halaman publik."
+    situs={{
+      judul: "Identitas studio",
+      letak: "Garis waktu di halaman Studio",
+      ikon: "building",
+      tautan: "/studio/",
+      tautanLabel: "Lihat halaman Studio",
+    }}
+    catatan="Nama studio, email, telepon, dan logo diurus terpisah di Pengaturan → Info Studio, karena keempatnya juga dipakai panel admin — bukan hanya halaman publik. Yang ada di sini cuma dua tahun yang tidak bisa ditebak dari data lain."
   />
 </AdminLayout>
