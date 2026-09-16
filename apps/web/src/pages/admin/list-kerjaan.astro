@@ -3,6 +3,17 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 import { TaskBoard } from "../../components/admin/TaskBoard";
 ---
 
-<AdminLayout title="List Kerjaan" heading="List Kerjaan" description="Tugas aktif lintas proyek, dikelompokkan per tahap kerja.">
+{/* Judulnya "Tugas", sama dengan namanya di sidebar. Sebelumnya halaman ini
+    bernama "List Kerjaan" sementara menunya sudah "Tugas" — dua nama untuk
+    satu halaman, persis jenis kebingungan yang sedang dirapikan.
+
+    Rutenya TIDAK ikut diganti: /admin/list-kerjaan sudah pernah dibuka dan
+    mungkin tersimpan di riwayat peramban pemilik, dan mengganti alamat demi
+    kerapian nama adalah ongkos yang ditanggung orang lain. */}
+<AdminLayout
+  title="Tugas"
+  heading="Tugas"
+  description="Seluruh tugas dari semua proyek, dalam satu halaman. Saring per proyek lewat tombol saringan."
+>
   <TaskBoard client:load />
 </AdminLayout>

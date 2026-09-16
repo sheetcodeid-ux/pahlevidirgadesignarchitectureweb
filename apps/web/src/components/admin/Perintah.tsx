@@ -9,7 +9,7 @@ const HALAMAN: { label: string; ikon: Parameters<typeof Icon>[0]["name"]; ke: st
   { label: "Dashboard", ikon: "dashboard", ke: "/admin" },
   { label: "Semua Proyek", ikon: "project", ke: "/admin/proyek" },
   { label: "Proyek Baru", ikon: "projectPlus", ke: "/admin/proyek/baru" },
-  { label: "List Kerjaan", ikon: "checklist", ke: "/admin/list-kerjaan" },
+  { label: "Tugas", ikon: "checklist", ke: "/admin/list-kerjaan" },
   { label: "Keuangan", ikon: "finance", ke: "/admin/keuangan" },
   { label: "Analisis Bulanan", ikon: "clock", ke: "/admin/keuangan/bulanan" },
   { label: "Pesan Masuk", ikon: "inquiry", ke: "/admin/pesan" },
