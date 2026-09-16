@@ -43,6 +43,11 @@ const NAV: NavItem[] = [
   },
   { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
   { label: "Keuangan", href: "/admin/keuangan", icon: "finance", group: "Utama" },
+  /* Tepat di bawah Keuangan, bukan di kelompok sendiri: angkanya LAHIR di
+     Keuangan — fee diketik sekali saja lewat Catat pengeluaran — dan halaman
+     ini cuma membacanya dari sudut lain. Menaruhnya jauh dari sumbernya
+     membuat keduanya terbaca sebagai dua sistem yang harus dicocokkan. */
+  { label: "Fee Proyek", href: "/admin/fee", icon: "cash", group: "Utama" },
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },
   { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Utama" },

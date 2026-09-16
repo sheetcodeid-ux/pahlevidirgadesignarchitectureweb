@@ -19,6 +19,7 @@ import {
 } from "../../lib/admin";
 import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
+import { unduhCsv } from "../../lib/csv";
 
 /* =============================================================================
    Halaman Keuangan.
@@ -89,20 +90,6 @@ function delta(kini: number, lalu: number): { teks: string; arah: "naik" | "turu
   };
 }
 
-function unduhCsv(nama: string, baris: string[][]) {
-  const isi = baris
-    .map((r) => r.map((sel) => `"${String(sel).replace(/"/g, '""')}"`).join(";"))
-    .join("\r\n");
-  // BOM supaya Excel berbahasa Indonesia membaca UTF-8 dengan benar; tanpa
-  // ini "Rp" dan tanda minus tipografis tampil sebagai sampah.
-  const blob = new Blob([`﻿${isi}`], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = nama;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 /* --- Kerangka muat ---------------------------------------------------------- */
 
