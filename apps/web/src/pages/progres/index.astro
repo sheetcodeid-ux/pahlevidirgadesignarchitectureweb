@@ -14,11 +14,11 @@ import "../../styles/publik.css";
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="id" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Your project page — Dirga Pahlevi Architecture</title>
+    <title>Halaman proyek Anda — Dirga Pahlevi Architecture</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
@@ -32,7 +32,7 @@ import "../../styles/publik.css";
     />
   </head>
   <body>
-    <a href="#isi" class="lompat" data-t="lewati">Skip to content</a>
+    <a href="#isi" class="lompat" data-t="lewati">Lewati ke isi</a>
     <div class="bar-atas" id="barAtas"></div>
 
     <div class="pita pita--awal nav" id="nav">
@@ -43,12 +43,12 @@ import "../../styles/publik.css";
               <path d="M10 1.5 18 6v8l-8 4.5L2 14V6l8-4.5Z" stroke="#2DD4BF" stroke-width="1.6"/>
               <path d="M10 6.5 14 9v4l-4 2.2L6 13V9l4-2.5Z" fill="#2DD4BF" fill-opacity=".25" stroke="#2DD4BF" stroke-width="1.2"/></svg>
             <span class="label" style="letter-spacing:.14em">DIRGA PAHLEVI</span></span>
-          <span class="dim kecil" data-t="portalLabel">Client project page</span>
+          <span class="dim kecil" data-t="portalLabel">Halaman proyek klien</span>
           <span style="margin-left:auto" class="rowx" style="gap:12px">
             <span class="dim kecil" id="navSegar"></span>
             <span class="bhs" role="group" aria-label="Language">
-              <button type="button" data-bhs="en" aria-pressed="true">EN</button>
-              <button type="button" data-bhs="id" aria-pressed="false">ID</button>
+              <button type="button" data-bhs="en" aria-pressed="false">EN</button>
+              <button type="button" data-bhs="id" aria-pressed="true">ID</button>
             </span>
           </span>
         </div>
@@ -60,7 +60,7 @@ import "../../styles/publik.css";
         <span class="lengket__n" id="lengketN">0</span>
         <span class="lengket__t" id="lengketT"></span>
         <button class="btn btn--isi" id="lengketB" style="padding:8px 15px;font-size:12.5px"
-          data-t="lihatB">Show me <span class="ar">&#8595;</span></button>
+          data-t="lihatB">Tunjukkan <span class="ar">&#8595;</span></button>
       </div>
     </div>
 
@@ -489,7 +489,12 @@ import "../../styles/publik.css";
     },
   };;
 
-  let B: "en" | "id" = "en";
+  /* Bawaannya INDONESIA, bukan Inggris. Portal ini tetap dwibahasa — klien
+     asing memang mungkin membukanya — tapi yang dibuka pertama kali harus
+     bahasa yang dipakai hampir semua klien studio. Sebelumnya klien Indonesia
+     mendarat di halaman berbahasa Inggris dan harus menemukan sendiri
+     pengalih di pojok kanan atas. */
+  let B: "en" | "id" = "id";
   let V: Portal | null = null;
   let token = "";
   const t = (k: string) => String(KAMUS[B][k] ?? "");
@@ -547,6 +552,8 @@ import "../../styles/publik.css";
     berkas: ikon('<path d="M11.5 2.5H5.5A1.5 1.5 0 0 0 4 4v12a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 16 16V7l-4.5-4.5Z"/><path d="M11.5 2.5V7H16"/>'),
     suara: ikon('<rect x="7.5" y="2.5" width="5" height="9" rx="2.5"/><path d="M4.5 9a5.5 5.5 0 0 0 11 0M10 14.5v3"/>'),
     jam: ikon('<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 2"/>'),
+    putar: ikon('<path d="M7 4.5 15.5 10 7 15.5V4.5Z" fill="currentColor"/>'),
+    jeda: ikon('<path d="M7.5 4.5v11M12.5 4.5v11"/>'),
     uang: ikon('<rect x="2.5" y="5" width="15" height="10" rx="1.5"/><circle cx="10" cy="10" r="2.2"/>'),
   };
 
@@ -705,9 +712,25 @@ import "../../styles/publik.css";
       /* <audio> asli, bukan pemutar buatan sendiri: mockup menggambar bentuknya
          tapi perilaku bawaan tidak bisa rusak diam-diam, dan pesan suara adalah
          hal yang paling sering diputar klien di ponsel. */
+      /* Pemutar sendiri, TAPI tetap menggerakkan elemen <audio> sungguhan
+         yang disembunyikan — bukan pemutar yang memalsukan perilakunya.
+         Pendekodean, pencarian posisi, dan penanganan jaringan tetap milik
+         peramban; yang diganti cuma kulitnya.
+
+         Alasannya tampilan: `<audio controls>` menggambar widget abu bawaan
+         Chrome selebar kartu, dan bentuknya berbeda di tiap peramban. Di
+         halaman yang dilihat klien, satu kotak abu yang tidak mengikuti
+         sistem warna apa pun adalah hal pertama yang terlihat salah.
+         Kelas .suara__p/.suara__bar/.suara__w SUDAH ada di stylesheet sejak
+         mockup pertama dan selama ini tidak pernah dipakai. */
       const suara = d.kind === "suara"
-        ? `<div class="suara"><audio controls preload="none" src="${E(d.fileUrl)}"
-             style="width:100%"></audio></div>`
+        ? `<div class="suara" data-suara>
+             <button type="button" class="suara__p" data-putar
+               aria-label="${E(t("dengar"))}">${I.putar}</button>
+             <span class="suara__bar" data-bar role="presentation"><i style="width:0%"></i></span>
+             <span class="suara__w" data-waktu>${durasi(d.durationMs) || "0:00"}</span>
+             <audio preload="metadata" src="${E(d.fileUrl)}"></audio>
+           </div>`
         : "";
       const thr = d.comments.length ? `<div class="thr">${d.comments.map((c) =>
         `<div class="thr__k"><div class="thr__w"><b>${c.author === "studio" ? t("studio") : t("klien")}</b> · ${tgl(c.createdAt)}</div>
@@ -723,8 +746,21 @@ import "../../styles/publik.css";
       const meta = [jenisBerkas(d.mimeType),
         d.kind === "suara" ? durasi(d.durationMs) : ukuran(d.fileSize),
         tgl(d.createdAt)].filter(Boolean);
-      return `<div class="dok" data-dok="${E(d.id)}"><div class="dok__b">
-          <span class="dok__ikon">${d.kind === "suara" ? I.suara : I.berkas}</span>
+      /* Pratinjau, bukan ikon generik. Studio arsitektur mengirim GAMBAR;
+         kotak ikon 38px yang sama untuk denah, tampak, dan potongan membuat
+         empat dokumen berbeda terlihat identik sampai judulnya dibaca satu
+         per satu. Kalau berkasnya memang gambar, yang ditampilkan isinya;
+         kalau bukan, jenisnya dicetak besar supaya tetap bisa dibedakan
+         sekilas. */
+      const gambar = (d.mimeType ?? "").startsWith("image/");
+      const pra = d.kind === "suara"
+        ? `<span class="dok__pra dok__pra--suara">${I.suara}</span>`
+        : gambar
+          ? `<span class="dok__pra"><img src="${E(d.fileUrl)}" alt="" loading="lazy"></span>`
+          : `<span class="dok__pra dok__pra--jenis">${E(jenisBerkas(d.mimeType))}</span>`;
+      const perlu = d.status === "menunggu_klien" || d.status === "revisi_diminta";
+      return `<div class="dok${perlu ? " dok--perlu" : ""}" data-dok="${E(d.id)}"><div class="dok__b">
+          ${pra}
           <div class="dok__isi"><div class="dok__j">${E(d.title)}</div>
             <div class="dok__m">${meta.map((m) => `<span>${E(m)}</span>`).join("")}</div>
             <div class="s10"></div>${lencanaDok(d.status)}${suara}${catatan}${thr}
@@ -956,6 +992,71 @@ import "../../styles/publik.css";
     k.querySelector("textarea")?.focus();
   };
 
+  /* ── Pemutar pesan suara ────────────────────────────────────────────────
+     Satu handler didelegasikan, bukan satu per kartu: daftar dokumen
+     digambar ulang tiap kali saringan diganti, dan handler yang dipasang
+     per elemen akan hilang bersama elemennya — atau menumpuk kalau dipasang
+     ulang tanpa dilepas.
+
+     Yang menyimpan keadaan tetap elemen <audio> itu sendiri, bukan variabel
+     di sini. Jadi tidak ada kemungkinan tombol mengaku "sedang berputar"
+     sementara suaranya sudah habis. */
+  const jamAudio = (dtk: number) => {
+    const d = Math.max(0, Math.round(dtk || 0));
+    return Math.floor(d / 60) + ":" + String(d % 60).padStart(2, "0");
+  };
+
+  const segarSuara = (kotak: HTMLElement) => {
+    const a = kotak.querySelector("audio") as HTMLAudioElement | null;
+    const isi = kotak.querySelector("[data-bar] i") as HTMLElement | null;
+    const jam = kotak.querySelector("[data-waktu]");
+    const tbl = kotak.querySelector("[data-putar]");
+    if (!a || !isi || !jam || !tbl) return;
+    const total = Number.isFinite(a.duration) && a.duration > 0 ? a.duration : 0;
+    isi.style.width = total ? (a.currentTime / total) * 100 + "%" : "0%";
+    /* Selagi diputar yang ditampilkan posisi sekarang; selagi diam, durasinya.
+       Angka yang diam di 0:00 sepanjang waktu tidak memberi tahu apa pun. */
+    jam.textContent = a.paused && !a.currentTime ? jamAudio(total) : jamAudio(a.currentTime);
+    tbl.innerHTML = a.paused ? I.putar : I.jeda;
+    kotak.classList.toggle("suara--main", !a.paused);
+  };
+
+  wajib("vIsi").addEventListener("click", (ev) => {
+    const kotak = (ev.target as HTMLElement).closest<HTMLElement>("[data-suara]");
+    if (!kotak) return;
+    const a = kotak.querySelector("audio") as HTMLAudioElement | null;
+    if (!a) return;
+
+    if ((ev.target as HTMLElement).closest("[data-putar]")) {
+      if (a.paused) {
+        /* Hanya satu yang berbunyi. Dua pesan suara yang berbunyi bersamaan
+           adalah keadaan yang tidak pernah diinginkan siapa pun, dan di
+           ponsel tidak ada cara cepat menemukan mana yang mana. */
+        document.querySelectorAll<HTMLAudioElement>("[data-suara] audio").forEach((x) => {
+          if (x !== a) { x.pause(); }
+        });
+        a.play().catch(() => {});
+      } else a.pause();
+      return;
+    }
+
+    const bar = (ev.target as HTMLElement).closest<HTMLElement>("[data-bar]");
+    if (bar && Number.isFinite(a.duration) && a.duration > 0) {
+      const r = bar.getBoundingClientRect();
+      a.currentTime = Math.min(1, Math.max(0, ((ev as MouseEvent).clientX - r.left) / r.width)) * a.duration;
+      segarSuara(kotak);
+    }
+  });
+
+  for (const nama of ["timeupdate", "play", "pause", "ended", "loadedmetadata"]) {
+    /* Peristiwa media tidak menggelembung, jadi ditangkap di fase capture —
+       satu-satunya cara mendelegasikannya tanpa memasang handler per elemen. */
+    wajib("vIsi").addEventListener(nama, (ev) => {
+      const kotak = (ev.target as HTMLElement).closest?.("[data-suara]");
+      if (kotak) segarSuara(kotak as HTMLElement);
+    }, true);
+  }
+
   wajib("vIsi").addEventListener("click", async (ev) => {
     const el = (ev.target as HTMLElement).closest<HTMLElement>("[data-aksi],[data-kirim],[data-batal],[data-saring]");
     if (!el) return;
@@ -1050,12 +1151,13 @@ import "../../styles/publik.css";
       gambarSemua();
     }));
   try {
+    /* Pilihan yang disimpan menang atas bawaan — DUA arah. Versi sebelumnya
+       hanya memeriksa "id", jadi klien yang sengaja memilih Inggris kembali
+       ke Indonesia tiap kali halaman dimuat ulang. */
     const simpan = localStorage.getItem("progres:bhs");
-    if (simpan === "id") {
-      B = "id";
-      document.querySelectorAll("[data-bhs]").forEach((x) =>
-        x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.bhs === "id")));
-    }
+    if (simpan === "en" || simpan === "id") B = simpan;
+    document.querySelectorAll("[data-bhs]").forEach((x) =>
+      x.setAttribute("aria-pressed", String((x as HTMLElement).dataset.bhs === B)));
   } catch { /* diblokir */ }
 
   wajib("gTombol").addEventListener("click", (e) => {
@@ -1161,9 +1263,26 @@ textarea.isian{min-height:96px;resize:vertical;line-height:1.6;font-family:var(-
 .tugas a{color:var(--aksen);text-decoration:none;border-bottom:1px solid rgba(45,212,191,.4)}
 
 /* Dokumen */
-.dok{border-top:1px solid var(--garis);padding:20px 0}
-.dok:first-child{border-top:0;padding-top:0}
+/* KARTU bergaris, bukan baris yang dipisah garis tipis. Empat dokumen yang
+   mengalir jadi satu blok panjang membuat klien kehilangan batas antara
+   "yang ini menunggu saya" dan "yang ini sudah beres" — dan itu satu-satunya
+   pembedaan yang dia cari di halaman ini. */
+.dok{border:1px solid var(--garis);border-radius:var(--r);padding:18px;margin-top:12px;
+  background:var(--gelap);transition:border-color .22s var(--ease)}
+.dok:first-child{margin-top:0}
+.dok:hover{border-color:var(--garis-2)}
+/* Yang menunggu tanggapan diberi garis kiri amber — terbaca sebelum satu pun
+   kata dibaca, dan padam sendiri begitu dokumennya disetujui. */
+.dok--perlu{border-left:3px solid #FBBF24}
 .dok__b{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+
+/* Pratinjau isi berkas, bukan ikon generik. */
+.dok__pra{flex:none;width:76px;height:76px;display:grid;place-items:center;overflow:hidden;
+  border:1px solid var(--garis-2);border-radius:var(--r-s);background:var(--sel);
+  color:var(--teks-3);font-size:11px;font-weight:700;letter-spacing:.08em}
+.dok__pra img{width:100%;height:100%;object-fit:cover}
+.dok__pra--suara{color:var(--aksen)}
+.dok__pra--suara svg{width:24px;height:24px}
 .dok__ikon{flex:none;width:38px;height:38px;display:grid;place-items:center;
   border:1px solid var(--garis-2);color:var(--teks-3)}
 .dok__isi{flex:1;min-width:200px}
@@ -1174,6 +1293,10 @@ textarea.isian{min-height:96px;resize:vertical;line-height:1.6;font-family:var(-
 /* Pemutar pesan suara — <audio> asli akan dipakai di kode; di sini bentuknya */
 .suara{display:flex;align-items:center;gap:12px;background:var(--gelap);
   border:1px solid var(--garis);padding:11px 14px;margin-top:12px}
+.suara audio{display:none}
+.suara__bar{cursor:pointer}
+.suara__bar i{transition:width .1s linear}
+.suara--main .suara__p{box-shadow:0 0 0 4px rgba(45,212,191,.16)}
 .suara__p{flex:none;width:32px;height:32px;border-radius:99px;background:var(--aksen);
   color:#18181B;display:grid;place-items:center;border:0;cursor:pointer}
 .suara__bar{flex:1;height:3px;background:var(--sel-2);position:relative;min-width:80px}

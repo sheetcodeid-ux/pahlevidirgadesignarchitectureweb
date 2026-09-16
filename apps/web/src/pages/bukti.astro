@@ -14,11 +14,11 @@ import "../styles/publik.css";
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="id" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Payment receipt — Dirga Pahlevi Architecture</title>
+    <title>Bukti pembayaran — Dirga Pahlevi Architecture</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
@@ -43,8 +43,8 @@ import "../styles/publik.css";
               <path d="M10 6.5 14 9v4l-4 2.2L6 13V9l4-2.5Z" fill="#2DD4BF" fill-opacity=".25" stroke="#2DD4BF" stroke-width="1.2"/></svg>
             <span class="label" style="letter-spacing:.14em">DIRGA PAHLEVI</span></span>
           <span class="bhs" role="group" aria-label="Language" style="margin-left:auto">
-            <button type="button" data-bhs="en" aria-pressed="true">EN</button>
-            <button type="button" data-bhs="id" aria-pressed="false">ID</button>
+            <button type="button" data-bhs="en" aria-pressed="false">EN</button>
+            <button type="button" data-bhs="id" aria-pressed="true">ID</button>
           </span>
         </div>
       </div>
@@ -204,7 +204,9 @@ import "../styles/publik.css";
     },
   };
 
-  let B: "en" | "id" = "en";
+  /* Bawaannya INDONESIA, sama seperti /progres. Halaman ini dibuka klien dari
+     tautan WhatsApp yang dikirim studio — hampir selalu klien Indonesia. */
+  let B: "en" | "id" = "id";
   let D: Bukti | null = null;
   const teks = (k: string) => String(KAMUS[B][k] ?? "");
   const peta = (k: string) => (KAMUS[B][k] as Record<string, string>) ?? {};
