@@ -39,10 +39,9 @@ const NAV: NavItem[] = [
       // mencarinya di sana. Halamannya tidak berubah dan tetap mengikuti
       // combobox yang sama — yang pindah cuma tautannya.
       { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document" },
-      { label: "Kerja Internal", href: "/admin/proyek/internal", icon: "checklist" },
     ],
   },
-  { label: "List Kerjaan", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
+  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
   { label: "Keuangan", href: "/admin/keuangan", icon: "finance", group: "Utama" },
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },

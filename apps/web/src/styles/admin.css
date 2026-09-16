@@ -76,18 +76,29 @@
    sama yang sudah dicatat dua kali di berkas ini, dan ini kali ketiga. */
 .topbar > .topbar__id::before { content: none; }
 
-/* Garis miring BERHENTI setelah penghitung proyek. Permintaan pemilik, dan
-   alasannya terbaca sendiri di bilahnya: kelompok kiri adalah satu kalimat
-   keadaan — di mana kita, jam berapa, tanggal berapa, berapa proyek — dan
-   garis miring adalah tanda baca kalimat itu. Combobox dan tombol di kanan
-   bukan bagian dari kalimat itu; mereka perkakas. Memberi mereka tanda baca
-   yang sama menyambung dua hal yang tidak bersambung.
+/* Garis miring JALAN TERUS sampai ujung kanan bilah.
+
+   Ini MEMBALIK keputusan sebelumnya ("garis miring berhenti setelah
+   penghitung proyek"), atas permintaan pemilik: "breadcrumb dibuat sampai
+   ujung seperti pipeline itu jadi keliatannya rapi". Yang dirujuknya bilah
+   Fase proyek — satu bilah yang selnya terbagi rata dari tepi ke tepi.
+
+   Terukur pada bilah 1168px sebelum perubahan: tanda bacanya berhenti di
+   747px, jadi 693px sisanya — combobox, Terbitkan, tombol tema — berdiri
+   tanpa satu pun pemisah. Itu yang membuat separuh kanan bilah terbaca
+   sebagai barang yang tercecer, bukan sebagai lanjutan barisnya.
+
+   Dua sel sengaja TETAP tanpa garis miring, dan keduanya bukan pengecualian
+   melainkan sudah punya pemisahnya sendiri:
+     lonceng   — dikurung garis tegak 2px di kiri dan kanan. Garis miring di
+                 tepi kirinya akan mendarat tepat di atas garis itu.
+     panel akun — dipisah oleh garis KANAN milik lonceng, yang berdiri persis
+                 di batas keduanya.
 
    Ditulis `.topbar > .x` supaya kekhususannya (0,2,0), setara aturan umum di
-   atas. Dengan `.x::before` saja aturan umum menang — jebakan yang sudah
-   tercatat di CLAUDE.md. */
-.topbar > .topbar__combo::before,
-.topbar > .topbar__aksi::before { content: none; }
+   atas, dan ditaruh SESUDAHNYA supaya menang. Dengan `.x::before` saja aturan
+   umum menang — jebakan yang sudah tercatat di CLAUDE.md. */
+.topbar > .topbar__aksi--lonceng::before { content: none; }
 
 /* Semua segmen dirata-tengahkan secara vertikal dan diberi napas sendiri.
 
@@ -426,10 +437,64 @@
   min-width: 0;
 }
 
+/* --- Bentuk kartu untuk DataTable ----------------------------------------
+ *
+ * Bentuk yang diminta pemilik untuk daftar-daftar baru, dan yang dirujuknya
+ * adalah tabel di Halaman Proyek (SITUS PUBLIK) — bukan Semua Proyek.
+ *
+ * Karena itu aturan bentuknya TIDAK disalin: tiap aturan .pilihproyek__* di
+ * bawah sini memuat pasangan .kartudaftar__*-nya di selektor yang SAMA. Satu
+ * blok, dua nama. Dua salinan yang isinya sama adalah cara paling mudah
+ * membuat satu bentuk diam-diam tertinggal saat yang satunya diperbaiki —
+ * pola yang sudah berkali-kali memakan waktu di proyek ini.
+ *
+ * Yang berbeda cuma dua hal, dan keduanya disengaja:
+ *   * TANPA padding sendiri. .pilihproyek hidup di .admin__content yang
+ *     paddingnya dibuang demi kepala halaman full-bleed, jadi ia membawa
+ *     napasnya sendiri. Halaman yang memakai .kartudaftar (Keuangan, Tugas,
+ *     Fee, Gaji) tidak membuang padding itu — menambahkannya lagi di sini
+ *     berarti dua lapis jarak.
+ *   * Isian, segmented, dan tombol sekundernya diberi bentuk hitam-bingkai-2px
+ *     di sini. Di Halaman Proyek yang memberikannya .proyekpage, dan leluhur
+ *     itu tidak ada di halaman lain.
+ */
+.kartudaftar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.kartudaftar .input,
+.kartudaftar .ov-select-trigger {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+.kartudaftar .input:hover:not(:disabled):not([readonly]) { border-color: var(--text-faint); }
+
+.kartudaftar .segmented {
+  background: var(--bg-sunken);
+  border-width: 2px;
+  border-color: var(--border-strong);
+}
+
+.kartudaftar .btn--secondary { border-width: 2px; }
+
+/* Keadaan kosong berdiri sendiri di badan halaman — diberi kartu yang sama
+   bentuknya dengan tabel yang digantikannya, supaya tidak melayang tanpa
+   batas persis di tempat tabelnya tadi ada. */
+.kartudaftar > .empty {
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+}
+
 /* Bilah perkakas: satu kartu berisi kotak cari selebar penuh di baris atas,
    lalu baris hitungan + aksi di bawahnya. Bentuknya diambil dari gambar
    referensi pemilik. */
-.pilihproyek__bar {
+.pilihproyek__bar,
+.kartudaftar__bar {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -450,9 +515,11 @@
 /* Ikon berdiri di atas isian, jadi isiannya sendiri yang diberi padding kiri
    — bukan dibungkus flex. Kalau dibungkus, isian tidak bisa selebar penuh
    tanpa menambah aturan lebar lagi. */
-.pilihproyek__cari { position: relative; display: block; }
+.pilihproyek__cari,
+.kartudaftar__cari { position: relative; display: block; }
 
-.pilihproyek__cariikon {
+.pilihproyek__cariikon,
+.kartudaftar__cariikon {
   position: absolute;
   left: var(--space-4);
   top: 50%;
@@ -463,7 +530,8 @@
   pointer-events: none;
 }
 
-.pilihproyek__cari .input {
+.pilihproyek__cari .input,
+.kartudaftar__cari .input {
   width: 100%;
   height: 3.25rem;
   padding-left: calc(var(--space-4) * 2 + 20px);
@@ -478,9 +546,11 @@
 
 /* Peramban menggambar tombol silang bawaannya sendiri di type=search, dan
    bentuknya tidak mengikuti tema mana pun. */
-.pilihproyek__cari .input::-webkit-search-cancel-button { appearance: none; }
+.pilihproyek__cari .input::-webkit-search-cancel-button,
+.kartudaftar__cari .input::-webkit-search-cancel-button { appearance: none; }
 
-.pilihproyek__meta {
+.pilihproyek__meta,
+.kartudaftar__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -488,7 +558,8 @@
   gap: var(--space-4);
 }
 
-.pilihproyek__hitung {
+.pilihproyek__hitung,
+.kartudaftar__hitung {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
@@ -497,9 +568,11 @@
   color: var(--text-muted);
   font-size: var(--text-sm);
 }
-.pilihproyek__hitung strong { color: var(--text); font-weight: 600; }
+.pilihproyek__hitung strong,
+.kartudaftar__hitung strong { color: var(--text); font-weight: 600; }
 
-.pilihproyek__alat {
+.pilihproyek__alat,
+.kartudaftar__alat {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -513,7 +586,9 @@
    Pengalih tampilan ikut, walaupun yang disebut cuma tombolnya: satu baris
    berisi dua benda setinggi 50 dan 40 px terbaca sebagai salah pasang. */
 .pilihproyek__alat .segmented,
-.pilihproyek__baru { height: calc(var(--topbar-h) - 2px); }
+.pilihproyek__baru,
+.kartudaftar__alat .segmented,
+.kartudaftar__alat > .btn { height: calc(var(--topbar-h) - 2px); }
 
 /* --- Tabel pemilih proyek ------------------------------------------------ */
 
@@ -524,7 +599,8 @@
    .table-wrap sudah punya overflow-x:auto — dan begitu satu sumbu bukan
    visible, sumbu satunya ikut jadi auto — jadi latar kepala tabel sudah
    terpotong mengikuti lengkung sudutnya tanpa aturan tambahan. */
-.table-wrap.pilihproyek__wrap {
+.table-wrap.pilihproyek__wrap,
+.table-wrap.kartudaftar__wrap {
   border: 2px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--bg-sunken);
@@ -537,28 +613,35 @@
    Kekhususan (0,2,2): `.table--ruled td + td` di berkas ini beratnya (0,1,2)
    dan menang atas satu kelas saja. */
 .table.pilihproyek__tabel th + th,
-.table.pilihproyek__tabel td + td { border-left: 0; }
+.table.pilihproyek__tabel td + td,
+.table.kartudaftar__tabel th + th,
+.table.kartudaftar__tabel td + td { border-left: 0; }
 
 /* Isi tabel PUTIH. Yang tetap redup hanya teks kecil — slug di bawah judul
    dan angka jumlah foto — dan keduanya sudah memasang warnanya sendiri, jadi
    aturan ini tidak menyentuhnya. */
-.table.pilihproyek__tabel td { color: var(--text-strong); }
+.table.pilihproyek__tabel td,
+.table.kartudaftar__tabel td { color: var(--text-strong); }
 
 /* Kekhususan (0,2,2), bukan (0,1,2): `.table--ruled thead th` di berkas ini
    ditulis belakangan dan akan menang kalau ditandingi dengan satu kelas saja.
    Jebakan nomor 6, di tempat baru. */
-.table.pilihproyek__tabel thead th { background: var(--surface-raised); }
+.table.pilihproyek__tabel thead th,
+.table.kartudaftar__tabel thead th { background: var(--surface-raised); }
 
 /* Tema terang bukan pembalikan otomatis (aturan desain nomor 5): di tema
    terang --surface-raised hampir putih, jadi kepala tabelnya hilang di atas
    kartu yang juga putih. Abunya diambil dari --surface-hover, yang memang
    satu-satunya abu yang terbaca di tema itu. */
-:root[data-theme="light"] .table.pilihproyek__tabel thead th { background: var(--surface-hover); }
+:root[data-theme="light"] .table.pilihproyek__tabel thead th,
+:root[data-theme="light"] .table.kartudaftar__tabel thead th { background: var(--surface-hover); }
 
 /* Baris di atas latar hitam: --bg-sunken sebagai warna sentuh jadi tidak
    berarti apa-apa, karena itu warnanya sendiri. */
-.table.pilihproyek__tabel tbody tr:hover { background: var(--surface); }
-.table.pilihproyek__tabel .table__klik:hover td { background: transparent; }
+.table.pilihproyek__tabel tbody tr:hover,
+.table.kartudaftar__tabel tbody tr:hover { background: var(--surface); }
+.table.pilihproyek__tabel .table__klik:hover td,
+.table.kartudaftar__tabel .table__klik:hover td { background: transparent; }
 
 /* Baris dipendekkan atas laporan pemilik: bawaan .table--ruled (11px atas dan
    bawah, ditambah baris kedua) membuat tiap baris ~71px — hampir dua kali
@@ -569,8 +652,10 @@
    berkelas tunggal kalah tanpa satu pun galat — persis jebakan nomor 6 di
    CLAUDE.md, cuma di tabel. Sudah terukur sekali: paddingnya diubah,
    tingginya tidak bergerak sedikit pun. */
-.table.pilihproyek__tabel td { padding: var(--space-2) var(--space-4); }
-.table.pilihproyek__tabel thead th { padding: var(--space-3) var(--space-4); }
+.table.pilihproyek__tabel td,
+.table.kartudaftar__tabel td { padding: var(--space-2) var(--space-4); }
+.table.pilihproyek__tabel thead th,
+.table.kartudaftar__tabel thead th { padding: var(--space-3) var(--space-4); }
 
 /* Baris teksnya juga dirapatkan — padding saja tidak cukup, dua baris teks
    dengan line-height bawaan sudah 46px sendiri. */
@@ -579,7 +664,8 @@
 /* Tombol di kolom Aksi diperkecil. Terukur: dialah yang paling tinggi di
    dalam baris (37,6px) — jadi tinggi baris mengikuti dia, bukan mengikuti
    teksnya. Diperkecil ke 28px supaya teks dua baris yang jadi penentu. */
-.table.pilihproyek__tabel .table__actions .btn {
+.table.pilihproyek__tabel .table__actions .btn,
+.table.kartudaftar__tabel .table__actions .btn {
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
@@ -707,10 +793,16 @@
 
 @media (max-width: 40rem) {
   .pilihproyek { padding: var(--space-4); }
-  .pilihproyek__meta { align-items: stretch; }
+  .pilihproyek__meta,
+  .kartudaftar__meta { align-items: stretch; }
   .pilihproyek__alat,
-  .pilihproyek__hitung { width: 100%; }
+  .pilihproyek__hitung,
+  .kartudaftar__alat,
+  .kartudaftar__hitung { width: 100%; }
   .pilihproyek__baru { flex: 1; justify-content: center; }
+  /* Tombol aksi di bentuk kartu melebar penuh di ponsel, sama seperti
+     "Proyek Baru" di Halaman Proyek. */
+  .kartudaftar__alat > .btn { flex: 1; justify-content: center; }
 }
 
 /* Baris tabel yang seluruhnya bisa diklik. Kursor DAN keadaan fokus wajib
@@ -1321,6 +1413,18 @@
 @media (max-width: 71rem) {
   .topbar__combo { display: none !important; }
   .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
+
+  /* Pendorong tidak punya tanda baca, jadi segmen SESUDAHNYA tidak boleh
+     punya juga: garis miringnya akan berdiri sendirian di seberang ruang
+     kosong — persis bentuk "tercecer" yang diperbaiki di aturan garis miring
+     di atas, cuma pindah lebar.
+
+     Ditulis DI SINI, bukan di dekat aturan garis miringnya, karena selektor
+     tetangga tidak peduli `display`: di layar lebar pendorongnya memang
+     `display:none` tapi ia TETAP saudara di DOM, jadi aturan yang sama di
+     luar media query ikut mematikan garis miring tombol Terbitkan pada
+     1440px. Sudah terukur sekali begitu. */
+  .topbar > .topbar__dorong + *::before { content: none; }
 }
 
 /* Teksnya pergi, tombolnya tinggal. Yang hilang cuma namanya — ikon unggah

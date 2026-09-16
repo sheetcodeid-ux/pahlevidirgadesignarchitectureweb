@@ -126,7 +126,15 @@ const STATUS_DOKUMEN: [string, string][] = [
   ["final", "Final"],
 ];
 
-function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontrak: (nilai: number | null) => void }) {
+/**
+ * Tagihan, nilai kontrak, dan biaya satu proyek.
+ *
+ * Dulu tinggal di halaman "Kerja Internal" yang sudah dibuang. Diekspor
+ * supaya halaman Keuangan bisa memakainya untuk proyek yang sedang dipilih —
+ * TAGIHAN dan NILAI KONTRAK tidak ada duanya di tempat lain, jadi membuang
+ * panel ini berarti membuang satu-satunya cara membuat invoice.
+ */
+export function PanelKeuangan({ proyek, onUbahKontrak }: { proyek: Proyek; onUbahKontrak: (nilai: number | null) => void }) {
   const toast = useToast();
   const [invoice, setInvoice] = useState<Invoice[] | null>(() => bacaCache<Invoice[]>(`invoice:${proyek.id}`));
   const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() => bacaCache<BiayaProyek[]>(`biaya:${proyek.id}`));
@@ -1226,138 +1234,10 @@ function PanelBrief({ projectId }: { projectId: string }) {
   );
 }
 
-function PanelTugas({ projectId }: { projectId: string }) {
-  const toast = useToast();
-  const [tugas, setTugas] = useState<Tugas[] | null>(() => bacaCache<Tugas[]>(`tugasproyek:${projectId}`));
-  const [tim, setTim] = useState<AnggotaTim[]>([]);
-  const [judulBaru, setJudulBaru] = useState("");
-  const [penanggungJawab, setPenanggungJawab] = useState("");
-  const [sibuk, setSibuk] = useState(false);
-
-  function muat() {
-    daftarTugasProyek(projectId).then((d) => { tulisCache(`tugasproyek:${projectId}`, d); setTugas(d); }).catch(() => setTugas((l) => l ?? []));
-  }
-
-  useEffect(() => {
-    muat();
-    daftarTim().then(setTim).catch(() => setTim([]));
-  }, [projectId]);
-
-  async function tambah() {
-    const judul = judulBaru.trim();
-    if (judul.length < 2) return;
-    setSibuk(true);
-    try {
-      await tambahTugas(projectId, { title: judul, assigneeId: penanggungJawab || null });
-      setJudulBaru("");
-      setPenanggungJawab("");
-      muat();
-      toast({ judul: "Tugas ditambahkan", nada: "sukses" });
-    } catch (e) {
-      toast({ judul: "Gagal menambah tugas", keterangan: (e as Error).message, nada: "gagal" });
-    } finally {
-      setSibuk(false);
-    }
-  }
-
-  async function ubahStatusTugas(id: string, status: string) {
-    if (!tugas) return;
-    const sebelum = tugas;
-    setTugas(tugas.map((t) => (t.id === id ? { ...t, status } : t)));
-    try {
-      await ubahTugas(id, { status });
-    } catch (e) {
-      setTugas(sebelum);
-      toast({ judul: "Gagal mengubah status", keterangan: (e as Error).message, nada: "gagal" });
-    }
-  }
-
-  async function hapus(id: string) {
-    if (!tugas) return;
-    try {
-      await hapusTugas(id);
-      setTugas(tugas.filter((t) => t.id !== id));
-    } catch (e) {
-      toast({ judul: "Gagal menghapus tugas", keterangan: (e as Error).message, nada: "gagal" });
-    }
-  }
-
-  if (!tugas) {
-    return <SkeletonKartu ikon="checklist" anak={<SkeletonDaftar jumlah={3} aksi={2} />} />;
-  }
-
-  return (
-    <div className="stack" style={{ gap: "var(--space-5)" }}>
-      <div className="card">
-        <div className="card__body">
-          <div className="spec-grid">
-            <div className="field">
-              <label className="field__label" htmlFor="tug-judul">Tugas baru</label>
-              <input id="tug-judul" className="input" value={judulBaru}
-                onChange={(e) => setJudulBaru(e.target.value)} placeholder="Contoh: Gambar kerja denah" />
-            </div>
-            <div className="field">
-              <label className="field__label" htmlFor="tug-pic">Penanggung jawab</label>
-              <Select
-                id="tug-pic"
-                ariaLabel="Penanggung jawab"
-                value={penanggungJawab || TANPA_PIC}
-                onValueChange={(v) => setPenanggungJawab(v === TANPA_PIC ? "" : v)}
-                options={[
-                  { value: TANPA_PIC, label: "Belum ditentukan" },
-                  ...tim.map((t) => ({ value: t.id, label: t.name })),
-                ]}
-              />
-            </div>
-          </div>
-          <div className="row row--end" style={{ marginTop: "var(--space-4)" }}>
-            <button type="button" className="btn btn--primary" disabled={judulBaru.trim().length < 2 || sibuk} onClick={tambah}>
-              <Icon name="plus" size={15} />Tambah tugas
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {tugas.length === 0 ? (
-        <div className="empty empty--sm buat-kartu">
-          <span className="icon-tile"><Icon name="check" size={20} /></span>
-          <span className="t-subheading">Belum ada tugas</span>
-          <p className="t-muted">Tugas yang ditambahkan di sini juga muncul di List Kerjaan.</p>
-        </div>
-      ) : (
-        <ul className="stack" style={{ gap: "var(--space-2)", listStyle: "none", padding: 0 }}>
-          {tugas.map((t) => (
-            <li key={t.id} className="item item--bordered">
-              <span className="item__text">
-                <span className="item__title">{t.title}</span>
-                <span className="item__desc">{t.assigneeName ?? "Belum ditentukan"}</span>
-              </span>
-              <Select
-                ringkas
-                ariaLabel={`Ubah status ${t.title}`}
-                value={t.status}
-                onValueChange={(v) => ubahStatusTugas(t.id, v)}
-                options={STATUS_TUGAS.map(([value, label]) => ({ value, label }))}
-              />
-              <AlertDialog
-                destructive
-                title={`Hapus ${t.title}?`}
-                description="Tugas ini akan dihapus dari daftar list kerjaan."
-                confirmLabel="Ya, hapus"
-                onConfirm={() => hapus(t.id)}
-                trigger={
-                  <button type="button" className="btn btn--ghost btn--icon btn--hapus" aria-label={`Hapus ${t.title}`}>
-                    <Icon name="trash" size={15} />
-                  </button>
-                }
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+/* PanelTugas DIBUANG bersama "Kerja Internal": tugas lintas proyek sudah
+   diurus TaskBoard di halaman Tugas, dan menyaringnya ke satu proyek adalah
+   saringan, bukan halaman tersendiri. Dibiarkan sebagai fungsi tak terpakai
+   akan jadi salinan kedua yang menyimpang diam-diam. */
 
 function PanelProgres({ projectId }: { projectId: string }) {
   const toast = useToast();
@@ -1843,7 +1723,7 @@ function PilihProyek({ onPilih }: { onPilih: (id: string) => void }) {
   );
 }
 
-export type HalamanProyek = "publik" | "klien" | "internal";
+export type HalamanProyek = "publik" | "klien";
 
 function Isi({ halaman }: { halaman: HalamanProyek }) {
   const toast = useToast();
@@ -2443,74 +2323,35 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
     );
   }
 
-  return (
-    <div className="buatpage">
-      <div className="buatpage__utama">
-        <section className="buat-kartu">
-          <h2 className="buat-kartu__judul">Tahap pipeline</h2>
-          <p className="t-muted" style={{ margin: 0, fontSize: "var(--text-sm)" }}>
-            Alur kerja internal studio — beda dari status terbit di Halaman Publik.
-          </p>
-          <div className="segmented segmented--block segmented--tebal" role="group" aria-label="Tahap pipeline">
-            {PIPELINE.map(([tahap, label]) => (
-              <button
-                key={tahap}
-                type="button"
-                className="segmented__opt"
-                aria-pressed={nilai("pipelineStage") === tahap}
-                onClick={async () => {
-                  const sebelum = nilai("pipelineStage");
-                  set("pipelineStage" as keyof Proyek, tahap as never);
-                  try {
-                    await simpanProyek(asli.id, { pipelineStage: tahap });
-                    setAsli((a) => (a ? { ...a, pipelineStage: tahap } : a));
-                  } catch (e) {
-                    set("pipelineStage" as keyof Proyek, sebelum as never);
-                    toast({ judul: "Gagal mengubah tahap", keterangan: (e as Error).message, nada: "gagal" });
-                  }
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </section>
+  /* Halaman "Kerja Internal" DIBUANG atas permintaan pemilik: ia tidak punya
+     isi miliknya sendiri, melainkan potongan dari dua halaman lain yang
+     disaring ke satu proyek. Akibatnya tiap angka biaya dan tiap tugas punya
+     DUA pintu masuk, tanpa ada yang memberi tahu bahwa keduanya benda yang
+     sama.
 
-        <Tabs
-          items={[
-            { id: "tugas", label: "Tugas", content: <PanelTugas projectId={asli.id} /> },
-            {
-              id: "keuangan",
-              label: "Keuangan",
-              content: (
-                <PanelKeuangan
-                  proyek={asli}
-                  onUbahKontrak={(v) => setAsli((a) => (a ? { ...a, contractValue: v } : a))}
-                />
-              ),
-            },
-          ]}
-        />
-      </div>
-      {sisi(
-        <p className="t-muted buat-aksi__catatan">
-          Tahap, tugas, dan angka keuangan tersimpan seketika saat diubah.
-        </p>,
-      )}
-    </div>
-  );
+     Ketiga isinya tidak hilang, cuma pindah ke rumahnya masing-masing:
+       Tahap pipeline — kolom yang bisa diubah di tabel Semua Proyek
+       Tugas          — halaman Tugas
+       Keuangan       — Keuangan → Kas & Biaya, dengan dropdown proyek
+
+     Tipe `HalamanProyek` tinggal dua nilai, jadi cabang ini tidak pernah
+     tercapai lagi. Baris ini menjaga fungsinya tetap punya nilai kembali. */
+  return null;
 }
 
 /**
- * Satu panel, tiga halaman. Pembagiannya menurut SIAPA yang melihat hasilnya:
+ * Satu panel, DUA halaman. Pembagiannya menurut SIAPA yang melihat hasilnya:
  *
- *   publik   — Detail, Galeri, SEO, status terbit: yang dilihat pengunjung situs
- *   klien    — Brief, Dokumen, Progres: yang dilihat klien proyek ini
- *   internal — Tahap pipeline, Tugas, Keuangan: yang hanya dilihat studio
+ *   publik — Detail, Galeri, SEO, status terbit: yang dilihat pengunjung situs
+ *   klien  — Brief, Dokumen, Progres: yang dilihat klien proyek ini
  *
  * Bukan dibagi menurut jenis datanya, karena pertanyaan yang benar-benar
  * muncul saat mengubah sesuatu adalah "kalau saya ubah ini, siapa yang
  * lihat?" — dan pembagian ini yang menjawabnya tanpa perlu diingat.
+ *
+ * Yang ketiga, "internal", dibuang: isinya bukan milik satu proyek melainkan
+ * potongan dari halaman lintas-proyek, dan menyaringnya ke satu proyek
+ * membuat tiap angka punya dua pintu masuk.
  */
 export function ProyekPanel({ halaman }: { halaman: HalamanProyek }) {
   return (

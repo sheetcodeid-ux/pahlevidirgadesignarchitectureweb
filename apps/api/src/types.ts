@@ -545,15 +545,35 @@ export interface ClientLogoInput {
   sortOrder?: number;
 }
 
+/**
+ * Empat jenis, diturunkan dari §5.2 dan §5.3 dokumen strategi. Yang
+ * menentukan siapa muncul di halaman Gaji dan siapa dibayar per proyek.
+ */
+export type MemberKind = "partner" | "inti" | "proyek" | "staf";
+
+export const VALID_MEMBER_KIND: ReadonlySet<string> = new Set([
+  "partner", "inti", "proyek", "staf",
+]);
+
 export interface TeamMember {
   id: string;
   name: string;
   role?: string | null;
+  kind: MemberKind;
+  /** Tarif acuan, bukan nominal yang mengikat. Yang dibayar diketik per proyek. */
+  rate?: number | null;
+  phone?: string | null;
+  /** Freelancer yang tidak dipakai lagi disembunyikan, bukan dihapus. */
+  active: boolean;
 }
 
 export interface TeamMemberInput {
   name?: string;
   role?: string | null;
+  kind?: string;
+  rate?: number | null;
+  phone?: string | null;
+  active?: boolean;
 }
 
 export interface ProjectTask {
@@ -605,6 +625,15 @@ export interface ProjectCost {
   amount: number;
   /** Tanggal biaya benar-benar terjadi (YYYY-MM-DD), bukan kapan diketik. */
   incurredOn: string;
+  /**
+   * Siapa yang dibayar. BOLEH KOSONG: biaya operasional memang bukan milik
+   * siapa pun, dan baris lama yang dicatat sebelum kolom ini ada tidak punya
+   * nama. Halaman Fee menghitung yang tertaut saja.
+   */
+  teamMemberId?: string | null;
+  teamMemberName?: string | null;
+  /** Ikut dibawa oleh daftar lintas proyek supaya tabelnya tidak perlu join kedua. */
+  projectTitle?: string;
 }
 
 export interface ProjectCostInput {
@@ -612,6 +641,79 @@ export interface ProjectCostInput {
   category?: string;
   amount?: number;
   incurredOn?: string;
+  teamMemberId?: string | null;
+  /** Dipakai halaman Kas & Biaya: satu pintu, proyeknya dipilih dari dropdown. */
+  projectId?: string;
+}
+
+/* ── Gaji dan fee ─────────────────────────────────────────────────────────
+ *
+ * Satu aturan yang membuat keduanya tidak mungkin bentrok: SATU NOMINAL HANYA
+ * BOLEH DIKETIK DI SATU TEMPAT. Bayaran yang lahir dari proyek diketik sebagai
+ * biaya proyek; gaji bulanan tetap diketik di payroll. Baris fee di halaman
+ * Gaji DITURUNKAN dari biaya proyek — tidak pernah diketik ulang di sana.
+ */
+
+export interface PayrollEntry {
+  id: string;
+  teamMemberId: string;
+  teamMemberName?: string;
+  /** Tanggal 1 bulan yang bersangkutan (YYYY-MM-01). */
+  period: string;
+  amount: number;
+  /** Kosong = belum dibayar. Tidak ada kolom status terpisah yang bisa berselisih. */
+  paidOn?: string | null;
+  note?: string | null;
+}
+
+export interface PayrollInput {
+  teamMemberId?: string;
+  period?: string;
+  amount?: number;
+  paidOn?: string | null;
+  note?: string | null;
+}
+
+/** Satu orang dalam satu bulan: gaji yang diketik + fee yang dijumlahkan. */
+export interface PayrollMonthRow {
+  teamMemberId: string;
+  name: string;
+  kind: MemberKind;
+  role?: string | null;
+  /** Baris gaji bulanan, kalau ada. Inilah yang diketik di halaman Gaji. */
+  salaryId?: string | null;
+  salaryAmount?: number | null;
+  salaryPaidOn?: string | null;
+  salaryNote?: string | null;
+  /** Dijumlahkan dari biaya proyek bulan itu. Dibaca, bukan ditulis. */
+  feeAmount: number;
+  feeCount: number;
+  total: number;
+}
+
+/** Fee satu proyek, dipecah per orang. */
+export interface FeeProject {
+  projectId: string;
+  projectTitle: string;
+  contractValue: number | null;
+  /** Jumlah biaya yang TERTAUT ke orang. */
+  feeTotal: number;
+  /** Biaya kategori freelancer/prinsipal yang belum punya nama. */
+  feeTanpaNama: number;
+  /** feeTotal terhadap nilai kontrak, null kalau kontraknya belum diisi. */
+  feeShare: number | null;
+  orang: { teamMemberId: string; name: string; kind: MemberKind; amount: number }[];
+}
+
+/** Rekap satu orang lintas proyek dalam satu rentang tanggal. */
+export interface FeePerson {
+  teamMemberId: string;
+  name: string;
+  kind: MemberKind;
+  role?: string | null;
+  total: number;
+  projectCount: number;
+  lastOn: string | null;
 }
 
 export interface FinanceOverviewRow {

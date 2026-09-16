@@ -1375,4 +1375,147 @@ begin
 end;
 $$;
 
+-- Fee proyek per orang, dan gaji bulanan -----------------------------------
+--
+-- Dua halaman baru yang diminta pemilik berdiri di atas tiga perubahan skema,
+-- dan ketiganya menyangkut uang. Yang diuji di sini bukan cuma "staf bisa,
+-- anon tidak" melainkan juga penjaga yang membuat angkanya mustahil ganda.
+
+do $$
+begin
+  perform pg_temp.jadi_anon();
+
+  begin
+    perform count(*) from public.payroll;
+    raise exception 'GAGAL: anon berhasil membaca gaji';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca gaji';
+  end;
+
+  begin
+    insert into public.payroll (team_member_id, period, amount)
+    select id, date_trunc('month', current_date)::date, 1000000
+    from public.team_members limit 1;
+    raise exception 'GAGAL: anon berhasil menulis gaji';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis gaji';
+  end;
+
+  reset role;
+end;
+$$;
+
+-- Non-staf yang PUNYA akun tetap tidak melihat apa pun. Token Supabase yang
+-- sah cuma membuktikan "punya akun", bukan "berhak melihat gaji orang".
+do $$
+declare terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+  select count(*) into terlihat from public.payroll;
+  perform pg_temp.tolak(terlihat <> 0, 'non-staf tidak melihat satu pun baris gaji');
+  reset role;
+end;
+$$;
+
+do $$
+declare tid uuid; terlihat int; bulan date := date_trunc('month', current_date)::date;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select id into tid from public.team_members where name = 'Rian Saputra';
+
+  insert into public.payroll (team_member_id, period, amount)
+  values (tid, bulan, 6000000);
+
+  select count(*) into terlihat from public.payroll where team_member_id = tid;
+  perform pg_temp.tolak(terlihat <> 1, 'staf bisa mencatat gaji bulanan');
+
+  -- Satu orang, satu baris per bulan. Tanpa penjaga ini, gaji yang diketik
+  -- dua kali karena ragu menggandakan beban studio diam-diam.
+  begin
+    insert into public.payroll (team_member_id, period, amount)
+    values (tid, bulan, 6000000);
+    raise exception 'GAGAL: gaji orang yang sama di bulan yang sama diterima dua kali';
+  exception when unique_violation then
+    raise notice 'ok: satu orang hanya bisa punya satu baris gaji per bulan';
+  end;
+
+  -- Periode wajib tanggal 1. Dua baris untuk bulan yang sama dengan tanggal
+  -- berbeda akan lolos unique constraint dan menggandakan bebannya.
+  begin
+    insert into public.payroll (team_member_id, period, amount)
+    values (tid, (bulan + 15), 6000000);
+    raise exception 'GAGAL: periode gaji di tengah bulan diterima';
+  exception when check_violation then
+    raise notice 'ok: periode gaji wajib tanggal 1';
+  end;
+
+  begin
+    insert into public.payroll (team_member_id, period, amount)
+    values (tid, (bulan - interval '1 month')::date, 0);
+    raise exception 'GAGAL: gaji nol diterima';
+  exception when check_violation then
+    raise notice 'ok: nominal gaji harus lebih dari nol';
+  end;
+
+  reset role;
+end;
+$$;
+
+-- Biaya proyek tahu siapa yang dibayar -------------------------------------
+
+do $$
+declare tid uuid; pid uuid; bid uuid; sisa int; nama uuid;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select id into pid from public.projects where slug = 'tes-published';
+  insert into public.team_members (name, role, kind, rate)
+  values ('Freelancer Tes', 'Drafter', 'inti', 350000) returning id into tid;
+
+  insert into public.project_costs (project_id, label, category, amount, team_member_id)
+  values (pid, 'Fee gambar kerja', 'freelancer', 4000000, tid) returning id into bid;
+
+  select team_member_id into nama from public.project_costs where id = bid;
+  perform pg_temp.tolak(nama is distinct from tid, 'biaya proyek bisa ditautkan ke orang');
+
+  -- Bawaan `kind` adalah 'proyek': freelancer yang baru didaftarkan tanpa
+  -- keterangan apa pun tidak boleh diam-diam jadi partner.
+  perform pg_temp.tolak(
+    (select kind from public.team_members where name = 'Rian Saputra') <> 'proyek',
+    'jenis anggota tim bawaannya project freelancer');
+
+  -- Menghapus orangnya TIDAK boleh ikut menghapus biayanya. Uangnya tetap
+  -- keluar; yang hilang cuma namanya.
+  delete from public.team_members where id = tid;
+
+  select count(*) into sisa from public.project_costs where id = bid;
+  perform pg_temp.tolak(sisa <> 1, 'menghapus anggota tim tidak menghapus biaya yang sudah tercatat');
+
+  select team_member_id into nama from public.project_costs where id = bid;
+  perform pg_temp.tolak(nama is not null, 'biaya kehilangan nama saat orangnya dihapus, bukan ikut terhapus');
+
+  reset role;
+end;
+$$;
+
+-- Gaji TIDAK boleh ikut terhapus bersama orangnya: riwayat pembayaran adalah
+-- hal terakhir yang boleh hilang, dan `on delete restrict` yang menahannya.
+do $$
+declare tid uuid;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  select id into tid from public.team_members where name = 'Rian Saputra';
+
+  begin
+    delete from public.team_members where id = tid;
+    raise exception 'GAGAL: orang yang punya riwayat gaji bisa dihapus';
+  exception when foreign_key_violation then
+    raise notice 'ok: orang yang punya riwayat gaji tidak bisa dihapus';
+  end;
+
+  reset role;
+end;
+$$;
+
 rollback;
