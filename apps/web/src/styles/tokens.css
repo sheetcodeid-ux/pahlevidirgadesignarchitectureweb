@@ -70,14 +70,18 @@
   --space-7: 3rem;
   --space-8: 4rem;
 
-  --sidebar-w: 17rem;
+  /* 224px, bukan 192px milik Coinest — dan bedanya diukur, bukan dikira.
+     Label nav Coinest satu kata Inggris ("Payments", "Cards"); label di sini
+     frasa Indonesia, dan yang terpanjang "Sebelum & Sesudah" butuh 126px
+     pada Urbanist SemiBold 14px sementara 192px cuma menyediakan 102px.
+     Empat label terpotong terukur. Anatominya tetap Coinest — radius 24px,
+     padding 16/12/8, ikon 24, jarak 12 — yang bertambah cuma lebarnya. */
+  --sidebar-w: 14rem;
   /* Lebar rel sempit: cukup untuk satu ikon 18px yang berdiri sendiri. */
-  --rel-w: 4.5rem;
-  /* 3,25rem (52px). Referensi pemilik jauh lebih padat dari 4,25rem yang
-     dipakai sebelumnya: bilahnya kira-kira empat kali tinggi teksnya, bukan
-     lima. Token ini juga dipakai sebagai offset sticky di beberapa tempat,
-     jadi mengubahnya di sini menggeser semuanya sekaligus. */
-  --topbar-h: 3.25rem;
+  --rel-w: 4.25rem;
+  /* 60px. Header Coinest setinggi 38px isinya, duduk 22px dari tepi atas
+     kanvas — jadi pita atasnya 60px, bukan 52px. */
+  --topbar-h: 3.75rem;
   --measure: 68ch;
 
   /* --- Gerak ------------------------------------------------------------ */

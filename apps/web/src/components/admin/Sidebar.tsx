@@ -340,15 +340,23 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
         </nav>
 
         <div className="sidebar__foot">
-          <a href="/" className="sidebar__site">
-            <span className="sidebar__site-text">
-              <span className="t-label">Situs publik</span>
-              <span className="sidebar__site-name geser">
-                <span className="geser__isi">pahlevidirgaarchitecture.com</span>
-              </span>
-            </span>
-            <Icon name="external" size={16} />
-          </a>
+          {/* Bentuk banner "Get Pro" Coinest: bidang hijau tua, satu kalimat
+              pendek, lalu tombol mint di bawahnya. Isinya diganti sesuai
+              bisnis ini — pintu ke situs yang dikelola panel ini, bukan
+              ajakan berlangganan.
+
+              Dua baris, bukan satu baris berisi URL: "pahlevidirgaarchitecture
+              .com" butuh 158px sementara kolomnya 134px, jadi ia SELALU
+              terpotong. Kalimat yang dipatah sendiri tidak pernah terpotong. */}
+          <div className="sidebar__site">
+            <p className="sidebar__site-teks">
+              Lihat hasilnya di situs yang dibaca klien.
+            </p>
+            <a href="/" className="sidebar__site-btn">
+              <Icon name="external" size={15} />
+              Buka situs
+            </a>
+          </div>
 
           {/* Tombolnya di kaki, bukan di kepala: di kepala ia bersaing dengan
               logo dan nama studio, dan yang paling sering dilihat justru
