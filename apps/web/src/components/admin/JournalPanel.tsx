@@ -306,6 +306,7 @@ function Isi() {
       labelCari="Cari tulisan"
       satuan="tulisan"
       barisSkeleton={jumlahDiingat("jurnal", 5)}
+      bentuk="kartu"
       aksi={
         <Sheet
           title="Tulisan baru"
@@ -335,15 +336,15 @@ const KOLOM_TIRUAN = kolomSkeleton<TulisanAdmin>([
   { judul: "Terbit", kelas: "table__num", lebar: "6rem", render: () => null },
   { judul: "Status", lebar: "5rem", render: () => null },
   { judul: "Aksi", kelas: "table__actions", lebar: "3.5rem", render: () => null },
-]);
+], "kartu");
 
 export function JournalPanel() {
   return (
     <RequireAuth
       skeleton={
-        <div className="listpage"><div className="listpage__pad">
+        <div className="kartudaftar">
           <SkeletonTabel baris={jumlahDiingat("jurnal", 5)} kolom={KOLOM_TIRUAN} />
-        </div></div>
+        </div>
       }
     >
       <ToastProvider><Isi /></ToastProvider>

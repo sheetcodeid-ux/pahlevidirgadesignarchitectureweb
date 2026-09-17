@@ -48,6 +48,10 @@ const NAV: NavItem[] = [
      ini cuma membacanya dari sudut lain. Menaruhnya jauh dari sumbernya
      membuat keduanya terbaca sebagai dua sistem yang harus dicocokkan. */
   { label: "Fee Proyek", href: "/admin/fee", icon: "cash", group: "Utama" },
+  /* Gaji tepat di bawah Fee: keduanya menjawab "berapa yang keluar untuk
+     orang", dan bedanya cuma dari mana uangnya lahir — proyek atau bulan.
+     Berjauhan, keduanya terbaca sebagai dua pembukuan yang harus dicocokkan. */
+  { label: "Gaji", href: "/admin/gaji", icon: "team", group: "Utama" },
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
   { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },
   { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Utama" },

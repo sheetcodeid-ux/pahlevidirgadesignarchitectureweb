@@ -3952,3 +3952,29 @@
   .spv-waktu__thn { position: static; width: auto; text-align: left; }
   .spv-waktu .spv__baris { padding-left: var(--space-4); }
 }
+
+
+/* --- Halaman Gaji --------------------------------------------------------- */
+
+/* Lencana status yang sekaligus tombol: satu klik menandai gaji sudah
+   dibayar, dan satu klik lagi membatalkannya.
+
+   Aturan ini bukan kosmetik, dan keduanya terukur — bukan terlihat:
+     * <button> TIDAK mewarisi font halaman. Tanpa `font: inherit` lencana
+       ini satu-satunya teks ber-Arial di seluruh panel, dan di latar gelap
+       itu tidak kelihatan sampai diukur.
+     * kursornya `default`, jadi satu-satunya aksi satu-klik di tabel ini
+       tidak terbaca sebagai bisa ditekan sama sekali.
+   Cincin fokus wajib ikut: ia bisa dicapai keyboard, dan tanpa penanda
+   yang memakai keyboard tidak tahu sedang di baris mana. */
+.payroll__status {
+  font: inherit;
+  font-size: var(--text-2xs);
+  cursor: pointer;
+}
+.payroll__status:hover { border-color: currentColor; }
+.payroll__status:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
+/* Pemilih bulan berdiri sendiri di atas tabel, jadi lebarnya dibatasi —
+   dibiarkan melar ia jadi isian selebar halaman untuk tujuh karakter. */
+.payroll__bulan { max-width: 14rem; }
