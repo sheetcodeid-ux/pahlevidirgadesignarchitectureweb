@@ -34,10 +34,7 @@ html {
 
 body {
   margin: 0;
-  /* Warna dasar halaman pindah ke <html> — kalau ia tetap di <body>, latar
-     body menutupi pseudo-elemen ber-z-index negatif miliknya sendiri dan
-     kisi titiknya hilang sama sekali. Sudah menggigit di situs publik. */
-  background: transparent;
+  background: var(--bg);
   color: var(--text-body);
   font-family: var(--font-sans);
   font-size: var(--text-base);
@@ -46,30 +43,10 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Kisi titik 8px — tanah yang sama dengan situs publik, supaya bidang kosong
-   di antara kartu punya tekstur alih-alih jadi bidang rata.
-
-   Satu lapisan TETAP seukuran layar, bukan latar body: sebagai latar body ia
-   harus dilukis untuk seluruh tinggi halaman lalu ditimpa habis oleh kartu
-   yang buram, dan tiap petak yang dilukis ulang saat digulir ikut menghitung
-   ulang kisinya. Sebagai lapisan `fixed` ia dilukis SEKALI lalu cuma ditempel
-   compositor. Titiknya jadi diam terhadap layar; pada kisi 8px yang tiap
-   titiknya serupa, itu tidak terlihat. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: radial-gradient(var(--border) 1px, transparent 1px);
-  background-size: 8px 8px;
-}
-
-/* Mode cetak WAJIB mematikannya: latar putih tidak lagi menutupinya, jadi
-   kisi titik ikut tercetak sebagai raster abu di seluruh kertas kuitansi. */
-@media print {
-  body::before { display: none; }
-}
+/* Coinest tidak memakai tekstur latar sama sekali — kedalamannya dibawa oleh
+   kartu putih di atas bidang abu #FBFBFC. Kisi titik yang dipasang untuk
+   menyamai landing page karena itu dibuang dari panel; ia tetap hidup di
+   situs publik, yang memang memakainya. */
 
 /* Satu keluarga untuk semuanya: Inter, sama dengan situs publik. Bobot 600
    dengan kerapatan negatif — lihat catatan di tokens.css. */

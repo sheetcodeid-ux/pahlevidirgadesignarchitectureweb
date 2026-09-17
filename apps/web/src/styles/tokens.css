@@ -9,68 +9,55 @@
 
 :root {
   /* --- Tipografi ------------------------------------------------------- */
-  /* INTER untuk judul DAN tubuh — sama persis dengan situs publik.
+  /* URBANIST — font yang dipakai file Figma "Coinest", diambil dari variable
+     definition-nya, bukan ditebak dari bentuk hurufnya:
+     Font(family: "Urbanist", weight 400/500/600/700).
 
-     Ini membalik susunan Arvo + Maven Pro yang dipilih pemilik sendiri lewat
-     empat tangkapan layar DevTools, atas permintaan eksplisitnya: panel admin
-     harus seragam dengan landing page. Situs publik sudah pindah ke Inter
-     lebih dulu; selama panel masih Arvo, dua bagian dari satu produk memakai
-     dua suara yang berbeda, dan itu terlihat langsung begitu pemilik
-     berpindah dari situsnya ke /admin.
+     Ini menggantikan Inter yang baru dipasang sebelumnya untuk menyamai
+     landing page. Keputusan pemilik: panel mengikuti Coinest.
 
-     Riwayat penolakan yang masih berlaku kalau suatu saat diganti lagi:
-     Newsreader ditolak, Geist ditolak untuk UI. Arvo tidak ditolak — ia
-     digantikan karena alasan keseragaman, bukan karena tidak disukai.
-
-     --font-mono menunjuk Inter juga: angka berjajar dijaga oleh
-     font-variant-numeric: tabular-nums, dan Inter PUNYA fitur itu — beda
-     dari Maven Pro yang tidak punya `tnum` sama sekali. Jadi kolom rupiah
-     sekarang benar-benar sejajar, bukan kebetulan sejajar. */
-  --font-display: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-
-  /* Monospace SUNGGUHAN, khusus permukaan yang memang kode: nama token di
-     halaman UI Component dan tuts pintasan. */
+     Tersedia di Google Fonts, jadi dimuat dengan cara yang sama persis
+     seperti Inter — tidak ada berkas yang perlu diunduh dari Figma. */
+  --font-display: "Urbanist", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Urbanist", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Urbanist", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-kode: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  --text-2xs: 0.6875rem;
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.9375rem;
-  --text-md: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.75rem;
-  --text-3xl: clamp(1.75rem, 3.4vw, 2.375rem);
-  --text-4xl: clamp(2.25rem, 5vw, 3.375rem);
+  /* Skala Coinest apa adanya: 10 / 11 / 12 / 14 / 16 / 20 / 22 / 24 px.
+     Dinyatakan dalam rem supaya setelan ukuran huruf peramban tetap dihormati. */
+  --text-2xs: 0.625rem;   /* 10 */
+  --text-xs: 0.6875rem;   /* 11 */
+  --text-sm: 0.75rem;     /* 12 */
+  --text-base: 0.875rem;  /* 14 — ukuran tubuh Coinest */
+  --text-md: 1rem;        /* 16 */
+  --text-lg: 1.25rem;     /* 20 */
+  --text-xl: 1.375rem;    /* 22 */
+  --text-2xl: 1.5rem;     /* 24 */
+  --text-3xl: 2rem;
+  --text-4xl: clamp(2rem, 4vw, 2.75rem);
 
-  --tracking-label: 0.18em;
+  --tracking-label: 0.08em;
   --tracking-tight: -0.015em;
-  /* -0,022em, angka yang dipakai situs publik. Inter grotesk terbaca renggang
-     di ukuran besar pada kerapatan nol; nol itu milik Arvo slab, yang
-     hurufnya justru bersinggungan kalau dirapatkan. */
-  --tracking-judul: -0.022em;
+  /* Nol. Variable Coinest menyebut letterSpacing: 0 di SETIAP gaya teks —
+     tidak ada satu pun yang dirapatkan. Urbanist geometris dan sudah rapat
+     pada bobot tebal; merapatkannya lagi membuat judul saling bersinggungan. */
+  --tracking-judul: 0em;
 
   /* --- Radius ----------------------------------------------------------- */
-  /* Aturan situs publik, dibawa apa adanya: WADAH TIDAK PERNAH MELENGKUNG.
-     Radius hanya untuk kontrol — tombol, isian, pil, lencana.
+  /* Dihitung dari kode acuan Coinest, bukan dikira-kira: radius yang benar-
+     benar dipakai di frame Element adalah 12px (9 kali, paling banyak untuk
+     WADAH), 32px (7 kali, untuk pil), lalu 6/8/10/20/24/28/40.
 
-     Itu satu kalimat, tapi ia yang paling mengubah wajah panel: kartu,
-     tabel, dialog, dan popover semuanya kehilangan lengkungnya dan jadi
-     siku, persis seperti sel-sel di landing page. Nama tokennya sengaja
-     TIDAK diubah supaya 120-an pemakaian di sembilan stylesheet ikut
-     berpindah tanpa disentuh satu per satu — yang berubah nilainya. */
-  --radius-xs: 6px;   /* kontrol kecil */
-  --radius-sm: 6px;   /* kontrol */
-  --radius-md: 0;     /* wadah */
-  --radius-lg: 0;     /* wadah */
-  /* Satu-satunya wadah yang melengkung: panel terluar halaman, sama seperti
-     pita panel di beranda (--panel-r di publik.css). */
-  --radius-xl: 18px;
-  /* Tetap 999px, dan tetap dipakai — tapi HANYA untuk yang memang bundar:
-     rel bar kemajuan, ibu jari batang gulir, titik status, avatar. Pil yang
-     sebenarnya tombol atau chip sudah dipindah ke --radius-sm. */
+     Jadi wadah MELENGKUNG lagi — kebalikan dari siku yang dipasang di
+     putaran sebelumnya untuk menyamai landing page. Ini konsekuensi langsung
+     dari keputusan memakai sistem Coinest. */
+  --radius-xs: 6px;
+  --radius-sm: 8px;    /* kontrol kecil */
+  --radius-md: 12px;   /* wadah — radius utama Coinest */
+  --radius-lg: 12px;   /* kartu */
+  --radius-xl: 24px;   /* panel besar */
+  /* 32px pada elemen setinggi 32-40px sudah jadi pil; dibuat pil sungguhan
+     supaya tingginya boleh berubah tanpa sudutnya ikut meleset. */
   --radius-pill: 999px;
 
   /* --- Spasi ------------------------------------------------------------ */
@@ -103,190 +90,173 @@
   --dur: 180ms;
   --dur-slow: 420ms;
 
-  /* --- Warna: tema GELAP (bawaan) --------------------------------------- */
-  /* Palet zinc + teal, diambil PERSIS dari :root milik publik.css supaya dua
-     bagian situs ini benar-benar satu benda, bukan dua yang mirip.
+  /* --- Warna: tema TERANG (bawaan) -------------------------------------- */
+  /* Palet Coinest, diambil dari variable definition file Figma-nya — bukan
+     dipetik dari tangkapan layar:
 
-       --kanvas #18181B  -> --surface
-       --gelap  #09090B  -> --bg
-       --sel    #27272A  -> --surface-hover / --border
-       --sel-2  #3F3F46  -> --border-strong
-       --aksen  #2DD4BF  -> --brand / --action
+       Green-Dark  #1E4841   Green-Light #BBF49C   Green-BG/Subtle #ECF4E9
+       Black       #242E2C   White       #FBFBFC
+       Gray-30     #6B7271   Gray-20     #BCBEBD   Gray-10 #EFF0F0
+       Gray-Line   #E5E6E6
+       Red         #F73541   Red Light   #FDCED1   Yellow  #F2B007
 
-     PERUBAHAN PALING BESAR: aksen panel sekarang TEAL, bukan putih-dan-merah.
-     Tanda merek di situs publik memang teal (lihat svg di Header.astro), jadi
-     "DPA" merah di panel selama ini justru satu-satunya tempat merah dipakai
-     sebagai identitas. Aturan warna lama berbunyi "merah = brand dan
-     destruktif"; sekarang jadi lebih tajam: TEAL = merek dan aksi, MERAH =
-     destruktif saja. Itulah sebabnya --danger lahir di bawah — tanpanya,
-     tombol Hapus ikut jadi teal dan berhenti berarti apa-apa. */
-  --bg: #09090B;
-  --bg-sunken: #09090B;
-  --surface: #18181B;
-  --surface-raised: #1C1C20;
-  --surface-hover: #27272A;
+     Coinest adalah design TERANG — tidak punya varian gelap sama sekali.
+     Karena itu terang yang jadi bawaan di sini, kebalikan dari sebelumnya.
+     Tema gelapnya diturunkan (lihat blok di bawah), bukan disalin, dan itu
+     memang tambahan kita — bukan bagian dari Coinest.
 
-  --border: #27272A;
-  --border-strong: #3F3F46;
-
-  /* Isian form memakai warna paling gelap, sama seperti .isian di situs
-     publik: bidang yang bisa diketik duduk LEBIH DALAM dari kartunya. */
-  --field: #09090B;
-  --tray: #27272A;
-
-  --text-strong: #FFFFFF;
-  --text-body: #E4E4E7;
-  --text-muted: #A1A1AA;
-  --text-faint: #71717A;
-
-  /* Aksi utama = teal, sama dengan .btn--isi di situs publik. */
-  --action: #2DD4BF;
-  --action-ink: #18181B;
-  --action-hover: #5EEAD4;
-  --action-hover-ink: #18181B;
-  --action-tekan: #14B8A6;
-  /* Bayangan keras di belakang tombol yang terangkat. Teal gelap, bukan
-     putih: putih di belakang tombol teal terbaca sebagai kilau, bukan
-     sebagai benda yang naik. */
-  --action-hover-shadow: #0F766E;
-
-  /* Merek — teal, dan ia yang mewarnai tanda DPA, item menu aktif, pilihan
-     yang tercentang, serta tautan yang disentuh. */
-  --brand: #2DD4BF;
-  --brand-ink: #18181B;
-  --brand-soft: #113230;
-  --brand-line: #1C5E57;
-  /* Isi pekat untuk garis fokus isian, sama dengan --isi di situs publik. */
-  --brand-isi: #0D9488;
-
-  /* DESTRUKTIF — token baru. Sebelumnya tombol Hapus, angka minus, dan
-     status "belum dibayar" semuanya meminjam --brand, karena --brand memang
-     merah. Begitu merek jadi teal, semuanya harus punya warnanya sendiri
-     atau berhenti berarti "hati-hati". Nilainya --merah milik situs publik. */
-  --danger: #F87171;
-  --danger-ink: #18181B;
-  --danger-soft: #2A1515;
-  --danger-line: #7F1D1D;
-
-  --upgrade: #A78BFA;
-  --upgrade-ink: #18181B;
-  --upgrade-soft: #1E1B2E;
-
-  --warn: #FBBF24;
-  --warn-soft: #241C09;
-  --warn-line: #78500D;
-
-  --success: #34D399;
-  --success-ink: #18181B;
-  --success-soft: #0D2A20;
-
-  --info: #60A5FA;
-  /* Aksen SITUS PUBLIK di dalam `.situs-pratinjau`. Sekarang nilainya SAMA
-     dengan --brand — dan itu memang intinya: kotak pratinjau tidak lagi
-     perlu warna sendiri, karena panelnya sudah memakai warna situs. Token
-     ini dipertahankan supaya pemakaiannya tidak perlu disentuh. */
-  --situs-aksen: #2DD4BF;
-  --info-soft: #0E1A2E;
-
-  /* Cincin fokus: hijau-teal terang, sama dengan --cincin di situs publik.
-     Sebelumnya putih dengan halo merah; putih masih benar di atas hitam
-     pekat, tapi begitu aksen jadi teal, cincin putih terbaca sebagai benda
-     asing di antara kontrol yang semuanya bersentuhan teal. */
-  --focus: #34D399;
-  --focus-halo: rgba(45, 212, 191, 0.32);
-
-  /* Situs publik tidak memakai bayangan sama sekali — kedalaman di sana
-     dibawa oleh garis dan bidang, bukan oleh blur. Yang tersisa di sini cuma
-     untuk permukaan yang benar-benar MENGAMBANG di atas halaman (dialog,
-     popover, menu), dan nilainya diturunkan supaya tidak berteriak. */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.6);
-
-  color-scheme: dark;
-}
-
-/* --- Warna: tema TERANG ------------------------------------------------- */
-/* Situs publik TIDAK punya tema terang — ia `color-scheme: dark` dan selesai.
-   Jadi tema ini tidak bisa disalin; ia harus DITURUNKAN. Aturannya satu:
-   pertahankan hubungan antar-warna, bukan nilainya.
-
-   Teal #2DD4BF adalah teal-400; di atas putih ia pucat dan teks di atasnya
-   tidak terbaca. Yang dipakai teal-600 #0D9488 — nada yang SUDAH ada di
-   palet gelap sebagai --brand-isi (garis fokus isian), jadi keduanya memang
-   satu keluarga, bukan dua teal yang kebetulan berdekatan.
-
-   Netralnya zinc, sisi terang dari tangga yang sama dengan sisi gelapnya:
-   #FAFAFA / #F4F4F5 / #E4E4E7 / #D4D4D8 / #52525B / #09090B. */
-:root[data-theme="light"] {
-  --bg: #FFFFFF;
-  --bg-sunken: #FAFAFA;
+     Hijau di sini dipakai BERPASANGAN, dan itu ciri paling khas Coinest:
+     hijau tua #1E4841 untuk bidang dan tombol, mint #BBF49C untuk aksen di
+     ATAS hijau tua itu. Mint sendirian di atas putih tidak terbaca — ia
+     memang tidak pernah dipakai begitu di file aslinya. */
+  --bg: #FBFBFC;
+  --bg-sunken: #F6F7F6;
   --surface: #FFFFFF;
-  --surface-raised: #FAFAFA;
-  --surface-hover: #F4F4F5;
+  --surface-raised: #FFFDFC;
+  --surface-hover: #EFF0F0;
 
-  --border: #E4E4E7;
-  --border-strong: #D4D4D8;
+  --border: #E5E6E6;
+  --border-strong: #BCBEBD;
 
-  /* Abu, bukan putih polos — permintaan pemilik lewat contoh isian "Nama
-     Lengkap". Kartunya tetap putih, jadi isiannya terbaca sebagai bidang
-     yang bisa diketik. Di tema gelap perannya dibalik: isian justru LEBIH
-     gelap dari kartunya. Dua-duanya bicara hal yang sama — isian duduk lebih
-     dalam dari permukaan di sekelilingnya. */
-  --field: #F4F4F5;
-  --tray: #F4F4F5;
+  --field: #FFFFFF;
+  --tray: #EFF0F0;
 
-  --text-strong: #09090B;
-  --text-body: #27272A;
-  --text-muted: #52525B;
-  --text-faint: #71717A;
+  --text-strong: #242E2C;
+  --text-body: #242E2C;
+  --text-muted: #6B7271;
+  --text-faint: #BCBEBD;
 
-  --action: #0D9488;
-  --action-ink: #FFFFFF;
-  --action-hover: #0F766E;
-  --action-hover-ink: #FFFFFF;
-  --action-tekan: #115E59;
-  --action-hover-shadow: #99F6E4;
+  /* Aksi utama = hijau tua pejal, teks putih. Bentuk tombol utama Coinest. */
+  --action: #1E4841;
+  --action-ink: #FBFBFC;
+  --action-hover: #163A34;
+  --action-hover-ink: #FBFBFC;
+  --action-tekan: #102A26;
+  --action-hover-shadow: #BBF49C;
 
-  --brand: #0D9488;
-  --brand-ink: #FFFFFF;
-  --brand-soft: #F0FDFA;
-  --brand-line: #99F6E4;
-  --brand-isi: #0F766E;
+  --brand: #1E4841;
+  --brand-ink: #FBFBFC;
+  --brand-soft: #ECF4E9;
+  --brand-line: #BBF49C;
+  --brand-isi: #1E4841;
+  /* Mint — token tersendiri, karena ia bukan versi lebih terang dari hijau
+     tua melainkan warna kedua yang berdiri sendiri: bar grafik, lencana di
+     atas kartu hijau, dan sorotan angka. */
+  --brand-mint: #BBF49C;
+  --brand-mint-ink: #1E4841;
 
-  --danger: #DC2626;
+  --danger: #F73541;
   --danger-ink: #FFFFFF;
-  --danger-soft: #FEF2F2;
-  --danger-line: #FECACA;
+  --danger-soft: #FDCED1;
+  --danger-line: #FDCED1;
 
   --upgrade: #7C3AED;
   --upgrade-ink: #FFFFFF;
   --upgrade-soft: #F5F3FF;
 
-  --warn: #B45309;
-  --warn-soft: #FFFBEB;
-  --warn-line: #FDE68A;
+  --warn: #F2B007;
+  --warn-soft: #FEF6E0;
+  --warn-line: #F7DA9A;
 
-  --success: #047857;
-  --success-ink: #FFFFFF;
-  --success-soft: #ECFDF5;
+  --success: #1E4841;
+  --success-ink: #FBFBFC;
+  --success-soft: #ECF4E9;
 
   --info: #1D4ED8;
   --info-soft: #EFF6FF;
 
-  /* Sengaja TIDAK diberi nilai terang: bidang yang memakainya selalu gelap
-     karena ia meniru situs publik, yang tidak punya tema terang sama sekali.
-     Memberinya varian terang berarti pratinjau berubah warna sementara
-     halaman yang ditirunya tidak. */
+  /* Aksen SITUS PUBLIK — tetap teal, dan sekarang justru WAJIB punya nilai
+     sendiri: ia dipakai di `.situs-pratinjau`, kotak yang meniru tampilan
+     situs publik. Situsnya tidak ikut berubah jadi hijau, jadi pratinjaunya
+     juga tidak boleh. */
+  --situs-aksen: #2DD4BF;
 
-  --focus: #0F766E;
-  --focus-halo: rgba(13, 148, 136, 0.28);
+  --focus: #1E4841;
+  --focus-halo: rgba(187, 244, 156, 0.55);
 
-  --shadow-sm: 0 1px 2px rgba(9, 9, 11, 0.06);
-  --shadow-md: 0 6px 20px rgba(9, 9, 11, 0.09);
-  --shadow-lg: 0 18px 44px rgba(9, 9, 11, 0.12);
+  /* Coinest memakai bayangan yang sangat halus — kedalamannya dibawa oleh
+     bidang putih di atas latar abu, bukan oleh blur. */
+  --shadow-sm: 0 1px 2px rgba(36, 46, 44, 0.05);
+  --shadow-md: 0 4px 16px rgba(36, 46, 44, 0.07);
+  --shadow-lg: 0 16px 40px rgba(36, 46, 44, 0.10);
 
   color-scheme: light;
+}
+
+/* --- Warna: tema GELAP --------------------------------------------------- */
+/* Coinest TIDAK punya tema gelap — file Figma-nya terang seluruhnya. Jadi
+   blok ini bukan salinan, melainkan turunan, dan itu perlu ditulis terang-
+   terangan supaya tidak ada yang mengira angkanya berasal dari Figma.
+
+   Aturan penurunannya satu: pertahankan HUBUNGAN, bukan nilainya. Di terang,
+   hijau tua #1E4841 adalah bidang gelap di atas putih; di gelap, hubungan itu
+   dibalik — mint #BBF49C yang jadi aksen di atas bidang gelap, karena hijau
+   tua di atas latar gelap tidak terbaca sama sekali.
+
+   Netralnya diturunkan dari Black #242E2C milik Coinest, bukan dari hitam
+   murni: itu yang menjaga panel gelapnya tetap terasa sekeluarga. */
+:root[data-theme="dark"] {
+  --bg: #171D1C;
+  --bg-sunken: #121716;
+  --surface: #1F2725;
+  --surface-raised: #242E2C;
+  --surface-hover: #2C3735;
+
+  --border: #2C3735;
+  --border-strong: #3D4A47;
+
+  --field: #171D1C;
+  --tray: #2C3735;
+
+  --text-strong: #FBFBFC;
+  --text-body: #E8EAE9;
+  --text-muted: #A3ACAA;
+  --text-faint: #6B7271;
+
+  /* Dibalik: mint jadi aksi utama, tintanya hijau tua. */
+  --action: #BBF49C;
+  --action-ink: #1E4841;
+  --action-hover: #CDF7B6;
+  --action-hover-ink: #1E4841;
+  --action-tekan: #A6E884;
+  --action-hover-shadow: #1E4841;
+
+  --brand: #BBF49C;
+  --brand-ink: #1E4841;
+  --brand-soft: #1E2E24;
+  --brand-line: #3A5C42;
+  --brand-isi: #BBF49C;
+  --brand-mint: #BBF49C;
+  --brand-mint-ink: #1E4841;
+
+  --danger: #FF6B74;
+  --danger-ink: #1E1012;
+  --danger-soft: #34191C;
+  --danger-line: #6E2A2F;
+
+  --upgrade: #A78BFA;
+  --upgrade-ink: #1E1B2E;
+  --upgrade-soft: #241F38;
+
+  --warn: #F2B007;
+  --warn-soft: #2E2408;
+  --warn-line: #6B5210;
+
+  --success: #BBF49C;
+  --success-ink: #1E4841;
+  --success-soft: #1E2E24;
+
+  --info: #7AA7FF;
+  --info-soft: #17223A;
+
+  --focus: #BBF49C;
+  --focus-halo: rgba(187, 244, 156, 0.30);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
 }
 
 /* Transisi tema. Hanya properti warna yang dianimasikan supaya layout tidak
@@ -331,9 +301,9 @@
    ============================================================================= */
 
 :root {
-  --chart-1: #2DD4BF;
-  --chart-2: #FBBF24;
-  --chart-3: #60A5FA;
+  --chart-1: #1E4841;
+  --chart-2: #BBF49C;
+  --chart-3: #F2B007;
 
   /* Sekuensial: satu warna, terang ke gelap, untuk besaran. */
   --chart-seq-1: #113347;
@@ -352,14 +322,14 @@
   --chart-cat-4: #9d7bf5;
   --chart-cat-5: #34c47c;
 
-  --chart-grid: #27272A;
-  --chart-axis: #71717A;
+  --chart-grid: #E5E6E6;
+  --chart-axis: #6B7271;
 }
 
-:root[data-theme="light"] {
-  --chart-1: #0D9488;
-  --chart-2: #B45309;
-  --chart-3: #1D4ED8;
+:root[data-theme="dark"] {
+  --chart-1: #BBF49C;
+  --chart-2: #1E4841;
+  --chart-3: #F2B007;
 
   --chart-seq-1: #dbeaf6;
   --chart-seq-2: #a8cce6;
@@ -375,6 +345,6 @@
   --chart-cat-4: #7048d6;
   --chart-cat-5: #14915a;
 
-  --chart-grid: #E4E4E7;
-  --chart-axis: #71717A;
+  --chart-grid: #2C3735;
+  --chart-axis: #A3ACAA;
 }

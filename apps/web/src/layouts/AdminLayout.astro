@@ -43,7 +43,7 @@ const dibangunPada = CAP_BUILD;
 ---
 
 <!doctype html>
-<html lang="id" data-theme="dark">
+<html lang="id" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -57,7 +57,7 @@ const dibangunPada = CAP_BUILD;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap"
     />
 
     <!-- Navigasi tanpa memuat ulang dokumen.
@@ -84,7 +84,7 @@ const dibangunPada = CAP_BUILD;
             : "dark";
           document.documentElement.setAttribute("data-theme", simpan || sistem);
         } catch (e) {
-          document.documentElement.setAttribute("data-theme", "dark");
+          document.documentElement.setAttribute("data-theme", "light");
         }
       })();
     </script>
@@ -94,7 +94,7 @@ const dibangunPada = CAP_BUILD;
     <script is:inline>
       (function () {
         // 1. Tema. Astro menyalin atribut <html> dari dokumen baru, dan
-        //    dokumen baru selalu berisi data-theme="dark" hasil build. Tanpa
+        //    dokumen baru selalu berisi data-theme="light" hasil build. Tanpa
         //    ini, satu klik menu mengembalikan tema terang ke gelap.
         document.addEventListener("astro:before-swap", function (e) {
           var tema = document.documentElement.getAttribute("data-theme");
