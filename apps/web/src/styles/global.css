@@ -24,6 +24,7 @@
 }
 
 html {
+  background: var(--bg);
   -webkit-text-size-adjust: 100%;
   /* Android Chrome menyorot elemen yang ditekan dengan overlay biru bawaan
      kalau tidak dimatikan — bentrok dengan tema gelap situs ini. Umpan balik
@@ -33,7 +34,10 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* Warna dasar halaman pindah ke <html> — kalau ia tetap di <body>, latar
+     body menutupi pseudo-elemen ber-z-index negatif miliknya sendiri dan
+     kisi titiknya hilang sama sekali. Sudah menggigit di situs publik. */
+  background: transparent;
   color: var(--text-body);
   font-family: var(--font-sans);
   font-size: var(--text-base);
@@ -42,12 +46,37 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Arvo (slab serif) menandai judul halaman; Maven Pro menandai seluruh
-   perkakas dan angka. Dua keluarga, sesuai tangkapan layar pemilik. */
+/* Kisi titik 8px — tanah yang sama dengan situs publik, supaya bidang kosong
+   di antara kartu punya tekstur alih-alih jadi bidang rata.
+
+   Satu lapisan TETAP seukuran layar, bukan latar body: sebagai latar body ia
+   harus dilukis untuk seluruh tinggi halaman lalu ditimpa habis oleh kartu
+   yang buram, dan tiap petak yang dilukis ulang saat digulir ikut menghitung
+   ulang kisinya. Sebagai lapisan `fixed` ia dilukis SEKALI lalu cuma ditempel
+   compositor. Titiknya jadi diam terhadap layar; pada kisi 8px yang tiap
+   titiknya serupa, itu tidak terlihat. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+/* Mode cetak WAJIB mematikannya: latar putih tidak lagi menutupinya, jadi
+   kisi titik ikut tercetak sebagai raster abu di seluruh kertas kuitansi. */
+@media print {
+  body::before { display: none; }
+}
+
+/* Satu keluarga untuk semuanya: Inter, sama dengan situs publik. Bobot 600
+   dengan kerapatan negatif — lihat catatan di tokens.css. */
 h1,
 h2 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.12;
   letter-spacing: var(--tracking-judul);
   color: var(--text-strong);
@@ -102,10 +131,10 @@ svg[width][height] { flex: none; max-width: none; }
   outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
-  /* Lingkar merah di LUAR cincin putih. Dipakai supaya cincinnya tetap
-     terbaca di atas permukaan yang kebetulan juga putih — tab aktif, tombol
-     aksi utama — tanpa mengembalikan warna yang bukan miliknya. */
-  box-shadow: 0 0 0 7px var(--focus-halo);
+  /* Halo teal redup di LUAR cincin, sama seperti cincin fokus situs publik
+     (0 0 0 2px kanvas, 0 0 0 4px --cincin). Di sini halonya dibuat lebih
+     lebar karena panel punya permukaan yang lebih terang dari kanvas situs. */
+  box-shadow: 0 0 0 6px var(--focus-halo);
 }
 
 ::selection {
@@ -199,7 +228,7 @@ svg[width][height] { flex: none; max-width: none; }
   padding: var(--space-2) var(--space-4);
   background: var(--action);
   color: var(--action-ink);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   z-index: 100;
 }
 

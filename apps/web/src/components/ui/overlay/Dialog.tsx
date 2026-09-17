@@ -90,7 +90,7 @@ export function AlertDialog({
         <RAlert.Content className="ov-dialog ov-panel">
           <div className="ov-dialog__head">
             {destructive && (
-              <span className="icon-tile icon-tile--sm" style={{ color: "var(--brand)" }} aria-hidden="true">
+              <span className="icon-tile icon-tile--sm" style={{ color: "var(--danger)" }} aria-hidden="true">
                 <Icon name="alert" size={16} />
               </span>
             )}
@@ -107,7 +107,9 @@ export function AlertDialog({
             <RAlert.Action asChild>
               <button
                 type="button"
-                className={destructive ? "btn btn--brand" : "btn btn--primary"}
+                /* --bahaya, bukan --brand: sejak merek jadi teal, tombol merah pekat
+                   punya kelasnya sendiri. */
+                className={destructive ? "btn btn--bahaya" : "btn btn--primary"}
                 onClick={onConfirm}
               >
                 {confirmLabel}

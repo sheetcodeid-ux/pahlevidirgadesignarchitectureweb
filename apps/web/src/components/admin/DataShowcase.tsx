@@ -46,7 +46,7 @@ const arusContoh = [
 
 const arusSeri = [
   { kunci: "kas", label: "Kas masuk", warna: "var(--success)", gaya: "penuh" as const, isi: true },
-  { kunci: "beban", label: "Beban", warna: "var(--brand)", gaya: "putus" as const },
+  { kunci: "beban", label: "Beban", warna: "var(--danger)", gaya: "putus" as const },
   { kunci: "laba", label: "Laba", warna: "var(--warn)", gaya: "putus" as const },
 ];
 

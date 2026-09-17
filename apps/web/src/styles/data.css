@@ -211,16 +211,16 @@
 }
 
 .delta--baik  { color: var(--success); }
-.delta--buruk { color: var(--brand); }
+.delta--buruk { color: var(--danger); }
 
 /* Chip berlatar untuk delta di sebelah angka utama — di referensi ia memang
    kotak berwarna lembut, bukan teks telanjang. */
 .papan__nilai .delta {
   padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
 }
 .papan__nilai .delta--baik  { background: var(--success-soft); }
-.papan__nilai .delta--buruk { background: var(--brand-soft); }
+.papan__nilai .delta--buruk { background: var(--danger-soft); }
 .delta--kosong { color: var(--text-faint); font-family: var(--font-sans); }
 
 /* --- Strip metrik --------------------------------------------------------- */
@@ -552,7 +552,7 @@ a.mini__judul:hover { color: var(--brand); }
 }
 
 .kangka__delta--baik   { color: var(--success); }
-.kangka__delta--buruk  { color: var(--brand); }
+.kangka__delta--buruk  { color: var(--danger); }
 .kangka__delta--netral { color: var(--text-faint); }
 
 /* --- Deret ---------------------------------------------------------------- */

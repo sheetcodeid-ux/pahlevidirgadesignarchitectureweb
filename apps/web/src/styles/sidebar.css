@@ -208,7 +208,7 @@
   width: 100%;
   padding: 0.6rem 0.75rem;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font-family: inherit;
@@ -228,15 +228,28 @@
    satu waktu, dengan ikon dan teks yang jadi terang penuh — beda dari hover
    lewat kombinasi fill+teks-terang itu, bukan warna aksi utama (putih/hitam
    solid tetap khusus untuk tombol aksi, sesuai aturan warna situs ini). */
+/* Halaman aktif memakai bahasa "terpilih" yang sama dengan situs publik:
+   kotak bergaris teal dengan tekstur titik teal — bentuk .btn--dot dan .pil--on
+   di sana. Sebelumnya cuma bidang abu, dan abu tidak pernah berarti "ini yang
+   sedang dibuka"; ia cuma berarti "kursor pernah lewat sini". */
 .sidebar__item[aria-current="page"] {
-  background: var(--surface-hover);
-  color: var(--text-strong);
+  background-color: color-mix(in srgb, var(--brand) 10%, transparent);
+  background-image: radial-gradient(color-mix(in srgb, var(--brand) 26%, transparent) 1px, transparent 1px);
+  background-size: 5px 5px;
+  border: 1px solid color-mix(in srgb, var(--brand) 38%, transparent);
+  /* Padding dikurangi 1px di kedua sumbu supaya garis yang baru muncul tidak
+     menggeser item aktif 2px terhadap tetangganya yang tidak bergaris. */
+  padding: calc(0.6rem - 1px) calc(0.75rem - 1px);
+  color: var(--brand);
   font-weight: 600;
 }
+
+.sidebar__item[aria-current="page"] svg { color: var(--brand); }
 
 /* Grup yang salah satu anaknya aktif ditandai lebih halus daripada halaman
    aktif itu sendiri, supaya tidak ada dua penanda yang bersaing. */
 .sidebar__item[data-active-branch] { color: var(--text-strong); font-weight: 600; }
+.sidebar__item[data-active-branch] svg { color: var(--brand); }
 
 .sidebar__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -278,7 +291,7 @@
   gap: var(--space-2);
   padding: 0.45rem 0.75rem;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   color: var(--text-faint);
   font-size: var(--text-sm);
   text-decoration: none;
@@ -289,8 +302,8 @@
 
 .sidebar__subitem:hover { color: var(--text-body); }
 .sidebar__subitem[aria-current="page"] {
-  background: var(--surface-hover);
-  color: var(--text-strong);
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  color: var(--brand);
   font-weight: 600;
 }
 
@@ -313,7 +326,7 @@
   width: 100%;
   padding: 0.6rem 0.75rem;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-faint);
   font-family: inherit;

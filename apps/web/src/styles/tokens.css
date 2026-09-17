@@ -9,24 +9,29 @@
 
 :root {
   /* --- Tipografi ------------------------------------------------------- */
-  /* Arvo untuk judul halaman, Maven Pro untuk seluruh sisanya termasuk
-     nominal. Dua font, sesuai empat tangkapan layar yang dikirim pemilik.
+  /* INTER untuk judul DAN tubuh — sama persis dengan situs publik.
 
-     Riwayatnya: Newsreader/Plus Jakarta Sans/IBM Plex Mono -> Geist/Geist Mono
-     -> susunan ini. Yang dia tolak bukan "serif untuk judul", tapi Newsreader-
-     nya; Arvo juga serif (slab). Dan Geist ditolak untuk UI.
+     Ini membalik susunan Arvo + Maven Pro yang dipilih pemilik sendiri lewat
+     empat tangkapan layar DevTools, atas permintaan eksplisitnya: panel admin
+     harus seragam dengan landing page. Situs publik sudah pindah ke Inter
+     lebih dulu; selama panel masih Arvo, dua bagian dari satu produk memakai
+     dua suara yang berbeda, dan itu terlihat langsung begitu pemilik
+     berpindah dari situsnya ke /admin.
 
-     Angka memakai --font-mono yang menunjuk Maven Pro juga — itu memang
-     permintaannya. Maven Pro bukan monospace, jadi lebar digitnya dijaga
-     lewat font-variant-numeric: tabular-nums yang sudah dipakai di seluruh
-     tempat angka berjajar. */
-  --font-display: "Arvo", Georgia, "Times New Roman", serif;
-  --font-sans: "Maven Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Maven Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+     Riwayat penolakan yang masih berlaku kalau suatu saat diganti lagi:
+     Newsreader ditolak, Geist ditolak untuk UI. Arvo tidak ditolak — ia
+     digantikan karena alasan keseragaman, bukan karena tidak disukai.
+
+     --font-mono menunjuk Inter juga: angka berjajar dijaga oleh
+     font-variant-numeric: tabular-nums, dan Inter PUNYA fitur itu — beda
+     dari Maven Pro yang tidak punya `tnum` sama sekali. Jadi kolom rupiah
+     sekarang benar-benar sejajar, bukan kebetulan sejajar. */
+  --font-display: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Monospace SUNGGUHAN, khusus permukaan yang memang kode: nama token di
-     halaman UI Component dan tuts pintasan. Kalau ikut Maven Pro, "--chart-cat-1"
-     berhenti terbaca sebagai kode. */
+     halaman UI Component dan tuts pintasan. */
   --font-kode: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --text-2xs: 0.6875rem;
@@ -40,20 +45,32 @@
   --text-3xl: clamp(1.75rem, 3.4vw, 2.375rem);
   --text-4xl: clamp(2.25rem, 5vw, 3.375rem);
 
-  --tracking-label: 0.12em;
+  --tracking-label: 0.18em;
   --tracking-tight: -0.015em;
-  /* Nol untuk Arvo. Kerapatan negatif dibuat untuk grotesk; slab serif punya
-     serif yang justru butuh ruang, dan merapatkannya membuat huruf saling
-     bersinggungan. Angka -0,032em di sini berasal dari susunan Geist dan
-     TIDAK boleh dibawa ke font serif. */
-  --tracking-judul: 0em;
+  /* -0,022em, angka yang dipakai situs publik. Inter grotesk terbaca renggang
+     di ukuran besar pada kerapatan nol; nol itu milik Arvo slab, yang
+     hurufnya justru bersinggungan kalau dirapatkan. */
+  --tracking-judul: -0.022em;
 
   /* --- Radius ----------------------------------------------------------- */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 26px;
+  /* Aturan situs publik, dibawa apa adanya: WADAH TIDAK PERNAH MELENGKUNG.
+     Radius hanya untuk kontrol — tombol, isian, pil, lencana.
+
+     Itu satu kalimat, tapi ia yang paling mengubah wajah panel: kartu,
+     tabel, dialog, dan popover semuanya kehilangan lengkungnya dan jadi
+     siku, persis seperti sel-sel di landing page. Nama tokennya sengaja
+     TIDAK diubah supaya 120-an pemakaian di sembilan stylesheet ikut
+     berpindah tanpa disentuh satu per satu — yang berubah nilainya. */
+  --radius-xs: 6px;   /* kontrol kecil */
+  --radius-sm: 6px;   /* kontrol */
+  --radius-md: 0;     /* wadah */
+  --radius-lg: 0;     /* wadah */
+  /* Satu-satunya wadah yang melengkung: panel terluar halaman, sama seperti
+     pita panel di beranda (--panel-r di publik.css). */
+  --radius-xl: 18px;
+  /* Tetap 999px, dan tetap dipakai — tapi HANYA untuk yang memang bundar:
+     rel bar kemajuan, ibu jari batang gulir, titik status, avatar. Pil yang
+     sebenarnya tombol atau chip sudah dipindah ke --radius-sm. */
   --radius-pill: 999px;
 
   /* --- Spasi ------------------------------------------------------------ */
@@ -77,157 +94,197 @@
   --measure: 68ch;
 
   /* --- Gerak ------------------------------------------------------------ */
-  --ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --dur-fast: 120ms;
-  --dur: 220ms;
+  /* Dua kurva yang sama dengan situs publik: --ease untuk perubahan warna dan
+     bentuk (e-halus di sana), --ease-keluar untuk gerakan yang melesat lalu
+     mengerem (e-keluar). */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-keluar: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 110ms;
+  --dur: 180ms;
   --dur-slow: 420ms;
 
   /* --- Warna: tema GELAP (bawaan) --------------------------------------- */
-  --bg: #000000;
-  --bg-sunken: #000000;
-  --surface: #141414;
-  --surface-raised: #1c1c1c;
-  --surface-hover: #232323;
+  /* Palet zinc + teal, diambil PERSIS dari :root milik publik.css supaya dua
+     bagian situs ini benar-benar satu benda, bukan dua yang mirip.
 
-  --border: #272727;
-  --border-strong: #3a3a3a;
+       --kanvas #18181B  -> --surface
+       --gelap  #09090B  -> --bg
+       --sel    #27272A  -> --surface-hover / --border
+       --sel-2  #3F3F46  -> --border-strong
+       --aksen  #2DD4BF  -> --brand / --action
 
-  /* Latar isian form. Punya token sendiri, bukan menumpang --surface-raised,
-     karena pemilik minta isian terbaca ABU di tema terang sementara kartu
-     tetap putih. Di tema gelap keduanya kebetulan sama. */
-  --field: #1c1c1c;
-  /* Nampan: bidang terangkat kecil yang menampung pilihan, seperti pengalih
-     tampilan. Punya token sendiri karena nilainya tidak mengikuti --surface
-     mana pun — di tema gelap ia harus lebih terang dari semuanya, di tema
-     terang justru harus nyaris menyatu dengan halaman. */
-  --tray: #3a3a3a;
+     PERUBAHAN PALING BESAR: aksen panel sekarang TEAL, bukan putih-dan-merah.
+     Tanda merek di situs publik memang teal (lihat svg di Header.astro), jadi
+     "DPA" merah di panel selama ini justru satu-satunya tempat merah dipakai
+     sebagai identitas. Aturan warna lama berbunyi "merah = brand dan
+     destruktif"; sekarang jadi lebih tajam: TEAL = merek dan aksi, MERAH =
+     destruktif saja. Itulah sebabnya --danger lahir di bawah — tanpanya,
+     tombol Hapus ikut jadi teal dan berhenti berarti apa-apa. */
+  --bg: #09090B;
+  --bg-sunken: #09090B;
+  --surface: #18181B;
+  --surface-raised: #1C1C20;
+  --surface-hover: #27272A;
 
-  --text-strong: #fafafa;
-  --text-body: #e4e4e4;
-  --text-muted: #a0a0a0;
-  --text-faint: #6b6b6b;
+  --border: #27272A;
+  --border-strong: #3F3F46;
 
-  /* Aksi utama membalik terhadap latar */
-  --action: #fafafa;
-  --action-ink: #0a0a0a;
-  /* Warna sentuh aksi utama: merah brand di KEDUA tema. Bukan
-     penggelapan otomatis — di tema gelap tombolnya sudah putih, jadi
-     "lebih gelap" justru terbaca seperti tombol yang mati.
-     --action-hover-shadow adalah bayangan keras tanpa blur di belakangnya.
-     Tema gelap memakai putih dan tema terang memakai hitam — masing-masing
-     kebalikan latarnya, supaya bayangannya benar-benar terlihat. */
-  --action-hover: #ef2b26;
-  --action-hover-ink: #ffffff;
-  --action-hover-shadow: #fafafa;
+  /* Isian form memakai warna paling gelap, sama seperti .isian di situs
+     publik: bidang yang bisa diketik duduk LEBIH DALAM dari kartunya. */
+  --field: #09090B;
+  --tray: #27272A;
 
-  --brand: #ef2b26;
-  --brand-ink: #ffffff;
-  --brand-soft: #2a0f0e;
-  --brand-line: #7a1a18;
+  --text-strong: #FFFFFF;
+  --text-body: #E4E4E7;
+  --text-muted: #A1A1AA;
+  --text-faint: #71717A;
 
-  --upgrade: #8b5cf6;
-  --upgrade-ink: #ffffff;
-  --upgrade-soft: #1d1630;
+  /* Aksi utama = teal, sama dengan .btn--isi di situs publik. */
+  --action: #2DD4BF;
+  --action-ink: #18181B;
+  --action-hover: #5EEAD4;
+  --action-hover-ink: #18181B;
+  --action-tekan: #14B8A6;
+  /* Bayangan keras di belakang tombol yang terangkat. Teal gelap, bukan
+     putih: putih di belakang tombol teal terbaca sebagai kilau, bukan
+     sebagai benda yang naik. */
+  --action-hover-shadow: #0F766E;
 
-  --warn: #f0a92c;
-  --warn-soft: #241a09;
-  --warn-line: #6b4c12;
+  /* Merek — teal, dan ia yang mewarnai tanda DPA, item menu aktif, pilihan
+     yang tercentang, serta tautan yang disentuh. */
+  --brand: #2DD4BF;
+  --brand-ink: #18181B;
+  --brand-soft: #113230;
+  --brand-line: #1C5E57;
+  /* Isi pekat untuk garis fokus isian, sama dengan --isi di situs publik. */
+  --brand-isi: #0D9488;
 
-  --success: #35c76a;
-  --success-ink: #ffffff;
-  --success-soft: #0d2416;
+  /* DESTRUKTIF — token baru. Sebelumnya tombol Hapus, angka minus, dan
+     status "belum dibayar" semuanya meminjam --brand, karena --brand memang
+     merah. Begitu merek jadi teal, semuanya harus punya warnanya sendiri
+     atau berhenti berarti "hati-hati". Nilainya --merah milik situs publik. */
+  --danger: #F87171;
+  --danger-ink: #18181B;
+  --danger-soft: #2A1515;
+  --danger-line: #7F1D1D;
 
-  --info: #4a8ef0;
-  /* Aksen SITUS PUBLIK, bukan bagian palet admin. Dipakai hanya di dalam
-     `.situs-pratinjau` — kotak yang memang meniru tampilan situs, dan yang
-     harus memakai warna situs supaya pratinjaunya tidak berbohong. Di luar
-     kotak itu, palet admin yang berlaku.
+  --upgrade: #A78BFA;
+  --upgrade-ink: #18181B;
+  --upgrade-soft: #1E1B2E;
 
-     SENGAJA tanpa nilai tandingan di tema terang, dan itu bukan kelalaian:
-     bidang yang memakainya selalu gelap — ia meniru situs publik, yang tidak
-     punya tema terang sama sekali. Memberinya varian terang berarti pratinjau
-     berubah warna sementara halaman yang ditirunya tidak. */
+  --warn: #FBBF24;
+  --warn-soft: #241C09;
+  --warn-line: #78500D;
+
+  --success: #34D399;
+  --success-ink: #18181B;
+  --success-soft: #0D2A20;
+
+  --info: #60A5FA;
+  /* Aksen SITUS PUBLIK di dalam `.situs-pratinjau`. Sekarang nilainya SAMA
+     dengan --brand — dan itu memang intinya: kotak pratinjau tidak lagi
+     perlu warna sendiri, karena panelnya sudah memakai warna situs. Token
+     ini dipertahankan supaya pemakaiannya tidak perlu disentuh. */
   --situs-aksen: #2DD4BF;
-  --info-soft: #0e1c30;
+  --info-soft: #0E1A2E;
 
-  /* Cincin fokus: PUTIH dulu, merah di luarnya, hitam di belakangnya.
-     Sebelumnya ungu (#8b5cf6) — melanggar aturan warna nomor 1: ungu hanya
-     untuk upgrade dan fitur berbayar, tidak pernah untuk aksi biasa. Pemilik
-     melihatnya sendiri di tab Detail dan menyebutnya bug. */
-  --focus: #ffffff;
-  --focus-halo: rgba(239, 43, 38, 0.38);
+  /* Cincin fokus: hijau-teal terang, sama dengan --cincin di situs publik.
+     Sebelumnya putih dengan halo merah; putih masih benar di atas hitam
+     pekat, tapi begitu aksen jadi teal, cincin putih terbaca sebagai benda
+     asing di antara kontrol yang semuanya bersentuhan teal. */
+  --focus: #34D399;
+  --focus-halo: rgba(45, 212, 191, 0.32);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.65);
+  /* Situs publik tidak memakai bayangan sama sekali — kedalaman di sana
+     dibawa oleh garis dan bidang, bukan oleh blur. Yang tersisa di sini cuma
+     untuk permukaan yang benar-benar MENGAMBANG di atas halaman (dialog,
+     popover, menu), dan nilainya diturunkan supaya tidak berteriak. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.6);
 
   color-scheme: dark;
 }
 
 /* --- Warna: tema TERANG ------------------------------------------------- */
-/* Nilai aksen sengaja digelapkan; amber dan hijau versi gelap tidak cukup
-   kontras di atas putih. */
+/* Situs publik TIDAK punya tema terang — ia `color-scheme: dark` dan selesai.
+   Jadi tema ini tidak bisa disalin; ia harus DITURUNKAN. Aturannya satu:
+   pertahankan hubungan antar-warna, bukan nilainya.
+
+   Teal #2DD4BF adalah teal-400; di atas putih ia pucat dan teks di atasnya
+   tidak terbaca. Yang dipakai teal-600 #0D9488 — nada yang SUDAH ada di
+   palet gelap sebagai --brand-isi (garis fokus isian), jadi keduanya memang
+   satu keluarga, bukan dua teal yang kebetulan berdekatan.
+
+   Netralnya zinc, sisi terang dari tangga yang sama dengan sisi gelapnya:
+   #FAFAFA / #F4F4F5 / #E4E4E7 / #D4D4D8 / #52525B / #09090B. */
 :root[data-theme="light"] {
-  --bg: #ffffff;
-  --bg-sunken: #ffffff;
-  --surface: #ffffff;
-  --surface-raised: #fdfdfd;
-  --surface-hover: #e8e8e5;
+  --bg: #FFFFFF;
+  --bg-sunken: #FAFAFA;
+  --surface: #FFFFFF;
+  --surface-raised: #FAFAFA;
+  --surface-hover: #F4F4F5;
 
-  /* Permintaan pemilik: garis batas di tema terang terlalu gelap. Dia
-     mengirim dua contoh warna — yang lama (#c9c9c3, persis --border-strong)
-     dan yang dia mau, satu tingkat jauh lebih pucat. Keduanya digeser satu
-     langkah: yang dulu --border sekarang jadi --border-strong, dan --border
-     mengambil nada dari contohnya. Berlaku ke SELURUH halaman sekaligus
-     karena keduanya token, bukan nilai literal di komponen. */
-  --border: #f0efec;
-  --border-strong: #e2e2de;
+  --border: #E4E4E7;
+  --border-strong: #D4D4D8;
 
-  /* Abu, bukan putih polos — permintaan pemilik lewat contoh isian
-     "Nama Lengkap". Kartu di sekelilingnya tetap putih, jadi isiannya
-     terbaca sebagai bidang yang bisa diketik. */
-  --field: #f2f2f0;
-  --tray: #f4f4f2;
+  /* Abu, bukan putih polos — permintaan pemilik lewat contoh isian "Nama
+     Lengkap". Kartunya tetap putih, jadi isiannya terbaca sebagai bidang
+     yang bisa diketik. Di tema gelap perannya dibalik: isian justru LEBIH
+     gelap dari kartunya. Dua-duanya bicara hal yang sama — isian duduk lebih
+     dalam dari permukaan di sekelilingnya. */
+  --field: #F4F4F5;
+  --tray: #F4F4F5;
 
-  --text-strong: #0d0d0c;
-  --text-body: #262624;
-  --text-muted: #5e5e5a;
-  --text-faint: #8b8b86;
+  --text-strong: #09090B;
+  --text-body: #27272A;
+  --text-muted: #52525B;
+  --text-faint: #71717A;
 
-  --action: #0d0d0c;
-  --action-ink: #ffffff;
-  --action-hover: #cf1b17;
-  --action-hover-ink: #ffffff;
-  --action-hover-shadow: #0d0d0c;
+  --action: #0D9488;
+  --action-ink: #FFFFFF;
+  --action-hover: #0F766E;
+  --action-hover-ink: #FFFFFF;
+  --action-tekan: #115E59;
+  --action-hover-shadow: #99F6E4;
 
-  --brand: #cf1b17;
-  --brand-ink: #ffffff;
-  --brand-soft: #fdecec;
-  --brand-line: #f3b9b7;
+  --brand: #0D9488;
+  --brand-ink: #FFFFFF;
+  --brand-soft: #F0FDFA;
+  --brand-line: #99F6E4;
+  --brand-isi: #0F766E;
 
-  --upgrade: #6d34d6;
-  --upgrade-ink: #ffffff;
-  --upgrade-soft: #f2ecfd;
+  --danger: #DC2626;
+  --danger-ink: #FFFFFF;
+  --danger-soft: #FEF2F2;
+  --danger-line: #FECACA;
 
-  --warn: #9a6206;
-  --warn-soft: #fdf3e0;
-  --warn-line: #e9cd97;
+  --upgrade: #7C3AED;
+  --upgrade-ink: #FFFFFF;
+  --upgrade-soft: #F5F3FF;
 
-  --success: #167a3d;
-  --success-ink: #ffffff;
-  --success-soft: #e7f6ed;
+  --warn: #B45309;
+  --warn-soft: #FFFBEB;
+  --warn-line: #FDE68A;
 
-  --info: #1d5fc4;
-  --info-soft: #e8f0fd;
+  --success: #047857;
+  --success-ink: #FFFFFF;
+  --success-soft: #ECFDF5;
 
-  /* Tema terang: putih tidak terlihat di atas putih, jadi cincin dalamnya
-     memakai tinta halaman. Merah di luarnya tetap. */
-  --focus: #0d0d0c;
-  --focus-halo: rgba(207, 27, 23, 0.30);
+  --info: #1D4ED8;
+  --info-soft: #EFF6FF;
 
-  --shadow-sm: 0 1px 2px rgba(13, 13, 12, 0.07);
-  --shadow-md: 0 8px 24px rgba(13, 13, 12, 0.1);
-  --shadow-lg: 0 24px 60px rgba(13, 13, 12, 0.14);
+  /* Sengaja TIDAK diberi nilai terang: bidang yang memakainya selalu gelap
+     karena ia meniru situs publik, yang tidak punya tema terang sama sekali.
+     Memberinya varian terang berarti pratinjau berubah warna sementara
+     halaman yang ditirunya tidak. */
+
+  --focus: #0F766E;
+  --focus-halo: rgba(13, 148, 136, 0.28);
+
+  --shadow-sm: 0 1px 2px rgba(9, 9, 11, 0.06);
+  --shadow-md: 0 6px 20px rgba(9, 9, 11, 0.09);
+  --shadow-lg: 0 18px 44px rgba(9, 9, 11, 0.12);
 
   color-scheme: light;
 }
@@ -274,9 +331,9 @@
    ============================================================================= */
 
 :root {
-  --chart-1: #3f9bd0;
-  --chart-2: #c08400;
-  --chart-3: #0e8f6b;
+  --chart-1: #2DD4BF;
+  --chart-2: #FBBF24;
+  --chart-3: #60A5FA;
 
   /* Sekuensial: satu warna, terang ke gelap, untuk besaran. */
   --chart-seq-1: #113347;
@@ -295,14 +352,14 @@
   --chart-cat-4: #9d7bf5;
   --chart-cat-5: #34c47c;
 
-  --chart-grid: #232323;
-  --chart-axis: #6b6b6b;
+  --chart-grid: #27272A;
+  --chart-axis: #71717A;
 }
 
 :root[data-theme="light"] {
-  --chart-1: #155ba6;
-  --chart-2: #b57000;
-  --chart-3: #12a06d;
+  --chart-1: #0D9488;
+  --chart-2: #B45309;
+  --chart-3: #1D4ED8;
 
   --chart-seq-1: #dbeaf6;
   --chart-seq-2: #a8cce6;
@@ -318,6 +375,6 @@
   --chart-cat-4: #7048d6;
   --chart-cat-5: #14915a;
 
-  --chart-grid: #e8e8e4;
-  --chart-axis: #8b8b86;
+  --chart-grid: #E4E4E7;
+  --chart-axis: #71717A;
 }

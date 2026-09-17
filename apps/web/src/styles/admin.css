@@ -212,7 +212,7 @@
   place-items: center;
   min-width: 2rem;
   padding: 0.1rem 0.5rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
   background: var(--surface-raised);
   color: var(--text-strong);
@@ -376,7 +376,7 @@
   min-width: 1.05rem;
   height: 1.05rem;
   padding-inline: 0.22rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--brand);
   color: var(--brand-ink);
   font-family: var(--font-mono);
@@ -552,7 +552,7 @@
   width: 100%;
   height: 3.25rem;
   padding-left: calc(var(--space-4) * 2 + 20px);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   font-size: var(--text-md);
 }
 
@@ -739,7 +739,7 @@
   gap: 4px;
   padding: 2px var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--bg-sunken) 82%, transparent);
   color: var(--text);
   font-size: var(--text-2xs);
@@ -1389,9 +1389,9 @@
 .akunpop__aksi-judul { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
 .akunpop__aksi-sub { font-size: var(--text-xs); color: var(--text-muted); }
 
-.akunpop__aksi--keluar { color: var(--brand); }
+.akunpop__aksi--keluar { color: var(--danger); }
 .akunpop__aksi--keluar .akunpop__aksi-judul,
-.akunpop__aksi--keluar .akunpop__aksi-sub { color: var(--brand); }
+.akunpop__aksi--keluar .akunpop__aksi-sub { color: var(--danger); }
 
 /* Keluar disorot merah tipis, bukan abu seperti Pengaturan: warnanya sudah
    merah, dan latar abu di bawah teks merah membuat keduanya berebut.
@@ -1800,9 +1800,9 @@
 
 .logo-preview__hapus:hover,
 .logo-preview__hapus:focus-visible {
-  color: var(--brand);
-  border-color: var(--brand);
-  background: color-mix(in srgb, var(--brand) 14%, var(--bg-sunken));
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, var(--bg-sunken));
 }
 
 /* Diukur dari tangkapan penuh referensi: kotaknya memenuhi lebar-dalam
@@ -2086,7 +2086,7 @@
 
 .pcard__act:first-child { border-left: 0; }
 .pcard__act:hover { background: var(--surface-hover); color: var(--text-strong); }
-.pcard__act--danger:hover { color: var(--brand); }
+.pcard__act--danger:hover { color: var(--danger); }
 
 /* Chip saringan berdiri sendiri-sendiri — masing-masing punya bingkai dan
    ada jarak di antaranya. Sengaja BUKAN .segmented, yang membungkus semua
@@ -2109,14 +2109,21 @@
   white-space: nowrap;
   background: transparent;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
     background-color var(--dur) var(--ease);
 }
 
 .chip:hover:not([aria-pressed="true"]) { color: var(--text-strong); border-color: var(--text-faint); }
-.chip[aria-pressed="true"] { background: var(--action); border-color: var(--action); color: var(--action-ink); }
+/* Chip terpilih memakai bentuk .pil--on situs publik: latar teal SAMAR,
+   garis teal, teks teal — bukan bidang teal pejal. Pejal membuat satu chip
+   jadi benda paling terang di halaman, padahal ia cuma penyaring. */
+.chip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  border-color: var(--brand-isi);
+  color: var(--brand);
+}
 
 .chip__n {
   display: inline-grid;
@@ -2126,11 +2133,11 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-weight: 500;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--surface-hover);
 }
 
-.chip[aria-pressed="true"] .chip__n { background: color-mix(in srgb, var(--action-ink) 12%, transparent); }
+.chip[aria-pressed="true"] .chip__n { background: color-mix(in srgb, var(--brand) 18%, transparent); color: var(--brand); }
 
 /* Pengalih tampilan: kotak bergaris dengan opsi aktif berupa kotak-membulat
    terisi — bukan pil, seperti di referensi. */
@@ -2220,7 +2227,7 @@
    antara digit. Merah di sini bukan "destruktif", melainkan brand yang sama
    dipakai sebagai penanda perhatian; tidak ada warna lain di palet yang
    berarti "kurang dari nol". */
-.angka-minus { color: var(--brand); }
+.angka-minus { color: var(--danger); }
 
 /* Sel yang isinya kalimat panjang — kutipan testimoni, catatan — dipotong
    satu baris. Tanpa ini tinggi tiap baris ditentukan oleh kalimat terpanjang,
@@ -2943,7 +2950,7 @@
      tetap: ujung kiri-kanannya harus membulat penuh mengikuti tingginya,
      dan radius tetap berapa pun akan meleset begitu tingginya berubah. */
   border: 2px solid var(--border-strong);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
 }
 
@@ -3250,7 +3257,7 @@
 
 .bayar-status--lunas    { color: var(--success); }
 .bayar-status--sebagian { color: var(--warn); }
-.bayar-status--belum    { color: var(--brand); }
+.bayar-status--belum    { color: var(--danger); }
 
 /* Tombol WhatsApp. Hijau WA memang bukan warna semantik palet ini, dan itu
    disengaja: tombol ini membuka aplikasi lain, dan warnanya yang membuat
@@ -3663,7 +3670,7 @@
   text-transform: uppercase;
   color: #f0a92c;
   border: 1px solid rgba(240, 169, 44, .4);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   vertical-align: 2px;
 }
 

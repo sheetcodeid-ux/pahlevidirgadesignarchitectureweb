@@ -209,12 +209,12 @@
 .ov-menu__shortcut { margin-left: auto; font-family: var(--font-kode); font-size: var(--text-2xs); color: var(--text-faint); }
 .ov-menu__check { display: grid; place-items: center; width: 1rem; flex: none; color: var(--brand); }
 
-.ov-menubar { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-raised); }
+.ov-menubar { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-raised); }
 
 .ov-menubar__trigger {
   padding: 0.4rem 0.85rem;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font-family: inherit;
@@ -241,7 +241,7 @@
   color: var(--text-strong);
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
   transition: border-color var(--dur) var(--ease);

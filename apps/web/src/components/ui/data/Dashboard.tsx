@@ -152,7 +152,7 @@ export function Gauge({ nilai, judul, keterangan }: { nilai: number; judul: stri
   const t = Math.min(Math.max(nilai, 0), 100) / 100;
   const [jx, jy] = titikBusur(t);
   const zona: [number, number, string][] = [
-    [0, 0.25, "var(--brand)"],
+    [0, 0.25, "var(--danger)"],
     [0.25, 0.45, "var(--warn)"],
     [0.45, 0.7, "var(--chart-2)"],
     [0.7, 1, "var(--success)"],
@@ -193,7 +193,7 @@ export function Sparkline({ titik, label }: { titik: number[]; label: string }) 
   const bidang = `${garis} L ${w} ${h} L 0 ${h} Z`;
   // Turun kalau titik terakhir lebih rendah dari titik pertama.
   const turun = titik[titik.length - 1] < titik[0];
-  const warna = turun ? "var(--brand)" : "var(--success)";
+  const warna = turun ? "var(--danger)" : "var(--success)";
 
   return (
     <svg className="spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={label}>
