@@ -206,6 +206,7 @@ function Isi() {
         labelCari="Cari pesan"
         satuan="pesan"
         barisSkeleton={jumlahDiingat("pesan:", 6)}
+        bentuk="kartu"
         saringan={
           <>
             <div className="field">
@@ -246,15 +247,15 @@ const KOLOM_TIRUAN = kolomSkeleton<Pesan>([
   { judul: "Tanggal", kelas: "table__num", lebar: "5rem", render: () => null },
   { judul: "Status", lebar: "4rem", render: () => null },
   { judul: "Aksi", kelas: "table__actions", lebar: "3.5rem", render: () => null },
-]);
+], "kartu");
 
 export function InquiryList() {
   return (
     <RequireAuth
       skeleton={
-        <div className="listpage"><div className="listpage__pad">
+        <div className="kartudaftar">
           <SkeletonTabel baris={jumlahDiingat("pesan:", 6)} kolom={KOLOM_TIRUAN} />
-        </div></div>
+        </div>
       }
     >
       <ToastProvider><Isi /></ToastProvider>

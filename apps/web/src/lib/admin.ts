@@ -630,8 +630,14 @@ export interface AnggotaTim {
 
 export const daftarTim = () => panggil<AnggotaTim[]>("/admin/team");
 
-export const tambahAnggotaTim = (name: string, role: string | null) =>
-  panggil<{ id: string }>("/admin/team", { method: "POST", body: JSON.stringify({ name, role }) });
+/* Menerima seluruh kolom, bukan cuma nama dan peran. Migrasi Fase 01 sudah
+   menambahkan jenis, tarif, telepon, dan aktif — dan API sudah menerimanya
+   sejak saat itu; yang menyempitkannya cuma tanda tangan fungsi ini, sehingga
+   keempatnya hanya bisa diubah lewat database. */
+export const tambahAnggotaTim = (a: {
+  name: string; role?: string | null; kind?: JenisAnggota;
+  rate?: number | null; phone?: string | null; active?: boolean;
+}) => panggil<{ id: string }>("/admin/team", { method: "POST", body: JSON.stringify(a) });
 
 export const ubahAnggotaTim = (id: string, patch: Partial<AnggotaTim>) =>
   panggil<{ updated: boolean }>(`/admin/team/${id}`, { method: "PATCH", body: JSON.stringify(patch) });

@@ -182,6 +182,7 @@ function Isi() {
       labelCari="Cari testimoni"
       satuan="testimoni"
       barisSkeleton={jumlahDiingat("testimoni", 5)}
+      bentuk="kartu"
       saringan={
         <label className="choice">
           <input type="checkbox" checked={hanyaUnggulan} onChange={(e) => setHanyaUnggulan(e.target.checked)} />
@@ -206,15 +207,15 @@ const KOLOM_TIRUAN = kolomSkeleton<TestimoniAdmin>([
   { judul: "Beranda", lebar: "4rem", render: () => null },
   { judul: "Status", lebar: "4.5rem", render: () => null },
   { judul: "Aksi", kelas: "table__actions", lebar: "3.5rem", render: () => null },
-]);
+], "kartu");
 
 export function TestimonialsPanel() {
   return (
     <RequireAuth
       skeleton={
-        <div className="listpage"><div className="listpage__pad">
+        <div className="kartudaftar">
           <SkeletonTabel baris={jumlahDiingat("testimoni", 5)} kolom={KOLOM_TIRUAN} />
-        </div></div>
+        </div>
       }
     >
       <ToastProvider><Isi /></ToastProvider>

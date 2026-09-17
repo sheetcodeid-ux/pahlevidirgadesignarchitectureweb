@@ -228,6 +228,7 @@ function Isi() {
       labelCari="Cari kontak"
       satuan="kontak"
       barisSkeleton={jumlahDiingat("direktori", 5)}
+      bentuk="kartu"
       saringan={
         <div className="field">
           <label className="field__label">Urutkan</label>
@@ -252,15 +253,15 @@ const KOLOM_TIRUAN = kolomSkeleton<KontakDirektori>([
   { judul: "Email", lebar: "8rem", render: () => null },
   { judul: "Catatan", lebar: "8rem", render: () => null },
   { judul: "Aksi", kelas: "table__actions", lebar: "3.5rem", render: () => null },
-]);
+], "kartu");
 
 export function DirectoryPanel() {
   return (
     <RequireAuth
       skeleton={
-        <div className="listpage"><div className="listpage__pad">
+        <div className="kartudaftar">
           <SkeletonTabel baris={jumlahDiingat("direktori", 5)} kolom={KOLOM_TIRUAN} />
-        </div></div>
+        </div>
       }
     >
       <ToastProvider><Isi /></ToastProvider>
