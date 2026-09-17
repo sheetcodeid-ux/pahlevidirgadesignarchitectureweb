@@ -1,105 +1,11 @@
-import { useEffect, useId, useState } from "react";
-import { Icon, type IconName } from "../ui/Icon";
+import { useEffect, useId, useRef, useState } from "react";
+import { Icon } from "../ui/Icon";
+import { NAV, type NavItem } from "../../lib/navAdmin";
 import { profilTersimpan, ambilSettings } from "../../lib/admin";
 import { Perintah } from "./Perintah";
 
-interface SubItem {
-  label: string;
-  href: string;
-  icon: IconName;
-}
-
-interface NavItem {
-  label: string;
-  href?: string;
-  icon: IconName;
-  children?: SubItem[];
-  /** Hanya tampil untuk master admin. */
-  masterOnly?: boolean;
-  /** Label kelompok kecil di atas item — mengelompokkan sidebar seperti bagian di halaman panjang. */
-  group: string;
-}
-
-// Ikon dipilih agar cocok dengan labelnya, bukan sekadar mengisi ruang:
-// denah bangunan untuk proyek, amplop untuk pesan masuk, lapisan untuk
-// pustaka komponen.
-const NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "dashboard", group: "Utama" },
-  {
-    label: "Proyek",
-    icon: "project",
-    group: "Utama",
-    children: [
-      { label: "Semua Proyek", href: "/admin/proyek", icon: "list" },
-      // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
-      // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
-      //
-      // Yang ketiga, "Halaman Publik", pindah ke kelompok Situs Publik atas
-      // permintaan pemilik: isinya memang yang dilihat pengunjung, dan dia
-      // mencarinya di sana. Halamannya tidak berubah dan tetap mengikuti
-      // combobox yang sama — yang pindah cuma tautannya.
-      { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document" },
-    ],
-  },
-  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
-  { label: "Keuangan", href: "/admin/keuangan", icon: "finance", group: "Utama" },
-  /* Tepat di bawah Keuangan, bukan di kelompok sendiri: angkanya LAHIR di
-     Keuangan — fee diketik sekali saja lewat Catat pengeluaran — dan halaman
-     ini cuma membacanya dari sudut lain. Menaruhnya jauh dari sumbernya
-     membuat keduanya terbaca sebagai dua sistem yang harus dicocokkan. */
-  { label: "Fee Proyek", href: "/admin/fee", icon: "cash", group: "Utama" },
-  /* Gaji tepat di bawah Fee: keduanya menjawab "berapa yang keluar untuk
-     orang", dan bedanya cuma dari mana uangnya lahir — proyek atau bulan.
-     Berjauhan, keduanya terbaca sebagai dua pembukuan yang harus dicocokkan. */
-  { label: "Gaji", href: "/admin/gaji", icon: "team", group: "Utama" },
-  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
-  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },
-  { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Utama" },
-  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", group: "Utama" },
-  { label: "Jurnal", href: "/admin/jurnal", icon: "document", group: "Utama" },
-
-  /* Kelompok sendiri bernama "Situs Publik", datar — bukan menu yang harus
-   * dibuka dulu.
-   *
-   * Datar karena pemilik datang ke sini untuk MENGISI satu hal tertentu
-   * ("tambahkan foto tim"), bukan untuk menjelajah; menu yang harus diklik
-   * dua kali menyembunyikan justru daftar yang jadi pengingatnya. Namanya
-   * "Situs Publik", bukan "Halaman Publik", karena label kedua dulu dipakai
-   * submenu Proyek — dan sekarang ia sendiri sudah pindah ke sini sebagai
-   * "Halaman Proyek", jadi dua label serupa di satu kelompok akan lebih
-   * membingungkan lagi.
-   *
-   * Isinya satu jenis pekerjaan yang jelas: menyunting apa yang dibaca
-   * PENGUNJUNG. Bedanya nyata dari sisa panel — halaman di sini dibekukan
-   * saat build, jadi setiap perubahan di dalamnya perlu tombol Terbitkan
-   * ditekan, sementara Proyek dan Keuangan langsung berlaku.
-   *
-   * Semua isinya dulu di-hardcode di lib/menunggu.ts dan hanya bisa diubah
-   * dengan menyunting repo — yang tidak pernah dilakukan pemilik. Akibatnya
-   * nama staf kedua, foto tim, foto sebelum/sesudah, empat isian privasi,
-   * dan empat angka FAQ sudah berbulan menampilkan penanda "menunggu" di
-   * situs yang tayang. */
-  /* Satu-satunya di kelompok ini yang mengikuti proyek terpilih di bilah atas;
-     sisanya berlaku untuk seluruh studio. Ditaruh paling atas karena ia yang
-     paling sering disentuh — judul, galeri, dan SEO tiap karya. */
-  { label: "Halaman Proyek", href: "/admin/proyek/publik", icon: "project", group: "Situs Publik" },
-  { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", group: "Situs Publik" },
-  { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", group: "Situs Publik" },
-  { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", group: "Situs Publik" },
-  { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info", group: "Situs Publik" },
-  { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock", group: "Situs Publik" },
-  { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", group: "Situs Publik" },
-  {
-    label: "Pengaturan",
-    icon: "settings",
-    group: "Sistem",
-    children: [
-      { label: "Info Studio", href: "/admin/pengaturan", icon: "info" },
-      { label: "Akun", href: "/admin/pengaturan/akun", icon: "user" },
-    ],
-  },
-  { label: "UI Component", href: "/admin/ui", icon: "component", group: "Sistem", masterOnly: true },
-];
+/** Kelompok mana yang sedang ditutup staf — preferensi, bukan keadaan sesaat. */
+const KUNCI_GRUP = "pd-sidebar-grup";
 
 interface Props {
   /** Path aktif, dipakai untuk menandai item dan membuka grup yang relevan. */
@@ -181,13 +87,78 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
     return acc;
   }, {});
 
-  // Grup yang memuat halaman aktif dibuka sejak awal, supaya pengguna tidak
+  // Menu yang memuat halaman aktif dibuka sejak awal, supaya pengguna tidak
   // perlu mencari di mana dirinya berada.
   const [dibuka, setDibuka] = useState<string[]>(() =>
     items
       .filter((i) => i.children?.some((c) => cocok(c.href, currentPath)))
       .map((i) => i.label),
   );
+
+  /* Kelompok yang sedang DITUTUP staf. Ditulis terbalik — yang disimpan yang
+     tertutup, bukan yang terbuka — supaya kelompok baru yang ditambahkan
+     nanti muncul terbuka tanpa perlu menyentuh nilai yang sudah tersimpan.
+     Disimpan di localStorage karena ini preferensi, bukan keadaan sesaat:
+     muat ulang penuh tidak boleh membuka lagi kelompok yang sengaja
+     disempitkan. Dibungkus try/catch — di jendela penyamaran pembacaannya
+     bisa melempar, dan sidebar yang gagal digambar jauh lebih buruk daripada
+     kelompok yang lupa keadaannya. */
+  const [grupTutup, setGrupTutup] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem(KUNCI_GRUP);
+      if (t) setGrupTutup(JSON.parse(t));
+    } catch { /* biarkan terbuka semua */ }
+  }, []);
+
+  function toggleKelompok(label: string) {
+    setGrupTutup((cur) => {
+      const baru = cur.includes(label) ? cur.filter((g) => g !== label) : [...cur, label];
+      try { localStorage.setItem(KUNCI_GRUP, JSON.stringify(baru)); } catch { /* tak apa */ }
+      return baru;
+    });
+  }
+
+  /* Membuka sendiri menu yang memuat halaman aktif SETIAP KALI path berubah,
+     bukan cuma saat sidebar dipasang.
+     Sidebar memakai transition:persist, jadi ia tidak pernah dipasang ulang:
+     berpindah ke /admin/pengaturan/akun lewat router — dari palet perintah,
+     dari tautan mana pun — meninggalkan menu induknya tertutup, dan karena
+     item aktifnya ada DI DALAM menu yang tertutup, tidak ada satu pun baris
+     yang tersorot. Terukur: aria-current tidak menempel di mana-mana
+     sementara halamannya memang halaman Akun. Muat-ulang penuh ke alamat
+     yang sama benar, jadi cacatnya cuma muncul lewat navigasi sisi klien. */
+  useEffect(() => {
+    const induk = items.find((i) => i.children?.some((c) => cocok(c.href, currentPath)));
+    if (!induk) return;
+    setDibuka((cur) => (cur.includes(induk.label) ? cur : [...cur, induk.label]));
+    setGrupTutup((cur) => cur.filter((g) => g !== induk.group));
+  }, [currentPath, isMasterAdmin]);
+
+
+  /* Menandai nav yang isinya melebihi tingginya, supaya CSS bisa memudarkan
+     tepi bawahnya. Diukur dengan ResizeObserver dan bukan di dalam handler
+     gulir: membaca properti geometri saat gulir memaksa layout tiap frame
+     (jebakan #21). Observer hanya menyala saat ukurannya benar-benar
+     berubah — buka/tutup kelompok, buka/tutup submenu, ganti ukuran
+     jendela — jadi ongkosnya nol selama halaman diam. */
+  const nav = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = nav.current;
+    if (!el) return;
+    const ukur = () => {
+      if (el.scrollHeight > el.clientHeight + 1) el.setAttribute("data-luber", "");
+      else el.removeAttribute("data-luber");
+    };
+    ukur();
+    const ro = new ResizeObserver(ukur);
+    ro.observe(el);
+    /* Anak pertama ikut diamati: tinggi nav sendiri tidak berubah saat satu
+       kelompok ditutup — yang berubah tinggi ISInya. */
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    for (const g of el.querySelectorAll(".sidebar__group")) ro.observe(g);
+    return () => ro.disconnect();
+  }, [dibuka, grupTutup, isMasterAdmin]);
 
   // Esc menutup drawer; ini satu-satunya jalan keluar lewat keyboard.
   useEffect(() => {
@@ -277,11 +248,30 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
         {/* Kotak cari perintah, sejajar daftar menu yang isinya sama. */}
         <Perintah />
 
-        <nav className="sidebar__nav" aria-label="Navigasi admin">
-          {Object.entries(kelompok).map(([labelGrup, itemGrup]) => (
-          <div className="sidebar__group" key={labelGrup}>
-          <p className="sidebar__group-label">{labelGrup}</p>
-          <ul className="sidebar__list">
+        <nav className="sidebar__nav" aria-label="Navigasi admin" ref={nav}>
+          {Object.entries(kelompok).map(([labelGrup, itemGrup]) => {
+          const grupTampil = !grupTutup.includes(labelGrup);
+          return (
+          <div className="sidebar__group" key={labelGrup} data-tutup={!grupTampil || undefined}>
+          {/* Kepalanya tombol, bukan label mati. "Situs Publik" sendirian
+              tujuh baris, dan seluruh navnya 1.155px di dalam slot 744px —
+              411px menu berada di bawah lipatan pada layar 1000px, lebih
+              lagi di laptop. Kelompoknya tetap TERBUKA sebagai bawaan supaya
+              daftar itu tetap jadi pengingat apa yang belum diisi, seperti
+              alasan aslinya; yang ditambahkan cuma kemampuan menutupnya. */}
+          <button
+            type="button"
+            className="sidebar__group-label"
+            aria-expanded={grupTampil}
+            onClick={() => toggleKelompok(labelGrup)}
+            title={grupTampil ? `Tutup ${labelGrup}` : `Buka ${labelGrup}`}
+          >
+            <span className="sidebar__group-teks">{labelGrup}</span>
+            <span className="sidebar__group-chevron" data-open={grupTampil || undefined}>
+              <Icon name="chevronDown" size={13} />
+            </span>
+          </button>
+          <ul className="sidebar__list" hidden={!grupTampil}>
             {itemGrup.map((item) => {
               if (!item.children) {
                 const aktif = cocok(item.href!, currentPath);
@@ -345,7 +335,8 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
             })}
           </ul>
           </div>
-          ))}
+          );
+          })}
         </nav>
 
         <div className="sidebar__foot">

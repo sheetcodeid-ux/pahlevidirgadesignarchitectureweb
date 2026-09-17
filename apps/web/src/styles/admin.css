@@ -389,6 +389,11 @@
 
 /* Tanpa rectangle: tidak ada garis maupun bidang, hanya isinya. */
 .topbar__id {
+  /* Tanpa min-width:0 tombol ini TIDAK PERNAH menyusut: ukuran min-content
+     sebuah flex item adalah lebar isinya, dan isinya nama ber-nowrap. Jadi
+     flex-shrink:1 di bawah tidak berlaku sama sekali, dan pada 1024px
+     bilahnya meluber 33px keluar layar alih-alih memendekkan namanya. */
+  min-width: 0;
   border: 0;
   background: transparent;
   color: var(--text-body);
@@ -398,29 +403,41 @@
 }
 
 .topbar__id:focus-visible { outline: 0; }
-.topbar__id:focus-visible .topbar__id-nama { color: var(--brand); }
-.topbar__id:hover .topbar__id-nama { color: var(--brand); }
+/* Umpan balik hover/fokus pindah ke avatar: setelah namanya dibuang, tidak
+   ada lagi teks netral yang bisa berubah merah — teks perannya memang sudah
+   merah sejak diam. */
+.topbar__id:hover .avatar,
+.topbar__id:focus-visible .avatar { box-shadow: 0 0 0 2px var(--focus); }
 
-.topbar__id-teks { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0; }
-
-.topbar__id-nama {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--text-strong);
-  max-width: 10rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color var(--dur) var(--ease);
-}
-
-/* Mahkota dan teks peran sama-sama merah — satu tanda, bukan dua benda. */
+/* Teks peran naik jadi satu-satunya label di tombol ini; ukurannya dinaikkan
+   dari 2xs ke xs supaya ia terbaca sebagai label, bukan sebagai catatan kaki
+   yang tertinggal setelah namanya dibuang. */
+/* Teksnya REDUP, mahkotanya merah. Sewaktu masih ada nama studio di
+   atasnya, merah seluruhnya masih terbaca sebagai satu tanda kecil; begitu
+   ia jadi satu-satunya label, merah tebal di sebelah avatar yang juga merah
+   membuat sudut kanan berteriak lebih keras daripada nama halaman yang
+   sedang dibuka — padahal peran akun bukan yang paling penting di bilah ini.
+   Mahkotanya tetap merah, jadi penanda "master" tidak hilang. */
 .topbar__id-peran {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  font-size: var(--text-2xs);
-  color: var(--brand);
+  gap: 0.3rem;
+  min-width: 0;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.topbar__id-peran svg { color: var(--brand); }
+.topbar__id:hover .topbar__id-peran { color: var(--text-strong); }
+
+/* Di ponsel tombol akun tinggal avatar + panah. Teks perannya 109px, dan
+   bilah selebar 390px cuma menyisakan 152px untuk seluruh tombol ini —
+   dengan perannya, bilahnya meluber 13px keluar layar. Keterangannya tidak
+   hilang: panel akun yang dibuka tombol ini menuliskannya lagi, lengkap
+   dengan email. */
+@media (max-width: 34rem) {
+  .topbar__id-peran { display: none; }
 }
 
 /* --- Memilih proyek di Halaman Proyek -------------------------------------- */
