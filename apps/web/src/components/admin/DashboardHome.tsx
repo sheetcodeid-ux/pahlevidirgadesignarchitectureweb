@@ -1,10 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Icon } from "../ui/Icon";
+import { useEffect, useMemo, useState } from "react";
+import { Icon, type IconName } from "../ui/Icon";
 import { RequireAuth } from "./RequireAuth";
 import { SkeletonKartu, SkeletonStat, SkeletonTeks } from "../ui/Skeleton";
-import { KartuAngka } from "../ui/data/KartuAngka";
-import { KartuDonat, type IrisDonat } from "../ui/data/KartuDonat";
-import { ChartArusKas } from "../ui/data/ChartArusKas";
 import { formatRupiah } from "../../lib/format";
 import { ambilNotifikasi, TAHAP_PROYEK, type BarisNotifikasi } from "../../lib/notifikasi";
 import {
@@ -14,83 +11,37 @@ import {
 } from "../../lib/admin";
 
 /* =============================================================================
-   Dashboard — susunan Coinest "01. Dashboard (v1)".
+   Dashboard — frame Figma "01. Dashboard (v1) - Desktop" (node 3:1069).
 
-   Angkanya diambil dari frame Figma-nya, bukan dikira-kira: badan 1192px
-   terbagi tiga kolom 283 / 586 / 283 dengan jarak 20px mendatar maupun tegak,
-   dan tiap kartu berpadding 16px.
+   Dibangun dari angka framenya, bukan dari tata letak lama yang diwarnai
+   ulang. Badan 1192px terbagi tiga kolom 283 / 586 / 283 dengan jarak 20px
+   mendatar maupun tegak; tiap kartu berpadding 16px, bergaris 1px #E5E6E6,
+   dan ber-radius 16px.
 
-   Isinya yang berbeda, dan memang harus: Coinest aplikasi keuangan pribadi
-   dengan kartu debit, rencana tabungan, dan promo. Yang setara maknanya di
-   studio arsitektur:
+   Isinya yang disesuaikan, dan memang harus: Coinest aplikasi keuangan
+   pribadi dengan kartu debit, rencana tabungan, dan riwayat transfer. Yang
+   setara maknanya di studio arsitektur:
 
-     kartu debit gelap   -> kas studio + sapaan
-     tombol cepat        -> empat pekerjaan yang paling sering dimulai
-     bar pengeluaran     -> laba bersih terhadap kas masuk
-     daftar rencana      -> proyek yang sedang berjalan
-     tiga kartu statistik-> kas masuk, piutang, biaya
-     grafik kolom        -> arus kas dua belas bulan
-     tabel               -> laba per proyek
-     donat + segmented   -> rincian beban
-     daftar log          -> pekerjaan yang belum ditangani
+     Widget Card (kartu debit)   -> kas studio, nama studio, piutang
+     Button Group (4 tombol)     -> empat pekerjaan yang paling sering dimulai
+     Daily Limit (bar)           -> laba bersih terhadap kas yang masuk
+     Saving Plans (kartu target) -> proyek berjalan, kontrak sebagai target
+     Card Statistic x3           -> kas masuk, total biaya, laba bersih
+     Cashflow (batang dua arah)  -> kas masuk ke atas, biaya ke bawah
+     Table                       -> laba per proyek
+     Statistic (donat)           -> rincian kas masuk dan beban
+     Recent Activity (log)       -> pekerjaan yang belum ditangani
 
-   Kolom kanan dashboard ini SEBELUMNYA kosong — elemennya ada, isinya tidak
-   pernah dibuat. Itu yang paling terlihat dari keseluruhan panel.
+   Yang DIBUANG dan perlu disebut: sapaan berketik "Selamat Datang." beserta
+   bidang bertitiknya. Frame ini tidak punya keduanya — slot yang dulu
+   ditempatinya adalah baris "Name" di kartu, dan di sana Figma menaruh satu
+   baris nama saja.
    ============================================================================= */
-
-/** Seberapa cepat sorot mengejar kursor tiap frame. Makin kecil makin lembut. */
-const KEJAR = 0.11;
-
-const SALAM = "Selamat Datang.";
-
-/* Irama ketikan, dalam milidetik. Menghapus dibuat dua kali lebih cepat
-   daripada mengetik: begitulah orang benar-benar menghapus, dan penghapusan
-   selambat pengetikan terasa seperti halaman yang macet. */
-const KETIK = 85;
-const TAHAN_PENUH = 2000;
-const HAPUS = 40;
-const TAHAN_KOSONG = 600;
-
-/**
- * Mengetik SALAM huruf demi huruf, menahannya sebentar, menghapusnya, lalu
- * mengulang. Dipakai satu setTimeout berantai, bukan setInterval: tiap tahap
- * punya jeda sendiri, dan interval tunggal tidak bisa menahan lebih lama di
- * ujung tanpa menghitung tick — cara yang mudah meleset satu langkah.
- *
- * Yang meminta gerakan dikurangi langsung mendapat kalimat utuh yang diam.
- */
-function useKetikan() {
-  const [n, setN] = useState(0);
-  const [hapus, setHapus] = useState(false);
-  const [diam, setDiam] = useState(false);
-
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setDiam(true);
-  }, []);
-
-  useEffect(() => {
-    if (diam) return;
-
-    const selesaiKetik = n === SALAM.length;
-    const jeda = !hapus ? (selesaiKetik ? TAHAN_PENUH : KETIK) : (n > 0 ? HAPUS : TAHAN_KOSONG);
-
-    const t = setTimeout(() => {
-      if (!hapus && !selesaiKetik) setN(n + 1);
-      else if (!hapus) setHapus(true);
-      else if (n > 0) setN(n - 1);
-      else setHapus(false);
-    }, jeda);
-
-    return () => clearTimeout(t);
-  }, [n, hapus, diam]);
-
-  return diam ? SALAM : SALAM.slice(0, n);
-}
 
 /* --- Angka pendek untuk ruang sempit -------------------------------------- */
 
 /**
- * "Rp1,2 jt", "Rp340 rb". Dipakai di kotak selebar 96px di kaki kartu gelap,
+ * "Rp1,2 jt", "Rp340 rb". Dipakai di kaki kartu gelap dan kaki kartu proyek,
  * tempat angka rupiah penuh pasti terpotong.
  *
  * Rupiah penuh tetap dipakai di mana pun ruangnya cukup — angka yang
@@ -106,144 +57,57 @@ function rupiahPendek(n: number): string {
   return formatRupiah(n);
 }
 
-/* --- Kartu gelap: kas studio + sapaan -------------------------------------- */
+function persen(bagian: number, dari: number): number | null {
+  return dari > 0 ? (bagian / dari) * 100 : null;
+}
 
-/**
- * Widget Card Coinest — satu-satunya bidang gelap di halaman terang, dan itu
- * memang perannya: menandai mana yang paling penting.
- *
- * Titik-titiknya dua lapis. Lapis dasar selalu terlihat samar supaya bidangnya
- * tidak terbaca sebagai hijau kosong; lapis sorot sedikit lebih besar dan
- * lebih terang, tapi ditutup topeng radial yang mengikuti kursor sehingga
- * hanya muncul di sekitar penunjuk.
- *
- * Dua hal yang tidak sesederhana kelihatannya:
- *
- * 1. Sorotnya MENGEJAR kursor, bukan menempel padanya. Tiap frame posisinya
- *    digeser sebagian jarak ke sasaran, jadi gerakannya menyusul dengan
- *    lembut alih-alih melompat. Transition CSS tidak bisa dipakai di sini:
- *    yang berubah adalah posisi di dalam mask-image, dan properti itu tidak
- *    bisa diinterpolasi browser.
- * 2. Posisinya dikirim lewat custom property, bukan state React. mousemove
- *    menyala puluhan kali per detik dan render ulang sesering itu percuma
- *    untuk sesuatu yang cuma menggeser gradien.
- *
- * Sorot hanya hidup selama kursor ada di dalam kartu ini. Begitu keluar ia
- * dipudarkan lewat CSS (:hover), bukan digeser ke luar layar — menggeser
- * berarti menyeret lingkaran terang melintasi seluruh bidang dulu.
- */
+/** "12,5%" — satu angka di belakang koma, ejaan Indonesia. */
+function tulisPersen(p: number | null): string {
+  return p === null ? "—" : `${p.toFixed(1).replace(".", ",")}%`;
+}
+
+/* --- Kartu gelap: kas studio ----------------------------------------------- */
+
+/* Widget Card (3:1128): bidang Green-Dark, radius 16, padding 16, jarak isi
+   27px. Satu-satunya bidang gelap di halaman terang, dan itu memang
+   perannya — menandai mana yang paling penting. */
 function KartuKas({ nama, profil, keu, proyekAktif }: {
   nama: string | null;
   profil: Profil | null;
   keu: FinanceOverview | null;
   proyekAktif: number | null;
 }) {
-  const kartu = useRef<HTMLElement>(null);
-  const sasaran = useRef({ x: -999, y: -999 });
-  const posisi = useRef({ x: -999, y: -999 });
-  const ketikan = useKetikan();
-
-  useEffect(() => {
-    const el = kartu.current;
-    if (!el) return;
-
-    // Yang meminta gerakan dikurangi tidak dapat pengejaran sama sekali:
-    // sorotnya menempel langsung di kursor.
-    const halus = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    let hidup = true;
-    let frame = 0;
-
-    function langkah() {
-      if (!hidup) return;
-      const p = posisi.current;
-      const s = sasaran.current;
-      if (halus) {
-        p.x += (s.x - p.x) * KEJAR;
-        p.y += (s.y - p.y) * KEJAR;
-      } else {
-        p.x = s.x;
-        p.y = s.y;
-      }
-      el!.style.setProperty("--mx", `${p.x}px`);
-      el!.style.setProperty("--my", `${p.y}px`);
-      frame = requestAnimationFrame(langkah);
-    }
-
-    frame = requestAnimationFrame(langkah);
-    return () => { hidup = false; cancelAnimationFrame(frame); };
-  }, []);
-
-  function titikKursor(e: React.MouseEvent<HTMLElement>) {
-    const k = kartu.current!.getBoundingClientRect();
-    return { x: e.clientX - k.left, y: e.clientY - k.top };
-  }
-
   return (
-    <article
-      className="dashkas"
-      ref={kartu}
-      onMouseMove={(e) => { sasaran.current = titikKursor(e); }}
-      /* Saat masuk, posisinya disamakan dulu dengan titik masuk. Tanpa ini
-         sorotnya meluncur dari tempat kursor terakhir keluar. Tidak terlihat
-         karena lapisannya masih tembus pandang saat itu. */
-      onMouseEnter={(e) => { const t = titikKursor(e); sasaran.current = t; posisi.current = { ...t }; }}
-    >
-      <span className="dashdot dashdot--dasar" aria-hidden="true" />
-      <span className="dashdot dashdot--sorot" aria-hidden="true" />
-
+    <article className="dashkas">
       <header className="dashkas__head">
-        {/* Sengaja ikon, bukan logo studio: kartu ini menandai "sedang masuk
-            sebagai siapa", dan logo studio sudah berdiri sendiri di sidebar.
-            Dua tempat menampilkan logo yang sama membuat keduanya berebut
-            perhatian. */}
+        {/* Slot "symbol" 23px di kiri dan "Union" di kanan. Di Coinest keduanya
+            lambang penerbit kartu; di sini lambang studio dan penanda peran
+            akun — dengan dua akun penulis, yang sedang dipakai perlu terbaca
+            tanpa menekan apa pun. */}
         <span className="dashkas__ubin"><Icon name="building" size={20} /></span>
         <span className="dashkas__peran">
-          <Icon name="crown" size={13} />
+          <Icon name="crown" size={12} />
           {profil?.isMasterAdmin ? "Master admin" : "Staf"}
         </span>
       </header>
 
-      {/* Dua lapis di kotak grid yang sama. Lapis pengukur berisi kalimat
-          UTUH dan tak terlihat — ia yang menetapkan lebar baris, jadi
-          lebarnya tidak berubah selama diketik. Tanpa itu kalimatnya
-          bergeser setiap satu huruf bertambah.
-
-          Teks ketikannya disembunyikan dari pembaca layar dan digantikan
-          aria-label: kalimat yang tumbuh huruf demi huruf akan dibacakan
-          ulang dari awal setiap kali satu huruf bertambah. */}
-      <p className="dash-salam" aria-label={SALAM}>
-        <span className="dash-salam__ukur" aria-hidden="true">
-          {SALAM}
-          <span className="dash-salam__caret" />
-        </span>
-        <span className="dash-salam__isi" aria-hidden="true">
-          {ketikan}
-          <span className="dash-salam__caret" />
-        </span>
-      </p>
-
       <p className="dashkas__nama">
-        {nama ?? <span className="skeleton" style={{ height: "1rem", width: "9rem" }} />}
+        {nama ?? <span className="skeleton" style={{ height: "1.25rem", width: "10rem" }} />}
       </p>
 
       <footer className="dashkas__kaki">
         <span className="dashkas__blok">
           <span className="dashkas__blok-label">Kas masuk</span>
-          <span className="dashkas__blok-nilai">
-            {keu ? rupiahPendek(keu.kasMasuk) : "—"}
-          </span>
+          <span className="dashkas__blok-nilai">{keu ? rupiahPendek(keu.kasMasuk) : "—"}</span>
         </span>
         <span className="dashkas__kanan">
           <span className="dashkas__blok dashkas__blok--kecil">
-            <span className="dashkas__blok-label">Proyek</span>
+            <span className="dashkas__blok-label">PROYEK</span>
             <span className="dashkas__blok-nilai">{proyekAktif ?? "—"}</span>
           </span>
           <span className="dashkas__blok dashkas__blok--kecil">
-            <span className="dashkas__blok-label">Piutang</span>
-            <span className="dashkas__blok-nilai">
-              {keu ? rupiahPendek(keu.piutang) : "—"}
-            </span>
+            <span className="dashkas__blok-label">PIUTANG</span>
+            <span className="dashkas__blok-nilai">{keu ? rupiahPendek(keu.piutang) : "—"}</span>
           </span>
         </span>
       </footer>
@@ -253,14 +117,16 @@ function KartuKas({ nama, profil, keu, proyekAktif }: {
 
 /* --- Empat tombol cepat ---------------------------------------------------- */
 
-/* Button Group Coinest: empat tombol setara dipisah garis tegak tipis.
+/* Button Group (3:1156): bidang Green-BG, radius 16, padding 8/12, empat
+   tombol setara dipisah garis tegak tipis, ikon 24px, label SemiBold 10px.
+
    Isinya empat pekerjaan yang paling sering DIMULAI dari nol — bukan empat
    halaman yang paling sering dibuka, karena untuk itu sudah ada sidebar. */
-const AKSI = [
-  { ke: "/admin/proyek/baru", ikon: "projectPlus" as const, label: "Proyek" },
-  { ke: "/admin/keuangan", ikon: "cash" as const, label: "Kas" },
-  { ke: "/admin/jurnal", ikon: "edit" as const, label: "Jurnal" },
-  { ke: "/admin/pesan", ikon: "inquiry" as const, label: "Pesan" },
+const AKSI: { ke: string; ikon: IconName; label: string }[] = [
+  { ke: "/admin/proyek/baru", ikon: "projectPlus", label: "Proyek" },
+  { ke: "/admin/keuangan", ikon: "cash", label: "Kas" },
+  { ke: "/admin/jurnal", ikon: "edit", label: "Jurnal" },
+  { ke: "/admin/pesan", ikon: "inquiry", label: "Pesan" },
 ];
 
 function AksiCepat() {
@@ -268,7 +134,7 @@ function AksiCepat() {
     <nav className="dashaksi" aria-label="Aksi cepat">
       {AKSI.map((a) => (
         <a key={a.ke} className="dashaksi__btn" href={a.ke}>
-          <span className="dashaksi__ubin"><Icon name={a.ikon} size={18} /></span>
+          <Icon name={a.ikon} size={24} />
           <span className="dashaksi__label">{a.label}</span>
         </a>
       ))}
@@ -278,6 +144,8 @@ function AksiCepat() {
 
 /* --- Kartu bar: laba bersih terhadap kas masuk ----------------------------- */
 
+/* Section Spending (3:1164). Bar-nya dua lapis: bidang mint sebagai alas,
+   bidang hijau tua sebagai isian — bukan abu, seperti bar kemajuan biasa. */
 function KartuLaba({ keu }: { keu: FinanceOverview | null }) {
   const kas = keu?.kasMasuk ?? 0;
   const laba = keu?.labaBersih ?? 0;
@@ -285,35 +153,39 @@ function KartuLaba({ keu }: { keu: FinanceOverview | null }) {
      nilai kontrak — keputusan yang sudah tercatat: nilai kontrak adalah
      janji, bukan uang. Kas nol berarti tidak ada penyebut, dan bar-nya
      kosong; menampilkan 0% akan terbaca sebagai "rugi total". */
-  const persen = kas > 0 ? Math.round((laba / kas) * 100) : null;
-  const lebar = kas > 0 ? Math.max(0, Math.min(100, (laba / kas) * 100)) : 0;
+  const p = persen(laba, kas);
+  const lebar = p === null ? 0 : Math.max(0, Math.min(100, p));
 
   return (
-    <article className="dashbar">
-      <header className="dashbar__head">
-        <h2 className="dashbar__judul">Laba bersih</h2>
-        <a className="dashbar__tautan" href="/admin/keuangan" aria-label="Buka Keuangan">
-          <Icon name="chevronRight" size={16} />
+    <article className="dashkartu dashbar">
+      <header className="dashkartu__head">
+        <h2 className="dashkartu__judul">Laba bersih</h2>
+        <a className="dashkartu__ikon" href="/admin/keuangan" aria-label="Buka Keuangan">
+          <Icon name="chevronRight" size={18} />
         </a>
       </header>
 
-      <p className="dashbar__baris">
-        <span className={`dashbar__nilai${laba < 0 ? " angka-minus" : ""}`}>
-          {keu ? formatRupiah(laba) : "—"}
-        </span>
-        <span className="dashbar__ket">dari {keu ? rupiahPendek(kas) : "—"} kas masuk</span>
-        <span className="dashbar__persen">{persen === null ? "—" : `${persen}%`}</span>
-      </p>
+      <div className="dashbar__isi">
+        <p className="dashbar__desc">
+          <span className="dashbar__angka">
+            <span className={`dashbar__nilai${laba < 0 ? " angka-minus" : ""}`}>
+              {keu ? formatRupiah(laba) : "—"}
+            </span>
+            <span className="dashbar__ket">dari {keu ? rupiahPendek(kas) : "—"} kas masuk</span>
+          </span>
+          <span className="dashbar__persen">{tulisPersen(p)}</span>
+        </p>
 
-      <div
-        className="dashbar__rel"
-        role="progressbar"
-        aria-label="Laba bersih terhadap kas masuk"
-        aria-valuenow={persen ?? 0}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <span className="dashbar__isi" style={{ width: `${lebar}%` }} />
+        <div
+          className="dashrel"
+          role="progressbar"
+          aria-label="Laba bersih terhadap kas masuk"
+          aria-valuenow={Math.round(lebar)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <span className="dashrel__isi" style={{ width: `${lebar}%` }} />
+        </div>
       </div>
     </article>
   );
@@ -321,6 +193,9 @@ function KartuLaba({ keu }: { keu: FinanceOverview | null }) {
 
 /* --- Daftar proyek berjalan ------------------------------------------------ */
 
+/* Section Plans (3:1176) + Card Saving Plan (3:1184). Rencana tabungan punya
+   target dan capaian; proyek berkontrak punya nilai kontrak dan uang yang
+   sudah diterima — bentuk angka yang sama persis. */
 function DaftarProyek({ proyek, keu }: { proyek: Proyek[] | null; keu: FinanceOverview | null }) {
   /* "Berjalan" = belum sampai pelunasan. Definisi yang sama dengan penghitung
      di topbar, dan sengaja: dua angka yang mengaku menghitung hal yang sama
@@ -328,48 +203,205 @@ function DaftarProyek({ proyek, keu }: { proyek: Proyek[] | null; keu: FinanceOv
   const jalan = (proyek ?? []).filter((p) => p.pipelineStage !== "pelunasan").slice(0, 3);
 
   return (
-    <article className="dashplan">
-      <header className="dashplan__head">
-        <h2 className="dashplan__judul">Proyek berjalan</h2>
-        <a className="dashplan__semua" href="/admin/proyek">Semua</a>
+    <article className="dashkartu dashplan">
+      <header className="dashkartu__head">
+        <h2 className="dashkartu__judul">Proyek berjalan</h2>
+        <a className="dashkartu__tombol" href="/admin/proyek/baru">
+          <Icon name="plus" size={12} />Proyek Baru
+        </a>
       </header>
 
       <div className="dashplan__total">
         <span className="dashplan__total-label">Nilai kontrak</span>
-        <span className="dashplan__total-nilai">
-          {keu ? formatRupiah(keu.totalKontrak) : "—"}
-        </span>
+        <span className="dashplan__total-nilai">{keu ? formatRupiah(keu.totalKontrak) : "—"}</span>
       </div>
 
       <div className="dashplan__list">
         {proyek === null
           ? [0, 1, 2].map((i) => <span key={i} className="skeleton dashplan__rangka" />)
           : jalan.length === 0
-            ? <p className="dashplan__kosong">Belum ada proyek yang sedang berjalan.</p>
+            ? <p className="dashkartu__kosong">Belum ada proyek yang sedang berjalan.</p>
             : jalan.map((p) => {
                 const baris = keu?.proyek.find((r) => r.projectId === p.id);
                 const nilai = p.contractValue ?? baris?.contractValue ?? null;
                 const masuk = baris?.received ?? p.paidTotal ?? 0;
-                const pct = nilai && nilai > 0 ? Math.min(100, (masuk / nilai) * 100) : 0;
+                const pct = persen(masuk, nilai ?? 0);
                 return (
-                  <a key={p.id} className="dashplan__kartu" href={`/admin/proyek/${p.id}`}>
-                    <span className="dashplan__kartu-atas">
-                      <span className="dashplan__kartu-judul">{p.title}</span>
-                      <span className="dashplan__kartu-tahap">
+                  <a key={p.id} className="dashplankartu" href={`/admin/proyek/${p.id}`}>
+                    <span className="dashplankartu__head">
+                      <span className="dashplankartu__judul">
+                        <span className="dashplankartu__ubin"><Icon name="project" size={16} /></span>
+                        <span className="dashplankartu__nama">{p.title}</span>
+                      </span>
+                      <span className="dashplankartu__tahap">
                         {TAHAP_PROYEK[p.pipelineStage ?? ""] ?? "Proposal"}
                       </span>
                     </span>
-                    <span className="dashplan__kartu-rel">
-                      <span className="dashplan__kartu-isi" style={{ width: `${pct}%` }} />
-                    </span>
-                    <span className="dashplan__kartu-bawah">
-                      <span>{rupiahPendek(masuk)} masuk</span>
-                      <span>{nilai ? rupiahPendek(nilai) : "belum berkontrak"}</span>
+
+                    <span className="dashplankartu__chart">
+                      <span className="dashrel">
+                        <span
+                          className="dashrel__isi"
+                          style={{ width: `${pct === null ? 0 : Math.min(100, pct)}%` }}
+                        />
+                      </span>
+                      <span className="dashplankartu__desc">
+                        <span className="dashplankartu__kiri">
+                          <span className="dashplankartu__masuk">{rupiahPendek(masuk)}</span>
+                          <span className="dashplankartu__pct">{tulisPersen(pct)}</span>
+                        </span>
+                        <span className="dashplankartu__kanan">
+                          <span className="dashplankartu__target-label">Kontrak:</span>
+                          <span className="dashplankartu__target">
+                            {nilai ? rupiahPendek(nilai) : "belum ada"}
+                          </span>
+                        </span>
+                      </span>
                     </span>
                   </a>
                 );
               })}
       </div>
+    </article>
+  );
+}
+
+/* --- Tiga kartu statistik --------------------------------------------------- */
+
+/**
+ * Selisih bulan terakhir terhadap bulan sebelumnya.
+ *
+ * Lencana di Figma berbunyi "+ 1.78 %", dan itu HARUS angka sungguhan —
+ * lencana tren yang isinya keterangan tetap ("3 proyek", "keluar dari kas")
+ * memakai bentuk yang menjanjikan perbandingan lalu tidak memberikannya,
+ * dan itu lebih buruk daripada tidak ada lencana sama sekali.
+ *
+ * Mengembalikan null kalau datanya belum cukup untuk dibandingkan — dua
+ * bulan, dan bulan pembandingnya bukan nol. Pembagian dengan nol akan
+ * melahirkan "+Infinity%" di kartu keuangan.
+ */
+function selisihBulan(
+  bulanan: BarisBulanan[] | null,
+  ambil: (b: BarisBulanan) => number,
+): number | null {
+  const d = bulanan ?? [];
+  if (d.length < 2) return null;
+  const kini = ambil(d[d.length - 1]);
+  const lalu = ambil(d[d.length - 2]);
+  if (lalu === 0) return null;
+  return ((kini - lalu) / Math.abs(lalu)) * 100;
+}
+
+/* Card Statistic (3:1189): jarak isi 28px, ikon berubin 20px di kiri atas,
+   lencana selisih, angka besar, label Regular 12px. */
+function KartuStat({ ikon, delta, baikNaik, nilai, label }: {
+  ikon: IconName;
+  /** Persentase selisih bulan; null berarti belum bisa dibandingkan. */
+  delta: number | null;
+  /**
+   * Apakah NAIK berarti kabar baik.
+   *
+   * Dipisah dari arah panahnya dengan sengaja: biaya yang TURUN adalah kabar
+   * baik dan harus mint meski panahnya menunjuk ke bawah. Menyatukan
+   * keduanya membuat bulan paling hemat tergambar merah.
+   */
+  baikNaik: boolean;
+  nilai: string;
+  label: string;
+}) {
+  const naik = (delta ?? 0) >= 0;
+  const baik = delta === null ? true : (naik === baikNaik);
+  return (
+    <article className="dashstat__kartu">
+      <header className="dashstat__head">
+        <span className="dashstat__ubin"><Icon name={ikon} size={20} /></span>
+      </header>
+      <div className="dashstat__isi">
+        <span className={`dashstat__badge${baik ? "" : " dashstat__badge--turun"}`}>
+          {delta === null
+            ? <>Bulan ini</>
+            : <>
+                <Icon name={naik ? "trendUp" : "trendDown"} size={10} />
+                {`${naik ? "+" : "−"} ${Math.abs(delta).toFixed(1).replace(".", ",")} %`}
+              </>}
+        </span>
+        <p className="dashstat__nilai">{nilai}</p>
+        <p className="dashstat__label">{label}</p>
+      </div>
+    </article>
+  );
+}
+
+/* --- Grafik batang dua arah -------------------------------------------------- */
+
+/* Chart Colomn (3:1210): lima garis kisi, batang ATAS hijau tua (radius atas
+   4px) dan batang BAWAH mint (radius bawah 4px), label bulan Regular 10px.
+
+   Batang dua arah, bukan dua garis bertumpuk: di Coinest sumbu nolnya di
+   tengah, pemasukan naik dan pengeluaran turun. Untuk studio ini artinya sama
+   persis — kas masuk ke atas, biaya ke bawah — dan bulan yang merugi terbaca
+   dari batang bawah yang lebih panjang, tanpa satu angka pun dibaca. */
+const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+
+function GrafikArus({ bulanan }: { bulanan: BarisBulanan[] | null }) {
+  const data = (bulanan ?? []).slice(-12);
+  const puncak = Math.max(1, ...data.flatMap((b) => [b.kasMasuk, b.biaya]));
+  const totalMasuk = data.reduce((a, b) => a + b.kasMasuk, 0);
+  const totalBiaya = data.reduce((a, b) => a + b.biaya, 0);
+
+  return (
+    <article className="dashkartu dasharus">
+      <header className="dashkartu__head">
+        <h2 className="dashkartu__judul">Arus kas</h2>
+        <span className="dashkartu__pil">12 bulan terakhir</span>
+      </header>
+
+      <div className="dasharus__info">
+        <span className="dasharus__saldo">
+          <span className="dasharus__saldo-label">Masuk dikurangi keluar</span>
+          <span className={`dasharus__saldo-nilai${totalMasuk - totalBiaya < 0 ? " angka-minus" : ""}`}>
+            {formatRupiah(totalMasuk - totalBiaya)}
+          </span>
+        </span>
+        <span className="dasharus__legenda">
+          <span className="dasharus__leg"><span className="dasharus__kotak dasharus__kotak--masuk" />Kas masuk</span>
+          <span className="dasharus__leg"><span className="dasharus__kotak dasharus__kotak--biaya" />Biaya</span>
+        </span>
+      </div>
+
+      {data.length === 0 ? (
+        <p className="dashkartu__kosong">Belum ada uang yang tercatat dalam dua belas bulan terakhir.</p>
+      ) : (
+        <div className="dasharus__chart">
+          {data.map((b) => {
+            const i = Number(b.bulan.split("-")[1]) - 1;
+            return (
+              <div className="dasharus__kol" key={b.bulan}>
+                <div className="dasharus__lines">
+                  {[0, 1, 2, 3, 4].map((n) => <span className="dasharus__garis" key={n} />)}
+                  <div className="dasharus__bars">
+                    <span className="dasharus__pos">
+                      <span
+                        className="dasharus__bar dasharus__bar--masuk"
+                        style={{ height: `${(b.kasMasuk / puncak) * 100}%` }}
+                        title={`${BULAN_PENDEK[i]}: masuk ${formatRupiah(b.kasMasuk)}`}
+                      />
+                    </span>
+                    <span className="dasharus__neg">
+                      <span
+                        className="dasharus__bar dasharus__bar--biaya"
+                        style={{ height: `${(b.biaya / puncak) * 100}%` }}
+                        title={`${BULAN_PENDEK[i]}: biaya ${formatRupiah(b.biaya)}`}
+                      />
+                    </span>
+                  </div>
+                </div>
+                <span className="dasharus__label">{BULAN_PENDEK[i] ?? b.bulan}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </article>
   );
 }
@@ -380,16 +412,18 @@ function TabelLaba({ keu }: { keu: FinanceOverview | null }) {
   const baris = (keu?.proyek ?? []).slice(0, 6);
 
   return (
-    <article className="dashtabel">
-      <header className="dashtabel__head">
-        <h2 className="dashtabel__judul">Laba per proyek</h2>
-        <a className="dashtabel__semua" href="/admin/keuangan">Buka Keuangan</a>
+    <article className="dashkartu dashtabel">
+      <header className="dashkartu__head">
+        <h2 className="dashkartu__judul">Laba per proyek</h2>
+        <a className="dashkartu__pilih" href="/admin/keuangan">
+          Buka Keuangan<Icon name="chevronRight" size={14} />
+        </a>
       </header>
 
       {keu === null
         ? <span className="skeleton dashtabel__rangka" />
         : baris.length === 0
-          ? <p className="dashtabel__kosong">Belum ada proyek yang punya angka.</p>
+          ? <p className="dashkartu__kosong">Belum ada proyek yang punya angka.</p>
           : (
             <div className="dashtabel__gulir">
               <table className="dashtabel__tabel">
@@ -420,94 +454,16 @@ function TabelLaba({ keu }: { keu: FinanceOverview | null }) {
   );
 }
 
-/* --- Daftar pekerjaan yang belum ditangani --------------------------------- */
+/* --- Donat rincian ----------------------------------------------------------- */
 
-/* Div Logs Coinest, dinaikkan jadi isi utama halaman. Isinya daftar yang SAMA
-   dengan lonceng di topbar — diturunkan dari sumber tunggal lib/notifikasi.ts,
-   bukan dihitung ulang di sini. Dua daftar berisi hal yang sama pasti
-   menyimpang, dan yang jarang dilihat yang salah (jebakan #32 di CLAUDE.md). */
-function Antrean({ baris }: { baris: BarisNotifikasi[] | null }) {
-  const n = baris?.length ?? 0;
-  return (
-    <article className="dashlog dashlog--utama">
-      <header className="dashlog__head">
-        <h2 className="dashlog__judul">
-          Yang menunggu Anda
-          {n > 0 && <span className="dashlog__hitung">{n}</span>}
-        </h2>
-        <a className="dashlog__semua" href="/admin/notifikasi">Semua</a>
-      </header>
+/* Section Statistic (3:1246): kepala + segmented dua tab + donat 149px +
+   daftar rincian.
 
-      <div className="dashlog__list">
-        {baris === null
-          ? [0, 1, 2, 3].map((i) => <span key={i} className="skeleton dashlog__rangka" />)
-          : baris.length === 0
-            ? (
-              <p className="dashlog__kosong">
-                <Icon name="check" size={16} />
-                Tidak ada yang menunggu. Semua sudah ditangani.
-              </p>
-            )
-            : baris.slice(0, 6).map((n) => (
-              <a key={n.id} className="dashlog__baris" href={n.ke}>
-                <span className="dashlog__ubin"><Icon name={n.ikon} size={16} /></span>
-                <span className="dashlog__teks">
-                  <span className="dashlog__judul-baris">{n.judul}</span>
-                  <span className="dashlog__detail">{n.detail}</span>
-                </span>
-                {n.waktu && <span className="dashlog__waktu">{n.waktu}</span>}
-              </a>
-            ))}
-      </div>
-    </article>
-  );
-}
-
-/* --- Sebaran tahap proyek --------------------------------------------------- */
-
-/* Tujuh tahap pipeline studio, dengan jumlah proyek di masing-masing.
-   Bukan hiasan: dengan ~7 klien sebulan, tumpukan di satu tahap adalah satu-
-   satunya tanda dini bahwa ada yang macet — lima proyek menggantung di
-   "Proposal" berarti penawaran tidak pernah ditutup, lima di "Desain 2"
-   berarti revisi tidak pernah selesai.
-
-   Tahap yang KOSONG tetap ditulis. Justru kekosongannya yang memberi tahu:
-   pipeline tanpa satu pun proposal berarti bulan depan tidak ada pekerjaan. */
-function Pipeline({ proyek }: { proyek: Proyek[] | null }) {
-  const urut = Object.keys(TAHAP_PROYEK);
-  const hitung = urut.map((k) => ({
-    kunci: k,
-    label: TAHAP_PROYEK[k],
-    n: (proyek ?? []).filter((p) => (p.pipelineStage ?? "proposal") === k).length,
-  }));
-  const puncak = Math.max(1, ...hitung.map((h) => h.n));
-
-  return (
-    <article className="dashpipe">
-      <header className="dashpipe__head">
-        <h2 className="dashpipe__judul">Tahap proyek</h2>
-        <a className="dashpipe__semua" href="/admin/proyek">Semua</a>
-      </header>
-
-      <div className="dashpipe__list">
-        {proyek === null
-          ? [0, 1, 2, 3, 4, 5, 6].map((i) => <span key={i} className="skeleton dashpipe__rangka" />)
-          : hitung.map((h) => (
-            <div className="dashpipe__baris" key={h.kunci} data-kosong={h.n === 0 || undefined}>
-              <span className="dashpipe__label">{h.label}</span>
-              <span className="dashpipe__rel">
-                <span className="dashpipe__isi" style={{ width: `${(h.n / puncak) * 100}%` }} />
-              </span>
-              <span className="dashpipe__n">{h.n}</span>
-            </div>
-          ))}
-      </div>
-    </article>
-  );
-}
-
-/* --- Halaman --------------------------------------------------------------- */
-
+   Warna irisannya TANGGA hijau ke abu berurut besaran — #1E4841, #BBF49C,
+   #ECF4E9, #E5E6E6, #BCBEBD — bukan lima rona berbeda. Itu yang membuat
+   donatnya terbaca sebagai satu besaran yang dipecah, bukan lima hal yang
+   tidak berhubungan, dan itu juga yang membuat irisan terbesar menonjol
+   tanpa satu angka pun dibaca. */
 const LABEL_BEBAN: Record<string, string> = {
   freelancer: "Freelancer",
   operasional: "Operasional",
@@ -530,18 +486,182 @@ function labelBeban(kategori: string): string {
   return rapi.charAt(0).toUpperCase() + rapi.slice(1);
 }
 
-const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const BULAN_PANJANG = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
+/* Ukuran dalam satuan viewBox, angka Figma apa adanya: donat 149px dengan
+   cincin setebal 30px. Bujur sangkar, jadi lingkarannya tidak bisa lonjong. */
+const VB = 149;
+const TEBAL = 30;
+const R = (VB - TEBAL) / 2;
+const KELILING = 2 * Math.PI * R;
+
+interface Irisan { label: string; nilai: number; tingkat: number }
+
+function Donat({ keu }: { keu: FinanceOverview | null }) {
+  const [tab, setTab] = useState<"biaya" | "masuk">("biaya");
+
+  const irisBiaya: Irisan[] = useMemo(
+    () => [...(keu?.bebanKategori ?? [])]
+      .filter((k) => k.nilai > 0)
+      .sort((a, b) => b.nilai - a.nilai)
+      .slice(0, 5)
+      .map((k, i) => ({ label: labelBeban(k.kategori), nilai: k.nilai, tingkat: i + 1 })),
+    [keu],
+  );
+
+  /* Tab "Kas masuk" memakai irisan per PROYEK, bukan per kategori: uang masuk
+     tidak punya kategori beban, dan yang ingin diketahui dari sisi itu adalah
+     proyek mana yang benar-benar membayar. */
+  const irisMasuk: Irisan[] = useMemo(
+    () => [...(keu?.proyek ?? [])]
+      .filter((r) => r.received > 0)
+      .sort((a, b) => b.received - a.received)
+      .slice(0, 5)
+      .map((r, i) => ({ label: r.projectTitle, nilai: r.received, tingkat: i + 1 })),
+    [keu],
+  );
+
+  const totalBiaya = irisBiaya.reduce((a, b) => a + b.nilai, 0);
+  const totalMasuk = irisMasuk.reduce((a, b) => a + b.nilai, 0);
+
+  const aktif = tab === "biaya" ? irisBiaya : irisMasuk;
+  const total = tab === "biaya" ? totalBiaya : totalMasuk;
+
+  let jalan = 0;
+
+  return (
+    <article className="dashkartu dashdonat">
+      <header className="dashkartu__head">
+        <h2 className="dashkartu__judul">Rincian</h2>
+        <span className="dashkartu__pil">Seluruh studio</span>
+      </header>
+
+      <div className="dashseg" role="tablist" aria-label="Pilih rincian">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "masuk"}
+          className="dashseg__tab"
+          onClick={() => setTab("masuk")}
+        >
+          Kas masuk<span className="dashseg__angka">({rupiahPendek(totalMasuk)})</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "biaya"}
+          className="dashseg__tab"
+          onClick={() => setTab("biaya")}
+        >
+          Biaya<span className="dashseg__angka">({rupiahPendek(totalBiaya)})</span>
+        </button>
+      </div>
+
+      <div className="dashdonat__chart">
+        {total === 0 ? (
+          <p className="dashkartu__kosong">Belum ada angka.</p>
+        ) : (
+          <>
+            <svg viewBox={`0 0 ${VB} ${VB}`} className="dashdonat__svg" role="img" aria-label="Donat rincian">
+              {aktif.map((s) => {
+                const panjang = (s.nilai / total) * KELILING;
+                const offset = jalan;
+                jalan += panjang;
+                return (
+                  <circle
+                    key={s.label}
+                    cx={VB / 2}
+                    cy={VB / 2}
+                    r={R}
+                    fill="none"
+                    stroke={`var(--ramp-${s.tingkat})`}
+                    strokeWidth={TEBAL}
+                    strokeDasharray={`${panjang} ${KELILING - panjang}`}
+                    strokeDashoffset={-offset}
+                    transform={`rotate(-90 ${VB / 2} ${VB / 2})`}
+                  />
+                );
+              })}
+            </svg>
+            <span className="dashdonat__pusat">
+              <span className="dashdonat__pusat-label">
+                {tab === "biaya" ? "Total biaya" : "Total masuk"}
+              </span>
+              <span className="dashdonat__pusat-nilai">{rupiahPendek(total)}</span>
+            </span>
+          </>
+        )}
+      </div>
+
+      <div className="dashdonat__list">
+        {aktif.map((s) => (
+          <div className="dashdonat__baris" key={s.label}>
+            <span className="dashdonat__kiri">
+              <span className={`dashdonat__chip dashdonat__chip--${s.tingkat}`}>
+                {Math.round((s.nilai / total) * 100)}%
+              </span>
+              <span className="dashdonat__label">{s.label}</span>
+            </span>
+            <span className="dashdonat__nilai">{formatRupiah(s.nilai)}</span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+/* --- Aktivitas: garis waktu yang belum ditangani ---------------------------- */
+
+/* Section Recent Activity (3:1272): kepala + Div Logs, tiap baris berbulatan
+   30px dengan garis penyambung ke baris berikutnya.
+
+   Isinya daftar yang SAMA dengan lonceng di topbar — diturunkan dari sumber
+   tunggal lib/notifikasi.ts, bukan dihitung ulang di sini. Dua daftar berisi
+   hal yang sama pasti menyimpang, dan yang jarang dilihat yang salah
+   (jebakan #32 di CLAUDE.md). */
+function Aktivitas({ baris }: { baris: BarisNotifikasi[] | null }) {
+  return (
+    <article className="dashkartu dashlog">
+      <header className="dashkartu__head">
+        <h2 className="dashkartu__judul">Belum ditangani</h2>
+        <a className="dashkartu__pilih" href="/admin/notifikasi">
+          Semua<Icon name="chevronRight" size={14} />
+        </a>
+      </header>
+
+      <div className="dashlog__list">
+        {baris === null
+          ? [0, 1, 2, 3].map((i) => <span key={i} className="skeleton dashlog__rangka" />)
+          : baris.length === 0
+            ? (
+              <p className="dashlog__beres">
+                <Icon name="check" size={16} />
+                Tidak ada yang menunggu. Semua sudah ditangani.
+              </p>
+            )
+            : baris.slice(0, 5).map((n, i, arr) => (
+              <a key={n.id} className="dashlog__baris" href={n.ke} data-akhir={i === arr.length - 1 || undefined}>
+                <span className="dashlog__rel">
+                  <span className="dashlog__bulat"><Icon name={n.ikon} size={14} /></span>
+                  <span className="dashlog__garis" aria-hidden="true" />
+                </span>
+                <span className="dashlog__teks">
+                  <span className="dashlog__judul-baris">
+                    <strong>{n.judul}</strong>
+                    {n.detail ? <> — {n.detail}</> : null}
+                  </span>
+                  {n.waktu && <span className="dashlog__waktu">{n.waktu}</span>}
+                </span>
+              </a>
+            ))}
+      </div>
+    </article>
+  );
+}
+
+/* --- Halaman --------------------------------------------------------------- */
 
 function Isi() {
   /* Nilai awal dibaca dari cache, permintaan segar tetap jalan di belakang —
-     pola stale-while-revalidate yang sama dengan halaman admin lain. Yang
-     MENULIS cache di sini cuma dashboard sendiri untuk kunci miliknya; kunci
-     "settings" ikut ditulis karena halaman ini pemakai pertamanya setiap
-     kali panel dibuka. */
+     pola stale-while-revalidate yang sama dengan halaman admin lain. */
   const [nama, setNama] = useState<string | null>(
     () => bacaCache<{ studioName?: string }>("settings")?.studioName ?? null,
   );
@@ -575,28 +695,6 @@ function Isi() {
       .catch(() => { setNotif([]); setProyek([]); setAktif(0); });
   }, []);
 
-  const titikArus = useMemo(
-    () => (bulanan ?? []).map((b) => {
-      const [th, bl] = b.bulan.split("-");
-      const i = Number(bl) - 1;
-      return {
-        label: BULAN_PENDEK[i] ?? b.bulan,
-        labelPanjang: `${BULAN_PANJANG[i] ?? b.bulan} ${th}`,
-        nilai: { masuk: b.kasMasuk, biaya: b.biaya },
-      };
-    }),
-    [bulanan],
-  );
-
-  const iris: IrisDonat[] = useMemo(
-    () => (keu?.bebanKategori ?? []).map((b, i) => ({
-      label: labelBeban(b.kategori),
-      nilai: b.nilai,
-      warna: `var(--chart-cat-${(i % 5) + 1})`,
-    })),
-    [keu],
-  );
-
   return (
     <div className="dashgrid">
       <div className="dashgrid__kol dashgrid__kol--kiri">
@@ -607,58 +705,38 @@ function Isi() {
       </div>
 
       <div className="dashgrid__kol dashgrid__kol--tengah">
-        {/* Antrean duduk PALING ATAS di kolom terlebar, bukan terselip di
-            kolom sempit sebelah kanan. Halaman ini bernama Hari Ini, dan
-            yang menjawab pertanyaan "hari ini saya harus apa" cuma daftar
-            ini — angka kas dan grafik menjawab pertanyaan lain. */}
-        <Antrean baris={notif} />
-
         <div className="dashstat">
-          <KartuAngka
-            label="Kas masuk"
-            nilai={keu ? formatRupiah(keu.kasMasuk) : "—"}
+          <KartuStat
             ikon="cash"
-            delta={keu ? `${keu.proyek.length} proyek tercatat` : undefined}
-            deltaNada="netral"
+            delta={selisihBulan(bulanan, (b) => b.kasMasuk)}
+            baikNaik
+            nilai={keu ? formatRupiah(keu.kasMasuk) : "—"}
+            label="Kas masuk"
           />
-          <KartuAngka
-            label="Piutang"
-            nilai={keu ? formatRupiah(keu.piutang) : "—"}
-            ikon="receipt"
-            delta={keu ? "belum diterima" : undefined}
-            deltaNada="netral"
-          />
-          <KartuAngka
-            label="Total biaya"
-            nilai={keu ? formatRupiah(keu.totalBiaya) : "—"}
+          <KartuStat
             ikon="bank"
-            delta={keu ? "keluar dari kas" : undefined}
-            deltaNada="netral"
+            delta={selisihBulan(bulanan, (b) => b.biaya)}
+            /* Biaya yang naik bukan kabar baik. */
+            baikNaik={false}
+            nilai={keu ? formatRupiah(keu.totalBiaya) : "—"}
+            label="Total biaya"
+          />
+          <KartuStat
+            ikon="finance"
+            delta={selisihBulan(bulanan, (b) => b.labaBersih)}
+            baikNaik
+            nilai={keu ? formatRupiah(keu.labaBersih) : "—"}
+            label="Laba bersih"
           />
         </div>
 
-        <ChartArusKas
-          judul="Arus kas dua belas bulan"
-          seri={[
-            { kunci: "masuk", label: "Kas masuk", warna: "var(--chart-1)", isi: true },
-            { kunci: "biaya", label: "Biaya", warna: "var(--chart-3)", gaya: "putus" },
-          ]}
-          data={titikArus}
-        />
-
+        <GrafikArus bulanan={bulanan} />
         <TabelLaba keu={keu} />
       </div>
 
       <div className="dashgrid__kol dashgrid__kol--kanan">
-        <Pipeline proyek={proyek} />
-        <KartuDonat
-          judul="Rincian beban"
-          subjudul="Ke mana uang studio keluar"
-          iris={iris}
-          kakiLabel="Total biaya"
-          kakiNilai={keu ? formatRupiah(keu.totalBiaya) : "—"}
-          format={formatRupiah}
-        />
+        <Donat keu={keu} />
+        <Aktivitas baris={notif} />
       </div>
     </div>
   );

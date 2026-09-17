@@ -2755,21 +2755,19 @@
   background: var(--bg-sunken);
 }
 
-/* --- Dashboard: grid tiga kolom Coinest ---------------------------------- */
+/* =============================================================================
+   Dashboard — frame Figma "01. Dashboard (v1) - Desktop" (node 3:1069).
 
-/* Susunan "01. Dashboard (v1)" apa adanya: badan 1192px terbagi 283 / 586 /
-   283 dengan jarak 20px mendatar dan tegak, tiap kartu berpadding 16px dan
-   ber-radius 12px.
+   Angkanya diambil dari framenya, bukan dikira-kira: badan 1192px terbagi
+   283 / 586 / 283 dengan jarak 20px, tiap kartu berpadding 16px, bergaris
+   1px, dan ber-radius 16px.
 
    Kolomnya ditulis sebagai `fr` dengan angka Figma-nya, bukan persentase:
    `fr` membagi SISA ruang setelah gap dikurangi, jadi perbandingan
    283:586:283 tetap persis berapa pun lebar layarnya — sementara persentase
    dihitung dari lebar penuh dan meleset sebesar gap-nya.
+   ============================================================================= */
 
-   MEMBALIK bentuk sebelumnya, yaitu dua kolom besar tempat kolom kanannya
-   sengaja dikosongkan "menunggu isi". Isinya tidak pernah datang, dan
-   setengah dashboard yang kosong adalah hal pertama yang terlihat begitu
-   panel dibuka. */
 .admin__content:has(.dashgrid) {
   padding-top: var(--space-5);
   gap: 0;
@@ -2784,80 +2782,104 @@
 
 .dashgrid__kol { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
-/* Bentuk kartu bersama. Ditulis sekali di sini, bukan diulang di tiap blok —
-   enam kartu dengan radius yang diketik ulang enam kali adalah enam
-   kesempatan untuk menyimpang. */
-.dashkas,
-.dashaksi,
-.dashbar,
-.dashplan,
-.dashtabel,
-.dashlog {
-  padding: var(--space-4);
+/* --- Bentuk kartu bersama --------------------------------------------------- */
+
+/* Ditulis sekali, bukan diulang di tiap blok — delapan kartu dengan radius
+   yang diketik ulang delapan kali adalah delapan kesempatan menyimpang. */
+.dashkartu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface);
 }
 
-/* --- Kartu gelap: kas studio + sapaan ------------------------------------- */
+.dashkartu__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 
-/* Satu-satunya bidang gelap di halaman terang, dan itu memang perannya:
-   menandai mana yang paling penting. Di Coinest ia kartu debit; di sini kas
-   studio, dengan sapaan sebagai nama pemegangnya. */
-/* Bidangnya memakai --kas-bidang, bukan --brand: di tema gelap --brand adalah
-   MINT, dan mint pejal seukuran kartu ini menyilaukan. Ini satu-satunya warna
-   di panel yang sengaja tidak ikut berbalik — yang dibawanya identitas, bukan
-   status. */
-.dashkas {
-  position: relative;
+.dashkartu__judul {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-strong);
+}
+
+/* Button Picker (I11:1745;1:1693): bergaris, radius 8, padding 12/8/8,
+   teks SemiBold 12px hijau tua. Bentuk yang sama dipakai tiap kepala kartu
+   yang punya keterangan atau tautan di kanannya. */
+.dashkartu__pil,
+.dashkartu__pilih,
+.dashkartu__tombol {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--brand-isi);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.dashkartu__pil { color: var(--text-muted); font-weight: 500; }
+.dashkartu__pilih:hover,
+.dashkartu__tombol:hover { background: var(--brand-soft); border-color: var(--brand-line); }
+
+.dashkartu__ikon {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+.dashkartu__ikon:hover { background: var(--surface-hover); color: var(--text-strong); }
+
+.dashkartu__kosong { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+
+/* Bar dua lapis: alas mint, isian hijau tua. Bukan alas abu seperti bar
+   kemajuan biasa — di Coinest alasnya memang mint, dan itu yang membuat
+   sisa yang belum tercapai tetap terbaca sebagai bagian dari hal yang sama. */
+.dashrel {
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-mint);
   overflow: hidden;
+}
+.dashrel__isi { display: block; height: 100%; border-radius: var(--radius-sm); background: var(--brand-isi); }
+
+/* --- Kartu gelap: kas studio ------------------------------------------------ */
+
+/* Widget Card (3:1128). Bidangnya memakai --kas-bidang, bukan --brand: di
+   tema gelap --brand adalah MINT, dan mint pejal seukuran kartu ini
+   menyilaukan. Ini satu-satunya warna di panel yang sengaja tidak ikut
+   berbalik — yang dibawanya identitas, bukan status. */
+.dashkas {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  border-color: var(--kas-bidang);
+  gap: 27px;
+  padding: 16px;
+  border: 1px solid var(--kas-bidang);
+  border-radius: 16px;
   background: var(--kas-bidang);
   color: var(--kas-ink);
 }
-
-/* Titik dua lapis. Lapis dasar selalu terlihat samar supaya bidangnya tidak
-   terbaca sebagai hijau kosong; lapis sorot lebih besar dan lebih terang,
-   ditutup topeng radial yang mengikuti kursor. */
-.dashdot {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.dashdot--dasar {
-  background-image: radial-gradient(circle, var(--brand-mint) 1px, transparent 1px);
-  background-size: 14px 14px;
-  opacity: 0.14;
-}
-
-.dashdot--sorot {
-  background-image: radial-gradient(circle, var(--brand-mint) 1.6px, transparent 1.6px);
-  background-size: 14px 14px;
-  opacity: 0;
-  transition: opacity var(--dur-slow) var(--ease);
-  -webkit-mask-image: radial-gradient(circle 120px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%);
-  mask-image: radial-gradient(circle 120px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%);
-}
-
-.dashkas:hover .dashdot--sorot { opacity: 0.85; }
-
-@media (prefers-reduced-motion: reduce) {
-  .dashdot--sorot { transition: none; }
-}
-
-.dashkas > *:not(.dashdot) { position: relative; }
 
 .dashkas__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 
 .dashkas__ubin {
   display: grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.125rem;
+  height: 2.125rem;
   border-radius: var(--radius-sm);
   background: var(--brand-mint);
   color: var(--brand-mint-ink);
@@ -2867,205 +2889,143 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: var(--text-xs);
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--brand-mint);
 }
-
-/* Sapaan memakai mint, bukan putih: ia yang paling besar di kartu ini, dan
-   mint adalah aksen di ATAS hijau tua — pasangan warna paling khas Coinest. */
-.dashkas .dash-salam {
-  margin-top: var(--space-3);
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--brand-mint);
-}
-
-.dashkas .dash-salam__caret { background: var(--brand-mint); }
 
 .dashkas__nama {
   margin: 0;
-  font-size: var(--text-sm);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--kas-ink);
-  opacity: 0.75;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.dashkas__kaki {
+.dashkas__kaki { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.dashkas__kanan { display: flex; align-items: flex-start; gap: 18px; }
+.dashkas__blok { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.dashkas__blok-label { font-size: var(--text-2xs); color: var(--kas-ink); opacity: 0.75; white-space: nowrap; }
+
+.dashkas__blok-nilai {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--kas-nilai);
+  white-space: nowrap;
+}
+.dashkas__blok--kecil .dashkas__blok-nilai { font-size: var(--text-sm); font-weight: 600; }
+
+/* --- Empat tombol cepat ------------------------------------------------------ */
+
+/* Button Group (3:1156): bidang Green-BG, radius 16, padding 8 samping /
+   12 tegak, ikon 24px, label SemiBold 10px, dipisah garis tegak tipis. */
+.dashaksi {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 16px;
+  background: var(--brand-soft);
 }
-
-.dashkas__kanan { display: flex; align-items: flex-end; gap: var(--space-4); }
-
-.dashkas__blok { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-
-.dashkas__blok-label {
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--kas-ink);
-  opacity: 0.6;
-}
-
-.dashkas__blok-nilai { font-size: var(--text-md); font-weight: 700; color: var(--kas-ink); white-space: nowrap; }
-.dashkas__blok--kecil .dashkas__blok-nilai { font-size: var(--text-sm); }
-
-/* --- Empat tombol cepat ---------------------------------------------------- */
-
-/* Button Group Coinest: empat tombol setara dipisah garis tegak tipis.
-   Garisnya milik tombol (::before), bukan elemen tersendiri — elemen pemisah
-   yang berdiri sendiri akan tertinggal sebagai tanda yatim kalau salah satu
-   tombol suatu saat disembunyikan. */
-.dashaksi { display: grid; grid-template-columns: repeat(4, 1fr); padding-block: var(--space-3); }
 
 .dashaksi__btn {
   position: relative;
+  flex: 1 0 0;
+  min-width: 45px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem;
-  color: var(--text-muted);
+  gap: 6px;
+  padding-block: 4px;
+  color: var(--brand-isi);
   text-decoration: none;
 }
 
+/* Garis pemisah milik tombolnya sendiri (::before), bukan elemen tersendiri —
+   elemen pemisah yang berdiri sendiri akan tertinggal sebagai tanda yatim
+   kalau salah satu tombol suatu saat disembunyikan. */
 .dashaksi__btn + .dashaksi__btn::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 10%;
-  height: 80%;
-  border-left: 1px solid var(--border);
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--brand-line);
 }
 
-.dashaksi__ubin {
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 20px;
-  background: var(--brand-soft);
-  color: var(--brand-isi);
-  transition: background var(--dur) var(--ease);
-}
-
-.dashaksi__btn:hover .dashaksi__ubin,
-.dashaksi__btn:focus-visible .dashaksi__ubin { background: var(--brand-line); color: var(--brand-mint-ink); }
+.dashaksi__label { font-size: var(--text-2xs); font-weight: 600; line-height: 1; }
+.dashaksi__btn:hover { color: var(--text-strong); }
 .dashaksi__btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
 
-.dashaksi__label { font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); }
-.dashaksi__btn:hover .dashaksi__label { color: var(--text-strong); }
+/* --- Kartu bar: laba bersih --------------------------------------------------- */
 
-/* --- Kartu bar: laba bersih ------------------------------------------------ */
+.dashbar__isi { display: flex; flex-direction: column; gap: 12px; }
+.dashbar__desc { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.dashbar__angka { display: inline-flex; align-items: baseline; gap: 4px; min-width: 0; flex-wrap: wrap; }
+.dashbar__nilai { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
+.dashbar__ket { font-size: var(--text-2xs); color: var(--text-muted); }
+.dashbar__persen { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); flex: none; }
 
-.dashbar { display: flex; flex-direction: column; gap: var(--space-3); }
+/* --- Daftar proyek berjalan --------------------------------------------------- */
 
-.dashbar__head,
-.dashplan__head,
-.dashtabel__head,
-.dashlog__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.dashbar__judul,
-.dashplan__judul,
-.dashtabel__judul,
-.dashlog__judul {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-md);
+.dashplan__total { display: flex; flex-direction: column; gap: 4px; }
+.dashplan__total-label { font-size: var(--text-2xs); color: var(--text-strong); }
+.dashplan__total-nilai {
+  font-size: var(--text-2xl);
   font-weight: 700;
-  line-height: 1.2;
-  color: var(--text-strong);
-}
-
-.dashbar__tautan {
-  display: grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: var(--radius-xs);
-  color: var(--text-muted);
-}
-.dashbar__tautan:hover { background: var(--surface-hover); color: var(--text-strong); }
-
-.dashplan__semua,
-.dashtabel__semua,
-.dashlog__semua {
-  font-size: var(--text-sm);
-  font-weight: 600;
+  line-height: 1.1;
   color: var(--brand-isi);
-  text-decoration: none;
 }
-.dashplan__semua:hover,
-.dashtabel__semua:hover,
-.dashlog__semua:hover { text-decoration: underline; }
 
-.dashbar__baris { margin: 0; display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
-.dashbar__nilai { font-size: var(--text-lg); font-weight: 700; color: var(--text-strong); }
-.dashbar__ket { font-size: var(--text-sm); color: var(--text-muted); }
-.dashbar__persen { margin-left: auto; font-size: var(--text-sm); font-weight: 700; color: var(--text-strong); }
+.dashplan__list { display: flex; flex-direction: column; gap: 16px; }
+.dashplan__rangka { height: 5.25rem; border-radius: 12px; }
 
-.dashbar__rel { height: 8px; border-radius: var(--radius-pill); background: var(--tray); overflow: hidden; }
-.dashbar__isi { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--brand-isi); }
-
-/* --- Daftar proyek berjalan ------------------------------------------------ */
-
-.dashplan { display: flex; flex-direction: column; gap: var(--space-3); }
-
-.dashplan__total { display: flex; flex-direction: column; gap: 0.15rem; }
-.dashplan__total-label {
-  font-size: var(--text-2xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.dashplan__total-nilai { font-size: var(--text-lg); font-weight: 700; color: var(--text-strong); }
-
-.dashplan__list { display: flex; flex-direction: column; gap: var(--space-2); }
-.dashplan__rangka { height: 4.75rem; border-radius: var(--radius-sm); }
-.dashplan__kosong,
-.dashtabel__kosong,
-.dashlog__kosong { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
-
-.dashplan__kartu {
+/* Card Saving Plan (3:1184): radius 12, padding 14, jarak isi 16. */
+.dashplankartu {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: var(--space-3);
+  gap: 16px;
+  padding: 14px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-sunken);
+  border-radius: 12px;
+  background: var(--surface);
   text-decoration: none;
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.dashplan__kartu:hover { border-color: var(--brand-line); background: var(--brand-soft); }
+.dashplankartu:hover { border-color: var(--brand-line); background: var(--brand-soft); }
 
-.dashplan__kartu-atas { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.dashplan__kartu-judul {
+.dashplankartu__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+.dashplankartu__judul { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+.dashplankartu__ubin {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+}
+
+.dashplankartu__nama {
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-strong);
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.dashplan__kartu-tahap {
+
+.dashplankartu__tahap {
   flex: none;
-  padding: 0.1rem 0.4rem;
+  padding: 2px 6px;
   border-radius: var(--radius-pill);
   background: var(--brand-soft);
   color: var(--brand-isi);
@@ -3074,43 +3034,152 @@
   white-space: nowrap;
 }
 
-.dashplan__kartu-rel { height: 5px; border-radius: var(--radius-pill); background: var(--tray); overflow: hidden; }
-.dashplan__kartu-isi { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--brand-isi); }
-
-.dashplan__kartu-bawah {
+.dashplankartu__chart { display: flex; flex-direction: column; gap: 10px; }
+.dashplankartu__desc {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-2);
   font-size: var(--text-2xs);
-  color: var(--text-muted);
+}
+.dashplankartu__kiri,
+.dashplankartu__kanan { display: inline-flex; gap: 4px; }
+.dashplankartu__masuk { font-weight: 600; color: var(--text-strong); }
+.dashplankartu__pct { font-weight: 600; color: var(--text-muted); }
+.dashplankartu__target-label { color: var(--text-muted); }
+.dashplankartu__target { color: var(--text-strong); }
+
+/* --- Tiga kartu statistik ------------------------------------------------------ */
+
+/* Section Statistic (3:1188): jarak 18px, bukan 20px. Angka Figma apa adanya. */
+.dashstat { display: flex; gap: 18px; align-items: stretch; }
+
+.dashstat__kartu {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
 }
 
-/* --- Tiga kartu statistik --------------------------------------------------- */
+.dashstat__head { display: flex; align-items: flex-start; justify-content: space-between; }
 
-/* auto-fit, bukan tiga kolom tetap: di kolom tengah yang menyempit tiga
-   kartu rupiah berdampingan jadi 120px masing-masing dan angkanya pecah dua
-   baris. Container query TIDAK dipakai — ia diam saja kalau tidak ada
-   leluhur ber-container-type, dan itu sudah menggigit sekali di berkas ini. */
-.dashstat {
+.dashstat__ubin {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
-  gap: 18px;
+  place-items: center;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-isi);
 }
 
-/* --- Tabel laba per proyek -------------------------------------------------- */
+.dashstat__isi { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 
-.dashtabel { display: flex; flex-direction: column; gap: var(--space-3); }
-.dashtabel__rangka { height: 12rem; border-radius: var(--radius-sm); }
+.dashstat__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 4px;
+  border-radius: 15px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashstat__badge--turun { background: var(--danger-soft); color: var(--danger); }
+
+/* 20px, bukan 24px seperti di Figma. Terukur: kartunya 183px dengan padding
+   16px, jadi 151px tersedia — dan "Rp185.000.000" pada Urbanist Bold 24px
+   butuh 175px, sehingga tiga kartu teratas semuanya terpotong jadi
+   "Rp185.000....". Angka Coinest "$78,000" cuma 7 karakter; rupiah tanpa
+   singkatan 13 karakter, dan itu beda yang tidak bisa dipaksakan.
+
+   Yang disingkat ukurannya, BUKAN angkanya: kartu ini yang dipakai pemilik
+   mencocokkan dengan mutasi bank, dan "Rp185,0 jt" tidak bisa dicocokkan. */
+.dashstat__nilai {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.dashstat__label { margin: 0; font-size: var(--text-sm); color: var(--text-strong); }
+
+/* --- Grafik batang dua arah ----------------------------------------------------- */
+
+.dasharus__info { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.dasharus__saldo { display: flex; flex-direction: column; gap: 2px; }
+.dasharus__saldo-label { font-size: var(--text-2xs); color: var(--text-muted); }
+.dasharus__saldo-nilai { font-size: var(--text-lg); font-weight: 700; line-height: 1.2; color: var(--text-strong); }
+
+.dasharus__legenda { display: flex; gap: 24px; }
+.dasharus__leg { display: inline-flex; align-items: center; gap: 13px; font-size: var(--text-sm); color: var(--text-strong); }
+.dasharus__kotak { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.dasharus__kotak--masuk { background: var(--brand-isi); }
+.dasharus__kotak--biaya { background: var(--brand-mint); }
+
+/* Chart (3:1207): tinggi 182px, kolom berdampingan tanpa celah — kisinya
+   digambar per kolom, jadi garisnya menyambung sendiri melintasi grafik. */
+.dasharus__chart { display: flex; height: 182px; align-items: stretch; }
+.dasharus__kol { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.dasharus__lines {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dasharus__garis { height: 13px; border-top: 1px solid var(--chart-grid); }
+
+/* Inset 3.64% tegak dan 20% mendatar — angka Figma. Yang 20% itu yang
+   memberi jarak antar-batang tanpa memberi jarak antar-KISI. */
+.dasharus__bars {
+  position: absolute;
+  inset: 3.64% 20%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dasharus__pos { flex: 1; min-height: 0; display: flex; align-items: flex-end; justify-content: center; }
+.dasharus__neg { flex: 1; min-height: 0; display: flex; align-items: flex-start; justify-content: center; }
+.dasharus__bar { display: block; width: 100%; }
+.dasharus__bar--masuk { background: var(--brand-isi); border-radius: 4px 4px 0 0; }
+.dasharus__bar--biaya { background: var(--brand-mint); border-radius: 0 0 4px 4px; }
+
+.dasharus__label {
+  height: 13px;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-2xs);
+  color: var(--text-strong);
+}
+
+/* --- Tabel laba per proyek -------------------------------------------------------- */
+
+.dashtabel__rangka { height: 12rem; border-radius: 12px; }
 .dashtabel__gulir { overflow-x: auto; }
-
 .dashtabel__tabel { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 
 .dashtabel__tabel th,
-.dashtabel__tabel td {
-  padding: var(--space-2) var(--space-3);
-  text-align: right;
-  white-space: nowrap;
-}
+.dashtabel__tabel td { padding: var(--space-2) var(--space-3); text-align: right; white-space: nowrap; }
 
 .dashtabel__tabel thead th {
   font-size: var(--text-2xs);
@@ -3138,131 +3207,118 @@
 
 .dashtabel__tabel tbody td { color: var(--text-body); font-variant-numeric: tabular-nums; }
 
-/* --- Daftar pekerjaan yang belum ditangani ---------------------------------- */
+/* --- Donat rincian ----------------------------------------------------------------- */
 
-.dashlog { display: flex; flex-direction: column; gap: var(--space-3); }
-.dashlog__list { display: flex; flex-direction: column; gap: var(--space-1); }
-.dashlog__rangka { height: 3rem; border-radius: var(--radius-sm); }
+/* Segmented (3:1250): dua tab selebar sama, garis bawah 1px untuk yang diam
+   dan 3px mint untuk yang aktif. */
+.dashseg { display: flex; }
 
-.dashlog__kosong { display: flex; align-items: center; gap: var(--space-2); color: var(--success); }
-
-.dashlog__baris {
+.dashseg__tab {
+  flex: 1 0 0;
+  min-width: 0;
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  transition: background var(--dur) var(--ease);
-}
-.dashlog__baris:hover { background: var(--surface-hover); }
-
-.dashlog__ubin {
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  flex: none;
-  border-radius: var(--radius-xs);
-  background: var(--brand-soft);
-  color: var(--brand-isi);
-}
-
-.dashlog__teks { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1; }
-.dashlog__judul-baris {
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dashlog__detail {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dashlog__waktu { flex: none; font-size: var(--text-2xs); color: var(--text-faint); white-space: nowrap; }
-
-/* Antrean sebagai isi UTAMA kolom tengah: barisnya lebih tinggi dan judulnya
-   membawa angka, karena inilah yang dibaca pertama begitu panel dibuka. */
-.dashlog--utama .dashlog__baris { padding: var(--space-3) var(--space-2); }
-.dashlog--utama .dashlog__ubin { width: 2.25rem; height: 2.25rem; border-radius: var(--radius-sm); }
-.dashlog--utama .dashlog__judul-baris { font-size: var(--text-base); }
-.dashlog--utama .dashlog__detail { font-size: var(--text-sm); }
-.dashlog--utama .dashlog__judul { font-size: var(--text-lg); }
-
-.dashlog__hitung {
-  display: inline-grid;
-  place-items: center;
-  min-width: 1.375rem;
-  height: 1.375rem;
-  margin-left: var(--space-2);
-  padding-inline: 0.3rem;
-  border-radius: var(--radius-pill);
-  background: var(--danger);
-  color: var(--danger-ink);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  vertical-align: 0.05em;
+  line-height: 1.3;
+  cursor: pointer;
 }
 
-/* --- Sebaran tahap proyek --------------------------------------------------- */
+.dashseg__tab[aria-selected="true"] { border-bottom: 3px solid var(--brand-mint); color: var(--brand-isi); }
+.dashseg__tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.dashseg__angka { font-size: var(--text-2xs); font-weight: 400; }
 
-.dashpipe {
+.dashdonat__chart { position: relative; height: 148px; display: grid; place-items: center; }
+.dashdonat__svg { height: 148px; width: 148px; }
+
+.dashdonat__pusat {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-}
-
-.dashpipe__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.dashpipe__judul {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--text-strong);
-}
-.dashpipe__semua { font-size: var(--text-sm); font-weight: 600; color: var(--brand-isi); text-decoration: none; }
-.dashpipe__semua:hover { text-decoration: underline; }
-
-.dashpipe__list { display: flex; flex-direction: column; gap: var(--space-2); }
-.dashpipe__rangka { height: 1.1rem; border-radius: var(--radius-xs); }
-
-/* Tiga kolom tetap: label, rel, angka. Rel yang lebarnya mengikuti label
-   membuat tujuh bar berujung di tujuh tempat berbeda, dan sebarannya jadi
-   tidak bisa dibaca sekilas — padahal itu satu-satunya gunanya. */
-.dashpipe__baris {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr 1.25rem;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.dashdonat__pusat-label { font-size: var(--text-2xs); font-weight: 500; color: var(--text-muted); }
+/* Lubang donatnya 89px (149 dikurangi dua kali tebal 30), jadi angka 20px
+   milik Figma meluber keluar cincin — "Rp261,7 jt" butuh 100px. 16px muat. */
+.dashdonat__pusat-nilai { font-size: var(--text-md); font-weight: 700; line-height: 1.2; color: var(--brand-isi); }
+
+.dashdonat__list { display: flex; flex-direction: column; gap: 12px; }
+.dashdonat__baris { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.dashdonat__kiri { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.dashdonat__chip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  flex: none;
+  padding: 6px 0;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-.dashpipe__label {
+.dashdonat__chip--1 { background: var(--ramp-1); color: var(--ramp-1-ink); }
+.dashdonat__chip--2 { background: var(--ramp-2); color: var(--ramp-2-ink); }
+.dashdonat__chip--3 { background: var(--ramp-3); color: var(--ramp-3-ink); }
+.dashdonat__chip--4 { background: var(--ramp-4); color: var(--ramp-4-ink); }
+.dashdonat__chip--5 { background: var(--ramp-5); color: var(--ramp-5-ink); }
+
+.dashdonat__label {
   font-size: var(--text-sm);
-  color: var(--text-body);
+  font-weight: 500;
+  color: var(--text-strong);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.dashdonat__nilai { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); flex: none; }
 
-.dashpipe__rel { height: 6px; border-radius: var(--radius-pill); background: var(--tray); overflow: hidden; }
-.dashpipe__isi { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--brand-isi); }
+/* --- Aktivitas: garis waktu ---------------------------------------------------------- */
 
-.dashpipe__n { font-size: var(--text-sm); font-weight: 700; color: var(--text-strong); text-align: right; }
+.dashlog { gap: 16px; }
+.dashlog__list { display: flex; flex-direction: column; gap: 2px; }
+.dashlog__rangka { height: 3rem; border-radius: var(--radius-sm); }
+.dashlog__beres { margin: 0; display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--success); }
 
-/* Tahap yang kosong diredupkan, TIDAK disembunyikan: pipeline tanpa satu pun
-   proposal adalah keterangan yang penting justru karena kosong. */
-.dashpipe__baris[data-kosong] .dashpipe__label,
-.dashpipe__baris[data-kosong] .dashpipe__n { color: var(--text-faint); }
+/* Log Item (3:1280): jarak 14px, bulatan 30px, garis penyambung turun ke
+   baris berikutnya. Garisnya berhenti di baris terakhir — garis yang
+   menggantung ke ruang kosong terbaca sebagai daftar yang terpotong. */
+.dashlog__baris { display: flex; align-items: stretch; gap: 14px; text-decoration: none; }
+.dashlog__rel { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
+
+.dashlog__bulat {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 56px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+}
+
+.dashlog__garis { flex: 1; width: 1px; background: var(--border); }
+.dashlog__baris[data-akhir] .dashlog__garis { display: none; }
+
+.dashlog__teks { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 2px 0 10px; }
+
+.dashlog__judul-baris { font-size: var(--text-sm); line-height: 1.3; color: var(--text-strong); }
+.dashlog__judul-baris strong { font-weight: 600; }
+.dashlog__waktu { font-size: var(--text-2xs); color: var(--text-muted); }
+.dashlog__baris:hover .dashlog__judul-baris { color: var(--brand-isi); }
 
 /* --- Dashboard di layar sempit --------------------------------------------- */
 
@@ -3272,13 +3328,22 @@
 @media (max-width: 78rem) {
   .dashgrid { grid-template-columns: 1fr 1fr; }
   .dashgrid__kol--tengah { grid-column: 1 / -1; order: 1; }
-  .dashgrid__kol--kiri { order: 0; }
+  .dashgrid__kol--kiri,
   .dashgrid__kol--kanan { order: 0; }
 }
 
 @media (max-width: 52rem) {
   .dashgrid { grid-template-columns: 1fr; }
   .dashgrid__kol--tengah { grid-column: auto; }
+  /* Tiga kartu statistik berdampingan jadi tidak muat begitu kolomnya
+     selebar ponsel; angka rupiahnya pecah dua baris lebih dulu. */
+  .dashstat { flex-wrap: wrap; }
+  .dashstat__kartu { flex-basis: calc(50% - 9px); }
+}
+
+@media (max-width: 34rem) {
+  .dashstat__kartu { flex-basis: 100%; }
+  .dasharus__legenda { gap: var(--space-3); }
 }
 
 /* --- Halaman Notifikasi -------------------------------------------------- */

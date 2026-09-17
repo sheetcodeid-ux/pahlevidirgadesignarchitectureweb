@@ -168,6 +168,20 @@
   --kas-bidang: #1E4841;
   --kas-ink: #ECF4E9;
 
+  /* Tangga irisan donat — hijau ke abu, berurut besaran. Coinest tidak
+     memakai lima rona berbeda untuk memecah satu besaran; ia memakai satu
+     tangga, dan itu yang membuat irisan terbesar menonjol tanpa satu angka
+     pun dibaca. Nilainya diambil dari frame Statistic (node 3:1246). */
+  --ramp-1: #1E4841;  --ramp-1-ink: #ECF4E9;
+  --ramp-2: #BBF49C;  --ramp-2-ink: #242E2C;
+  --ramp-3: #ECF4E9;  --ramp-3-ink: #242E2C;
+  --ramp-4: #E5E6E6;  --ramp-4-ink: #242E2C;
+  --ramp-5: #BCBEBD;  --ramp-5-ink: #242E2C;
+
+  /* Angka besar di kartu kas — putih penuh di kedua tema, karena bidangnya
+     memang tidak ikut berbalik. */
+  --kas-nilai: #FBFBFC;
+
   --danger: #F73541;
   --danger-ink: #FFFFFF;
   --danger-soft: #FDCED1;
@@ -261,6 +275,17 @@
   /* Sama persis dengan tema terang — lihat alasannya di blok terang. */
   --kas-bidang: #1E4841;
   --kas-ink: #ECF4E9;
+
+  /* Tangga yang sama, dibalik arah terangnya: di atas bidang gelap yang
+     paling menonjol adalah yang paling TERANG. Yang dijaga hubungannya —
+     satu besaran yang dipecah — bukan nilainya. */
+  --ramp-1: #BBF49C;  --ramp-1-ink: #10261A;
+  --ramp-2: #7FC98E;  --ramp-2-ink: #10261A;
+  --ramp-3: #4F8A5E;  --ramp-3-ink: #E8EAE9;
+  --ramp-4: #3D4A47;  --ramp-4-ink: #E8EAE9;
+  --ramp-5: #2C3735;  --ramp-5-ink: #E8EAE9;
+
+  --kas-nilai: #FBFBFC;
 
   --danger: #FF6B74;
   --danger-ink: #1E1012;
