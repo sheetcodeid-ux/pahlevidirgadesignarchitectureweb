@@ -202,8 +202,8 @@
    tetikus maupun panah keyboard — satu gaya menangani keduanya. */
 .ov-menu__item[data-highlighted] { background: var(--surface-hover); color: var(--text-strong); }
 .ov-menu__item[data-disabled] { color: var(--text-faint); cursor: not-allowed; }
-.ov-menu__item--danger { color: var(--brand); }
-.ov-menu__item--danger[data-highlighted] { background: var(--brand-soft); color: var(--brand); }
+.ov-menu__item--danger { color: var(--danger); }
+.ov-menu__item--danger[data-highlighted] { background: var(--danger-soft); color: var(--danger); }
 .ov-menu__label { padding: 0.4rem 0.65rem; font-size: var(--text-2xs); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-faint); }
 .ov-menu__sep { height: 1px; margin: var(--space-2) 0.25rem; background: var(--border); }
 .ov-menu__shortcut { margin-left: auto; font-family: var(--font-kode); font-size: var(--text-2xs); color: var(--text-faint); }
@@ -373,10 +373,10 @@
 .ov-toast[data-swipe="end"] { animation: ov-out-right var(--dur-fast) var(--ease); }
 
 .ov-toast--success { border-color: var(--success); }
-.ov-toast--danger { border-color: var(--brand); }
+.ov-toast--danger { border-color: var(--danger); }
 .ov-toast__icon { flex: none; margin-top: 0.1rem; }
 .ov-toast--success .ov-toast__icon { color: var(--success); }
-.ov-toast--danger .ov-toast__icon { color: var(--brand); }
+.ov-toast--danger .ov-toast__icon { color: var(--danger); }
 .ov-toast__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 .ov-toast__title { font-weight: 700; font-size: var(--text-base); color: var(--text-strong); }
 .ov-toast__desc { font-size: var(--text-sm); color: var(--text-muted); }

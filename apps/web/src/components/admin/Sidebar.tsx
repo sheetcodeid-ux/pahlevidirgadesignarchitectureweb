@@ -250,15 +250,21 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
 
         <nav className="sidebar__nav" aria-label="Navigasi admin" ref={nav}>
           {Object.entries(kelompok).map(([labelGrup, itemGrup]) => {
-          const grupTampil = !grupTutup.includes(labelGrup);
+          /* Kelompok berlabel KOSONG tidak punya kepala dan tidak bisa
+             ditutup — itu baris paling atas ("Hari Ini"), yang sendirian dan
+             harus selalu terlihat. Memberinya kepala berarti menulis
+             judul kelompok yang isinya satu baris dengan nama yang sama. */
+          const tanpaKepala = labelGrup === "";
+          const grupTampil = tanpaKepala || !grupTutup.includes(labelGrup);
           return (
-          <div className="sidebar__group" key={labelGrup} data-tutup={!grupTampil || undefined}>
-          {/* Kepalanya tombol, bukan label mati. "Situs Publik" sendirian
-              tujuh baris, dan seluruh navnya 1.155px di dalam slot 744px —
-              411px menu berada di bawah lipatan pada layar 1000px, lebih
-              lagi di laptop. Kelompoknya tetap TERBUKA sebagai bawaan supaya
-              daftar itu tetap jadi pengingat apa yang belum diisi, seperti
-              alasan aslinya; yang ditambahkan cuma kemampuan menutupnya. */}
+          <div className="sidebar__group" key={labelGrup || "atas"} data-tutup={!grupTampil || undefined}>
+          {/* Kepalanya tombol, bukan label mati. Kelompok "Reputasi" sendirian
+              enam baris, dan seluruh navnya jauh lebih tinggi daripada slot
+              yang tersedia di laptop — sebagian menu berada di bawah lipatan
+              tanpa tanda apa pun. Kelompoknya tetap TERBUKA sebagai bawaan
+              supaya daftarnya tetap jadi pengingat apa yang belum diisi;
+              yang ditambahkan cuma kemampuan menutupnya. */}
+          {!tanpaKepala && (
           <button
             type="button"
             className="sidebar__group-label"
@@ -271,6 +277,7 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
               <Icon name="chevronDown" size={13} />
             </span>
           </button>
+          )}
           <ul className="sidebar__list" hidden={!grupTampil}>
             {itemGrup.map((item) => {
               if (!item.children) {

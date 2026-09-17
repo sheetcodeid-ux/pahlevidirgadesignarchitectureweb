@@ -403,7 +403,7 @@
   transition: background-color var(--dur) var(--ease);
 }
 
-.sidebar__site-btn:hover { background: #CDF7B6; }
+.sidebar__site-btn:hover { background: var(--brand-mint-hover); }
 
 
 .sidebar__site-text { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
