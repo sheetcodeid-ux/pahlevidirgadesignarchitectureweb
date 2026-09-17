@@ -1219,6 +1219,14 @@ a.mini__judul:hover { color: var(--brand); }
 /* Angka yang persis sama dengan wireframe: 2,16 : 1 dengan celah 17px. */
 .keu__baris2 { display: grid; grid-template-columns: 2.16fr 1fr; gap: 17px; }
 
+/* Dua kartu yang isinya SEJENIS dibagi rata, bukan 2,16 : 1. Dua donat
+   dengan lebar berbeda melipat legendanya di titik yang berbeda pula —
+   yang sempit menaruh legenda DI BAWAH donat, yang lebar di sebelahnya —
+   sehingga kartu kirinya ikut meninggi mengejar kanan dan menyisakan
+   rongga kosong setinggi 180px di bawah garis kakinya. Terukur di
+   /admin/fee sebelum aturan ini ada. */
+.keu__baris2--rata { grid-template-columns: 1fr 1fr; }
+
 @media (max-width: 62rem) { .keu__baris2 { grid-template-columns: 1fr; } }
 
 

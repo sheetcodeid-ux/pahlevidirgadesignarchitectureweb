@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { SkeletonTabel } from "../ui/Skeleton";
+import { KartuAngka } from "../ui/data/KartuAngka";
 import { Avatar } from "../ui/misc/Avatar";
 import { Tooltip, TooltipProvider } from "../ui/overlay/Floating";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
@@ -151,9 +152,22 @@ function Isi() {
     {
       judul: "Aksi",
       kelas: "table__actions",
-      lebar: "5rem",
+      lebar: "7rem",
       render: (t) => (
         <span className="table__act">
+          {/* Satu klik untuk aksi yang paling sering dipakai. Lewat dropdown
+              Status butuh dua ketukan plus membaca lima pilihan untuk sesuatu
+              yang jawabannya hampir selalu "selesai". Yang SUDAH selesai
+              tidak diberi tombol ini — tidak ada yang perlu diselesaikan
+              dua kali. */}
+          {t.status !== "selesai" && (
+            <button type="button" className="btn btn--secondary btn--icon btn--boxed"
+              title={`Tandai "${t.title}" selesai`}
+              aria-label={`Tandai ${t.title} selesai`}
+              onClick={() => ubahStatus(t.id, "selesai")}>
+              <Icon name="check" size={15} />
+            </button>
+          )}
           <a className="btn btn--secondary btn--icon btn--boxed" href={`/admin/proyek/edit?id=${t.projectId}`}
             aria-label={`Buka proyek ${t.projectTitle}`}>
             <Icon name="project" size={15} />
@@ -270,7 +284,49 @@ function Isi() {
     );
   }
 
+  /* Tiga angka yang menjawab "apa yang mendesak hari ini". Bukan jumlah
+     total — itu sudah ada di baris hitungan tabel dan tidak menuntut apa
+     pun. Yang menuntut adalah tenggat yang lewat. */
+  const angka = (() => {
+    const d = tugas ?? [];
+    const belum = d.filter((t) => t.status !== "selesai");
+    return {
+      lewat: belum.filter((t) => t.dueDate && t.dueDate <= hariIni).length,
+      berjalan: belum.filter((t) => t.status === "berjalan").length,
+      klien: belum.filter((t) => t.status === "menunggu_klien").length,
+    };
+  })();
+
   return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      {/* Selama data belum datang yang tampil kerangka, bukan angka nol.
+          "0 lewat tenggat" yang sedetik kemudian jadi 3 adalah jawaban yang
+          salah, bukan penanda sedang memuat. */}
+      {tugas === null ? (
+        <div className="kangka-deret" aria-hidden="true">
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+        </div>
+      ) : (
+      <div className="kangka-deret">
+        <KartuAngka
+          label="Lewat tenggat" nilai={String(angka.lewat)} ikon="clock"
+          delta={angka.lewat > 0 ? "perlu ditangani hari ini" : "tidak ada yang telat"}
+          deltaNada="netral"
+        />
+        <KartuAngka
+          label="Sedang berjalan" nilai={String(angka.berjalan)} ikon="checklist"
+          delta="dikerjakan sekarang" deltaNada="netral"
+        />
+        <KartuAngka
+          label="Menunggu klien" nilai={String(angka.klien)} ikon="user"
+          delta={angka.klien > 0 ? "bolanya di pihak klien" : "tidak ada yang menunggu"}
+          deltaNada="netral"
+        />
+      </div>
+      )}
+
     <DataTable
       data={tersaring}
       kunci={(t) => t.id}
@@ -333,6 +389,7 @@ function Isi() {
         keterangan: "Tekan Tambah tugas di atas. Proyeknya dipilih di dalam dialog.",
       }}
     />
+    </div>
   );
 }
 

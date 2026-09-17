@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { Balok } from "../ui/Skeleton";
 import { KartuAngka } from "../ui/data/KartuAngka";
+import { KartuDonat, type IrisDonat } from "../ui/data/KartuDonat";
 import { DataTable, type Kolom } from "../ui/data/DataTable";
 import { RequireAuth } from "./RequireAuth";
 import { Select } from "../ui/overlay/Select";
@@ -63,6 +64,36 @@ function persen(v: number | null): string {
   return `${(v * 100).toFixed(1).replace(".", ",")}%`;
 }
 
+/* Empat terbesar, sisanya dijumlahkan jadi satu irisan "lainnya".
+   Empat karena donat dengan sepuluh irisan tipis tidak menjawab apa pun —
+   yang ditanyakan "siapa yang paling besar", bukan "berapa bagian tiap
+   orang sampai desimal". Dan empat, bukan lima, karena token warna
+   kategori cuma ada sampai --chart-cat-5 dan irisan "lainnya" butuh satu
+   untuk dirinya sendiri; menulis --chart-cat-6 tidak memberi galat apa pun
+   — warnanya sekadar tidak ada, dan irisannya hilang tanpa satu pun tanda.
+
+   Sisanya TIDAK dibuang: donat yang jumlah irisannya tidak sama dengan
+   totalnya adalah gambar yang berbohong. */
+function irisTeratas(
+  daftar: { label: string; nilai: number }[],
+  satuanSisa: string,
+): IrisDonat[] {
+  const urut = [...daftar].filter((d) => d.nilai > 0).sort((a, b) => b.nilai - a.nilai);
+  const atas = urut.slice(0, 4);
+  const sisa = urut.slice(4).reduce((a, o) => a + o.nilai, 0);
+  const d: IrisDonat[] = atas.map((o, i) => ({
+    label: o.label, nilai: o.nilai, warna: `var(--chart-cat-${i + 1})`,
+  }));
+  if (sisa > 0) {
+    d.push({
+      label: `${urut.length - 4} ${satuanSisa} lainnya`,
+      nilai: sisa,
+      warna: "var(--chart-cat-5)",
+    });
+  }
+  return d;
+}
+
 function Isi() {
   const [tab, setTab] = useState<Tab>("orang");
   const [rentang, setRentang] = useState("semua");
@@ -82,10 +113,29 @@ function Isi() {
       .catch(() => setProyek((l) => l ?? []));
   }, [rentang]);
 
+  const irisOrang = useMemo<IrisDonat[]>(
+    () => irisTeratas((orang ?? []).map((o) => ({ label: o.name, nilai: o.total })), "orang"),
+    [orang],
+  );
+
+  /* Yang dipakai feeTotal, bukan jumlah orangnya: fee yang belum bernama
+     tetap uang yang keluar untuk proyek itu, dan donat yang membuangnya
+     akan berbeda dari kartu angka di atasnya tanpa alasan yang kelihatan. */
+  const irisProyek = useMemo<IrisDonat[]>(
+    () => irisTeratas((proyek ?? []).map((p) => ({ label: p.projectTitle, nilai: p.feeTotal })), "proyek"),
+    [proyek],
+  );
+
   const ringkas = useMemo(() => {
     const totalOrang = (orang ?? []).reduce((a, o) => a + o.total, 0);
     const tanpaNama = (proyek ?? []).reduce((a, p) => a + p.feeTanpaNama, 0);
-    return { totalOrang, tanpaNama, jumlahOrang: (orang ?? []).length };
+    /* Dijumlahkan dari feeTotal, BUKAN totalOrang + tanpaNama. Keduanya
+       seharusnya sama, tapi biaya bernama yang orangnya sudah dihapus
+       (on delete set null) hilang dari daftar per orang sementara tetap
+       tercatat di proyeknya — dan kaki donat proyek harus sama dengan
+       jumlah irisannya sendiri, bukan dengan angka dari daftar lain. */
+    const totalProyek = (proyek ?? []).reduce((a, p) => a + p.feeTotal, 0);
+    return { totalOrang, tanpaNama, totalProyek, jumlahOrang: (orang ?? []).length };
   }, [orang, proyek]);
 
   const kolomOrang: Kolom<FeeOrang>[] = [
@@ -200,9 +250,9 @@ function Isi() {
     return (
       <div className="keu" aria-hidden="true">
         <div className="kangka-deret">
-          <div className="skeleton skeleton--tunda keu__rangka" />
-          <div className="skeleton skeleton--tunda keu__rangka" />
-          <div className="skeleton skeleton--tunda keu__rangka" />
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
         </div>
         <Balok tinggi="3rem" style={{ borderRadius: "var(--radius-sm)" }} />
         <Balok tinggi="18rem" style={{ borderRadius: "var(--radius-sm)" }} />
@@ -227,6 +277,31 @@ function Isi() {
           deltaNada="netral"
         />
       </div>
+
+      {/* Dua donat yang mencerminkan dua tab di bawahnya: siapa yang
+          menerima, dan proyek mana yang mengeluarkannya. Hanya muncul kalau
+          ADA yang digambar — donat kosong berbentuk cincin abu yang
+          menanyakan sendiri kenapa ia ada di situ. */}
+      {(irisOrang.length > 0 || irisProyek.length > 0) && (
+        <div className="keu__baris2 keu__baris2--rata">
+          <KartuDonat
+            judul="Penerima terbesar"
+            subjudul={RENTANG.find((r) => r.value === rentang)?.label}
+            iris={irisOrang}
+            format={(n) => formatRupiah(n)}
+            kakiLabel="Total fee bernama"
+            kakiNilai={formatRupiah(ringkas.totalOrang)}
+          />
+          <KartuDonat
+            judul="Dari proyek mana"
+            subjudul={RENTANG.find((r) => r.value === rentang)?.label}
+            iris={irisProyek}
+            format={(n) => formatRupiah(n)}
+            kakiLabel="Total fee keluar"
+            kakiNilai={formatRupiah(ringkas.totalProyek)}
+          />
+        </div>
+      )}
 
       <div className="keu__bar">
         <div className="segmented segmented--kotak" role="group" aria-label="Tampilan Fee">
