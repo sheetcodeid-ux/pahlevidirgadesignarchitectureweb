@@ -150,8 +150,14 @@ function Isi() {
 
   useEffect(() => {
     muatBiaya();
-    daftarProyek().then((d) => { tulisCache("proyek", d); setProyek(d); }).catch(() => {});
-    daftarTim().then((d) => { tulisCache("tim", d); setTim(d); }).catch(() => {});
+    /* MEMBACA saja, tidak menulis. Halaman ini bukan pemilik daftar proyek
+       maupun daftar tim — ia cuma butuh keduanya untuk dropdown di dialog.
+       Aturan jebakan #8 di CLAUDE.md: yang boleh memanggil tulisCache(kunci)
+       hanya halaman pemilik daftar itu, karena tulisCache ikut menyimpan
+       PANJANG daftar, dan panjang itu dibaca saat render oleh skeleton
+       halaman lain. Pelanggarannya saya sendiri yang tulis di Fase 02. */
+    daftarProyek().then(setProyek).catch(() => {});
+    daftarTim().then(setTim).catch(() => {});
   }, []);
 
   useEffect(() => {
