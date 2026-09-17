@@ -60,3 +60,36 @@ di-zip, atribut `id` tidak.
 | Batch | Jumlah | Tanggal | Catatan |
 | --- | --- | --- | --- |
 | _(menunggu batch 1)_ | | | |
+
+---
+
+# Halaman 🎨 Style & Component
+
+Pemilik menyebut halaman itu berisi **15 item**. Angkanya dicatat di sini
+supaya jadi penghitung: pustaka komponen baru boleh disebut selesai kalau
+kelima belas item itu sudah dibangun dan diperiksa satu per satu — bukan
+kalau "kelihatannya sudah banyak".
+
+Nama tiap item belum diketahui; kuota MCP Figma habis (20/bulan, lihat
+CLAUDE.md), jadi halaman itu tidak bisa dibaca dari sini. Yang paling murah:
+pemilik mengekspor halaman itu sebagai PNG 2x dan melampirkannya — nama
+kelima belas item bisa dibaca langsung dari gambarnya tanpa satu pun
+panggilan Figma.
+
+| # | Nama item | Sudah dibangun? | Catatan |
+| --- | --- | --- | --- |
+| 1 | _(menunggu)_ | belum | |
+| 2 | _(menunggu)_ | belum | |
+| 3 | _(menunggu)_ | belum | |
+| 4 | _(menunggu)_ | belum | |
+| 5 | _(menunggu)_ | belum | |
+| 6 | _(menunggu)_ | belum | |
+| 7 | _(menunggu)_ | belum | |
+| 8 | _(menunggu)_ | belum | |
+| 9 | _(menunggu)_ | belum | |
+| 10 | _(menunggu)_ | belum | |
+| 11 | _(menunggu)_ | belum | |
+| 12 | _(menunggu)_ | belum | |
+| 13 | _(menunggu)_ | belum | |
+| 14 | _(menunggu)_ | belum | |
+| 15 | _(menunggu)_ | belum | |
