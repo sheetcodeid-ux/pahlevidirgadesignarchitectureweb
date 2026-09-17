@@ -22,7 +22,18 @@ import * as team from "../src/repository/team";
  * Postgres dan memang melewatinya.
  */
 const DIR_PG = "/var/lib/postgresql/uji";
-const adaPostgres = existsSync(`${DIR_PG}/sock`);
+/* Yang diperiksa BERKAS SOKETNYA, bukan foldernya.
+ *
+ * Folder `sock/` tetap ada setelah Postgres lokal dimatikan, jadi penjaga
+ * yang memeriksa folder membuat tes ini GAGAL dengan ECONNREFUSED alih-alih
+ * melewati dirinya sendiri — merah palsu yang sudah dua kali memakan waktu
+ * dalam satu sesi, dan dua-duanya di tengah merge. Berkas soketnya sendiri
+ * dibuat dan dihapus oleh servernya, jadi keberadaannya memang menjawab
+ * "servernya hidup atau tidak".
+ *
+ * CI tidak terpengaruh dua-duanya: di sana seluruh folder /var/lib/postgresql
+ * memang tidak ada. Yang diperbaiki cuma keadaan mesin pengembang. */
+const adaPostgres = existsSync(`${DIR_PG}/sock/.s.PGSQL.55432`);
 
 it.skipIf(!adaPostgres)("repository uang jalan dengan setelan koneksi produksi", { timeout: 60_000 }, async () => {
   const DIR = DIR_PG;
