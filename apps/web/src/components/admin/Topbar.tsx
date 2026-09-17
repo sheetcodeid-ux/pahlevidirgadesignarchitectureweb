@@ -4,6 +4,7 @@ import { Command as Cmdk } from "cmdk";
 import { Icon } from "../ui/Icon";
 import { Avatar } from "../ui/misc/Avatar";
 import { ThemeToggle } from "../ui/ThemeToggle";
+import { Perintah } from "./Perintah";
 import { IsiNotifikasi, TabNotifikasi } from "./NotifikasiPanel";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
 import { bukaProyek, setProyekAktif, proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
@@ -154,7 +155,7 @@ function Lonceng({
 }
 
 /** Identitas studio tanpa rectangle; diklik membuka panel akun. */
-function Identitas({ settings, profil }: { settings: StudioSettings | null; profil: Profil | null }) {
+function Identitas({ settings, profil, zona }: { settings: StudioSettings | null; profil: Profil | null; zona: string }) {
   const nama = settings?.studioName ?? "Studio";
   const peran = profil?.isMasterAdmin ? "Master admin" : "Staf";
   // Sapaan memakai kata pertama nama studio, seperti "Halo, Bintang." di
@@ -193,6 +194,10 @@ function Identitas({ settings, profil }: { settings: StudioSettings | null; prof
       <RPopover.Portal>
         <RPopover.Content className="akunpop" sideOffset={10} align="end" collisionPadding={12}>
           <div className="akunpop__kepala">
+            <span className="akunpop__waktu">
+              <Tanggal zona={zona} />
+              <Jam zona={zona} />
+            </span>
             {/* md, bukan lg: panel ini keterangan akun, bukan halaman profil.
                 Avatar sebesar lg mengambil sepertiga tinggi panel untuk
                 menyampaikan hal yang sudah disampaikan namanya. */}
@@ -478,8 +483,7 @@ function Terbit({ dibangunPada, aktif, zona }: {
           data-belum={menyala ? "" : undefined}
           aria-label={menyala ? "Terbitkan perubahan yang belum tayang" : "Terbitkan situs"}
         >
-          <Icon name="upload" size={16} />
-          <span className="topbar__terbit-teks">Terbitkan</span>
+          <Icon name="upload" size={18} />
           {menyala && <span className="topbar__terbit-titik" aria-hidden="true" />}
         </button>
       </RPopover.Trigger>
@@ -639,25 +643,19 @@ export function Topbar({ heading: headingAwal, dibangunPada }: {
 
   return (
     <header className="topbar">
-      {/* Sisi kiri: judul halaman, lalu satu baris keterangan redup.
-          Jam, tanggal, dan jumlah proyek dulu masing-masing sel tersendiri
-          di bilah ini — bersama-sama sepertiga lebarnya untuk keterangan
-          yang tidak pernah ditindaklanjuti siapa pun. */}
-      <div className="topbar__kiri">
-        <p className="topbar__judul">{heading}</p>
-        <p className="topbar__meta">
-          <Tanggal zona={zona} />
-          <span className="topbar__meta-titik" aria-hidden="true" />
-          <Jam zona={zona} />
-          <span className="topbar__meta-titik" aria-hidden="true" />
-          <span className="topbar__hitung">
-            <Icon name="project" size={13} />
-            {aktif ?? "—"} proyek
-          </span>
-        </p>
-      </div>
+      {/* Header Coinest: judul halaman SENDIRIAN di kiri. Baris keterangan
+          (tanggal, jam, jumlah proyek) yang sempat ada di bawahnya dibuang —
+          framenya tidak punya, dan ketiganya sudah ada di tempat lain: jam
+          dan tanggal di panel akun, jumlah proyek di kartu kas. */}
+      <p className="topbar__judul">{heading}</p>
 
       <div className="topbar__kanan">
+        {/* Tanpa tombol: tempat kotak carinya sudah dipakai combobox proyek
+            di bawah ini. Yang dibawa ke sini cuma pendengar Ctrl/Cmd+K dan
+            dialognya — keduanya mati kalau paletnya tidak dipasang sama
+            sekali, dan itu yang terjadi begitu kotak cari keluar dari
+            sidebar. */}
+        <Perintah tanpaTombol />
         <ComboProyek proyek={proyek} />
 
         {/* Tiga tombol berjarak 10px — jarak tombol ikon Coinest. Tiap
@@ -674,7 +672,7 @@ export function Topbar({ heading: headingAwal, dibangunPada }: {
           </span>
         </div>
 
-        <Identitas settings={settings} profil={profil} />
+        <Identitas settings={settings} profil={profil} zona={zona} />
       </div>
     </header>
   );

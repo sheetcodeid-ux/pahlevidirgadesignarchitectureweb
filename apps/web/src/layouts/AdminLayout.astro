@@ -178,6 +178,20 @@ const dibangunPada = CAP_BUILD;
           }
           <slot />
         </main>
+
+        {/* Footer (361:12269): satu baris di kaki kolom kerja — hak cipta di
+            kiri, tiga tautan di tengah kiri, ikon sosial di kanan. Coinest
+            punya ini di setiap frame; tanpanya kolom kerja berakhir
+            menggantung di ruang kosong. Tautannya diarahkan ke halaman
+            publik yang memang ada, bukan ke alamat karangan. */}
+        <footer class="adminfoot">
+          <p class="adminfoot__hak">© {new Date().getFullYear()} Dirga Pahlevi Architecture</p>
+          <nav class="adminfoot__tautan" aria-label="Tautan kaki">
+            <a href="/privasi">Kebijakan Privasi</a>
+            <a href="/faq">Pertanyaan Umum</a>
+            <a href="/kontak">Kontak</a>
+          </nav>
+        </footer>
       </div>
     </div>
   </body>

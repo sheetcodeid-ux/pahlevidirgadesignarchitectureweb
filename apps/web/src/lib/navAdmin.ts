@@ -55,44 +55,42 @@ export interface NavItem {
   /**
    * Label kelompok kecil di atas item.
    *
-   * String KOSONG berarti tanpa kepala kelompok — dipakai baris paling atas,
-   * yang tidak perlu diberi judul karena ia sendirian dan selalu terlihat.
+   * SELURUHNYA kosong sekarang, dan itu disengaja: sidebar Coinest tidak
+   * punya satu pun kepala kelompok, dan kepala kelompok itulah yang paling
+   * membuat punggung panel ini terbaca berbeda dari framenya. Yang
+   * menggantikan pengelompokan adalah submenu ber-caret — bentuk yang memang
+   * dipakai Coinest untuk "Payments".
+   *
+   * Bidangnya dipertahankan, bukan dibuang, supaya pengelompokan bisa
+   * dihidupkan lagi tanpa menyentuh Sidebar maupun command palette.
    */
   group: string;
+
+  /**
+   * Sumber angka merah di kanan baris, seperti "Inbox 99" di Coinest.
+   * Hanya "pesan" yang punya; sisanya tidak berangka.
+   */
+  lencana?: "pesan";
 }
 
 // Ikon dipilih agar cocok dengan labelnya, bukan sekadar mengisi ruang:
 // denah bangunan untuk proyek, amplop untuk pesan masuk, lapisan untuk
 // pustaka komponen.
 export const NAV: NavItem[] = [
-  /* Tanpa kepala kelompok, seperti baris Dashboard di Coinest. Namanya
-     "Hari Ini", bukan "Dashboard": yang dibukanya antrean pekerjaan hari ini
-     — pesan yang belum dibalas, tenggat yang lewat, uang yang belum masuk —
-     bukan papan angka untuk dipandangi. */
-  { label: "Hari Ini", href: "/admin", icon: "dashboard", group: "" },
-
-  /* --- Calon klien: yang terjadi SEBELUM sebuah proyek ada --------------- */
-  /* Paling atas sesudah antrean karena inilah yang paling mahal kalau
-     terlewat. Satu pesan yang tidak dibalas dua hari adalah satu proyek yang
-     tidak pernah terjadi — dan dengan ~7 klien sebulan, itu terasa. */
-  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Calon klien" },
-  { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Calon klien" },
-
-  /* --- Pekerjaan: mengerjakan proyek yang sudah jadi ---------------------- */
+  { label: "Dashboard", href: "/admin", icon: "dashboard", group: "" },
   {
     label: "Proyek",
     icon: "project",
-    group: "Pekerjaan",
+    group: "",
     children: [
       { label: "Semua Proyek", href: "/admin/proyek", icon: "list" },
-      // Mengikuti proyek yang dipilih di combobox topbar. Semua Proyek
-      // sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
+      // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
+      // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
       { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document" },
+      { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "globe" },
     ],
   },
-  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", group: "Pekerjaan" },
-
-  /* --- Uang --------------------------------------------------------------- */
+  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", group: "" },
   /* Ketiganya satu menu, bukan tiga baris berjajar. Alasan berdampingannya
      tidak berubah — angka fee LAHIR di Keuangan (diketik sekali lewat Catat
      pengeluaran) dan Gaji menjawab pertanyaan yang sama dari sisi bulan —
@@ -101,51 +99,47 @@ export const NAV: NavItem[] = [
   {
     label: "Keuangan",
     icon: "finance",
-    group: "Uang",
+    group: "",
     children: [
       { label: "Ringkasan", href: "/admin/keuangan", icon: "finance" },
       { label: "Fee Proyek", href: "/admin/fee", icon: "cash" },
       { label: "Gaji", href: "/admin/gaji", icon: "bank" },
     ],
   },
-
-  /* --- Reputasi: keluaran yang mendatangkan calon klien berikutnya -------- */
-  /* Semuanya satu jenis pekerjaan: menyunting apa yang dibaca PENGUNJUNG.
-     Bedanya nyata dari sisa panel — halaman di sini dibekukan saat build,
-     jadi setiap perubahan di dalamnya perlu tombol Terbitkan ditekan,
-     sementara Proyek dan Keuangan langsung berlaku.
-
-     Datar, bukan menu yang harus dibuka dulu: pemilik datang ke sini untuk
-     MENGISI satu hal tertentu ("tambahkan foto tim"), dan menu yang harus
-     diklik dua kali menyembunyikan justru daftar yang jadi pengingatnya.
-
-     Urutannya menurut seberapa besar pengaruhnya pada orang yang baru
-     menemukan studio ini: karya dulu, lalu bukti sosial, lalu sisanya. */
-  { label: "Halaman Proyek", href: "/admin/proyek/publik", icon: "project", group: "Reputasi" },
-  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", group: "Reputasi" },
-  { label: "Jurnal", href: "/admin/jurnal", icon: "document", group: "Reputasi" },
-  { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", group: "Reputasi" },
-  { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", group: "Reputasi" },
-  { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", group: "Reputasi" },
-
-  /* --- Studio: orang dan setelan ------------------------------------------ */
-  /* Paling bawah karena paling jarang disentuh. Tiga halaman "Situs Publik"
-     lama ikut ke sini — identitas, angka FAQ, dan privasi bukan bahan
-     pemasaran melainkan keterangan studio yang diisi sekali lalu ditinggal. */
-  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Studio" },
-  { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", group: "Studio" },
-  { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info", group: "Studio" },
-  { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock", group: "Studio" },
+  /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
+     satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */
+  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "", lencana: "pesan" },
+  { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "" },
+  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", group: "" },
+  { label: "Jurnal", href: "/admin/jurnal", icon: "document", group: "" },
+  /* Enam halaman yang isinya dibaca PENGUNJUNG, dikumpulkan jadi satu menu.
+     Sebelumnya tujuh baris datar di kelompok tersendiri — dan kelompoknya
+     yang membuat sidebar ini tidak mungkin mirip Coinest, yang tidak punya
+     satu pun kepala kelompok. */
+  {
+    label: "Situs Publik",
+    icon: "globe",
+    group: "",
+    children: [
+      { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image" },
+      { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team" },
+      { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera" },
+      { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info" },
+      { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock" },
+      { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building" },
+    ],
+  },
+  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "" },
   {
     label: "Pengaturan",
     icon: "settings",
-    group: "Studio",
+    group: "",
     children: [
       { label: "Info Studio", href: "/admin/pengaturan", icon: "info" },
       { label: "Akun", href: "/admin/pengaturan/akun", icon: "user" },
     ],
   },
-  { label: "UI Component", href: "/admin/ui", icon: "component", group: "Studio", masterOnly: true },
+  { label: "UI Component", href: "/admin/ui", icon: "component", group: "", masterOnly: true },
 ];
 
 /**

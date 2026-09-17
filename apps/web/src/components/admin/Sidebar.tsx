@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "../ui/Icon";
 import { NAV, type NavItem } from "../../lib/navAdmin";
 import { profilTersimpan, ambilSettings } from "../../lib/admin";
-import { Perintah } from "./Perintah";
+import { ambilNotifikasi } from "../../lib/notifikasi";
 
 /** Kelompok mana yang sedang ditutup staf — preferensi, bukan keadaan sesaat. */
 const KUNCI_GRUP = "pd-sidebar-grup";
@@ -21,6 +21,10 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
   // kursor lewat, dan itu jauh lebih mengganggu daripada menutupi sedikit.
   const [intip, setIntip] = useState(false);
   const drawerId = useId();
+  /* Angka merah di baris Pesan Masuk. Diturunkan dari sumber yang SAMA dengan
+     lonceng di topbar dan daftar di dashboard — tiga tempat yang menghitung
+     sendiri-sendiri pasti menyimpang, dan yang jarang dilihat yang salah. */
+  const [pesanBaru, setPesanBaru] = useState(0);
 
   // Situs ini statis, jadi Astro.url.pathname saat build tidak pernah
   // menyertakan query string — item nav yang dibedakan lewat query baru bisa
@@ -36,6 +40,12 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
   // aria-current bisa nyangkut di item yang salah. Lewat setState di effect,
   // pembaruan itu jadi render sungguhan yang dijamin diterapkan.
   const [currentPath, setCurrentPath] = useState(currentPathAwal);
+  useEffect(() => {
+    ambilNotifikasi()
+      .then((d) => setPesanBaru(d.notifikasi.filter((n) => n.ke === "/admin/pesan").length))
+      .catch(() => { /* tanpa angka, barisnya tetap tampil */ });
+  }, []);
+
   useEffect(() => {
     const perbarui = () => setCurrentPath(window.location.pathname + window.location.search);
     perbarui();
@@ -245,9 +255,6 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
           </button>
         </div>
 
-        {/* Kotak cari perintah, sejajar daftar menu yang isinya sama. */}
-        <Perintah />
-
         <nav className="sidebar__nav" aria-label="Navigasi admin" ref={nav}>
           {Object.entries(kelompok).map(([labelGrup, itemGrup]) => {
           /* Kelompok berlabel KOSONG tidak punya kepala dan tidak bisa
@@ -290,10 +297,15 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                       aria-current={aktif ? "page" : undefined}
                       title={ciut ? item.label : undefined}
                     >
-                      <Icon name={item.icon} size={18} variant={aktif ? "filled" : "stroke"} />
+                      <Icon name={item.icon} size={24} variant={aktif ? "filled" : "stroke"} />
                       <span className="sidebar__label geser">
                         <span className="geser__isi">{item.label}</span>
                       </span>
+                      {item.lencana === "pesan" && pesanBaru > 0 && (
+                        <span className="sidebar__lencana" aria-label={`${pesanBaru} belum dibaca`}>
+                          {pesanBaru > 99 ? "99+" : pesanBaru}
+                        </span>
+                      )}
                     </a>
                   </li>
                 );
@@ -312,7 +324,7 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                     onClick={() => toggleGrup(item.label)}
                     title={ciut ? item.label : undefined}
                   >
-                    <Icon name={item.icon} size={18} variant={adaAnakAktif ? "filled" : "stroke"} />
+                    <Icon name={item.icon} size={24} variant={adaAnakAktif ? "filled" : "stroke"} />
                     <span className="sidebar__label geser">
                       <span className="geser__isi">{item.label}</span>
                     </span>
@@ -330,7 +342,7 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
                             className="sidebar__subitem"
                             aria-current={cocok(child.href, currentPath) ? "page" : undefined}
                           >
-                            <Icon name={child.icon} size={15} />
+                            <Icon name={child.icon} size={18} />
                             <span>{child.label}</span>
                           </a>
                         </li>
@@ -364,22 +376,6 @@ export function Sidebar({ currentPath: currentPathAwal }: Props) {
               Buka situs
             </a>
           </div>
-
-          {/* Tombolnya di kaki, bukan di kepala: di kepala ia bersaing dengan
-              logo dan nama studio, dan yang paling sering dilihat justru
-              bukan dia. Referensi Cloudflare menaruhnya di kaki juga. */}
-          <button
-            type="button"
-            className="sidebar__collapse"
-            aria-label={ciut ? "Lebarkan sidebar" : "Sempitkan sidebar"}
-            aria-pressed={ciut}
-            onClick={() => { setCiut((v) => !v); setIntip(false); }}
-          >
-            <Icon name="panel" size={16} />
-            <span className="sidebar__label geser">
-              <span className="geser__isi">{ciut ? "Lebarkan" : "Sempitkan"}</span>
-            </span>
-          </button>
         </div>
       </aside>
       </div>

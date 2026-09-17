@@ -368,24 +368,49 @@
 /* Banner kaki Coinest, angka aslinya (node 3:1080): bidang Green-Dark
    #1E4841, radius 16px, padding 16px samping / 20px tegak, jarak isi 20px,
    teks Green-BG 12px, tombol mint radius 8px padding 14/10. */
+/* Banner (3:1080): tinggi TETAP 212px, isinya didorong ke BAWAH, dan dua
+   lambang hias mengambang di atasnya — satu 32px di kiri atas, satu 65px
+   menggantung keluar tepi kanan atas. Tanpa keduanya bidangnya cuma kotak
+   hijau berisi teks, dan itu yang membuatnya terbaca beda dari framenya. */
 .sidebar__site {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 14px;
+  justify-content: flex-end;
+  gap: 20px;
+  height: 212px;
   padding: 20px 16px;
   border: 0;
   border-radius: 16px;
-  background: var(--brand);
-  color: var(--brand-soft);
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
   text-decoration: none;
 }
 
+/* Lambang hias. Dibuat dari bentuk yang sudah ada — bulatan mint tembus
+   pandang — bukan aset yang diunduh: yang ditiru bobot dan letaknya, dan
+   lambang Coinest sendiri memang bukan milik studio ini. */
+.sidebar__site::before,
+.sidebar__site::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: var(--brand-mint);
+  pointer-events: none;
+}
+.sidebar__site::before { left: 17px; top: 16px; width: 32px; height: 32px; opacity: 0.22; }
+.sidebar__site::after { left: 95px; top: -8px; width: 65px; height: 65px; opacity: 0.12; }
+
+.sidebar__site > * { position: relative; }
+
 .sidebar__site-teks {
   margin: 0;
+  max-width: 122px;
   font-size: var(--text-sm);
   line-height: 1.3;
-  color: var(--brand-soft);
+  color: var(--kas-ink);
 }
 
 .sidebar__site-btn {
@@ -553,3 +578,31 @@
   animation: none;
   transform: none;
 }
+
+
+/* --- Lencana angka di baris nav ------------------------------------------- */
+
+/* Badge (7:819): kotak 20px berisi lingkaran 18px merah, angka Regular 11px
+   putih. Satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh,
+   jadi ia satu-satunya yang berhak menarik perhatian dari daftar yang diam. */
+.sidebar__lencana {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: auto;
+  padding-inline: 2px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--danger);
+  color: var(--danger-ink);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  line-height: 1.24;
+}
+
+/* Kelompok nav tidak lagi punya kepala — seluruh item hidup di satu kelompok
+   berlabel kosong. Jarak antar-kelompok karena itu dinolkan; kalau tidak,
+   satu-satunya kelompok yang ada tetap membawa jarak atas yang tidak
+   mengapit apa pun. */
+.sidebar__group + .sidebar__group { margin-top: 0; }

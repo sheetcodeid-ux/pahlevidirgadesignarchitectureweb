@@ -47,28 +47,23 @@
   border-bottom: 0;
 }
 
-/* --- Sisi kiri: judul halaman + satu baris keterangan --------------------- */
+/* --- Sisi kiri: judul halaman, sendirian ---------------------------------- */
 
-.topbar__kiri {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-  /* Boleh menyusut sampai judulnya terpotong; sisi kanan berisi kontrol yang
-     tidak punya ellipsis, jadi penyusutan seluruhnya dibebankan ke sini. */
-  flex: 0 1 auto;
-}
+/* Urbanist Bold 22px, hijau tua — angka, bobot, dan warnanya dari Header
+   Coinest (node 18:3780), yang isinya memang cuma satu baris judul.
 
-/* Urbanist Bold 22px, hijau tua — bobot, ukuran, dan warnanya diambil dari
-   Header Coinest, bukan dikira-kira dari tangkapan layar.
+   Baris keterangan di bawahnya (tanggal, jam, jumlah proyek) sempat ada di
+   sini dan sudah dibuang: framenya tidak punya, dan ketiganya sudah tertulis
+   di tempat lain — jam dan tanggal di panel akun, jumlah proyek di kartu kas
+   dashboard.
 
    Bukan <h1>: tiap halaman admin sudah menuliskan judulnya sendiri di badan
-   halaman, dan dua h1 dalam satu dokumen membuat pembaca layar menyebut judul
-   yang sama dua kali. Remah roti "Admin / …" yang dulu berdiri di sini ikut
-   dibuang — satu tingkat jejak tidak memberi tahu apa pun yang tidak sudah
-   terbaca dari penanda menu aktif di sidebar. */
+   halaman, dan dua h1 dalam satu dokumen membuat pembaca layar menyebut
+   judul yang sama dua kali. */
 .topbar__judul {
   margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
   font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: 700;
@@ -80,31 +75,9 @@
   text-overflow: ellipsis;
 }
 
-/* Jam, tanggal, dan jumlah proyek turun ke satu baris redup di bawah judul.
-   Sebelumnya ketiganya sel tersendiri yang bersama-sama memakan sepertiga
-   lebar bilah untuk keterangan yang tidak pernah ditindaklanjuti siapa pun —
-   dan tiap sel menambah satu garis miring lagi ke baris yang sudah ramai. */
-.topbar__meta {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.topbar__meta-titik {
-  width: 3px;
-  height: 3px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--text-faint);
-}
-
-.topbar__jam { display: inline-flex; align-items: center; gap: 0.35rem; flex: none; }
+/* Jam dan tanggal pindah ke panel akun. Kelasnya tetap ini supaya komponen
+   Jam dan Tanggal tidak perlu tahu di mana ia dipasang. */
+.topbar__jam { display: inline-flex; align-items: center; gap: 0.35rem; }
 .topbar__titik {
   width: 0.375rem;
   height: 0.375rem;
@@ -113,8 +86,16 @@
   flex: none;
 }
 .topbar__zona { color: var(--text-faint); }
-.topbar__tanggal { flex: none; }
-.topbar__hitung { display: inline-flex; align-items: center; gap: 0.35rem; flex: none; }
+.topbar__tanggal { }
+
+.akunpop__waktu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
 
 /* --- Sisi kanan ----------------------------------------------------------- */
 
@@ -390,15 +371,18 @@
   font-weight: 700;
 }
 
+/* Bold 16px — slot nama di profil Coinest. Isinya peran akun, bukan nama
+   orang: nama studio sudah tertulis utuh dan permanen di sidebar, dan dengan
+   dua akun penulis yang perlu terbaca sekilas justru akun mana yang dipakai. */
 .topbar__id-peran {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
-  font-size: var(--text-base);
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: 700;
   white-space: nowrap;
-  color: var(--text-strong);
+  color: var(--judul-ink);
 }
 
 .topbar__id-peran svg { color: var(--brand-isi); flex: none; }
@@ -1051,57 +1035,49 @@
 
 /* --- Terbitkan perubahan --------------------------------------------------- */
 
-/* Tombol hijau tua PEJAL, satu-satunya aksi utama di bilah ini. Sebelumnya ia
-   kotak bergaris yang warnanya sama redup dengan dua tetangganya — tiga benda
-   sederajat, padahal yang satu ini memicu pekerjaan yang tidak bisa
-   dibatalkan di tengah jalan sementara dua lainnya cuma perkakas.
+/* Tombol IKON, bentuknya sama persis dengan lonceng dan pengalih tema di
+   sebelahnya. Sebelumnya pil hijau tua berteks — dan pil pejal selebar 116px
+   di antara tiga lingkaran hijau muda adalah benda paling berat di seluruh
+   bilah, jauh lebih berat daripada judul halaman di seberangnya. Header
+   Coinest tidak punya tombol aksi sama sekali; yang paling mendekati adalah
+   tombol ikonnya.
 
-   Bentuknya diambil dari tombol utama Coinest: hijau tua, teks putih, radius
-   20px, tinggi 38px — sama dengan tombol ikon di sebelahnya, jadi ketiganya
-   duduk di satu garis. */
+   Namanya tidak hilang: aria-label menyebutkannya, dan popover yang
+   dibukanya menuliskan seluruh keadaannya. */
 .topbar__terbit {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 2.375rem;
   height: 2.375rem;
-  padding-inline: var(--space-4);
   flex: none;
+  padding: 0;
   border: 0;
   border-radius: 20px;
-  background: var(--action);
-  color: var(--action-ink);
+  background: var(--brand-soft);
+  color: var(--brand-isi);
   font: inherit;
-  font-size: var(--text-base);
-  font-weight: 600;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .topbar__terbit:hover,
 .topbar__terbit:focus-visible,
-.topbar__terbit[data-state="open"] { background: var(--action-hover); color: var(--action-hover-ink); }
+.topbar__terbit[data-state="open"] { background: var(--brand-line); color: var(--brand-mint-ink); }
 .topbar__terbit:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--focus-halo); }
 
-/* Titik AMBER, bukan merah: ada perubahan yang belum tayang bukan kerusakan
-   dan bukan tuntutan — situsnya baik-baik saja, cuma belum yang terbaru.
-   Amber di sistem ini berarti "terbatas atau terkunci sebagian", dan itu
-   persis keadaannya. Merah sudah dipakai titik lonceng untuk hal yang memang
-   menunggu ditangani. */
+/* Titik AMBER di pojok, bentuk yang sama dengan titik merah lonceng — ada
+   perubahan yang belum tayang bukan kerusakan dan bukan tuntutan; situsnya
+   baik-baik saja, cuma belum yang terbaru. */
 .topbar__terbit-titik {
-  width: 0.4rem;
-  height: 0.4rem;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--warn);
-  flex: none;
 }
-
-/* Tidak ada bar di tombol topbar. Sempat ada, dan lengkungnya tembus:
-   tombolnya ber-radius sementara barnya persegi, jadi ujung barnya menonjol
-   keluar sudut tombol. Dilaporkan pemilik. Yang menyatakan keadaan di tombol
-   itu tinggal titiknya; barnya hidup di dalam popover, tempat ia punya ruang
-   yang cukup untuk terbaca. */
 
 /* Bar di dalam popover. Tak bertentu dengan sengaja: panel ini tidak bisa
    menanyakan GitHub Actions sudah sampai langkah mana, jadi persentase apa
@@ -1382,12 +1358,6 @@
   .topbar__combo { display: none !important; }
 }
 
-@media (max-width: 62rem) {
-  .topbar__terbit-teks { display: none; }
-  /* Jadi tombol ikon 38px persegi seperti dua tetangganya. */
-  .topbar__terbit { width: 2.375rem; padding-inline: 0; justify-content: center; }
-}
-
 /* Tombol laci menempel di pojok kiri atas layar (fixed, 12px dari tepi,
    2.25rem lebar), jadi judul halaman harus menyingkir sebesar itu — tapi
    HANYA di lebar tempat tombolnya benar-benar muncul. Ambangnya sama persis
@@ -1395,10 +1365,6 @@
    harus ikut. */
 @media (max-width: 59.99rem) {
   .topbar { padding-left: 3.5rem; }
-}
-
-@media (max-width: 52rem) {
-  .topbar__meta { display: none !important; }
 }
 
 @media (max-width: 34rem) {
@@ -4323,3 +4289,27 @@
 /* Pemilih bulan berdiri sendiri di atas tabel, jadi lebarnya dibatasi —
    dibiarkan melar ia jadi isian selebar halaman untuk tujuh karakter. */
 .payroll__bulan { max-width: 14rem; }
+
+
+/* --- Kaki kolom kerja ------------------------------------------------------ */
+
+/* Footer (361:12269): satu baris setinggi 24px di kaki kolom kerja, 28px dari
+   tepi, teks 12px redup. Kecil dengan sengaja — ia penutup halaman, bukan
+   navigasi kedua. */
+.adminfoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 82rem;
+  margin-inline: auto;
+  padding: var(--space-4) clamp(var(--space-4), 3vw, var(--space-6)) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.adminfoot__hak { margin: 0; }
+.adminfoot__tautan { display: flex; gap: var(--space-5); flex-wrap: wrap; }
+.adminfoot__tautan a { color: var(--text-muted); text-decoration: none; }
+.adminfoot__tautan a:hover { color: var(--text-strong); text-decoration: underline; }
