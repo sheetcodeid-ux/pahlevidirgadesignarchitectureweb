@@ -132,6 +132,20 @@
 
 .sidebar__nav { flex: 1; overflow-y: auto; padding: var(--space-3); }
 
+/* Tepi bawah dipudarkan HANYA kalau memang ada menu di bawah lipatan.
+   Dua puluh baris menu tidak muat di layar laptop, dan tanpa tanda apa pun
+   "Situs Publik" serta "Sistem" seolah tidak ada — daftarnya terlihat
+   berakhir di Jurnal. Batang gulir peramban cuma muncul saat sedang
+   digulir, jadi ia bukan tanda.
+
+   mask-image, bukan gradien yang ditempel: pseudo-elemen absolut di dalam
+   penampung gulir mendarat di ujung ISI, bukan di tepi tampak (jebakan
+   #19), jadi fadenya akan berada jauh di bawah layar. Mask berlaku pada
+   kotak tampaknya. */
+.sidebar__nav[data-luber] {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent 100%);
+}
+
 /* Pembatas antar kelompok — cuma di atas kelompok kedua dan seterusnya,
    supaya "UTAMA" yang pertama tidak kebagian garis tanpa alasan. */
 .sidebar__group + .sidebar__group {
@@ -140,15 +154,50 @@
   border-top: 1px solid var(--border);
 }
 
+/* Kepala kelompok adalah TOMBOL, bukan label mati — jadi resetnya ditulis
+   di sini: peramban memberi <button> font, latar, dan bingkainya sendiri. */
 .sidebar__group-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
   margin: 0 0 var(--space-2);
-  padding-inline: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
   font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-faint);
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
+
+.sidebar__group-label:hover { color: var(--text-muted); background: var(--surface-hover); }
+.sidebar__group-label:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
+.sidebar__group-teks { flex: 1; min-width: 0; text-align: start; }
+
+.sidebar__group-chevron {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-faint);
+  /* Tertutup = menunjuk ke kanan, terbuka = menunjuk ke bawah. Ikonnya satu
+     dan sama dengan chevron submenu, jadi arah panah di seluruh sidebar
+     berarti hal yang sama. */
+  transform: rotate(-90deg);
+  transition: transform var(--dur) var(--ease);
+}
+
+.sidebar__group-chevron[data-open] { transform: rotate(0deg); }
+
+/* Kelompok yang ditutup tidak menyisakan jarak kosong sebesar kelompok yang
+   terbuka — tanpa ini tiga kepala kelompok berjejer dengan rongga 20px di
+   antaranya, dan terbaca seolah isinya gagal dimuat. */
+.sidebar__group[data-tutup] .sidebar__group-label { margin-bottom: 0; }
 
 .sidebar__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 
@@ -320,6 +369,15 @@
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__cari-label,
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__kbd,
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__site-text { display: none; }
+
+  /* Di rel, kepala kelompok ikut disembunyikan — jadi kelompok yang sedang
+     ditutup tidak punya satu pun tombol untuk membukanya lagi, dan ikonnya
+     lenyap tanpa jalan kembali. Karena itu di rel SEMUA kelompok dipaksa
+     tampil. Ditulis !important dan berkekhususan (0,4,0) karena yang harus
+     dikalahkan adalah `[hidden]{display:none!important}` di global.css. */
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__list[hidden] {
+    display: flex !important;
+  }
 
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__item,
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__collapse,

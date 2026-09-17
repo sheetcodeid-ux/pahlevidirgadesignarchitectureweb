@@ -1,23 +1,24 @@
 import { useEffect, useState } from "react";
 import { Command as Cmdk } from "cmdk";
 import * as RDialog from "@radix-ui/react-dialog";
-import { Icon } from "../ui/Icon";
+import { Icon, type IconName } from "../ui/Icon";
+import { halamanRata } from "../../lib/navAdmin";
 import { bukaProyek } from "../../lib/proyekAktif";
 import { daftarProyek, bacaCache, type Proyek } from "../../lib/admin";
 
-const HALAMAN: { label: string; ikon: Parameters<typeof Icon>[0]["name"]; ke: string }[] = [
-  { label: "Dashboard", ikon: "dashboard", ke: "/admin" },
-  { label: "Semua Proyek", ikon: "project", ke: "/admin/proyek" },
+/* Diturunkan dari peta nav yang sama dengan sidebar — lihat lib/navAdmin.ts
+   untuk alasannya. Dua halaman yang tidak punya baris di sidebar ditambahkan
+   di sini: Proyek Baru (aksi, bukan tujuan) dan Notifikasi (dibuka dari
+   lonceng). */
+const HALAMAN: { label: string; ikon: IconName; ke: string }[] = [
+  /* masterOnly dibuang: palet tidak tahu peran pemakainya, dan menawarkan
+     halaman UI Component kepada staf penginput cuma menambah baris yang
+     tidak pernah dia butuhkan. Ini kerapian, bukan penjagaan — lihat
+     catatan di MasterGuard. */
+  ...halamanRata().filter((h) => !h.masterOnly)
+    .map((h) => ({ label: h.label, ikon: h.icon, ke: h.href })),
   { label: "Proyek Baru", ikon: "projectPlus", ke: "/admin/proyek/baru" },
-  { label: "Tugas", ikon: "checklist", ke: "/admin/list-kerjaan" },
-  { label: "Keuangan", ikon: "finance", ke: "/admin/keuangan" },
-  { label: "Analisis Bulanan", ikon: "clock", ke: "/admin/keuangan/bulanan" },
-  { label: "Pesan Masuk", ikon: "inquiry", ke: "/admin/pesan" },
-  { label: "Tim & Freelancer", ikon: "team", ke: "/admin/tim" },
-  { label: "Direktori", ikon: "directory", ke: "/admin/direktori" },
-  { label: "Testimoni", ikon: "quote", ke: "/admin/testimoni" },
   { label: "Notifikasi", ikon: "bell", ke: "/admin/notifikasi" },
-  { label: "Info Studio", ikon: "settings", ke: "/admin/pengaturan" },
 ];
 
 /**

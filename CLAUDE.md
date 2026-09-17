@@ -683,6 +683,35 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     perintah Bash majemuk membunuh shell-nya sendiri (exit 144) — jalankan
     lewat `bash skrip.sh` atau `sh -c`.
 
+31. **Prop yang kelasnya tidak punya aturan CSS gagal DIAM-DIAM.** `Avatar`
+    menerima `size="sm" | "md" | "lg"` dan menempelkan `.avatar--sm` /
+    `.avatar--lg` dengan patuh — tapi kedua kelas itu tidak pernah ada di
+    stylesheet mana pun. Jadi sembilan pemanggil yang minta "sm" dan satu
+    yang minta "lg" semuanya tergambar 2,5rem, dan yang paling kelihatan
+    avatar di bilah atas: 40px di dalam bilah setinggi 52px, yang dilaporkan
+    pemilik sebagai "avatar terlalu besar". Tidak ada galat, tidak ada
+    peringatan, dan membaca komponennya tidak menunjukkan apa pun — yang
+    menjawab cuma `grep` nama kelasnya di `styles/`. Kalau menambah prop
+    varian, buktikan kelasnya benar-benar punya aturan.
+
+32. **Dua daftar berisi hal yang sama pasti menyimpang; yang jarang dilihat
+    yang salah.** Sidebar dan command palette masing-masing punya daftar
+    halamannya sendiri. Palet menawarkan "Analisis Bulanan" ke
+    `/admin/keuangan/bulanan` yang **halamannya tidak ada** — 404 — sementara
+    sembilan halaman sungguhan (Fee Proyek, Gaji, Jurnal, Akun, dan enam
+    halaman Situs Publik) tidak pernah bisa dicari dari palet sama sekali.
+    Sekarang keduanya membaca `lib/navAdmin.ts`.
+
+33. **Lebar flex item TIDAK dibatasi induknya kalau induknya
+    `align-items: flex-start`.** Anak jadi seukuran max-content dan cuma
+    dibatasi `max-width` sendiri, jadi ia meluber keluar induk tanpa pernah
+    memicu `text-overflow: ellipsis`. Di bilah atas itu berarti nama studio
+    mendorong halaman 33px ke kanan pada 1024px. Dan `flex-shrink: 1` pada
+    induknya tidak menolong tanpa `min-width: 0` — ukuran min-content sebuah
+    flex item adalah lebar isinya. Dua hal itu harus ada berdua:
+    `min-width: 0` di item yang boleh menyusut, `align-self: stretch` di
+    teks yang harus memendek.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -838,4 +867,7 @@ skrip; jangan sunting hasilnya.
 | **Fee menulis, Gaji membaca** | Pemilik memilih fee per proyek ke orang DAN halaman gaji yang memuat freelancer — dua jawaban yang kalau diikuti mentah membuat satu bayaran freelancer bisa diketik dua kali, dan beban studio tercatat ganda. Ditutup di lapisan data, bukan di UI: tabel `payroll` secara struktur TIDAK BISA memuat bayaran proyek, dan baris freelancer di halaman Gaji diturunkan SQL dari `project_costs`. Jadi angka ganda bukan cuma tidak dianjurkan — ia tidak bisa terjadi |
 | Biaya proyek menyimpan SIAPA yang dibayar, dan boleh kosong | Tanpa kolom itu pertanyaan "orang ini tahun ini terima berapa dari semua proyek" tidak pernah bisa dijawab. Boleh kosong dua kali disengaja: biaya operasional memang bukan milik siapa pun, dan puluhan baris lama tidak punya nama — menautkannya satu per satu memakan waktu pemilik untuk angka yang sudah lewat. `on delete set null`, bukan cascade: menghapus freelancer tidak boleh menghapus biaya yang sudah keluar |
 | **Tabel daftar baru memakai bentuk Halaman Proyek, bukan Semua Proyek** | Koreksi eksplisit pemilik. `DataTable` punya prop `bentuk`: `listbar` (bilah full-bleed bergaris tebal, berkolom nomor — enam daftar lama) dan `kartu` (kartu hitam bingkai 2px, kotak cari pil selebar penuh, tabel berkartu, tanpa kolom nomor). Aturan CSS-nya TIDAK disalin: tiap aturan `.pilihproyek__*` memuat pasangan `.kartudaftar__*`-nya di selektor yang sama — satu blok, dua nama. Tombol aksi utama duduk DI DALAM bilah tabelnya, seperti "Proyek Baru" |
+| **Keuangan, Fee Proyek, dan Gaji jadi SATU menu di sidebar** | Permintaan pemilik: "buat sub agar user tidak bingung, contoh keuangan isinya apa aja". Alasan ketiganya berdampingan tidak berubah — angka fee lahir di Keuangan, Gaji menjawab pertanyaan yang sama dari sisi bulan — tapi tiga baris setara terbaca sebagai tiga pembukuan yang harus dicocokkan. Pesan Masuk sengaja TIDAK ikut dikelompokkan ke mana pun: isinya calon klien, dan satu klik tambahan untuk menemukannya adalah satu klik yang kadang tidak terjadi |
+| Kepala kelompok sidebar bisa ditutup, bawaannya TERBUKA | Dua puluh baris menu = 1.155px di dalam slot 744px, jadi "Situs Publik" dan "Sistem" berada di bawah lipatan tanpa tanda apa pun. Kelompoknya tetap terbuka sebagai bawaan supaya daftar Situs Publik tetap jadi pengingat apa yang belum diisi — alasan aslinya masih berlaku; yang ditambahkan cuma kemampuan menutupnya, dan pilihannya disimpan di localStorage. Di rel sempit semua kelompok dipaksa tampil: kepala kelompoknya ikut disembunyikan di sana, jadi kelompok tertutup tidak punya tombol untuk dibuka lagi |
+| **Nama studio dibuang dari tombol akun di bilah atas** | Sidebar sudah menuliskannya utuh dan permanen 270px di sebelah kiri, dan salinan keduanya terpotong jadi "Dirga Pahlevi Archit…" di setiap lebar sejak bilahnya dibuat (butuh 194px, batasnya 160px). Melebarkan batasnya memuat namanya, tapi ruangnya diambil dari combobox proyek yang lalu terpotong jadi "Semua Proye" — dan yang itu fungsional. Yang tersisa di tombol itu peran akun, satu-satunya keterangan di sana yang tidak ada di tempat lain, dan dengan dua akun penulis ia yang paling perlu dibaca sekilas |
 | **Garis miring topbar jalan sampai ujung kanan** | Membalik keputusan pemilik sebelumnya ("berhenti setelah penghitung proyek"). Terukur: tanda bacanya berhenti di 747px dari bilah 1168px, jadi 693px sisanya berdiri tanpa pemisah dan terbaca sebagai barang tercecer. Lonceng dan panel akun tetap tanpa garis miring karena garis tegak 2px milik lonceng sudah memisahkan keduanya |

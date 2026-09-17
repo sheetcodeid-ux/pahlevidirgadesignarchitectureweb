@@ -165,13 +165,22 @@ function Identitas({ settings, profil }: { settings: StudioSettings | null; prof
   return (
     <RPopover.Root>
       <RPopover.Trigger asChild>
-        <button type="button" className="topbar__id" aria-label="Menu akun">
+        {/* Nama studio TIDAK ditulis di sini lagi.
+            Sidebar sudah menuliskannya utuh dan permanen 270px di sebelah
+            kiri, jadi yang di bilah ini salinan kedua — dan salinan itu
+            terpotong jadi "Dirga Pahlevi Archit…" di SETIAP lebar sejak
+            bilahnya dibuat, karena ia butuh 194px sementara batasnya 160px.
+            Melebarkan batasnya memang memuat namanya, tapi ruangnya diambil
+            dari combobox proyek di sebelahnya, yang lalu terpotong jadi
+            "Semua Proye" — dan yang itu fungsional, bukan hiasan: ia yang
+            memberi tahu proyek mana yang sedang dipilih.
+            Yang tersisa justru yang dicari orang saat menekan avatar: akun
+            mana yang sedang dipakai. Dengan dua akun penulis, itu satu-
+            satunya keterangan di sini yang tidak ada di tempat lain. */}
+        <button type="button" className="topbar__id" aria-label={`Menu akun — ${peran}`}>
           <Avatar name={nama} src={settings?.logoUrl ?? undefined} brand size="sm" />
-          <span className="topbar__id-teks">
-            <span className="topbar__id-nama">{nama}</span>
-            <span className="topbar__id-peran">
-              <Icon name="crown" size={12} />{peran}
-            </span>
+          <span className="topbar__id-peran">
+            <Icon name="crown" size={12} />{peran}
           </span>
           <Icon name="chevronDown" size={15} />
         </button>

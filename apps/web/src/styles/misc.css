@@ -115,6 +115,24 @@
 .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .avatar--brand { background: var(--brand); color: var(--brand-ink); }
 
+/* Ukuran sm dan lg SELAMA INI TIDAK PERNAH ADA di stylesheet mana pun —
+   komponennya menerima prop `size` dan menempelkan kelasnya, tapi tidak ada
+   satu pun aturan yang membacanya. Akibatnya sembilan pemanggil yang minta
+   "sm" dan satu yang minta "lg" semuanya tergambar 2,5rem, dan yang paling
+   kelihatan adalah avatar di bilah atas: 40px di dalam bilah setinggi 52px.
+   Tanpa satu pun galat, dan tidak kelihatan dari membaca komponennya. */
+.avatar--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: var(--text-2xs);
+}
+
+.avatar--lg {
+  width: 4rem;
+  height: 4rem;
+  font-size: var(--text-lg);
+}
+
 .avatar-group { display: flex; }
 /* Tumpang tindih dengan cincin permukaan supaya tepi tiap avatar tetap terbaca. */
 .avatar-group .avatar + .avatar { margin-left: -0.6rem; box-shadow: 0 0 0 2px var(--surface); }
