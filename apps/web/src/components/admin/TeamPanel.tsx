@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
+import { KartuAngka } from "../ui/data/KartuAngka";
 import { SkeletonTabel } from "../ui/Skeleton";
 import { Avatar } from "../ui/misc/Avatar";
 import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
@@ -166,7 +167,48 @@ function Isi() {
     { id: "nonaktif", label: "Nonaktif", cocok: (t) => !t.active },
   ];
 
+  /* Tiga angka yang menjawab "siapa saja yang ada sekarang". Yang dihitung
+     hanya yang AKTIF — anggota nonaktif masih tersimpan supaya fee dan gaji
+     lamanya tetap punya nama, tapi ia bukan bagian dari studio hari ini dan
+     ikut menghitungnya membuat angkanya naik terus selamanya. */
+  const angka = (() => {
+    const aktif = (tim ?? []).filter((t) => t.active);
+    return {
+      aktif: aktif.length,
+      tetap: aktif.filter((t) => t.kind === "partner" || t.kind === "staf").length,
+      lepas: aktif.filter((t) => t.kind === "inti" || t.kind === "proyek").length,
+    };
+  })();
+
   return (
+    <div className="stack" style={{ gap: "var(--space-5)" }}>
+      {/* Selama data belum datang yang tampil kerangka, bukan angka nol.
+          Kartu berangka 0 yang sedetik kemudian jadi 5 terbaca sebagai
+          jawaban, bukan sebagai "sedang memuat". */}
+      {tim === null ? (
+        <div className="kangka-deret" aria-hidden="true">
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+          <div className="skeleton skeleton--tunda keu__rangka-kartu" />
+        </div>
+      ) : (
+      <div className="kangka-deret">
+        <KartuAngka
+          label="Anggota aktif" nilai={String(angka.aktif)} ikon="team"
+          delta={(tim ?? []).length > angka.aktif ? `${(tim ?? []).length - angka.aktif} nonaktif disimpan` : "semua masih aktif"}
+          deltaNada="netral"
+        />
+        <KartuAngka
+          label="Partner & staf tetap" nilai={String(angka.tetap)} ikon="building"
+          delta="dibayar lewat halaman Gaji" deltaNada="netral"
+        />
+        <KartuAngka
+          label="Freelancer" nilai={String(angka.lepas)} ikon="user"
+          delta="dibayar lewat fee proyek" deltaNada="netral"
+        />
+      </div>
+      )}
+
     <DataTable
       data={tim}
       kunci={(t) => t.id}
@@ -194,6 +236,7 @@ function Isi() {
         keterangan: "Staf tetap maupun freelancer — bukan akun login. Yang didaftarkan di sini bisa dipilih sebagai PIC tugas, penerima fee, dan penerima gaji.",
       }}
     />
+    </div>
   );
 }
 

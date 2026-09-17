@@ -42,6 +42,15 @@ function bulanIni(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function bulanSebelum(period: string): string {
+  const [y, m] = period.split("-").map(Number);
+  // Date(y, 0 - 1) sudah benar melewati pergantian tahun: bulan 0 dikurangi
+  // satu jadi Desember tahun sebelumnya. Menghitungnya sendiri dengan if
+  // adalah cara paling mudah salah di bulan Januari.
+  const d = new Date(y, m - 2, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 function labelBulan(period: string): string {
   const [y, m] = period.split("-").map(Number);
   return new Date(y, m - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
@@ -60,8 +69,15 @@ function Isi() {
   const [baris, setBaris] = useState<BarisGajiBulan[] | null>(null);
   const [tim, setTim] = useState<AnggotaTim[]>([]);
 
+  /* Baris gaji bulan LALU, dipakai tombol "Salin dari bulan lalu". Diambil
+     terpisah dan diam-diam: kalau gagal, tombolnya sekadar tidak muncul —
+     halaman ini tetap berguna tanpanya. */
+  const [bulanLalu, setBulanLalu] = useState<BarisGajiBulan[]>([]);
+  const [menyalin, setMenyalin] = useState(false);
+
   function muat() {
     gajiBulan(period).then(setBaris).catch(() => setBaris((l) => l ?? []));
+    gajiBulan(bulanSebelum(period)).then(setBulanLalu).catch(() => setBulanLalu([]));
   }
 
   /* TIDAK di-cache. Isinya selalu milik satu bulan tertentu, dan cache yang
@@ -79,6 +95,49 @@ function Isi() {
       belum: d.filter((b) => b.salaryId && !b.salaryPaidOn).length,
     };
   }, [baris]);
+
+  /* Yang disalin HANYA nominalnya, dan selalu sebagai BELUM DIBAYAR.
+     Menyalin tanggal bayar bulan lalu berarti menandai gaji bulan ini lunas
+     padahal uangnya belum keluar — kesalahan yang paling mahal di halaman
+     ini, karena ia menghapus satu-satunya penanda "masih harus dibayar".
+
+     Orang yang bulan ini SUDAH punya baris dilewati, bukan ditimpa: satu
+     orang cuma boleh punya satu baris per bulan, dan menimpa berarti
+     membuang nominal yang barusan diketik tangan. */
+  const bisaDisalin = bulanLalu.filter(
+    (l) => l.salaryId && !baris?.some((b) => b.teamMemberId === l.teamMemberId && b.salaryId),
+  );
+
+  async function salinBulanLalu() {
+    if (bisaDisalin.length === 0) return;
+    setMenyalin(true);
+    let berhasil = 0;
+    const gagal: string[] = [];
+    for (const l of bisaDisalin) {
+      try {
+        await catatGaji({
+          teamMemberId: l.teamMemberId, period,
+          amount: l.salaryAmount as number, paidOn: null, note: l.salaryNote ?? null,
+        });
+        berhasil++;
+      } catch (e) {
+        gagal.push(`${l.name}: ${(e as Error).message}`);
+      }
+    }
+    setMenyalin(false);
+    muat();
+    /* Dilaporkan apa adanya, termasuk yang gagal. Toast "berhasil" setelah
+       tiga dari lima tersalin adalah cara paling mudah membuat dua gaji
+       hilang tanpa ada yang tahu. */
+    if (gagal.length === 0) {
+      toast({ judul: `${berhasil} gaji disalin`, keterangan: "Semuanya ditandai belum dibayar.", nada: "sukses" });
+    } else {
+      toast({
+        judul: `${berhasil} tersalin, ${gagal.length} gagal`,
+        keterangan: gagal.join("; "), nada: "gagal",
+      });
+    }
+  }
 
   async function tandaiDibayar(b: BarisGajiBulan, dibayar: boolean) {
     if (!b.salaryId || !baris) return;
@@ -213,6 +272,18 @@ function Isi() {
 
   const alat = (
     <>
+      {/* Muncul HANYA kalau ada yang bisa disalin. Tombol yang selalu ada
+          tapi sering tidak melakukan apa-apa mengajari staf mengabaikannya. */}
+      {bisaDisalin.length > 0 && (
+        <button type="button" className="btn btn--secondary" disabled={menyalin}
+          onClick={salinBulanLalu}
+          title={`Menyalin ${bisaDisalin.length} nominal dari ${labelBulan(bulanSebelum(period))}, semuanya sebagai belum dibayar`}>
+          {menyalin
+            ? <span className="spinner spinner--sm" />
+            : <Icon name="copy" size={15} />}
+          Salin {bisaDisalin.length} dari bulan lalu
+        </button>
+      )}
       <DialogGaji
         tim={tim} period={period} onSelesai={muat}
         pemicu={
