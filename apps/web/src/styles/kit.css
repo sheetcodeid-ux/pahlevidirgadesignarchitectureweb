@@ -925,3 +925,178 @@
   gap: 16px;
   align-items: start;
 }
+
+/* -----------------------------------------------------------------------------
+   KARTU — frame Card
+
+   Wadah dasar seluruh panel. Terukur dari "Card Statistic" versi Desktop:
+
+     kotak    182x173 radius 15,5 dengan garis 1 yang MENUNGGANGI tepi
+              -> 183x174 radius 16 di CSS (lihat catatan lencana bergaris)
+     garis    #E5E6E6
+     padding  15,5 dari tepi rect -> 15 dari dalam border
+     radius   16 — ini yang membuat panel Coinest terbaca lengkung, bukan 12
+
+   Ukuran 183x174 itu ukuran KARTU CONTOH di frame komponen, bukan ukuran
+   mati: di halaman sungguhan kartu melar mengikuti kolomnya. Yang mengikat
+   radius, garis, dan paddingnya.
+   -------------------------------------------------------------------------- */
+.k-kartu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-kartu-gap, 16px);
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+/* -----------------------------------------------------------------------------
+   KARTU STATISTIK — keluarga "Card Statistic" versi 2
+
+   Susunannya, dari atas ke bawah:
+
+     kepala   ubin ikon 36x36 radius 8 berlatar #ECF4E9, ikon 20px;
+              tombol titik-tiga 18px di ujung kanan
+     lencana  49x12 radius 6 berlatar mint, ikon tren 10px + persen
+     nilai    ink 87,6x22,2 -> 32px
+     judul    12px
+
+   Ubin ikonnya yang paling khas: kotak mint membulat, BUKAN ikon telanjang.
+   Versi Tab (182x109) membuang kepalanya dan menyisakan tiga baris bawah.
+   -------------------------------------------------------------------------- */
+.k-stat {
+  display: flex;
+  flex-direction: column;
+  width: 183px;
+  min-height: 174px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.k-stat__kepala {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.k-stat__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.k-stat__menu {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.k-stat__menu:hover { background: var(--surface-hover); }
+
+/* Jarak antarbaris diambil dari POSISI tinta di framenya, bukan dari
+   `margin-bottom: auto` yang mendorong isinya ke bawah. Terukur pada kartu
+   setinggi 173: ubin ikon berakhir di 51,5, lencana mulai di 79,5, tinta
+   nilai di 105, tinta judul di 144,5. */
+.k-stat .k-tren { margin-top: 28px; }
+
+.k-stat__nilai {
+  margin: 8px 0 0;
+  font-size: var(--k-h1);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--text-strong);
+}
+
+.k-stat__judul {
+  margin: 11px 0 0;
+  font-size: var(--k-t12);
+  font-weight: var(--k-reg);
+  color: var(--text-strong);
+}
+
+/* Lencana tren — 49x12 radius 6. Jauh lebih pendek daripada lencana status
+   (16-24), dan itu disengaja: ia menempel di atas angka, bukan berdiri
+   sendiri di dalam baris. */
+.k-tren {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  align-self: flex-start;
+  height: 12px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: var(--brand-mint);
+  color: var(--brand);
+  font-size: var(--k-t8);
+  font-weight: var(--k-med);
+  line-height: 1;
+}
+.k-tren--turun { background: var(--danger-soft); color: var(--danger); }
+
+.k-stat svg[width][height],
+.k-kartu svg[width][height],
+.k-tren svg[width][height] { flex: none; max-width: none; }
+
+/* -----------------------------------------------------------------------------
+   KARTU KAS — keluarga "Card - Cards"
+
+   Terukur: 251x163 radius 16, dua varian — pejal hijau tua (#1E4841) dan
+   terang (#FBFBFC). Padding 16. Di Coinest ini kartu debit; di panel ini
+   yang setara maknanya kas studio, dan itu satu-satunya bidang besar yang
+   sengaja TIDAK ikut berbalik saat tema diganti (lihat --kas-bidang).
+   -------------------------------------------------------------------------- */
+.k-kas {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 251px;
+  height: 163px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
+}
+.k-kas--terang {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.k-kas__atas { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* Ukuran huruf di dalam kartu kas, diturunkan dari tinggi tinta tiap baris
+   di framenya: nama 20,6 -> 20px, nilai 20,3 (angka) -> 28px, keterangan
+   7,6 -> 10px, isi 8,7 (angka) -> 12px. */
+/* 14px. Di Figma sudut ini diisi WORDMARK (logo yang sudah jadi outline),
+   bukan teks — jadi tinggi tintanya 20,6 bukan ukuran huruf. Di panel ini
+   slotnya dipakai nama kas, dan 14px adalah ukuran label yang setara. */
+.k-kas__nama { margin: 0; font-size: var(--k-t14); font-weight: var(--k-semi); }
+.k-kas__nilai {
+  margin: 0;
+  font-size: var(--k-h2);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--kas-nilai);
+}
+.k-kas--terang .k-kas__nilai { color: var(--text-strong); }
+/* Tiga kolom di kaki kartu, dan jaraknya TIDAK rata: terukur di x 16, 164,
+   dan 215 pada kartu selebar 251. Kolom pertama memakan sisa ruang, dua
+   sisanya menempel ke kanan. */
+.k-kas__kaki { display: flex; gap: 20px; }
+.k-kas__kaki > :first-child { margin-right: auto; }
+.k-kas__ket { margin: 0; font-size: var(--k-t10); font-weight: var(--k-reg); }
+.k-kas__isi { margin: 4px 0 0; font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--kas-nilai); }
+.k-kas--terang .k-kas__isi { color: var(--text-strong); }

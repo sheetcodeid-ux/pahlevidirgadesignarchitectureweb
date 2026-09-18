@@ -6,9 +6,11 @@ import { Lencana, Angka, Titik } from "./Lencana";
 import { Remah } from "./Remah";
 import { Paginasi } from "./Paginasi";
 import { Cari, Isian, Centang, Sakelar } from "./Isian";
+import { KartuStatistik, KartuKas, Tren, TandaKas } from "./Kartu";
 import { Ikon } from "./Ikon";
 import {
   CalendarBlank,
+  CoinIn,
   CaretDown,
   ChatTeardropDots,
   NavSquaresFour,
@@ -237,6 +239,43 @@ export function GaleriBanding() {
         </Banding>
         <Banding kunci="paginasi-ponsel" zoom={2}>
           <Paginasi kini={1} total={12} onPindah={setHal} ponsel />
+        </Banding>
+      </Grup>
+
+      <Grup judul="Kartu">
+        {/* Teks contoh disamakan dengan framenya supaya lebar kotaknya bisa
+            ikut dibandingkan. */}
+        <Banding kunci="stat-desktop" zoom={2}>
+          <KartuStatistik
+            ikon={CoinIn}
+            judul="Total Income"
+            nilai="$25,000"
+            tren={<Tren naik>+12.5%</Tren>}
+            onMenu={() => {}}
+          />
+        </Banding>
+        <Banding kunci="kas-gelap" zoom={2}>
+          <KartuKas
+            nama="Kas Studio"
+            nilai="$25,000"
+            kanan={<TandaKas />}
+            kaki={[
+              { judul: "Card Holder", isi: "Pahlevi Dirga" },
+              { judul: "Expires", isi: "12/28" },
+            ]}
+          />
+        </Banding>
+        <Banding kunci="kas-terang" zoom={2}>
+          <KartuKas
+            terang
+            kanan={<TandaKas />}
+            nama="Kas Studio"
+            nilai="$25,000"
+            kaki={[
+              { judul: "Card Holder", isi: "Pahlevi Dirga" },
+              { judul: "Expires", isi: "12/28" },
+            ]}
+          />
         </Banding>
       </Grup>
 
