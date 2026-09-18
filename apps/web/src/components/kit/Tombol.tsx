@@ -81,6 +81,16 @@ export interface PropTombolIkon extends Omit<ButtonHTMLAttributes<HTMLButtonElem
   ukuran?: UkuranTombolIkon;
   jenis?: JenisTombol;
   tipeHtml?: "button" | "submit" | "reset";
+  /**
+   * Titik merah pemberitahuan di sudut kanan-atas ikonnya.
+   *
+   * Ada di setiap varian Button Icon di Figma, tapi dibuat opsional di sini:
+   * titik yang selalu menyala berhenti berarti apa-apa. Yang memakainya harus
+   * menyebut apa yang belum ditangani lewat `titikJudul`, supaya pembaca layar
+   * ikut mendengarnya — titik merah tanpa nama tidak bercerita apa pun.
+   */
+  titik?: boolean;
+  titikJudul?: string;
 }
 
 export function TombolIkon({
@@ -89,6 +99,8 @@ export function TombolIkon({
   ukuran = "medium",
   jenis = "primary",
   tipeHtml = "button",
+  titik,
+  titikJudul,
   className,
   ...sisa
 }: PropTombolIkon) {
@@ -103,6 +115,9 @@ export function TombolIkon({
   return (
     <button type={tipeHtml} className={kelas} aria-label={judul} title={judul} {...sisa}>
       <Ikon ikon={ikon} ukuran={IKON_PX_KOTAK[ukuran]} />
+      {titik && (
+        <span className="k-tombolikon__titik" role="img" aria-label={titikJudul ?? "Ada yang baru"} />
+      )}
     </button>
   );
 }

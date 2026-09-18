@@ -182,6 +182,31 @@
      memang tidak ikut berbalik. */
   --kas-nilai: #FBFBFC;
 
+  /* --- Centang dan sakelar: palet KEDUA milik file Figma ------------------
+     Frame Forms memakai dua palet yang berbeda. Input-search dan Input Large
+     memakai palet Coinest yang sama dengan seluruh file; Checkbox, Toggle,
+     Input Medium, frame Breadcrumb, dan frame Color memakai yang ini —
+     beige hangat dengan mint pucat.
+
+     Dihitung di 14 frame komponen: #242E2C 614 kali, #1E4841 484, #6B7271
+     266, #BBF49C 194, sementara #FAF6F5 cuma 20 kali dan #E4E2DD 33. Jadi
+     yang ini memang minoritas, dan sempat saya kira sisa templat yang belum
+     dibersihkan lalu saya ganti dengan hijau tua.
+
+     Dikembalikan ke nilai Figma-nya karena permintaannya "100% mirip
+     framenya", dan ini yang tertulis di framenya. Kalau suatu saat pemilik
+     memutuskan seluruh panel memakai satu palet, yang diubah cukup enam
+     token di bawah ini. */
+  --centang-bidang: #FAF6F5;
+  --centang-aktif: #CDEDDD;
+  --centang-tanda: #1A1615;
+  --sakelar-mati: #E4E2DD;
+  --sakelar-hidup: #CDEDDD;
+  --sakelar-tuas: #FFFDFC;
+  /* Remah juga memakai palet kedua itu: teks abu-biru, pemisah abu terang. */
+  --remah-teks: #868F9B;
+  --remah-pisah: #E0E2E5;
+
   --danger: #F73541;
   --danger-ink: #FFFFFF;
   --danger-soft: #FDCED1;

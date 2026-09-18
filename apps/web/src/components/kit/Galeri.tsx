@@ -6,16 +6,22 @@ import { Lencana, Angka, Titik, type BentukLencana, type NadaLencana } from "./L
 import { Remah } from "./Remah";
 import { Paginasi } from "./Paginasi";
 import { Cari, Isian, Centang, Sakelar } from "./Isian";
+import { GaleriBanding } from "./GaleriBanding";
 import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, SEMUA_IKON } from "./ikon";
 
 /* =============================================================================
    Galeri kit — halaman kerja, bukan hiasan.
 
-   Tiap contoh diberi atribut `data-ukur` berisi ANGKA FIGMA-nya, supaya
-   pemeriksaan di browser bisa membandingkan sendiri: skrip pengukur membaca
-   getBoundingClientRect() lalu mencocokkannya dengan angka di atribut itu.
-   Menilai dari melihat tangkapan layar tidak cukup — jebakan yang membuat 145
-   ikon terpotong lolos persis itu.
+   Bagian ini memperlihatkan komponen dalam pemakaian sehari-hari. Yang
+   MEMBUKTIKAN kemiripannya bukan di sini melainkan di seksi "Banding dengan
+   Figma" di atas, tempat tiap komponen ditempel bersebelahan dengan potongan
+   framenya.
+
+   Dulu di sini ada atribut `data-ukur` berisi angka Figma yang dicocokkan
+   skrip. Itu dibuang: ia daftar KEDUA berisi hal yang sama dengan kit.css,
+   dan begitu padding di CSS diubah, angkanya langsung basi tanpa ada yang
+   tahu — jebakan #32 di CLAUDE.md. Pembanding gambar tidak bisa basi, karena
+   sumbernya berkas Figma itu sendiri.
    ============================================================================= */
 
 const UKURAN: UkuranTombol[] = ["small", "medium", "large"];
@@ -29,15 +35,6 @@ const SPEK_IKON: Record<"xsmall" | "small" | "medium" | "large", string> = {
 };
 const JENIS: JenisTombol[] = ["primary", "secondary", "ghost", "transparent"];
 
-/* Spesifikasi KOTAK dari Figma — tinggi, radius, padding, jarak, ikon, font.
-   LEBAR sengaja tidak dicantumkan: teks di Figma sudah jadi outline sehingga
-   isinya tidak terbaca, jadi 49/59/68 itu lebar kata contoh Coinest, bukan
-   ukuran yang harus ditiru oleh label berbahasa Indonesia. */
-const SPEK: Record<UkuranTombol, string> = {
-  small: "h=28;r=7;pad=8;gap=6;font=10;bobot=500;ikon=12",
-  medium: "h=32;r=8;pad=10;gap=6;font=12;bobot=500;ikon=14",
-  large: "h=38;r=8;pad=12;gap=6;font=14;bobot=500;ikon=16",
-};
 const TINGGI_FIGMA: Record<UkuranTombol, number> = { small: 28, medium: 32, large: 38 };
 
 function Baris({ judul, children }: { judul: string; children: React.ReactNode }) {
@@ -69,6 +66,8 @@ export function Galeri() {
 
   return (
     <div className="k-galeri">
+      <GaleriBanding />
+
       <section className="k-galeri__seksi">
         <h2 className="k-galeri__judul">Tombol</h2>
         <p className="k-galeri__ket">
@@ -86,7 +85,6 @@ export function Galeri() {
                 <Tombol
                   ukuran={u}
                   jenis={j}
-                  data-ukur={SPEK[u]}
                 >
                   Label
                 </Tombol>
@@ -94,7 +92,6 @@ export function Galeri() {
                   ukuran={u}
                   jenis={j}
                   kiri={CalendarBlank}
-                  data-ukur={SPEK[u]}
                 >
                   Label
                 </Tombol>
@@ -102,7 +99,6 @@ export function Galeri() {
                   ukuran={u}
                   jenis={j}
                   kanan={CaretDown}
-                  data-ukur={SPEK[u]}
                 >
                   Label
                 </Tombol>
@@ -111,7 +107,6 @@ export function Galeri() {
                   jenis={j}
                   kiri={CalendarBlank}
                   kanan={CaretDown}
-                  data-ukur={SPEK[u]}
                 >
                   Label
                 </Tombol>
@@ -138,7 +133,6 @@ export function Galeri() {
                   jenis={j}
                   ikon={ChatTeardropDots}
                   judul={`Pesan ${u} ${j}`}
-                  data-ukur={SPEK_IKON[u]}
                 />
               ))}
               <span className="k-galeri__tanda">{u}</span>
@@ -162,7 +156,6 @@ export function Galeri() {
               nilai={segmen}
               onPilih={setSegmen}
               className="k-galeri__segmen"
-              data-ukur="h=32;r=8"
               segmen={[
                 { nilai: "bulan", label: "Bulan" },
                 { nilai: "kuartal", label: "Kuartal" },
@@ -190,11 +183,11 @@ export function Galeri() {
           </Baris>
         ))}
         <Baris judul="Indicator — angka dan titik">
-          <Angka jumlah={9} judul="Pesan belum dibaca" data-ukur="h=18;r=9;font=10" />
-          <Angka jumlah={128} judul="Pesan belum dibaca" data-ukur="h=18;r=9;font=10" />
-          <Angka jumlah={4} kecil judul="Pesan belum dibaca" data-ukur="h=10;r=5" />
-          <Titik judul="Ada yang baru" data-ukur="w=10;h=10;r=5" />
-          <Titik kecil judul="Ada yang baru" data-ukur="w=8;h=8;r=4" />
+          <Angka jumlah={9} judul="Pesan belum dibaca" />
+          <Angka jumlah={128} judul="Pesan belum dibaca" />
+          <Angka jumlah={4} kecil judul="Pesan belum dibaca" />
+          <Titik judul="Ada yang baru" />
+          <Titik kecil judul="Ada yang baru" />
         </Baris>
       </section>
 
@@ -237,7 +230,6 @@ export function Galeri() {
               ukuran={u}
               judul={`Cari ${u}`}
               placeholder="Cari proyek, klien, tagihan…"
-              data-ukur={{ large: "h=37", medium: "h=31", small: "h=27" }[u]}
             />
           ))}
         </Baris>
@@ -253,14 +245,14 @@ export function Galeri() {
         <Baris judul="Checkbox — 13 / 17 / 23">
           {(["default", "medium", "big"] as const).map((u) => (
             <label key={u} className="k-galeri__sel">
-              <Centang ukuran={u} defaultChecked data-ukur={{ default: "w=13;h=13", medium: "w=17;h=17", big: "w=23;h=23" }[u]} />
+              <Centang ukuran={u} defaultChecked />
               <span className="k-galeri__tanda">{u}</span>
             </label>
           ))}
         </Baris>
         <Baris judul="Toggle — 28x16">
-          <Sakelar judul="Tampilkan di beranda" defaultChecked data-ukur="w=28;h=16;r=8" />
-          <Sakelar judul="Kirim notifikasi" data-ukur="w=28;h=16;r=8" />
+          <Sakelar judul="Tampilkan di beranda" defaultChecked />
+          <Sakelar judul="Kirim notifikasi" />
         </Baris>
       </section>
 

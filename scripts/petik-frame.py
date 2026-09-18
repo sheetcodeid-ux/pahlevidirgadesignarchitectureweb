@@ -1,0 +1,76 @@
+"""Petik satu layer dari frame Figma jadi SVG berdiri sendiri.
+
+    python3 scripts/petik-frame.py Button "Size=Medium, With Icon=Left, Type=Primary" keluar.svg
+
+Dipakai untuk MEMBANDINGKAN, bukan untuk dipakai di kode: hasilnya ditempel
+bersebelahan dengan komponen buatan sendiri pada perbesaran yang sama.
+
+Alasannya satu, dan sudah pernah menggigit: mencocokkan angka yang saya
+ekstrak sendiri tidak membuktikan apa-apa kalau ekstraksinya yang salah.
+Yang membuktikan cuma gambar sumbernya, ditempel berdampingan. Itu yang
+akhirnya menemukan 145 ikon terpotong.
+
+Koordinat path tidak disentuh — yang disetel cuma viewBox-nya, sama seperti
+ekstraksi ikon.
+"""
+import re
+import sys
+import pathlib
+import xml.etree.ElementTree as ET
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from importlib import import_module
+bbox_banyak = import_module("bbox-svg").bbox_banyak
+
+NS = "http://www.w3.org/2000/svg"
+ET.register_namespace("", NS)
+Q = "{%s}" % NS
+AKAR = pathlib.Path(__file__).resolve().parent.parent
+STYLE = AKAR / "apps/web/src/assets/figma/style"
+
+
+def kotak(el):
+    """Kotak gambar sebuah layer — rect ikut dihitung, bukan cuma path."""
+    b = bbox_banyak([p.get("d") for p in el.iter() if p.tag == Q + "path" and p.get("d")])
+    for r in el.iter():
+        if r.tag != Q + "rect":
+            continue
+        x, y = float(r.get("x", 0)), float(r.get("y", 0))
+        w, h = float(r.get("width", 0)), float(r.get("height", 0))
+        # Garis Figma berpusat di tepi, jadi setengahnya menonjol keluar rect.
+        # Bawaan stroke-width di SVG adalah 1, BUKAN 0. Memakai 0 sebagai
+        # nilai bawaan membuat kotak varian Ghost terbaca 1px lebih kecil
+        # daripada yang benar-benar tergambar, dan selisih itu lalu
+        # tampak seperti cacat di komponennya.
+        t = float(r.get("stroke-width", 1)) / 2 if r.get("stroke") else 0
+        q = (x - t, y - t, x + w + t, y + h + t)
+        b = q if b is None else (min(b[0], q[0]), min(b[1], q[1]), max(b[2], q[2]), max(b[3], q[3]))
+    return b
+
+
+def petik(frame: str, layer: str):
+    root = ET.parse(STYLE / f"{frame}.svg").getroot()
+    el = next((c for c in root.iter() if c.get("id") == layer), None)
+    if el is None:
+        sys.exit(f'tidak ada layer "{layer}" di {frame}.svg')
+    b = kotak(el)
+    isi = "".join(ET.tostring(c, encoding="unicode") for c in el)
+    isi = re.sub(r'\sxmlns(:\w+)?="[^"]*"', "", isi)
+    w, h = b[2] - b[0], b[3] - b[1]
+    return (
+        f'<svg xmlns="{NS}" width="{w:g}" height="{h:g}" '
+        f'viewBox="{b[0]:g} {b[1]:g} {w:g} {h:g}" fill="none">{isi}</svg>',
+        w, h,
+    )
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        sys.exit(__doc__)
+    svg, w, h = petik(sys.argv[1], sys.argv[2])
+    tujuan = sys.argv[3] if len(sys.argv) > 3 else None
+    if tujuan:
+        pathlib.Path(tujuan).write_text(svg)
+        print(f"{tujuan}  {w:g}x{h:g}")
+    else:
+        print(svg)
