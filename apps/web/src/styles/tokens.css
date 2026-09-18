@@ -200,6 +200,13 @@
   --centang-bidang: #FAF6F5;
   --centang-aktif: #CDEDDD;
   --centang-tanda: #1A1615;
+  /* Bentuk centangnya diambil dari path Figma apa adanya: polyline ber-stroke
+     dengan ujung PERSEGI, bukan dua border CSS yang diputar 45 derajat.
+     Bedanya kelihatan diperbesar — ujung border CSS terpotong menyudut dan
+     panjang kedua lengannya tidak sebanding. Titiknya sama di ketiga ukuran
+     kalau dihitung sebagai pecahan sisi kotaknya, jadi satu bentuk ini cukup;
+     warnanya datang dari --centang-tanda lewat mask, bukan dipanggang. */
+  --centang-tanda-bentuk: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M4.5 8.5L7.1667 11.1667L12.5 5.8333' fill='none' stroke='black' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E");
   --sakelar-mati: #E4E2DD;
   --sakelar-hidup: #CDEDDD;
   --sakelar-tuas: #FFFDFC;

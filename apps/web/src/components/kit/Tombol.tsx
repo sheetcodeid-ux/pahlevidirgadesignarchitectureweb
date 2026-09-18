@@ -22,8 +22,15 @@ import { Ikon, type DataIkon } from "./Ikon";
 export type UkuranTombol = "small" | "medium" | "large";
 export type JenisTombol = "primary" | "secondary" | "ghost" | "transparent";
 
-/** Terukur dari lebar gambar instance dibagi gambar masternya, dikali 32. */
+/* Ukuran ikon = tinta instance / tinta MASTER ikon itu sendiri * 32.
+   Lebar tinta master BEDA-BEDA per ikon — CalendarBlank 24, ChatTeardropDots
+   25, MagnifyingGlass 26, Nav/SquaresFour 22, CaretDown 18. Sempat saya kira
+   24 untuk semuanya, dan akibatnya hampir setiap ikon di kit 2px kekecilan. */
 const IKON_PX: Record<UkuranTombol, number> = { small: 12, medium: 14, large: 16 };
+
+/* Caret di KANAN ukurannya sendiri: 12 / 14 / 14 — pada Large ia TIDAK ikut
+   naik jadi 16 seperti ikon kirinya. Terukur di ketiga ukuran. */
+const CARET_PX: Record<UkuranTombol, number> = { small: 12, medium: 14, large: 14 };
 
 export interface PropTombol extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   children?: ReactNode;
@@ -46,14 +53,23 @@ export function Tombol({
   ...sisa
 }: PropTombol) {
   const px = IKON_PX[ukuran];
-  const kelas = ["k-tombol", `k-tombol--${ukuran}`, `k-tombol--${jenis}`, className]
+  const kelas = [
+    "k-tombol",
+    `k-tombol--${ukuran}`,
+    `k-tombol--${jenis}`,
+    // Padding sisi kiri dan kanan berbeda tergantung ada-tidaknya ikon di
+    // sisi itu — begitu di Figma, terukur dari letak tinta ikonnya.
+    kiri && "k-tombol--ikonkiri",
+    kanan && "k-tombol--ikonkanan",
+    className,
+  ]
     .filter(Boolean)
     .join(" ");
   return (
     <button type={tipeHtml} className={kelas} {...sisa}>
       {kiri && <Ikon ikon={kiri} ukuran={px} />}
       {children}
-      {kanan && <Ikon ikon={kanan} ukuran={px} />}
+      {kanan && <Ikon ikon={kanan} ukuran={CARET_PX[ukuran]} />}
     </button>
   );
 }
@@ -69,10 +85,10 @@ export function Tombol({
 export type UkuranTombolIkon = "xsmall" | "small" | "medium" | "large";
 
 const IKON_PX_KOTAK: Record<UkuranTombolIkon, number> = {
-  xsmall: 10,
-  small: 12,
-  medium: 14,
-  large: 16,
+  xsmall: 12,
+  small: 14,
+  medium: 16,
+  large: 18,
 };
 
 export interface PropTombolIkon extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {

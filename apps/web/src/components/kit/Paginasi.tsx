@@ -52,7 +52,7 @@ export interface PropPaginasi {
 }
 
 export function Paginasi({ kini, total, onPindah, ponsel = false, className }: PropPaginasi) {
-  const px = ponsel ? 14 : 12;
+  const px = ponsel ? 16 : 14;
   /* Versi ponsel menampilkan satu nomor lebih banyak — terukur dari lebar
      framenya: 312 = 8 slot berjarak 8, lawan 254 = 7 slot. */
   const lebar = ponsel ? 4 : 3;

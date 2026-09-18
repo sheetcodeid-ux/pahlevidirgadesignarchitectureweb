@@ -145,7 +145,7 @@ export function GaleriBanding() {
         <Banding kunci="nav-aktif" zoom={2}>
           <div style={{ width: 177 }}>
             <button type="button" className="k-nav is-aktif">
-              <Ikon ikon={NavSquaresFour} ukuran={20} />
+              <Ikon ikon={NavSquaresFour} ukuran={24} />
               Dashboard
             </button>
           </div>
@@ -158,7 +158,7 @@ export function GaleriBanding() {
         >
           <div style={{ width: 177 }}>
             <button type="button" className="k-nav">
-              <Ikon ikon={NavSquaresFour} ukuran={20} />
+              <Ikon ikon={NavSquaresFour} ukuran={24} />
               Dashboard
             </button>
           </div>
@@ -198,11 +198,13 @@ export function GaleriBanding() {
         <Banding kunci="lencana-pil-belum">
           <Lencana bentuk="pil" nada="netral">Unpaid</Lencana>
         </Banding>
+        {/* Framenya menulis "99" — contohnya harus kata yang sama, kalau tidak
+            yang dibandingkan lebar dua tulisan yang berbeda. */}
         <Banding kunci="angka-18" zoom={6}>
-          <Angka jumlah={9} judul="Contoh" />
+          <Angka jumlah={99} judul="Contoh" />
         </Banding>
         <Banding kunci="angka-13" zoom={6}>
-          <Angka jumlah={9} kecil judul="Contoh" />
+          <Angka jumlah={99} kecil judul="Contoh" />
         </Banding>
         <Banding kunci="titik-10" zoom={6}>
           <Titik judul="Contoh" />
@@ -240,18 +242,18 @@ export function GaleriBanding() {
 
       <Grup judul="Isian">
         <Banding kunci="cari-large" zoom={2}>
-          <Cari ukuran="large" judul="Cari" placeholder="Search something" />
+          <Cari ukuran="large" judul="Cari" placeholder="Search placeholder" />
         </Banding>
         <Banding kunci="cari-medium" zoom={2}>
-          <Cari ukuran="medium" judul="Cari" placeholder="Search something" />
+          <Cari ukuran="medium" judul="Cari" placeholder="Search placeholder" />
         </Banding>
         <Banding kunci="cari-small" zoom={2}>
-          <Cari ukuran="small" judul="Cari" placeholder="Search something" />
+          <Cari ukuran="small" judul="Cari" placeholder="Search placeholder" />
         </Banding>
         <Banding kunci="isian-large" zoom={2}>
           <div style={{ width: 236 }}>
             <Isian label="Label" placeholder="Placeholder" kiri={SmileySticker}
-              kanan={<Ikon ikon={Paperclip} ukuran={16} />} />
+              kanan={<Ikon ikon={Paperclip} ukuran={18} />} />
           </div>
         </Banding>
         <Banding kunci="centang-13" zoom={6}><Centang ukuran="default" defaultChecked /></Banding>

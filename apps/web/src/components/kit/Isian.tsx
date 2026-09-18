@@ -13,7 +13,7 @@ import { MagnifyingGlass } from "./ikon";
    ============================================================================= */
 
 export type UkuranCari = "small" | "medium" | "large";
-const IKON_CARI: Record<UkuranCari, number> = { small: 12, medium: 14, large: 16 };
+const IKON_CARI: Record<UkuranCari, number> = { small: 14, medium: 16, large: 18 };
 
 export interface PropCari extends Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "type"> {
   ukuran?: UkuranCari;
@@ -68,7 +68,7 @@ export function Isian({ label, bantu, kiri, kanan, className, id, ...sisa }: Pro
         {label}
       </label>
       <div className="k-isian__kotak">
-        {kiri && <Ikon ikon={kiri} ukuran={16} />}
+        {kiri && <Ikon ikon={kiri} ukuran={18} />}
         <input id={kunci} className="k-isian__input" aria-describedby={bantuId} {...sisa} />
         {kanan}
       </div>

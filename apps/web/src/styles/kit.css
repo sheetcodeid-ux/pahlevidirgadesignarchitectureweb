@@ -60,6 +60,29 @@
 }
 
 /* -----------------------------------------------------------------------------
+   RESET — garis bawaan <button>.
+
+   Peramban memberi setiap <button> garis dengan warna sistem (buttonborder)
+   yang gelap. Selama sebuah tombol tidak menyetel border-color sendiri, garis
+   itu tetap tergambar — dan itu tidak kelihatan dari membaca CSS-nya, karena
+   tidak ada satu baris pun yang menyebut warna hitam.
+
+   Sudah menggigit DUA kali: pertama di tombol ikon, lalu di tombol bersegmen
+   yang memang tidak punya deklarasi border sama sekali. Karena itu resetnya
+   ditulis satu kali di sini untuk seluruh tombol kit, bukan per komponen.
+   -------------------------------------------------------------------------- */
+.k-tombol,
+.k-tombolikon,
+.k-nav,
+.k-segmen__b,
+.k-paginasi__b {
+  border: 0 solid transparent;
+  font-family: var(--font-sans);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* -----------------------------------------------------------------------------
    TOMBOL — frame Button, keluarga "Button"
 
    Tinggi, radius, dan warna dibaca langsung dari <rect> variannya:
@@ -87,11 +110,18 @@
    Ukuran ikon dihitung dari lebar gambar instance dibagi lebar gambar
    masternya, dikali 32 — bukan dikira dari melihat.
 
-   FONT: Btn 10 / 12 / 14, bobot 500 (Medium). Kedua angka itu dari nama layer
-   di frame Typography ("Btn/12px - SemiBold", "Btn/12px - Medium"), bukan
-   ditebak. Bobot 500 juga yang dibuktikan lebar teksnya: label tombol
-   berukuran 2,77 em di ketiga ukuran, dan pada bobot 600 tidak ada kata
-   enam huruf yang selebar itu — pada 500 ada beberapa.
+   FONT: Btn 10 / 12 / 14, bobot 600.
+
+   Bobotnya DITIMBANG, bukan diukur dari lebar. Lebar tidak bisa
+   menjawabnya: Urbanist yang disajikan Google punya advance yang sama
+   persis untuk 400 dan 500, dan sama persis untuk 600 ke atas — terukur,
+   dan `font-variation-settings` tidak mengubahnya sama sekali. Jadi lebar
+   cuma memisahkan dua kelompok.
+
+   Yang menjawab luas tinta: teks yang sama dirender peramban, dipotret,
+   pikselnya dihitung, lalu dibandingkan dengan luas tinta path Figma.
+   Selisihnya 0,0% pada 600 dan -16,7% pada 500 — tidak ada ruang untuk
+   salah baca. Sempat saya simpulkan 500 dari lebar, dan itu salah.
 
    Satu hal yang TIDAK bisa dicocokkan, dan jangan dikejar: LEBAR tombolnya.
    Label di Figma sudah jadi outline, jadi isinya tidak terbaca; yang terukur
@@ -105,18 +135,25 @@
   justify-content: center;
   gap: var(--k-tombol-gap);
   height: var(--k-tombol-h);
-  padding: 0 var(--k-tombol-pad);
-  border: 1px solid transparent;
+  padding-left: var(--k-tombol-pad-polos);
+  padding-right: var(--k-tombol-pad-polos);
+  border-width: 1px;
   border-radius: var(--k-tombol-r);
   font-family: var(--font-sans);
   font-size: var(--k-tombol-font);
-  font-weight: var(--k-med);
+  font-weight: var(--k-semi);
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
   transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
     color var(--dur) var(--ease);
 }
+
+/* Kelas ini datang dari komponennya, bukan dari :has() — komponen memang
+   sudah tahu ada-tidaknya ikon, dan selektor yang bergantung pada bentuk
+   pohon DOM gampang rusak diam-diam di dalam island Astro (jebakan #1). */
+.k-tombol--ikonkiri { padding-left: var(--k-tombol-pad-ikon); }
+.k-tombol--ikonkanan { padding-right: var(--k-tombol-pad-ikon); }
 
 .k-tombol:disabled {
   cursor: not-allowed;
@@ -129,25 +166,41 @@
 }
 
 /* Ukuran */
+/* Padding KIRI dan KANAN berbeda, dan itu memang begitu di Figma — bukan
+   kesalahan baca. Dihitung dari POSISI, bukan dari selisih lebar:
+
+     kotak ikon kiri = tinta ikon - (ukuran ikon - lebar tinta) / 2
+     padding kiri    = kotak ikon kiri
+     jarak           = awal kotak teks - (padding kiri + ukuran ikon)
+     padding kanan   = lebar tombol - semua yang di atas - lebar teks
+
+   small  8 / 7 / 12      Medium  10 / 5 / 10      Large  12 / 6 / 14
+
+   Waktu keduanya saya samakan, kotaknya tetap seukuran Figma tapi TEKSNYA
+   duduk beberapa piksel meleset — dan itu cuma kelihatan dari peta selisih
+   piksel, bukan dari membandingkan lebar dan tinggi. */
 .k-tombol--small {
   --k-tombol-h: 28px;
   --k-tombol-r: 7px;
-  --k-tombol-pad: 10px;
-  --k-tombol-gap: 4px;
+  --k-tombol-pad-ikon: 7px;
+  --k-tombol-pad-polos: 9.5px;
+  --k-tombol-gap: 7px;
   --k-tombol-font: var(--k-t10);
 }
 .k-tombol--medium {
   --k-tombol-h: 32px;
   --k-tombol-r: 8px;
-  --k-tombol-pad: 11.5px;
-  --k-tombol-gap: 2px;
+  --k-tombol-pad-ikon: 9px;
+  --k-tombol-pad-polos: 11.5px;
+  --k-tombol-gap: 5px;
   --k-tombol-font: var(--k-t12);
 }
 .k-tombol--large {
   --k-tombol-h: 38px;
   --k-tombol-r: 8px;
-  --k-tombol-pad: 13px;
-  --k-tombol-gap: 2px;
+  --k-tombol-pad-ikon: 11px;
+  --k-tombol-pad-polos: 13px;
+  --k-tombol-gap: 7px;
   --k-tombol-font: var(--k-t14);
 }
 
@@ -296,7 +349,10 @@
   grid-auto-columns: 1fr;
   gap: 2px;
   height: 32px;
-  padding: 2px;
+  /* TANPA padding. Segmen menempel ke tepi jalurnya: terukur, segmen pertama
+     mulai di 0 dan yang kedua di 157,5 pada jalur selebar 313 — jadi yang ada
+     cuma celah 2px di antaranya. */
+  padding: 0;
   border-radius: 8px;
   background: var(--brand-soft);
 }
@@ -305,17 +361,24 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  border-radius: 6px;
+  border: 0;
+  /* Radius segmen sama dengan jalurnya, 8 — bukan lebih kecil. */
+  border-radius: 8px;
   font-size: var(--k-t12);
   font-weight: var(--k-semi);
   color: var(--brand);
-  background: transparent;
+  background: var(--brand-soft);
   cursor: pointer;
-  transition: background-color var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-/* Putih Coinest adalah #FBFBFC, bukan #FFFFFF — di token itu --bg. */
+/* Segmen yang sedang dipilih HIJAU TUA dengan tinta putih — kebalikan dari
+   yang sempat saya buat (putih dengan tinta hijau). Terukur dari rect-nya:
+   bg #1E4841, label #FBFBFC. */
 .k-segmen__b[aria-selected="true"],
-.k-segmen__b.is-aktif { background: var(--bg); }
+.k-segmen__b.is-aktif {
+  background: var(--action);
+  color: var(--action-ink);
+}
 
 /* -----------------------------------------------------------------------------
    Penjaga jebakan #7 — ikon yang punya width DAN height tidak boleh ikut
@@ -471,19 +534,27 @@
   border: 1px solid transparent;
   border-radius: var(--k-lencana-r);
   font-size: var(--k-lencana-font);
-  font-weight: var(--k-med);
+  font-weight: var(--k-lencana-bobot);
   line-height: 1;
   white-space: nowrap;
 }
 
 /* Bentuk: garis (16), pejal kecil (17), pejal (24), pil (24). */
+/* Tinggi 17 dan radius 4, bukan 16 dan 3,5 seperti yang tertulis di rect-nya.
+
+   Garis di Figma MENUNGGANGI tepi kotak: rect 61x16 dengan stroke 1 menutupi
+   62x17 piksel. Border CSS duduk di DALAM kotak, jadi yang harus disamakan
+   batas LUARNYA — kalau tidak, seluruh cincin garisnya meleset setengah
+   piksel. Terukur: selisih piksel lencana ini turun dari 11,8% jadi 0,94%
+   begitu tingginya dinaikkan satu. Radius luar = radius rect + setengah
+   tebal garis. */
 .k-lencana--garis {
-  --k-lencana-h: 16px; --k-lencana-r: 3.5px; --k-lencana-pad: 5px; --k-lencana-font: var(--k-t10);
+  --k-lencana-h: 17px; --k-lencana-r: 4px; --k-lencana-pad: 5px; --k-lencana-font: var(--k-t10); --k-lencana-bobot: var(--k-reg);
   border-color: var(--border);
 }
-.k-lencana--pejalkecil { --k-lencana-h: 17px; --k-lencana-r: 4px; --k-lencana-pad: 5.25px; --k-lencana-font: var(--k-t10); }
-.k-lencana--pejal      { --k-lencana-h: 24px; --k-lencana-r: 6px; --k-lencana-pad: 7.2px; --k-lencana-font: var(--k-t12); }
-.k-lencana--pil        { --k-lencana-h: 24px; --k-lencana-r: 12px; --k-lencana-pad: 9px; --k-lencana-font: var(--k-t12); }
+.k-lencana--pejalkecil { --k-lencana-h: 17px; --k-lencana-r: 4px; --k-lencana-pad: 5.25px; --k-lencana-font: var(--k-t10); --k-lencana-bobot: var(--k-reg); }
+.k-lencana--pejal      { --k-lencana-h: 24px; --k-lencana-r: 6px; --k-lencana-pad: 7.2px; --k-lencana-font: var(--k-t12); --k-lencana-bobot: var(--k-med); }
+.k-lencana--pil        { --k-lencana-h: 24px; --k-lencana-r: 12px; --k-lencana-pad: 9px; --k-lencana-font: var(--k-t12); --k-lencana-bobot: var(--k-med); }
 
 /* Nada. Pada bentuk bergaris yang berwarna cuma tintanya; pada bentuk pejal
    latar DAN tintanya, dan pasangannya dari Figma apa adanya. */
@@ -504,12 +575,12 @@
   justify-content: center;
   min-width: 18px;
   height: 18px;
-  padding: 0 4px;
+  padding: 0 3px;
   border-radius: 9px;
   background: var(--danger);
   color: var(--danger-ink);
   font-size: var(--k-t10);
-  font-weight: var(--k-bold);
+  font-weight: var(--k-med);
   line-height: 1;
 }
 .k-angka--kecil { min-width: 13px; height: 10px; border-radius: 5px; padding: 0 2.5px; font-size: var(--k-t8); }
@@ -567,7 +638,7 @@
   background: var(--brand-soft);
   color: var(--brand);
   font-size: var(--k-t10);
-  font-weight: var(--k-semi);
+  font-weight: var(--k-med);
   line-height: 1;
   cursor: pointer;
 }
@@ -640,9 +711,9 @@
 }
 /* Lebar 236 (Small 222) juga dari Figma. Dipasang sebagai lebar BAWAAN, bukan
    lebar mati: kotak cari di bilah tabel harus boleh melar selebar bilahnya. */
-.k-cari--large  { --k-cari-h: 37px; --k-cari-pad: 16px; --k-cari-font: var(--k-t12); width: 236px; }
-.k-cari--medium { --k-cari-h: 31px; --k-cari-pad: 14px; --k-cari-font: var(--k-t12); width: 236px; }
-.k-cari--small  { --k-cari-h: 27px; --k-cari-pad: 12px; --k-cari-font: var(--k-t11); width: 222px; }
+.k-cari--large  { --k-cari-h: 38px; --k-cari-pad: 16px; --k-cari-font: var(--k-t12); width: 237px; }
+.k-cari--medium { --k-cari-h: 32px; --k-cari-pad: 14px; --k-cari-font: var(--k-t12); width: 237px; }
+.k-cari--small  { --k-cari-h: 28px; --k-cari-pad: 12px; --k-cari-font: var(--k-t11); width: 223px; }
 .k-cari { max-width: 100%; }
 .k-cari:focus-within { border-color: var(--brand-mint); }
 /* Ikon kacanya hijau tua #1E4841, sementara teksnya abu #6B7271 — dua warna
@@ -670,10 +741,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 45px;
+  /* 46 dan radius 8: batas LUAR kotak Figma (45 + stroke 1 yang menunggangi
+     tepinya), sama seperti lencana bergaris. */
+  height: 46px;
   padding: 0 14px;
   border: 1px solid var(--border);
-  border-radius: 7.5px;
+  border-radius: 8px;
   background: var(--surface);
 }
 .k-isian__kotak:focus-within { border-color: var(--brand); }
@@ -704,9 +777,9 @@
   border-radius: 4px;
   background: var(--centang-bidang);
   cursor: pointer;
-  display: inline-grid;
-  place-content: center;
-  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  display: inline-block;
+  position: relative;
+  transition: background-color var(--dur) var(--ease);
 }
 .k-centang--default { --k-centang-s: 13px; }
 .k-centang--medium  { --k-centang-s: 17px; }
@@ -714,20 +787,23 @@
 
 .k-centang::before {
   content: "";
-  width: calc(var(--k-centang-s) * 0.46);
-  height: calc(var(--k-centang-s) * 0.28);
-  border-left: 2px solid var(--centang-tanda);
-  border-bottom: 2px solid var(--centang-tanda);
-  transform: rotate(-45deg) translate(1px, -1px) scale(0);
+  position: absolute;
+  inset: 0;
+  background: var(--centang-tanda);
+  -webkit-mask: var(--centang-tanda-bentuk) center / 100% 100% no-repeat;
+  mask: var(--centang-tanda-bentuk) center / 100% 100% no-repeat;
+  transform: scale(0);
   transition: transform var(--dur-fast) var(--ease);
 }
 .k-centang:checked { background: var(--centang-aktif); }
-.k-centang:checked::before { transform: rotate(-45deg) translate(1px, -1px) scale(1); }
+.k-centang:checked::before { transform: scale(1); }
 .k-centang:indeterminate { background: var(--centang-aktif); }
+/* Keadaan "sebagian" tidak ada di Figma; digambar sebagai garis mendatar
+   supaya tidak bisa tertukar dengan centang. */
 .k-centang:indeterminate::before {
-  border-bottom: 2px solid var(--centang-tanda);
-  border-left: 0;
-  height: 0;
+  inset: calc(50% - 1px) 26%;
+  -webkit-mask: none;
+  mask: none;
   transform: none;
 }
 .k-centang:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -769,6 +845,10 @@
    berimpit dan tepi kanan-bawah milik Figma ditandai garis putus-putus.
    -------------------------------------------------------------------------- */
 .k-banding {
+  /* Isi yang diperbesar tidak boleh meluber ke kartu tetangga — kalau meluber,
+     ia ikut terpotret dan terbaca sebagai cacat komponen sebelahnya. Sudah
+     terjadi: kotak centang muncul di dalam kartu Input. */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -810,10 +890,16 @@
   position: absolute;
   top: 0;
   left: 0;
+  /* line-height 0 WAJIB. Lencana dan titik adalah elemen inline, jadi tanpa
+     ini mereka duduk di garis dasar teks dan turun beberapa piksel terhadap
+     acuan Figma yang mulai di 0,0. Selisihnya lalu terbaca sebagai cacat
+     komponen padahal cacat alat ukurnya. */
+  line-height: 0;
   transform: scale(var(--k-banding-zoom));
   transform-origin: 0 0;
 }
 .k-banding__kit { overflow: visible; }
+
 .k-banding__ket { font-size: var(--k-t9); color: var(--text-muted); }
 
 .k-banding__warna { display: flex; flex-direction: column; gap: 4px; }

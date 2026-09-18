@@ -239,7 +239,7 @@ export function Galeri() {
             placeholder="Rumah Kaca"
             kiri={SmileySticker}
             bantu="Dipakai sebagai judul di halaman publik."
-            kanan={<Ikon ikon={Paperclip} ukuran={16} />}
+            kanan={<Ikon ikon={Paperclip} ukuran={18} />}
           />
         </Baris>
         <Baris judul="Checkbox — 13 / 17 / 23">
