@@ -12,6 +12,31 @@ import type { IconName } from "../components/ui/Icon";
    Dua daftar berisi hal yang sama pasti menyimpang suatu saat; yang kedua
    biasanya yang jarang dilihat. Jadi daftarnya satu di sini, dan palet
    meratakannya sendiri.
+
+   ---------------------------------------------------------------------------
+   URUTAN KELOMPOKNYA DITURUNKAN DARI BISNISNYA, BUKAN DARI TABEL DATABASE.
+
+   Susunan sebelumnya ("Utama" berisi sebelas baris, lalu "Situs Publik", lalu
+   "Sistem") adalah bentuk skemanya: satu baris untuk tiap tabel. Itu masuk
+   akal bagi yang menulis migrasinya, dan tidak berarti apa-apa bagi orang
+   yang bisnisnya arsitektur.
+
+   Dokumen strategi studio menyebut satu lingkaran: coffee shop jadi mesin
+   reputasi, reputasi mendatangkan calon klien, calon klien jadi proyek,
+   proyek menghasilkan uang DAN foto, foto kembali jadi reputasi. Kelompok di
+   bawah ini adalah lingkaran itu, urut:
+
+     Hari ini    — antrean: apa yang menunggu saya sekarang
+     Calon klien — sebelum proyek ada: pesan masuk dan daftar kontak
+     Pekerjaan   — mengerjakan proyek: fase, tugas, dokumen, portal klien
+     Uang        — termin masuk, biaya keluar, laba per proyek dan per bulan
+     Reputasi    — keluaran yang mendatangkan calon klien berikutnya
+     Studio      — orang dan setelan; yang paling jarang disentuh, paling bawah
+
+   Tidak ada halaman yang hilang — yang berubah rumahnya, dan urutan orang
+   menemukannya. "Tim & Freelancer" masuk Studio (itu orangnya), sementara
+   "Tim Studio" masuk Reputasi (itu halaman yang dibaca pengunjung); keduanya
+   memang beda pekerjaan walau namanya mirip.
    ============================================================================= */
 
 export interface SubItem {
@@ -27,103 +52,95 @@ export interface NavItem {
   children?: SubItem[];
   /** Hanya tampil untuk master admin. */
   masterOnly?: boolean;
-  /** Label kelompok kecil di atas item — mengelompokkan sidebar seperti bagian di halaman panjang. */
+  /**
+   * Label kelompok kecil di atas item.
+   *
+   * SELURUHNYA kosong sekarang, dan itu disengaja: sidebar Coinest tidak
+   * punya satu pun kepala kelompok, dan kepala kelompok itulah yang paling
+   * membuat punggung panel ini terbaca berbeda dari framenya. Yang
+   * menggantikan pengelompokan adalah submenu ber-caret — bentuk yang memang
+   * dipakai Coinest untuk "Payments".
+   *
+   * Bidangnya dipertahankan, bukan dibuang, supaya pengelompokan bisa
+   * dihidupkan lagi tanpa menyentuh Sidebar maupun command palette.
+   */
   group: string;
+
+  /**
+   * Sumber angka merah di kanan baris, seperti "Inbox 99" di Coinest.
+   * Hanya "pesan" yang punya; sisanya tidak berangka.
+   */
+  lencana?: "pesan";
 }
 
 // Ikon dipilih agar cocok dengan labelnya, bukan sekadar mengisi ruang:
 // denah bangunan untuk proyek, amplop untuk pesan masuk, lapisan untuk
 // pustaka komponen.
 export const NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "dashboard", group: "Utama" },
+  { label: "Dashboard", href: "/admin", icon: "dashboard", group: "" },
   {
     label: "Proyek",
     icon: "project",
-    group: "Utama",
+    group: "",
     children: [
       { label: "Semua Proyek", href: "/admin/proyek", icon: "list" },
       // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
       // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
-      //
-      // Yang ketiga, "Halaman Publik", pindah ke kelompok Situs Publik atas
-      // permintaan pemilik: isinya memang yang dilihat pengunjung, dan dia
-      // mencarinya di sana. Halamannya tidak berubah dan tetap mengikuti
-      // combobox yang sama — yang pindah cuma tautannya.
       { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document" },
+      { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "globe" },
     ],
   },
-  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", group: "Utama" },
+  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", group: "" },
   /* Ketiganya satu menu, bukan tiga baris berjajar. Alasan berdampingannya
      tidak berubah — angka fee LAHIR di Keuangan (diketik sekali lewat Catat
      pengeluaran) dan Gaji menjawab pertanyaan yang sama dari sisi bulan —
      tapi tiga baris setara membuat ketiganya terbaca sebagai tiga pembukuan
-     yang harus dicocokkan. Sebagai satu menu bernama Keuangan dengan tiga
-     isi, hubungannya terbaca sebelum satu pun halaman dibuka.
-     Anaknya diberi nama "Ringkasan", bukan "Keuangan" lagi, karena induknya
-     sudah menyandang nama itu. */
+     yang harus dicocokkan. */
   {
     label: "Keuangan",
     icon: "finance",
-    group: "Utama",
+    group: "",
     children: [
       { label: "Ringkasan", href: "/admin/keuangan", icon: "finance" },
       { label: "Fee Proyek", href: "/admin/fee", icon: "cash" },
       { label: "Gaji", href: "/admin/gaji", icon: "bank" },
     ],
   },
-  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "Utama" },
-  /* Pesan Masuk sengaja TIDAK ikut dikelompokkan ke mana pun. Isinya calon
-     klien dari form kontak, dan satu klik tambahan untuk menemukannya adalah
-     satu klik yang kadang tidak terjadi. */
-  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "Utama" },
-  { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "Utama" },
-  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", group: "Utama" },
-  { label: "Jurnal", href: "/admin/jurnal", icon: "document", group: "Utama" },
-
-  /* Kelompok sendiri bernama "Situs Publik", datar — bukan menu yang harus
-   * dibuka dulu.
-   *
-   * Datar karena pemilik datang ke sini untuk MENGISI satu hal tertentu
-   * ("tambahkan foto tim"), bukan untuk menjelajah; menu yang harus diklik
-   * dua kali menyembunyikan justru daftar yang jadi pengingatnya. Namanya
-   * "Situs Publik", bukan "Halaman Publik", karena label kedua dulu dipakai
-   * submenu Proyek — dan sekarang ia sendiri sudah pindah ke sini sebagai
-   * "Halaman Proyek", jadi dua label serupa di satu kelompok akan lebih
-   * membingungkan lagi.
-   *
-   * Isinya satu jenis pekerjaan yang jelas: menyunting apa yang dibaca
-   * PENGUNJUNG. Bedanya nyata dari sisa panel — halaman di sini dibekukan
-   * saat build, jadi setiap perubahan di dalamnya perlu tombol Terbitkan
-   * ditekan, sementara Proyek dan Keuangan langsung berlaku.
-   *
-   * Semua isinya dulu di-hardcode di lib/menunggu.ts dan hanya bisa diubah
-   * dengan menyunting repo — yang tidak pernah dilakukan pemilik. Akibatnya
-   * nama staf kedua, foto tim, foto sebelum/sesudah, empat isian privasi,
-   * dan empat angka FAQ sudah berbulan menampilkan penanda "menunggu" di
-   * situs yang tayang. */
-  /* Satu-satunya di kelompok ini yang mengikuti proyek terpilih di bilah atas;
-     sisanya berlaku untuk seluruh studio. Ditaruh paling atas karena ia yang
-     paling sering disentuh — judul, galeri, dan SEO tiap karya. */
-  { label: "Halaman Proyek", href: "/admin/proyek/publik", icon: "project", group: "Situs Publik" },
-  { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", group: "Situs Publik" },
-  { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", group: "Situs Publik" },
-  { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", group: "Situs Publik" },
-  { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info", group: "Situs Publik" },
-  { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock", group: "Situs Publik" },
-  { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", group: "Situs Publik" },
+  /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
+     satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */
+  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", group: "", lencana: "pesan" },
+  { label: "Direktori", href: "/admin/direktori", icon: "directory", group: "" },
+  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", group: "" },
+  { label: "Jurnal", href: "/admin/jurnal", icon: "document", group: "" },
+  /* Enam halaman yang isinya dibaca PENGUNJUNG, dikumpulkan jadi satu menu.
+     Sebelumnya tujuh baris datar di kelompok tersendiri — dan kelompoknya
+     yang membuat sidebar ini tidak mungkin mirip Coinest, yang tidak punya
+     satu pun kepala kelompok. */
+  {
+    label: "Situs Publik",
+    icon: "globe",
+    group: "",
+    children: [
+      { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image" },
+      { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team" },
+      { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera" },
+      { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info" },
+      { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock" },
+      { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building" },
+    ],
+  },
+  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", group: "" },
   {
     label: "Pengaturan",
     icon: "settings",
-    group: "Sistem",
+    group: "",
     children: [
       { label: "Info Studio", href: "/admin/pengaturan", icon: "info" },
       { label: "Akun", href: "/admin/pengaturan/akun", icon: "user" },
     ],
   },
-  { label: "UI Component", href: "/admin/ui", icon: "component", group: "Sistem", masterOnly: true },
+  { label: "UI Component", href: "/admin/ui", icon: "component", group: "", masterOnly: true },
 ];
-
-
 
 /**
  * Semua halaman yang bisa dituju, rata — dipakai command palette.

@@ -15,21 +15,27 @@ const warna = [
   { grup: "Permukaan", token: ["--bg", "--bg-sunken", "--surface", "--surface-raised", "--surface-hover"] },
   { grup: "Garis", token: ["--border", "--border-strong"] },
   { grup: "Teks", token: ["--text-strong", "--text-body", "--text-muted", "--text-faint"] },
-  { grup: "Semantik", token: ["--brand", "--upgrade", "--warn", "--success", "--info"] },
+  /* --brand dan --action kini TEAL, sama dengan aksen situs publik; --danger
+     lahir supaya merah tidak lagi menanggung dua arti sekaligus. */
+  { grup: "Merek & aksi", token: ["--brand", "--action", "--brand-soft", "--brand-line"] },
+  { grup: "Semantik", token: ["--danger", "--upgrade", "--warn", "--success", "--info"] },
 ];
 
 const tombol = [
   { kelas: "btn--primary", nama: "Primary", catatan: "Aksi utama. Satu per layar." },
   { kelas: "btn--secondary", nama: "Secondary", catatan: "Aksi pendamping." },
   { kelas: "btn--ghost", nama: "Ghost", catatan: "Aksi tersier, di dalam toolbar." },
-  { kelas: "btn--brand", nama: "Brand", catatan: "Aksi bertekanan tinggi." },
+  { kelas: "btn--isi", nama: "Isi", catatan: "Teal pejal — dua aksi, satu harus menang." },
+  { kelas: "btn--brand", nama: "Brand", catatan: "Teal pejal + terangkat. Tekanan tinggi." },
   { kelas: "btn--upgrade", nama: "Upgrade", catatan: "Hanya untuk fitur berbayar." },
-  { kelas: "btn--danger", nama: "Danger", catatan: "Menghapus, memutus." },
+  { kelas: "btn--danger", nama: "Danger", catatan: "Garis merah. Menghapus, memutus." },
+  { kelas: "btn--bahaya", nama: "Bahaya", catatan: "Merah pejal. Konfirmasi hapus di dialog." },
 ];
 
 const lencana = [
   { kelas: "", nama: "Netral" },
   { kelas: "badge--brand", nama: "Brand" },
+  { kelas: "badge--danger", nama: "Bahaya" },
   { kelas: "badge--upgrade", nama: "Upgrade" },
   { kelas: "badge--warn", nama: "Peringatan" },
   { kelas: "badge--success", nama: "Sukses" },
@@ -85,7 +91,7 @@ const ikonBerpasangan = [
     <section class="spec-section">
       <div class="spec-section__head">
         <h2 class="t-heading">Typography</h2>
-        <p class="t-muted" style="margin:0">Serif untuk judul halaman, sans untuk perkakas, mono untuk data.</p>
+        <p class="t-muted" style="margin:0">Inter untuk semuanya — keluarga yang sama dengan situs publik. Angka memakai tabular-nums.</p>
       </div>
       <div class="spec-demo">
         <div class="spec-demo__stage spec-demo__stage--stack">

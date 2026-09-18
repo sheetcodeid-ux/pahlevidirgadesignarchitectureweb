@@ -4,6 +4,7 @@ import { Command as Cmdk } from "cmdk";
 import { Icon } from "../ui/Icon";
 import { Avatar } from "../ui/misc/Avatar";
 import { ThemeToggle } from "../ui/ThemeToggle";
+import { Perintah } from "./Perintah";
 import { IsiNotifikasi, TabNotifikasi } from "./NotifikasiPanel";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
 import { bukaProyek, setProyekAktif, proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
@@ -154,7 +155,7 @@ function Lonceng({
 }
 
 /** Identitas studio tanpa rectangle; diklik membuka panel akun. */
-function Identitas({ settings, profil }: { settings: StudioSettings | null; profil: Profil | null }) {
+function Identitas({ settings, profil, zona }: { settings: StudioSettings | null; profil: Profil | null; zona: string }) {
   const nama = settings?.studioName ?? "Studio";
   const peran = profil?.isMasterAdmin ? "Master admin" : "Staf";
   // Sapaan memakai kata pertama nama studio, seperti "Halo, Bintang." di
@@ -178,17 +179,25 @@ function Identitas({ settings, profil }: { settings: StudioSettings | null; prof
             mana yang sedang dipakai. Dengan dua akun penulis, itu satu-
             satunya keterangan di sini yang tidak ada di tempat lain. */}
         <button type="button" className="topbar__id" aria-label={`Menu akun — ${peran}`}>
-          <Avatar name={nama} src={settings?.logoUrl ?? undefined} brand size="sm" />
           <span className="topbar__id-peran">
-            <Icon name="crown" size={12} />{peran}
+            <Icon name="crown" size={14} />{peran}
           </span>
           <Icon name="chevronDown" size={15} />
+          {/* Avatar SESUDAH labelnya, seperti slot profil Coinest — di sana
+              nama duduk di kiri dan potretnya menutup baris di kanan.
+              Ukurannya (38px) dan warnanya (mint) diurus CSS, bukan prop:
+              ini satu-satunya avatar di panel yang memakai mint. */}
+          <Avatar name={nama} src={settings?.logoUrl ?? undefined} brand />
         </button>
       </RPopover.Trigger>
 
       <RPopover.Portal>
         <RPopover.Content className="akunpop" sideOffset={10} align="end" collisionPadding={12}>
           <div className="akunpop__kepala">
+            <span className="akunpop__waktu">
+              <Tanggal zona={zona} />
+              <Jam zona={zona} />
+            </span>
             {/* md, bukan lg: panel ini keterangan akun, bukan halaman profil.
                 Avatar sebesar lg mengambil sepertiga tinggi panel untuk
                 menyampaikan hal yang sudah disampaikan namanya. */}
@@ -252,7 +261,6 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
     <div className="topbar__combo">
       <Cmdk loop shouldFilter>
         <div className="topbar__field">
-          <Icon name="project" size={15} />
           <Cmdk.Input
             className="ov-command__input topbar__field-input"
             /* Placeholder judul proyek bukan teks bantuan, melainkan isi —
@@ -270,6 +278,11 @@ function ComboProyek({ proyek }: { proyek: Proyek[] | null }) {
             // menutup seketika membuat pilihannya tidak pernah tersampaikan.
             onBlur={() => window.setTimeout(() => setBuka(false), 120)}
           />
+          {/* Di sisi KANAN, tempat kaca pembesar duduk di search Coinest.
+              Ikonnya di sini ikon proyek, bukan kaca pembesar: kotak ini
+              memang mencari, tapi yang pertama dibacanya adalah proyek mana
+              yang sedang dibuka. */}
+          <Icon name="project" size={18} />
         </div>
 
         {buka && (
@@ -470,8 +483,7 @@ function Terbit({ dibangunPada, aktif, zona }: {
           data-belum={menyala ? "" : undefined}
           aria-label={menyala ? "Terbitkan perubahan yang belum tayang" : "Terbitkan situs"}
         >
-          <Icon name="upload" size={16} />
-          <span className="topbar__terbit-teks">Terbitkan</span>
+          <Icon name="upload" size={18} />
           {menyala && <span className="topbar__terbit-titik" aria-hidden="true" />}
         </button>
       </RPopover.Trigger>
@@ -631,42 +643,37 @@ export function Topbar({ heading: headingAwal, dibangunPada }: {
 
   return (
     <header className="topbar">
-      <nav className="breadcrumb topbar__crumb" aria-label="Remah roti">
-        <a href="/admin">Admin</a>
-        <span className="breadcrumb__sep" aria-hidden="true">/</span>
-        <span aria-current="page">{heading}</span>
-      </nav>
-      <Jam zona={zona} />
-      <Tanggal zona={zona} />
+      {/* Header Coinest: judul halaman SENDIRIAN di kiri. Baris keterangan
+          (tanggal, jam, jumlah proyek) yang sempat ada di bawahnya dibuang —
+          framenya tidak punya, dan ketiganya sudah ada di tempat lain: jam
+          dan tanggal di panel akun, jumlah proyek di kartu kas. */}
+      <p className="topbar__judul">{heading}</p>
 
-      <span className="topbar__hitung">
-        <Icon name="project" size={15} />
-        <span className="topbar__hitung-label">Proyek :</span>
-        <span className="topbar__pil t-mono">{aktif ?? "—"}</span>
-      </span>
-      <ComboProyek proyek={proyek} />
+      <div className="topbar__kanan">
+        {/* Tanpa tombol: tempat kotak carinya sudah dipakai combobox proyek
+            di bawah ini. Yang dibawa ke sini cuma pendengar Ctrl/Cmd+K dan
+            dialognya — keduanya mati kalau paletnya tidak dipasang sama
+            sekali, dan itu yang terjadi begitu kotak cari keluar dari
+            sidebar. */}
+        <Perintah tanpaTombol />
+        <ComboProyek proyek={proyek} />
 
-      {/* Sisi kanan didorong ke ujung; segmen di kiri tetap rapat. */}
-      <span className="topbar__dorong" />
+        {/* Tiga tombol berjarak 10px — jarak tombol ikon Coinest. Tiap
+            tombol dibungkus selnya sendiri supaya jangkar popover di
+            dalamnya menambat ke TOMBOL itu, bukan ke gerombolnya: tanpa itu
+            panel Terbitkan turun di bawah lonceng. */}
+        <div className="topbar__alat">
+          <span className="topbar__aksi">
+            <Terbit dibangunPada={dibangunPada} aktif={settings?.terbitSitusAktif} zona={zona} />
+          </span>
+          <span className="topbar__aksi"><ThemeToggle /></span>
+          <span className="topbar__aksi">
+            <Lonceng notif={notif} milestone={milestone} />
+          </span>
+        </div>
 
-      {/* Tombol ikon dibungkus selnya sendiri. Tanpa pembungkus, tombolnya
-          ADALAH selnya: lebar tetap 2,25rem sudah termasuk padding, jadi
-          lingkarannya menempel rapat ke garis pemisah di kedua sisi sementara
-          segmen lain punya napas 12px. Itu yang membuat sisi kanan terbaca
-          sesak. */}
-      <span className="topbar__aksi topbar__aksi--terbit">
-        <Terbit dibangunPada={dibangunPada} aktif={settings?.terbitSitusAktif} zona={zona} />
-      </span>
-      <span className="topbar__aksi"><ThemeToggle /></span>
-      {/* Satu-satunya segmen yang masih berbingkai garis. Pemilik memilih
-          lonceng, dan itu masuk akal: ia satu-satunya yang isinya berubah
-          sendiri tanpa disentuh, jadi ia perlu terbaca sebagai benda, bukan
-          sebagai ikon di antara ikon. */}
-      <span className="topbar__aksi topbar__aksi--lonceng">
-        <Lonceng notif={notif} milestone={milestone} />
-      </span>
-
-      <Identitas settings={settings} profil={profil} />
+        <Identitas settings={settings} profil={profil} zona={zona} />
+      </div>
     </header>
   );
 }

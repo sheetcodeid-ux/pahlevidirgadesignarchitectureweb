@@ -793,6 +793,94 @@ Selalu ukur dengan RTT.
 `supabase/bootstrap.sql` **hasil generate** — ubah migrasinya, lalu jalankan
 skrip; jangan sunting hasilnya.
 
+## Sumber desain: Figma "Coinest"
+
+Panel admin dibangun mengikuti file Figma **Coinest — Finance Management
+Dashboard**, file key `62HM59sb04oWlZoT3EcCyN`. Dua halaman: `1:3028`
+(💻 Interface, 42 frame) dan `0:1` (🎨 Style & Component).
+
+Permintaan pemilik, dikatakan berkali-kali dan makin tegas: **100% mirip
+framenya**, dibangun dari lembar kosong, urutannya **ikon → pustaka komponen →
+wireframe 14 halaman → halaman satu per satu**. Jangan melompat, dan jangan
+mewarnai ulang tata letak lama lalu menyebutnya rombak.
+
+### Dua batas yang sudah diuji, bukan dugaan
+
+1. **Kuota MCP Figma: 20 panggilan per BULAN.** Akun
+   `muhammadlutfirijalulfikri00@gmail.com`, seat **View**, tier **starter** —
+   dan tabel resmi Figma menaruh View/Collab di Starter pada 20/bulan. Sudah
+   habis. `whoami` bebas kuota, sisanya tidak.
+
+   Yang menaikkannya: plan **Professional** DAN seat **Dev atau Full**
+   (200/hari). Dua-duanya harus. View di Professional justru **6/bulan** —
+   lebih buruk daripada Starter, jadi jangan menyuruh upgrade plan saja.
+
+2. **Unduh berkas aset TIDAK BISA, berapa pun kuotanya.** URL aset yang
+   dikembalikan Figma ada di `www.figma.com`, dan gateway jaringan sesi ini
+   menolak host itu. Terukur: `http:000`, `connect_rejected`, kebijakan
+   organisasi. Bukan soal setelan Figma, permission, atau tautan berbagi.
+
+   Akibatnya **ikon harus dikirim pemilik sebagai lampiran** — lihat
+   `apps/web/src/assets/figma/ikon/DAFTAR.md` untuk setelan ekspornya.
+   Menggambar ulang ikon dari tangkapan layar TIDAK boleh; itu menjiplak dan
+   tidak akan pernah persis.
+
+### Yang masih boleh dipakai tanpa kuota
+
+Tangkapan layar frame lewat `get_screenshot` dengan `enableBase64Response`
+datang lewat jalur MCP, bukan HTTP — jadi ia tidak kena blokir gateway. Tapi
+ia tetap MEMAKAI kuota. Yang benar-benar gratis: PNG yang diekspor pemilik
+sendiri dan dilampirkan ke percakapan.
+
+### Bahan yang sudah ditarik dan tidak perlu diulang
+
+Tersimpan di repo ini (token) dan di riwayat percakapan (angka frame):
+
+- Seluruh token warna, font, ukuran, radius → sudah jadi `styles/tokens.css`
+- Daftar **42 frame** beserta node ID dan ukurannya
+- Spesifikasi Sidebar (`14:2803`), Header (`18:3780`), dan enam bagian
+  Dashboard v1: kiri `3:1127`, statistik `3:1188`, kolom grafik `3:1210`,
+  kanan `3:1245`, kepala seksi `11:1745`
+
+### Pemetaan 14 frame ke halaman admin
+
+| Frame Figma | Halaman |
+| --- | --- |
+| 01. Dashboard (v1) `3:1069` | `/admin` |
+| 04. Dashboard (v2) `18:2771` | Keuangan — Ringkasan |
+| 07. Transfer `63:1868` | Terima Pembayaran |
+| 10. Payment `92:2248` | Catat Pengeluaran |
+| 13. Transactions `108:3478` | Semua Transaksi |
+| 16. Invoices `121:3433` | Tagihan & Termin |
+| 19. Cards `132:6490` | Semua Proyek |
+| 22. Saving Plans `132:7043` | Satu Proyek |
+| 25. Investments `132:7596` | Fee Proyek & Gaji |
+| 28. Inbox `173:5228` | Pesan Masuk |
+| 31. Promos `196:5554` | Paket Layanan (6 tier) |
+| 34. Promo Details `196:6036` | Detail satu tier |
+| 37. Insights `196:6267` | Jurnal |
+| 40. Insight Details `196:6508` | Satu tulisan |
+
+Tiap frame punya varian Tablet dan Mobile — responsifnya tidak perlu dikarang.
+
+### Yang SUDAH ketahuan meleset dan sudah diperbaiki
+
+Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
+
+- Sidebar Coinest **tidak punya** kotak cari, kepala kelompok, maupun tombol
+  sempitkan. Ketiganya sempat ada dan itu yang paling membuat panel terbaca
+  berbeda. Command palette tetap hidup lewat Ctrl/Cmd+K, dipasang di topbar
+  dengan `tanpaTombol`.
+- Header Coinest isinya **satu baris judul saja** di kiri. Baris
+  tanggal/jam/jumlah proyek di bawahnya tidak ada di framenya.
+- Footer ada di **setiap** frame Coinest.
+- Warna irisan donat itu **tangga hijau→abu berurut besaran**
+  (`--ramp-1`..`--ramp-5`), bukan lima rona kategorikal.
+- Kartu di Coinest ber-radius **16px**, bukan 12px.
+- Membaca kode acuan per bagian TIDAK cukup — frame utuhnya harus dilihat
+  sebagai gambar dulu. Sekali dilewatkan, dan hasilnya gridnya benar
+  sementara seluruh kerangkanya salah.
+
 ## Cara kerja yang diharapkan
 
 - **Branch produksi: `claude/stack-setup-supabase-cloudflare-kdwlkk`.** Push ke

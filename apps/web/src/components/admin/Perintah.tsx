@@ -22,18 +22,22 @@ const HALAMAN: { label: string; ikon: IconName; ke: string }[] = [
 ];
 
 /**
- * Command palette — perintah cepat, dibuka lewat kotak cari di sidebar atau
- * Ctrl/Cmd+K.
+ * Command palette — perintah cepat, dibuka dengan Ctrl/Cmd+K.
  *
- * Tempatnya di sidebar, bukan topbar: di sana ia sejajar dengan daftar menu
- * yang isinya sama, dan topbar jadi bebas untuk hal yang benar-benar berubah
- * per halaman. Referensi Cloudflare menaruhnya persis di situ juga.
+ * Tombol pemicunya SUDAH TIDAK dipasang di sidebar: sidebar Coinest tidak
+ * punya kotak cari sama sekali, dan pencariannya duduk di topbar. Di topbar
+ * tempat itu sudah dipakai combobox proyek — yang memang pencarian juga,
+ * hanya isinya proyek — jadi palet ini dipasang dengan `tanpaTombol`, cukup
+ * sebagai pendengar Ctrl/Cmd+K beserta dialognya.
+ *
+ * Dipasang di topbar, bukan sidebar, karena keduanya `transition:persist`
+ * dan topbar-lah yang memuat kotak carinya.
  *
  * Daftar proyek diambil sendiri, bukan diterima sebagai prop: pemanggilnya
  * satu-satunya adalah sidebar, dan permintaannya sudah dilayani cache
  * sessionStorage yang sama dengan halaman Semua Proyek.
  */
-export function Perintah() {
+export function Perintah({ tanpaTombol = false }: { tanpaTombol?: boolean } = {}) {
   const [buka, setBuka] = useState(false);
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
 
@@ -60,7 +64,8 @@ export function Perintah() {
 
   return (
     <RDialog.Root open={buka} onOpenChange={setBuka}>
-      <RDialog.Trigger asChild>
+      {!tanpaTombol && (
+        <RDialog.Trigger asChild>
         <button type="button" className="sidebar__cari" aria-label="Perintah cepat">
           <Icon name="search" size={16} />
           <span className="sidebar__cari-label geser">
@@ -69,6 +74,7 @@ export function Perintah() {
           <kbd className="ov-menu__shortcut sidebar__kbd">⌘K</kbd>
         </button>
       </RDialog.Trigger>
+      )}
 
       <RDialog.Portal>
         <RDialog.Overlay className="ov-scrim" />

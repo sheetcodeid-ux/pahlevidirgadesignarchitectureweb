@@ -1,0 +1,29 @@
+<svg width="1744" height="1200" viewBox="0 0 1744 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame 1">
+<rect width="1744" height="1200" fill="white"/>
+<rect id="Black" opacity="0.8" x="31" y="1042" width="100" height="100" fill="#272932"/>
+<rect id="Black_2" opacity="0.54" x="157" y="1042" width="100" height="100" fill="#272932"/>
+<rect id="Black_3" opacity="0.3" x="283" y="1042" width="100" height="100" fill="#272932"/>
+<rect id="Black_4" opacity="0.14" x="409" y="1042" width="100" height="100" fill="#272932"/>
+<rect id="Black_5" opacity="0.08" x="535" y="1042" width="100" height="100" fill="#272932"/>
+<rect id="Black_6" opacity="0.04" x="661" y="1042" width="100" height="100" fill="#272932"/>
+<rect id="text-primary" x="544" y="721" width="100" height="100" fill="#1A1615"/>
+<rect id="text-secondary" x="670" y="721" width="100" height="100" fill="#66615E"/>
+<rect id="text-tertiary" x="796" y="721" width="100" height="100" fill="#B8B1A9"/>
+<rect id="border-default" x="922" y="721" width="100" height="100" fill="#E4E2DD"/>
+<rect id="bg" x="544" y="881" width="100" height="100" fill="#FAF6F5"/>
+<rect id="bg-subtle" x="670" y="881" width="100" height="100" fill="#FAFAF8"/>
+<rect id="bg-surface-default" x="796.5" y="881.5" width="99" height="99" fill="#FFFDFC" stroke="black"/>
+<rect id="Green-Dark" x="61" y="65" width="100" height="100" fill="#1E4841"/>
+<rect id="Gray-30" x="61" y="204" width="100" height="100" fill="#6B7271"/>
+<rect id="Green-Light" x="185" y="65" width="100" height="100" fill="#BBF49C"/>
+<rect id="Gray-20" x="185" y="204" width="100" height="100" fill="#BCBEBD"/>
+<rect id="Green-BG" x="309" y="65" width="100" height="100" fill="#ECF4E9"/>
+<rect id="Gray-Line" x="309" y="204" width="100" height="100" fill="#E5E6E6"/>
+<rect id="Black_7" x="61" y="343" width="100" height="100" fill="#242E2C"/>
+<rect id="Red" x="61" y="482" width="100" height="100" fill="#F73541"/>
+<rect id="Yellow" x="61" y="621" width="100" height="100" fill="#F2B007"/>
+<rect id="Red-Light" x="185" y="482" width="100" height="100" fill="#FDCED1"/>
+<rect id="White" x="185.5" y="343.5" width="99" height="99" fill="#FBFBFC" stroke="black"/>
+</g>
+</svg>

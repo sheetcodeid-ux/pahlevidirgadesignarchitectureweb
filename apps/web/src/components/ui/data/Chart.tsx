@@ -118,7 +118,7 @@ export function BarChart({ data, title, unit = "" }: { data: BarDatum[]; title: 
                     width={lebar}
                     height={Math.max(tinggi, 2)}
                     rx="4"
-                    fill={minus ? "var(--brand)" : "var(--chart-1)"}
+                    fill={minus ? "var(--danger)" : "var(--chart-1)"}
                     opacity={sorot === null || sorot === i ? 1 : 0.45}
                   />
                   {/* Angka batang minus ditaruh DI BAWAH ujungnya — di atas

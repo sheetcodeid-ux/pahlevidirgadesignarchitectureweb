@@ -9,293 +9,240 @@
   flex-direction: column;
 }
 
-/* --- Topbar bersegmen ----------------------------------------------------- */
+/* --- Topbar: anatomi Header Coinest --------------------------------------- */
 
-/* Satu baris rata, tiap bagian dipisah garis TEBAL setinggi topbar. Padding
-   mendatar dilepas: garis pemisah harus menyentuh tepi atas dan bawah, dan
-   itu tidak mungkin kalau segmennya dibungkus padding. Napas kiri-kanan
-   diurus tiap segmen sendiri. */
+/* MEMBALIK bentuk sebelumnya — bilah bersegmen yang tiap bagiannya dipisah
+   garis miring. Header Coinest tidak punya segmen sama sekali: judul halaman
+   di kiri, satu gerombol perkakas di kanan, dan yang memisahkan di sana bukan
+   garis melainkan jarak 20px. Itu yang membuat bilahnya terbaca sebagai satu
+   baris, bukan sebagai deretan kotak yang bobotnya sama dengan bilah itu
+   sendiri.
+
+   Dua hal yang ikut dibuang, dan keduanya bukan sekadar soal gaya:
+
+   - `backdrop-filter: blur(10px)`. Jebakan #23 di CLAUDE.md: pada bilah
+     lengket, tiap frame gulir compositor harus menyalin bidang di belakang
+     bilah, memperkecilnya, mengaburkan dua arah, lalu menempel lagi — kerja
+     GPU yang TIDAK muncul di penghitung main thread mana pun. Latarnya
+     dibuat pejal, persis seperti yang sudah dilakukan pada `.nav` situs
+     publik dan `.lengket` portal klien.
+   - Garis bawah 2px. Tanpa segmen tidak ada lagi yang perlu dikurung, dan
+     Header Coinest memang tidak punya. */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 40;
   display: flex;
-  align-items: stretch;
-  min-height: var(--topbar-h);
-  padding: 0;
-  padding-left: 3rem;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-bottom: 2px solid var(--border-strong);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  /* Tinggi TETAP, bukan minimum. Jangkar popover (`.topbar__jangkar` dan
+     `.topbar__jangkar-segmen`) memakai --topbar-h untuk menentukan dari mana
+     panelnya turun; kalau bilahnya boleh lebih tinggi dari tokennya, panel
+     lonceng dan panel akun mulai DI ATAS kaki bilah. Terukur: bilah 71px
+     sementara tokennya 60px, jadi panelnya menimpa 1px. */
+  height: var(--topbar-h);
+  padding: 0 var(--space-5);
+  background: var(--bg);
+  border-bottom: 0;
 }
 
-/* Pemisah antar-segmen: GARIS MIRING, bukan garis tegak setinggi topbar.
-   Alasannya bukan hiasan — garis setinggi bar memotong topbar jadi kotak-kotak
-   yang bobotnya sama dengan bilah itu sendiri, dan mata membaca tiap kotak
-   sebagai benda terpisah. Garis miring cuma tanda baca: segmennya tetap
-   terbaca sebagai satu baris.
+/* --- Sisi kiri: judul halaman, sendirian ---------------------------------- */
 
-   Tetap milik segmennya sendiri (::before), bukan elemen tersendiri — alasan
-   yang sama seperti border dulu: di layar sempit sebagian segmen
-   disembunyikan, dan pemisah yang berdiri sendiri akan tertinggal sebagai
-   tanda yatim di antara dua ruang kosong. Sebagai ::before, ia ikut hilang
-   bersama pemiliknya.
+/* Urbanist Bold 22px, hijau tua — angka, bobot, dan warnanya dari Header
+   Coinest (node 18:3780), yang isinya memang cuma satu baris judul.
 
-   Diposisikan absolut, bukan sebagai item flex: .topbar__aksi
-   merata-tengahkan isinya, jadi satu item tambahan akan menggeser ikonnya
-   keluar dari tengah. Dengan left:0 dan translate -50%, titik tengah garis
-   miring jatuh tepat di tepi segmen — yaitu tengah-tengah celah, karena
-   celahnya adalah padding kanan segmen sebelumnya ditambah padding kiri
-   segmen ini. */
-.topbar > *:not(.topbar__dorong) { position: relative; }
+   Baris keterangan di bawahnya (tanggal, jam, jumlah proyek) sempat ada di
+   sini dan sudah dibuang: framenya tidak punya, dan ketiganya sudah tertulis
+   di tempat lain — jam dan tanggal di panel akun, jumlah proyek di kartu kas
+   dashboard.
 
-.topbar > *:not(.topbar__dorong)::before {
-  content: "/";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  translate: -50% -50%;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  line-height: 1;
-  color: var(--text-faint);
-  pointer-events: none;
+   Bukan <h1>: tiap halaman admin sudah menuliskan judulnya sendiri di badan
+   halaman, dan dua h1 dalam satu dokumen membuat pembaca layar menyebut
+   judul yang sama dua kali. */
+.topbar__judul {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-judul);
+  color: var(--judul-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.topbar > *:first-child::before { content: none; }
+/* Jam dan tanggal pindah ke panel akun. Kelasnya tetap ini supaya komponen
+   Jam dan Tanggal tidak perlu tahu di mana ia dipasang. */
+.topbar__jam { display: inline-flex; align-items: center; gap: 0.35rem; }
+.topbar__titik {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+.topbar__zona { color: var(--text-faint); }
+.topbar__tanggal { }
 
-/* Panel akun sengaja TIDAK ikut: permintaan pemilik, bagian owner dibiarkan
-   persis seperti semula. Dan "semula" di sini berarti TANPA pemisah apa pun —
-   aturan .topbar__id di bawah menyetel `border: 0` untuk mematikan bingkai
-   bawaan <button>, dan karena ia datang belakangan, panel akun memang tidak
-   pernah punya garis kiri sekalipun aturan umum di atas dulu memberinya satu.
-
-   Selektornya ditulis `.topbar > .topbar__id` supaya kekhususannya (0,2,0)
-   sama dengan aturan umum di atas. Dengan `.topbar__id::before` saja — (0,1,0)
-   — aturan umum menang dan garis miringnya tetap tergambar. Ini jebakan yang
-   sama yang sudah dicatat dua kali di berkas ini, dan ini kali ketiga. */
-.topbar > .topbar__id::before { content: none; }
-
-/* Garis miring JALAN TERUS sampai ujung kanan bilah.
-
-   Ini MEMBALIK keputusan sebelumnya ("garis miring berhenti setelah
-   penghitung proyek"), atas permintaan pemilik: "breadcrumb dibuat sampai
-   ujung seperti pipeline itu jadi keliatannya rapi". Yang dirujuknya bilah
-   Fase proyek — satu bilah yang selnya terbagi rata dari tepi ke tepi.
-
-   Terukur pada bilah 1168px sebelum perubahan: tanda bacanya berhenti di
-   747px, jadi 693px sisanya — combobox, Terbitkan, tombol tema — berdiri
-   tanpa satu pun pemisah. Itu yang membuat separuh kanan bilah terbaca
-   sebagai barang yang tercecer, bukan sebagai lanjutan barisnya.
-
-   Dua sel sengaja TETAP tanpa garis miring, dan keduanya bukan pengecualian
-   melainkan sudah punya pemisahnya sendiri:
-     lonceng   — dikurung garis tegak 2px di kiri dan kanan. Garis miring di
-                 tepi kirinya akan mendarat tepat di atas garis itu.
-     panel akun — dipisah oleh garis KANAN milik lonceng, yang berdiri persis
-                 di batas keduanya.
-
-   Ditulis `.topbar > .x` supaya kekhususannya (0,2,0), setara aturan umum di
-   atas, dan ditaruh SESUDAHNYA supaya menang. Dengan `.x::before` saja aturan
-   umum menang — jebakan yang sudah tercatat di CLAUDE.md. */
-.topbar > .topbar__aksi--lonceng::before { content: none; }
-
-/* Semua segmen dirata-tengahkan secara vertikal dan diberi napas sendiri.
-
-   Bawaannya TIDAK menyusut. Kalau semua segmen boleh menyusut, flexbox
-   membagi penyusutannya rata menurut lebar masing-masing — dan remah roti
-   pun ikut terpotong padahal ia yang paling pendek. Yang boleh mengalah
-   hanya dua yang memang punya ellipsis sendiri: combobox dan nama studio. */
-.topbar > *:not(.topbar__dorong) {
+.akunpop__waktu {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
-  padding-inline: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* --- Sisi kanan ----------------------------------------------------------- */
+
+/* gap 20px — angka Header Coinest apa adanya. */
+.topbar__kanan {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
   min-width: 0;
+  flex: none;
 }
 
-/* flex ditulis terpisah dengan kekhususan (0,1,0), setara aturan per-segmen
-   di bawahnya. Sebelumnya nilai ini ikut di aturan umum yang kekhususannya
-   (0,2,0) — dan setiap penyesuaian per-segmen diam-diam kalah. Sudah dua
-   kali menggigit: sekali di padding ponsel, sekali di sini. */
-.topbar > * { flex: 0 0 auto; }
-.topbar__id { flex-shrink: 1; }
+/* Tiga tombol berjarak 10px, juga angka Coinest. */
+.topbar__alat { display: flex; align-items: center; gap: 10px; flex: none; }
 
-/* Ruang pendorong sengaja TIDAK dipakai selama kedua bidang pencarian masih
-   tampil. Ia tidak punya garis, jadi ia menempel ke sel di kirinya dan
-   terbaca sebagai sel yang isinya tidak sampai ujung — bar-nya terlihat
-   setengah jadi. Sisa ruangnya diberikan ke combobox dan Perintah, sehingga
-   setiap piksel topbar dimiliki sebuah sel. */
-/* Ruang pendorong tidak dipakai di layar lebar: sisa ruang diberikan ke
-   combobox, jadi tidak ada celah kosong menganga di tengah bilah. Permintaan
-   pemilik setelah melihat versi yang combobox-nya selebar isinya sendiri —
-   ruang kosong di tengah membuat bilahnya terlihat belum selesai. */
-.topbar__dorong { display: none; }
+/* Pembungkus per-tombol. Satu-satunya tugasnya position:relative, supaya
+   jangkar popover milik tombol di dalamnya menambat ke tombol itu — bukan ke
+   gerombolnya, yang akan membuat panel Terbitkan turun di bawah lonceng. */
+.topbar__aksi { position: relative; display: flex; align-items: center; }
 
-.topbar__combo { flex: 1 1 0; }
-
-/* Sel pembungkus tombol ikon — napasnya sama dengan segmen teks di
-   sebelahnya, jadi seluruh baris berirama sama. */
-.topbar__aksi { justify-content: center; }
-
-/* Lonceng: satu-satunya segmen yang masih dikurung garis tegak. Bukan
-   inkonsistensi — ia satu-satunya yang isinya berubah sendiri tanpa
-   disentuh siapa pun, jadi ia harus terbaca sebagai benda yang berdiri
-   sendiri, bukan ikon di antara ikon. */
-.topbar__aksi--lonceng {
-  border-inline: 2px solid var(--border-strong);
+/* Bentuk tombol ikon Coinest: bidang hijau muda, 38px, radius 20px, ikon 18px.
+   Ditulis satu kali untuk lonceng DAN pengalih tema supaya keduanya tidak
+   bisa menyimpang. Kekhususannya (0,2,0) — aturan dasar `.theme-btn` dan
+   `.topbar__lonceng` di berkas lain cuma (0,1,0), jadi yang ini menang di
+   mana pun urutannya. */
+.topbar__aksi > .theme-btn,
+.topbar__aksi > .topbar__lonceng {
+  width: 2.375rem;
+  height: 2.375rem;
+  border: 0;
+  border-radius: 20px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.topbar__crumb { overflow: hidden; white-space: nowrap; flex-wrap: nowrap !important; }
-/* Remah roti boleh menyusut sampai judulnya terpotong, tapi tidak boleh pecah
-   dua baris: topbar tingginya tetap, dan baris kedua akan terpotong. */
-.topbar__crumb [aria-current] { overflow: hidden; text-overflow: ellipsis; }
+.topbar__aksi > .theme-btn:hover:not(:disabled),
+.topbar__aksi > .theme-btn:focus-visible,
+.topbar__aksi > .topbar__lonceng:hover,
+.topbar__aksi > .topbar__lonceng:focus-visible,
+.topbar__aksi > .topbar__lonceng[data-state="open"] {
+  background: var(--brand-line);
+  color: var(--brand-mint-ink);
+}
 
-/* Jam: titik hidup, angka mono, singkatan zona redup. */
-/* Jangkar popover: lebar nol, menempel ke tepi KANAN LAYAR dan setinggi
-   topbar. Dipakai lonceng, panel akun, dan tombol Terbitkan — supaya
-   ketiganya berhenti di garis yang sama.
-
-   position: FIXED, bukan absolute. Komentar lama di sini menyatakan .topbar
-   yang jadi blok penampungnya karena ia position:sticky — itu keliru, dan
-   keliru diam-diam: `.topbar__aksi` ternyata position:relative, jadi tiap
-   jangkar berlabuh di SEGMENNYA SENDIRI. Terukur: jangkar lonceng berhenti
-   di 1232px sementara jangkar tombol Terbitkan di 1110px — 122px berbeda,
-   yang persis terlihat sebagai dua panel yang tidak sejajar. Dengan fixed,
-   ketiganya berangkat dari titik yang sama tanpa bergantung pada segmen
-   mana yang membungkusnya. */
 /* Jangkar untuk panel yang harus turun di bawah TOMBOLNYA SENDIRI tapi tetap
    berangkat dari kaki topbar. Berbeda dari .topbar__jangkar yang menambat ke
-   tepi kanan layar: yang ini menambat ke segmen tempat ia hidup —
-   `.topbar__aksi` memang position:relative dan setinggi topbar penuh, jadi
-   inset-block:0 memberi tinggi yang benar tanpa angka tambahan. */
+   tepi kanan layar: yang ini menambat ke `.topbar__aksi` di atas. */
 .topbar__jangkar-segmen {
   position: absolute;
-  inset-block: 0;
+  top: calc(50% - var(--topbar-h) / 2);
+  height: var(--topbar-h);
   right: 0;
   width: 0;
   pointer-events: none;
 }
 
+/* Jangkar lebar nol yang menempel ke tepi KANAN LAYAR dan setinggi topbar,
+   supaya panel lonceng dan panel akun berhenti di garis yang sama.
+
+   position: FIXED, bukan absolute — `.topbar__aksi` position:relative, jadi
+   jangkar absolut akan berlabuh di tombolnya sendiri. 12px, sama dengan
+   collisionPadding kedua popover: segmen identitas berhenti persis di tepi
+   kanan bilah, jadi panel akun selalu kena pantulan tepi dan berhenti 12px
+   dari tepi; jangkar yang ditaruh di right:0 tidak kena pantulan itu dan
+   panel lonceng berhenti 12px lebih kanan — cukup untuk terlihat miring. */
 .topbar__jangkar {
   position: fixed;
   top: 0;
   height: var(--topbar-h);
-  /* 12px, sama dengan collisionPadding kedua popover. Segmen identitas
-     berhenti persis di tepi kanan layar, jadi panel akun SELALU kena
-     pantulan tepi dan berhenti 12px dari tepi. Jangkar yang ditaruh di
-     tepi (right:0) tidak kena pantulan itu, dan panel lonceng berhenti
-     12px lebih kanan — cukup untuk terlihat tidak sejajar. Ditaruh langsung
-     di titik yang sama, keduanya berhenti di garis yang sama tanpa
-     bergantung pada pembulatan sub-piksel. */
   right: 12px;
   width: 0;
   pointer-events: none;
 }
 
-.topbar__jam { font-size: var(--text-sm); color: var(--text-strong); white-space: nowrap; }
-.topbar__titik {
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  background: var(--success);
-  flex: none;
+/* --- Combobox proyek: bidang pil Coinest --------------------------------- */
+
+/* Bentuk search Coinest: bidang abu 283px, radius 20px, padding 16/10, jarak
+   isi 6px, dan kaca pembesar di sisi KANAN — bukan kiri. Ikonnya di sini
+   ikon proyek, bukan kaca pembesar: kotak ini memang mencari, tapi yang
+   pertama dibacanya adalah proyek mana yang sedang dibuka. */
+.topbar__combo {
+  position: relative;
+  flex: 0 1 17.6875rem;
+  width: 17.6875rem;
+  min-width: 0;
 }
-.topbar__zona { font-size: var(--text-xs); color: var(--text-faint); }
-
-.topbar__tanggal { font-size: var(--text-sm); color: var(--text-muted); white-space: nowrap; }
-
-/* Penghitung proyek aktif. Angkanya dalam pil, seperti di referensi. */
-.topbar__hitung { font-size: var(--text-sm); color: var(--text-muted); white-space: nowrap; }
-.topbar__pil {
-  display: inline-grid;
-  place-items: center;
-  min-width: 2rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-strong);
-  background: var(--surface-raised);
-  color: var(--text-strong);
-  font-size: var(--text-xs);
-}
-
-/* --- Dua pintu pencarian: combobox proyek dan command palette ------------ */
-
-/* Keduanya bidang abu yang sama persis. Sebelumnya hanya combobox yang punya
-   bidang, sementara Perintah polos di sel yang lebih sempit — dua benda yang
-   perannya sama tapi wujudnya berbeda, dan barisnya jadi tidak berirama. */
-.topbar__combo { position: relative; }
 
 /* cmdk membungkus isinya dalam satu div tanpa lebar. Tanpa dibuat mengisi,
-   lebar 100% pada bidang di dalamnya menunjuk ke lebar-otomatis pembungkus
-   itu — bukan ke lebar selnya — dan hasilnya bidang combobox tidak sama
-   lebar dengan kembarannya. */
+   `width:100%` pada bidang di dalamnya menunjuk ke lebar-otomatis pembungkus
+   itu, bukan ke lebar selnya. */
 .topbar__combo > * { flex: 1; min-width: 0; }
 
 .topbar__field {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 6px;
   width: 100%;
-  min-width: 6.5rem;
-  height: 2.125rem;
+  height: 2.375rem;
   min-width: 0;
-  padding: 0 0.65rem;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--surface-raised);
-  color: var(--text-faint);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--tray);
+  border-radius: 20px;
+  background: var(--tray);
+  color: var(--text-muted);
   font-family: inherit;
   font-size: var(--text-sm);
   text-align: left;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-/* Di tema terang --surface-raised nyaris putih, jadi bidangnya lenyap di atas
-   topbar yang juga putih dan keduanya kehilangan petunjuk bahwa mereka bisa
-   ditekan. Abunya diambil dari --tray. */
-:root[data-theme="light"] .topbar__field { background: var(--tray); }
-
-/* Fokus tanpa warna: di topbar cincin ungu terbaca sebagai peringatan, bukan
-   sebagai penanda elemen yang sedang aktif. Bidangnya cukup menaik satu
-   tingkat, sama seperti keadaan hover. */
 .topbar__field:focus-within,
-.topbar__field:hover { background: var(--surface-hover); color: var(--text-muted); }
+.topbar__field:hover { background: var(--surface-hover); border-color: var(--border); }
+.topbar__field:focus-within { border-color: var(--focus); }
 
-/* Input di dalamnya memakai gaya input command palette dari pustaka, hanya
-   ukurannya diturunkan supaya muat di tinggi topbar. */
+/* Ikon duduk di kanan, jadi ia tidak boleh ikut melar bersama input. */
+.topbar__field > svg { flex: none; }
+
 .topbar__field-input { font-size: var(--text-sm); color: var(--text-strong); }
 
-/* Judul proyek yang sedang dibuka dipasang sebagai placeholder, jadi ia
-   perlu warna teks penuh — placeholder redup akan membuat proyek aktif
-   terbaca seperti kotak yang masih kosong. */
+/* Judul proyek yang sedang dibuka dipasang sebagai placeholder, jadi ia perlu
+   warna teks penuh — placeholder redup membuat proyek aktif terbaca seperti
+   kotak yang masih kosong. */
 .topbar__field-input[data-terpilih]::placeholder {
   color: var(--text-strong);
   opacity: 1;
 }
 
-
-/* Daftar hasil menggantung di bawah field, di dalam topbar. z-index di atas
-   topbar sendiri supaya tidak tertutup garis pemisah di sebelahnya. */
+/* Daftar hasil menggantung tepat di bawah bidangnya. Lebarnya dipatok ke
+   bidang itu, bukan nilai tetap: daftar yang lebih lebar dari pemicunya
+   terbaca sebagai panel yang salah tempat. */
 .topbar__combo-list {
-/* Lebarnya dipatok ke BIDANG di atasnya, bukan nilai tetap: daftar yang lebih
-   lebar dari pemicunya terbaca sebagai panel yang salah tempat. Judul yang
-   tidak muat diurus TeksGeser, bukan dengan melebarkan daftarnya. */
   position: absolute;
   top: calc(100% + 6px);
-  left: var(--space-3);
-  right: var(--space-3);
+  left: 0;
+  right: 0;
   z-index: 50;
   max-height: 15rem;
   overflow-y: auto;
   padding: var(--space-1);
-  border: 2px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--shadow-md);
 }
 
-.topbar__combo-list .ov-command__item { gap: var(--space-2); padding: 0.4rem 0.5rem; font-size: var(--text-sm); }
+.topbar__combo-list .ov-command__item { gap: var(--space-2); padding: 0.4rem 0.5rem; font-size: var(--text-sm); border-radius: var(--radius-sm); }
 .topbar__combo-status { font-size: var(--text-2xs); color: var(--text-faint); flex: none; }
 
 /* --- Teks yang menggeser sendiri ----------------------------------------- */
@@ -331,30 +278,21 @@
 
 /* --- Lonceng -------------------------------------------------------------- */
 
+/* Bentuk dasar; bidang hijau muda, ukuran, dan radiusnya datang dari aturan
+   `.topbar__aksi > .topbar__lonceng` di atas, yang dipakai bersama pengalih
+   tema supaya keduanya tidak bisa menyimpang. */
 .topbar__lonceng {
   position: relative;
   display: grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
   flex: none;
   padding: 0;
-  /* Tanpa lingkaran. Alasan lingkaran dulu: tombol ikon di antara sel-sel
-     selebar 200px terbaca sebagai sisa ruang. Setelah bidang pencarian
-     keluar dari topbar, tetangganya jadi teks pendek — ikon telanjang sudah
-     terbaca sebagai tombol, dan dua lingkaran di ujung kanan cuma menambah
-     dua benda yang tidak menyampaikan apa pun. Sesuai referensi pemilik. */
-  border: 0;
-  border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.topbar__lonceng:hover,
-.topbar__lonceng[data-state="open"] { color: var(--text-strong); }
-.topbar__lonceng:focus-visible { outline: 0; color: var(--text-strong); }
+.topbar__lonceng:focus-visible { outline: 0; }
 
 /* Ayunan yang sama persis dengan lonceng di kartu dashboard — satu gerakan
    untuk satu benda, di mana pun ia muncul. */
@@ -364,81 +302,91 @@
   animation: ayun-lonceng 800ms var(--ease);
 }
 
-/* Badge jumlah. Merah karena ia menuntut tindakan, bukan sekadar memberi
-   tahu — merah di sistem ini berarti brand dan destruktif, dan "ada yang
-   belum ditangani" adalah anggota terdekat dari keluarga itu. */
+/* Titik merah DI DALAM tombol, bukan menggantung di luarnya — letaknya
+   right:6px top:6px, angka Coinest apa adanya. Bedanya dengan Coinest cuma
+   satu dan disengaja: di sana titiknya kosong, di sini ia memuat angka.
+   Angkanya diturunkan dari pekerjaan yang benar-benar belum ditangani, jadi
+   "3" dan "31" adalah dua keadaan yang berbeda artinya bagi yang membacanya. */
 .topbar__badge {
   position: absolute;
-  top: -0.2rem;
-  right: -0.2rem;
+  top: 6px;
+  right: 6px;
   display: grid;
   place-items: center;
-  min-width: 1.05rem;
-  height: 1.05rem;
-  padding-inline: 0.22rem;
+  min-width: 0.875rem;
+  height: 0.875rem;
+  padding-inline: 0.2rem;
   border-radius: var(--radius-pill);
-  background: var(--brand);
-  color: var(--brand-ink);
-  font-family: var(--font-mono);
+  background: var(--danger);
+  color: var(--danger-ink);
   font-size: var(--text-2xs);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
 }
 
 /* --- Identitas studio ----------------------------------------------------- */
 
-/* Tanpa rectangle: tidak ada garis maupun bidang, hanya isinya. */
+/* Slot profil Coinest: label, jarak 14px, avatar 38px bulat penuh berisi
+   mint. Yang berbeda cuma isi labelnya — di Coinest nama orang, di sini
+   PERAN akun.
+
+   Alasannya masih sama seperti saat nama studio dibuang dari sini: sidebar
+   sudah menuliskan nama studio utuh dan permanen di sebelah kiri, jadi
+   salinan keduanya cuma barang yang terpotong. Yang dicari orang saat menekan
+   avatar adalah akun mana yang sedang dipakai — dan dengan dua akun penulis,
+   itu satu-satunya keterangan di bilah ini yang tidak ada di tempat lain.
+
+   Ukurannya SATU tingkat di bawah Coinest (14px SemiBold, bukan 16px Bold):
+   "Master admin" adalah label peran, bukan nama. Ditulis setebal nama orang,
+   ia terbaca lebih keras daripada judul halaman di seberangnya. */
 .topbar__id {
-  /* Tanpa min-width:0 tombol ini TIDAK PERNAH menyusut: ukuran min-content
-     sebuah flex item adalah lebar isinya, dan isinya nama ber-nowrap. Jadi
-     flex-shrink:1 di bawah tidak berlaku sama sekali, dan pada 1024px
-     bilahnya meluber 33px keluar layar alih-alih memendekkan namanya. */
+  display: flex;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
+  flex: none;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: var(--text-body);
+  color: var(--text-strong);
   font-family: inherit;
   cursor: pointer;
-  gap: var(--space-3) !important;
 }
 
 .topbar__id:focus-visible { outline: 0; }
-/* Umpan balik hover/fokus pindah ke avatar: setelah namanya dibuang, tidak
-   ada lagi teks netral yang bisa berubah merah — teks perannya memang sudah
-   merah sejak diam. */
 .topbar__id:hover .avatar,
 .topbar__id:focus-visible .avatar { box-shadow: 0 0 0 2px var(--focus); }
 
-/* Teks peran naik jadi satu-satunya label di tombol ini; ukurannya dinaikkan
-   dari 2xs ke xs supaya ia terbaca sebagai label, bukan sebagai catatan kaki
-   yang tertinggal setelah namanya dibuang. */
-/* Teksnya REDUP, mahkotanya merah. Sewaktu masih ada nama studio di
-   atasnya, merah seluruhnya masih terbaca sebagai satu tanda kecil; begitu
-   ia jadi satu-satunya label, merah tebal di sebelah avatar yang juga merah
-   membuat sudut kanan berteriak lebih keras daripada nama halaman yang
-   sedang dibuka — padahal peran akun bukan yang paling penting di bilah ini.
-   Mahkotanya tetap merah, jadi penanda "master" tidak hilang. */
+/* Avatar mint, seperti di Coinest — bukan hijau tua pejal seperti
+   `.avatar--brand` di tempat lain. Di sini ia duduk di atas latar terang
+   bersama tiga tombol hijau muda; hijau tua pejal jadi benda paling gelap di
+   bilah dan menarik perhatian lebih besar daripada judul halaman. */
+.topbar__id .avatar--brand {
+  width: 2.375rem;
+  height: 2.375rem;
+  border-radius: 50%;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+/* Bold 16px — slot nama di profil Coinest. Isinya peran akun, bukan nama
+   orang: nama studio sudah tertulis utuh dan permanen di sidebar, dan dengan
+   dua akun penulis yang perlu terbaca sekilas justru akun mana yang dipakai. */
 .topbar__id-peran {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.35rem;
   min-width: 0;
-  font-size: var(--text-xs);
+  font-size: var(--text-md);
+  font-weight: 700;
   white-space: nowrap;
-  color: var(--text-muted);
+  color: var(--judul-ink);
 }
 
-.topbar__id-peran svg { color: var(--brand); }
-.topbar__id:hover .topbar__id-peran { color: var(--text-strong); }
-
-/* Di ponsel tombol akun tinggal avatar + panah. Teks perannya 109px, dan
-   bilah selebar 390px cuma menyisakan 152px untuk seluruh tombol ini —
-   dengan perannya, bilahnya meluber 13px keluar layar. Keterangannya tidak
-   hilang: panel akun yang dibuka tombol ini menuliskannya lagi, lengkap
-   dengan email. */
-@media (max-width: 34rem) {
-  .topbar__id-peran { display: none; }
-}
+.topbar__id-peran svg { color: var(--brand-isi); flex: none; }
+.topbar__id > svg:last-child { color: var(--text-faint); flex: none; }
 
 /* --- Memilih proyek di Halaman Proyek -------------------------------------- */
 
@@ -552,7 +500,7 @@
   width: 100%;
   height: 3.25rem;
   padding-left: calc(var(--space-4) * 2 + 20px);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   font-size: var(--text-md);
 }
 
@@ -596,16 +544,21 @@
   gap: var(--space-3);
 }
 
-/* Setinggi segmen breadcrumb di topbar, diminta pemilik. --topbar-h dikurangi
-   dua karena topbar punya garis 1px di atas dan di bawah, jadi kotak segmennya
-   50px sementara bilahnya 52px — yang sejajar di mata adalah segmennya.
+/* Tingginya DILEPAS dari --topbar-h. Angka itu dulu berarti "setinggi segmen
+   breadcrumb", permintaan pemilik waktu topbar masih bilah bersegmen — tapi
+   topbar sekarang tidak punya segmen sama sekali, dan tokennya naik jadi 68px
+   supaya judul dua baris muat. Dibiarkan menempel, tombol bilah tabel ikut
+   jadi 66px: setengah lebih tinggi daripada kontrol mana pun di sekitarnya.
+
+   Dipatok 44px — sama dengan tinggi baris isian form, jadi bilah tabel
+   berirama dengan form di halaman sebelahnya.
 
    Pengalih tampilan ikut, walaupun yang disebut cuma tombolnya: satu baris
-   berisi dua benda setinggi 50 dan 40 px terbaca sebagai salah pasang. */
+   berisi dua benda setinggi 44 dan 40 px terbaca sebagai salah pasang. */
 .pilihproyek__alat .segmented,
 .pilihproyek__baru,
 .kartudaftar__alat .segmented,
-.kartudaftar__alat > .btn { height: calc(var(--topbar-h) - 2px); }
+.kartudaftar__alat > .btn { height: 2.75rem; }
 
 /* --- Tabel pemilih proyek ------------------------------------------------ */
 
@@ -739,7 +692,7 @@
   gap: 4px;
   padding: 2px var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--bg-sunken) 82%, transparent);
   color: var(--text);
   font-size: var(--text-2xs);
@@ -1082,60 +1035,49 @@
 
 /* --- Terbitkan perubahan --------------------------------------------------- */
 
-/* Tombol berteks, bukan ikon telanjang seperti tema dan lonceng. Bedanya
-   disengaja: dua tetangganya adalah perkakas yang sudah dikenali dari
-   bentuknya, sementara yang ini memicu pekerjaan yang tidak bisa dibatalkan
-   di tengah jalan. Ia perlu menyebut namanya sendiri. */
+/* Tombol IKON, bentuknya sama persis dengan lonceng dan pengalih tema di
+   sebelahnya. Sebelumnya pil hijau tua berteks — dan pil pejal selebar 116px
+   di antara tiga lingkaran hijau muda adalah benda paling berat di seluruh
+   bilah, jauh lebih berat daripada judul halaman di seberangnya. Header
+   Coinest tidak punya tombol aksi sama sekali; yang paling mendekati adalah
+   tombol ikonnya.
+
+   Namanya tidak hilang: aria-label menyebutkannya, dan popover yang
+   dibukanya menuliskan seluruh keadaannya. */
 .topbar__terbit {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  height: 2.25rem;
-  padding-inline: var(--space-3);
+  display: grid;
+  place-items: center;
+  width: 2.375rem;
+  height: 2.375rem;
   flex: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-muted);
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
   font: inherit;
-  font-size: var(--text-sm);
   cursor: pointer;
-  white-space: nowrap;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
-              background var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .topbar__terbit:hover,
-.topbar__terbit[data-state="open"] {
-  color: var(--text-strong);
-  border-color: var(--border-strong);
-  background: var(--surface-hover);
-}
-.topbar__terbit:focus-visible { outline: 0; color: var(--text-strong); border-color: var(--border-strong); }
+.topbar__terbit:focus-visible,
+.topbar__terbit[data-state="open"] { background: var(--brand-line); color: var(--brand-mint-ink); }
+.topbar__terbit:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--focus-halo); }
 
-/* Amber, bukan merah: ada perubahan yang belum tayang bukan kerusakan dan
-   bukan tuntutan — situsnya baik-baik saja, cuma belum yang terbaru. Amber
-   di sistem ini berarti "terbatas atau terkunci sebagian", dan itu persis
-   keadaannya. Merah sudah dipakai badge lonceng untuk hal yang memang
-   menunggu ditangani. */
-.topbar__terbit[data-belum] { color: var(--warn); border-color: var(--warn-line); }
-.topbar__terbit[data-belum]:hover,
-.topbar__terbit[data-belum][data-state="open"] { color: var(--warn); border-color: var(--warn); }
-
+/* Titik AMBER di pojok, bentuk yang sama dengan titik merah lonceng — ada
+   perubahan yang belum tayang bukan kerusakan dan bukan tuntutan; situsnya
+   baik-baik saja, cuma belum yang terbaru. */
 .topbar__terbit-titik {
-  width: 0.4rem;
-  height: 0.4rem;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--warn);
-  flex: none;
 }
-
-/* Tidak ada bar di tombol topbar. Sempat ada, dan lengkungnya tembus:
-   tombolnya ber-radius sementara barnya persegi, jadi ujung barnya menonjol
-   keluar sudut tombol. Dilaporkan pemilik. Yang menyatakan keadaan di tombol
-   itu tinggal warnanya; barnya hidup di dalam popover, tempat ia punya ruang
-   yang cukup untuk terbaca. */
 
 /* Bar di dalam popover. Tak bertentu dengan sengaja: panel ini tidak bisa
    menanyakan GitHub Actions sudah sampai langkah mana, jadi persentase apa
@@ -1256,7 +1198,7 @@
 
 .terbitpop__status--belum { border-color: var(--warn-line); background: var(--warn-soft); color: var(--warn); }
 .terbitpop__status--sama  { border-color: var(--success); background: var(--success-soft); color: var(--success); }
-.terbitpop__galat         { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); margin-top: var(--space-3); }
+.terbitpop__galat         { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); margin-top: var(--space-3); }
 .terbitpop__kunci         { border-color: var(--border); background: var(--tray); color: var(--text-muted); margin-bottom: var(--space-4); }
 
 .terbitpop__aksi {
@@ -1389,9 +1331,9 @@
 .akunpop__aksi-judul { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
 .akunpop__aksi-sub { font-size: var(--text-xs); color: var(--text-muted); }
 
-.akunpop__aksi--keluar { color: var(--brand); }
+.akunpop__aksi--keluar { color: var(--danger); }
 .akunpop__aksi--keluar .akunpop__aksi-judul,
-.akunpop__aksi--keluar .akunpop__aksi-sub { color: var(--brand); }
+.akunpop__aksi--keluar .akunpop__aksi-sub { color: var(--danger); }
 
 /* Keluar disorot merah tipis, bukan abu seperti Pengaturan: warnanya sudah
    merah, dan latar abu di bawah teks merah membuat keduanya berebut.
@@ -1402,85 +1344,42 @@
   background: color-mix(in srgb, var(--brand) 14%, transparent);
 }
 
-/* Di layar sempit segmen keterangan disembunyikan lebih dulu — jam, tanggal,
-   dan penghitung boleh hilang; navigasi dan identitas tidak. Batas di
-   sebelahnya ikut hilang lewat :has, kalau tidak garisnya menumpuk. */
+/* --- Topbar di layar sempit ----------------------------------------------- */
+
 /* Ambangnya dihitung dari lebar KOLOM KERJA, bukan viewport: sidebar memakan
-   17rem lebih dulu, jadi ambang yang ditulis dalam ukuran viewport selalu
-   meleset sebesar itu. Label "Proyek aktif" pergi lebih dulu — ikon dan
-   angkanya sudah cukup — lalu tanggal, lalu combobox. */
-@media (max-width: 72rem) {
-  .topbar__hitung-label { display: none; }
-}
+   14rem lebih dulu, jadi ambang yang ditulis dalam ukuran viewport selalu
+   meleset sebesar itu.
 
-@media (max-width: 86rem) {
-  .topbar__tanggal { display: none !important; }
-}
-
-/* Penghitung pergi sebelum combobox: angka proyek aktif bisa dilihat di
-   halaman Proyek, sementara combobox adalah satu-satunya jalan pintas ke
-   sebuah proyek dari halaman mana pun. */
-@media (max-width: 82rem) {
-  .topbar__hitung { display: none !important; }
-}
-
-/* Begitu combobox hilang, tidak ada lagi yang melar di topbar — tanpa
-   pendorong, seluruh segmen menggerombol di kiri dan panel akun ikut
-   berpindah dari ujung kanan. */
-@media (max-width: 71rem) {
+   Urutan yang pergi, dari yang paling murah: bidang combobox (283px, dan
+   proyek masih bisa dibuka dari halaman Proyek), lalu teks tombol Terbitkan
+   (ikon unggah plus titik amber sudah menyampaikan keadaannya), lalu baris
+   keterangan di bawah judul, lalu label peran. */
+@media (max-width: 78rem) {
   .topbar__combo { display: none !important; }
-  .topbar__dorong { display: block; flex: 1 1 auto; min-width: var(--space-4); }
-
-  /* Pendorong tidak punya tanda baca, jadi segmen SESUDAHNYA tidak boleh
-     punya juga: garis miringnya akan berdiri sendirian di seberang ruang
-     kosong — persis bentuk "tercecer" yang diperbaiki di aturan garis miring
-     di atas, cuma pindah lebar.
-
-     Ditulis DI SINI, bukan di dekat aturan garis miringnya, karena selektor
-     tetangga tidak peduli `display`: di layar lebar pendorongnya memang
-     `display:none` tapi ia TETAP saudara di DOM, jadi aturan yang sama di
-     luar media query ikut mematikan garis miring tombol Terbitkan pada
-     1440px. Sudah terukur sekali begitu. */
-  .topbar > .topbar__dorong + *::before { content: none; }
 }
 
-/* Teksnya pergi, tombolnya tinggal. Yang hilang cuma namanya — ikon unggah
-   plus titik amber masih menyampaikan keadaannya, dan isinya dijelaskan
-   lengkap begitu ditekan. */
-@media (max-width: 62rem) {
-  .topbar__terbit-teks { display: none; }
-  .topbar__terbit { padding-inline: var(--space-2); }
+/* Tombol laci menempel di pojok kiri atas layar (fixed, 12px dari tepi,
+   2.25rem lebar), jadi judul halaman harus menyingkir sebesar itu — tapi
+   HANYA di lebar tempat tombolnya benar-benar muncul. Ambangnya sama persis
+   dengan ambang sidebar di sidebar.css; kalau yang satu digeser, yang ini
+   harus ikut. */
+@media (max-width: 59.99rem) {
+  .topbar { padding-left: 3.5rem; }
 }
 
-@media (max-width: 52rem) {
-  .topbar__jam { display: none !important; }
-  .topbar__id-teks { display: none !important; }
-}
-
-/* Ponsel sempit: napas tiap segmen dipangkas dan panah identitas dilepas.
-   Yang tersisa cuma yang tidak bisa diwakili apa pun: remah roti, perintah,
-   tema, lonceng, dan avatar. */
 @media (max-width: 34rem) {
-  .topbar > *:not(.topbar__dorong) { padding-inline: var(--space-2); }
+  .topbar { padding-inline: var(--space-4); padding-left: 3.5rem; gap: var(--space-3); }
+  /* 22px Bold menyisakan 93px untuk judul di layar 390px, sementara
+     "Keuangan" saja butuh 99px — terukur meleset 6px. Satu tingkat turun
+     (20px) memuatnya, dan judul tetap teks terbesar di bilah. */
+  .topbar__judul { font-size: var(--text-lg); }
+  .topbar__kanan { gap: var(--space-3); }
+  /* Teks peran 109px, dan bilah selebar 390px tidak punya ruang untuk itu.
+     Keterangannya tidak hilang: panel akun yang dibuka tombol ini
+     menuliskannya lagi, lengkap dengan email. */
+  .topbar__id-peran { display: none; }
   .topbar__id > svg:last-child { display: none; }
-  /* Di sini remah roti pun boleh mengalah: ia punya ellipsis sendiri, dan
-     ruang 3rem untuk tombol laci tidak bisa diambil dari mana-mana lagi.
-     "Admin /" ikut dilepas — di ponsel jejak satu tingkat tidak memberi tahu
-     apa pun yang tidak sudah diketahui dari sidebar. */
-  /* min-width:0 bukan hiasan: tanpa itu remah roti tidak pernah menyusut di
-     bawah lebar isinya, jadi sisa lebar yang tak muat justru mendorong avatar
-     keluar layar dan membuat badan halaman bisa digulir mendatar. */
-  .topbar__crumb { flex-shrink: 1; min-width: 0; }
-  .topbar__crumb a,
-  .topbar__crumb .breadcrumb__sep { display: none; }
-  /* Tombol laci butuh 3rem di kiri; sisanya dipangkas dari sel tombol ikon. */
-  .topbar__aksi,
-  /* Di lebar ini identitas tinggal avatar — tidak ada teks yang bisa
-     dipendekkan, jadi menyusutkannya cuma mendorong avatar keluar layar.
-     Seluruh penyusutan dibebankan ke remah roti, yang memang punya ellipsis. */
-  .topbar__id { flex-shrink: 0; }
 }
-
 
 .admin__content {
   flex: 1;
@@ -1540,9 +1439,12 @@
    diatur inline per baris karena ketiga statusnya butuh warna berbeda. */
 
 @media (min-width: 60rem) {
-  /* Tombol drawer hilang, jadi ruang kirinya dikembalikan. Nolkan saja:
-     napas kiri remah roti sekarang datang dari padding segmennya sendiri. */
-  .topbar { padding-left: 0; }
+  /* Tombol drawer hilang, jadi ruang yang dipesan untuknya dikembalikan —
+     TAPI bukan jadi nol. Angka nol itu sisa dari bilah bersegmen, tempat
+     napas kiri datang dari padding segmen pertama. Topbar sekarang tidak
+     punya segmen, jadi nol berarti judul halaman menempel rapat ke garis
+     sidebar: terukur judulnya mulai di 224px, persis tepi sidebar. */
+  .topbar { padding-left: var(--space-5); }
 }
 
 /* --- Penjaga akses ------------------------------------------------------- */
@@ -1800,9 +1702,9 @@
 
 .logo-preview__hapus:hover,
 .logo-preview__hapus:focus-visible {
-  color: var(--brand);
-  border-color: var(--brand);
-  background: color-mix(in srgb, var(--brand) 14%, var(--bg-sunken));
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, var(--bg-sunken));
 }
 
 /* Diukur dari tangkapan penuh referensi: kotaknya memenuhi lebar-dalam
@@ -2086,7 +1988,7 @@
 
 .pcard__act:first-child { border-left: 0; }
 .pcard__act:hover { background: var(--surface-hover); color: var(--text-strong); }
-.pcard__act--danger:hover { color: var(--brand); }
+.pcard__act--danger:hover { color: var(--danger); }
 
 /* Chip saringan berdiri sendiri-sendiri — masing-masing punya bingkai dan
    ada jarak di antaranya. Sengaja BUKAN .segmented, yang membungkus semua
@@ -2109,14 +2011,21 @@
   white-space: nowrap;
   background: transparent;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
     background-color var(--dur) var(--ease);
 }
 
 .chip:hover:not([aria-pressed="true"]) { color: var(--text-strong); border-color: var(--text-faint); }
-.chip[aria-pressed="true"] { background: var(--action); border-color: var(--action); color: var(--action-ink); }
+/* Chip terpilih memakai bentuk .pil--on situs publik: latar teal SAMAR,
+   garis teal, teks teal — bukan bidang teal pejal. Pejal membuat satu chip
+   jadi benda paling terang di halaman, padahal ia cuma penyaring. */
+.chip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  border-color: var(--brand-isi);
+  color: var(--brand);
+}
 
 .chip__n {
   display: inline-grid;
@@ -2126,11 +2035,11 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-weight: 500;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--surface-hover);
 }
 
-.chip[aria-pressed="true"] .chip__n { background: color-mix(in srgb, var(--action-ink) 12%, transparent); }
+.chip[aria-pressed="true"] .chip__n { background: color-mix(in srgb, var(--brand) 18%, transparent); color: var(--brand); }
 
 /* Pengalih tampilan: kotak bergaris dengan opsi aktif berupa kotak-membulat
    terisi — bukan pil, seperti di referensi. */
@@ -2220,7 +2129,7 @@
    antara digit. Merah di sini bukan "destruktif", melainkan brand yang sama
    dipakai sebagai penanda perhatian; tidak ada warna lain di palet yang
    berarti "kurang dari nol". */
-.angka-minus { color: var(--brand); }
+.angka-minus { color: var(--danger); }
 
 /* Sel yang isinya kalimat panjang — kutipan testimoni, catatan — dipotong
    satu baris. Tanpa ini tinggi tiap baris ditentukan oleh kalimat terpanjang,
@@ -2812,208 +2721,595 @@
   background: var(--bg-sunken);
 }
 
-/* --- Dashboard: bidang bertitik + kolom kanan --------------------------- */
+/* =============================================================================
+   Dashboard — frame Figma "01. Dashboard (v1) - Desktop" (node 3:1069).
 
-/* Sama seperti .settings-split: halamannya pas satu layar dan full-bleed,
-   supaya garis pemisah vertikalnya menyambung utuh dari bawah topbar sampai
-   dasar layar. Selektornya tanpa ">" — <astro-island> menyisip di antaranya. */
-.admin:has(.dashsplit) { height: 100dvh; overflow: hidden; }
-.admin:has(.dashsplit) .admin__main { min-height: 0; }
+   Angkanya diambil dari framenya, bukan dikira-kira: badan 1192px terbagi
+   283 / 586 / 283 dengan jarak 20px, tiap kartu berpadding 16px, bergaris
+   1px, dan ber-radius 16px.
 
-.admin__content:has(.dashsplit) {
-  padding: 0;
+   Kolomnya ditulis sebagai `fr` dengan angka Figma-nya, bukan persentase:
+   `fr` membagi SISA ruang setelah gap dikurangi, jadi perbandingan
+   283:586:283 tetap persis berapa pun lebar layarnya — sementara persentase
+   dihitung dari lebar penuh dan meleset sebesar gap-nya.
+   ============================================================================= */
+
+.admin__content:has(.dashgrid) {
+  padding-top: var(--space-5);
   gap: 0;
-  max-width: none;
-  min-height: 0;
-  overflow: hidden;
 }
 
-.dashsplit {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  align-items: stretch;
-}
-
-/* Dua kolom sama lebar, dipisah garis setebal garis topbar dan tabel. */
-.dashsplit__kiri,
-.dashsplit__kanan { flex: 1 1 50%; min-width: 0; }
-
-/* Kolom kanan berbidang abu, jadi pembagian dua terbaca dari warnanya
-   sendiri dan bukan cuma dari garis di tengah. Di tema terang
-   --surface-raised nyaris putih; abunya diambil dari --tray, satu-satunya
-   bidang abu lembut yang memang disediakan untuk tema terang. */
-.dashsplit__kanan { background: var(--surface-raised); }
-:root[data-theme="light"] .dashsplit__kanan { background: var(--tray); }
-
-.dashsplit__kiri {
-  position: relative;
-  overflow: hidden;
+.dashgrid {
   display: grid;
-  place-items: center;
-  border-right: 2px solid var(--border-strong);
-  /* Nilai awal menaruh sorot titik di luar bidang, jadi sebelum kursor
-     pernah masuk tidak ada lingkaran terang yang menggantung di pojok. */
-  --mx: -999px;
-  --my: -999px;
+  grid-template-columns: 283fr 586fr 283fr;
+  gap: 20px;
+  align-items: start;
 }
 
-/* Dua lapis titik pada kisi yang sama persis, jadi lapis sorot jatuh tepat
-   di atas lapis dasar dan tidak terlihat sebagai kisi kedua. */
-.dashdot {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-position: center;
-}
+.dashgrid__kol { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
-/* Opacity, bukan warna yang lebih gelap: titiknya harus meredup dengan cara
-   yang sama di tema gelap dan terang, dan menurunkan warnanya per tema berarti
-   dua nilai yang harus dijaga tetap seimbang. */
-.dashdot--dasar {
-  background-image: radial-gradient(circle at center, var(--border-strong) 1.75px, transparent 1.95px);
-  background-size: 26px 26px;
-  opacity: 0.45;
-}
+/* --- Bentuk kartu bersama --------------------------------------------------- */
 
-/* Lapis sorot: titiknya lebih besar dan lebih terang, tapi topeng radial
-   hanya membiarkan yang dekat kursor terlihat. Jarak pudarnya dibuat panjang
-   supaya tepinya tidak terbaca sebagai lingkaran bergaris. */
-.dashdot--sorot {
-  background-image: radial-gradient(circle at center, var(--text-body) 3.5px, transparent 3.7px);
-  background-size: 26px 26px;
-  -webkit-mask-image: radial-gradient(circle 165px at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, 0.8) 45%, rgba(0, 0, 0, 0.25) 75%, transparent 100%);
-  mask-image: radial-gradient(circle 165px at var(--mx) var(--my), #000 0%, rgba(0, 0, 0, 0.8) 45%, rgba(0, 0, 0, 0.25) 75%, transparent 100%);
-  /* Sorot hanya hidup selama kursor ada di kolom ini. Dipudarkan lewat
-     opacity, bukan digeser ke luar bidang: menggeser berarti menyeret
-     lingkaran terangnya melintasi seluruh kolom dulu sebelum hilang. */
-  opacity: 0;
-  transition: opacity var(--dur-slow) var(--ease);
-}
-
-.dashsplit__kiri:hover .dashdot--sorot { opacity: 1; }
-
-@media (prefers-reduced-motion: reduce) {
-  .dashdot--sorot { transition: none; }
-}
-
-/* Tanpa padding mendatar: lebar kartu di bawah ditulis sebagai persen, dan
-   persen itu dihitung dari kotak-dalam INDUK. Padding di sini akan diam-diam
-   mengecilkan kartunya — 80% dari kolom yang sudah dipotong 2x32px bukan lagi
-   80% dari kolomnya. Napas kiri-kanan diurus masing-masing anaknya. */
-.dashsplit__isi {
-  position: relative;
-  z-index: 1;
-  width: 100%;
+/* Ditulis sekali, bukan diulang di tiap blok — delapan kartu dengan radius
+   yang diketik ulang delapan kali adalah delapan kesempatan menyimpang. */
+.dashkartu {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-7);
-  padding-block: var(--space-6);
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
 }
 
-.dash-salam {
+.dashkartu__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+
+.dashkartu__judul {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(1.75rem, 4vw, 2.375rem);
-  letter-spacing: var(--tracking-judul);
+  font-size: var(--text-md);
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--text-strong);
-  text-align: center;
-  padding-inline: var(--space-6);
 }
 
-/* Kartu identitas studio. Lebarnya 80% kolom seperti referensi, dengan batas
-   atas supaya bentuknya tidak ikut melar di layar lebar — yang dijaga adalah
-   perbandingannya, bukan kemampuannya memenuhi ruang. */
-.dash-kartu {
-  display: flex;
+/* Button Picker (I11:1745;1:1693): bergaris, radius 8, padding 12/8/8,
+   teks SemiBold 12px hijau tua. Bentuk yang sama dipakai tiap kepala kartu
+   yang punya keterangan atau tautan di kanannya. */
+.dashkartu__pil,
+.dashkartu__pilih,
+.dashkartu__tombol {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
-  width: 80%;
-  max-width: calc(100% - 2 * var(--space-6));
-  min-height: 6.125rem;
-  /* Kiri lebih lapang dari kanan: di sisi kiri yang berdiri adalah ubin
-     ikon persegi, yang tepinya bertabrakan dengan lengkung pill kalau
-     terlalu mepet. Di kanan yang berdiri tombol bundar — bentuknya sendiri
-     sudah mengikuti lengkungnya, jadi tidak butuh sebanyak itu. */
-  padding: 0 1rem 0 2rem;
-  /* Garis tebal dan bidang abu, senada dengan kolom kanan — kartunya jadi
-     satu-satunya benda terang di bidang gelap ini. Radius pill, bukan nilai
-     tetap: ujung kiri-kanannya harus membulat penuh mengikuti tingginya,
-     dan radius tetap berapa pun akan meleset begitu tingginya berubah. */
-  border: 2px solid var(--border-strong);
-  border-radius: var(--radius-pill);
-  background: var(--surface-raised);
+  gap: 4px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--brand-isi);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
-:root[data-theme="light"] .dash-kartu { background: var(--tray); }
+.dashkartu__pil { color: var(--text-muted); font-weight: 500; }
+.dashkartu__pilih:hover,
+.dashkartu__tombol:hover { background: var(--brand-soft); border-color: var(--brand-line); }
 
-.dash-kartu__logo {
+.dashkartu__ikon {
   display: grid;
   place-items: center;
-  width: 3.25rem;
-  height: 3.25rem;
-  flex: none;
-  border-radius: var(--radius-md);
-  background: var(--brand);
-  color: var(--brand-ink);
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+.dashkartu__ikon:hover { background: var(--surface-hover); color: var(--text-strong); }
+
+.dashkartu__kosong { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+
+/* Bar dua lapis: alas mint, isian hijau tua. Bukan alas abu seperti bar
+   kemajuan biasa — di Coinest alasnya memang mint, dan itu yang membuat
+   sisa yang belum tercapai tetap terbaca sebagai bagian dari hal yang sama. */
+.dashrel {
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-mint);
   overflow: hidden;
 }
+.dashrel__isi { display: block; height: 100%; border-radius: var(--radius-sm); background: var(--brand-isi); }
 
-.dash-kartu__logo img { width: 100%; height: 100%; object-fit: cover; }
+/* --- Kartu gelap: kas studio ------------------------------------------------ */
 
-.dash-kartu__teks {
+/* Widget Card (3:1128). Bidangnya memakai --kas-bidang, bukan --brand: di
+   tema gelap --brand adalah MINT, dan mint pejal seukuran kartu ini
+   menyilaukan. Ini satu-satunya warna di panel yang sengaja tidak ikut
+   berbalik — yang dibawanya identitas, bukan status. */
+.dashkas {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-  flex: 1;
+  gap: 27px;
+  padding: 16px;
+  border: 1px solid var(--kas-bidang);
+  border-radius: 16px;
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
 }
 
-/* 15px, bukan 16px seperti referensi. Nama studio ini jauh lebih panjang
-   dari nama usaha di referensi, dan pada 16px ia terpotong ellipsis persis
-   satu huruf sebelum habis. Selisih 1px tidak terbaca; nama studio yang
-   terpenggal terbaca. Ellipsis-nya tetap ada sebagai jaring pengaman kalau
-   suatu saat namanya diganti lebih panjang lagi. */
-.dash-kartu__nama {
-  font-size: var(--text-base);
+.dashkas__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+
+.dashkas__ubin {
+  display: grid;
+  place-items: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--radius-sm);
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+}
+
+.dashkas__peran {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--brand-mint);
+}
+
+.dashkas__nama {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
   font-weight: 700;
+  line-height: 1.2;
+  color: var(--kas-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashkas__kaki { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.dashkas__kanan { display: flex; align-items: flex-start; gap: 18px; }
+.dashkas__blok { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.dashkas__blok-label { font-size: var(--text-2xs); color: var(--kas-ink); opacity: 0.75; white-space: nowrap; }
+
+.dashkas__blok-nilai {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--kas-nilai);
+  white-space: nowrap;
+}
+.dashkas__blok--kecil .dashkas__blok-nilai { font-size: var(--text-sm); font-weight: 600; }
+
+/* --- Empat tombol cepat ------------------------------------------------------ */
+
+/* Button Group (3:1156): bidang Green-BG, radius 16, padding 8 samping /
+   12 tegak, ikon 24px, label SemiBold 10px, dipisah garis tegak tipis. */
+.dashaksi {
+  display: flex;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+
+.dashaksi__btn {
+  position: relative;
+  flex: 1 0 0;
+  min-width: 45px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-block: 4px;
+  color: var(--brand-isi);
+  text-decoration: none;
+}
+
+/* Garis pemisah milik tombolnya sendiri (::before), bukan elemen tersendiri —
+   elemen pemisah yang berdiri sendiri akan tertinggal sebagai tanda yatim
+   kalau salah satu tombol suatu saat disembunyikan. */
+.dashaksi__btn + .dashaksi__btn::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--brand-line);
+}
+
+.dashaksi__label { font-size: var(--text-2xs); font-weight: 600; line-height: 1; }
+.dashaksi__btn:hover { color: var(--text-strong); }
+.dashaksi__btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+
+/* --- Kartu bar: laba bersih --------------------------------------------------- */
+
+.dashbar__isi { display: flex; flex-direction: column; gap: 12px; }
+.dashbar__desc { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.dashbar__angka { display: inline-flex; align-items: baseline; gap: 4px; min-width: 0; flex-wrap: wrap; }
+.dashbar__nilai { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); }
+.dashbar__ket { font-size: var(--text-2xs); color: var(--text-muted); }
+.dashbar__persen { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); flex: none; }
+
+/* --- Daftar proyek berjalan --------------------------------------------------- */
+
+.dashplan__total { display: flex; flex-direction: column; gap: 4px; }
+.dashplan__total-label { font-size: var(--text-2xs); color: var(--text-strong); }
+.dashplan__total-nilai {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--brand-isi);
+}
+
+.dashplan__list { display: flex; flex-direction: column; gap: 16px; }
+.dashplan__rangka { height: 5.25rem; border-radius: 12px; }
+
+/* Card Saving Plan (3:1184): radius 12, padding 14, jarak isi 16. */
+.dashplankartu {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  text-decoration: none;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.dashplankartu:hover { border-color: var(--brand-line); background: var(--brand-soft); }
+
+.dashplankartu__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); }
+.dashplankartu__judul { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+.dashplankartu__ubin {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+}
+
+.dashplankartu__nama {
+  font-size: var(--text-sm);
+  font-weight: 500;
   color: var(--text-strong);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.dash-kartu__peran { font-size: var(--text-sm); color: var(--text-muted); }
-.dash-kartu__peran strong { color: var(--brand); font-weight: 600; }
-
-.dash-kartu__aksi {
-  display: grid;
-  place-items: center;
-  width: 2.1875rem;
-  height: 2.1875rem;
+.dashplankartu__tahap {
   flex: none;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-raised);
-  color: var(--text-muted);
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.dash-kartu__aksi + .dash-kartu__aksi { margin-left: calc(var(--space-2) - var(--space-3)); }
-.dash-kartu__aksi:hover { color: var(--text-strong); border-color: var(--text-faint); }
-.dash-kartu__aksi:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.dashplankartu__chart { display: flex; flex-direction: column; gap: 10px; }
+.dashplankartu__desc {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-2xs);
+}
+.dashplankartu__kiri,
+.dashplankartu__kanan { display: inline-flex; gap: 4px; }
+.dashplankartu__masuk { font-weight: 600; color: var(--text-strong); }
+.dashplankartu__pct { font-weight: 600; color: var(--text-muted); }
+.dashplankartu__target-label { color: var(--text-muted); }
+.dashplankartu__target { color: var(--text-strong); }
 
-/* Di layar sempit dua kolom tidak muat: kolom kanan yang masih kosong
-   disembunyikan sepenuhnya — kolom kosong selebar setengah layar terbaca
-   sebagai halaman yang gagal memuat, bukan sebagai ruang yang disediakan. */
-@media (max-width: 60rem) {
-  .admin:has(.dashsplit) { height: auto; overflow: visible; }
-  .admin__content:has(.dashsplit) { overflow: visible; }
-  .dashsplit__kiri { border-right: 0; min-height: 60vh; }
-  .dashsplit__kanan { display: none; }
-  .dash-kartu { width: 100%; padding: var(--space-4) var(--space-5); border-radius: var(--radius-xl); }
+/* --- Tiga kartu statistik ------------------------------------------------------ */
+
+/* Section Statistic (3:1188): jarak 18px, bukan 20px. Angka Figma apa adanya. */
+.dashstat { display: flex; gap: 18px; align-items: stretch; }
+
+.dashstat__kartu {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.dashstat__head { display: flex; align-items: flex-start; justify-content: space-between; }
+
+.dashstat__ubin {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+}
+
+.dashstat__isi { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+
+.dashstat__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 1px 4px;
+  border-radius: 15px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashstat__badge--turun { background: var(--danger-soft); color: var(--danger); }
+
+/* 20px, bukan 24px seperti di Figma. Terukur: kartunya 183px dengan padding
+   16px, jadi 151px tersedia — dan "Rp185.000.000" pada Urbanist Bold 24px
+   butuh 175px, sehingga tiga kartu teratas semuanya terpotong jadi
+   "Rp185.000....". Angka Coinest "$78,000" cuma 7 karakter; rupiah tanpa
+   singkatan 13 karakter, dan itu beda yang tidak bisa dipaksakan.
+
+   Yang disingkat ukurannya, BUKAN angkanya: kartu ini yang dipakai pemilik
+   mencocokkan dengan mutasi bank, dan "Rp185,0 jt" tidak bisa dicocokkan. */
+.dashstat__nilai {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.dashstat__label { margin: 0; font-size: var(--text-sm); color: var(--text-strong); }
+
+/* --- Grafik batang dua arah ----------------------------------------------------- */
+
+.dasharus__info { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.dasharus__saldo { display: flex; flex-direction: column; gap: 2px; }
+.dasharus__saldo-label { font-size: var(--text-2xs); color: var(--text-muted); }
+.dasharus__saldo-nilai { font-size: var(--text-lg); font-weight: 700; line-height: 1.2; color: var(--text-strong); }
+
+.dasharus__legenda { display: flex; gap: 24px; }
+.dasharus__leg { display: inline-flex; align-items: center; gap: 13px; font-size: var(--text-sm); color: var(--text-strong); }
+.dasharus__kotak { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.dasharus__kotak--masuk { background: var(--brand-isi); }
+.dasharus__kotak--biaya { background: var(--brand-mint); }
+
+/* Chart (3:1207): tinggi 182px, kolom berdampingan tanpa celah — kisinya
+   digambar per kolom, jadi garisnya menyambung sendiri melintasi grafik. */
+.dasharus__chart { display: flex; height: 182px; align-items: stretch; }
+.dasharus__kol { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.dasharus__lines {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dasharus__garis { height: 13px; border-top: 1px solid var(--chart-grid); }
+
+/* Inset 3.64% tegak dan 20% mendatar — angka Figma. Yang 20% itu yang
+   memberi jarak antar-batang tanpa memberi jarak antar-KISI. */
+.dasharus__bars {
+  position: absolute;
+  inset: 3.64% 20%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dasharus__pos { flex: 1; min-height: 0; display: flex; align-items: flex-end; justify-content: center; }
+.dasharus__neg { flex: 1; min-height: 0; display: flex; align-items: flex-start; justify-content: center; }
+.dasharus__bar { display: block; width: 100%; }
+.dasharus__bar--masuk { background: var(--brand-isi); border-radius: 4px 4px 0 0; }
+.dasharus__bar--biaya { background: var(--brand-mint); border-radius: 0 0 4px 4px; }
+
+.dasharus__label {
+  height: 13px;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-2xs);
+  color: var(--text-strong);
+}
+
+/* --- Tabel laba per proyek -------------------------------------------------------- */
+
+.dashtabel__rangka { height: 12rem; border-radius: 12px; }
+.dashtabel__gulir { overflow-x: auto; }
+.dashtabel__tabel { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+
+.dashtabel__tabel th,
+.dashtabel__tabel td { padding: var(--space-2) var(--space-3); text-align: right; white-space: nowrap; }
+
+.dashtabel__tabel thead th {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.dashtabel__tabel tbody tr + tr th,
+.dashtabel__tabel tbody tr + tr td { border-top: 1px solid var(--border); }
+
+/* Kolom pertama kiri dan boleh memendek; sisanya angka dan tetap kanan. */
+.dashtabel__tabel th:first-child,
+.dashtabel__tabel tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-strong);
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashtabel__tabel tbody td { color: var(--text-body); font-variant-numeric: tabular-nums; }
+
+/* --- Donat rincian ----------------------------------------------------------------- */
+
+/* Segmented (3:1250): dua tab selebar sama, garis bawah 1px untuk yang diam
+   dan 3px mint untuk yang aktif. */
+.dashseg { display: flex; }
+
+.dashseg__tab {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.dashseg__tab[aria-selected="true"] { border-bottom: 3px solid var(--brand-mint); color: var(--brand-isi); }
+.dashseg__tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.dashseg__angka { font-size: var(--text-2xs); font-weight: 400; }
+
+.dashdonat__chart { position: relative; height: 148px; display: grid; place-items: center; }
+.dashdonat__svg { height: 148px; width: 148px; }
+
+.dashdonat__pusat {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.dashdonat__pusat-label { font-size: var(--text-2xs); font-weight: 500; color: var(--text-muted); }
+/* Lubang donatnya 89px (149 dikurangi dua kali tebal 30), jadi angka 20px
+   milik Figma meluber keluar cincin — "Rp261,7 jt" butuh 100px. 16px muat. */
+.dashdonat__pusat-nilai { font-size: var(--text-md); font-weight: 700; line-height: 1.2; color: var(--brand-isi); }
+
+.dashdonat__list { display: flex; flex-direction: column; gap: 12px; }
+.dashdonat__baris { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.dashdonat__kiri { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.dashdonat__chip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  flex: none;
+  padding: 6px 0;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.dashdonat__chip--1 { background: var(--ramp-1); color: var(--ramp-1-ink); }
+.dashdonat__chip--2 { background: var(--ramp-2); color: var(--ramp-2-ink); }
+.dashdonat__chip--3 { background: var(--ramp-3); color: var(--ramp-3-ink); }
+.dashdonat__chip--4 { background: var(--ramp-4); color: var(--ramp-4-ink); }
+.dashdonat__chip--5 { background: var(--ramp-5); color: var(--ramp-5-ink); }
+
+.dashdonat__label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashdonat__nilai { font-size: var(--text-sm); font-weight: 600; color: var(--text-strong); flex: none; }
+
+/* --- Aktivitas: garis waktu ---------------------------------------------------------- */
+
+.dashlog { gap: 16px; }
+.dashlog__list { display: flex; flex-direction: column; gap: 2px; }
+.dashlog__rangka { height: 3rem; border-radius: var(--radius-sm); }
+.dashlog__beres { margin: 0; display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--success); }
+
+/* Log Item (3:1280): jarak 14px, bulatan 30px, garis penyambung turun ke
+   baris berikutnya. Garisnya berhenti di baris terakhir — garis yang
+   menggantung ke ruang kosong terbaca sebagai daftar yang terpotong. */
+.dashlog__baris { display: flex; align-items: stretch; gap: 14px; text-decoration: none; }
+.dashlog__rel { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
+
+.dashlog__bulat {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 56px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+}
+
+.dashlog__garis { flex: 1; width: 1px; background: var(--border); }
+.dashlog__baris[data-akhir] .dashlog__garis { display: none; }
+
+.dashlog__teks { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 2px 0 10px; }
+
+.dashlog__judul-baris { font-size: var(--text-sm); line-height: 1.3; color: var(--text-strong); }
+.dashlog__judul-baris strong { font-weight: 600; }
+.dashlog__waktu { font-size: var(--text-2xs); color: var(--text-muted); }
+.dashlog__baris:hover .dashlog__judul-baris { color: var(--brand-isi); }
+
+/* --- Dashboard di layar sempit --------------------------------------------- */
+
+/* Tiga kolom jadi dua: kolom tengah — yang memuat grafik dan tabel — pindah
+   ke bawah selebar penuh, dan dua kolom sempit berdampingan di atasnya.
+   Coinest melakukan hal yang sama di frame Tablet-nya. */
+@media (max-width: 78rem) {
+  .dashgrid { grid-template-columns: 1fr 1fr; }
+  .dashgrid__kol--tengah { grid-column: 1 / -1; order: 1; }
+  .dashgrid__kol--kiri,
+  .dashgrid__kol--kanan { order: 0; }
+}
+
+@media (max-width: 52rem) {
+  .dashgrid { grid-template-columns: 1fr; }
+  .dashgrid__kol--tengah { grid-column: auto; }
+  /* Tiga kartu statistik berdampingan jadi tidak muat begitu kolomnya
+     selebar ponsel; angka rupiahnya pecah dua baris lebih dulu. */
+  .dashstat { flex-wrap: wrap; }
+  .dashstat__kartu { flex-basis: calc(50% - 9px); }
+}
+
+@media (max-width: 34rem) {
+  .dashstat__kartu { flex-basis: 100%; }
+  .dasharus__legenda { gap: var(--space-3); }
 }
 
 /* --- Halaman Notifikasi -------------------------------------------------- */
@@ -3123,13 +3419,11 @@
   50.01%, 100% { opacity: 0; }
 }
 
-/* Lonceng berayun saat disentuh: sekali dorong lalu mereda, bukan goyangan
-   yang tetap besar. Poros di ujung ATAS ikon — lonceng sungguhan digantung,
-   bukan diputar di tengah badannya. */
-.dash-kartu__aksi--lonceng:hover svg {
-  transform-origin: 50% 12%;
-  animation: ayun-lonceng 800ms var(--ease);
-}
+/* Ayunan lonceng: sekali dorong lalu mereda, bukan goyangan yang tetap besar.
+   Poros di ujung ATAS ikon — lonceng sungguhan digantung, bukan diputar di
+   tengah badannya. Keyframes-nya dipakai `.topbar__lonceng`; pemakai yang
+   satunya (`.dash-kartu__aksi--lonceng`) ikut hilang bersama kartu sambutan
+   lama, jadi aturannya dibuang di sini supaya tidak jadi selektor yatim. */
 
 @keyframes ayun-lonceng {
   0%   { transform: rotate(0deg); }
@@ -3250,7 +3544,7 @@
 
 .bayar-status--lunas    { color: var(--success); }
 .bayar-status--sebagian { color: var(--warn); }
-.bayar-status--belum    { color: var(--brand); }
+.bayar-status--belum    { color: var(--danger); }
 
 /* Tombol WhatsApp. Hijau WA memang bukan warna semantik palet ini, dan itu
    disengaja: tombol ini membuka aplikasi lain, dan warnanya yang membuat
@@ -3663,7 +3957,7 @@
   text-transform: uppercase;
   color: #f0a92c;
   border: 1px solid rgba(240, 169, 44, .4);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   vertical-align: 2px;
 }
 
@@ -3995,3 +4289,27 @@
 /* Pemilih bulan berdiri sendiri di atas tabel, jadi lebarnya dibatasi —
    dibiarkan melar ia jadi isian selebar halaman untuk tujuh karakter. */
 .payroll__bulan { max-width: 14rem; }
+
+
+/* --- Kaki kolom kerja ------------------------------------------------------ */
+
+/* Footer (361:12269): satu baris setinggi 24px di kaki kolom kerja, 28px dari
+   tepi, teks 12px redup. Kecil dengan sengaja — ia penutup halaman, bukan
+   navigasi kedua. */
+.adminfoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 82rem;
+  margin-inline: auto;
+  padding: var(--space-4) clamp(var(--space-4), 3vw, var(--space-6)) var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.adminfoot__hak { margin: 0; }
+.adminfoot__tautan { display: flex; gap: var(--space-5); flex-wrap: wrap; }
+.adminfoot__tautan a { color: var(--text-muted); text-decoration: none; }
+.adminfoot__tautan a:hover { color: var(--text-strong); text-decoration: underline; }

@@ -24,6 +24,7 @@
 }
 
 html {
+  background: var(--bg);
   -webkit-text-size-adjust: 100%;
   /* Android Chrome menyorot elemen yang ditekan dengan overlay biru bawaan
      kalau tidak dimatikan — bentrok dengan tema gelap situs ini. Umpan balik
@@ -42,12 +43,17 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Arvo (slab serif) menandai judul halaman; Maven Pro menandai seluruh
-   perkakas dan angka. Dua keluarga, sesuai tangkapan layar pemilik. */
+/* Coinest tidak memakai tekstur latar sama sekali — kedalamannya dibawa oleh
+   kartu putih di atas bidang abu #FBFBFC. Kisi titik yang dipasang untuk
+   menyamai landing page karena itu dibuang dari panel; ia tetap hidup di
+   situs publik, yang memang memakainya. */
+
+/* Satu keluarga untuk semuanya: Inter, sama dengan situs publik. Bobot 600
+   dengan kerapatan negatif — lihat catatan di tokens.css. */
 h1,
 h2 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.12;
   letter-spacing: var(--tracking-judul);
   color: var(--text-strong);
@@ -102,10 +108,10 @@ svg[width][height] { flex: none; max-width: none; }
   outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: var(--radius-xs);
-  /* Lingkar merah di LUAR cincin putih. Dipakai supaya cincinnya tetap
-     terbaca di atas permukaan yang kebetulan juga putih — tab aktif, tombol
-     aksi utama — tanpa mengembalikan warna yang bukan miliknya. */
-  box-shadow: 0 0 0 7px var(--focus-halo);
+  /* Halo teal redup di LUAR cincin, sama seperti cincin fokus situs publik
+     (0 0 0 2px kanvas, 0 0 0 4px --cincin). Di sini halonya dibuat lebih
+     lebar karena panel punya permukaan yang lebih terang dari kanvas situs. */
+  box-shadow: 0 0 0 6px var(--focus-halo);
 }
 
 ::selection {
@@ -199,7 +205,7 @@ svg[width][height] { flex: none; max-width: none; }
   padding: var(--space-2) var(--space-4);
   background: var(--action);
   color: var(--action-ink);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   z-index: 100;
 }
 

@@ -22,7 +22,9 @@ type Theme = "dark" | "light";
  *    hover dan fokus tetap gesit.
  */
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  /* Bawaannya TERANG sejak panel memakai sistem Coinest, yang memang
+     design terang. */
+  const [theme, setTheme] = useState<Theme>("light");
   const [siap, setSiap] = useState(false);
   const [putaran, setPutaran] = useState(0);
 
@@ -30,7 +32,7 @@ export function ThemeToggle() {
   // <head> sudah menetapkannya lebih dulu, dan itulah kebenarannya.
   useEffect(() => {
     const aktif = document.documentElement.getAttribute("data-theme");
-    setTheme(aktif === "light" ? "light" : "dark");
+    setTheme(aktif === "dark" ? "dark" : "light");
     setSiap(true);
   }, []);
 

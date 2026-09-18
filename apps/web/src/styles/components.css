@@ -5,22 +5,23 @@
 
 /* --- Typography ---------------------------------------------------------- */
 
-/* Bobot 400, bukan 700. Arvo adalah slab serif — batang hurufnya sudah tebal
-   pada bobot reguler, dan pada 700 judulnya menutup sendiri. Tangkapan layar
-   yang dikirim pemilik memang menunjukkan font-normal. Bobot 700 di sini
-   berasal dari susunan Geist dan tidak berlaku lagi. */
-.t-display   { font-family: var(--font-display); font-weight: 400; font-size: var(--text-4xl); line-height: 1.08; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
-/* 30px pas, bukan clamp. Permintaan pemilik: pada 38px judulnya terlalu
-   besar. .t-title cuma dipakai judul halaman admin, jadi h2 publik yang
-   ikut --text-3xl tidak kena. */
-.t-title     { font-family: var(--font-display); font-weight: 400; font-size: 1.875rem; line-height: 1.15; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
-.t-heading   { font-family: var(--font-sans); font-weight: 700; font-size: var(--text-xl); line-height: 1.25; color: var(--text-strong); }
-.t-subheading{ font-family: var(--font-sans); font-weight: 700; font-size: var(--text-md); line-height: 1.35; color: var(--text-strong); }
+/* Bobot 600 dan kerapatan negatif — setelan judul situs publik, bukan 400/0
+   lagi. Angka lama itu milik Arvo slab, yang sudah tebal pada reguler dan
+   hurufnya bersinggungan kalau dirapatkan. Inter grotesk kebalikannya: pada
+   400 ia terbaca kurus di ukuran besar, dan justru menuntut kerapatan negatif
+   supaya tidak renggang. */
+.t-display   { font-family: var(--font-display); font-weight: 600; font-size: var(--text-4xl); line-height: 1.08; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
+/* 30px pas, bukan clamp — permintaan pemilik: pada 38px judulnya terlalu besar. */
+.t-title     { font-family: var(--font-display); font-weight: 600; font-size: 1.875rem; line-height: 1.15; letter-spacing: var(--tracking-judul); color: var(--text-strong); text-wrap: balance; }
+.t-heading   { font-family: var(--font-sans); font-weight: 600; letter-spacing: var(--tracking-judul); font-size: var(--text-xl); line-height: 1.25; color: var(--text-strong); }
+.t-subheading{ font-family: var(--font-sans); font-weight: 600; font-size: var(--text-md); line-height: 1.35; color: var(--text-strong); }
 .t-body      { font-size: var(--text-base); color: var(--text-body); }
 .t-muted     { font-size: var(--text-sm); color: var(--text-muted); }
 .t-label     { font-size: var(--text-2xs); font-weight: 600; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-faint); }
+/* Varian beraksen, sama dengan .label di situs publik. */
+.t-label--aksen { color: var(--brand); }
 .t-mono      { font-family: var(--font-mono); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.t-numeral   { font-family: var(--font-sans); font-weight: 700; font-size: var(--text-2xl); font-variant-numeric: tabular-nums; color: var(--text-strong); line-height: 1; }
+.t-numeral   { font-family: var(--font-sans); font-weight: 600; letter-spacing: var(--tracking-judul); font-size: var(--text-2xl); font-variant-numeric: tabular-nums; color: var(--text-strong); line-height: 1; }
 /* Tautan di dalam badan teks atau sel tabel: warnanya ikut teks di sekitarnya
    dan garis bawahnya baru muncul saat disentuh. Tautan berwarna sendiri di
    dalam tabel membuat kolom yang isinya tautan terlihat seperti peringatan. */
@@ -28,19 +29,28 @@
 .t-tautan:hover { text-decoration: underline; }
 
 /* --- Button -------------------------------------------------------------- */
-
+/* Bentuknya diambil dari .btn di situs publik: kotak bersudut 6px, garis 1px,
+   latar tembus pandang, dan saat disentuh garisnya jadi teal — bukan pil
+   berlatar pekat seperti sebelumnya. Padding, ukuran huruf, dan bobotnya
+   disamakan sampai angkanya. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: 0.625rem 1.125rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-pill);
+  padding: 0.6875rem 1.1875rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-strong);
   font-family: inherit;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  line-height: 1.2;
+  font-size: 0.84375rem;
+  font-weight: 500;
+  /* WAJIB disebut: begitu .btn dipakai sebagai <a> — dan tombol yang
+     menavigasi memang harus <a> — ia mewarisi line-height badan halaman dan
+     tumbuh beberapa piksel, lalu bergaris bawah. Sudah menggigit di situs
+     publik. */
+  line-height: normal;
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
@@ -48,16 +58,58 @@
     background-color var(--dur) var(--ease),
     border-color var(--dur) var(--ease),
     color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
     transform var(--dur-fast) var(--ease);
 }
 
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:hover:not(:disabled) {
+  border-color: var(--brand-isi);
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+}
+/* Mengecil saat ditekan, bukan turun 1px: gerakan yang sama dengan situs
+   publik, dan ia tidak menggeser tetangganya. */
+.btn:active:not(:disabled) { transform: scale(0.978); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
-/* Aksi utama: membalik terhadap latar, jadi selalu jadi hal paling terang
-   di tema gelap dan paling gelap di tema terang. */
-.btn--primary { background: var(--action); color: var(--action-ink); }
-.btn--primary:hover:not(:disabled) { background: var(--action-hover); color: var(--action-hover-ink); }
+/* Aksi utama: KOTAK GELAP BERGARIS TEAL bertekstur titik — bentuk .btn--dot
+   di situs publik, yang dipakai tombol "Mulai proyek" di navbar dan lencana
+   pembuka hero. Bukan tombol teal pejal: bentuk itu justru yang pernah
+   ditolak pemilik.
+
+   background-image, bukan pseudo-elemen: tombol ini juga dipakai sebagai
+   <a>, dan ::before di dalamnya bertabrakan dengan ikon panah. */
+.btn--primary {
+  background-color: color-mix(in srgb, var(--brand) 6%, transparent);
+  background-image: radial-gradient(color-mix(in srgb, var(--brand) 30%, transparent) 1px, transparent 1px);
+  background-size: 5px 5px;
+  border-color: color-mix(in srgb, var(--brand) 45%, transparent);
+  color: var(--brand);
+  font-weight: 600;
+  box-shadow: inset 0 0 18px color-mix(in srgb, var(--brand) 10%, transparent);
+}
+/* Shorthand `background` di aturan hover mana pun membuang background-image
+   tanpa suara, jadi teksturnya ditegakkan ulang di tiap keadaan. */
+.btn--primary:hover:not(:disabled),
+.btn--primary:focus-visible {
+  background-color: color-mix(in srgb, var(--brand) 13%, transparent);
+  background-image: radial-gradient(color-mix(in srgb, var(--brand) 34%, transparent) 1px, transparent 1px);
+  background-size: 5px 5px;
+  border-color: var(--brand);
+  color: var(--brand);
+  box-shadow: inset 0 0 22px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+
+/* Teal PEJAL — dipakai kalau satu layar punya dua aksi dan yang satu harus
+   menang telak. Sama dengan .btn--isi di situs publik. */
+.btn--isi {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-ink);
+  font-weight: 600;
+}
+.btn--isi:hover:not(:disabled) { background: var(--action-hover); border-color: var(--action-hover); color: var(--action-hover-ink); }
+.btn--isi:active:not(:disabled) { background: var(--action-tekan); border-color: var(--action-tekan); }
 
 .btn--secondary { background: transparent; color: var(--text-strong); border-color: var(--border-strong); }
 .btn--secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--text-faint); }
@@ -65,45 +117,73 @@
 .btn--ghost { background: transparent; color: var(--text-muted); }
 .btn--ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text-strong); }
 
-/* Merah mendapat efek angkat yang sama dengan tombol utama — diminta pemilik
-   supaya semua tombol merah berperilaku seperti satu keluarga. Diberikan di
-   sini, bukan dengan menambahkan .btn--lift di tiap pemakaian: kelas yang
-   harus diingat adalah kelas yang suatu saat terlupa, dan tombol merah
-   berikutnya akan diam-diam jadi satu-satunya yang tidak bergerak.
+/* Aksi bertekanan tinggi: teal PEJAL yang TERANGKAT saat disentuh —
+   bayangan keras tanpa blur, lalu kembali rata saat ditekan.
 
-   Bayangannya MERAH GELAP, bukan --action-hover-shadow yang putih: bayangan
-   putih di belakang tombol merah terbaca sebagai kilau, bukan sebagai benda
-   yang terangkat. */
+   Namanya tetap --brand dan sekarang namanya benar: merek memang teal.
+   Sebelumnya kelas ini merah dan dipakai untuk konfirmasi menghapus; peran
+   itu pindah ke .btn--bahaya di bawah, supaya satu warna tidak menanggung
+   dua arti yang berlawanan. */
 .btn--brand {
-  background: var(--brand);
-  color: var(--brand-ink);
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-ink);
+  font-weight: 600;
   transition:
     background-color var(--dur) var(--ease),
-    filter var(--dur) var(--ease),
     box-shadow var(--dur) var(--ease),
     transform var(--dur) var(--ease);
 }
 .btn--brand:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow: 4px 4px 0 color-mix(in srgb, var(--brand) 45%, #000);
+  background: var(--action-hover);
+  border-color: var(--action-hover);
+  color: var(--action-hover-ink);
+  box-shadow: 4px 4px 0 var(--action-hover-shadow);
   transform: translate(-2px, -2px);
 }
 .btn--brand:active:not(:disabled) {
-  box-shadow: 0 0 0 color-mix(in srgb, var(--brand) 45%, #000);
+  box-shadow: 0 0 0 var(--action-hover-shadow);
+  transform: translate(0, 0);
+}
+
+/* Destruktif PEJAL — satu-satunya tombol merah pekat di panel, dipakai
+   tombol konfirmasi di dialog "yakin hapus?". Efek angkatnya sama dengan
+   .btn--brand supaya keduanya terbaca sebagai satu keluarga tombol
+   bertekanan tinggi; yang membedakan cuma warnanya, dan warna itu yang
+   membawa artinya. */
+.btn--bahaya {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--danger-ink);
+  font-weight: 600;
+  transition:
+    background-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+.btn--bahaya:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--danger-ink);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--danger) 55%, #000);
+  transform: translate(-2px, -2px);
+}
+.btn--bahaya:active:not(:disabled) {
+  box-shadow: 0 0 0 color-mix(in srgb, var(--danger) 55%, #000);
   transform: translate(0, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn--brand { transition: background-color var(--dur) var(--ease), filter var(--dur) var(--ease); }
-  .btn--brand:hover:not(:disabled) { box-shadow: none; transform: none; }
+  .btn--brand:hover:not(:disabled),
+  .btn--bahaya:hover:not(:disabled) { box-shadow: none; transform: none; }
 }
 
 /* Ungu hanya untuk upgrade dan fitur berbayar — tidak pernah aksi biasa. */
 .btn--upgrade { background: var(--upgrade); color: var(--upgrade-ink); }
 .btn--upgrade:hover:not(:disabled) { filter: brightness(1.1); }
 
-.btn--danger { background: transparent; color: var(--brand); border-color: var(--brand-line); }
-.btn--danger:hover:not(:disabled) { background: var(--brand-soft); }
+.btn--danger { background: transparent; color: var(--danger); border-color: var(--danger-line); }
+.btn--danger:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); }
 
 /* Tombol hapus ikon: diam saat tidak disentuh, merah begitu kursor mendekat.
    Merah = brand DAN destruktif di sistem warna ini, jadi warnanya sudah
@@ -112,9 +192,9 @@
    berteriak padahal tidak ada yang salah. */
 .btn--hapus:hover:not(:disabled),
 .btn--hapus:focus-visible:not(:disabled) {
-  color: var(--brand);
-  border-color: var(--brand-line);
-  background: var(--brand-soft);
+  color: var(--danger);
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
 }
 
 /* Tombol yang TERANGKAT saat disentuh: bayangan keras tanpa blur muncul di
@@ -149,7 +229,7 @@
 
 .btn--sm { padding: 0.4rem 0.85rem; font-size: var(--text-xs); }
 .btn--lg { padding: 0.8rem 1.5rem; font-size: var(--text-base); }
-.btn--icon { padding: 0.55rem; border-radius: var(--radius-pill); }
+.btn--icon { padding: 0.55rem; border-radius: var(--radius-sm); }
 
 /* Tombol ikon berbentuk kotak-membulat, bukan bundar. Dipakai saat tombolnya
    berjajar dengan kotak lain yang juga bersudut — di deretan aksi tabel,
@@ -164,7 +244,7 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.2rem 0.6rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface-raised);
   color: var(--text-muted);
@@ -178,6 +258,7 @@
 .badge--upgrade { background: var(--upgrade-soft); color: var(--upgrade); border-color: transparent; }
 .badge--warn    { background: var(--warn-soft);    color: var(--warn);    border-color: var(--warn-line); }
 .badge--success { background: var(--success-soft); color: var(--success); border-color: transparent; }
+.badge--danger  { background: var(--danger-soft);  color: var(--danger);  border-color: var(--danger-line); }
 .badge--info    { background: var(--info-soft);    color: var(--info);    border-color: transparent; }
 
 /* Titik status di depan label — dipakai untuk "hidup"/"aktif". */
@@ -224,21 +305,60 @@
 .card__titles { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
 
 /* Tile ikon persegi membulat — penanda tetap di kepala kartu dan halaman. */
+/* Ubin ikon dengan SUDUT BRACKET — bentuk .kotak-ikon di situs publik: dua
+   siku kecil di pojok kiri-atas dan kanan-bawah, di dalam kotak bergaris
+   tipis. Sebelumnya bidang pejal berwarna; sikunya yang membuat ia terbaca
+   sebagai satu keluarga dengan kotak-kotak di landing page. */
 .icon-tile {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
   flex: none;
-  border-radius: var(--radius-md);
+  width: 2.375rem;
+  height: 2.375rem;
+  border-radius: var(--radius-xs);
   background: var(--surface-raised);
-  border: 1px solid var(--border);
-  color: var(--text-strong);
+  color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
-.icon-tile--invert { background: var(--action); border-color: transparent; color: var(--action-ink); }
-.icon-tile--brand  { background: var(--brand);   border-color: transparent; color: var(--brand-ink); }
-.icon-tile--sm { width: 2rem; height: 2rem; border-radius: var(--radius-sm); }
+.icon-tile::before,
+.icon-tile::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1px solid currentColor;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.icon-tile::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.icon-tile::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+
+.icon-tile--sm { width: 1.75rem; height: 1.75rem; }
+.icon-tile--lg { width: 3rem; height: 3rem; }
+
+/* Varian berwarna mewarnai GARIS dan SIKUNYA, bukan bidangnya — sama seperti
+   .kotak-ikon di situs publik, yang tidak pernah jadi blok pejal. */
+.icon-tile--brand   { color: var(--brand);   box-shadow: inset 0 0 0 1px var(--brand-line);   background: var(--brand-soft); }
+.icon-tile--danger  { color: var(--danger);  box-shadow: inset 0 0 0 1px var(--danger-line);  background: var(--danger-soft); }
+.icon-tile--upgrade { color: var(--upgrade); box-shadow: inset 0 0 0 1px transparent;         background: var(--upgrade-soft); }
+.icon-tile--warn    { color: var(--warn);    box-shadow: inset 0 0 0 1px var(--warn-line);    background: var(--warn-soft); }
+.icon-tile--success { color: var(--success); box-shadow: inset 0 0 0 1px transparent;         background: var(--success-soft); }
+.icon-tile--info    { color: var(--info);    box-shadow: inset 0 0 0 1px transparent;         background: var(--info-soft); }
+
+
+/* Satu-satunya ubin yang masih PEJAL: --invert, dipakai saat ubinnya sendiri
+   yang jadi aksi utama. Sikunya dimatikan — di atas bidang pejal ia cuma
+   jadi noda. */
+.icon-tile--invert {
+  background: var(--action);
+  color: var(--action-ink);
+  box-shadow: none;
+}
+.icon-tile--invert::before,
+.icon-tile--invert::after { content: none; }
 
 /* --- Separator ----------------------------------------------------------- */
 
@@ -271,7 +391,7 @@
 .item__desc { font-size: var(--text-sm); color: var(--text-muted); }
 .item__trail { color: var(--text-faint); flex: none; }
 .item--bordered { border-color: var(--border); background: var(--surface); }
-.item--danger .item__title, .item--danger .item__desc { color: var(--brand); }
+.item--danger .item__title, .item--danger .item__desc { color: var(--danger); }
 
 /* --- Breadcrumb ---------------------------------------------------------- */
 
@@ -349,4 +469,53 @@
 @media (prefers-reduced-motion: reduce) {
   .theme-btn__ikon { animation: none; }
   .theme-btn:hover:not(:disabled) svg { animation: none; }
+}
+
+/* =============================================================================
+   PENANDA SUDUT — dibawa dari situs publik.
+
+   Kotak berongga 17px di tiap sudut wadah, menunggangi garisnya. Di landing
+   page ia yang membuat tiap pita terbaca sebagai lembar cetak biru, dan ia
+   satu-satunya tanda visual yang tidak punya padanan sama sekali di panel.
+
+   Dipasang lewat kelas `.bersudut`, bukan otomatis ke semua `.card`: kartu
+   angka kecil yang berjajar empat akan penuh titik kalau tiap sudutnya
+   diberi kotak, dan yang dimaksud landing page adalah penanda di sudut
+   BIDANG BESAR, bukan di tiap benda.
+
+   Isinya diwarnai permukaan halaman, bukan transparan, supaya garis di
+   bawahnya terpotong dan kotaknya benar-benar terbaca berongga. Geserannya
+   -(sisi / 2 + 0,5px): pseudo-elemen absolut diukur dari kotak-PADDING
+   induknya, jadi titik nolnya sudah 1px masuk ke dalam terhadap garis yang
+   mau ditumpangi — setengah kotak saja membuatnya meleset 1px.
+   Sisinya sengaja GANJIL supaya tepi kotak jatuh di piksel bulat.
+   ============================================================================= */
+
+.bersudut { position: relative; }
+
+.bersudut::before,
+.bersudut::after {
+  content: "";
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--bg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dua sudut yang berseberangan, persis seperti .dalam::before/::after di
+   situs publik — di sana pun tiap pita cuma menggambar dua, dan yang membuat
+   keempat perpotongan terisi adalah pita di atas dan di bawahnya. */
+.bersudut::before { left: -9px; top: -9px; }
+.bersudut::after { right: -9px; bottom: -9px; }
+
+/* Di layar sempit penanda sudut kanan keluar viewport dan halaman bisa
+   digeser mendatar beberapa piksel — persis jebakan yang sudah menggigit di
+   situs publik. Di bawah 48rem ia dimatikan. */
+@media (max-width: 48rem) {
+  .bersudut::before,
+  .bersudut::after { content: none; }
 }

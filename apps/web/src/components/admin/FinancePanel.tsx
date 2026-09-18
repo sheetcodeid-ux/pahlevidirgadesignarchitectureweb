@@ -363,7 +363,10 @@ function Isi() {
                  sisanya. */
               seri={[
                 { kunci: "kas", label: "Kas masuk", warna: "var(--success)", gaya: "penuh", isi: true },
-                { kunci: "beban", label: "Beban", warna: "var(--brand)", gaya: "putus" },
+                /* --danger, bukan --brand: sejak merek jadi teal, beban yang memakai
+                     --brand tergambar teal — warna yang sama dengan kas masuk,
+                     dan dua garis sewarna di satu grafik tidak menjawab apa pun. */
+                { kunci: "beban", label: "Beban", warna: "var(--danger)", gaya: "putus" },
                 { kunci: "laba", label: "Laba bersih", warna: "var(--warn)", gaya: "putus" },
               ]}
               data={arus}
