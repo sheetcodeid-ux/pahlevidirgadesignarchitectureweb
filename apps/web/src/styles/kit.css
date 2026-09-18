@@ -1,0 +1,688 @@
+/* =============================================================================
+   KIT — pustaka komponen panel admin, dibangun dari lembar kosong mengikuti
+   file Figma "Coinest — Finance Management Dashboard".
+
+   Setiap angka di berkas ini DIUKUR dari ekspor SVG framenya, bukan dikira:
+
+       python3 scripts/ukur-figma.py Button "Size=Medium, With Icon=Left, Type=Primary"
+
+   Skrip itu membaca <rect> di dalam frame — ukuran, radius, dan warna latar
+   apa adanya — jadi tidak ada langkah "kira-kira dari tangkapan layar" di
+   antara Figma dan CSS ini.
+
+   Awalan `k-` dipakai supaya kit ini bisa hidup berdampingan dengan
+   admin.css lama selama halaman dipindahkan satu per satu. Begitu seluruh
+   halaman pindah, admin.css dibuang dan awalannya boleh ikut hilang.
+
+   Warna SELALU menunjuk token di tokens.css — tidak ada nilai literal di
+   sini, kecuali di komentar yang menyebut angka Figma-nya sebagai bukti.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Tipografi Coinest
+
+   Skala lengkapnya terbaca dari nama layer di frame Typography — Figma
+   menamai tiap baris contoh dengan gayanya sendiri, jadi ini bukan hasil
+   pengukuran tinggi huruf melainkan nama yang ditulis perancangnya:
+
+     Heading  H1 32 · H2 28 · H3 26 · H4 24 · H5 22 · H6 20
+     Title    18 · 16 · 14 · 12 · 11 · 10 · 9 · 8
+     Btn      14 · 12 · 10          (hanya Medium dan SemiBold)
+     Body     16 · 14 · 12 · 11 · 10
+
+   Bobotnya juga dari sana: Heading SemiBold/Bold (H5 dan H6 naik ke
+   Bold/ExtraBold), Title Regular/SemiBold/Bold, Body Regular/SemiBold/Bold.
+   -------------------------------------------------------------------------- */
+:root {
+  --k-h1: 2rem;      /* 32 */
+  --k-h2: 1.75rem;   /* 28 */
+  --k-h3: 1.625rem;  /* 26 */
+  --k-h4: 1.5rem;    /* 24 */
+  --k-h5: 1.375rem;  /* 22 */
+  --k-h6: 1.25rem;   /* 20 */
+
+  --k-t18: 1.125rem;
+  --k-t16: 1rem;
+  --k-t14: 0.875rem;
+  --k-t12: 0.75rem;
+  --k-t11: 0.6875rem;
+  --k-t10: 0.625rem;
+  --k-t9: 0.5625rem;
+  --k-t8: 0.5rem;
+
+  /* Urbanist. Bobot yang benar-benar dipakai Coinest: 400 Regular,
+     500 Medium (hanya tombol), 600 SemiBold, 700 Bold, 800 ExtraBold. */
+  --k-reg: 400;
+  --k-med: 500;
+  --k-semi: 600;
+  --k-bold: 700;
+  --k-xbold: 800;
+}
+
+/* -----------------------------------------------------------------------------
+   TOMBOL — frame Button, keluarga "Button"
+
+   Tinggi, radius, dan warna dibaca langsung dari <rect> variannya:
+
+     Size     tinggi  radius   latar        tinta
+     small       28      7     Primary      #1E4841 / #FBFBFC
+     Medium      32      8     Secondary    #ECF4E9 / #1E4841
+     Large       38      8     Ghost        garis #E5E6E6, tinta #1E4841
+                               Transparent  tanpa keduanya, tinta #1E4841
+
+   Ghost rect-nya 1px lebih kecil di tiap sisi (37, 31, 27) dengan radius
+   setengah piksel lebih kecil — itu bukan ukuran lain, melainkan cara Figma
+   menggambar garis yang berpusat di tepi. Kotaknya sama; yang ada border 1px.
+
+   PADDING DIHITUNG DARI POSISI, BUKAN DARI SELISIH LEBAR. Lebar varian di
+   file ini tidak konsisten — "small, No Icon, Ghost" 52px sementara
+   "small, No Icon, Primary" 49px, padahal keduanya kotak yang sama. Satu
+   instance pernah diseret. Yang tetap konsisten posisi kotak ikonnya:
+
+     padding-x   small 8 · Medium 10 · Large 12
+     ikon        small 12 · Medium 14 · Large 16
+     jarak       6 (terukur 6,7 / 4,8 / 6,8 — sebarannya dari
+                 ketidakkonsistenan yang sama)
+
+   Ukuran ikon dihitung dari lebar gambar instance dibagi lebar gambar
+   masternya, dikali 32 — bukan dikira dari melihat.
+
+   FONT: Btn 10 / 12 / 14, bobot 500 (Medium). Kedua angka itu dari nama layer
+   di frame Typography ("Btn/12px - SemiBold", "Btn/12px - Medium"), bukan
+   ditebak. Bobot 500 juga yang dibuktikan lebar teksnya: label tombol
+   berukuran 2,77 em di ketiga ukuran, dan pada bobot 600 tidak ada kata
+   enam huruf yang selebar itu — pada 500 ada beberapa.
+
+   Satu hal yang TIDAK bisa dicocokkan, dan jangan dikejar: LEBAR tombolnya.
+   Label di Figma sudah jadi outline, jadi isinya tidak terbaca; yang terukur
+   cuma lebar tintanya. Lebar tombol di sini karena itu mengikuti teks
+   Indonesia yang sesungguhnya, bukan angka 49/59/68 milik kata contoh
+   Coinest. Yang wajib sama kotaknya: tinggi, radius, padding, jarak, ikon.
+   -------------------------------------------------------------------------- */
+.k-tombol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k-tombol-gap);
+  height: var(--k-tombol-h);
+  padding: 0 var(--k-tombol-pad);
+  border: 1px solid transparent;
+  border-radius: var(--k-tombol-r);
+  font-family: var(--font-sans);
+  font-size: var(--k-tombol-font);
+  font-weight: var(--k-med);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.k-tombol:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.k-tombol:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Ukuran */
+.k-tombol--small {
+  --k-tombol-h: 28px;
+  --k-tombol-r: 7px;
+  --k-tombol-pad: 8px;
+  --k-tombol-gap: 6px;
+  --k-tombol-font: var(--k-t10);
+}
+.k-tombol--medium {
+  --k-tombol-h: 32px;
+  --k-tombol-r: 8px;
+  --k-tombol-pad: 10px;
+  --k-tombol-gap: 6px;
+  --k-tombol-font: var(--k-t12);
+}
+.k-tombol--large {
+  --k-tombol-h: 38px;
+  --k-tombol-r: 8px;
+  --k-tombol-pad: 12px;
+  --k-tombol-gap: 6px;
+  --k-tombol-font: var(--k-t14);
+}
+
+/* Jenis */
+.k-tombol--primary {
+  background: var(--action);
+  color: var(--action-ink);
+}
+.k-tombol--primary:hover:not(:disabled) { background: var(--action-hover); }
+.k-tombol--primary:active:not(:disabled) { background: var(--action-tekan); }
+
+.k-tombol--secondary {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.k-tombol--secondary:hover:not(:disabled) { background: var(--brand-mint); }
+
+.k-tombol--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--brand);
+}
+.k-tombol--ghost:hover:not(:disabled) {
+  background: var(--brand-soft);
+  border-color: var(--brand-mint);
+}
+
+.k-tombol--transparent {
+  background: transparent;
+  color: var(--brand);
+}
+.k-tombol--transparent:hover:not(:disabled) { background: var(--brand-soft); }
+
+/* -----------------------------------------------------------------------------
+   TOMBOL IKON — frame Button, keluarga "Button Icon"
+
+   Bujur sangkar. Terukur: xSmall 24 (r6), Small 28 (r7), Medium 32 (r8),
+   Large 38 (r19). Large-nya BULAT — 19 adalah setengah 38, jadi itu memang
+   lingkaran dan bukan salah baca; ketiga ukuran lain bersudut.
+   -------------------------------------------------------------------------- */
+.k-tombolikon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--k-tombol-h);
+  height: var(--k-tombol-h);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--k-tombol-r);
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.k-tombolikon--xsmall { --k-tombol-h: 24px; --k-tombol-r: 6px; }
+.k-tombolikon--small  { --k-tombol-h: 28px; --k-tombol-r: 7px; }
+.k-tombolikon--medium { --k-tombol-h: 32px; --k-tombol-r: 8px; }
+.k-tombolikon--large  { --k-tombol-h: 38px; --k-tombol-r: 999px; }
+
+/* -----------------------------------------------------------------------------
+   TOMBOL NAV — frame Button, keluarga "Button Nav"
+
+   Terukur: tinggi 40, radius 20 (pil penuh), lebar menu desktop 177.
+   Yang AKTIF berlatar mint #BBF49C; yang tidak aktif tidak punya rect sama
+   sekali di framenya — jadi latarnya memang kosong, bukan abu muda.
+
+   Submenu memakai kotak yang sama persis, teksnya saja mulai 8px lebih ke
+   kanan (61,3 lawan 53,3) dan tanpa ikon.
+   -------------------------------------------------------------------------- */
+.k-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  color: var(--text-body);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.k-nav:hover { background: var(--brand-soft); }
+.k-nav[aria-current="page"],
+.k-nav.is-aktif {
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+}
+/* Submenu: tanpa ikon, teksnya sejajar dengan label menu di atasnya. */
+.k-nav--sub { padding-left: 52px; }
+
+/* -----------------------------------------------------------------------------
+   TOMBOL BERSEGMEN — frame Button, keluarga "Segmented Button"
+
+   Terukur: 313x32, radius 8, latar #ECF4E9. Segmen aktifnya kotak putih di
+   dalamnya. Varian di Figma 2, 3, dan 4 segmen — lebarnya tetap 313 di
+   ketiganya, jadi segmennya memang dibagi rata, bukan mengikuti isi.
+   -------------------------------------------------------------------------- */
+.k-segmen {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  height: 32px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+}
+.k-segmen__b {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 6px;
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  color: var(--brand);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease);
+}
+.k-segmen__b[aria-selected="true"],
+.k-segmen__b.is-aktif { background: var(--surface); }
+
+/* -----------------------------------------------------------------------------
+   Penjaga jebakan #7 — ikon yang punya width DAN height tidak boleh ikut
+   aturan `svg { max-width: 100% }` di global.css, atau ia menyusut jadi 0x0
+   di kolom sempit dan yang tampil tombol bulat kosong.
+   -------------------------------------------------------------------------- */
+.k-tombol svg[width][height],
+.k-tombolikon svg[width][height],
+.k-nav svg[width][height],
+.k-segmen svg[width][height] {
+  flex: none;
+  max-width: none;
+}
+
+/* -----------------------------------------------------------------------------
+   GALERI — kerangka halaman kerja tempat komponen diperiksa.
+
+   Bukan bagian dari sistem Coinest; ia perancah. Ditulis di sini supaya
+   halamannya tidak perlu stylesheet sendiri yang bisa lupa dimuat
+   (jebakan #5 di CLAUDE.md).
+   -------------------------------------------------------------------------- */
+.k-galeri { display: flex; flex-direction: column; gap: 48px; }
+
+.k-galeri__seksi {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.k-galeri__judul {
+  margin: 0 0 4px;
+  font-size: var(--k-h4);
+  font-weight: var(--k-semi);
+  color: var(--judul-ink);
+}
+
+.k-galeri__ket {
+  margin: 0 0 20px;
+  max-width: 68ch;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+
+.k-galeri__baris {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+
+.k-galeri__label {
+  flex: none;
+  width: 180px;
+  margin: 0;
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  color: var(--text-muted);
+}
+
+/* min-width:0 wajib di sini — jebakan #33: flex item yang boleh menyusut
+   berukuran min-content tanpa itu, dan min-content sebuah baris tombol adalah
+   selebar seluruh tombolnya. */
+.k-galeri__isi {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+}
+
+.k-galeri__sel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.k-galeri__tanda {
+  font-size: var(--k-t10);
+  color: var(--text-faint);
+}
+
+.k-galeri__segmen { width: 313px; max-width: 100%; }
+
+.k-galeri__ikon {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 16px 8px;
+}
+.k-galeri__ikon figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-body);
+}
+.k-galeri__ikon figcaption {
+  font-size: var(--k-t9);
+  line-height: 1.3;
+  text-align: center;
+  color: var(--text-faint);
+  word-break: break-word;
+}
+.k-galeri__ikon svg[width][height] { flex: none; max-width: none; }
+
+/* -----------------------------------------------------------------------------
+   LENCANA — frame Badges
+
+   Lima keluarga, dan tingginya yang membedakan maknanya:
+
+     Badge (Indicator)          18 r9 · 10 r5 · 13x10 r5 · 8 r4, latar #F73541
+     Badge Status               16 r3.5  garis #E5E6E6, latar bening
+     Badge Status v2            17 r4    pejal
+     Badge Status Transaction   24 r6    pejal
+     Badge Status Invoice       24 r12   pil, pejal
+
+   Ukuran hurufnya TIDAK ditebak. Teks Figma sudah jadi outline, jadi yang
+   terukur tinggi tintanya; ukuran font diturunkan dengan rasio Urbanist yang
+   diukur sendiri di peramban —
+
+     angka 0,6875 · kapital 0,65625 · beraskender 0,71875 ·
+     beraskender+berdesender 0,921875 · tinggi-x 0,5
+
+   — lalu dibagi 1,05, karena outline Figma terukur sekitar 5% lebih besar
+   daripada render peramban pada string yang SAMA (dibuktikan dengan dua belas
+   baris di frame Typography, yang nama layernya memang isi teksnya).
+
+   Hasilnya jatuh persis di skala Coinest, dan sejalan dengan tombol: kotak
+   setinggi 16-17 memakai 10px, setinggi 24 memakai 12px — sama seperti tombol
+   28 memakai Btn/10 dan tombol 32 memakai Btn/12.
+
+   CATATAN PENTING soal warna: Badge Status memakai #E5E6E6, #1E4841, #F2B007,
+   #F73541 — seluruhnya palet Coinest. Itu berbeda dari frame Forms dan
+   Breadcrumb; lihat catatan di bagian Forms.
+   -------------------------------------------------------------------------- */
+.k-lencana {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--k-lencana-h);
+  padding: 0 var(--k-lencana-pad);
+  border: 1px solid transparent;
+  border-radius: var(--k-lencana-r);
+  font-size: var(--k-lencana-font);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Bentuk: garis (16), pejal kecil (17), pejal (24), pil (24). */
+.k-lencana--garis {
+  --k-lencana-h: 16px; --k-lencana-r: 3.5px; --k-lencana-pad: 6px; --k-lencana-font: var(--k-t10);
+  border-color: var(--border);
+}
+.k-lencana--pejalkecil { --k-lencana-h: 17px; --k-lencana-r: 4px; --k-lencana-pad: 6px; --k-lencana-font: var(--k-t10); }
+.k-lencana--pejal      { --k-lencana-h: 24px; --k-lencana-r: 6px; --k-lencana-pad: 8px; --k-lencana-font: var(--k-t12); }
+.k-lencana--pil        { --k-lencana-h: 24px; --k-lencana-r: 12px; --k-lencana-pad: 10px; --k-lencana-font: var(--k-t12); }
+
+/* Nada. Pada bentuk bergaris yang berwarna cuma tintanya; pada bentuk pejal
+   latar DAN tintanya, dan pasangannya dari Figma apa adanya. */
+.k-lencana--garis.k-lencana--selesai { color: var(--brand); }
+.k-lencana--garis.k-lencana--menunggu { color: var(--warn); }
+.k-lencana--garis.k-lencana--gagal { color: var(--danger); }
+.k-lencana--garis.k-lencana--netral { color: var(--text-body); }
+
+.k-lencana--selesai:not(.k-lencana--garis) { background: var(--brand); color: var(--brand-mint); }
+.k-lencana--menunggu:not(.k-lencana--garis) { background: var(--brand-mint); color: var(--brand); }
+.k-lencana--gagal:not(.k-lencana--garis) { background: var(--danger-soft); color: var(--danger); }
+.k-lencana--netral:not(.k-lencana--garis) { background: var(--border-strong); color: var(--text-strong); }
+
+/* Angka merah — "Inbox 99" di sidebar Coinest, dan titik tanpa angka. */
+.k-angka {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: var(--danger-ink);
+  font-size: var(--k-t10);
+  font-weight: var(--k-bold);
+  line-height: 1;
+}
+.k-angka--kecil { min-width: 13px; height: 10px; border-radius: 5px; padding: 0 2.5px; font-size: var(--k-t8); }
+.k-titik { display: inline-block; width: 10px; height: 10px; border-radius: 5px; background: var(--danger); }
+.k-titik--kecil { width: 8px; height: 8px; border-radius: 4px; }
+
+/* -----------------------------------------------------------------------------
+   REMAH (breadcrumb) — frame Breadcrumb
+
+   Terukur: teks 12px, jarak sekitar 7px di kiri dan kanan pemisahnya.
+
+   Warna aslinya #868F9B untuk teks dan #E0E2E5 untuk pemisah — DUA-DUANYA di
+   luar palet Coinest (lihat catatan di bagian Forms). Dipetakan ke token
+   terdekat yang memang dipakai seluruh file: teks abu dan garis.
+   -------------------------------------------------------------------------- */
+.k-remah { display: flex; align-items: center; gap: 7px; margin: 0; padding: 0; list-style: none; font-size: var(--k-t12); }
+.k-remah__item { display: flex; align-items: center; gap: 7px; }
+.k-remah a { color: var(--text-muted); text-decoration: none; }
+.k-remah a:hover { color: var(--brand); text-decoration: underline; }
+.k-remah__pisah { color: var(--border); }
+.k-remah [aria-current="page"] { color: var(--text-body); font-weight: var(--k-semi); }
+
+/* -----------------------------------------------------------------------------
+   PAGINASI — frame Pagination
+
+   Terukur, dan angkanya bertemu dengan keluarga tombol:
+
+     Default  tombol angka 30x28 r7, tombol ikon 28x28 r7, jarak 8, font 10
+     Mobile   seluruhnya 32x32 r8, jarak 8, font 12
+
+   Tinggi 28 memakai font 10 dan tinggi 32 memakai font 12 — persis aturan
+   yang sama seperti tombol small dan Medium. Itu bukan kebetulan, dan itu
+   yang membuat angka hasil turunan di atas bisa dipercaya.
+
+   Warna: yang sedang dibuka #1E4841 dengan tinta #FBFBFC, sisanya #ECF4E9
+   dengan tinta #1E4841, dan tombol yang MATI #EEEEEF.
+   -------------------------------------------------------------------------- */
+.k-paginasi { display: flex; align-items: center; gap: 8px; }
+.k-paginasi__b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  cursor: pointer;
+}
+.k-paginasi__b--ikon { min-width: 28px; width: 28px; padding: 0; }
+.k-paginasi__b[aria-current="page"] { background: var(--brand); color: var(--action-ink); }
+.k-paginasi__b:disabled { background: var(--surface-hover); color: var(--text-faint); cursor: not-allowed; }
+.k-paginasi__jeda { padding: 0 2px; color: var(--brand); font-size: var(--k-t10); }
+
+.k-paginasi--ponsel .k-paginasi__b {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: var(--k-t12);
+}
+.k-paginasi--ponsel .k-paginasi__b--ikon { width: 32px; }
+
+.k-paginasi svg[width][height],
+.k-lencana svg[width][height] { flex: none; max-width: none; }
+
+/* -----------------------------------------------------------------------------
+   ISIAN — frame Forms
+
+   PERINGATAN, dan ini perlu diputuskan pemilik, bukan dipilih diam-diam:
+   frame Forms memakai DUA palet yang berbeda.
+
+     Input-search dan "Input · Size=Large, Type=Default" memakai palet Coinest
+     — #EFF0F0, #6B7271, #FBFBFC, #E5E6E6, #242E2C.
+
+     Checkbox, Toggle, "Input · Size=Medium", dan seluruh frame Breadcrumb
+     serta frame Color memakai palet LAIN — #FAF6F5, #CDEDDD, #E4E2DD,
+     #1A1615, #66615E, #868F9B, #E0E2E5. Frame Color bahkan seluruhnya biru
+     dan merah (#3384C6, #43ABFF, #FF434E), yang tidak muncul di satu pun
+     komponen.
+
+   Dihitung di seluruh 14 frame komponen: #242E2C 614 kali, #1E4841 484,
+   #6B7271 266, #BBF49C 194 — sementara #FAF6F5 cuma 20 kali dan #E4E2DD 33.
+   Jadi palet Coinest yang menang di sini, dan sisa-sisa itu diperlakukan
+   sebagai bawaan templat yang belum dibersihkan.
+
+   Yang diambil apa adanya dari Figma tetap BENTUKNYA:
+
+     Input-search  Large 37 r18.5 · Medium 31 r15.5 · Small 27 r13.5 (pil),
+                   ikon cari di KANAN, ukuran 16 / 14 / 12
+     Input         label di atas, kotak 45 r7.5, ikon kiri dan kanan 16
+     Checkbox      13 · 17 · 23 persegi
+     Toggle        28x16 r8 dengan tuas bulat 12
+   -------------------------------------------------------------------------- */
+.k-cari {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--k-cari-h);
+  padding: 0 var(--k-cari-pad);
+  border: 1px solid var(--surface-hover);
+  border-radius: 999px;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+/* Lebar 236 (Small 222) juga dari Figma. Dipasang sebagai lebar BAWAAN, bukan
+   lebar mati: kotak cari di bilah tabel harus boleh melar selebar bilahnya. */
+.k-cari--large  { --k-cari-h: 37px; --k-cari-pad: 16px; --k-cari-font: var(--k-t12); width: 236px; }
+.k-cari--medium { --k-cari-h: 31px; --k-cari-pad: 14px; --k-cari-font: var(--k-t12); width: 236px; }
+.k-cari--small  { --k-cari-h: 27px; --k-cari-pad: 12px; --k-cari-font: var(--k-t11); width: 222px; }
+.k-cari { max-width: 100%; }
+.k-cari:focus-within { border-color: var(--brand-mint); }
+
+.k-cari__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--k-cari-font);
+}
+.k-cari__input:focus { outline: none; }
+.k-cari__input::placeholder { color: var(--text-muted); }
+
+.k-isian { display: flex; flex-direction: column; gap: 8px; }
+.k-isian__label { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.k-isian__kotak {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 45px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 7.5px;
+  background: var(--surface);
+}
+.k-isian__kotak:focus-within { border-color: var(--brand); }
+.k-isian__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--k-t14);
+}
+.k-isian__input:focus { outline: none; }
+.k-isian__input::placeholder { color: var(--text-muted); }
+.k-isian__bantu { font-size: var(--k-t12); color: var(--text-muted); }
+
+/* Kotak centang — <input type=checkbox> ASLI yang digambar ulang, bukan div
+   ber-role. Perilaku bawaan (spasi, label, form, indeterminate) tidak bisa
+   rusak diam-diam; yang diganti cuma tampilannya. */
+.k-centang {
+  appearance: none;
+  flex: none;
+  width: var(--k-centang-s);
+  height: var(--k-centang-s);
+  margin: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--field);
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.k-centang--default { --k-centang-s: 13px; }
+.k-centang--medium  { --k-centang-s: 17px; }
+.k-centang--big     { --k-centang-s: 23px; }
+
+.k-centang::before {
+  content: "";
+  width: calc(var(--k-centang-s) * 0.46);
+  height: calc(var(--k-centang-s) * 0.28);
+  border-left: 1.5px solid var(--brand-ink);
+  border-bottom: 1.5px solid var(--brand-ink);
+  transform: rotate(-45deg) translate(1px, -1px) scale(0);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.k-centang:checked { background: var(--brand); border-color: var(--brand); }
+.k-centang:checked::before { transform: rotate(-45deg) translate(1px, -1px) scale(1); }
+.k-centang:indeterminate { background: var(--brand); border-color: var(--brand); }
+.k-centang:indeterminate::before {
+  border-bottom: 1.5px solid var(--brand-ink);
+  border-left: 0;
+  height: 0;
+  transform: none;
+}
+.k-centang:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Sakelar — juga <input type=checkbox> asli, dengan role switch. */
+.k-sakelar {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 16px;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--border-strong);
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease);
+}
+.k-sakelar::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface);
+  transition: transform var(--dur) var(--ease);
+}
+.k-sakelar:checked { background: var(--brand-mint); }
+.k-sakelar:checked::after { transform: translateX(12px); }
+.k-sakelar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.k-cari svg[width][height],
+.k-isian svg[width][height] { flex: none; max-width: none; }

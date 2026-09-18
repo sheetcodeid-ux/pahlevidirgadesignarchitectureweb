@@ -1,0 +1,21 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { MasterGuard } from "../../components/admin/MasterGuard";
+import { Galeri } from "../../components/kit/Galeri";
+import "../../styles/kit.css";
+
+/* Pustaka komponen BARU — dibangun dari lembar kosong mengikuti file Figma
+   Coinest, menggantikan /admin/ui secara bertahap.
+
+   Selama dua-duanya hidup, yang berlaku sebagai sumber kebenaran adalah
+   halaman ini: /admin/ui berisi sistem lama yang akan dibuang begitu seluruh
+   halaman pindah. Dua daftar berisi hal yang sama pasti menyimpang
+   (jebakan #32), jadi jangan menambah komponen baru ke /admin/ui. */
+---
+
+<AdminLayout title="Kit Komponen" heading="Kit Komponen">
+  <MasterGuard client:load target="isi-kit" />
+  <div id="isi-kit" hidden>
+    <Galeri client:load />
+  </div>
+</AdminLayout>
