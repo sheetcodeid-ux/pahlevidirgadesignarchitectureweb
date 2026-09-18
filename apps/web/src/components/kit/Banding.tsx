@@ -59,6 +59,13 @@ function warnaTergambar(akar: HTMLElement): string[] {
       if (garis) keluar.add(garis);
     }
     if (el instanceof SVGElement && el.tagName === "svg" && tinta) keluar.add(tinta);
+    /* Bentuk SVG diwarnai lewat `fill`, bukan background atau color. Tanpa
+       membacanya, lingkaran dan path berwarna tidak pernah terhitung dan
+       dilaporkan sebagai warna yang hilang. */
+    if (el instanceof SVGElement) {
+      const isi = keHeks(g.fill);
+      if (isi) keluar.add(isi);
+    }
     /* Centang dan tuas sakelar digambar sebagai pseudo-elemen, jadi warnanya
        tidak akan pernah terbaca dari elemennya sendiri. Tanpa ini, komponen
        yang SUDAH benar tetap dilaporkan kekurangan warna. */

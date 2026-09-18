@@ -80,6 +80,10 @@ PASANGAN = [
     ("centang-23",  "Forms", "State=Checked, Size=Big"),
     ("sakelar-on",  "Forms", "Active=True, Size=Default"),
     ("sakelar-off", "Forms", "Active=False, Size=Default"),
+    # --- Kartu ---------------------------------------------------------------
+    ("stat-desktop", "Card", "Version=Desktop"),
+    ("kas-gelap",    "Card", "Property 1=True"),
+    ("kas-terang",   "Card", "Property 1=False"),
 ]
 
 
