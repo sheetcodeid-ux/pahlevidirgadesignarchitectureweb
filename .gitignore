@@ -26,3 +26,4 @@ Thumbs.db
 
 # Backup lokal
 *.dump
+__pycache__/
