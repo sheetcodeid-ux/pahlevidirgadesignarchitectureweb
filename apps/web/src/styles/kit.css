@@ -133,10 +133,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--k-tombol-gap);
+  /* `gap: 0` dan jaraknya dipasang sebagai margin pada ikonnya masing-masing:
+     jarak ikon-kiri→teks dan teks→caret BEDA di Figma (Large 5,97 lawan
+     3,61), dan satu `gap` tidak bisa menyatakan dua angka. */
+  gap: 0;
   height: var(--k-tombol-h);
-  padding-left: var(--k-tombol-pad-polos);
-  padding-right: var(--k-tombol-pad-polos);
+  /* Isinya diturunkan setengah dari padding atas ini — `align-items: center`
+     memusatkan di dalam kotak-isi, dan kotak-isi ikut turun separuhnya.
+
+     Kenapa perlu: Chromium memusatkan teks memakai metrik ascent/descent
+     font, Figma memakai kotak teksnya sendiri. Bedanya kecil tapi TETAP:
+     terukur, tinta huruf kit duduk 0,5px (small) dan 1,0px (Large) di atas
+     tinta Figma, sementara Medium kebetulan berimpit. Bukan line-height yang
+     menentukannya — pada isi yang dipusatkan, tinggi baris hilang dari
+     persamaannya. */
+  padding-top: var(--k-tombol-turun);
+  padding-left: var(--k-tombol-pad-kiri);
+  padding-right: var(--k-tombol-pad-kanan);
   border-width: 1px;
   border-radius: var(--k-tombol-r);
   font-family: var(--font-sans);
@@ -152,8 +165,10 @@
 /* Kelas ini datang dari komponennya, bukan dari :has() — komponen memang
    sudah tahu ada-tidaknya ikon, dan selektor yang bergantung pada bentuk
    pohon DOM gampang rusak diam-diam di dalam island Astro (jebakan #1). */
-.k-tombol--ikonkiri { padding-left: var(--k-tombol-pad-ikon); }
-.k-tombol--ikonkanan { padding-right: var(--k-tombol-pad-ikon); }
+.k-tombol--ikonkiri { padding-left: var(--k-tombol-padikon-kiri); }
+.k-tombol--ikonkanan { padding-right: var(--k-tombol-padikon-kanan); }
+.k-tombol__ikonkiri { margin-right: var(--k-tombol-jarak-kiri); }
+.k-tombol__ikonkanan { margin-left: var(--k-tombol-jarak-kanan); }
 
 .k-tombol:disabled {
   cursor: not-allowed;
@@ -166,41 +181,64 @@
 }
 
 /* Ukuran */
-/* Padding KIRI dan KANAN berbeda, dan itu memang begitu di Figma — bukan
-   kesalahan baca. Dihitung dari POSISI, bukan dari selisih lebar:
+/* Keempat padding dan kedua jaraknya dihitung dari LETAK TINTA di Figma,
+   bukan dari selisih lebar kotaknya:
 
-     kotak ikon kiri = tinta ikon - (ukuran ikon - lebar tinta) / 2
-     padding kiri    = kotak ikon kiri
-     jarak           = awal kotak teks - (padding kiri + ukuran ikon)
-     padding kanan   = lebar tombol - semua yang di atas - lebar teks
+     kotak ikon    = tinta ikon - (ukuran tampil - lebar tinta) / 2
+     kotak teks    = tinta teks - bearing kiri huruf pertama
+     padding sisi  = kotak terluar di sisi itu, diukur dari tepi tombol
+     jarak         = kotak berikutnya - ujung kotak sebelumnya
 
-   small  8 / 7 / 12      Medium  10 / 5 / 10      Large  12 / 6 / 14
+   Semua angka di bawah SUDAH dikurangi 1px untuk `border-width: 1px` yang
+   dipakai setiap tombol (termasuk yang garisnya transparan), karena
+   box-sizing-nya border-box.
 
-   Waktu keduanya saya samakan, kotaknya tetap seukuran Figma tapi TEKSNYA
-   duduk beberapa piksel meleset — dan itu cuma kelihatan dari peta selisih
-   piksel, bukan dari membandingkan lebar dan tinggi. */
+   Empat varian per ukuran dan tiga ukuran = dua belas lebar. Sembilan di
+   antaranya jadi PERSIS lebar Figma dengan angka-angka ini. Tiga sisanya
+   meleset 2px, dan itu bukan angka yang bisa diperbaiki: Figma sendiri
+   memberi varian yang sama padding yang berbeda —
+
+     small "Left"   padding kanannya 11,93 sementara varian tanpa ikon 9,93
+     Medium "Left"  padding kanannya 10,20 sementara tanpa ikon 12,20
+     Large "Right"  padding kirinya 15,97 sementara tanpa ikon 13,97
+
+   Ketiganya dipertahankan mengikuti mayoritas variannya, dan selisih 2px itu
+   dilaporkan apa adanya ketimbang ditutup dengan padding per-varian yang
+   akan membuat tombol di panel ini melebar-menyempit tanpa aturan. */
 .k-tombol--small {
+  --k-tombol-turun: 1px;
   --k-tombol-h: 28px;
   --k-tombol-r: 7px;
-  --k-tombol-pad-ikon: 7px;
-  --k-tombol-pad-polos: 9.5px;
-  --k-tombol-gap: 7px;
+  --k-tombol-padikon-kiri: 7px;
+  --k-tombol-padikon-kanan: 7px;
+  --k-tombol-pad-kiri: 9.19px;
+  --k-tombol-pad-kanan: 8.94px;
+  --k-tombol-jarak-kiri: 6.19px;
+  --k-tombol-jarak-kanan: 3.93px;
   --k-tombol-font: var(--k-t10);
 }
 .k-tombol--medium {
+  --k-tombol-turun: 0px;
   --k-tombol-h: 32px;
   --k-tombol-r: 8px;
-  --k-tombol-pad-ikon: 9px;
-  --k-tombol-pad-polos: 11.5px;
-  --k-tombol-gap: 5px;
+  --k-tombol-padikon-kiri: 9px;
+  --k-tombol-padikon-kanan: 8px;
+  --k-tombol-pad-kiri: 11.14px;
+  --k-tombol-pad-kanan: 11.2px;
+  --k-tombol-jarak-kiri: 4.14px;
+  --k-tombol-jarak-kanan: 5.2px;
   --k-tombol-font: var(--k-t12);
 }
 .k-tombol--large {
+  --k-tombol-turun: 2px;
   --k-tombol-h: 38px;
   --k-tombol-r: 8px;
-  --k-tombol-pad-ikon: 11px;
-  --k-tombol-pad-polos: 13px;
-  --k-tombol-gap: 7px;
+  --k-tombol-padikon-kiri: 11px;
+  --k-tombol-padikon-kanan: 11px;
+  --k-tombol-pad-kiri: 12.97px;
+  --k-tombol-pad-kanan: 12.61px;
+  --k-tombol-jarak-kiri: 5.97px;
+  --k-tombol-jarak-kanan: 3.61px;
   --k-tombol-font: var(--k-t14);
 }
 
@@ -307,11 +345,17 @@
   /* Melar selebar wadahnya. Di Figma kotaknya 177, dan itu lebar rel
      sidebar Coinest dikurangi paddingnya — bukan lebar tombolnya sendiri. */
   width: 100%;
+  /* Untuk garis penanda submenu — lihat .k-nav--sub. */
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  /* 16 dan 12,4: terukur dari letak tinta, bukan dari kotaknya. Kotak ikon
+     Figma mulai di 16 (tinta 19,75 dikurangi setengah selisih tampil-tinta),
+     dan kotak teks di 52,4 — jadi jaraknya 52,4 - (16+24). Sempat 20 dan 12,
+     yang menggeser ikon DAN teks empat piksel ke kanan sekaligus. */
+  gap: 12.4px;
   height: 40px;
-  padding: 0 20px;
+  padding: 0 16px;
   border-radius: 999px;
   font-size: var(--k-t14);
   font-weight: var(--k-semi);
@@ -328,8 +372,25 @@
   background: var(--brand-mint);
   color: var(--brand-mint-ink);
 }
-/* Submenu: tanpa ikon, teksnya sejajar dengan label menu di atasnya. */
-.k-nav--sub { padding-left: 52px; }
+/* Submenu: tanpa ikon. Teksnya TIDAK sejajar dengan label menu di atasnya —
+   terukur, tinta submenu Figma mulai di 61,28 sementara menu induknya di
+   53,28, jadi ia menjorok 8px lagi ke dalam. */
+.k-nav--sub { padding-left: 60.4px; }
+
+/* Garis tegak penanda submenu yang sedang dibuka. Ada di frame Figma sebagai
+   `Line` setebal 3px dari y10 ke y30, berpusat di x28 — dan sempat tidak
+   dibuat sama sekali, sehingga submenu aktif cuma berbeda warna latarnya.
+   Hanya muncul pada yang aktif: garis yang selalu ada tidak menandai apa-apa. */
+.k-nav--sub[aria-current="page"]::before,
+.k-nav--sub.is-aktif::before {
+  content: "";
+  position: absolute;
+  left: 26px;
+  top: 10px;
+  width: 3px;
+  height: 20px;
+  background: currentColor;
+}
 
 /* -----------------------------------------------------------------------------
    TOMBOL BERSEGMEN — frame Button, keluarga "Segmented Button"
@@ -579,10 +640,14 @@
   border-radius: 9px;
   background: var(--danger);
   color: var(--danger-ink);
-  font-size: var(--k-t10);
-  font-weight: var(--k-med);
+  /* 11px/400, bukan 10px/500. Terukur dari tinta "99" di Figma: 10,92x7,84.
+     11px reguler memberi 10,88x7,88; 10px medium cuma 10,13x7,13 — dua persen
+     lebih pendek dan itu kelihatan pada lingkaran 18px. */
+  font-size: var(--k-t11);
+  font-weight: var(--k-reg);
   line-height: 1;
 }
+/* Tinta "99" Figma pada ukuran kecil 7,94x5,70; 8px reguler memberi 8,00x5,75. */
 .k-angka--kecil { min-width: 13px; height: 10px; border-radius: 5px; padding: 0 2.5px; font-size: var(--k-t8); }
 .k-titik { display: inline-block; width: 10px; height: 10px; border-radius: 5px; background: var(--danger); }
 .k-titik--kecil { width: 8px; height: 8px; border-radius: 4px; }
@@ -703,7 +768,11 @@
   align-items: center;
   gap: 8px;
   height: var(--k-cari-h);
-  padding: 0 var(--k-cari-pad);
+  /* Kiri dan kanan TIDAK sama. Terukur dari tinta Figma: teks mulai di 16,1 /
+     14,1 / 12,24 sementara kotak ikon berakhir di 220,5 / 224,5 / 212,5 —
+     jadi sisa kanannya 15,5 / 11,5 / 9,5. Dipasang simetris, ikon kotak cari
+     Medium dan Small meleset tiga piksel ke kiri. */
+  padding: 0 var(--k-cari-padkanan) 0 var(--k-cari-padkiri);
   border: 1px solid var(--surface-hover);
   border-radius: 999px;
   background: var(--surface-hover);
@@ -711,9 +780,9 @@
 }
 /* Lebar 236 (Small 222) juga dari Figma. Dipasang sebagai lebar BAWAAN, bukan
    lebar mati: kotak cari di bilah tabel harus boleh melar selebar bilahnya. */
-.k-cari--large  { --k-cari-h: 38px; --k-cari-pad: 16px; --k-cari-font: var(--k-t12); width: 237px; }
-.k-cari--medium { --k-cari-h: 32px; --k-cari-pad: 14px; --k-cari-font: var(--k-t12); width: 237px; }
-.k-cari--small  { --k-cari-h: 28px; --k-cari-pad: 12px; --k-cari-font: var(--k-t11); width: 223px; }
+.k-cari--large  { --k-cari-h: 38px; --k-cari-padkiri: 15px; --k-cari-padkanan: 15.5px; --k-cari-font: var(--k-t12); width: 237px; }
+.k-cari--medium { --k-cari-h: 32px; --k-cari-padkiri: 13px; --k-cari-padkanan: 11.5px; --k-cari-font: var(--k-t12); width: 237px; }
+.k-cari--small  { --k-cari-h: 28px; --k-cari-padkiri: 11.1px; --k-cari-padkanan: 9.5px; --k-cari-font: var(--k-t11); width: 223px; }
 .k-cari { max-width: 100%; }
 .k-cari:focus-within { border-color: var(--brand-mint); }
 /* Ikon kacanya hijau tua #1E4841, sementara teksnya abu #6B7271 — dua warna
@@ -723,6 +792,7 @@
 .k-cari__input {
   flex: 1 1 auto;
   min-width: 0;
+  padding: 0;
   border: 0;
   background: none;
   color: var(--text-body);
@@ -732,28 +802,64 @@
 .k-cari__input:focus { outline: none; }
 .k-cari__input::placeholder { color: var(--text-muted); }
 
-/* Tinggi total 72 di Figma: label mulai di y0, kotak mulai di y27, kotak 45.
-   Jadi baris labelnya 17 dan jaraknya 10 — line-height ditulis eksplisit
-   karena "normal" berbeda-beda antar font dan akan hanyut diam-diam. */
-.k-isian { display: flex; flex-direction: column; gap: 10px; }
-.k-isian__label { font-size: var(--k-t14); font-weight: var(--k-semi); line-height: 17px; color: var(--text-strong); }
+/* Terukur dari TINTA-nya, bukan dari kotak teksnya: di Figma tinta "Label"
+   mulai di y 0,5 dan kotak isian mulai di y 26,5 (rect y27 dengan garis 1px
+   yang menunggangi tepinya).
+
+   Setengah-leading CSS yang menghalangi: pada line-height 17 dan font 14,
+   tinta huruf mendarat 2,88px di bawah tepi atas kotaknya — jadi menyusun
+   `gap` saja tidak pernah bisa membuat tintanya berimpit dengan Figma.
+   Margin blok negatif memangkas setengah-leading itu dari KEDUA sisi
+   (17 - 2x2,375 = 12,25), sehingga tepi luar label berimpit dengan tintanya
+   sendiri. Dipilih daripada mengecilkan line-height jadi 12,25, karena
+   line-height yang lebih kecil dari fontnya membuat label dua baris saling
+   menindih — dan label memang boleh panjang. */
+.k-isian { display: flex; flex-direction: column; gap: 14.25px; }
+.k-isian__label {
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  line-height: 17px;
+  margin-block: -2.375px;
+  color: var(--text-strong);
+}
 .k-isian__kotak {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8.5px;
   /* 46 dan radius 8: batas LUAR kotak Figma (45 + stroke 1 yang menunggangi
      tepinya), sama seperti lencana bergaris. */
   height: 46px;
-  padding: 0 14px;
+  /* Terukur dari tinta ikon dan tinta teksnya di Figma, bukan dari kotaknya:
+     ikon kiri mulai di 15,75, teks di 40,88, ikon kanan berakhir di 220.
+     Padding kanan 13,38 dan jarak 8,5 adalah angka yang menaruh ketiganya
+     tepat di situ. */
+  padding: 0 13.38px 0 12.5px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
 }
 .k-isian__kotak:focus-within { border-color: var(--brand); }
 .k-isian__kotak > svg { color: var(--brand); }
+/* Teks contoh Figma duduk 0,5px di bawah tengah kotaknya; `align-items:
+   center` menaruhnya tepat di tengah. Digeser relatif — tidak mengubah tata
+   letak, cuma tempat gambarnya.
+
+   Batas yang perlu diketahui sebelum mengejar angka yang lebih kecil dari
+   ini: pada pratinjau berskala, Chromium merasterkan huruf dan SVG pada kisi
+   piksel tata letak DULU, baru menskalakannya. Terukur dengan menyapu
+   margin-block label (-2,75..-2,375), geseran ikon (-0,5..0), dan geseran
+   teks (0..1): dua puluh tujuh kombinasi hanya menghasilkan LIMA posisi
+   tinta, semuanya berjarak 1 satuan. Jadi sisa 0,38–0,5px di bawah ini bukan
+   angka yang bisa disetel — dan pada tampilan 1x aslinya ia di bawah
+   setengah piksel. */
+.k-isian__input { position: relative; top: 0.5px; }
 .k-isian__input {
   flex: 1 1 auto;
   min-width: 0;
+  /* Chrome memberi tiap <input> padding bawaan 1px 2px. Dua piksel itu yang
+     membuat teks contoh mendarat 2,5px di kanan tinta Figma, dan tidak
+     kelihatan dari membaca CSS-nya karena tidak ada yang menuliskannya. */
+  padding: 0;
   border: 0;
   background: none;
   color: var(--text-body);
@@ -849,6 +955,10 @@
      ia ikut terpotret dan terbaca sebagai cacat komponen sebelahnya. Sudah
      terjadi: kotak centang muncul di dalam kartu Input. */
   overflow: hidden;
+  /* `flex: none` wajib: tanpa itu kartu tetap menyusut di bawah lebar isinya
+     (flex-shrink bawaannya 1), dan pemotongannya kembali persis seperti saat
+     memakai grid. */
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -890,11 +1000,19 @@
   position: absolute;
   top: 0;
   left: 0;
-  /* line-height 0 WAJIB. Lencana dan titik adalah elemen inline, jadi tanpa
-     ini mereka duduk di garis dasar teks dan turun beberapa piksel terhadap
-     acuan Figma yang mulai di 0,0. Selisihnya lalu terbaca sebagai cacat
-     komponen padahal cacat alat ukurnya. */
-  line-height: 0;
+  /* `display: flex`, BUKAN `line-height: 0`.
+
+     Masalah aslinya: lencana dan titik adalah elemen inline, jadi mereka
+     duduk di garis dasar teks dan turun beberapa piksel terhadap acuan Figma
+     yang mulai di 0,0. Saya sempat menutupnya dengan `line-height: 0` — dan
+     itu ikut diwariskan ke SELURUH isi komponen, sehingga kartu yang punya
+     teks berbaris banyak tampil bertumpuk. Cacat alat ukurnya terbaca
+     sebagai cacat komponennya.
+
+     Wadah flex menyelesaikan sebabnya, bukan akibatnya: anak flex bukan
+     elemen inline, jadi tidak ada garis dasar yang menurunkannya, dan
+     line-height masing-masing tetap utuh. */
+  display: flex;
   transform: scale(var(--k-banding-zoom));
   transform-origin: 0 0;
 }
@@ -919,11 +1037,25 @@
 }
 .k-banding__petak .is-kurang { color: var(--danger); font-weight: var(--k-bold); }
 
+/* Flex-wrap, BUKAN grid berkolom sama lebar.
+
+   Kartu perbandingan lebarnya ditentukan acuannya masing-masing: Input Large
+   pada perbesaran 2x butuh 474px, kotak centang cuma 78px. Grid
+   `minmax(280px, 1fr)` memberi keduanya kolom yang sama, jadi kartu yang
+   lebih lebar dari kolomnya terpotong `overflow: hidden` — dan kartu
+   TETANGGA-nya yang tergambar di ruang yang terpotong itu. Bukan cuma jelek
+   dilihat: tangkapan layar per-elemen memotret WILAYAH HALAMAN, jadi isi
+   kartu sebelah ikut masuk ke dalam potret acuan dan terhitung sebagai
+   selisih piksel. Terukur: Input Large terbaca 13,6% berbeda, dan 30 dari 237
+   satuan lebarnya sebenarnya kartu lain.
+
+   Flex-wrap membuat tiap kartu selebar isinya sendiri, lalu turun baris
+   kalau tidak muat. */
 .k-banding__daftar {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
-  align-items: start;
+  align-items: flex-start;
 }
 
 /* -----------------------------------------------------------------------------
@@ -993,12 +1125,16 @@
   color: var(--brand);
 }
 
+/* 18x18, bukan 24x24 berlatar. Di Figma tombol ini cuma ikonnya sendiri,
+   sejajar dengan TEPI ATAS ubin ikon di sebelah kiri — kotak 24 yang lebih
+   tinggi menurunkan ikonnya 3px. Latar hover tetap ada, digambar melebihi
+   kotaknya lewat padding negatif supaya sasaran kliknya tidak ikut mengecil. */
 .k-stat__menu {
   flex: none;
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border: 0;
   border-radius: 6px;
   background: none;
@@ -1013,16 +1149,28 @@
    nilai di 105, tinta judul di 144,5. */
 .k-stat .k-tren { margin-top: 28px; }
 
+/* 24px Bold, BUKAN 32 SemiBold.
+
+   Saya sempat menurunkannya dari TINGGI tinta (22,2) dan dapat 32px. Itu
+   salah, dan salahnya sistematis: stringnya "$78,000", dan glif "$" menjulang
+   di atas angka serta menjorok di bawah garis dasar — jadi 22,2 itu tinggi
+   "$", bukan tinggi angka. Yang benar dicocokkan dari LEBAR tinta untuk
+   string yang sudah diketahui: 87,6px cocok pada 24px/700 dengan meleset
+   0,2%, sementara pada 32px lebarnya jadi 117.
+
+   ATURANNYA: jangan pernah menurunkan ukuran huruf dari tinggi tinta kalau
+   stringnya memuat "$", "Rp", kurung, atau tanda baca yang menjulang.
+   Cocokkan lebarnya. */
 .k-stat__nilai {
-  margin: 8px 0 0;
-  font-size: var(--k-h1);
-  font-weight: var(--k-semi);
+  margin: 12.5px 0 0;
+  font-size: 24px;
+  font-weight: var(--k-bold);
   line-height: 1;
   color: var(--text-strong);
 }
 
 .k-stat__judul {
-  margin: 11px 0 0;
+  margin: 12px 0 0;
   font-size: var(--k-t12);
   font-weight: var(--k-reg);
   color: var(--text-strong);
@@ -1059,21 +1207,32 @@
    yang setara maknanya kas studio, dan itu satu-satunya bidang besar yang
    sengaja TIDAK ikut berbalik saat tema diganti (lihat --kas-bidang).
    -------------------------------------------------------------------------- */
+/* Jarak antarblok diambil dari POSISI tinta di framenya, bukan dari
+   `space-between` yang membagi sisa ruang rata. Terukur pada kartu setinggi
+   163: nama 18,5 · nilai 69,1 · keterangan kaki 118,5 · isi kaki 134,4.
+   Dengan space-between seluruh blok bawah duduk 9px terlalu tinggi. */
 .k-kas {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   width: 251px;
   height: 163px;
-  padding: 16px;
+  /* Atasnya 17, sisinya 16 — dan itu memang begitu di Figma, bukan pembulatan
+     yang meleset: tanda kartu duduk di y17..41 sementara tinta namanya mulai
+     di x16,6. Sempat tertutup diam-diam oleh `border: 1px` pada varian
+     terang, yang kebetulan menurunkan isinya satu piksel — begitu garisnya
+     dibuang (framenya memang tidak punya garis) seluruh isinya naik 1px. */
+  padding: 17px 16px 16px;
   border-radius: 16px;
   background: var(--kas-bidang);
   color: var(--kas-ink);
 }
+/* TANPA garis. Frame Figma-nya cuma `kotak 251x163 radius 16 latar #FBFBFC`
+   — tidak ada stroke sama sekali; yang membedakannya dari kartu gelap hanya
+   latar dan warna tintanya. Garis 1px yang sempat ada juga mendorong seluruh
+   isinya satu piksel ke dalam. */
 .k-kas--terang {
   background: var(--surface);
   color: var(--text-muted);
-  border: 1px solid var(--border);
 }
 
 .k-kas__atas { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -1083,11 +1242,23 @@
 /* 14px. Di Figma sudut ini diisi WORDMARK (logo yang sudah jadi outline),
    bukan teks — jadi tinggi tintanya 20,6 bukan ukuran huruf. Di panel ini
    slotnya dipakai nama kas, dan 14px adalah ukuran label yang setara. */
-.k-kas__nama { margin: 0; font-size: var(--k-t14); font-weight: var(--k-semi); }
+/* 10px SemiBold. Terukur dari lebar tinta baris terpanjangnya (83,6 lawan
+   83,4), dan tinggi dua barisnya cocok pula. Kecil memang — nama kartu di
+   Coinest jauh lebih kecil daripada nominalnya. */
+.k-kas__nama { margin: 0; font-size: var(--k-t10); font-weight: var(--k-semi); line-height: 1.2; white-space: pre-line; }
+/* Nominal dan labelnya satu baris, label menempel ke kanan. Jarak 28 dari
+   nama kartu dipindah ke barisnya, bukan ke nominalnya. */
+.k-kas__tengah { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 28px; }
+/* 14px, dan warnanya BEDA per varian: mint pucat di kartu gelap, abu di
+   kartu terang — bukan sekadar nominal yang diredupkan. */
+.k-kas__label { margin: 0; font-size: var(--k-t14); font-weight: var(--k-semi); line-height: 1; color: var(--brand-soft); }
+.k-kas--terang .k-kas__label { color: var(--text-muted); }
 .k-kas__nilai {
   margin: 0;
-  font-size: var(--k-h2);
-  font-weight: var(--k-semi);
+  /* 22px Bold — dicocokkan dari lebar tinta "$532,000" (92,7px), meleset
+     0,1%. Lihat catatan di .k-stat__nilai soal kenapa tinggi tinta menipu. */
+  font-size: 22px;
+  font-weight: var(--k-bold);
   line-height: 1;
   color: var(--kas-nilai);
 }
@@ -1095,8 +1266,15 @@
 /* Tiga kolom di kaki kartu, dan jaraknya TIDAK rata: terukur di x 16, 164,
    dan 215 pada kartu selebar 251. Kolom pertama memakan sisa ruang, dua
    sisanya menempel ke kanan. */
-.k-kas__kaki { display: flex; gap: 20px; }
+.k-kas__kaki { display: flex; gap: 20px; margin-top: 26.5px; }
 .k-kas__kaki > :first-child { margin-right: auto; }
-.k-kas__ket { margin: 0; font-size: var(--k-t10); font-weight: var(--k-reg); }
-.k-kas__isi { margin: 4px 0 0; font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--kas-nilai); }
+/* `line-height: 1` di kedua baris kaki, dan jaraknya 5,74 — bukan 4.
+
+   Tanpa line-height eksplisit keduanya mewarisi 1,6, jadi baris judul 10px
+   memakai kotak setinggi 16 dan tintanya duduk 4px di bawah tepi kotaknya.
+   Akibatnya seluruh kaki kartu melorot: terukur, judul 3,5px dan isinya
+   8,6px di bawah tinta Figma. Menyetel `margin-top` saja tidak bisa
+   memperbaiki keduanya sekaligus — yang salah jarak DI DALAM kakinya. */
+.k-kas__ket { margin: 0; font-size: var(--k-t10); font-weight: var(--k-reg); line-height: 1; }
+.k-kas__isi { margin: 5.74px 0 0; font-size: var(--k-t12); font-weight: var(--k-semi); line-height: 1; color: var(--kas-nilai); }
 .k-kas--terang .k-kas__isi { color: var(--text-strong); }

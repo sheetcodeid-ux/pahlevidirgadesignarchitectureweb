@@ -113,7 +113,7 @@ export function GaleriBanding() {
             judul="Contoh"
             nilai={seg}
             onPilih={setSeg}
-            segmen={[{ nilai: "a", label: "Label" }, { nilai: "b", label: "Label" }]}
+            segmen={[{ nilai: "a", label: "Button 1" }, { nilai: "b", label: "Button 2" }]}
           />
         </Banding>
         <Banding kunci="segmen-3" zoom={2}>
@@ -122,9 +122,9 @@ export function GaleriBanding() {
             nilai={seg}
             onPilih={setSeg}
             segmen={[
-              { nilai: "a", label: "Label" },
-              { nilai: "b", label: "Label" },
-              { nilai: "c", label: "Label" },
+              { nilai: "a", label: "Button 1" },
+              { nilai: "b", label: "Button 2" },
+              { nilai: "c", label: "Button 3" },
             ]}
           />
         </Banding>
@@ -134,10 +134,10 @@ export function GaleriBanding() {
             nilai={seg}
             onPilih={setSeg}
             segmen={[
-              { nilai: "a", label: "Label" },
-              { nilai: "b", label: "Label" },
-              { nilai: "c", label: "Label" },
-              { nilai: "d", label: "Label" },
+              { nilai: "a", label: "Button 1" },
+              { nilai: "b", label: "Button 2" },
+              { nilai: "c", label: "Button 3" },
+              { nilai: "d", label: "Button 4" },
             ]}
           />
         </Banding>
@@ -225,8 +225,8 @@ export function GaleriBanding() {
         >
           <Remah
             jalur={[
-              { label: "Link 1", href: "#" },
-              { label: "Link 2", href: "#" },
+              { label: "Link", href: "#" },
+              { label: "Link", href: "#" },
               { label: "Page" },
             ]}
           />
@@ -249,31 +249,39 @@ export function GaleriBanding() {
           <KartuStatistik
             ikon={CoinIn}
             judul="Total Income"
-            nilai="$25,000"
-            tren={<Tren naik>+12.5%</Tren>}
+            nilai="$78,000"
+            tren={<Tren naik>+ 1.78 %</Tren>}
             onMenu={() => {}}
           />
         </Banding>
+        {/* Teks contoh disamakan PERSIS dengan framenya — termasuk tiga kolom
+            di kakinya. Di halaman sungguhan isinya nama kas, saldo, dan
+            periode; di sini yang diukur geometrinya, jadi kata yang berbeda
+            cuma akan terbaca sebagai cacat yang tidak ada. */}
         <Banding kunci="kas-gelap" zoom={2}>
           <KartuKas
-            nama="Kas Studio"
-            nilai="$25,000"
+            nama={"Freedom Unlimited\nMastercard"}
+            nilai="$532,000"
+            label="Debit"
             kanan={<TandaKas />}
             kaki={[
-              { judul: "Card Holder", isi: "Pahlevi Dirga" },
-              { judul: "Expires", isi: "12/28" },
+              { judul: "Card Number", isi: "**** **** **** 3321" },
+              { judul: "EXP", isi: "05/25" },
+              { judul: "CVV", isi: "672" },
             ]}
           />
         </Banding>
         <Banding kunci="kas-terang" zoom={2}>
           <KartuKas
             terang
-            kanan={<TandaKas />}
-            nama="Kas Studio"
-            nilai="$25,000"
+            nama={"Freedom Unlimited\nMastercard"}
+            nilai="$532,000"
+            label="Debit"
+            kanan={<TandaKas terang />}
             kaki={[
-              { judul: "Card Holder", isi: "Pahlevi Dirga" },
-              { judul: "Expires", isi: "12/28" },
+              { judul: "Card Number", isi: "**** **** **** 3321" },
+              { judul: "EXP", isi: "05/25" },
+              { judul: "CVV", isi: "672" },
             ]}
           />
         </Banding>
@@ -290,7 +298,7 @@ export function GaleriBanding() {
           <Cari ukuran="small" judul="Cari" placeholder="Search placeholder" />
         </Banding>
         <Banding kunci="isian-large" zoom={2}>
-          <div style={{ width: 236 }}>
+          <div style={{ width: 237 }}>
             <Isian label="Label" placeholder="Placeholder" kiri={SmileySticker}
               kanan={<Ikon ikon={Paperclip} ukuran={18} />} />
           </div>

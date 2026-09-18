@@ -67,9 +67,12 @@ export function Tombol({
     .join(" ");
   return (
     <button type={tipeHtml} className={kelas} {...sisa}>
-      {kiri && <Ikon ikon={kiri} ukuran={px} />}
+      {/* Kelas per sisi, bukan `svg:first-child`/`:last-child`: pada tombol
+          yang cuma punya caret kanan, caret itu SEKALIGUS anak pertama —
+          selektor posisi akan memberinya jarak kiri yang bukan miliknya. */}
+      {kiri && <Ikon ikon={kiri} ukuran={px} className="k-tombol__ikonkiri" />}
       {children}
-      {kanan && <Ikon ikon={kanan} ukuran={CARET_PX[ukuran]} />}
+      {kanan && <Ikon ikon={kanan} ukuran={CARET_PX[ukuran]} className="k-tombol__ikonkanan" />}
     </button>
   );
 }

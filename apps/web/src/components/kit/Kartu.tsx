@@ -89,24 +89,33 @@ export function KartuStatistik({
  * Tanda dua lingkaran di pojok kartu kas.
  *
  * Bentuknya dari Figma apa adanya: dua lingkaran berdiameter 24 yang
- * bertumpang 9,6px, yang kanan mint 80% dan yang kiri mint pucat, dengan
- * irisannya hijau tua 80%.
+ * bertumpang 9,6px, dengan irisannya hijau tua.
+ *
+ * Transparansinya ditulis Figma sebagai atribut `opacity`, BUKAN
+ * `fill-opacity` — dan sekali saya membacanya dengan mencari `fill-opacity`,
+ * jawabannya "tidak ada transparansi sama sekali", yang membuat lingkaran
+ * kiri kartu terang tergambar hijau tua pejal padahal seharusnya 30%.
+ *
+ * Kartu gelap : kanan #BBF49C 80%, kiri #ECF4E9 penuh, irisan #1E4841 80%
+ * Kartu terang: kanan #BBF49C 80%, kiri #1E4841 30%,  irisan #1E4841 80%
  *
  * Di Coinest ini lambang jaringan pembayaran. Di panel ini tempatnya dipakai
  * LOGO STUDIO — jadi komponen ini ada supaya bentuk acuannya bisa dibanding,
  * bukan supaya dipakai di halaman sungguhan. Yang dipakai di halaman: prop
  * `kanan` diisi logo studio.
  */
-export function TandaKas() {
+export function TandaKas({ terang }: { terang?: boolean }) {
   return (
     <svg width="38.4" height="24" viewBox="0 0 38.4 24" fill="none" aria-hidden="true">
-      <circle cx="26.4" cy="12" r="12" fill="var(--brand-mint)" fillOpacity="0.8" />
-      <circle cx="12" cy="12" r="12" fill="var(--brand-soft)" />
-      <path
-        d="M19.2 2.1A12 12 0 0 0 19.2 21.9 12 12 0 0 0 19.2 2.1Z"
-        fill="var(--brand)"
-        fillOpacity="0.8"
+      <circle cx="26.4" cy="12" r="12" fill="var(--brand-mint)" opacity="0.8" />
+      <circle
+        cx="12"
+        cy="12"
+        r="12"
+        fill={terang ? "var(--brand)" : "var(--brand-soft)"}
+        opacity={terang ? 0.3 : undefined}
       />
+      <path d="M19.2 2.1A12 12 0 0 0 19.2 21.9 12 12 0 0 0 19.2 2.1Z" fill="var(--brand)" opacity="0.8" />
     </svg>
   );
 }
@@ -117,18 +126,29 @@ export interface PropKartuKas {
   /** Dua keterangan kecil di kaki kartu — mis. periode dan jumlah transaksi. */
   kaki?: { judul: string; isi: ReactNode }[];
   kanan?: ReactNode;
+  /**
+   * Keterangan kecil di sebelah kanan nominal — "Debit" di framenya.
+   *
+   * Sempat tidak ada sama sekali, dan itu tidak terlihat dari membandingkan
+   * ukuran kartunya: yang menemukannya peta selisih piksel, yang menggambar
+   * kata itu merah pejal karena ia ada di Figma dan tidak ada di kit.
+   */
+  label?: ReactNode;
   terang?: boolean;
   className?: string;
 }
 
-export function KartuKas({ nama, nilai, kaki, kanan, terang, className }: PropKartuKas) {
+export function KartuKas({ nama, nilai, kaki, kanan, label, terang, className }: PropKartuKas) {
   return (
     <div className={["k-kas", terang && "k-kas--terang", className].filter(Boolean).join(" ")}>
       <div className="k-kas__atas">
         <p className="k-kas__nama">{nama}</p>
         {kanan}
       </div>
-      <p className="k-kas__nilai">{nilai}</p>
+      <div className="k-kas__tengah">
+        <p className="k-kas__nilai">{nilai}</p>
+        {label && <p className="k-kas__label">{label}</p>}
+      </div>
       <div className="k-kas__kaki">
         {kaki?.map((k) => (
           <div key={k.judul}>
