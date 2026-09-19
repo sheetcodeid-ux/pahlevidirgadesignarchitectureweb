@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Banding } from "./Banding";
 import { Tombol, TombolIkon } from "./Tombol";
 import { Segmen } from "./Segmen";
+import { Tabel, SelDua, SelIkon, SelKeping, type KolomTabel } from "./Tabel";
 import { Lencana, Angka, Titik } from "./Lencana";
 import { Remah } from "./Remah";
 import { Paginasi } from "./Paginasi";
@@ -34,6 +35,42 @@ function Grup({ judul, children }: { judul: string; children: React.ReactNode })
     </>
   );
 }
+
+/* Lebar kolom dari Figma: tepi kiri tiap sel = tinta teksnya dikurangi
+   padding baris, dan lebar kolom = jarak ke tepi kiri kolom berikutnya.
+   Jumlahnya PERSIS lebar barisnya — itu yang membuktikan pembacaannya benar. */
+const KOL_DASH: KolomTabel[] = [
+  { judul: "Transaction Name", lebar: 170.6, urut: true },
+  { judul: "Date & Time", lebar: 92.3, urut: true },
+  { judul: "Amount", lebar: 72.7, urut: true },
+  { judul: "Note", lebar: 154.4, urut: true },
+  { judul: "Status", lebar: 82, urut: true },
+];
+const KOL_INVEST: KolomTabel[] = [
+  { judul: "Stock Symbol", lebar: 165.75, urut: true },
+  { judul: "Invest Date", lebar: 113.35, urut: true },
+  { judul: "Price", lebar: 99.3, urut: true },
+  { judul: "Change", lebar: 93.5, urut: true },
+  { judul: "Current Value", lebar: 99.85, urut: true },
+];
+/* Transaction punya kolom kotak centang di paling kiri. Lebarnya 32,5 —
+   yaitu jarak tepi baris ke tepi kiri kolom berikutnya, bukan lebar kotak
+   centangnya sendiri. */
+const KOL_TRX: KolomTabel[] = [
+  { judul: "Transaction Name", lebar: 201.9, urut: true },
+  { judul: "Account", lebar: 241.5, urut: true },
+  { judul: "Transaction ID", lebar: 121.7, urut: true },
+  { judul: "Date & Time", lebar: 113.3, urut: true },
+  { judul: "Amount", lebar: 95.7, urut: true },
+  { judul: "Note", lebar: 235.4, urut: true },
+  { judul: "Status", lebar: 97, urut: true },
+];
+const KOL_TABUNG: KolomTabel[] = [
+  { judul: "Transaction Type", lebar: 250.5, urut: true },
+  { judul: "Date & Time", lebar: 193.8, urut: true },
+  { judul: "Amount", lebar: 128, urut: true },
+  { judul: "Brief Note", lebar: 197.7, urut: true },
+];
 
 export function GaleriBanding() {
   const [seg, setSeg] = useState("a");
@@ -284,6 +321,99 @@ export function GaleriBanding() {
               { judul: "CVV", isi: "672" },
             ]}
           />
+        </Banding>
+      </Grup>
+
+      {/* Tabel — empat dari tujuh jenis baris di frame Table. Ketujuhnya
+          anatominya sama; yang berbeda daftar kolom, lebar kolom, dan tinggi
+          barisnya, jadi keempat ini sudah menguji seluruh jalurnya. */}
+      <Grup judul="Tabel">
+        <Banding kunci="tabel-dash-kepala" zoom={1.5}>
+          <div style={{ width: 572 }}>
+            <Tabel kolom={KOL_DASH} baris={[]} pad={10} tinggiKepala={34} tinggiBaris={49} />
+          </div>
+        </Banding>
+        <Banding kunci="tabel-dash-baris" zoom={1.5}>
+          <div style={{ width: 572 }}>
+            <Tabel
+              kolom={KOL_DASH}
+              baris={[[
+                <SelDua atas="Dinner at Italian Restaurant" bawah="Dining Out" />,
+                <SelDua atas="2024-03-01" bawah="04:28:48" />,
+                "$226.25",
+                "Dining out with family at a local Italian restaurant.",
+                <Lencana bentuk="garis" nada="selesai">Completed</Lencana>,
+              ]]}
+              pad={10}
+              tinggiKepala={34}
+              tinggiBaris={49}
+              fontBaris={10}
+              tanpaKepala
+            />
+          </div>
+        </Banding>
+        <Banding kunci="tabel-invest-kepala" zoom={1.5}>
+          <div style={{ width: 572 }}>
+            <Tabel kolom={KOL_INVEST} baris={[]} pad={12.15} tinggiKepala={40} tinggiBaris={62} />
+          </div>
+        </Banding>
+        <Banding kunci="tabel-invest-baris" zoom={1.5}>
+          <div style={{ width: 572 }}>
+            <Tabel
+              kolom={KOL_INVEST}
+              baris={[[
+                <SelIkon ikon={CoinIn} ukuran={30} ikonPx={14}>
+                  <SelDua besar atas="GOOGL" bawah="Amazon.com Inc." />
+                </SelIkon>,
+                "2024-01-15",
+                "$3,250.00",
+                "+$10.00",
+                "$2,785.58",
+              ]]}
+              pad={12.15}
+              tinggiKepala={40}
+              tinggiBaris={62}
+              tanpaKepala
+            />
+          </div>
+        </Banding>
+        <Banding kunci="tabel-tabung-kepala" zoom={1.5}>
+          <div style={{ width: 770 }}>
+            <Tabel
+              kolom={KOL_TABUNG}
+              baris={[]}
+              pad={16}
+              tinggiKepala={37}
+              tinggiBaris={57}
+              kepala="mint"
+            />
+          </div>
+        </Banding>
+        {/* Transaction: satu-satunya jenis yang punya kolom kotak centang.
+            Kepala-nya TIDAK ikut dibandingkan — di Figma ia tanpa latar dan
+            tanpa garis, jadi kotak acuannya cuma sebesar tinta teksnya dan
+            letaknya tidak sah dibandingkan dengan baris selebar 1139. */}
+        <Banding kunci="tabel-trx-baris" zoom={1}>
+          <div style={{ width: 1139 }}>
+            <Tabel
+              kolom={KOL_TRX}
+              baris={[[
+                <SelIkon ikon={CoinIn} ukuran={30} ikonPx={14} jarak={10.48}>
+                  <SelDua besar atas="Comcast Bill Payment" bawah="Food & Dining" />
+                </SelIkon>,
+                <SelKeping keping="Freedom">Freedom Unlimited Mastercard</SelKeping>,
+                "4567890123",
+                <SelDua besar atas="2024-09-24" bawah="14:30" />,
+                <span style={{ color: "var(--danger)" }}>-$350.00</span>,
+                "Monthly entertainment subscription",
+                <Lencana bentuk="pil" nada="selesai">Completed</Lencana>,
+              ]]}
+              pilih
+              pad={9.5}
+              tinggiBaris={65}
+              tanpaKepala
+            />
+          </div>
         </Banding>
       </Grup>
 

@@ -879,7 +879,10 @@
   width: var(--k-centang-s);
   height: var(--k-centang-s);
   margin: 0;
-  border: 0;
+  /* Garis 1px #E4E2DD ada di keadaan BELUM dicentang dan hilang begitu
+     dicentang — warna latarnya yang mengambil alih. Sempat tidak dibuat sama
+     sekali karena yang dibandingkan cuma varian tercentang. */
+  border: 1px solid var(--sakelar-mati);
   border-radius: 4px;
   background: var(--centang-bidang);
   cursor: pointer;
@@ -887,6 +890,7 @@
   position: relative;
   transition: background-color var(--dur) var(--ease);
 }
+.k-centang:checked { border-color: transparent; }
 .k-centang--default { --k-centang-s: 13px; }
 .k-centang--medium  { --k-centang-s: 17px; }
 .k-centang--big     { --k-centang-s: 23px; }
@@ -1278,3 +1282,121 @@
 .k-kas__ket { margin: 0; font-size: var(--k-t10); font-weight: var(--k-reg); line-height: 1; }
 .k-kas__isi { margin: 5.74px 0 0; font-size: var(--k-t12); font-weight: var(--k-semi); line-height: 1; color: var(--kas-nilai); }
 .k-kas--terang .k-kas__isi { color: var(--text-strong); }
+
+/* -----------------------------------------------------------------------------
+   TABEL — frame Table
+
+   Angka di bawah semuanya dari letak tinta di frame Figma, bukan dari selisih
+   kotaknya. Ukuran huruf kepala dipastikan lewat pencocokan LEBAR tinta pada
+   string yang sudah diketahui: "Transaction Name" 79,38 lawan 79,31 di Figma,
+   "Amount" 34,25 lawan 34,23, "Status" 27,38 lawan 27,32 — ketiganya pada
+   10px reguler, dan meleset di bawah seperempat persen.
+
+   Garis 1px ada di ATAS tiap baris, bukan di bawahnya. Bedanya kelihatan di
+   ujung tabel: dengan garis-atas, tabel punya garis di atas kepalanya dan
+   TIDAK punya garis menggantung di bawah baris terakhir — persis framenya.
+   -------------------------------------------------------------------------- */
+.k-tabel {
+  width: 100%;
+  /* `collapse` supaya garis atas tiap sel menyatu jadi satu garis selebar
+     baris; `separate` menggambarnya per sel dan celah antarsel jadi putus. */
+  border-collapse: collapse;
+  /* `fixed` supaya lebar <col> yang diukur dari Figma benar-benar dipakai.
+     Tanpa ini peramban menghitung sendiri dari isinya dan seluruh angka
+     kolomnya jadi tidak berarti. */
+  table-layout: fixed;
+  font-family: var(--font-sans);
+  /* Barisnya berlatar putih di Figma, bukan tembus pandang. Kelihatan sekali
+     di halaman yang latarnya abu: tanpa ini tabel menyatu dengan halamannya. */
+  background: var(--surface);
+}
+.k-tabel th,
+.k-tabel td {
+  padding: 0 var(--k-tabel-pad);
+  border-top: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+.k-tabel th.is-kanan,
+.k-tabel td.is-kanan { text-align: right; }
+
+/* Kepala bermint TIDAK punya garis: di Figma bidangnya #ECF4E9 penuh dan
+   tidak ada satu pun stroke. Kepala polos (Transaction) tidak punya keduanya. */
+.k-tabel--kepala-mint thead th {
+  border-top-color: transparent;
+  background: var(--brand-soft);
+}
+.k-tabel--kepala-polos thead th { border-top-color: transparent; }
+
+.k-tabel th {
+  height: var(--k-tabel-h-kepala);
+  font-size: var(--k-t10);
+  font-weight: var(--k-reg);
+  color: var(--text-muted);
+}
+/* Jarak judul ke ikon Sort 0,35.
+
+   Angka ini TIDAK bisa dibaca langsung dari selisih tinta: terukur, jarak
+   tinta-ke-tinta di lima kolom Dashboard 5,04 / 4,87 / 4,12 / 4,38 / 4,93 —
+   berbeda-beda karena huruf terakhir tiap judul punya side bearing sendiri
+   ("Amount" berakhir 't' yang rapat, "Name" berakhir 'e' yang bulat).
+   Yang tetap jaraknya adalah dari ujung ADVANCE teks ke kotak ikonnya, dan
+   itulah yang dipasang di sini. */
+.k-tabel__judul { display: inline-flex; align-items: center; gap: 0.35px; white-space: nowrap; }
+.k-tabel__judul svg { color: var(--text-muted); }
+
+/* Ukuran huruf baris isi BEDA per jenis tabel: Dashboard 10px, sisanya 12px.
+   Dipastikan dari tinggi tinta kolom nominal, yang stringnya memuat "$" dan
+   karena itu tingginya bisa dipakai sebagai sidik jari ukuran: 9,24 di
+   Dashboard lawan 11,08 di Transaction dan Investment — persis rasio 10/12. */
+.k-tabel td {
+  height: var(--k-tabel-h-baris);
+  /* Isinya diturunkan 1px dari titik tengah: `vertical-align: middle`
+     memusatkan kotak baris, sementara Figma menaruh tintanya sedikit di
+     bawah tengah — pola yang sama seperti teks di dalam tombol, dan
+     sebabnya juga sama (metrik ascent/descent font lawan kotak teks Figma).
+     Padding atas menggeser isi yang dipusatkan sebesar SETENGAHNYA. */
+  padding-top: 2px;
+  font-size: var(--k-tabel-font);
+  color: var(--text-strong);
+}
+/* Kotak centang di kolom pertama tidak boleh ikut melar bersama selnya. */
+.k-tabel th > .k-centang,
+.k-tabel td > .k-centang { display: block; }
+
+/* Sel dua baris. Jarak antar-tinta 15,37 pada Dashboard (dua baris 10px) dan
+   17,56 pada Investment (12px di atas, 10px di bawah) — jadi line-height-nya
+   ikut varian, bukan angka tunggal. */
+.k-sel2 { display: flex; flex-direction: column; }
+.k-sel2__atas { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-strong); }
+.k-sel2__bawah { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-muted); }
+.k-sel2--besar .k-sel2__atas { font-size: var(--k-t12); line-height: 17.56px; }
+.k-sel2--besar .k-sel2__bawah { line-height: 17.56px; }
+
+/* Sel berikon — bulatan mint PENUH, bukan kotak membulat. */
+.k-selikon { display: flex; align-items: center; gap: var(--k-selikon-gap, 12.4px); }
+.k-selikon__bulat {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--brand-mint);
+  color: var(--brand);
+}
+
+/* Sel berkeping — keping 23x15 radius 4, lalu teks berjarak 7,22. */
+.k-selkeping { display: flex; align-items: center; gap: 7.22px; min-width: 0; }
+.k-selkeping__keping {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 15px;
+  border-radius: 4px;
+  background: var(--brand);
+  color: var(--brand-mint);
+  font-size: 6px;
+  font-weight: var(--k-semi);
+  overflow: hidden;
+}
+.k-selkeping__teks { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
