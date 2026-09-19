@@ -207,6 +207,15 @@
      kalau dihitung sebagai pecahan sisi kotaknya, jadi satu bentuk ini cukup;
      warnanya datang dari --centang-tanda lewat mask, bukan dipanggang. */
   --centang-tanda-bentuk: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M4.5 8.5L7.1667 11.1667L12.5 5.8333' fill='none' stroke='black' stroke-width='2' stroke-linecap='square'/%3E%3C/svg%3E");
+  /* Sel tanggal, palet kedua yang sama: persik untuk tanggal yang dipilih,
+     abu hangat untuk tanggal di luar bulan berjalan. */
+  /* Garis grafik mungil di dalam kartu. Warnanya BUKAN hijau Coinest dan
+     bukan merah brand: #1F3045 biru tua dan #FF1A36 merah terang, dipakai
+     hanya di sini. Dicatat apa adanya. */
+  --kilau-naik: #1F3045;
+  --kilau-turun: #FF1A36;
+  --tgl-pilih: #FFD9CF;
+  --tgl-mati: #B8B1A9;
   --sakelar-mati: #E4E2DD;
   --sakelar-hidup: #CDEDDD;
   --sakelar-tuas: #FFFDFC;

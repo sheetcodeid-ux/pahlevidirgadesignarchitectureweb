@@ -84,6 +84,33 @@ PASANGAN = [
     ("stat-desktop", "Card", "Version=Desktop"),
     ("kas-gelap",    "Card", "Property 1=True"),
     ("kas-terang",   "Card", "Property 1=False"),
+    # --- Tabel ---------------------------------------------------------------
+    ("tabel-dash-kepala",  "Table", "Type=Head, Version=Desktop"),
+    ("tabel-dash-baris",   "Table", "Type=Body, Version=Desktop"),
+    ("tabel-invest-kepala", "Table", "Type=Head"),
+    ("tabel-invest-baris",  "Table", "Type=Body"),
+    ("tabel-trx-baris",    "Table", "Type=Body_2"),
+    # --- Rel samping & bilah atas -------------------------------------------
+    ("sisi-desktop", "Nav", "Device=Desktop"),
+    ("sisi-tablet",  "Nav", "Device=Tablet"),
+    ("bilah-ponsel", "Nav", "Navbar"),
+    # --- Grafik --------------------------------------------------------------
+    ("kolom-labely",    "Chart", "Type=Y-labels"),
+    ("kolom-kosong",    "Chart", "Type=Default"),
+    ("kolom-naikturun", "Chart", "Type=Up Down"),
+    ("kolom-tunggal",   "Chart", "Type=Single"),
+    ("kolom-ganda",     "Chart", "Type=Double"),
+    ("kolom-tiga",      "Chart", "Type=Tripple"),
+    ("kilau-naik",      "Chart", "Variant=Trend Up"),
+    ("kilau-turun",     "Chart", "Variant=Trend Down"),
+    # --- Kalender ------------------------------------------------------------
+    ("tgl-biasa", "Calendar", "Variant=Default"),
+    ("tgl-mati",  "Calendar", "Variant=Off"),
+    ("tgl-pilih", "Calendar", "Variant=On"),
+    ("tgl-kini",  "Calendar", "Variant=Active"),
+    ("hari",      "Calendar", "Cell-day-dashboard"),
+    ("tabel-tabung-kepala", "Table", "Type=Head, Size=Wide"),
+    ("tabel-tabung-baris",  "Table", "Type=Body, Size=Wide"),
 ]
 
 
@@ -94,12 +121,23 @@ def warna_layer(svg: str):
     Figma (#9747FF, yang dipakai untuk menandai batas komponen dan bukan
     bagian dari desainnya) dibuang.
     """
+    # <defs> dibuang dulu. Sejak gradien dan clipPath ikut disalin ke
+    # potongan acuan, `fill="white"` milik rect di dalam clipPath ikut
+    # terhitung sebagai warna komponen — dan setiap grafik lalu dilaporkan
+    # "putih tidak ada di kit" padahal putih itu tidak pernah tergambar.
+    svg = re.sub(r"<defs>.*?</defs>", "", svg, flags=re.S)
     ANOTASI = {"#9747FF"}
+    # Figma menulis putih sebagai kata kunci `white`, bukan heks. Tanpa
+    # disamakan, audit warna melaporkan "white tidak ada di kit" pada setiap
+    # komponen yang sudah benar — dan laporan palsu membuat laporan
+    # sungguhannya ikut tidak dipercaya.
+    KATA = {"white": "#FFFFFF", "black": "#000000"}
     hitung = Counter()
     for m in re.finditer(r'(?:fill|stroke)="([^"]+)"', svg):
         v = m.group(1)
         if v == "none" or v.startswith("url"):
             continue
+        v = KATA.get(v.lower(), v)
         v = v.upper() if v.startswith("#") else v
         if v in ANOTASI:
             continue

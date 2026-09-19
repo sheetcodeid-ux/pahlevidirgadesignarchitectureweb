@@ -29,22 +29,55 @@ AKAR = pathlib.Path(__file__).resolve().parent.parent
 STYLE = AKAR / "apps/web/src/assets/figma/style"
 
 
-def kotak(el):
-    """Kotak gambar sebuah layer — rect ikut dihitung, bukan cuma path."""
-    b = bbox_banyak([p.get("d") for p in el.iter() if p.tag == Q + "path" and p.get("d")])
-    for r in el.iter():
-        if r.tag != Q + "rect":
-            continue
-        x, y = float(r.get("x", 0)), float(r.get("y", 0))
-        w, h = float(r.get("width", 0)), float(r.get("height", 0))
+def _geser(el):
+    """Nilai translate() pada sebuah simpul, (0,0) kalau tidak ada."""
+    m = re.match(r"translate\(\s*([-\d.]+)[\s,]+([-\d.]+)", el.get("transform") or "")
+    return (float(m.group(1)), float(m.group(2))) if m else (0.0, 0.0)
+
+
+def kotak(el, dx=0.0, dy=0.0):
+    """Kotak gambar sebuah layer — rect ikut dihitung, bukan cuma path.
+
+    `transform="translate(...)"` WAJIB diikutkan. Figma memakainya untuk
+    menempatkan rect latar alih-alih atribut x dan y, dan mengabaikannya
+    membuat panel rel samping terbaca di (0,0) padahal isinya di x68 — jadi
+    isinya seolah berada DI LUAR panelnya sendiri. Gambarnya sendiri tetap
+    benar karena transform-nya ikut tersalin; yang salah cuma viewBox yang
+    dihitung dari kotak ini, dan akibatnya potongannya meleset tanpa satu
+    pun tanda. Terukur: rel samping terpotong jadi 228x1110 padahal 192x1034.
+    """
+    gx, gy = _geser(el)
+    dx, dy = dx + gx, dy + gy
+    b = None
+    if el.tag == Q + "path" and el.get("d"):
+        q = bbox_banyak([el.get("d")])
+        if q:
+            b = (q[0] + dx, q[1] + dy, q[2] + dx, q[3] + dy)
+    elif el.tag in (Q + "circle", Q + "ellipse"):
+        # <circle> dan <ellipse> sempat tidak dihitung sama sekali, dan itu
+        # tidak menimbulkan galat apa pun — kotaknya cuma mengecil diam-diam.
+        # Terukur: sel tanggal terpotong jadi 13,04x8,79 (tinta angkanya
+        # saja) padahal bulatan latarnya 24x24, jadi perbandingannya
+        # melaporkan 57% berbeda untuk komponen yang sebenarnya benar.
+        cx, cy = float(el.get("cx", 0)) + dx, float(el.get("cy", 0)) + dy
+        rx = float(el.get("rx") or el.get("r") or 0)
+        ry = float(el.get("ry") or el.get("r") or 0)
+        t = float(el.get("stroke-width", 1)) / 2 if el.get("stroke") else 0
+        b = (cx - rx - t, cy - ry - t, cx + rx + t, cy + ry + t)
+    elif el.tag == Q + "rect":
+        x, y = float(el.get("x", 0)) + dx, float(el.get("y", 0)) + dy
+        w, h = float(el.get("width", 0)), float(el.get("height", 0))
         # Garis Figma berpusat di tepi, jadi setengahnya menonjol keluar rect.
         # Bawaan stroke-width di SVG adalah 1, BUKAN 0. Memakai 0 sebagai
         # nilai bawaan membuat kotak varian Ghost terbaca 1px lebih kecil
         # daripada yang benar-benar tergambar, dan selisih itu lalu
         # tampak seperti cacat di komponennya.
-        t = float(r.get("stroke-width", 1)) / 2 if r.get("stroke") else 0
-        q = (x - t, y - t, x + w + t, y + h + t)
-        b = q if b is None else (min(b[0], q[0]), min(b[1], q[1]), max(b[2], q[2]), max(b[3], q[3]))
+        t = float(el.get("stroke-width", 1)) / 2 if el.get("stroke") else 0
+        b = (x - t, y - t, x + w + t, y + h + t)
+    for c in el:
+        q = kotak(c, dx, dy)
+        if q:
+            b = q if b is None else (min(b[0], q[0]), min(b[1], q[1]), max(b[2], q[2]), max(b[3], q[3]))
     return b
 
 
@@ -55,6 +88,22 @@ def petik(frame: str, layer: str):
         sys.exit(f'tidak ada layer "{layer}" di {frame}.svg')
     b = kotak(el)
     isi = "".join(ET.tostring(c, encoding="unicode") for c in el)
+
+    # <defs> WAJIB ikut. Gradien dan clipPath tinggal di akar berkas frame,
+    # sementara yang dipetik cuma satu layer — jadi setiap `fill="url(#...)"`
+    # di dalamnya menunjuk id yang tidak ada lagi. SVG tidak mengeluh: yang
+    # tidak bisa diselesaikan sekadar TIDAK DILUKIS. Terukur: bidang gradien
+    # di bawah garis grafik mungil hilang sama sekali dari acuannya, dan
+    # perbandingan lalu melaporkan bidang yang BENAR di kit sebagai cacat
+    # seluas 19% — padahal yang kurang acuannya.
+    #
+    # Disalin apa adanya dan seluruhnya: memilah id mana yang dipakai berarti
+    # menulis penelusuran referensi sendiri, dan defs yang tidak terpakai
+    # tidak melukis apa pun.
+    defs = "".join(
+        ET.tostring(d, encoding="unicode") for d in root if d.tag == Q + "defs"
+    )
+    isi = defs + isi
     isi = re.sub(r'\sxmlns(:\w+)?="[^"]*"', "", isi)
     w, h = b[2] - b[0], b[3] - b[1]
     return (

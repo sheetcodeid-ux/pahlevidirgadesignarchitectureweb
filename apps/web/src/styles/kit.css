@@ -879,7 +879,10 @@
   width: var(--k-centang-s);
   height: var(--k-centang-s);
   margin: 0;
-  border: 0;
+  /* Garis 1px #E4E2DD ada di keadaan BELUM dicentang dan hilang begitu
+     dicentang — warna latarnya yang mengambil alih. Sempat tidak dibuat sama
+     sekali karena yang dibandingkan cuma varian tercentang. */
+  border: 1px solid var(--sakelar-mati);
   border-radius: 4px;
   background: var(--centang-bidang);
   cursor: pointer;
@@ -887,6 +890,7 @@
   position: relative;
   transition: background-color var(--dur) var(--ease);
 }
+.k-centang:checked { border-color: transparent; }
 .k-centang--default { --k-centang-s: 13px; }
 .k-centang--medium  { --k-centang-s: 17px; }
 .k-centang--big     { --k-centang-s: 23px; }
@@ -1169,10 +1173,15 @@
   color: var(--text-strong);
 }
 
+/* line-height 1, bukan 1,6 yang diwarisi. Kotak baris judul yang 19,2
+   membuat kartu 175,69 tinggi padahal framenya 174 — dan kelebihannya tidak
+   kelihatan sama sekali dari melihat kartunya, cuma dari membandingkan
+   tingginya. margin-atas naik 3,6 supaya tintanya tetap mendarat di 144,5. */
 .k-stat__judul {
-  margin: 12px 0 0;
+  margin: 15.6px 0 0;
   font-size: var(--k-t12);
   font-weight: var(--k-reg);
+  line-height: 1;
   color: var(--text-strong);
 }
 
@@ -1278,3 +1287,296 @@
 .k-kas__ket { margin: 0; font-size: var(--k-t10); font-weight: var(--k-reg); line-height: 1; }
 .k-kas__isi { margin: 5.74px 0 0; font-size: var(--k-t12); font-weight: var(--k-semi); line-height: 1; color: var(--kas-nilai); }
 .k-kas--terang .k-kas__isi { color: var(--text-strong); }
+
+/* -----------------------------------------------------------------------------
+   TABEL — frame Table
+
+   Angka di bawah semuanya dari letak tinta di frame Figma, bukan dari selisih
+   kotaknya. Ukuran huruf kepala dipastikan lewat pencocokan LEBAR tinta pada
+   string yang sudah diketahui: "Transaction Name" 79,38 lawan 79,31 di Figma,
+   "Amount" 34,25 lawan 34,23, "Status" 27,38 lawan 27,32 — ketiganya pada
+   10px reguler, dan meleset di bawah seperempat persen.
+
+   Garis 1px ada di ATAS tiap baris, bukan di bawahnya. Bedanya kelihatan di
+   ujung tabel: dengan garis-atas, tabel punya garis di atas kepalanya dan
+   TIDAK punya garis menggantung di bawah baris terakhir — persis framenya.
+   -------------------------------------------------------------------------- */
+.k-tabel {
+  width: 100%;
+  /* `collapse` supaya garis atas tiap sel menyatu jadi satu garis selebar
+     baris; `separate` menggambarnya per sel dan celah antarsel jadi putus. */
+  border-collapse: collapse;
+  /* `fixed` supaya lebar <col> yang diukur dari Figma benar-benar dipakai.
+     Tanpa ini peramban menghitung sendiri dari isinya dan seluruh angka
+     kolomnya jadi tidak berarti. */
+  table-layout: fixed;
+  font-family: var(--font-sans);
+  /* Barisnya berlatar putih di Figma, bukan tembus pandang. Kelihatan sekali
+     di halaman yang latarnya abu: tanpa ini tabel menyatu dengan halamannya. */
+  background: var(--surface);
+}
+.k-tabel th,
+.k-tabel td {
+  padding: 0 var(--k-tabel-pad);
+  border-top: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+.k-tabel th.is-kanan,
+.k-tabel td.is-kanan { text-align: right; }
+
+/* Kepala bermint TIDAK punya garis: di Figma bidangnya #ECF4E9 penuh dan
+   tidak ada satu pun stroke. Kepala polos (Transaction) tidak punya keduanya. */
+.k-tabel--kepala-mint thead th {
+  border-top-color: transparent;
+  background: var(--brand-soft);
+}
+.k-tabel--kepala-polos thead th { border-top-color: transparent; }
+
+.k-tabel th {
+  height: var(--k-tabel-h-kepala);
+  font-size: var(--k-t10);
+  font-weight: var(--k-reg);
+  color: var(--text-muted);
+}
+/* Jarak judul ke ikon Sort 0,35.
+
+   Angka ini TIDAK bisa dibaca langsung dari selisih tinta: terukur, jarak
+   tinta-ke-tinta di lima kolom Dashboard 5,04 / 4,87 / 4,12 / 4,38 / 4,93 —
+   berbeda-beda karena huruf terakhir tiap judul punya side bearing sendiri
+   ("Amount" berakhir 't' yang rapat, "Name" berakhir 'e' yang bulat).
+   Yang tetap jaraknya adalah dari ujung ADVANCE teks ke kotak ikonnya, dan
+   itulah yang dipasang di sini. */
+.k-tabel__judul { display: inline-flex; align-items: center; gap: 0.35px; white-space: nowrap; }
+.k-tabel__judul svg { color: var(--text-muted); }
+
+/* Ukuran huruf baris isi BEDA per jenis tabel: Dashboard 10px, sisanya 12px.
+   Dipastikan dari tinggi tinta kolom nominal, yang stringnya memuat "$" dan
+   karena itu tingginya bisa dipakai sebagai sidik jari ukuran: 9,24 di
+   Dashboard lawan 11,08 di Transaction dan Investment — persis rasio 10/12. */
+.k-tabel td {
+  height: var(--k-tabel-h-baris);
+  /* Isinya diturunkan 1px dari titik tengah: `vertical-align: middle`
+     memusatkan kotak baris, sementara Figma menaruh tintanya sedikit di
+     bawah tengah — pola yang sama seperti teks di dalam tombol, dan
+     sebabnya juga sama (metrik ascent/descent font lawan kotak teks Figma).
+     Padding atas menggeser isi yang dipusatkan sebesar SETENGAHNYA. */
+  padding-top: 2px;
+  font-size: var(--k-tabel-font);
+  color: var(--text-strong);
+}
+/* Kotak centang di kolom pertama tidak boleh ikut melar bersama selnya. */
+.k-tabel th > .k-centang,
+.k-tabel td > .k-centang { display: block; }
+
+/* Sel dua baris. Jarak antar-tinta 15,37 pada Dashboard (dua baris 10px) dan
+   17,56 pada Investment (12px di atas, 10px di bawah) — jadi line-height-nya
+   ikut varian, bukan angka tunggal. */
+.k-sel2 { display: flex; flex-direction: column; }
+.k-sel2__atas { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-strong); }
+.k-sel2__bawah { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-muted); }
+.k-sel2--besar .k-sel2__atas { font-size: var(--k-t12); line-height: 17.56px; }
+.k-sel2--besar .k-sel2__bawah { line-height: 17.56px; }
+
+/* Sel berikon — bulatan mint PENUH, bukan kotak membulat. */
+.k-selikon { display: flex; align-items: center; gap: var(--k-selikon-gap, 12.4px); }
+.k-selikon__bulat {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--brand-mint);
+  color: var(--brand);
+}
+
+/* Sel berkeping — keping 23x15 radius 4, lalu teks berjarak 7,22. */
+.k-selkeping { display: flex; align-items: center; gap: 7.22px; min-width: 0; }
+.k-selkeping__keping {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 15px;
+  border-radius: 4px;
+  background: var(--brand);
+  color: var(--brand-mint);
+  font-size: 6px;
+  font-weight: var(--k-semi);
+  overflow: hidden;
+}
+.k-selkeping__teks { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* -----------------------------------------------------------------------------
+   REL SAMPING & BILAH ATAS — frame Nav
+
+   Terukur pada varian Desktop: panel 192 lebar berlatar #ECF4E9, logo 110x22
+   di (32,30), daftar menu mulai y80 dengan baris 160x40 berjarak 8, dan
+   banner 159x220 di (16,788). Varian Tablet 72 lebar, ikon saja.
+   -------------------------------------------------------------------------- */
+.k-sisi {
+  display: flex;
+  flex-direction: column;
+  /* Tinggi rel mengikuti wadahnya; di Figma frame-nya 1034 karena itu tinggi
+     kanvas halamannya, bukan ukuran komponennya sendiri. */
+  height: 100%;
+  width: 192px;
+  padding: 0 16px;
+  background: var(--brand-soft);
+}
+.k-sisi__kepala {
+  display: flex;
+  align-items: center;
+  /* 30 dari tepi atas panel, dan 16 lagi dari tepi-dalamnya — jadi 32 dari
+     tepi luar, bukan rata dengan daftar menunya. */
+  height: 22px;
+  margin: 30px 0 0 16px;
+}
+/* Daftar mulai di y80: 30 + 22 + 28. */
+.k-sisi__daftar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.k-sisi__daftar > li { display: block; }
+.k-sisi .k-nav { text-decoration: none; }
+/* Angka merah menempel ke kanan baris, bukan mengikuti teksnya. */
+.k-sisi .k-nav .k-angka,
+.k-sisi__lipat { margin-left: auto; }
+/* Titik di rel sempit menumpang di sudut kanan-atas ikonnya. */
+.k-sisi--sempit .k-nav { position: relative; }
+.k-sisi--sempit .k-titik { position: absolute; top: 9px; right: 9px; }
+.k-sisi__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-sisi__kaki { margin-top: auto; padding: 0 0 26px; }
+
+/* Rel sempit: 72 lebar, isinya ikon saja, dan barisnya jadi bujur sangkar 40. */
+.k-sisi--sempit { width: 72px; padding: 0 16px; }
+.k-sisi--sempit .k-sisi__label,
+.k-sisi--sempit .k-angka { display: none; }
+.k-sisi--sempit .k-nav { justify-content: center; padding: 0; }
+.k-sisi--sempit .k-sisi__kepala { margin-left: 0; justify-content: center; }
+
+.k-bilahnav {
+  display: flex;
+  align-items: center;
+  width: 390px;
+  height: 70px;
+  padding: 0 24px;
+  background: var(--brand-soft);
+}
+.k-bilahnav__logo { flex: none; display: flex; align-items: center; }
+/* Judul di TENGAH bilah, bukan sekadar sisa ruang: terukur, tintanya
+   berpusat di 197,7 pada bilah selebar 390 yang tengahnya 195. */
+.k-bilahnav__judul {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-size: var(--k-t18);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-bilahnav__menu {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+/* -----------------------------------------------------------------------------
+   GRAFIK — frame Chart
+
+   Kolom 45 lebar, bidang plot 152 tinggi, lima garis kisi berjarak 38, label
+   sumbu-X 21 di bawah garis terakhir. Batangnya datang sebagai data dalam
+   persen, jadi satu komponen melayani kedelapan varian di frame itu.
+   -------------------------------------------------------------------------- */
+.k-kolom { display: flex; flex-direction: column; align-items: center; width: var(--k-kolom-w); }
+.k-kolom__bidang { position: relative; width: 100%; height: var(--k-kolom-h); }
+.k-kolom__garis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  /* Garis kisi memakai warna tepi yang paling pudar; di Figma ia hampir tak
+     terlihat dan memang begitu maksudnya — yang dibaca batangnya. */
+  background: var(--border);
+}
+/* Rel abu varian "Phil": melebar keluar kolom (49 pada kolom 45) dan
+   membulat penuh. */
+.k-kolom__rel {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: -2.5px;
+  bottom: 4.5px;
+  border-radius: 12px;
+  background: var(--surface-hover);
+}
+.k-kolom__batang {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.k-kolom__b { position: relative; flex: none; }
+/* Bertumpuk: tiap potongan dipusatkan pada sumbu kolom, bukan dijajarkan. */
+.k-kolom__batang--tumpuk .k-kolom__b { position: absolute; left: 50%; transform: translateX(-50%); }
+.k-kolom__b--mint  { background: var(--brand-mint); }
+.k-kolom__b--tua   { background: var(--brand); }
+.k-kolom__b--hitam { background: var(--text-strong); }
+.k-kolom__b--pudar { background: var(--surface-hover); }
+/* Label sumbu-X: 21 di bawah dasar bidang plot, 10px abu. */
+/* line-height 1 dan jarak 16,1: yang harus mendarat tepat tinta labelnya di
+   176,63 dari puncak bidang plot, bukan kotak barisnya. Sisa 1,47 di bawah
+   tinta adalah ruang ekor huruf yang memang tidak ada di kotak acuan Figma. */
+.k-kolom__label {
+  margin-top: 16.1px;
+  line-height: 1;
+  font-size: var(--k-t10);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.k-labely { position: relative; display: inline-block; height: var(--k-kolom-h); }
+.k-labely__ukur { visibility: hidden; font-size: var(--k-t10); white-space: nowrap; }
+/* Tiap label BERPUSAT pada garis kisinya — translateY(-50%), bukan duduk di
+   atasnya. Terukur: tinta 22,37..29,63 berpusat tepat di garis y26. */
+.k-labely__b {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: var(--k-t10);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.k-kilau { display: block; color: var(--kilau-naik); }
+.k-kilau--turun { color: var(--kilau-turun); }
+
+/* Sel tanggal — bulatan 24, angka 12px. */
+.k-tgl {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  font-size: var(--k-t12);
+  color: var(--centang-tanda);
+}
+.k-tgl--mati  { color: var(--tgl-mati); }
+.k-tgl--pilih { background: var(--tgl-pilih); }
+.k-tgl--kini  { background: var(--centang-aktif); }
+/* Nama hari — 10px abu, mis. "Mon". */
+/* Nama hari #B8B1A9, abu HANGAT — bukan abu netral panel. */
+.k-hari { font-size: var(--k-t10); color: var(--tgl-mati); }
