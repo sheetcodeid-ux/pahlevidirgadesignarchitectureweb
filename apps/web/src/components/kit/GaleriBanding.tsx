@@ -541,19 +541,19 @@ export function GaleriBanding() {
 
       <Grup judul="Kalender">
         <Banding kunci="tgl-biasa" zoom={6} tanpaKotak catatan="varian tanpa bulatan — yang terukur cuma tinta angkanya">
-          <SelTanggal>26</SelTanggal>
+          <SelTanggal>30</SelTanggal>
         </Banding>
         <Banding kunci="tgl-mati" zoom={6} tanpaKotak catatan="sama, tinta abu">
-          <SelTanggal keadaan="mati">26</SelTanggal>
+          <SelTanggal keadaan="mati">30</SelTanggal>
         </Banding>
         <Banding kunci="tgl-pilih" zoom={6}>
-          <SelTanggal keadaan="pilih">26</SelTanggal>
+          <SelTanggal keadaan="pilih">30</SelTanggal>
         </Banding>
         <Banding kunci="tgl-kini" zoom={6}>
-          <SelTanggal keadaan="kini">26</SelTanggal>
+          <SelTanggal keadaan="kini">30</SelTanggal>
         </Banding>
         <Banding kunci="hari" zoom={6} tanpaKotak catatan="nama hari, 10px abu">
-          <SelHari>Mon</SelHari>
+          <SelHari>Wed</SelHari>
         </Banding>
       </Grup>
 
