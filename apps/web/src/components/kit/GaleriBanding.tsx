@@ -510,8 +510,8 @@ export function GaleriBanding() {
             label="Jan"
             lebarBatang={15.5}
             batang={[
-              { atas: 8.2, bawah: 100.3, nada: "mint", radiusAtas: 7.2 },
-              { atas: 54.3, bawah: 100.3, nada: "tua", radiusAtas: 7.2 },
+              { atas: 8.2, bawah: 100.3, nada: "mint", radiusAtas: 4 },
+              { atas: 54.3, bawah: 100.3, nada: "tua", radiusAtas: 4 },
             ]}
           />
         </Banding>
@@ -522,7 +522,7 @@ export function GaleriBanding() {
             celah={4}
             batang={[
               { atas: 33.2, bawah: 100.3, nada: "hitam", radiusAtas: 3 },
-              { atas: 9.5, bawah: 100.3, nada: "mint", radiusAtas: 3 },
+              { atas: 9.54, bawah: 100.3, nada: "mint", radiusAtas: 3 },
               { atas: 68.8, bawah: 100.3, nada: "tua", radiusAtas: 3 },
             ]}
           />

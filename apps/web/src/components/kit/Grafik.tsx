@@ -32,7 +32,18 @@ export interface BatangGrafik {
    * salah baca: Figma memanggang lengkungnya ke dalam data path sebagai
    * kurva bezier, bukan menulisnya sebagai atribut `rx` — jadi mencari `rx`
    * menjawab "tidak ada radius" untuk batang yang jelas-jelas membulat.
-   * Yang benar dibaca dari path-nya: Up Down 4, Double 7,2, Tripple 3.
+   *
+   * Yang benar: Up Down 4, Tripple 3 — keduanya busur lingkaran biasa —
+   * dan Double 4 juga, BUKAN 7,2 seperti bacaan pertama. Sudut Double
+   * dipakaikan corner smoothing Figma, yang menggambar satu sudut dengan
+   * TIGA ruas bezier membentang 7,2 di sepanjang tepinya padahal
+   * lengkungnya sendiri setara radius 4. Membaca rentang path-nya sebagai
+   * radius membuat batang selebar 15,5 nyaris jadi pil.
+   *
+   * Yang membuktikan angkanya bukan path-nya melainkan PROFIL SUDUTNYA —
+   * lebar batang yang benar-benar tergambar pada tiap baris piksel dari
+   * puncak. Figma sudah 93% lebar penuh pada 2px dari puncak; radius 7,2
+   * baru 73%. Radius 4 cocok di seluruh titik ukur: selisih 0,02-0,06px.
    */
   radiusAtas?: number;
   /** Radius sudut BAWAH saja. Dipakai potongan negatif varian Up Down. */
@@ -187,7 +198,11 @@ export function Kilau({
      bidang gradien di bawahnya. Terukur: garis 42,20 dari kotak 61,68. */
   const tinggiGaris = tinggi * 0.684;
   const xs = titik.map((_, i) => (posisi ? posisi[i] : i / (n - 1)) * lebar);
-  const ys = titik.map((v) => tinggiGaris - ((v - min) / rentang) * tinggiGaris + 1);
+  /* TANPA geseran +1. Sempat saya tambahkan supaya goresan setebal 2 tidak
+     terpotong di tepi atas — dan itu menggeser SELURUH kurva satu piksel ke
+     bawah, setengah tebal goresannya sendiri. Figma pun membiarkan
+     separuhnya terpotong di sana; yang penting kurvanya berimpit. */
+  const ys = titik.map((v) => tinggiGaris - ((v - min) / rentang) * tinggiGaris);
   /* Interpolasi kubik MONOTON (Fritsch-Carlson), bukan Catmull-Rom.
      Bedanya bukan soal kehalusan: Catmull-Rom MELAMPAUI titik datanya di
      tiap belokan, jadi grafik yang datanya tidak pernah turun tetap
@@ -217,12 +232,32 @@ export function Kilau({
       m[i + 1] = ((3 / h) * b) * lereng[i];
     }
   }
+  /* Titik kendali di 48% panjang ruas, BUKAN 33% yang jadi bawaan rumus
+     Hermite.
+
+     Ini yang membuat kurvanya terbaca halus, dan angkanya dibaca langsung
+     dari path Figma: pada ruas (19,5;35,7)->(33;22,7) kendalinya di x26 dan
+     x26,5 — keduanya 48% dari ujungnya. Sama di ruas lain: 44%, 48%, 53%.
+     Pada 33% kurvanya menahan sebentar lalu membelok tajam, persis yang
+     dilihat pemilik sebagai "terlalu tajam, tidak smooth".
+
+     Angka 0,45 bukan tebakan dari melihat: kedua kurva dicuplik pada 400
+     titik lalu jarak tegaknya diukur. Tangen monoton dengan kendali 0,45
+     meleset rata-rata 0,33px dari kurva Figma; Catmull-Rom meleset 0,70px
+     pada panjang kendali mana pun. */
+  const F = 0.45;
   const d = xs
     .map((x, i) => {
       if (i === 0) return `M${x.toFixed(2)} ${ys[0].toFixed(2)}`;
       const h = dx[i - 1];
-      const c1x = xs[i - 1] + h / 3, c1y = ys[i - 1] + (m[i - 1] * h) / 3;
-      const c2x = x - h / 3, c2y = ys[i] - (m[i] * h) / 3;
+      /* Gagang di titik PERTAMA dan TERAKHIR dikuncupkan jadi nol — sama
+         seperti di Figma, yang menulis titik kendali pertamanya tepat di
+         atas titik awalnya. Efeknya kurva berangkat lurus dan tidak
+         mengarang lengkung di ujung yang tidak punya tetangga. */
+      const f1 = i === 1 ? 0 : F;
+      const f2 = i === n - 1 ? 0 : F;
+      const c1x = xs[i - 1] + f1 * h, c1y = ys[i - 1] + m[i - 1] * f1 * h;
+      const c2x = x - f2 * h, c2y = ys[i] - m[i] * f2 * h;
       return `C${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${x.toFixed(2)} ${ys[i].toFixed(2)}`;
     })
     .join(" ");
