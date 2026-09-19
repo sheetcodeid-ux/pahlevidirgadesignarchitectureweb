@@ -23,7 +23,21 @@ export interface BatangGrafik {
   /** Dasar batang, persen dari ATAS bidang plot. 100 = menyentuh dasar. */
   bawah: number;
   nada?: NadaBatang;
-  /** Radius sudut dalam px. Figma memakai 0, 6, 8, dan 12 tergantung varian. */
+  /**
+   * Radius sudut ATAS saja, dalam px.
+   *
+   * Batang di Figma membulat cuma di sudut LUARNYA: yang tumbuh ke atas
+   * membulat di atas dan rata di garis dasarnya, yang tumbuh ke bawah
+   * sebaliknya. Radiusnya sempat saya baca NOL di keempat varian, dan itu
+   * salah baca: Figma memanggang lengkungnya ke dalam data path sebagai
+   * kurva bezier, bukan menulisnya sebagai atribut `rx` — jadi mencari `rx`
+   * menjawab "tidak ada radius" untuk batang yang jelas-jelas membulat.
+   * Yang benar dibaca dari path-nya: Up Down 4, Double 7,2, Tripple 3.
+   */
+  radiusAtas?: number;
+  /** Radius sudut BAWAH saja. Dipakai potongan negatif varian Up Down. */
+  radiusBawah?: number;
+  /** Keempat sudut sekaligus — varian Single, yang rect-nya memang rx 6. */
   radius?: number;
 }
 
@@ -90,7 +104,10 @@ export function KolomGrafik({
                 width: lebarBatang,
                 top: `${b.atas}%`,
                 height: `${b.bawah - b.atas}%`,
-                borderRadius: b.radius ?? 0,
+                borderRadius:
+                  b.radius !== undefined
+                    ? b.radius
+                    : `${b.radiusAtas ?? 0}px ${b.radiusAtas ?? 0}px ${b.radiusBawah ?? 0}px ${b.radiusBawah ?? 0}px`,
               }}
             />
           ))}
@@ -140,12 +157,22 @@ export function LabelYGrafik({ nilai, tinggi = 152 }: { nilai: ReactNode[]; ting
    -------------------------------------------------------------------------- */
 export function Kilau({
   titik,
+  posisi,
   turun,
   lebar = 89.26,
   tinggi = 61.68,
   className,
 }: {
   titik: number[];
+  /**
+   * Letak tiap titik pada sumbu-X, 0..1. Kalau tidak diisi, titiknya dibagi
+   * rata.
+   *
+   * Ada karena deret waktu jarang berjarak rata — dan karena kurva di Figma
+   * memang tidak: titiknya di 0 / 7,3% / 21,8% / 37% / 53,8% / 71,7% / 90,2%
+   * / 100%. Tanpa ini, bentuk kurvanya tidak akan pernah bisa dibandingkan.
+   */
+  posisi?: number[];
   /** Tren menurun — garisnya merah, bukan hijau. */
   turun?: boolean;
   lebar?: number;
@@ -159,19 +186,43 @@ export function Kilau({
   /* Garisnya cuma memakai 68% tinggi teratas kotaknya — sisanya ruang untuk
      bidang gradien di bawahnya. Terukur: garis 42,20 dari kotak 61,68. */
   const tinggiGaris = tinggi * 0.684;
-  const xs = titik.map((_, i) => (i / (n - 1)) * lebar);
+  const xs = titik.map((_, i) => (posisi ? posisi[i] : i / (n - 1)) * lebar);
   const ys = titik.map((v) => tinggiGaris - ((v - min) / rentang) * tinggiGaris + 1);
-  /* Kurva Catmull-Rom yang diubah jadi bezier kubik, bukan garis patah.
-     Grafik mungil di Figma melengkung, dan garis patah membuatnya terbaca
-     seperti data yang lain sama sekali — bukan sekadar "kurang halus". */
+  /* Interpolasi kubik MONOTON (Fritsch-Carlson), bukan Catmull-Rom.
+     Bedanya bukan soal kehalusan: Catmull-Rom MELAMPAUI titik datanya di
+     tiap belokan, jadi grafik yang datanya tidak pernah turun tetap
+     tergambar turun sedikit — kurva yang berbohong tentang angkanya.
+     Monoton menahan lerengnya di tiap titik balik, dan justru itu yang
+     membuat dataran-dataran panjang seperti di Figma. */
+  const dx = xs.slice(1).map((x, i) => x - xs[i]);
+  const lereng = ys.slice(1).map((y, i) => (y - ys[i]) / (dx[i] || 1));
+  const m: number[] = [];
+  for (let i = 0; i < n; i++) {
+    if (i === 0) m.push(lereng[0]);
+    else if (i === n - 1) m.push(lereng[n - 2]);
+    else if (lereng[i - 1] * lereng[i] <= 0) m.push(0);
+    else m.push((lereng[i - 1] + lereng[i]) / 2);
+  }
+  for (let i = 0; i < n - 1; i++) {
+    if (lereng[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+      continue;
+    }
+    const a = m[i] / lereng[i];
+    const b = m[i + 1] / lereng[i];
+    const h = Math.hypot(a, b);
+    if (h > 3) {
+      m[i] = ((3 / h) * a) * lereng[i];
+      m[i + 1] = ((3 / h) * b) * lereng[i];
+    }
+  }
   const d = xs
     .map((x, i) => {
       if (i === 0) return `M${x.toFixed(2)} ${ys[0].toFixed(2)}`;
-      const x0 = xs[Math.max(0, i - 2)], y0 = ys[Math.max(0, i - 2)];
-      const x1 = xs[i - 1], y1 = ys[i - 1];
-      const x3 = xs[Math.min(n - 1, i + 1)], y3 = ys[Math.min(n - 1, i + 1)];
-      const c1x = x1 + (x - x0) / 6, c1y = y1 + (ys[i] - y0) / 6;
-      const c2x = x - (x3 - x1) / 6, c2y = ys[i] - (y3 - y1) / 6;
+      const h = dx[i - 1];
+      const c1x = xs[i - 1] + h / 3, c1y = ys[i - 1] + (m[i - 1] * h) / 3;
+      const c2x = x - h / 3, c2y = ys[i] - (m[i] * h) / 3;
       return `C${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${x.toFixed(2)} ${ys[i].toFixed(2)}`;
     })
     .join(" ");
@@ -187,7 +238,10 @@ export function Kilau({
     >
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
+          {/* 0,48 untuk tren naik dan 0,36 untuk tren turun — beda, dan itu
+              memang begitu di Figma. Satu angka untuk keduanya membuat yang
+              merah terbaca lebih pekat daripada seharusnya. */}
+          <stop offset="0%" stopColor="currentColor" stopOpacity={turun ? 0.36 : 0.48} />
           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </linearGradient>
       </defs>

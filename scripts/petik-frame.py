@@ -88,6 +88,22 @@ def petik(frame: str, layer: str):
         sys.exit(f'tidak ada layer "{layer}" di {frame}.svg')
     b = kotak(el)
     isi = "".join(ET.tostring(c, encoding="unicode") for c in el)
+
+    # <defs> WAJIB ikut. Gradien dan clipPath tinggal di akar berkas frame,
+    # sementara yang dipetik cuma satu layer — jadi setiap `fill="url(#...)"`
+    # di dalamnya menunjuk id yang tidak ada lagi. SVG tidak mengeluh: yang
+    # tidak bisa diselesaikan sekadar TIDAK DILUKIS. Terukur: bidang gradien
+    # di bawah garis grafik mungil hilang sama sekali dari acuannya, dan
+    # perbandingan lalu melaporkan bidang yang BENAR di kit sebagai cacat
+    # seluas 19% — padahal yang kurang acuannya.
+    #
+    # Disalin apa adanya dan seluruhnya: memilah id mana yang dipakai berarti
+    # menulis penelusuran referensi sendiri, dan defs yang tidak terpakai
+    # tidak melukis apa pun.
+    defs = "".join(
+        ET.tostring(d, encoding="unicode") for d in root if d.tag == Q + "defs"
+    )
+    isi = defs + isi
     isi = re.sub(r'\sxmlns(:\w+)?="[^"]*"', "", isi)
     w, h = b[2] - b[0], b[3] - b[1]
     return (

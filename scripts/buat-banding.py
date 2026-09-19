@@ -121,6 +121,11 @@ def warna_layer(svg: str):
     Figma (#9747FF, yang dipakai untuk menandai batas komponen dan bukan
     bagian dari desainnya) dibuang.
     """
+    # <defs> dibuang dulu. Sejak gradien dan clipPath ikut disalin ke
+    # potongan acuan, `fill="white"` milik rect di dalam clipPath ikut
+    # terhitung sebagai warna komponen — dan setiap grafik lalu dilaporkan
+    # "putih tidak ada di kit" padahal putih itu tidak pernah tergambar.
+    svg = re.sub(r"<defs>.*?</defs>", "", svg, flags=re.S)
     ANOTASI = {"#9747FF"}
     # Figma menulis putih sebagai kata kunci `white`, bukan heks. Tanpa
     # disamakan, audit warna melaporkan "white tidak ada di kit" pada setiap

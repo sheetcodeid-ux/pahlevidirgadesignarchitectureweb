@@ -497,8 +497,8 @@ export function GaleriBanding() {
             tumpuk
             lebarBatang={27}
             batang={[
-              { atas: 24.7, bawah: 50, nada: "tua" },
-              { atas: 50, bawah: 75.3, nada: "mint" },
+              { atas: 24.7, bawah: 50, nada: "tua", radiusAtas: 4 },
+              { atas: 50, bawah: 75.3, nada: "mint", radiusBawah: 4 },
             ]}
           />
         </Banding>
@@ -510,8 +510,8 @@ export function GaleriBanding() {
             label="Jan"
             lebarBatang={15.5}
             batang={[
-              { atas: 8.2, bawah: 100.3, nada: "mint" },
-              { atas: 54.3, bawah: 100.3, nada: "tua" },
+              { atas: 8.2, bawah: 100.3, nada: "mint", radiusAtas: 7.2 },
+              { atas: 54.3, bawah: 100.3, nada: "tua", radiusAtas: 7.2 },
             ]}
           />
         </Banding>
@@ -521,9 +521,9 @@ export function GaleriBanding() {
             lebarBatang={6.67}
             celah={4}
             batang={[
-              { atas: 33.2, bawah: 100.3, nada: "hitam" },
-              { atas: 9.5, bawah: 100.3, nada: "mint" },
-              { atas: 68.8, bawah: 100.3, nada: "tua" },
+              { atas: 33.2, bawah: 100.3, nada: "hitam", radiusAtas: 3 },
+              { atas: 9.5, bawah: 100.3, nada: "mint", radiusAtas: 3 },
+              { atas: 68.8, bawah: 100.3, nada: "tua", radiusAtas: 3 },
             ]}
           />
         </Banding>
@@ -532,10 +532,22 @@ export function GaleriBanding() {
           zoom={3}
           catatan="kurvanya dihitung dari data, bukan menyalin path Figma — yang dibandingkan ukuran kotak, tinggi garis, warna, dan gradiennya"
         >
-          <Kilau titik={[3, 5, 4, 7, 6, 9, 8, 12]} />
+          {/* Angka dan letaknya diambil dari titik jangkar path Figma
+              (42,2 - y), supaya yang dibandingkan MATEMATIKA KURVANYA, bukan
+              data yang kebetulan berbeda. Bentuknya tangga: turun, datar,
+              turun, naik sedikit — bukan zigzag. */}
+          <Kilau
+            titik={[0, 6.5, 6.5, 19.5, 17.6, 36.2, 35.2, 42.2]}
+            posisi={[0, 0.073, 0.218, 0.37, 0.538, 0.717, 0.902, 1]}
+          />
         </Banding>
         <Banding kunci="kilau-turun" zoom={3} catatan="sama, varian menurun">
-          <Kilau turun titik={[12, 9, 10, 7, 8, 5, 6, 3]} className="k-kilau--turun" />
+          <Kilau
+            turun
+            titik={[42.2, 35.2, 36.2, 17.6, 19.5, 6.5, 6.5, 0]}
+            posisi={[0, 0.098, 0.283, 0.462, 0.63, 0.782, 0.927, 1]}
+            className="k-kilau--turun"
+          />
         </Banding>
       </Grup>
 
