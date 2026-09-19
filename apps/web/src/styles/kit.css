@@ -1492,3 +1492,91 @@
   color: var(--text-strong);
   cursor: pointer;
 }
+
+/* -----------------------------------------------------------------------------
+   GRAFIK — frame Chart
+
+   Kolom 45 lebar, bidang plot 152 tinggi, lima garis kisi berjarak 38, label
+   sumbu-X 21 di bawah garis terakhir. Batangnya datang sebagai data dalam
+   persen, jadi satu komponen melayani kedelapan varian di frame itu.
+   -------------------------------------------------------------------------- */
+.k-kolom { display: flex; flex-direction: column; align-items: center; width: var(--k-kolom-w); }
+.k-kolom__bidang { position: relative; width: 100%; height: var(--k-kolom-h); }
+.k-kolom__garis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  /* Garis kisi memakai warna tepi yang paling pudar; di Figma ia hampir tak
+     terlihat dan memang begitu maksudnya — yang dibaca batangnya. */
+  background: var(--border);
+}
+/* Rel abu varian "Phil": melebar keluar kolom (49 pada kolom 45) dan
+   membulat penuh. */
+.k-kolom__rel {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: -2.5px;
+  bottom: 4.5px;
+  border-radius: 12px;
+  background: var(--surface-hover);
+}
+.k-kolom__batang {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.k-kolom__b { position: relative; flex: none; }
+/* Bertumpuk: tiap potongan dipusatkan pada sumbu kolom, bukan dijajarkan. */
+.k-kolom__batang--tumpuk .k-kolom__b { position: absolute; left: 50%; transform: translateX(-50%); }
+.k-kolom__b--mint  { background: var(--brand-mint); }
+.k-kolom__b--tua   { background: var(--brand); }
+.k-kolom__b--hitam { background: var(--text-strong); }
+.k-kolom__b--pudar { background: var(--surface-hover); }
+/* Label sumbu-X: 21 di bawah dasar bidang plot, 10px abu. */
+/* line-height 1 dan jarak 16,1: yang harus mendarat tepat tinta labelnya di
+   176,63 dari puncak bidang plot, bukan kotak barisnya. Sisa 1,47 di bawah
+   tinta adalah ruang ekor huruf yang memang tidak ada di kotak acuan Figma. */
+.k-kolom__label {
+  margin-top: 16.1px;
+  line-height: 1;
+  font-size: var(--k-t10);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.k-labely { position: relative; display: inline-block; height: var(--k-kolom-h); }
+.k-labely__ukur { visibility: hidden; font-size: var(--k-t10); white-space: nowrap; }
+/* Tiap label BERPUSAT pada garis kisinya — translateY(-50%), bukan duduk di
+   atasnya. Terukur: tinta 22,37..29,63 berpusat tepat di garis y26. */
+.k-labely__b {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: var(--k-t10);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.k-kilau { display: block; color: var(--kilau-naik); }
+.k-kilau--turun { color: var(--kilau-turun); }
+
+/* Sel tanggal — bulatan 24, angka 12px. */
+.k-tgl {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  font-size: var(--k-t12);
+  color: var(--centang-tanda);
+}
+.k-tgl--mati  { color: var(--tgl-mati); }
+.k-tgl--pilih { background: var(--tgl-pilih); }
+.k-tgl--kini  { background: var(--centang-aktif); }
+/* Nama hari — 10px abu, mis. "Mon". */
+/* Nama hari #B8B1A9, abu HANGAT — bukan abu netral panel. */
+.k-hari { font-size: var(--k-t10); color: var(--tgl-mati); }

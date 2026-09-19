@@ -94,6 +94,21 @@ PASANGAN = [
     ("sisi-desktop", "Nav", "Device=Desktop"),
     ("sisi-tablet",  "Nav", "Device=Tablet"),
     ("bilah-ponsel", "Nav", "Navbar"),
+    # --- Grafik --------------------------------------------------------------
+    ("kolom-labely",    "Chart", "Type=Y-labels"),
+    ("kolom-kosong",    "Chart", "Type=Default"),
+    ("kolom-naikturun", "Chart", "Type=Up Down"),
+    ("kolom-tunggal",   "Chart", "Type=Single"),
+    ("kolom-ganda",     "Chart", "Type=Double"),
+    ("kolom-tiga",      "Chart", "Type=Tripple"),
+    ("kilau-naik",      "Chart", "Variant=Trend Up"),
+    ("kilau-turun",     "Chart", "Variant=Trend Down"),
+    # --- Kalender ------------------------------------------------------------
+    ("tgl-biasa", "Calendar", "Variant=Default"),
+    ("tgl-mati",  "Calendar", "Variant=Off"),
+    ("tgl-pilih", "Calendar", "Variant=On"),
+    ("tgl-kini",  "Calendar", "Variant=Active"),
+    ("hari",      "Calendar", "Cell-day-dashboard"),
     ("tabel-tabung-kepala", "Table", "Type=Head, Size=Wide"),
     ("tabel-tabung-baris",  "Table", "Type=Body, Size=Wide"),
 ]

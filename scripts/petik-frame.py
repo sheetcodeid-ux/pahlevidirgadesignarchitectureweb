@@ -53,6 +53,17 @@ def kotak(el, dx=0.0, dy=0.0):
         q = bbox_banyak([el.get("d")])
         if q:
             b = (q[0] + dx, q[1] + dy, q[2] + dx, q[3] + dy)
+    elif el.tag in (Q + "circle", Q + "ellipse"):
+        # <circle> dan <ellipse> sempat tidak dihitung sama sekali, dan itu
+        # tidak menimbulkan galat apa pun — kotaknya cuma mengecil diam-diam.
+        # Terukur: sel tanggal terpotong jadi 13,04x8,79 (tinta angkanya
+        # saja) padahal bulatan latarnya 24x24, jadi perbandingannya
+        # melaporkan 57% berbeda untuk komponen yang sebenarnya benar.
+        cx, cy = float(el.get("cx", 0)) + dx, float(el.get("cy", 0)) + dy
+        rx = float(el.get("rx") or el.get("r") or 0)
+        ry = float(el.get("ry") or el.get("r") or 0)
+        t = float(el.get("stroke-width", 1)) / 2 if el.get("stroke") else 0
+        b = (cx - rx - t, cy - ry - t, cx + rx + t, cy + ry + t)
     elif el.tag == Q + "rect":
         x, y = float(el.get("x", 0)) + dx, float(el.get("y", 0)) + dy
         w, h = float(el.get("width", 0)), float(el.get("height", 0))

@@ -3,6 +3,7 @@ import { Banding } from "./Banding";
 import { Tombol, TombolIkon } from "./Tombol";
 import { Segmen } from "./Segmen";
 import { SisiNav, BilahNav, type ItemNav } from "./Nav";
+import { KolomGrafik, LabelYGrafik, Kilau, SelTanggal, SelHari } from "./Grafik";
 import { Tabel, SelDua, SelIkon, SelKeping, type KolomTabel } from "./Tabel";
 import { Lencana, Angka, Titik } from "./Lencana";
 import { Remah } from "./Remah";
@@ -470,6 +471,89 @@ export function GaleriBanding() {
             judul="Dashboard"
             menuIkon={List}
           />
+        </Banding>
+      </Grup>
+
+      {/* Grafik. Persen tiap batang diturunkan dari letaknya di frame:
+          (y - 26) / 152, karena bidang plotnya membentang y26..y178. */}
+      <Grup judul="Grafik">
+        <Banding
+          kunci="kolom-labely"
+          zoom={2}
+          tanpaKotak
+          catatan="acuannya cuma tinta lima labelnya — kotak teks punya side bearing yang tidak ada di tinta, jadi lebarnya tidak sah dibandingkan"
+        >
+          {/* Kelimanya "8K" — itu memang isi framenya, dan itu yang
+              menjelaskan kenapa lebar tinta kelima barisnya sama persis
+              9,99. */}
+          <LabelYGrafik nilai={["8K", "8K", "8K", "8K", "8K"]} />
+        </Banding>
+        <Banding kunci="kolom-kosong" zoom={2}>
+          <KolomGrafik label="Jan" />
+        </Banding>
+        <Banding kunci="kolom-naikturun" zoom={2}>
+          <KolomGrafik
+            label="Jan"
+            tumpuk
+            lebarBatang={27}
+            batang={[
+              { atas: 24.7, bawah: 50, nada: "tua" },
+              { atas: 50, bawah: 75.3, nada: "mint" },
+            ]}
+          />
+        </Banding>
+        <Banding kunci="kolom-tunggal" zoom={2}>
+          <KolomGrafik label="Jan" lebarBatang={31} batang={[{ atas: 16.2, bawah: 100.2, radius: 6 }]} />
+        </Banding>
+        <Banding kunci="kolom-ganda" zoom={2}>
+          <KolomGrafik
+            label="Jan"
+            lebarBatang={15.5}
+            batang={[
+              { atas: 8.2, bawah: 100.3, nada: "mint" },
+              { atas: 54.3, bawah: 100.3, nada: "tua" },
+            ]}
+          />
+        </Banding>
+        <Banding kunci="kolom-tiga" zoom={2}>
+          <KolomGrafik
+            label="Jan"
+            lebarBatang={6.67}
+            celah={4}
+            batang={[
+              { atas: 33.2, bawah: 100.3, nada: "hitam" },
+              { atas: 9.5, bawah: 100.3, nada: "mint" },
+              { atas: 68.8, bawah: 100.3, nada: "tua" },
+            ]}
+          />
+        </Banding>
+        <Banding
+          kunci="kilau-naik"
+          zoom={3}
+          catatan="kurvanya dihitung dari data, bukan menyalin path Figma — yang dibandingkan ukuran kotak, tinggi garis, warna, dan gradiennya"
+        >
+          <Kilau titik={[3, 5, 4, 7, 6, 9, 8, 12]} />
+        </Banding>
+        <Banding kunci="kilau-turun" zoom={3} catatan="sama, varian menurun">
+          <Kilau turun titik={[12, 9, 10, 7, 8, 5, 6, 3]} className="k-kilau--turun" />
+        </Banding>
+      </Grup>
+
+      <Grup judul="Kalender">
+        <Banding kunci="tgl-biasa" zoom={6} tanpaKotak catatan="varian tanpa bulatan — yang terukur cuma tinta angkanya">
+          <SelTanggal>26</SelTanggal>
+        </Banding>
+        <Banding kunci="tgl-mati" zoom={6} tanpaKotak catatan="sama, tinta abu">
+          <SelTanggal keadaan="mati">26</SelTanggal>
+        </Banding>
+        <Banding kunci="tgl-pilih" zoom={6}>
+          <SelTanggal keadaan="pilih">26</SelTanggal>
+        </Banding>
+        <Banding kunci="tgl-kini" zoom={6}>
+          <SelTanggal keadaan="kini">26</SelTanggal>
+        </Banding>
+        <Banding kunci="hari" zoom={6} tanpaKotak catatan="nama hari, 10px abu">
+          <SelHari>Mon</SelHari>
         </Banding>
       </Grup>
 
