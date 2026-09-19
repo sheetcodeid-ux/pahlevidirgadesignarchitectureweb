@@ -29,22 +29,44 @@ AKAR = pathlib.Path(__file__).resolve().parent.parent
 STYLE = AKAR / "apps/web/src/assets/figma/style"
 
 
-def kotak(el):
-    """Kotak gambar sebuah layer — rect ikut dihitung, bukan cuma path."""
-    b = bbox_banyak([p.get("d") for p in el.iter() if p.tag == Q + "path" and p.get("d")])
-    for r in el.iter():
-        if r.tag != Q + "rect":
-            continue
-        x, y = float(r.get("x", 0)), float(r.get("y", 0))
-        w, h = float(r.get("width", 0)), float(r.get("height", 0))
+def _geser(el):
+    """Nilai translate() pada sebuah simpul, (0,0) kalau tidak ada."""
+    m = re.match(r"translate\(\s*([-\d.]+)[\s,]+([-\d.]+)", el.get("transform") or "")
+    return (float(m.group(1)), float(m.group(2))) if m else (0.0, 0.0)
+
+
+def kotak(el, dx=0.0, dy=0.0):
+    """Kotak gambar sebuah layer — rect ikut dihitung, bukan cuma path.
+
+    `transform="translate(...)"` WAJIB diikutkan. Figma memakainya untuk
+    menempatkan rect latar alih-alih atribut x dan y, dan mengabaikannya
+    membuat panel rel samping terbaca di (0,0) padahal isinya di x68 — jadi
+    isinya seolah berada DI LUAR panelnya sendiri. Gambarnya sendiri tetap
+    benar karena transform-nya ikut tersalin; yang salah cuma viewBox yang
+    dihitung dari kotak ini, dan akibatnya potongannya meleset tanpa satu
+    pun tanda. Terukur: rel samping terpotong jadi 228x1110 padahal 192x1034.
+    """
+    gx, gy = _geser(el)
+    dx, dy = dx + gx, dy + gy
+    b = None
+    if el.tag == Q + "path" and el.get("d"):
+        q = bbox_banyak([el.get("d")])
+        if q:
+            b = (q[0] + dx, q[1] + dy, q[2] + dx, q[3] + dy)
+    elif el.tag == Q + "rect":
+        x, y = float(el.get("x", 0)) + dx, float(el.get("y", 0)) + dy
+        w, h = float(el.get("width", 0)), float(el.get("height", 0))
         # Garis Figma berpusat di tepi, jadi setengahnya menonjol keluar rect.
         # Bawaan stroke-width di SVG adalah 1, BUKAN 0. Memakai 0 sebagai
         # nilai bawaan membuat kotak varian Ghost terbaca 1px lebih kecil
         # daripada yang benar-benar tergambar, dan selisih itu lalu
         # tampak seperti cacat di komponennya.
-        t = float(r.get("stroke-width", 1)) / 2 if r.get("stroke") else 0
-        q = (x - t, y - t, x + w + t, y + h + t)
-        b = q if b is None else (min(b[0], q[0]), min(b[1], q[1]), max(b[2], q[2]), max(b[3], q[3]))
+        t = float(el.get("stroke-width", 1)) / 2 if el.get("stroke") else 0
+        b = (x - t, y - t, x + w + t, y + h + t)
+    for c in el:
+        q = kotak(c, dx, dy)
+        if q:
+            b = q if b is None else (min(b[0], q[0]), min(b[1], q[1]), max(b[2], q[2]), max(b[3], q[3]))
     return b
 
 

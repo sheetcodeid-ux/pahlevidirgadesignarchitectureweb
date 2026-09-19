@@ -90,6 +90,10 @@ PASANGAN = [
     ("tabel-invest-kepala", "Table", "Type=Head"),
     ("tabel-invest-baris",  "Table", "Type=Body"),
     ("tabel-trx-baris",    "Table", "Type=Body_2"),
+    # --- Rel samping & bilah atas -------------------------------------------
+    ("sisi-desktop", "Nav", "Device=Desktop"),
+    ("sisi-tablet",  "Nav", "Device=Tablet"),
+    ("bilah-ponsel", "Nav", "Navbar"),
     ("tabel-tabung-kepala", "Table", "Type=Head, Size=Wide"),
     ("tabel-tabung-baris",  "Table", "Type=Body, Size=Wide"),
 ]

@@ -1173,10 +1173,15 @@
   color: var(--text-strong);
 }
 
+/* line-height 1, bukan 1,6 yang diwarisi. Kotak baris judul yang 19,2
+   membuat kartu 175,69 tinggi padahal framenya 174 — dan kelebihannya tidak
+   kelihatan sama sekali dari melihat kartunya, cuma dari membandingkan
+   tingginya. margin-atas naik 3,6 supaya tintanya tetap mendarat di 144,5. */
 .k-stat__judul {
-  margin: 12px 0 0;
+  margin: 15.6px 0 0;
   font-size: var(--k-t12);
   font-weight: var(--k-reg);
+  line-height: 1;
   color: var(--text-strong);
 }
 
@@ -1400,3 +1405,90 @@
   overflow: hidden;
 }
 .k-selkeping__teks { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* -----------------------------------------------------------------------------
+   REL SAMPING & BILAH ATAS — frame Nav
+
+   Terukur pada varian Desktop: panel 192 lebar berlatar #ECF4E9, logo 110x22
+   di (32,30), daftar menu mulai y80 dengan baris 160x40 berjarak 8, dan
+   banner 159x220 di (16,788). Varian Tablet 72 lebar, ikon saja.
+   -------------------------------------------------------------------------- */
+.k-sisi {
+  display: flex;
+  flex-direction: column;
+  /* Tinggi rel mengikuti wadahnya; di Figma frame-nya 1034 karena itu tinggi
+     kanvas halamannya, bukan ukuran komponennya sendiri. */
+  height: 100%;
+  width: 192px;
+  padding: 0 16px;
+  background: var(--brand-soft);
+}
+.k-sisi__kepala {
+  display: flex;
+  align-items: center;
+  /* 30 dari tepi atas panel, dan 16 lagi dari tepi-dalamnya — jadi 32 dari
+     tepi luar, bukan rata dengan daftar menunya. */
+  height: 22px;
+  margin: 30px 0 0 16px;
+}
+/* Daftar mulai di y80: 30 + 22 + 28. */
+.k-sisi__daftar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.k-sisi__daftar > li { display: block; }
+.k-sisi .k-nav { text-decoration: none; }
+/* Angka merah menempel ke kanan baris, bukan mengikuti teksnya. */
+.k-sisi .k-nav .k-angka,
+.k-sisi__lipat { margin-left: auto; }
+/* Titik di rel sempit menumpang di sudut kanan-atas ikonnya. */
+.k-sisi--sempit .k-nav { position: relative; }
+.k-sisi--sempit .k-titik { position: absolute; top: 9px; right: 9px; }
+.k-sisi__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-sisi__kaki { margin-top: auto; padding: 0 0 26px; }
+
+/* Rel sempit: 72 lebar, isinya ikon saja, dan barisnya jadi bujur sangkar 40. */
+.k-sisi--sempit { width: 72px; padding: 0 16px; }
+.k-sisi--sempit .k-sisi__label,
+.k-sisi--sempit .k-angka { display: none; }
+.k-sisi--sempit .k-nav { justify-content: center; padding: 0; }
+.k-sisi--sempit .k-sisi__kepala { margin-left: 0; justify-content: center; }
+
+.k-bilahnav {
+  display: flex;
+  align-items: center;
+  width: 390px;
+  height: 70px;
+  padding: 0 24px;
+  background: var(--brand-soft);
+}
+.k-bilahnav__logo { flex: none; display: flex; align-items: center; }
+/* Judul di TENGAH bilah, bukan sekadar sisa ruang: terukur, tintanya
+   berpusat di 197,7 pada bilah selebar 390 yang tengahnya 195. */
+.k-bilahnav__judul {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-size: var(--k-t18);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-bilahnav__menu {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-strong);
+  cursor: pointer;
+}

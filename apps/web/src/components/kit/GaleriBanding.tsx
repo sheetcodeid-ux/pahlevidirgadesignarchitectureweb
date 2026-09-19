@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Banding } from "./Banding";
 import { Tombol, TombolIkon } from "./Tombol";
 import { Segmen } from "./Segmen";
+import { SisiNav, BilahNav, type ItemNav } from "./Nav";
 import { Tabel, SelDua, SelIkon, SelKeping, type KolomTabel } from "./Tabel";
 import { Lencana, Angka, Titik } from "./Lencana";
 import { Remah } from "./Remah";
@@ -14,6 +15,16 @@ import {
   CoinIn,
   CaretDown,
   ChatTeardropDots,
+  List,
+  NavArrowsLeftRight,
+  NavCardholder,
+  NavCoins,
+  NavCreditCard,
+  NavCurrencyEth,
+  NavEnvelope,
+  NavNewspaper,
+  NavReceipt,
+  NavSealPercent,
   NavSquaresFour,
   Paperclip,
   SmileySticker,
@@ -56,6 +67,22 @@ const KOL_INVEST: KolomTabel[] = [
 /* Transaction punya kolom kotak centang di paling kiri. Lebarnya 32,5 —
    yaitu jarak tepi baris ke tepi kiri kolom berikutnya, bukan lebar kotak
    centangnya sendiri. */
+/* Sembilan baris menu Coinest, dengan ikon Nav/* masing-masing. Labelnya
+   bahasa Inggris seperti di framenya — yang dibandingkan geometrinya, dan
+   kata yang berbeda cuma akan terbaca sebagai cacat yang tidak ada. */
+const MENU_NAV: ItemNav[] = [
+  { ikon: NavSquaresFour, label: "Dashboard", aktif: true },
+  { ikon: NavCreditCard, label: "Payments", lipat: true },
+  { ikon: NavArrowsLeftRight, label: "Transactions" },
+  { ikon: NavReceipt, label: "Invoices" },
+  { ikon: NavCardholder, label: "Cards" },
+  { ikon: NavCoins, label: "Saving Plans" },
+  { ikon: NavCurrencyEth, label: "Investments" },
+  { ikon: NavEnvelope, label: "Inbox", jumlah: 99, jumlahJudul: "99 pesan belum dibaca" },
+  { ikon: NavSealPercent, label: "Promos" },
+  { ikon: NavNewspaper, label: "Insights" },
+];
+
 const KOL_TRX: KolomTabel[] = [
   { judul: "Transaction Name", lebar: 201.9, urut: true },
   { judul: "Account", lebar: 241.5, urut: true },
@@ -414,6 +441,35 @@ export function GaleriBanding() {
               tanpaKepala
             />
           </div>
+        </Banding>
+      </Grup>
+
+      <Grup judul="Rel samping & bilah atas">
+        {/* Tinggi 1034 diberikan dari luar: itu tinggi kanvas halaman di
+            Figma, bukan ukuran relnya sendiri. Banner 159x220 di kakinya
+            adalah slot promo Coinest — di panel ini tempatnya kosong sampai
+            pemilik memutuskan isinya, jadi di sini diisi kotak seukurannya
+            supaya tata letak kakinya tetap bisa dibandingkan. */}
+        <Banding kunci="sisi-desktop" zoom={1}>
+          <div style={{ height: 1034 }}>
+            <SisiNav
+              logo={<span style={{ fontWeight: 700, fontSize: 18 }}>Coinest</span>}
+              item={MENU_NAV}
+              kaki={<div style={{ width: 159, height: 220, borderRadius: 16, background: "var(--brand)" }} />}
+            />
+          </div>
+        </Banding>
+        <Banding kunci="sisi-tablet" zoom={1}>
+          <div style={{ height: 1034 }}>
+            <SisiNav sempit logo={<span style={{ fontWeight: 700, fontSize: 18 }}>C</span>} item={MENU_NAV} />
+          </div>
+        </Banding>
+        <Banding kunci="bilah-ponsel" zoom={1}>
+          <BilahNav
+            logo={<span style={{ fontWeight: 700, fontSize: 18 }}>C</span>}
+            judul="Dashboard"
+            menuIkon={List}
+          />
         </Banding>
       </Grup>
 
