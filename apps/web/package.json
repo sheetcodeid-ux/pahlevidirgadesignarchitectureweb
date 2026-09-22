@@ -10,9 +10,9 @@
     "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/markdown-remark": "^6.3.11",
-    "@astrojs/react": "^6.0.4",
-    "@astrojs/sitemap": "^3.6.0",
+    "@astrojs/markdown-remark": "^7.3.0",
+    "@astrojs/react": "^6.0.5",
+    "@astrojs/sitemap": "^3.7.4",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-context-menu": "^2.3.7",
     "@radix-ui/react-dialog": "^1.1.23",
@@ -28,16 +28,16 @@
     "@radix-ui/react-toast": "^1.2.23",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "astro": "^5.16.0",
+    "@types/react-dom": "^19.2.7",
+    "astro": "^7.3.1",
     "cmdk": "^1.1.1",
     "pdf-lib": "^1.17.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-resizable-panels": "^4.12.3"
+    "react-resizable-panels": "^4.12.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
-    "typescript": "^5.9.2"
+    "typescript": "^7.0.2"
   }
 }
