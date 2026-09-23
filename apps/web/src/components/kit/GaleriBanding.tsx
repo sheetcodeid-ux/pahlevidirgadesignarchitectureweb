@@ -774,7 +774,7 @@ export function GaleriBanding() {
               nama="Name"
               waktu="9.46 PM"
               avatar={<span className="k-banding__avatar" style={{ width: 36, height: 36 }} />}
-              lampiran={<span className="k-banding__avatar" style={{ height: 148, borderRadius: 8 }} />}
+              lampiran={<span className="k-banding__gambar" style={{ height: 148 }} />}
             >
               Can I request a late check-out for Room 305?
             </Gelembung>
@@ -864,7 +864,7 @@ export function GaleriBanding() {
           <KepingKategori aktif>All</KepingKategori>
         </Banding>
         <Banding kunci="kategori-mati" zoom={5}>
-          <KepingKategori>3D</KepingKategori>
+          <KepingKategori>All</KepingKategori>
         </Banding>
       </Grup>
 

@@ -325,7 +325,14 @@ export function BarisAktivitas({
   return (
     <div className={kelas("k-aktivitas", akhir && "k-aktivitas--akhir", className)}>
       <span className="k-aktivitas__ubin">
-        <Ikon ikon={ikon} ukuran={12} />
+        {/* 32, sebesar ubinnya sendiri — bukan 12. Ikon Phosphor menyisakan
+            banyak ruang kosong di dalam kotaknya: tinta PersonSimpleTaiChi
+            cuma 12x13 pada kotak 32. Di framenya tinta ikon ini memang
+            12,00x13,00 dengan pojok kiri-atas (10,9) di dalam ubin 32 — jadi
+            yang 12 itu TINTANYA, dan memakainya sebagai ukuran tampil
+            membuat ikonnya tergambar 2,7x lebih kecil. Sudah kelihatan
+            begitu render dan acuan ditumpuk. */}
+        <Ikon ikon={ikon} ukuran={32} />
       </span>
       <div className="k-aktivitas__isi">
         <p className="k-aktivitas__waktu">{waktu}</p>

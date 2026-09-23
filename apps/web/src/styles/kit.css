@@ -60,6 +60,31 @@
 }
 
 /* -----------------------------------------------------------------------------
+   LEBAR HURUF — `text-rendering: geometricPrecision`
+
+   Bawaan Chromium membulatkan lebar-maju TIAP GLIF ke piksel bulat; Figma
+   tidak. Terukur pada "Button" berbobot 600 di Urbanist:
+
+     ukuran   Chromium bawaan   geometricPrecision   Figma (0,288 em/huruf)
+       10px        31,000             28,875                 28,80
+       12px        35,000             34,656                 34,56
+       14px        41,000             40,422                 40,32
+
+   Jadi setiap kotak yang MEMELUK teksnya — tombol, lencana, keping, tab —
+   tergambar sampai 2,2px lebih lebar daripada framenya, dan selisih itu
+   tidak pernah bisa ditutup dengan padding karena besarnya berubah menurut
+   ukuran font dan panjang kalimat. Ini yang membuat empat tombol dan tiga
+   lencana meleset +-2px sementara angka paddingnya sendiri benar.
+
+   Dipasang di kit.css saja, yang cuma dimuat halaman kit — bukan di
+   global.css — supaya panel admin lama tidak ikut bergeser.
+   -------------------------------------------------------------------------- */
+#isi-kit,
+#isi-kit * {
+  text-rendering: geometricPrecision;
+}
+
+/* -----------------------------------------------------------------------------
    RESET — garis bawaan <button>.
 
    Peramban memberi setiap <button> garis dengan warna sistem (buttonborder)
@@ -194,32 +219,38 @@
      padding sisi  = kotak terluar di sisi itu, diukur dari tepi tombol
      jarak         = kotak berikutnya - ujung kotak sebelumnya
 
+   Bearing kiri "B" Urbanist SemiBold = 0,0723 em, diturunkan dari tiga
+   ukuran sekaligus: lebar tinta Figma 27,55/33,45/38,58 lawan lebar-maju
+   28,80/34,56/40,32.
+
    Semua angka di bawah SUDAH dikurangi 1px untuk `border-width: 1px` yang
    dipakai setiap tombol (termasuk yang garisnya transparan), karena
    box-sizing-nya border-box.
 
-   Empat varian per ukuran dan tiga ukuran = dua belas lebar. Sembilan di
-   antaranya jadi PERSIS lebar Figma dengan angka-angka ini. Tiga sisanya
-   meleset 2px, dan itu bukan angka yang bisa diperbaiki: Figma sendiri
-   memberi varian yang sama padding yang berbeda —
+   Dua belas lebar Figma, dua belas lebar kit, selisih terbesar 0,15px —
+   tapi EMPAT di antaranya butuh padding sendiri, karena Figma memberi
+   varian yang sama padding yang berbeda. Keempatnya ditulis sebagai
+   pengecualian di bawah blok ukuran, bukan disembunyikan:
 
-     small "Left"   padding kanannya 11,93 sementara varian tanpa ikon 9,93
-     Medium "Left"  padding kanannya 10,20 sementara tanpa ikon 12,20
-     Large "Right"  padding kirinya 15,97 sementara tanpa ikon 13,97
+     small  "Left"          padding kanan 12,02  (tanpa ikon: 10,06)
+     small  "No Icon" Ghost padding 12,06 dua sisi (Primary/Secondary: 10,06)
+     Medium "Left"          padding kanan 10,32  (tanpa ikon: 12,17)
+     Large  "Right"         padding kiri  15,84  (tanpa ikon: 13,79)
 
-   Ketiganya dipertahankan mengikuti mayoritas variannya, dan selisih 2px itu
-   dilaporkan apa adanya ketimbang ditutup dengan padding per-varian yang
-   akan membuat tombol di panel ini melebar-menyempit tanpa aturan. */
+   Arahnya acak — small melebar, Medium menyempit — jadi ini kekeliruan di
+   filenya, bukan aturan. Ditiru apa adanya karena yang diminta "100% mirip
+   framenya"; kalau suatu saat mau dirapikan, hapus keempat blok pengecualian
+   itu dan empat tombol akan meleset 2-4px dari acuannya. */
 .k-tombol--small {
   --k-tombol-turun: 1px;
   --k-tombol-h: 28px;
   --k-tombol-r: 7px;
   --k-tombol-padikon-kiri: 7px;
   --k-tombol-padikon-kanan: 7px;
-  --k-tombol-pad-kiri: 9.19px;
-  --k-tombol-pad-kanan: 8.94px;
-  --k-tombol-jarak-kiri: 6.19px;
-  --k-tombol-jarak-kanan: 3.93px;
+  --k-tombol-pad-kiri: 9.0625px;
+  --k-tombol-pad-kanan: 9.0625px;
+  --k-tombol-jarak-kiri: 6.1px;
+  --k-tombol-jarak-kanan: 4.1px;
   --k-tombol-font: var(--k-t10);
 }
 .k-tombol--medium {
@@ -227,11 +258,11 @@
   --k-tombol-h: 32px;
   --k-tombol-r: 8px;
   --k-tombol-padikon-kiri: 9px;
-  --k-tombol-padikon-kanan: 8px;
-  --k-tombol-pad-kiri: 11.14px;
-  --k-tombol-pad-kanan: 11.2px;
-  --k-tombol-jarak-kiri: 4.14px;
-  --k-tombol-jarak-kanan: 5.2px;
+  --k-tombol-padikon-kanan: 8.854px;
+  --k-tombol-pad-kiri: 11.172px;
+  --k-tombol-pad-kanan: 11.172px;
+  --k-tombol-jarak-kiri: 4.026px;
+  --k-tombol-jarak-kanan: 4.318px;
   --k-tombol-font: var(--k-t12);
 }
 .k-tombol--large {
@@ -240,11 +271,28 @@
   --k-tombol-r: 8px;
   --k-tombol-padikon-kiri: 11px;
   --k-tombol-padikon-kanan: 11px;
-  --k-tombol-pad-kiri: 12.97px;
-  --k-tombol-pad-kanan: 12.61px;
-  --k-tombol-jarak-kiri: 5.97px;
-  --k-tombol-jarak-kanan: 3.61px;
+  --k-tombol-pad-kiri: 12.789px;
+  --k-tombol-pad-kanan: 12.789px;
+  --k-tombol-jarak-kiri: 5.84px;
+  --k-tombol-jarak-kanan: 3.738px;
   --k-tombol-font: var(--k-t14);
+}
+
+/* Empat pengecualian Figma — lihat daftarnya di komentar di atas. `:not()`
+   dipakai supaya varian "Left & Right" TIDAK ikut kena: ia punya kedua kelas
+   ikon sekaligus, dan lebarnya justru sudah pas dengan aturan umumnya. */
+.k-tombol--small.k-tombol--ikonkiri:not(.k-tombol--ikonkanan) {
+  --k-tombol-pad-kanan: 11.025px;
+}
+.k-tombol--medium.k-tombol--ikonkiri:not(.k-tombol--ikonkanan) {
+  --k-tombol-pad-kanan: 9.318px;
+}
+.k-tombol--large.k-tombol--ikonkanan:not(.k-tombol--ikonkiri) {
+  --k-tombol-pad-kiri: 14.84px;
+}
+.k-tombol--small.k-tombol--ghost:not(.k-tombol--ikonkiri):not(.k-tombol--ikonkanan) {
+  --k-tombol-pad-kiri: 11.0625px;
+  --k-tombol-pad-kanan: 11.0625px;
 }
 
 /* -----------------------------------------------------------------------------
@@ -1037,6 +1085,17 @@
   width: 100%;
   border-radius: 999px;
   background: var(--brand-mint);
+}
+/* Pengganti FOTO biasa — bukan avatar. Di framenya lampiran gambar pesan
+   digambar sebagai bidang abu #E5E6E6, bukan mint: mint cuma dipakai untuk
+   avatar orang. Sempat keduanya memakai bulatan mint yang sama, dan itu
+   sendirian menyumbang 33% selisih piksel pada baris "Type=2". */
+.k-banding__gambar {
+  display: block;
+  flex: none;
+  width: 100%;
+  border-radius: 8px;
+  background: var(--border);
 }
 /* Figma menumpuk DUA bidang di tempat avatar: lingkaran persik #FFD9CF, lalu
    kotak "Place Image Here" mint yang menutupinya habis. Jadi yang tergambar
@@ -1831,7 +1890,10 @@
 }
 .k-chat__lampiran {
   width: 164px;
-  margin-top: 8px;
+  /* 11, bukan 8. Terukur di framenya: gelembung berakhir di 68 dari puncak
+     baris dan kotak lampiran mulai di 79. Delapan membuat seluruh baris
+     3px lebih pendek daripada acuannya. */
+  margin-top: 11px;
   padding: 8px;
   border-radius: 12px;
   background: var(--tgl-pilih);
@@ -1919,7 +1981,11 @@
 }
 
 /* --- 6. Item List Recent Activity ------------------------------------------ */
-.k-aktivitas { position: relative; display: flex; gap: 11.3px; padding-bottom: 17px; background: var(--surface); }
+/* Padding bawah 11,22 supaya barisnya 84 seperti framenya: isinya sendiri
+   72,78 sejak ukuran teksnya dibetulkan jadi 12,5px. Angka lama 17 dipasang
+   waktu teksnya masih 16px dan isinya 67. Kalau ukuran teks di baris ini
+   diubah lagi, kedua angka padding di bawah ini ikut. */
+.k-aktivitas { position: relative; display: flex; gap: 11.3px; padding-bottom: 11.22px; background: var(--surface); }
 .k-aktivitas__ubin {
   display: grid;
   place-items: center;
@@ -1938,12 +2004,14 @@
   content: "";
   position: absolute;
   left: 16px;
+  /* 36..80 — relnya 44 panjang di framenya (Left Side 32+4+44 = 80 pada
+     kartu 84), jadi ia berhenti 4px sebelum dasar kartu, bukan menyentuhnya. */
   top: 36px;
-  bottom: 0;
+  bottom: 4px;
   width: 1px;
   background: var(--item-garis);
 }
-.k-aktivitas--akhir { padding-bottom: 5px; }
+.k-aktivitas--akhir { padding-bottom: 0; }
 .k-aktivitas--akhir::before { display: none; }
 .k-aktivitas__isi { min-width: 0; }
 .k-aktivitas__waktu {
@@ -1955,12 +2023,28 @@
 }
 .k-aktivitas__teks {
   margin: 0;
-  /* 16, bukan 14: baris pertamanya "Cardio progress updated – 7.5 km"
-     bertinta 235,87 lebar dengan tiga kata pertama tebal, dan 16px memberi
-     228 sementara 14px cuma 213. Jarak barisnya lalu jatuh ke 1,0 — tinta
-     tiga barisnya 47,48, dan 3 x 16 = 48. */
-  font-size: var(--k-t16);
-  line-height: 1;
+  /* 12,5 — dan angka 16 yang pernah ada di sini adalah kekeliruan baca yang
+     membuat teksnya 28% kebesaran, kelihatan jelas begitu render dan acuan
+     ditumpuk.
+
+     Sebabnya: `Title_10` di framenya bertinta 235,87 lebar, dan itu saya
+     kira lebar BARIS PERTAMA. Bukan — itu kotak gabungan TIGA baris, jadi
+     yang 235,87 adalah baris terpanjangnya. Dibuktikan dengan memecah
+     path teks yang sudah di-outline pada tiap perintah `M` lalu
+     mengelompokkannya menurut pusat-y:
+
+       baris 1  "Cardio progress updated - 7.5 km"            188,14
+       baris 2  "completed out of 10 km goal for endurance"   235,79
+       baris 3  "improvement"                                  73,75
+
+     Tinta Urbanist 12,5px memberi 235,25 dan 72,88 untuk baris 2 dan 3 —
+     dua kalimat berbeda panjang yang dua-duanya cocok, jadi ukurannya
+     memang segitu dan bukan kebetulan. 12px memberi 225,38 dan 69,75.
+
+     Jarak barisnya 17,93 diukur dari selisih dasar huruf ketiga barisnya
+     (11,63 / 29,59 / 47,48), bukan dari tinggi kotaknya. */
+  font-size: 12.5px;
+  line-height: 1.434;
   color: var(--item-ink);
 }
 
@@ -2006,15 +2090,27 @@
 }
 .k-log__waktu { margin: 0; line-height: 1; font-size: var(--k-t10); color: var(--text-muted); }
 .k-log__teks + .k-log__waktu { margin-top: 8px; }
-.k-log__waktu + .k-log__teks { margin-top: 8px; }
+/* Varian V2 (waktu DI ATAS): 4,67 dan bukan 8. Kedua angka itu jarak KOTAK,
+   sementara yang 8 di framenya jarak TINTA — tinta waktu berakhir di 10,27
+   dan tinta baris pertama mulai di 18,0. Kotak baris teks kita punya ruang
+   baris 3,33px di atas tintanya, jadi memakai 8 menaruh seluruh dua baris
+   3,33px terlalu rendah. Terukur dengan memindai pita tinta per baris
+   (scripts/banding/baris.mjs): garis dasar baris pertama 30,33 padahal
+   acuannya 27,0. */
+.k-log__waktu + .k-log__teks { margin-top: 4.67px; }
 
 /* --- 8 & 14. Chips --------------------------------------------------------- */
 .k-keping {
   display: inline-flex;
   align-items: center;
-  gap: 1.76px;
+  /* TANPA jarak. Di framenya "#" dan labelnya dua layer terpisah, dan saya
+     sempat membacanya sebagai dua kotak berjarak 1,76px — padahal 1,76 itu
+     jarak TINTA-nya, yaitu bearing kanan "#" ditambah bearing kiri "F".
+     Diukur sebagai satu kalimat "#FinancialPlanning": tintanya 97,0 lebar,
+     dan rentang tinta di framenya 96,71. Jadi memang satu baris menyambung. */
+  gap: 0;
   height: 32px;
-  padding: 0 12.85px 0 10.44px;
+  padding: 0 12.14px 0 9.94px;
   border-radius: 8px;
   background: var(--brand-soft);
   color: var(--item-ink);
@@ -2029,15 +2125,24 @@
   display: inline-flex;
   align-items: center;
   height: 30px;
-  padding: 0 16.5px;
+  padding: 0 16.1px;
   border-radius: 15px;
   background: var(--brand-soft);
   color: var(--item-ink);
   font-size: var(--k-t12);
-  font-weight: var(--k-semi);
+  /* Bobotnya BEDA antara yang aktif dan yang tidak — dan itu bukan tebakan.
+     Tinta "All" di framenya 12,55 saat aktif dan 11,400 saat tidak; diukur
+     dengan memindai piksel, Urbanist 12px memberi 12,6 pada 600 dan 11,4
+     pada 400. Sempat keduanya saya buat 600, jadi tab tidak aktif tergambar
+     1,2px lebih lebar dan jelas lebih tebal dari acuannya. */
+  font-weight: var(--k-reg);
   cursor: pointer;
 }
-.k-kategori.is-aktif { background: var(--brand); color: var(--brand-ink); }
+.k-kategori.is-aktif {
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: var(--k-semi);
+}
 
 /* --- 9. Item List Asset ---------------------------------------------------- */
 .k-aset { display: flex; align-items: center; min-height: 39px; }
