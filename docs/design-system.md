@@ -190,6 +190,45 @@ setinggi baris sungguhannya — 68 px lawan 68 px, bukan 38 lawan 68. Bandingkan
 Seluruh 66 komponen selesai dan terdaftar di halaman UI Component
 (`/admin/ui`). Fitur baru mengambil dari sana.
 
+### Kit Coinest (P2) — pustaka kedua, dibangun dari lembar kosong
+
+Di samping inventaris di atas, ada pustaka `k-` yang dibangun mengikuti file
+Figma **Coinest** frame demi frame. Ia hidup berdampingan dengan yang lama
+selama halaman admin dipindahkan satu per satu; begitu seluruh halaman
+pindah, yang lama dibuang.
+
+Lima belas frame Style & Component **selesai seluruhnya**. Yang terakhir,
+frame **Item**, berisi delapan belas jenis baris daftar dan dibangun sebagai
+satu keluarga di `components/kit/Item.tsx`:
+
+| Frame Figma | Komponen |
+| --- | --- |
+| Header-Section | `KepalaSeksi` |
+| Header | `KepalaHalaman`, `TombolBulat` |
+| Footer | `KakiHalaman` |
+| Bubble-chat | `Gelembung` |
+| Item List Message | `BarisPesan` |
+| Item List Recent Activity | `BarisAktivitas` |
+| Log Item | `BarisLog` |
+| Chips Tags | `KepingTagar` |
+| Chips Category | `KepingKategori` |
+| Item List Asset | `BarisAset` |
+| Item List Watchlist | `BarisPantau` |
+| Item List Transfer List + Recent Transfer | `BarisTransfer` |
+| Item List Providers | `BarisPenyedia` |
+| Item List Expense Statistic | `BarisBeban` |
+| Item List Inbox | `BarisInbox` |
+| Item List Trending Tags | `BarisTagar` |
+| Item List Top Author | `BarisPenulis` |
+
+Delapan belas jenis jadi tujuh belas komponen karena Transfer List dan Recent
+Transfer bentuknya identik sampai ke radius 15,5 dan avatar 40 — yang
+membedakan cuma ada-tidaknya blok kedua di kanan, jadi itu yang dibuat prop.
+
+Seluruhnya dibandingkan berdampingan dengan potongan framenya di
+`/admin/kit`. Angkanya, cara mengukurnya, dan apa yang memang sengaja
+berbeda ada di `docs/kit-coinest.md`.
+
 ## Urutan pengerjaan
 
 Dibangun bergelombang, bukan sekaligus. Tiap gelombang menghasilkan sesuatu

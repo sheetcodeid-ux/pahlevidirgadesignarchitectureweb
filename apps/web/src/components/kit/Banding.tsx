@@ -54,9 +54,16 @@ function warnaTergambar(akar: HTMLElement): string[] {
       const ph = keHeks(getComputedStyle(el, "::placeholder").color);
       if (ph) keluar.add(ph);
     }
-    if (parseFloat(g.borderTopWidth) > 0) {
-      const garis = keHeks(g.borderTopColor);
-      if (garis) keluar.add(garis);
+    /* KEEMPAT sisi, bukan cuma atas. Baris daftar di frame Item cuma punya
+       garis BAWAH, jadi membaca borderTopColor saja melaporkan setiap satu
+       dari mereka kekurangan warna garisnya — padahal garisnya tergambar.
+       Alat ukur yang salah membuat komponen yang benar terbaca cacat, dan
+       itu sudah tiga kali terjadi di sesi ini. */
+    for (const sisi of ["Top", "Right", "Bottom", "Left"] as const) {
+      if (parseFloat(g[`border${sisi}Width`]) > 0) {
+        const garis = keHeks(g[`border${sisi}Color`]);
+        if (garis) keluar.add(garis);
+      }
     }
     if (el instanceof SVGElement && el.tagName === "svg" && tinta) keluar.add(tinta);
     /* Bentuk SVG diwarnai lewat `fill`, bukan background atau color. Tanpa

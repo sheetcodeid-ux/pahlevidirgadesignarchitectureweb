@@ -223,6 +223,33 @@
   --remah-teks: #868F9B;
   --remah-pisah: #E0E2E5;
 
+  /* --- Palet KETIGA: frame Item -----------------------------------------
+     Frame Item memakai lima warna yang tidak muncul di satu pun frame lain.
+     Dihitung di lima belas frame Style & Component: #272932 sembilan kali
+     di Item dan nol di dua belas frame lainnya, #8A8C90 empat kali, #E1E1E2
+     lima, #C2E66E dua, #52545B lima. Jadi ini bukan salah baca — keluarga
+     baris daftar memang punya paletnya sendiri, sama seperti Forms dan
+     Calendar punya palet beige-mintnya.
+
+     Dicatat apa adanya karena permintaannya "100% mirip framenya". Kalau
+     suatu saat pemilik memutuskan seluruh panel memakai satu palet, yang
+     diubah cukup lima token di bawah ini. */
+  --item-ink: #272932;      /* nama pengirim, judul aktivitas, teks keping */
+  --item-ket: #8A8C90;      /* peran penulis, label kecil aktivitas */
+  --item-garis: #E1E1E2;    /* garis pemisah antar-baris dan rel linimasa */
+  --item-ubin: #C2E66E;     /* ubin ikon linimasa — hijau muda, bukan mint */
+  --item-ubin-ink: #52545B; /* glif di dalam ubin itu */
+  /* Dua lagi dari frame yang sama, dipakai di baris pesan: cuplikan abu
+     netral dan lencana merah muda "belum dibaca". */
+  --item-cuplik: #8C8D8C;
+  --item-belum: #FEB6A3;
+  --item-buka-garis: #9BDABB;
+  /* Abu HANGAT untuk jam dan tanggal. Bukan milik frame Item sendirian —
+     ia juga dipakai di Calendar (15 kali) dan Forms (3), jadi ia bagian dari
+     palet beige-mint yang sama. Ditaruh di sini karena di sinilah ia pertama
+     kali dibutuhkan bernama. */
+  --item-waktu: #66615E;
+
   --danger: #F73541;
   --danger-ink: #FFFFFF;
   --danger-soft: #FDCED1;
@@ -325,6 +352,22 @@
   --ramp-3: #4F8A5E;  --ramp-3-ink: #E8EAE9;
   --ramp-4: #3D4A47;  --ramp-4-ink: #E8EAE9;
   --ramp-5: #2C3735;  --ramp-5-ink: #E8EAE9;
+
+  /* Palet ketiga diturunkan, TIDAK dibiarkan apa adanya seperti palet kedua.
+     Alasannya sederhana dan sudah terbukti di tema gelap panel ini: #272932
+     hampir sama gelapnya dengan permukaan #1F2725, jadi nama pengirim dan
+     judul aktivitas akan hilang sama sekali. Yang dipertahankan HUBUNGAN-nya:
+     tinta paling kuat, keterangan satu tingkat lebih redup, garis nyaris tak
+     terlihat, ubin tetap hijau muda dengan glif gelap di atasnya. */
+  --item-ink: #E8EAE9;
+  --item-ket: #8A8C90;
+  --item-garis: #2C3735;
+  --item-ubin: #C2E66E;
+  --item-ubin-ink: #1F2725;
+  --item-cuplik: #8A8C90;
+  --item-belum: #FEB6A3;
+  --item-buka-garis: #3A5C42;
+  --item-waktu: #9AA3A0;
 
   --kas-nilai: #FBFBFC;
 

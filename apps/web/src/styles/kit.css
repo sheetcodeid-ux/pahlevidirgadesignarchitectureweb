@@ -75,7 +75,12 @@
 .k-tombolikon,
 .k-nav,
 .k-segmen__b,
-.k-paginasi__b {
+.k-paginasi__b,
+.k-bulat,
+.k-kategori,
+.k-penyedia,
+.k-kepalahal__kembali,
+.k-inbox__bintang {
   border: 0 solid transparent;
   font-family: var(--font-sans);
   -webkit-appearance: none;
@@ -1022,6 +1027,23 @@
 }
 .k-banding__kit { overflow: visible; }
 
+/* Pengganti foto avatar di halaman banding. Acuan Figma menggambar foto
+   sungguhan; kit tidak punya fotonya, jadi tempatnya diisi bulatan polos.
+   Selisih piksel DI DALAM bulatan itu karena itu memang ada dan bukan cacat
+   bentuk — yang dibandingkan tinggi baris, radius, jarak, dan warna. */
+.k-banding__avatar {
+  display: block;
+  flex: none;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--brand-mint);
+}
+/* Figma menumpuk DUA bidang di tempat avatar: lingkaran persik #FFD9CF, lalu
+   kotak "Place Image Here" mint yang menutupinya habis. Jadi yang tergambar
+   mint, dan persiknya tidak pernah terlihat — audit warna tetap melaporkannya
+   hilang karena ia membaca atribut, bukan piksel. Dicatat di sini supaya
+   laporan itu tidak dikira cacat berikutnya. */
+
 .k-banding__ket { font-size: var(--k-t9); color: var(--text-muted); }
 
 .k-banding__warna { display: flex; flex-direction: column; gap: 4px; }
@@ -1580,3 +1602,756 @@
 /* Nama hari — 10px abu, mis. "Mon". */
 /* Nama hari #B8B1A9, abu HANGAT — bukan abu netral panel. */
 .k-hari { font-size: var(--k-t10); color: var(--tgl-mati); }
+
+/* =============================================================================
+   ITEM — frame Item. Delapan belas jenis BARIS DAFTAR.
+
+   Angkanya dari ekspor SVG framenya, dibaca dengan alat yang memperhitungkan
+   `transform="translate()"`. Tanpa itu satu panel pernah terbaca 228x1110
+   padahal 192x1034, dan seluruh isinya seolah berada di luar kotaknya
+   sendiri.
+
+   Satu aturan yang berlaku untuk SEMUA garis pemisah di bawah ini: Figma
+   menulisnya sebagai <path> setinggi 2px karena strokenya mengangkangi tepi
+   — 1px di dalam, 1px di luar. Yang benar `border-bottom: 1px`. Mengambil
+   angka 2 apa adanya menumbuhkan setiap daftar satu piksel per baris, dan
+   itu baru kelihatan setelah dua puluh baris.
+   -------------------------------------------------------------------------- */
+
+/* --- 1. Header-Section — 1280x32 ----------------------------------------- */
+/* line-height 1 di SELURUH keluarga Item. Panel admin mewarisi 1.6, dan itu
+   yang membuat tiap baris tumbuh 4–8px tanpa satu pun angka di berkas ini
+   terlihat salah — tingginya benar, jarak antar-barisnya yang bukan milik
+   siapa pun. Yang butuh lebih dari satu baris menyetel sendiri di bawah. */
+.k-kepalaseksi,
+.k-kepalahal,
+.k-kakihal,
+.k-chat,
+.k-pesan,
+.k-aktivitas,
+.k-log,
+.k-keping,
+.k-kategori,
+.k-aset,
+.k-pantau,
+.k-transfer,
+.k-penyedia,
+.k-beban,
+.k-inbox,
+.k-tagar,
+.k-penulis { line-height: 1; }
+
+.k-kepalaseksi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 11px;
+  min-height: 32px;
+}
+.k-kepalaseksi__kiri,
+.k-kepalaseksi__kanan {
+  display: flex;
+  align-items: center;
+  /* 11px terbaca berulang di keempat Model: 236→247, 327→338, 659→669,5,
+     982,5→993,5. Bukan 12, bukan 10. */
+  gap: 11px;
+  min-width: 0;
+}
+/* 16, bukan 14: "Header Title" bertinta 87,37 lebar di framenya, dan 16/600
+   memberi 87,7. Pada 14 ia cuma 76,7 — meleset sebelas piksel pada judul
+   yang berdiri paling kiri, tempat selisih paling kelihatan. */
+.k-kepalaseksi__judul {
+  margin: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+/* --- 2. Header — kepala halaman, 38 tinggi ------------------------------- */
+.k-kepalahal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 38px;
+}
+.k-kepalahal__kiri {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+/* Tombol kembali 32x32 r8 — KOTAK, bukan bulat seperti tombol kanan-atas.
+   Dua bentuk tombol ikon di satu bilah memang terlihat aneh dibaca dari
+   kode; di framenya memang begitu, dan bedanya membawa arti: yang kotak
+   berpindah halaman, yang bulat membuka panel. */
+.k-kepalahal__kembali {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+  cursor: pointer;
+}
+.k-kepalahal__judul {
+  margin: 0;
+  /* 22, bukan 18. "Dashboard" bertinta 106,84 lebar; 22/600 memberi 107,1,
+     sementara 18/600 cuma 87. Tinggi tintanya 16,79 memang membaca seperti
+     18 — dan itu persis kenapa tinggi tidak boleh dipakai. */
+  font-size: var(--k-h5);
+  font-weight: var(--k-semi);
+  color: var(--judul-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-kepalahal__kanan {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+.k-kepalahal__grup { display: flex; align-items: center; gap: 10px; }
+.k-kepalahal__akun {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 15px;
+  font-size: var(--k-t16);
+  font-weight: var(--k-semi);
+  color: var(--judul-ink);
+  white-space: nowrap;
+}
+
+.k-bulat {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+  cursor: pointer;
+}
+/* Titik 8px — posisinya dari framenya: 21 dari kiri, 9 dari atas pada tombol
+   38px. Itu BUKAN sudut kanan atas; ia duduk agak ke dalam, menempel pada
+   lonceng di baliknya. */
+.k-bulat__tanda {
+  position: absolute;
+  left: 21px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--danger);
+}
+
+/* --- 3. Footer ------------------------------------------------------------ */
+.k-kakihal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 19.5px;
+  font-size: var(--k-t12);
+}
+.k-kakihal__legal { display: flex; align-items: center; gap: 22px; }
+.k-kakihal__cipta { color: var(--text-strong); }
+.k-kakihal__tautan { display: flex; align-items: center; gap: 18px; }
+.k-kakihal__tautan a,
+.k-kakihal__sosial a { color: var(--text-faint); text-decoration: none; }
+.k-kakihal__tautan a:hover,
+.k-kakihal__sosial a:hover { color: var(--text-body); }
+.k-kakihal__sosial { display: flex; align-items: center; gap: 18px; }
+
+/* Varian Mobile: tiga baris tengah. Dikerjakan media query dan bukan prop —
+   yang menentukan lebar layar, bukan pemanggilnya. */
+@media (max-width: 40rem) {
+  .k-kakihal { flex-direction: column; gap: 14px; }
+  .k-kakihal__legal { flex-direction: column; gap: 14px; }
+  .k-kakihal__sosial { margin-top: -1px; }
+}
+
+/* --- 4. Bubble-chat ------------------------------------------------------- */
+.k-chat { display: flex; gap: 12px; }
+.k-chat--sendiri { justify-content: flex-end; }
+.k-chat__avatar { flex: none; width: 36px; height: 36px; }
+.k-chat__utama { max-width: 270px; min-width: 0; }
+.k-chat__info {
+  display: flex;
+  align-items: center;
+  gap: 6.7px;
+  margin: 0 0 9px;
+  font-size: var(--k-t11);
+  color: var(--item-waktu);
+}
+.k-chat--sendiri .k-chat__info { justify-content: flex-end; }
+.k-chat__nama { font-size: var(--k-t10); }
+/* Jam 12 sementara namanya 10. Keduanya sebaris dan sewarna, jadi ini
+   terbaca seperti salah ketik — tapi tinta framenya memang 27,13 untuk
+   "Name" (10px) dan 39,79 untuk "9.46 PM" (12px). Dicatat apa adanya. */
+.k-chat__waktu { font-size: var(--k-t12); }
+.k-chat__centang { margin-left: 1.4px; color: var(--centang-tanda); }
+/* Titik pemisah 4px antara dua keterangan kecil. Dipakai gelembung chat dan
+   baris tagar — di framenya r2, jadi 4px penuh, bukan 3. */
+.k-titikpisah {
+  flex: none;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--sakelar-mati);
+}
+/* Gelembung: r12 di tiga sudut, SIKU di sudut pangkalnya. Figma menuliskan
+   rentang sudutnya 21,6 — itu corner smoothing, bukan radiusnya; radius
+   tampaknya 12. Jebakan yang sama pernah membuat radius batang grafik
+   terbaca 7,2 padahal 4. */
+.k-chat__gelembung {
+  display: flex;
+  align-items: center;
+  min-height: 47px;
+  padding: 0 16px;
+  border-radius: 12px 12px 12px 0;
+  background: var(--tgl-pilih);
+  color: var(--centang-tanda);
+  font-size: var(--k-t12);
+}
+.k-chat--sendiri .k-chat__gelembung {
+  border-radius: 12px 0 12px 12px;
+  background: var(--centang-aktif);
+}
+.k-chat__lampiran {
+  width: 164px;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--tgl-pilih);
+}
+.k-chat__lampiran > * { display: block; width: 100%; }
+
+/* --- 5. Item List Message -------------------------------------------------- */
+.k-pesan { display: flex; gap: 16px; }
+.k-pesan__avatar { flex: none; width: 36px; height: 36px; }
+.k-pesan__utama { flex: 1; min-width: 0; }
+.k-pesan__kepala {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 18px;
+}
+/* Lencana status milik frame Item: 50x18 r9. BUKAN lencana pil dari frame
+   Badges, yang 24 tinggi — dua lencana pil berbeda di satu file, dan memakai
+   yang salah menumbuhkan seluruh barisnya enam piksel. */
+.k-pesan__status {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 50px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--centang-aktif);
+  color: var(--item-ubin-ink);
+  font-size: var(--k-t11);
+}
+.k-pesan__nama {
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  color: var(--item-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-pesan__waktu {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--k-t12);
+  color: var(--item-waktu);
+}
+/* Yang belum dibaca menggelapkan JAM-nya, bukan namanya — dan yang berubah
+   cuma WARNANYA. Sempat saya tebalkan juga; di framenya tebalnya sama. */
+.k-pesan--belum .k-pesan__waktu { color: var(--centang-tanda); }
+.k-pesan__badan {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 5px;
+  height: 18px;
+}
+.k-pesan__cuplik {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--k-t12);
+  color: var(--item-cuplik);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-pesan__jumlah {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--item-belum);
+  color: var(--centang-tanda);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+}
+/* Kartunya 343x77 dengan isi yang SAMA persis (41 tinggi), jadi seluruh
+   sisanya padding: 18 di atas, 16 di bawah, dan kiri-kanan tidak sama —
+   6,5 dan 8 setelah dikurangi tebal garisnya. */
+.k-pesan--terbuka {
+  padding: 18px 8px 17px 6.5px;
+  border: 1px solid var(--item-buka-garis);
+  border-radius: 11.5px;
+  background: var(--centang-bidang);
+}
+
+/* --- 6. Item List Recent Activity ------------------------------------------ */
+.k-aktivitas { position: relative; display: flex; gap: 11.3px; padding-bottom: 17px; background: var(--surface); }
+.k-aktivitas__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--item-ubin);
+  color: var(--item-ubin-ink);
+}
+/* Rel linimasa: mulai 4px di bawah ubin, sampai dasar barisnya. `akhir`
+   mematikannya — garis yang menjulur ke bawah tanpa tujuan adalah cacat yang
+   paling sering lolos di komponen linimasa, dan hanya pemanggil yang tahu
+   ini baris terakhir. */
+.k-aktivitas::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 36px;
+  bottom: 0;
+  width: 1px;
+  background: var(--item-garis);
+}
+.k-aktivitas--akhir { padding-bottom: 5px; }
+.k-aktivitas--akhir::before { display: none; }
+.k-aktivitas__isi { min-width: 0; }
+.k-aktivitas__waktu {
+  margin: 0 0 9px;
+  line-height: 1;
+  font-size: var(--k-t10);
+  font-weight: var(--k-med);
+  color: var(--item-ket);
+}
+.k-aktivitas__teks {
+  margin: 0;
+  /* 16, bukan 14: baris pertamanya "Cardio progress updated – 7.5 km"
+     bertinta 235,87 lebar dengan tiga kata pertama tebal, dan 16px memberi
+     228 sementara 14px cuma 213. Jarak barisnya lalu jatuh ke 1,0 — tinta
+     tiga barisnya 47,48, dan 3 x 16 = 48. */
+  font-size: var(--k-t16);
+  line-height: 1;
+  color: var(--item-ink);
+}
+
+/* --- 7. Log Item ----------------------------------------------------------- */
+.k-log { position: relative; display: flex; gap: 13px; padding-bottom: 10px; }
+.k-log__kiri {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+}
+/* Ubin berwarna HANYA kalau isinya ikon. Varian Default memasang foto, dan
+   latar mint di belakang foto bulat tidak pernah terlihat — tapi ia terlihat
+   sekejap sebelum fotonya sampai, dan kilatan hijau itu yang kelihatan
+   salah. */
+.k-log__kiri:not(:has(img)):not(:empty) { background: var(--brand-mint); color: var(--text-strong); }
+/* Rel digambar oleh BARISNYA, bukan oleh ubinnya. Kalau ia pseudo-elemen
+   milik ubin, `overflow: hidden` yang memotong foto jadi bulat ikut memotong
+   relnya — dan yang tersisa cuma titik 1px yang tidak kelihatan sama sekali. */
+.k-log::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+}
+.k-log--akhir { padding-bottom: 0; }
+.k-log--akhir::before { display: none; }
+.k-log__kiri > img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.k-log__isi { min-width: 0; }
+.k-log__teks {
+  margin: 0;
+  /* 12, bukan 14: "Jamie Smith updated account" (dua kata pertama tebal)
+     bertinta 159,15 lebar, dan 12px memberi 160,6. Jarak baris 1,355 dari
+     tinta dua barisnya yang 28 tinggi. */
+  font-size: var(--k-t12);
+  line-height: 1.355;
+  color: var(--text-strong);
+}
+.k-log__waktu { margin: 0; line-height: 1; font-size: var(--k-t10); color: var(--text-muted); }
+.k-log__teks + .k-log__waktu { margin-top: 8px; }
+.k-log__waktu + .k-log__teks { margin-top: 8px; }
+
+/* --- 8 & 14. Chips --------------------------------------------------------- */
+.k-keping {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.76px;
+  height: 32px;
+  padding: 0 12.85px 0 10.44px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--item-ink);
+  font-size: var(--k-t12);
+}
+/* Pagarnya seukuran labelnya — tinta "#" di framenya 7,52 lebar, dan itu
+   ukuran 12px. Sempat saya kecilkan jadi 11 karena tingginya cuma 7,7;
+   tingginya memang pendek karena "#" tidak setinggi huruf kapital. */
+.k-keping__pagar { color: var(--text-faint); }
+
+.k-kategori {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 16.5px;
+  border-radius: 15px;
+  background: var(--brand-soft);
+  color: var(--item-ink);
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  cursor: pointer;
+}
+.k-kategori.is-aktif { background: var(--brand); color: var(--brand-ink); }
+
+/* --- 9. Item List Asset ---------------------------------------------------- */
+.k-aset { display: flex; align-items: center; min-height: 39px; }
+.k-aset__batang { flex: none; width: 16px; height: 39px; border-radius: 5px; }
+.k-aset__nama {
+  margin-left: 13px;
+  min-width: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-aset__kanan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+}
+.k-aset__persen {
+  font-size: var(--k-t16);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  line-height: 1;
+}
+.k-aset__total { font-size: var(--k-t14); color: var(--text-muted); line-height: 1; }
+
+/* --- 10. Item List Watchlist ----------------------------------------------- */
+.k-pantau { display: flex; align-items: center; min-height: 48px; }
+.k-pantau__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+}
+.k-pantau__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 12.5px;
+  min-width: 0;
+}
+.k-pantau__simbol { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.k-pantau__nama {
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-pantau__kanan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+}
+.k-pantau__nilai { font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); }
+
+/* --- 11 & 13. Transfer List / Recent Transfer ------------------------------ */
+.k-transfer {
+  display: flex;
+  align-items: center;
+  /* 68 dan bukan 67: garis Figma mengangkangi tepi, jadi batas LUAR yang
+     tergambar 68 — dan batas luar itulah yang harus sama. */
+  min-height: 68px;
+  /* 12,5 dan bukan 13,5: garis Figma MENGANGKANGI tepi (0,5 di dalam, 0,5 di
+     luar), sementara `border` CSS seluruhnya di dalam border-box. Yang harus
+     sama tepi luarnya, jadi paddingnya dikurangi setebal garisnya. */
+  padding: 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--bg);
+}
+.k-transfer__gambar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: var(--brand-mint);
+  color: var(--text-strong);
+  overflow: hidden;
+}
+.k-transfer__gambar > img { width: 100%; height: 100%; object-fit: cover; }
+.k-transfer__info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 16.5px;
+  min-width: 0;
+}
+.k-transfer__nama {
+  font-size: var(--k-t14);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-transfer__rek { font-size: var(--k-t11); color: var(--text-muted); }
+.k-transfer__kanan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+  padding-left: 12px;
+}
+.k-transfer__nilai { font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); }
+.k-transfer__ket { font-size: var(--k-t11); font-weight: var(--k-med); color: var(--brand-isi); }
+
+/* --- 12. Item List Providers ----------------------------------------------- */
+.k-penyedia {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.k-penyedia__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--brand-mint);
+  color: var(--text-strong);
+}
+.k-penyedia__nama {
+  margin-left: 15px;
+  min-width: 0;
+  font-size: var(--k-t14);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-penyedia--kartu {
+  min-height: 58px;
+  padding: 12.5px 16px 12.5px 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--bg);
+}
+.k-penyedia--kartu .k-penyedia__caret { margin-left: auto; padding-left: 12px; color: var(--brand-isi); }
+/* Varian Detail: baris polos, dan garis tegaknya TIDAK di tepi kiri
+   melainkan 29px ke dalam — ia rel daftar, bukan bingkai baris. */
+.k-penyedia--rinci {
+  min-height: 54px;
+  padding: 12px 12px 12px 58px;
+  background: var(--bg);
+}
+.k-penyedia--rinci::before {
+  content: "";
+  position: absolute;
+  left: 29px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+}
+.k-penyedia--rinci .k-penyedia__ubin { background: var(--brand-soft); }
+.k-penyedia--rinci.is-aktif { background: var(--brand-soft); }
+.k-penyedia--rinci.is-aktif::before { left: 27px; width: 4px; background: var(--brand-mint); }
+.k-penyedia--rinci.is-aktif .k-penyedia__ubin { background: var(--bg); }
+
+/* --- 15. Item List Expense Statistic --------------------------------------- */
+.k-beban { display: flex; align-items: center; min-height: 25px; }
+.k-beban__persen {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 25px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--text-strong);
+  font-size: var(--k-t10);
+}
+.k-beban__kategori {
+  margin-left: 12.5px;
+  min-width: 0;
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-beban__nominal {
+  margin-left: auto;
+  padding-left: 16px;
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+}
+@media (max-width: 40rem) {
+  .k-beban { min-height: 30px; }
+  .k-beban__persen { width: 40px; height: 30px; font-size: var(--k-t12); }
+  .k-beban__kategori { margin-left: 13px; font-size: var(--k-t14); }
+  .k-beban__nominal { font-size: var(--k-t14); }
+}
+
+/* --- 16. Item List Inbox ---------------------------------------------------- */
+.k-inbox {
+  display: flex;
+  min-height: 88px;
+  padding: 18.5px 5px 15.75px 3.5px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.k-inbox__centang { --k-centang-s: 13px; flex: none; }
+.k-inbox__isi { flex: 1; margin-left: 12px; min-width: 0; }
+.k-inbox__kepala { display: flex; align-items: center; gap: 12px; height: 14px; }
+.k-inbox__pengirim {
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-inbox__waktu { margin-left: auto; flex: none; font-size: var(--k-t11); color: var(--text-muted); }
+.k-inbox__badan { display: flex; align-items: flex-end; gap: 29px; margin-top: 7.25px; }
+.k-inbox__teks {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--k-t12);
+  line-height: 1.355;
+  color: var(--text-muted);
+}
+.k-inbox__bintang {
+  flex: none;
+  padding: 0;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.k-inbox__bintang.is-aktif { color: var(--warn); }
+
+/* --- 17. Item List Trending Tags -------------------------------------------- */
+.k-tagar {
+  min-height: 58px;
+  padding: 3px 0 4px;
+  border-bottom: 1px solid var(--item-garis);
+  background: var(--surface);
+}
+.k-tagar__judul { margin: 0; font-size: var(--k-t16); font-weight: var(--k-bold); color: var(--text-strong); }
+.k-tagar__bawah { display: flex; align-items: center; gap: 8.5px; margin: 9px 0 0; font-size: var(--k-t12); }
+.k-tagar__kategori { color: var(--brand-isi); }
+.k-tagar__ket { color: var(--text-muted); }
+/* Mobile: judul di kiri, kategori dan keterangan menumpuk di KANAN. Bukan
+   sekadar mengecil — susunannya memang berbeda di framenya. */
+@media (max-width: 40rem) {
+  .k-tagar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    /* padding 0: di varian ponsel isinya ditengahkan terhadap tinggi baris,
+       jadi padding tegak yang di varian desktop menahan judulnya di sini
+       justru menumbuhkan barisnya tiga piksel. */
+    padding: 0;
+    min-height: 50px;
+  }
+  .k-tagar__bawah { flex-direction: column; align-items: flex-end; gap: 7.4px; margin: 0; }
+}
+
+/* --- 18. Item List Top Author ------------------------------------------------ */
+.k-penulis {
+  display: flex;
+  align-items: flex-start;
+  min-height: 55px;
+  padding: 1px 0 3px;
+  border-bottom: 1px solid var(--item-garis);
+  background: var(--surface);
+}
+.k-penulis__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--brand-mint);
+  overflow: hidden;
+}
+.k-penulis__avatar > img { width: 100%; height: 100%; object-fit: cover; }
+.k-penulis__info {
+  display: flex;
+  flex-direction: column;
+  gap: 7.5px;
+  margin-left: 12.5px;
+  min-width: 0;
+}
+.k-penulis__nama {
+  font-size: var(--k-t14);
+  font-weight: var(--k-med);
+  color: var(--item-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-penulis__peran { font-size: var(--k-t12); color: var(--item-ket); }
+@media (max-width: 40rem) {
+  .k-penulis { align-items: center; min-height: 59px; }
+  .k-penulis__avatar { width: 40px; height: 40px; border-radius: 20px; }
+  .k-penulis__info { flex-direction: row; align-items: baseline; gap: 10px; margin-left: 13px; }
+  .k-penulis__nama { font-size: var(--k-t16); }
+}
