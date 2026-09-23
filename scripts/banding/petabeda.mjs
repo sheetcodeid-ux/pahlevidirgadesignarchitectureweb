@@ -130,7 +130,7 @@ writeFileSync("/tmp/peta-banding.html", html);
    `fullPage` dan Chromium menolak dengan "Unable to capture screenshot".
    Angkanya tetap dicetak; gambarnya diambil per kelompok lewat PILIH. */
 if (baris.length <= 24) {
-  const p2 = await b.newPage({ viewport: { width: 1100, height: 800 }, deviceScaleFactor: 3 });
+  const p2 = await b.newPage({ viewport: { width: 1100, height: 800 }, deviceScaleFactor: Number(process.env.DSF || 3) });
   await p2.goto("file:///tmp/peta-banding.html");
   await p2.screenshot({ path: KELUAR, fullPage: true });
 } else {
