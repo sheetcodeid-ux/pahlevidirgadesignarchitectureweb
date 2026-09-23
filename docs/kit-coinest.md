@@ -126,6 +126,52 @@ sebagai nilai skala terdekat, dan konsekuensinya baris teksnya membungkus
 satu kata lebih awal daripada framenya. Kalau suatu saat ketahuan Coinest
 memang memakai instance yang diskalakan, angkanya tinggal dikembalikan.
 
+## Lima bentuk dari frame INTERFACE
+
+Ditambahkan setelah P3, dan urutannya memang begitu: kelimanya baru
+ketahuan kurang waktu kotak wireframe ditumpuk di atas gambar frame
+halamannya. Tidak ada di satu pun frame Style & Component, jadi P2 tidak
+mungkin membangunnya.
+
+Hidup di `components/kit/Ukuran.tsx`:
+
+| Komponen | Dari | Kotak | Selisih piksel |
+| --- | --- | --- | --- |
+| `BarKemajuan` terpisah | Saving Plans | 324x12 cocok | 0,14% |
+| `BarKemajuan` di kartu | Dashboard v2 | 251x25 cocok | 0,05% |
+| `BarKemajuan` tumpuk | Saving Plans | 252x51 cocok | 0,32% |
+| `GrafikArea` halus | Dashboard v2 | 554,7x195,1 cocok | 14,4% ¹ |
+| `GrafikArea` tangga | Investments | 553,7x226,5 cocok | 4,8% ¹ |
+| `Busur` | Investments | 224x112 cocok | 7,5% |
+| `KartuStatistikLebar` | Saving Plans | 386x88 cocok | 6,5% |
+
+¹ Kurvanya digambar Figma DI LUAR layer `Chart`, jadi potongan acuannya cuma
+memuat kisi dan label sumbu. Yang dibandingkan di situ geometri kisinya, dan
+itu cocok sampai 0,04px. Selisih pikselnya seluruhnya milik kurva yang ada
+di kit dan tidak ada di acuannya.
+
+Tiga hal yang diukur dan gampang salah kira:
+
+- **Bar kemajuan bukan rel dengan isian di atasnya.** Bentuk yang dipakai di
+  tiga dari empat tempat adalah DUA kotak bersebelahan dengan celah 4px di
+  antaranya. Menggambarnya sebagai rel penuh menghilangkan celah itu, dan
+  celahnya terlihat di setiap baris daftar.
+- **Busurnya setengah lingkaran berjari-jari 112 luar / 85 dalam**, celah
+  antar-irisan **2 derajat**. Digambar sebagai path arc, bukan lingkaran
+  ber-`stroke-dasharray`: dasharray menghitung celah dalam satuan panjang
+  busur, jadi celah yang sama terlihat berbeda lebar pada irisan yang
+  berbeda besar.
+- **Isi lubang busurnya 51% tinggi, bukan 40%.** Sempat 40%, dan baris
+  ketiganya ("+5% compared to last year") terpotong habis — tanpa galat,
+  tanpa peringatan, barisnya sekadar tidak tergambar. Yang menemukannya peta
+  selisih, bukan angka.
+
+Alat auditnya ikut diperbaiki lagi: `warnaTergambar` dulu tidak membaca
+`stroke` SVG sama sekali, jadi warna garis kurva dilaporkan "tidak ada di
+kit" pada grafik yang sudah benar. Cacat yang sama persis dengan
+`borderTopColor` sebelumnya — alat ukur yang buta pada satu properti akan
+selalu menyalahkan komponen yang benar.
+
 ## Menjalankan ulang
 
 ```bash

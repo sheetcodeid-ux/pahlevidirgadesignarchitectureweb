@@ -72,6 +72,14 @@ function warnaTergambar(akar: HTMLElement): string[] {
     if (el instanceof SVGElement) {
       const isi = keHeks(g.fill);
       if (isi) keluar.add(isi);
+      /* `stroke` juga. Garis kurva grafik area diwarnai lewat stroke, dan
+         tanpa membacanya audit melaporkan warna garisnya "tidak ada di kit"
+         pada grafik yang sudah benar — sama persis dengan cacat alat yang
+         sebelumnya cuma membaca borderTopColor. */
+      if (parseFloat(g.strokeWidth) > 0) {
+        const garis = keHeks(g.stroke);
+        if (garis) keluar.add(garis);
+      }
     }
     /* Centang dan tuas sakelar digambar sebagai pseudo-elemen, jadi warnanya
        tidak akan pernah terbaca dari elemennya sendiri. Tanpa ini, komponen

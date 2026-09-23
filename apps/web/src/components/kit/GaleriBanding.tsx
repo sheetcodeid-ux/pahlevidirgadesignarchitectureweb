@@ -30,6 +30,7 @@ import {
   BarisTagar,
   BarisPenulis,
 } from "./Item";
+import { BarKemajuan, GrafikArea, Busur, KartuStatistikLebar } from "./Ukuran";
 import { Ikon } from "./Ikon";
 import {
   ArrowLeft,
@@ -45,6 +46,7 @@ import {
   List,
   MagnifyingGlass,
   NavCalendarDots,
+  NavReceipt,
   NavPersonSimpleTaiChi,
   ShoppingCart,
   Sliders,
@@ -59,7 +61,6 @@ import {
   NavCurrencyEth,
   NavEnvelope,
   NavNewspaper,
-  NavReceipt,
   NavSealPercent,
   NavSquaresFour,
   Paperclip,
@@ -962,6 +963,93 @@ export function GaleriBanding() {
               avatar={<span className="k-banding__avatar" style={{ width: 40, height: 40 }} />}
               nama="Mark Thompson"
               peran="3.5K Followers"
+            />
+          </div>
+        </Banding>
+      </Grup>
+
+      {/* ---------------------------------------------------------------------
+          Lima bentuk dari frame INTERFACE — tidak ada di satu pun frame
+          Style & Component, jadi P2 memang tidak pernah membangunnya.
+          ------------------------------------------------------------------ */}
+      <Grup judul="Ukuran — bentuk dari frame halaman">
+        <Banding kunci="bar-terpisah" zoom={3} catatan="dua kotak bersebelahan, celah 4 — bukan rel dengan isian">
+          <div style={{ width: 324 }}>
+            <BarKemajuan persen={58.1} judul="Contoh" />
+          </div>
+        </Banding>
+        <Banding kunci="bar-kartu" zoom={3} catatan="tinggi 25, celah 6">
+          <div style={{ width: 251 }}>
+            <BarKemajuan persen={72.9} tinggi={25} celah={6} judul="Contoh" />
+          </div>
+        </Banding>
+        <Banding kunci="bar-tumpuk" zoom={2} catatan="rel r8, isian tanpa radius sendiri">
+          <div style={{ width: 252 }}>
+            <BarKemajuan persen={57.6} bentuk="tumpuk" tinggi={51} judul="Contoh" />
+          </div>
+        </Banding>
+        <Banding
+          kunci="area-halus"
+          zoom={1}
+          catatan="acuannya cuma kisi dan label — kurvanya digambar di LUAR layer Chart, jadi selisih piksel di bidang plotnya memang milik kurva kit"
+        >
+          <div style={{ width: 554.7 }}>
+            <GrafikArea
+              tinggi={141}
+              ruangAtas={26.3}
+              labelY={["2000", "1500", "1000", "500", "0"]}
+              labelX={["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]}
+              maks={2000}
+              deret={[
+                { titik: [980, 1180, 1520, 900, 1020, 1480, 1560], nada: "kedua" },
+                { titik: [620, 540, 760, 430, 560, 700, 640] },
+              ]}
+            />
+          </div>
+        </Banding>
+        <Banding kunci="area-tangga" zoom={1} catatan="nilainya bertahan lalu melompat — sama, kurvanya di luar layer Chart">
+          <div style={{ width: 553.7 }}>
+            <GrafikArea
+              bentuk="tangga"
+              tinggi={181}
+              ruangAtas={17.7}
+              labelY={["40K", "30K", "20K", "10K", "0"]}
+              labelX={["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"]}
+              maks={40}
+              deret={[{ titik: [8, 12, 12, 16, 9, 26, 20, 18, 22, 30] }]}
+            />
+          </div>
+        </Banding>
+        <Banding kunci="busur" zoom={2} catatan="setengah lingkaran, jari-jari 112/85, celah 2 derajat">
+          <div style={{ width: 224 }}>
+            <Busur
+              iris={[
+                { nilai: 55, warna: "var(--ramp-1)" },
+                { nilai: 20, warna: "var(--ramp-2)" },
+                { nilai: 15, warna: "var(--ramp-3)" },
+                { nilai: 10, warna: "var(--ramp-4)" },
+              ]}
+              tengah={
+                <>
+                  <span style={{ fontSize: "var(--k-t11)", color: "var(--text-muted)" }}>Total Assets</span>
+                  <span style={{ fontSize: "var(--k-h6)", fontWeight: 600, color: "var(--text-strong)" }}>
+                    $500,000
+                  </span>
+                  <span style={{ fontSize: "var(--k-t10)", color: "var(--text-muted)" }}>
+                    +5% compared to last year
+                  </span>
+                </>
+              }
+            />
+          </div>
+        </Banding>
+        <Banding kunci="statlebar" zoom={2} catatan="ikon 56 di KANAN, latar mint pucat — bukan KartuStatistik">
+          <div style={{ width: 386 }}>
+            <KartuStatistikLebar
+              judul="Total Savings"
+              nilai="$47,600"
+              tren={<Tren naik>4.20 %</Tren>}
+              ikon={NavReceipt}
             />
           </div>
         </Banding>

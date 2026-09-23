@@ -143,6 +143,18 @@ PASANGAN = [
     ("tagar-ponsel",   "Item", "Version=Mobile_4"),
     ("penulis",        "Item", "Version=Default_3"),
     ("penulis-ponsel", "Item", "Version=Mobile_5"),
+    # --- Lima bentuk dari frame INTERFACE ------------------------------------
+    # Tidak ada di satu pun frame Style & Component, jadi acuannya memang
+    # harus datang dari halaman yang memakainya.
+    # Dua bar ini memuat rect 1x24 tak terpakai di (0,0), jadi bbox-nya
+    # membentang dari pojok bingkai. Kotaknya dipaksa ke barnya sendiri.
+    ("bar-terpisah", "22. Saving Plans - Desktop", "Progress", (250, 345, 324, 12)),
+    ("bar-tumpuk",   "22. Saving Plans - Desktop", "Progress_8"),
+    ("bar-kartu",    "04. Dashboard (v2) - Desktop", "Progress", (1145, 190, 251, 25)),
+    ("area-halus",   "04. Dashboard (v2) - Desktop", "Chart"),
+    ("area-tangga",  "25. Investments - Desktop", "Chart"),
+    ("busur",        "25. Investments - Desktop", "Chart_3"),
+    ("statlebar",    "22. Saving Plans - Desktop", "Card Statistic Saving Plans"),
 ]
 
 
@@ -197,8 +209,9 @@ def main():
         "",
         "export const ACUAN: Record<string, AcuanFigma> = {",
     ]
-    for kunci, frame, layer in PASANGAN:
-        svg, w, h = petik(frame, layer)
+    for pasang in PASANGAN:
+        kunci, frame, layer = pasang[0], pasang[1], pasang[2]
+        svg, w, h = petik(frame, layer, pasang[3] if len(pasang) > 3 else None)
         aman = svg.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
         warna = ", ".join(f'"{c}"' for c in warna_layer(svg))
         baris.append(
