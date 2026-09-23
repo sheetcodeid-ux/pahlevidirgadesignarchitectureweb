@@ -16,6 +16,12 @@ import { bukaKit } from "./buka.mjs";
 const RE = new RegExp(process.env.PILIH || ".");
 const SUMBU = (process.env.SUMBU || "y").toLowerCase(); // y = pita mendatar, x = pita tegak
 const { b, p } = await bukaKit({ skala: 4, lebar: Number(process.env.LEBAR || 1400) });
+/* Garis putus penanda sel DIMATIKAN sebelum dipotret. Selama ia ada, setiap
+   pengukuran harus melewati cincin beberapa piksel di tepi — dan cincin itu
+   ikut menelan apa pun yang memang duduk di tepi, misalnya garis atas tabel
+   yang tergambar di y=0. Akibatnya tabel yang garisnya BENAR terbaca
+   kehilangan 54% warnanya. */
+await p.addStyleTag({ content: ".k-banding__figma,.k-banding__kit{outline:none !important}" });
 
 for (const k of await p.$$(".k-banding")) {
   const ket = ((await k.$eval(".k-banding__ket", (e) => e.textContent)) || "").split(" · ")[0];
@@ -33,7 +39,7 @@ for (const k of await p.$$(".k-banding")) {
       g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height);
       g.drawImage(i, 0, 0);
       const d = g.getImageData(0, 0, i.width, i.height).data;
-      const M = 6; // lewati garis putus tepi sel banding
+      const M = 0;
       const isi = [];
       const N = sumbu === "x" ? i.width : i.height;
       const P = sumbu === "x" ? i.height : i.width;

@@ -242,6 +242,84 @@ justru akan memindahkan tinta hurufnya ke tempat yang salah.
 query, bukan komponen tersendiri. Di 1400 keempatnya melapor meleset padahal
 yang tergambar varian desktopnya.
 
+## Putaran ketiga: ukuran huruf, tebal huruf, dan warna
+
+Pemilik menunjuk lima gambar dan menyebut grafik yang kaku, warna yang
+tidak sesuai, persentase yang kekecilan, dan ikon yang kekecilan. Sebagian
+memang sudah diperbaiki di putaran sebelumnya dan tangkapan layarnya
+mendahului perbaikan itu — tapi menjawab begitu saja tidak cukup, jadi
+seluruh kit diukur ulang dari sisi yang memang belum pernah diukur:
+**ukuran dan tebal huruf, dan PORSI tiap warna.**
+
+### Alat baru: `teks.mjs`
+
+Dua hal yang tidak bisa dijawab alat yang sudah ada:
+
+- **Ukuran dan tebal huruf.** Keduanya mengubah lebar tinta satu baris dan
+  tidak mengubah apa pun yang lain, jadi selisih KOTAK komponen tidak
+  pernah menunjukkannya — kotaknya ditentukan wadahnya. Yang dibandingkan
+  sekarang tiap pita tinta mendatar: lebar dan tingginya, acuan lawan kit.
+- **Warna yang salah pada elemen yang benar.** `warna.mjs` membandingkan
+  HIMPUNAN warna, jadi nominal yang seharusnya hijau tua tapi digambar
+  hitam tidak ketahuan selama hijau tuanya masih dipakai di tempat lain
+  dalam komponen yang sama. Yang dibandingkan sekarang porsinya.
+
+Pendampingnya `cocokfont.mjs`: diberi lebar dan tinggi tinta Figma, ia
+memindai Urbanist pada 8..34px dan lima bobot lalu melaporkan tiga
+pasangan terdekat. Itu yang mengubah "ukuran fontnya kira-kira segini"
+jadi angka.
+
+### Yang ditemukan
+
+| Cacat | Bukti |
+| --- | --- |
+| Nominal digambar HITAM, seharusnya hijau tua #1E4841 | porsi #1E4841 2,7% jadi 0,6%; #242E2C 0,7% jadi 2,2% |
+| Nominal berbobot 600, seharusnya 700 | tinta "$500,000" 102,88x22,18; 24px/700 memberi 103,00x22,25 |
+| Label busur abu, seharusnya #242E2C | fill layer Title_10 |
+| Angka lencana tren tanpa bobot (mewarisi 400), seharusnya 600 | tinta "4.20 %" 27,89x7,26; 10px/600 memberi 27,88x7,25 |
+| Label sumbu grafik abu, seharusnya #242E2C | fill Y-label dan X-label di ketiga frame grafik |
+| Tinta baris nav yang AKTIF hijau tua, seharusnya #242E2C | porsi #242E2C 5,5% jadi 0% |
+| Garis grafik bersiku tajam, seharusnya membulat | `stroke-linecap="round" stroke-linejoin="round"` di kelima layer garis |
+| Pita sorot grafik tangga selebar penuh dan tanpa garis | di framenya 40 pada tangga 52, bergaris #ECF4E9 2px |
+| Pita sorot TIDAK PERNAH TERGAMBAR setelah diperbaiki | lebarnya dalam persen terhadap kotak selebar nol = nol |
+| Pemilih di bilah kepala seksi mint, seharusnya putih bergaris | porsi mint 15,6% jadi 52,3% |
+| Judul baris tabel berbobot 400, seharusnya 600 (500 di Transaction) | tinta 120,92 / 41,69 / 113,54 |
+| Kolom Note dan tiga kolom nominal Investment hitam, seharusnya abu | fill #6B7271 di layer teksnya |
+| Cuplikan pesan yang sedang dibuka terlalu terang | #555555 lawan #8C8D8C, 15,2% tinta barisnya |
+| Isian Large berisi placeholder abu, di framenya nilai hitam | fill Label_5 #242E2C, sementara kotak cari Medium memang #6B7271 |
+| Avatar baris pesan menempel ke atas, seharusnya dipusatkan | 2,5 dari puncak baris di framenya |
+
+### Empat kali alat ukurnya sendiri yang salah
+
+Dicatat karena tiap kali ia membuat saya mengejar cacat yang tidak ada:
+
+1. **Menumpuk dari pojok, bukan dari tinta.** Sudah diperbaiki putaran lalu.
+2. **Memaksakan geseran tinta.** Pada frame Chart piksel teratas di kedua
+   gambar bukan benda yang sama, dan geserannya memindahkan gambar 73px.
+   Sekarang geserannya dicoba dan dipakai hanya kalau memperkecil selisih.
+3. **Mengukur pasangan yang acuannya TANPA KOTAK.** Di situ selnya lebih
+   kecil daripada elemen kit dan isinya meluber keluar; "Wed" terbaca
+   setinggi setengahnya dan nav tidak aktif 33% lebih sempit. Sekarang
+   dilewati.
+4. **Membandingkan warna sama-persis, dan mengukur porsinya terhadap
+   SELURUH sel.** #EEEEEF lawan #EFF0F0 terbaca "hilang" padahal selisihnya
+   1/255, dan sparkline tren terbaca 25,4% lawan 40,9% padahal nilai
+   pikselnya sama persis baris demi baris. Sekarang warna dicocokkan dengan
+   toleransi 12, yang berdekatan digabung dulu, dan latar putihnya dibuang
+   sebelum porsinya dihitung.
+
+### Angka penutup putaran ini
+
+| Ukuran | Sebelum putaran ini | Sesudah |
+| --- | --- | --- |
+| Rata-rata selisih piksel 105 pasangan | 3,3% | **3,2%** |
+| Selisih piksel terburuk | 13,7% | **9,9%** |
+| Porsi warna meleset | 37 | **14** |
+
+Empat belas sisa warnanya: logo Coinest yang memang tidak ditiru, sparkline
+tren yang selnya beda ukuran (sudah dibuktikan pikselnya identik), dan
+antialias ikon 24px di kaki halaman.
+
 ## Menjalankan ulang
 
 ```bash

@@ -330,6 +330,13 @@ export function GrafikArea({
                   fill="none"
                   stroke={warnaDeret(d)}
                   strokeWidth="2"
+                  /* Sudut dan ujungnya BULAT — begitu di kedua frame grafik
+                     (`stroke-linecap="round" stroke-linejoin="round"` pada
+                     Line Income Area, Line Expense, dan Line). Bawaan SVG
+                     `butt`/`miter` membuat tiap siku grafik tangga tergambar
+                     runcing; pemilik menyebutnya "terlalu kaku". */
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
                 />
               </g>
@@ -337,7 +344,25 @@ export function GrafikArea({
           })}
         </svg>
         {sorot && (
-          <div className="k-area__sorot" style={{ left: `${sorotX}%` }}>
+          /* Dua bentuk penanda, dua kotak yang berbeda:
+
+             halus   kotak selebar NOL di garis penanda. Kartu, garis putus,
+                     dan titiknya semua berdiri di satu absis.
+             tangga  kotak selebar SATU ANAK TANGGA. Pitanya mengisi kotak itu
+                     dikurangi 6px tiap sisi, dan kartunya dipusatkan padanya.
+
+             Sempat keduanya memakai kotak selebar nol, dan pitanya diberi
+             lebar dalam persen — persen terhadap kotak selebar nol adalah
+             nol, jadi pitanya tidak pernah tergambar sama sekali. Tanpa
+             galat; yang menunjukkannya cuma gambarnya. */
+          <div
+            className="k-area__sorot"
+            style={
+              bentuk === "tangga" && nS > 0
+                ? { left: `${(sorot.indeks / nS) * 100}%`, width: `${100 / nS}%` }
+                : { left: `${sorotX}%` }
+            }
+          >
             {/* Kartu keterangan diletakkan BEDA di dua grafiknya, dan itu
                 terukur: di grafik halus tepi KIRI kartu duduk tepat di garis
                 penanda (218,70 keduanya), sementara di grafik tangga kartu
@@ -350,6 +375,9 @@ export function GrafikArea({
               {sorot.ket && <p className="k-area__kket">{sorot.ket}</p>}
             </div>
             {bentuk === "tangga" ? (
+              /* Pita sorot TIDAK selebar anak tangganya: di framenya ia
+                 40 pada tangga 52, jadi menjorok 6px di tiap sisi. Dan ia
+                 bergaris #ECF4E9 selebar 2 yang menunggangi tepinya. */
               <span className="k-area__pita" style={{ top: `${sorotY}%` }} />
             ) : (
               <>

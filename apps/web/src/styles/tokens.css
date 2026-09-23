@@ -242,6 +242,7 @@
   /* Dua lagi dari frame yang sama, dipakai di baris pesan: cuplikan abu
      netral dan lencana merah muda "belum dibaca". */
   --item-cuplik: #8C8D8C;
+  --item-cuplik-buka: #555555;
   --item-belum: #FEB6A3;
   --item-buka-garis: #9BDABB;
   /* Abu HANGAT untuk jam dan tanggal. Bukan milik frame Item sendirian —
@@ -365,6 +366,7 @@
   --item-ubin: #C2E66E;
   --item-ubin-ink: #1F2725;
   --item-cuplik: #8A8C90;
+  --item-cuplik-buka: #A8AAA9;
   --item-belum: #FEB6A3;
   --item-buka-garis: #3A5C42;
   --item-waktu: #9AA3A0;

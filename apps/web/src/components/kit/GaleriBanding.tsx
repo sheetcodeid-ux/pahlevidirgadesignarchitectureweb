@@ -91,15 +91,15 @@ const KOL_DASH: KolomTabel[] = [
   { judul: "Transaction Name", lebar: 170.6, urut: true },
   { judul: "Date & Time", lebar: 92.3, urut: true },
   { judul: "Amount", lebar: 72.7, urut: true },
-  { judul: "Note", lebar: 154.4, urut: true },
+  { judul: "Note", lebar: 154.4, urut: true, redup: true },
   { judul: "Status", lebar: 82, urut: true },
 ];
 const KOL_INVEST: KolomTabel[] = [
   { judul: "Stock Symbol", lebar: 165.75, urut: true },
   { judul: "Invest Date", lebar: 113.35, urut: true },
-  { judul: "Price", lebar: 99.3, urut: true },
-  { judul: "Change", lebar: 93.5, urut: true },
-  { judul: "Current Value", lebar: 99.85, urut: true },
+  { judul: "Price", lebar: 99.3, urut: true, redup: true },
+  { judul: "Change", lebar: 93.5, urut: true, redup: true },
+  { judul: "Current Value", lebar: 99.85, urut: true, redup: true },
 ];
 /* Transaction punya kolom kotak centang di paling kiri. Lebarnya 32,5 —
    yaitu jarak tepi baris ke tepi kiri kolom berikutnya, bukan lebar kotak
@@ -463,11 +463,14 @@ export function GaleriBanding() {
               kolom={KOL_TRX}
               baris={[[
                 <SelIkon ikon={CoinIn} ukuran={30} ikonPx={14} jarak={10.48}>
-                  <SelDua besar atas="Comcast Bill Payment" bawah="Food & Dining" />
+                  {/* Transaction menyimpang: 12px/500 di atas dan 11px di bawah —
+                      tinta "Comcast Bill Payment" 113,54 dan "Food & Dining"
+                      64,84 di framenya. */}
+                  <SelDua besar bobotAtas={500} pxBawah={11} atas="Comcast Bill Payment" bawah="Food & Dining" />
                 </SelIkon>,
                 <SelKeping keping="Freedom">Freedom Unlimited Mastercard</SelKeping>,
                 "4567890123",
-                <SelDua besar atas="2024-09-24" bawah="14:30" />,
+                <SelDua besar bobotAtas={500} pxBawah={11} atas="2024-09-24" bawah="14:30" />,
                 <span style={{ color: "var(--danger)" }}>-$350.00</span>,
                 "Monthly entertainment subscription",
                 <Lencana bentuk="pil" nada="selesai">Completed</Lencana>,
@@ -617,7 +620,12 @@ export function GaleriBanding() {
         </Banding>
         <Banding kunci="isian-large" zoom={2}>
           <div style={{ width: 237 }}>
-            <Isian label="Label" placeholder="Placeholder" kiri={SmileySticker}
+            {/* Isinya NILAI, bukan placeholder. Di framenya teks di dalam
+                kotak ini bertinta #242E2C sama seperti labelnya — sementara
+                kotak cari ukuran Medium memang abu #6B7271. Jadi yang
+                digambar di sini kotak yang sudah terisi, dan dirender
+                begitu supaya perbandingannya jujur. */}
+            <Isian label="Label" defaultValue="Placeholder" kiri={SmileySticker}
               kanan={<Ikon ikon={Paperclip} ukuran={18} />} />
           </div>
         </Banding>
@@ -660,18 +668,25 @@ export function GaleriBanding() {
                       seluruh separuh kanan bilah ini melar ke kanan 50px
                       dan tingginya tidak sama dengan tombol bersegmen di
                       sebelahnya. */}
-                  <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
-                  <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
+                  {/* GHOST, bukan secondary. Di framenya ketiga pemilih dan
+                      tombol saringnya kotak PUTIH bergaris #E5E6E6 — bukan
+                      kotak mint. Sempat secondary semuanya, dan akibatnya
+                      seluruh bilah terbaca jauh lebih hijau: porsi mint
+                      15,6% di acuan lawan 52,3% di kit. */}
+                  <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown}>Popular</Tombol>
+                  <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown}>Popular</Tombol>
                   <span className="k-kepalaseksi__kiri" style={{ gap: 10.6 }}>
                     <span style={{ fontSize: "var(--k-t11)", color: "var(--text-muted)" }}>Sort by:</span>
-                    <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
+                    <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown}>Popular</Tombol>
                   </span>
-                  <TombolIkon ukuran="medium" jenis="secondary" ikon={Sliders} judul="Saring" />
+                  <TombolIkon ukuran="medium" jenis="ghost" ikon={Sliders} judul="Saring" />
                   {/* Titik tiga tergambar 22px di framenya — lebih besar
                       daripada 16 yang dipakai ikon Medium lain. Terbaca dari
                       tintanya: 13,06 lebar, dan tinta master DotsThree
                       0,594 dari kotaknya. */}
-                  <TombolIkon ukuran="medium" jenis="ghost" ikon={DotsThree} ikonPx={22} judul="Lainnya" />
+                  {/* Titik tiga TIDAK punya kotak sama sekali di framenya — bukan
+                      ghost yang bergaris, melainkan transparent. */}
+                  <TombolIkon ukuran="medium" jenis="transparent" ikon={DotsThree} ikonPx={22} judul="Lainnya" />
                   <Tombol ukuran="medium">Popular</Tombol>
                 </>
               }

@@ -423,7 +423,12 @@
 .k-nav[aria-current="page"],
 .k-nav.is-aktif {
   background: var(--brand-mint);
-  color: var(--brand-mint-ink);
+  /* #242E2C, bukan #1E4841. Terukur: tinta ikon DAN label baris yang sedang
+     dibuka di framenya #242E2C — hijau tuanya cuma latar pilnya. Sempat
+     memakai --brand-mint-ink yang memang hijau tua, jadi tulisannya
+     kehijauan di atas latar hijau. Ketemu lewat porsi warna: #242E2C ada
+     5,5% di acuan dan 0% di kit. */
+  color: var(--text-strong);
 }
 /* Submenu: tanpa ikon. Teksnya TIDAK sejajar dengan label menu di atasnya —
    terukur, tinta submenu Figma mulai di 61,28 sementara menu induknya di
@@ -1414,6 +1419,7 @@
 }
 .k-tabel th.is-kanan,
 .k-tabel td.is-kanan { text-align: right; }
+.k-tabel td.is-redup { color: var(--text-muted); }
 
 /* Kepala bermint TIDAK punya garis: di Figma bidangnya #ECF4E9 penuh dan
    tidak ada satu pun stroke. Kepala polos (Transaction) tidak punya keduanya. */
@@ -1463,7 +1469,16 @@
    17,56 pada Investment (12px di atas, 10px di bawah) — jadi line-height-nya
    ikut varian, bukan angka tunggal. */
 .k-sel2 { display: flex; flex-direction: column; }
-.k-sel2__atas { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-strong); }
+/* Baris ATAS sel dua-baris berbobot 600 di kedua tabel — terukur dari tinta:
+   "Dinner at Italian Restaurant" 120,92 lebar (10px/600 memberi 120,38) dan
+   "GOOGL" 41,69 (12px/600 memberi 41,63). Tanpa bobot ia mewarisi 400 dan
+   judul barisnya tergambar setipis keterangan di bawahnya. */
+.k-sel2__atas {
+  font-size: var(--k-t10);
+  line-height: 15.37px;
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+}
 .k-sel2__bawah { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-muted); }
 .k-sel2--besar .k-sel2__atas { font-size: var(--k-t12); line-height: 17.56px; }
 .k-sel2--besar .k-sel2__bawah { line-height: 17.56px; }
@@ -1634,7 +1649,7 @@
   margin-top: 16.1px;
   line-height: 1;
   font-size: var(--k-t10);
-  color: var(--text-muted);
+  color: var(--text-strong);
   white-space: nowrap;
 }
 
@@ -1647,7 +1662,10 @@
   right: 0;
   transform: translateY(-50%);
   font-size: var(--k-t10);
-  color: var(--text-muted);
+  /* Label sumbu di Coinest HITAM (#242E2C), bukan abu. Berlaku untuk sumbu-Y
+     maupun sumbu-X, dan di kedua frame grafik besarnya juga. Sempat abu
+     semuanya. */
+  color: var(--text-strong);
   white-space: nowrap;
 }
 
@@ -1921,8 +1939,12 @@
 .k-chat__lampiran > * { display: block; width: 100%; }
 
 /* --- 5. Item List Message -------------------------------------------------- */
+/* Avatar DIPUSATKAN tegak, tidak menempel ke atas. Di framenya ia duduk di
+   2,5 dari puncak baris setinggi 39,19 — dan kotak baris kita 41, jadi
+   memusatkan 36 di dalam 41 memberi 2,5 juga. Sempat menempel ke atas, dan
+   lingkarannya tergambar sebagai cincin merah utuh di peta selisih. */
 .k-pesan { display: flex; gap: 16px; }
-.k-pesan__avatar { flex: none; width: 36px; height: 36px; }
+.k-pesan__avatar { flex: none; align-self: center; width: 36px; height: 36px; }
 .k-pesan__utama { flex: 1; min-width: 0; }
 .k-pesan__kepala {
   display: flex;
@@ -1993,6 +2015,11 @@
 /* Kartunya 343x77 dengan isi yang SAMA persis (41 tinggi), jadi seluruh
    sisanya padding: 18 di atas, 16 di bawah, dan kiri-kanan tidak sama —
    6,5 dan 8 setelah dikurangi tebal garisnya. */
+/* Cuplikan pesan pada baris yang SEDANG DIBUKA lebih gelap: #555555 di
+   framenya lawan #8C8D8C pada baris biasa. Masuk akal — percakapan yang
+   sedang dibuka memang yang paling perlu terbaca — dan terukur, bukan
+   dikira: 15,2% tinta barisnya berwarna itu.  */
+.k-pesan--terbuka .k-pesan__cuplik { color: var(--item-cuplik-buka); }
 .k-pesan--terbuka {
   padding: 18px 8px 17px 6.5px;
   border: 1px solid var(--item-buka-garis);
@@ -2540,7 +2567,7 @@
   height: var(--k-area-t, 141px);
   font-size: var(--k-t10);
   line-height: 1;
-  color: var(--text-muted);
+  color: var(--text-strong);
   text-align: right;
   white-space: nowrap;
 }
@@ -2573,7 +2600,7 @@
   margin-top: var(--k-area-jarakx, 17.8px);
   font-size: var(--k-t10);
   line-height: 1;
-  color: var(--text-muted);
+  color: var(--text-strong);
   text-align: center;
 }
 
@@ -2600,15 +2627,31 @@
   align-items: center;
   text-align: center;
 }
-.k-busur__label { margin: 0; font-size: var(--k-t10); color: var(--text-muted); }
+/* WARNA DI SINI PUNYA ATURAN, dan sempat saya balik semua:
+
+     judul/keterangan  #242E2C  (--text-strong)
+     NOMINAL           #1E4841  (--brand)   <- hijau tua, bukan hitam
+     angka di lencana  #1E4841  (--brand)
+
+   Yang saya pasang sebelumnya judulnya abu (--text-muted) dan nominalnya
+   hitam — dua-duanya salah, dan yang paling kelihatan nominalnya: di
+   framenya "$500,000" hijau tua. `warna.mjs` tidak menangkapnya karena ia
+   membandingkan HIMPUNAN warna, dan #1E4841 tetap ada di komponen ini
+   lewat irisan busurnya. Yang menangkap `teks.mjs`, yang membandingkan
+   PORSI tiap warna: #1E4841 2,7% jadi 0,6% sementara #242E2C 0,7% jadi
+   2,2%. */
+.k-busur__label { margin: 0; font-size: var(--k-t10); color: var(--text-strong); }
 .k-busur__nilai {
   margin: 6.1px 0 0;
   font-size: var(--k-h4);
-  font-weight: var(--k-med);
-  color: var(--text-strong);
+  /* Bobot 700, bukan 600. Tinta "$500,000" di framenya 102,88x22,18, dan
+     Urbanist 24px memberi 103,00x22,25 pada 700 — pada 600 lebarnya
+     meleset lebih jauh dan tingginya tidak lagi cocok. */
+  font-weight: var(--k-bold);
+  color: var(--brand);
 }
-.k-busur__ket { margin: 8.1px 0 0; font-size: var(--k-t10); color: var(--text-muted); }
-.k-busur__ket b { margin-right: 5px; font-weight: var(--k-semi); color: var(--text-strong); }
+.k-busur__ket { margin: 8.1px 0 0; font-size: var(--k-t10); color: var(--text-strong); }
+.k-busur__ket b { margin-right: 5px; font-weight: var(--k-semi); color: var(--brand); }
 
 /* --- Kartu statistik lebar ------------------------------------------------ */
 .k-statlebar {
@@ -2639,8 +2682,10 @@
    busur, dan di sana ukurannya juga 24. */
 .k-statlebar__nilai {
   font-size: var(--k-h4);
-  font-weight: var(--k-semi);
-  color: var(--text-strong);
+  /* 24/700 dan hijau tua — sama alasannya dengan .k-busur__nilai.
+     Tinta "$47,600" di framenya 87,64x22,18; 24px/700 memberi 87,75x22,25. */
+  font-weight: var(--k-bold);
+  color: var(--brand);
 }
 .k-statlebar__ubin {
   display: grid;
@@ -2678,6 +2723,7 @@
    memeluk isi — 77 di framenya lawan 114 di grafik halus, karena yang di
    sana punya baris tanggal panjang yang melebarkannya. */
 .k-area__kartu--tengah {
+  left: 50%;
   width: max-content;
   transform: translateX(-50%);
 }
@@ -2712,13 +2758,19 @@
 }
 /* Varian tangga: bukan titik, melainkan pita mint selebar satu anak tangga
    yang menunggangi tepi atasnya. */
+/* Lebar dan letaknya disetel inline dari komponennya — lihat catatannya di
+   Ukuran.tsx. Garisnya 2px MENUNGGANGI tepi (Figma: fill 40x8, kotak luar
+   42x10), jadi ditulis sebagai border 1px ke dalam + box-shadow 1px ke luar;
+   `outline` tidak dipakai karena ia tidak ikut radius di semua keadaan. */
 .k-area__pita {
   position: absolute;
-  left: -26px;
-  width: 52px;
+  left: 6px;
+  right: 6px;
   height: 8px;
   margin-top: -4px;
+  border: 1px solid var(--brand-soft);
   border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--brand-soft);
   background: var(--brand-mint);
 }
 
@@ -2735,6 +2787,9 @@
   background: var(--brand-mint);
   color: var(--brand-isi);
   font-size: var(--k-t10);
+  /* Tinta "4.20 %" 27,89x7,26; 10px/600 memberi 27,88x7,25. Tanpa bobot ia
+     mewarisi 400 dan angkanya tergambar tipis. */
+  font-weight: var(--k-semi);
   line-height: 1;
   white-space: nowrap;
 }
