@@ -190,7 +190,13 @@ export function KakiHalaman({
         <div className="k-kakihal__sosial">
           {sosial.map((s) => (
             <a key={s.judul} href={s.href} aria-label={s.judul}>
-              <Ikon ikon={s.ikon} ukuran={20} />
+              {/* 24, bukan 20. Jarak antar-PUSAT kelima ikon di framenya
+                  persis 36,0, dan tinta FacebookLogo di sana 19,50 —
+                  sementara tinta ikon yang sama di kit mengisi 0,8125
+                  kotaknya, jadi kotaknya 19,50/0,8125 = 24. Pitch 36 lalu
+                  memberi jarak 12. Dengan 20 dan 18 pitch-nya jadi 38 dan
+                  seluruh baris ikon melebar 4px. */}
+              <Ikon ikon={s.ikon} ukuran={24} />
             </a>
           ))}
         </div>

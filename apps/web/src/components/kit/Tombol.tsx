@@ -110,6 +110,15 @@ export interface PropTombolIkon extends Omit<ButtonHTMLAttributes<HTMLButtonElem
    */
   titik?: boolean;
   titikJudul?: string;
+  /**
+   * Ukuran ikon dalam piksel, kalau ia menyimpang dari bawaan ukurannya.
+   *
+   * Dipakai satu tempat dan memang cuma untuk itu: titik tiga di bilah
+   * kepala seksi tergambar 22px di Figma, sementara ikon Medium lain 16px.
+   * Bukan pintu untuk mengarang ukuran — kalau memakainya, sebutkan angka
+   * Figma-nya di tempat pemanggilan.
+   */
+  ikonPx?: number;
 }
 
 export function TombolIkon({
@@ -120,6 +129,7 @@ export function TombolIkon({
   tipeHtml = "button",
   titik,
   titikJudul,
+  ikonPx,
   className,
   ...sisa
 }: PropTombolIkon) {
@@ -133,7 +143,7 @@ export function TombolIkon({
     .join(" ");
   return (
     <button type={tipeHtml} className={kelas} aria-label={judul} title={judul} {...sisa}>
-      <Ikon ikon={ikon} ukuran={IKON_PX_KOTAK[ukuran]} />
+      <Ikon ikon={ikon} ukuran={ikonPx ?? IKON_PX_KOTAK[ukuran]} />
       {titik && (
         <span className="k-tombolikon__titik" role="img" aria-label={titikJudul ?? "Ada yang baru"} />
       )}

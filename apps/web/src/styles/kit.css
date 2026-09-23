@@ -936,7 +936,16 @@
      dicentang — warna latarnya yang mengambil alih. Sempat tidak dibuat sama
      sekali karena yang dibandingkan cuma varian tercentang. */
   border: 1px solid var(--sakelar-mati);
-  border-radius: 4px;
+  /* Radius IKUT ukuran — sempat 4px tetap untuk ketiganya, jadi yang 13px
+     kebulatan dan yang 23px kepersegian. Di framenya sudutnya melebar
+     seperempat sisi: 3,25 pada 13, 4,25 pada 17, 5,99 pada 23.
+
+     Bentuknya sendiri bukan busur lingkaran melainkan sudut berhalus
+     (corner smoothing) — kurvanya mulai lebih jauh dari pojok lalu
+     membelok lebih tajam. `border-radius` tidak bisa menyatakan itu, jadi
+     yang diambil radius lingkaran yang paling mendekati; sisa selisihnya
+     ada di beberapa piksel pojok dan dibiarkan. */
+  border-radius: calc(var(--k-centang-s) * 0.23);
   background: var(--centang-bidang);
   cursor: pointer;
   display: inline-block;
@@ -1715,9 +1724,15 @@
 .k-kepalaseksi__kanan {
   display: flex;
   align-items: center;
-  /* 11px terbaca berulang di keempat Model: 236→247, 327→338, 659→669,5,
-     982,5→993,5. Bukan 12, bukan 10. */
-  gap: 11px;
+  /* 10px, dan angka 11 yang pernah ada di sini salah baca: ia diukur dari
+     tepi <rect>, sementara <rect> yang bergaris di Figma digambar MASUK
+     setengah piksel di tiap sisi (rect 236 untuk bingkai 237). Jadi tiap
+     jarak yang bertetangga dengan kotak bergaris terbaca 1px kelebihan.
+
+     Yang memutuskan: tombol bersegmen TIDAK bergaris, jadi bingkainya sama
+     dengan rect-nya — 487,04..800,04 — dan pemilih sesudahnya mulai di
+     810,04. Sepuluh, tanpa ambiguitas. */
+  gap: 10px;
   min-width: 0;
 }
 /* 16, bukan 14: "Header Title" bertinta 87,37 lebar di framenya, dan 16/600
@@ -1824,14 +1839,19 @@
   min-height: 19.5px;
   font-size: var(--k-t12);
 }
-.k-kakihal__legal { display: flex; align-items: center; gap: 22px; }
+.k-kakihal__legal { display: flex; align-items: center; gap: 20.85px; }
 .k-kakihal__cipta { color: var(--text-strong); }
-.k-kakihal__tautan { display: flex; align-items: center; gap: 18px; }
+/* Jarak diukur dari TINTA ke TINTA di framenya lalu dikurangi bearing
+   hurufnya (~0,9 untuk sepasang tepi): tautan 17,46 - 0,9 = 16,55, dan
+   legal 21,74 - 0,9 = 20,85. Angka 18 dan 22 sebelumnya memakai jarak
+   tinta apa adanya, jadi baris tautannya 3,9px kelebaran di ponsel —
+   satu-satunya tempat lebar baris itu menentukan lebar komponennya. */
+.k-kakihal__tautan { display: flex; align-items: center; gap: 16.55px; }
 .k-kakihal__tautan a,
 .k-kakihal__sosial a { color: var(--text-faint); text-decoration: none; }
 .k-kakihal__tautan a:hover,
 .k-kakihal__sosial a:hover { color: var(--text-body); }
-.k-kakihal__sosial { display: flex; align-items: center; gap: 18px; }
+.k-kakihal__sosial { display: flex; align-items: center; gap: 12px; }
 
 /* Varian Mobile: tiga baris tengah. Dikerjakan media query dan bukan prop —
    yang menentukan lebar layar, bukan pemanggilnya. */
@@ -2350,10 +2370,20 @@
   color: var(--text-strong);
 }
 @media (max-width: 40rem) {
+  /* Varian Mobile MENAIKKAN ukuran hurufnya, tidak menurunkannya seperti
+     yang saya kira sebelumnya. Tinta di framenya, dan Urbanist yang
+     memberikannya:
+
+       "60%"            25,15 x 10,16   ->  14px  (24,13 x 10,25)
+       "Rent & Living"  89,81 x 15,48   ->  16px  (88,75 x 15,50)
+       "$2,100"         45,07 x 14,78   ->  16px  (43,63 x 14,88)
+
+     Angka 12/14/14 sebelumnya menyalin ukuran desktopnya, jadi seluruh
+     baris ini tergambar satu tingkat lebih kecil daripada acuannya. */
   .k-beban { min-height: 30px; }
-  .k-beban__persen { width: 40px; height: 30px; font-size: var(--k-t12); }
-  .k-beban__kategori { margin-left: 13px; font-size: var(--k-t14); }
-  .k-beban__nominal { font-size: var(--k-t14); }
+  .k-beban__persen { width: 40px; height: 30px; font-size: var(--k-t14); }
+  .k-beban__kategori { margin-left: 13px; font-size: var(--k-t16); }
+  .k-beban__nominal { font-size: var(--k-t16); }
 }
 
 /* --- 16. Item List Inbox ---------------------------------------------------- */
@@ -2643,6 +2673,13 @@
   border: 1px solid var(--border);
   border-radius: 7.5px;
   background: var(--surface);
+}
+/* Grafik tangga: kartunya dipusatkan pada anak tangganya, dan lebarnya
+   memeluk isi — 77 di framenya lawan 114 di grafik halus, karena yang di
+   sana punya baris tanggal panjang yang melebarkannya. */
+.k-area__kartu--tengah {
+  width: max-content;
+  transform: translateX(-50%);
 }
 .k-area__kjudul { margin: 0; font-size: var(--k-t10); line-height: 1; color: var(--text-muted); }
 .k-area__knilai { margin: 5.25px 0 0; font-size: var(--k-t12); line-height: 1; color: var(--text-strong); }

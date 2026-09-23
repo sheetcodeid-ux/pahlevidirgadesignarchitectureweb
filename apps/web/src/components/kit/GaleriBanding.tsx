@@ -336,10 +336,10 @@ export function GaleriBanding() {
             mati, empat tombol angka, satu jeda, lalu tombol "berikutnya".
             Halaman ke-1 menghasilkan susunan yang persis sama. */}
         <Banding kunci="paginasi-default" zoom={2}>
-          <Paginasi kini={1} total={12} onPindah={setHal} />
+          <Paginasi kini={1} total={16} onPindah={setHal} />
         </Banding>
         <Banding kunci="paginasi-ponsel" zoom={2}>
-          <Paginasi kini={1} total={12} onPindah={setHal} ponsel />
+          <Paginasi kini={1} total={16} onPindah={setHal} ponsel />
         </Banding>
       </Grup>
 
@@ -654,15 +654,25 @@ export function GaleriBanding() {
                     onPilih={() => {}}
                     judul="Contoh"
                   />
-                  <Tombol ukuran="small" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
-                  <Tombol ukuran="small" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
-                  <span className="k-kepalaseksi__kiri" style={{ gap: 11.5 }}>
+                  {/* Ukuran Medium, bukan small. Terukur di framenya: tiap
+                      pemilih "Popular" berbingkai 81x32 dan kedua tombol
+                      ikonnya 32x32 — small memberi 68x28 dan 28x28, jadi
+                      seluruh separuh kanan bilah ini melar ke kanan 50px
+                      dan tingginya tidak sama dengan tombol bersegmen di
+                      sebelahnya. */}
+                  <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
+                  <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
+                  <span className="k-kepalaseksi__kiri" style={{ gap: 10.6 }}>
                     <span style={{ fontSize: "var(--k-t11)", color: "var(--text-muted)" }}>Sort by:</span>
-                    <Tombol ukuran="small" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
+                    <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown}>Popular</Tombol>
                   </span>
-                  <TombolIkon ukuran="small" jenis="secondary" ikon={Sliders} judul="Saring" />
-                  <TombolIkon ukuran="small" jenis="ghost" ikon={DotsThree} judul="Lainnya" />
-                  <Tombol ukuran="small">Popular</Tombol>
+                  <TombolIkon ukuran="medium" jenis="secondary" ikon={Sliders} judul="Saring" />
+                  {/* Titik tiga tergambar 22px di framenya — lebih besar
+                      daripada 16 yang dipakai ikon Medium lain. Terbaca dari
+                      tintanya: 13,06 lebar, dan tinta master DotsThree
+                      0,594 dari kotaknya. */}
+                  <TombolIkon ukuran="medium" jenis="ghost" ikon={DotsThree} ikonPx={22} judul="Lainnya" />
+                  <Tombol ukuran="medium">Popular</Tombol>
                 </>
               }
             />

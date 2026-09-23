@@ -1,6 +1,11 @@
 /* Di SEBELAH MANA bedanya?
  *
  *     PILIH="Chart|Busur" node scripts/banding/petabeda.mjs [keluar.png]
+ *     LEBAR=390 PILIH="Mobile" node scripts/banding/petabeda.mjs
+ *
+ * LEBAR wajib 390 untuk varian Mobile di frame Item: ia bukan komponen
+ * tersendiri melainkan media query, jadi di 1400 yang tergambar varian
+ * desktopnya dan angkanya tidak berarti.
  *
  * Tiga yang lain cuma melaporkan angka. Yang menunjukkan bahwa relnya tidak
  * pernah tergambar, bahwa satu kata hilang, atau bahwa isian gradiennya abu
@@ -12,7 +17,7 @@ import { bukaKit } from "./buka.mjs";
 
 const RE = new RegExp(process.env.PILIH || ".");
 const KELUAR = process.argv[2] || "/tmp/peta-banding.png";
-const { b, p } = await bukaKit({ skala: 4 });
+const { b, p } = await bukaKit({ skala: 4, lebar: Number(process.env.LEBAR || 1400) });
 const kartu = await p.$$(".k-banding");
 const baris = [];
 for (const k of kartu) {
@@ -57,7 +62,37 @@ for (const k of kartu) {
       return x1 < 0 ? { x: 0, y: 0 } : { x: x0, y: y0 };
     };
     const ta = tinta(A), tb = tinta(B);
-    const dx = tb.x - ta.x, dy = tb.y - ta.y;
+    /* Geseran tinta dicoba, TIDAK dipaksakan. Pada beberapa pasangan piksel
+       bertinta paling atas di kedua gambar bukan benda yang sama — di frame
+       Chart yang satu garis kisi dan yang satu batang — dan menyejajarkannya
+       justru memindahkan seluruh gambar puluhan piksel. Jadi kedua susunan
+       dihitung dan yang selisihnya lebih kecil yang dipakai; kalau yang
+       menang susunan tanpa geseran, geserannya dilaporkan 0. */
+    const hitung = (dx, dy, gambar) => {
+      const w = Math.min(A.w, B.w) - Math.abs(dx), h = Math.min(A.h, B.h) - Math.abs(dy);
+      let n = 0;
+      const im = gambar ? gambar.createImageData(w, h) : null;
+      for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) {
+        const ax = xx + Math.max(0, -dx), ay = yy + Math.max(0, -dy);
+        const bx = xx + Math.max(0, dx), by = yy + Math.max(0, dy);
+        const ia = (ay * A.w + ax) * 4, ib = (by * B.w + bx) * 4, io = (yy * w + xx) * 4;
+        const beda = Math.abs(A.d.data[ia] - B.d.data[ib]) > 40 ||
+          Math.abs(A.d.data[ia + 1] - B.d.data[ib + 1]) > 40 ||
+          Math.abs(A.d.data[ia + 2] - B.d.data[ib + 2]) > 40;
+        if (beda) n++;
+        if (im) {
+          im.data[io] = beda ? 244 : 255;
+          im.data[io + 1] = beda ? 53 : 255;
+          im.data[io + 2] = beda ? 65 : 255;
+          im.data[io + 3] = 255;
+        }
+      }
+      return { persen: (n / (w * h)) * 100, w, h, im };
+    };
+    const nol = hitung(0, 0, null);
+    const geser = hitung(tb.x - ta.x, tb.y - ta.y, null);
+    const pakai = geser.persen < nol.persen ? [tb.x - ta.x, tb.y - ta.y] : [0, 0];
+    const dx = pakai[0], dy = pakai[1];
     const w = Math.min(A.w, B.w) - Math.abs(dx), h = Math.min(A.h, B.h) - Math.abs(dy);
     const out = document.createElement("canvas");
     out.width = w; out.height = h;

@@ -15,7 +15,7 @@ import { bukaKit } from "./buka.mjs";
 
 const RE = new RegExp(process.env.PILIH || ".");
 const SUMBU = (process.env.SUMBU || "y").toLowerCase(); // y = pita mendatar, x = pita tegak
-const { b, p } = await bukaKit({ skala: 4 });
+const { b, p } = await bukaKit({ skala: 4, lebar: Number(process.env.LEBAR || 1400) });
 
 for (const k of await p.$$(".k-banding")) {
   const ket = ((await k.$eval(".k-banding__ket", (e) => e.textContent)) || "").split(" · ")[0];

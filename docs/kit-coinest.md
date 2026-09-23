@@ -145,10 +145,14 @@ Hidup di `components/kit/Ukuran.tsx`:
 | `Busur` | Investments | 224x112 cocok | 7,5% |
 | `KartuStatistikLebar` | Saving Plans | 386x88 cocok | 6,5% |
 
-¹ Kurvanya digambar Figma DI LUAR layer `Chart`, jadi potongan acuannya cuma
-memuat kisi dan label sumbu. Yang dibandingkan di situ geometri kisinya, dan
-itu cocok sampai 0,04px. Selisih pikselnya seluruhnya milik kurva yang ada
-di kit dan tidak ada di acuannya.
+¹ **Catatan ini sebelumnya salah dan sudah dicabut.** Yang tertulis di sini
+dulu: "kurvanya digambar Figma di luar layer `Chart`, jadi selisih pikselnya
+milik kurva yang ada di kit dan tidak ada di acuannya". Itu tidak benar, dan
+dipakai untuk memaafkan selisih 14,43%. Kurvanya ADA di dalam
+`Chart > Chart Area` — `Line Income`, `Line Income Area`, `Line Expense`,
+`Line Expense Area` — dan saya melewatkannya karena menyalurkan pencarian
+lewat `head -16`. Datanya lalu dibaca dari titik ujung Bezier-nya dan
+dipetakan balik lewat kisi; selisihnya sekarang 3,1%.
 
 Tiga hal yang diukur dan gampang salah kira:
 
@@ -157,7 +161,9 @@ Tiga hal yang diukur dan gampang salah kira:
   antaranya. Menggambarnya sebagai rel penuh menghilangkan celah itu, dan
   celahnya terlihat di setiap baris daftar.
 - **Busurnya setengah lingkaran berjari-jari 112 luar / 85 dalam**, celah
-  antar-irisan **2 derajat**. Digambar sebagai path arc, bukan lingkaran
+  antar-irisan **2 derajat** dan celah itu diambil dari UJUNG irisan saja,
+  bukan dibagi dua sisi — membaginya menyempitkan tiap iris 2 derajat dan
+  memutarnya 1 derajat. Digambar sebagai path arc, bukan lingkaran
   ber-`stroke-dasharray`: dasharray menghitung celah dalam satuan panjang
   busur, jadi celah yang sama terlihat berbeda lebar pada irisan yang
   berbeda besar.
@@ -166,11 +172,75 @@ Tiga hal yang diukur dan gampang salah kira:
   tanpa peringatan, barisnya sekadar tidak tergambar. Yang menemukannya peta
   selisih, bukan angka.
 
-Alat auditnya ikut diperbaiki lagi: `warnaTergambar` dulu tidak membaca
-`stroke` SVG sama sekali, jadi warna garis kurva dilaporkan "tidak ada di
-kit" pada grafik yang sudah benar. Cacat yang sama persis dengan
-`borderTopColor` sebelumnya — alat ukur yang buta pada satu properti akan
-selalu menyalahkan komponen yang benar.
+## Audit ulang seluruh kit
+
+Diminta pemilik: bukan cuma grafiknya, yang SEBELUMNYA juga. Hasilnya enam
+cacat, dan tidak satu pun ketemu dari membaca kode — semuanya dari menumpuk
+render di atas acuannya.
+
+| Cacat | Besarnya |
+| --- | --- |
+| Chromium membulatkan lebar-maju tiap glif ke piksel bulat, Figma tidak | 4 tombol + 3 lencana meleset +-2px |
+| Padding tombol diturunkan ulang dari letak tinta | 12 dari 12 lebar cocok, meleset terbesar 0,15px |
+| Tab kategori tidak aktif berbobot 400, bukan 600 (dan labelnya "All", bukan "3D") | tab 1,2px kelebaran dan jelas ketebalan |
+| Keping tagar: "#" dan labelnya satu baris menyambung, bukan dua kotak berjarak 1,76 | 2,95px kelebaran |
+| Lampiran gambar di gelembung pesan ABU #E5E6E6, bukan mint | 33% selisih piksel jadi 3,7% |
+| Teks baris aktivitas 12,5px, bukan 16 — dan ikonnya tampil 32, bukan 12 | teks 28% kebesaran, ikon 2,7x kekecilan |
+
+Ditambah lima lagi yang lebih kecil, semuanya terukur:
+
+- Bilah kepala seksi memakai tombol ukuran **Medium**, bukan small: tiap
+  pemilih "Popular" 81x32 dan kedua tombol ikonnya 32x32 di framenya. Titik
+  tiganya tergambar 22px, lebih besar daripada 16 yang dipakai ikon Medium
+  lain. Jaraknya 10, bukan 11 — angka 11 diukur dari tepi `<rect>`, dan
+  `<rect>` bergaris di Figma digambar masuk setengah piksel di tiap sisi.
+- Kaki halaman: jarak tautan 16,55 dan legal 20,85 (jarak TINTA di framenya
+  dikurangi bearing hurufnya), ikon sosial 24px berjarak 12 — jarak antar-
+  pusat kelimanya di framenya persis 36,0.
+- Baris beban varian Mobile MENAIKKAN ukuran hurufnya: 14/16/16, bukan
+  menyalin 12/14/14 dari desktopnya.
+- Radius kotak centang ikut ukuran (0,23 x sisi), bukan 4px tetap.
+- Kartu keterangan grafik tangga DIPUSATKAN pada anak tangganya, sementara
+  di grafik halus tepi kirinya duduk di garis penanda. Dua letak berbeda,
+  dua-duanya terukur.
+
+### Alatnya sendiri dua kali berbohong
+
+- `petabeda.mjs` menumpuk dua gambar dari pojok kiri-atas. Ekspor Figma
+  dipotong pada TINTA sementara kotak DOM memuat ruang baris di atas dan di
+  bawah huruf, jadi baris pesan yang sebenarnya rapi terbaca 13,7%. Sekarang
+  geseran tinta dicoba dan dipakai hanya kalau ia memperkecil selisihnya —
+  dipaksakan, ia justru merusak pasangan yang piksel teratasnya bukan benda
+  yang sama (frame Chart terbaca 48,7%).
+- `baris.mjs` baru: pita tinta per baris piksel, acuan dan kit berdampingan.
+  Itu yang menjawab "barisnya turun 2px"; selisih kotak tidak pernah bisa.
+
+### Angka penutup
+
+| Ukuran | Sebelum | Sesudah |
+| --- | --- | --- |
+| Selisih kotak meleset >1px (105 pasangan) | 24 | 12 |
+| Rata-rata selisih piksel | — | 3,3% |
+| Selisih piksel terburuk | 33,1% | 13,7% |
+
+Dua belas yang tersisa **semuanya satu sebab yang sama**, dan itu bukan
+cacat tata letak: bingkai Figma adalah kotak TINTA layernya, sementara kotak
+DOM kita adalah kotak elemennya. Untuk tepi yang berupa teks selisihnya ruang
+baris di bawah baris terakhir (lima label grafik +1,5; `Type=1` +1,0;
+`Type=Read` +1,8; `Variant=V2` +1,2); untuk kaki halaman selisihnya kotak
+ikon 24 lawan tintanya 19,5 (+4,5). Dua grafik besar +1,4/+1,5 adalah
+pertukaran yang disengaja: yang diutamakan kisinya lurus, bukan tinggi
+kotaknya.
+
+Dibuktikan pada `Item / Variant=V2` — setelah jaraknya dibetulkan, pita
+tintanya `0,50..30,33  35,33..45,83` di kedua sisi, sama persis, sementara
+selisih kotaknya tetap melapor +1,2px. Artinya angka selisih-kotak untuk
+komponen yang tepinya teks memang tidak bisa nol, dan mengejarnya sampai nol
+justru akan memindahkan tinta hurufnya ke tempat yang salah.
+
+**Varian Mobile di frame Item wajib diukur pada viewport 390** — ia media
+query, bukan komponen tersendiri. Di 1400 keempatnya melapor meleset padahal
+yang tergambar varian desktopnya.
 
 ## Menjalankan ulang
 
@@ -181,6 +251,8 @@ node selisih.mjs 1400 && node selisih.mjs 390
 node warna.mjs
 node tumpuk.mjs
 PILIH="Item / Type=2" node petabeda.mjs
+LEBAR=390 PILIH="Mobile" node petabeda.mjs    # varian Mobile WAJIB di 390
+PILIH="Item / Variant=V2" node baris.mjs      # pita tinta per baris
 ```
 
 Acuan Figma-nya digenerate: ubah daftar `PASANGAN` di

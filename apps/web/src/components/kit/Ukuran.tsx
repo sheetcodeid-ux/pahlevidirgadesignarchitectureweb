@@ -338,7 +338,13 @@ export function GrafikArea({
         </svg>
         {sorot && (
           <div className="k-area__sorot" style={{ left: `${sorotX}%` }}>
-            <div className="k-area__kartu">
+            {/* Kartu keterangan diletakkan BEDA di dua grafiknya, dan itu
+                terukur: di grafik halus tepi KIRI kartu duduk tepat di garis
+                penanda (218,70 keduanya), sementara di grafik tangga kartu
+                DIPUSATKAN pada anak tangga yang disorot (pusat kartu 316,2
+                lawan pusat tangga 315,7). Sebelumnya keduanya kiri, jadi
+                kartu di grafik tangga meleset 36px ke kanan. */}
+            <div className={kelas("k-area__kartu", bentuk === "tangga" && "k-area__kartu--tengah")}>
               <p className="k-area__kjudul">{sorot.judul}</p>
               <p className="k-area__knilai">{sorot.nilai}</p>
               {sorot.ket && <p className="k-area__kket">{sorot.ket}</p>}
