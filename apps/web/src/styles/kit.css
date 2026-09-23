@@ -1639,7 +1639,11 @@
 .k-beban,
 .k-inbox,
 .k-tagar,
-.k-penulis { line-height: 1; }
+.k-penulis,
+.k-bar,
+.k-area,
+.k-busur,
+.k-statlebar { line-height: 1; }
 
 .k-kepalaseksi {
   display: flex;
@@ -2386,7 +2390,14 @@
 .k-bar--tumpuk .k-bar__sisa { display: none; }
 
 /* --- Grafik area ---------------------------------------------------------- */
-.k-area { display: grid; grid-template-columns: auto 1fr; gap: 0 12px; padding-top: var(--k-area-atas, 0); }
+/* Celah 8,4 antara label sumbu dan bidang plot — bukan 12. Terukur: label Y
+   berakhir di 258,6 dan kisinya mulai di 267. */
+.k-area {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 8.4px;
+  padding-top: var(--k-area-atas, 0);
+}
 .k-area__labely {
   display: flex;
   flex-direction: column;
@@ -2415,36 +2426,54 @@
 .k-area__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .k-area__deret { color: var(--brand); }
 .k-area__deret--kedua { color: var(--brand-mint); }
+/* Label X berpusat di TENGAH KOLOMNYA, bukan di tepi plot. `space-between`
+   menempelkan label pertama ke tepi kiri dan yang terakhir ke tepi kanan,
+   dan ketujuhnya lalu meleset makin jauh ke tengah. Terukur: tinta "Sun" di
+   framenya berpusat di 304,4 — persis tengah kolom pertama (267 + 74,7/2). */
 .k-area__labelx {
   grid-column: 2;
-  display: flex;
-  justify-content: space-between;
-  margin-top: 17.8px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin-top: var(--k-area-jarakx, 17.8px);
   font-size: var(--k-t10);
   line-height: 1;
   color: var(--text-muted);
+  text-align: center;
 }
 
 /* --- Busur ---------------------------------------------------------------- */
 .k-busur { position: relative; display: block; }
 .k-busur > svg { display: block; width: 100%; height: auto; }
-/* Isi lubangnya menempati SETENGAH bawah busurnya: di framenya tinta
-   ketiga barisnya membentang y599,5..656,5 di dalam kotak setinggi 112,
-   jadi 51%. Sempat 40%, dan baris ketiganya terpotong habis — tidak ada
-   galat, tidak ada peringatan, barisnya sekadar tidak tergambar. */
+/* Tiga baris di lubang busurnya, diukur dari framenya: tinta label
+   y54,5..62,1 dari puncak kotak, nominal y70,5..92,7, keterangan
+   y101,5..111,5 — jadi kotaknya mulai di 53,3 dari 112, yaitu 47,6%.
+
+   Sempat 40% DAN mewarisi line-height 1,6 panel admin, dan akibatnya baris
+   ketiganya mendarat di y112,5 — setengah piksel di bawah kotaknya, jadi
+   terpotong habis. Tidak ada galat, tidak ada peringatan, dan angka selisih
+   pun tidak menyebutnya; yang menemukannya menempelkannya di samping
+   framenya. */
 .k-busur__tengah {
   position: absolute;
   left: 0;
   right: 0;
+  top: 47.6%;
   bottom: 0;
-  height: 51%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
   text-align: center;
 }
+.k-busur__label { margin: 0; font-size: var(--k-t10); color: var(--text-muted); }
+.k-busur__nilai {
+  margin: 6.1px 0 0;
+  font-size: var(--k-h4);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+}
+.k-busur__ket { margin: 8.1px 0 0; font-size: var(--k-t10); color: var(--text-muted); }
+.k-busur__ket b { margin-right: 5px; font-weight: var(--k-semi); color: var(--text-strong); }
 
 /* --- Kartu statistik lebar ------------------------------------------------ */
 .k-statlebar {
@@ -2463,10 +2492,18 @@
   line-height: 1;
 }
 .k-statlebar__info { flex: 1; min-width: 0; }
-.k-statlebar__judul { margin: 0; font-size: var(--k-t14); color: var(--text-strong); }
+.k-statlebar__judul {
+  margin: 0;
+  font-size: var(--k-t14);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+}
 .k-statlebar__baris { display: flex; align-items: center; gap: 11.4px; margin: 8px 0 0; }
+/* 24, bukan 22: tinta "$47,600" di framenya 87,6 lebar, dan 24/500 memberi
+   88,0 sementara 22 cuma 80,7. Gaya "Amount" yang sama dipakai di lubang
+   busur, dan di sana ukurannya juga 24. */
 .k-statlebar__nilai {
-  font-size: var(--k-h5);
+  font-size: var(--k-h4);
   font-weight: var(--k-semi);
   color: var(--text-strong);
 }
@@ -2480,3 +2517,85 @@
   background: var(--bg);
   color: var(--brand-isi);
 }
+
+/* --- Sorot satu titik pada grafik area ------------------------------------
+   Kartu 114x64 r7,5, penanda bulat r7 mint bergaris putih 2, dan garis putus
+   4-4 dari penanda ke dasar plot. Semuanya diukur dari layer `Tooltip` di
+   frame Dashboard v2.
+
+   Kartunya duduk di RUANG ATAS plot — itu sebabnya `ruangAtas` bukan sekadar
+   ruang bernapas untuk garisnya. */
+.k-area__sorot { position: absolute; top: 0; bottom: 0; width: 0; }
+.k-area__kartu {
+  position: absolute;
+  top: calc(-1 * var(--k-area-atas, 0px));
+  left: 0;
+  width: 114px;
+  /* Sisi 8, bukan 10,5: dengan 10,5 ruang dalamnya 91 dan "Tuesday, 6 June
+     2029" yang 93,5 lebar membungkus jadi dua baris — kartunya lalu tumbuh
+     dan seluruh isinya bergeser. */
+  padding: 9.5px 8px 8.5px;
+  border: 1px solid var(--border);
+  border-radius: 7.5px;
+  background: var(--surface);
+}
+.k-area__kjudul { margin: 0; font-size: var(--k-t10); line-height: 1; color: var(--text-muted); }
+.k-area__knilai { margin: 5.25px 0 0; font-size: var(--k-t12); line-height: 1; color: var(--text-strong); }
+.k-area__kket {
+  margin: 8.7px 0 0;
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* `top` disetel inline ke tinggi titiknya; `bottom: 0` yang menariknya sampai
+   dasar plot. Menyetel `height` malah membuatnya bergantung pada tinggi plot
+   yang belum diketahui saat render server. */
+.k-area__garis {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(var(--border-strong) 50%, transparent 0) top / 1px 8px repeat-y;
+}
+.k-area__titik {
+  position: absolute;
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--brand-mint);
+}
+/* Varian tangga: bukan titik, melainkan pita mint selebar satu anak tangga
+   yang menunggangi tepi atasnya. */
+.k-area__pita {
+  position: absolute;
+  left: -26px;
+  width: 52px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: var(--brand-mint);
+}
+
+/* --- Lencana tren 54x17, dipakai kartu statistik lebar dan baris watchlist
+   Terukur di frame Investments: kotak 55x17 r8,5, ikon 8,76 lebar di 5,62
+   dari tepi kiri, teks mulai 5,02 sesudahnya, sisa 6,07 di kanan. */
+.k-trenlebar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 17px;
+  padding: 0 6px 0 5.6px;
+  border-radius: 8.5px;
+  background: var(--brand-mint);
+  color: var(--brand-isi);
+  font-size: var(--k-t10);
+  line-height: 1;
+  white-space: nowrap;
+}
+/* Arah turun yang BURUK tetap memakai bentuk yang sama, cuma warnanya
+   berpindah — bukan lencana lain. */
+.k-trenlebar--buruk { background: var(--danger-soft); color: var(--danger); }

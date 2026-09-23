@@ -30,7 +30,7 @@ import {
   BarisTagar,
   BarisPenulis,
 } from "./Item";
-import { BarKemajuan, GrafikArea, Busur, KartuStatistikLebar } from "./Ukuran";
+import { BarKemajuan, GrafikArea, Busur, KartuStatistikLebar, LencanaTren } from "./Ukuran";
 import { Ikon } from "./Ikon";
 import {
   ArrowLeft,
@@ -882,7 +882,7 @@ export function GaleriBanding() {
               simbol="GOOGL"
               nama="Microsoft Corporation"
               nilai="$3,204.50"
-              tren={<Tren naik>+2.30%</Tren>}
+              tren={<LencanaTren>+2.30%</LencanaTren>}
             />
           </div>
         </Banding>
@@ -988,40 +988,46 @@ export function GaleriBanding() {
             <BarKemajuan persen={57.6} bentuk="tumpuk" tinggi={51} judul="Contoh" />
           </div>
         </Banding>
-        <Banding
-          kunci="area-halus"
-          zoom={1}
-          catatan="acuannya cuma kisi dan label — kurvanya digambar di LUAR layer Chart, jadi selisih piksel di bidang plotnya memang milik kurva kit"
-        >
+        {/* Angka kedua deret ini DIBACA dari simpul Bezier kurva Figma-nya,
+            bukan dikarang: tiap segmen C berakhir di satu titik data, jadi
+            tinggal dipetakan balik lewat kisinya (y421,5 = 2000, y562,5 = 0).
+            Sembilan titik, bukan tujuh — ada titik tambahan di tepi kiri dan
+            kanan plot supaya garisnya sampai ke ujung. */}
+        <Banding kunci="area-halus" zoom={1} catatan="dua deret, titik dari simpul kurva Figma">
           <div style={{ width: 554.7 }}>
             <GrafikArea
               tinggi={141}
-              ruangAtas={26.3}
+              ruangAtas={29.5}
+              jarakLabelX={16}
               labelY={["2000", "1500", "1000", "500", "0"]}
               labelX={["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]}
               maks={2000}
+              posisi={[0, 0.0681, 0.2111, 0.3538, 0.4965, 0.6392, 0.7793, 0.9247, 1]}
+              sorot={{ indeks: 3, deret: 0, judul: "Income", nilai: "$6,000", ket: "Tuesday, 6 June 2029" }}
               deret={[
-                { titik: [980, 1180, 1520, 900, 1020, 1480, 1560], nada: "kedua" },
-                { titik: [620, 540, 760, 430, 560, 700, 640] },
+                { titik: [909.5, 1031.9, 807.2, 1325.6, 661.5, 1751.8, 1233.3, 1545.8, 1396.7], nada: "kedua" },
+                { titik: [633.7, 755.1, 149.2, 755.1, 340.4, 955.0, 522.8, 825.9, 762.4] },
               ]}
             />
           </div>
         </Banding>
-        <Banding kunci="area-tangga" zoom={1} catatan="nilainya bertahan lalu melompat — sama, kurvanya di luar layer Chart">
+        <Banding kunci="area-tangga" zoom={1} catatan="sepuluh anak tangga, nilainya dari simpul kurva Figma">
           <div style={{ width: 553.7 }}>
             <GrafikArea
               bentuk="tangga"
-              tinggi={181}
-              ruangAtas={17.7}
+              tinggi={174}
+              ruangAtas={25.5}
+              jarakLabelX={18.5}
               labelY={["40K", "30K", "20K", "10K", "0"]}
               labelX={["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"]}
               maks={40}
-              deret={[{ titik: [8, 12, 12, 16, 9, 26, 20, 18, 22, 30] }]}
+              sorot={{ indeks: 5, judul: "June 2028", nilai: "$31,675.05" }}
+              deret={[{ titik: [10, 15.9, 12.8, 21.3, 7.4, 31.4, 23.3, 17.6, 26.6, 34.1] }]}
             />
           </div>
         </Banding>
         <Banding kunci="busur" zoom={2} catatan="setengah lingkaran, jari-jari 112/85, celah 2 derajat">
-          <div style={{ width: 224 }}>
+          <div style={{ width: 223.695 }}>
             <Busur
               iris={[
                 { nilai: 55, warna: "var(--ramp-1)" },
@@ -1029,26 +1035,19 @@ export function GaleriBanding() {
                 { nilai: 15, warna: "var(--ramp-3)" },
                 { nilai: 10, warna: "var(--ramp-4)" },
               ]}
-              tengah={
-                <>
-                  <span style={{ fontSize: "var(--k-t11)", color: "var(--text-muted)" }}>Total Assets</span>
-                  <span style={{ fontSize: "var(--k-h6)", fontWeight: 600, color: "var(--text-strong)" }}>
-                    $500,000
-                  </span>
-                  <span style={{ fontSize: "var(--k-t10)", color: "var(--text-muted)" }}>
-                    +5% compared to last year
-                  </span>
-                </>
-              }
+              label="Total Assets"
+              nilai="$500,000"
+              tanda="+5%"
+              ket="compared to last year"
             />
           </div>
         </Banding>
         <Banding kunci="statlebar" zoom={2} catatan="ikon 56 di KANAN, latar mint pucat — bukan KartuStatistik">
-          <div style={{ width: 386 }}>
+          <div style={{ width: 386.667 }}>
             <KartuStatistikLebar
               judul="Total Savings"
               nilai="$47,600"
-              tren={<Tren naik>4.20 %</Tren>}
+              tren={<LencanaTren>4.20 %</LencanaTren>}
               ikon={NavReceipt}
             />
           </div>

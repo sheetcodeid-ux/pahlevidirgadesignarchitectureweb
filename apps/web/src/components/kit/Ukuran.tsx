@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
+import { TrendUp, TrendDown } from "./ikon";
 
 /* =============================================================================
    Ukuran — lima bentuk yang dipakai frame INTERFACE dan tidak ada di satu pun
@@ -103,6 +104,16 @@ export interface DeretArea {
   nada?: "utama" | "kedua";
 }
 
+/**
+ * Letak tiap titik pada lebar plot, 0..1.
+ *
+ * Perlu karena kurva Figma TIDAK menaruh titiknya rata: tujuh titik datanya
+ * duduk di tengah kolom, lalu ada dua titik tambahan di tepi kiri dan kanan
+ * plot supaya garisnya sampai ke ujung. Sembilan titik yang dibagi rata
+ * menggeser semuanya, dan kurvanya lalu mirip tapi tidak pernah berimpit.
+ */
+export type PosisiArea = number[];
+
 export interface PropGrafikArea {
   deret: DeretArea[];
   /** Label di bawah plot — satu per titik, atau lebih sedikit kalau dijarangkan. */
@@ -120,7 +131,25 @@ export interface PropGrafikArea {
    * berbeda tinggi, jadi ia prop dan bukan angka tetap.
    */
   ruangAtas?: number;
+  /**
+   * Jarak dari garis kisi terbawah ke kotak label X.
+   *
+   * Prop, bukan angka tetap, karena keduanya harus disetel BERSAMA
+   * `ruangAtas` supaya garis kisinya mendarat tepat — dan kisi yang meleset
+   * menggeser seluruh kurvanya. Terukur: Cashflow 29,5 + 16, Portfolio
+   * Value 25,5 + 18,5.
+   */
+  jarakLabelX?: number;
   bentuk?: "halus" | "tangga";
+  /** Letak tiap titik 0..1. Tanpa ini dibagi rata. */
+  posisi?: PosisiArea;
+  /**
+   * Titik yang sedang disorot — kartu keterangan, penanda, garis putus.
+   *
+   * Ada di framenya, dan bukan hiasan: grafik tanpa cara membaca satu titik
+   * cuma bercerita tentang bentuk, tidak pernah tentang angka.
+   */
+  sorot?: { indeks: number; deret?: number; judul: ReactNode; nilai: ReactNode; ket?: ReactNode };
   /** Nilai terbesar sumbu Y. Tanpa ini diambil dari datanya. */
   maks?: number;
   className?: string;
@@ -155,6 +184,21 @@ function tangen(xs: number[], ys: number[]) {
   return m;
 }
 
+/** Warna satu deret. Disebut eksplisit karena gradien tidak mewarisi. */
+const warnaDeret = (d: DeretArea) =>
+  d.nada === "kedua" ? "var(--brand-mint)" : "var(--brand)";
+
+/**
+ * Kepekatan bidang di bawah garis — BERBEDA antar deret.
+ *
+ * Terukur langsung dari stop gradien framenya: mint 0,24 dan hijau tua
+ * 0,16, di grafik Cashflow maupun Portfolio Value. Sempat saya samakan 0,28
+ * untuk keduanya, dan bidang hijau tua lalu tergambar hampir dua kali lebih
+ * pekat — terlihat jelas di peta selisih sebagai bidang yang menggelap,
+ * sementara angka kotaknya tetap cocok sempurna.
+ */
+const pekatDeret = (d: DeretArea) => (d.nada === "kedua" ? 0.24 : 0.16);
+
 /** Panjang gagang Bezier. 0,45 dibaca dari kurva Figma, bukan 1/3 bawaan. */
 const GAGANG = 0.45;
 
@@ -162,12 +206,16 @@ function jalur(xs: number[], ys: number[], bentuk: "halus" | "tangga") {
   const n = xs.length;
   if (n === 0) return "";
   if (bentuk === "tangga") {
-    /* Nilainya bertahan sampai titik berikutnya lalu melompat tegak. Itu
-       yang digambar frame Investments — dan itu berarti sesuatu: angkanya
-       memang tidak berubah di antara dua pengukuran, bukan naik perlahan. */
-    let d = `M${xs[0].toFixed(2)} ${ys[0].toFixed(2)}`;
-    for (let i = 1; i < n; i++) {
-      d += `H${xs[i].toFixed(2)}V${ys[i].toFixed(2)}`;
+    /* N nilai = N anak tangga, jadi N+1 batas kolom. Sempat digambar sebagai
+       N titik yang disambung — hasilnya N−1 tangga, dan nilai terakhirnya
+       kehilangan bidang datarnya sama sekali. Terukur di frame Investments:
+       20 simpul untuk 10 nilai, yaitu sepasang per nilai. */
+    const w = xs[xs.length - 1];
+    const lebar = w / n;
+    let d = `M0 ${ys[0].toFixed(2)}`;
+    for (let i = 0; i < n; i++) {
+      d += `H${((i + 1) * lebar).toFixed(2)}`;
+      if (i < n - 1) d += `V${ys[i + 1].toFixed(2)}`;
     }
     return d;
   }
@@ -195,7 +243,10 @@ export function GrafikArea({
   labelY,
   tinggi = 141,
   ruangAtas = 0,
+  jarakLabelX = 17.8,
   bentuk = "halus",
+  posisi,
+  sorot,
   maks,
   className,
 }: PropGrafikArea) {
@@ -203,10 +254,28 @@ export function GrafikArea({
   const atas = maks ?? Math.max(1, ...semua);
   const LEBAR = 1000; // viewBox; lebar tampilnya dari CSS
   const id = `k-area-${bentuk}`;
+  /* Letak penanda sorot dalam PERSEN lebar plot — bukan piksel, karena
+     lebar plotnya ditentukan CSS dan baru diketahui di browser. */
+  const sD = deret[sorot?.deret ?? 0];
+  const nS = sD?.titik.length ?? 0;
+  const sorotX =
+    sorot === undefined || nS === 0
+      ? 0
+      : bentuk === "tangga"
+        ? ((sorot.indeks + 0.5) / nS) * 100
+        : (posisi ? posisi[sorot.indeks] : nS < 2 ? 0 : sorot.indeks / (nS - 1)) * 100;
+  const sorotY =
+    sorot === undefined || !sD ? 0 : (1 - sD.titik[sorot.indeks] / atas) * 100;
   return (
     <div
       className={kelas("k-area", className)}
-      style={{ "--k-area-t": `${tinggi}px`, "--k-area-atas": `${ruangAtas}px` } as React.CSSProperties}
+      style={
+        {
+          "--k-area-t": `${tinggi}px`,
+          "--k-area-atas": `${ruangAtas}px`,
+          "--k-area-jarakx": `${jarakLabelX}px`,
+        } as React.CSSProperties
+      }
     >
       {labelY && labelY.length > 0 && (
         <div className="k-area__labely">
@@ -233,25 +302,57 @@ export function GrafikArea({
         >
           <defs>
             {deret.map((d, i) => (
+              /* Warnanya DISEBUT, bukan `currentColor`. Stop gradien tidak
+                 mewarisi `color` dari elemen yang memakainya — ia
+                 diselesaikan di tempat gradiennya didefinisikan, yaitu
+                 <defs>, yang warnanya abu bawaan. Akibatnya bidang di bawah
+                 kedua garis tergambar ABU, bukan mint dan hijau. Tidak ada
+                 galat; yang salah cuma warnanya, dan itu baru kelihatan
+                 waktu ditempel di samping framenya. */
               <linearGradient key={i} id={`${id}-${i}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="currentColor" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+                <stop offset="0%" stopColor={warnaDeret(deret[i])} stopOpacity={pekatDeret(deret[i])} />
+                <stop offset="100%" stopColor={warnaDeret(deret[i])} stopOpacity={0} />
               </linearGradient>
             ))}
           </defs>
           {deret.map((d, i) => {
             const n = d.titik.length;
-            const xs = d.titik.map((_, j) => (n < 2 ? 0 : (j / (n - 1)) * LEBAR));
+            const xs = d.titik.map((_, j) =>
+              posisi ? posisi[j] * LEBAR : n < 2 ? 0 : (j / (n - 1)) * LEBAR,
+            );
             const ys = d.titik.map((v) => tinggi - (v / atas) * tinggi);
             const garis = jalur(xs, ys, bentuk);
             return (
               <g key={i} className={d.nada === "kedua" ? "k-area__deret k-area__deret--kedua" : "k-area__deret"}>
                 <path d={`${garis} V${tinggi} H${xs[0]?.toFixed(2) ?? 0} Z`} fill={`url(#${id}-${i})`} />
-                <path d={garis} fill="none" stroke="currentColor" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                <path
+                  d={garis}
+                  fill="none"
+                  stroke={warnaDeret(d)}
+                  strokeWidth="2"
+                  vectorEffect="non-scaling-stroke"
+                />
               </g>
             );
           })}
         </svg>
+        {sorot && (
+          <div className="k-area__sorot" style={{ left: `${sorotX}%` }}>
+            <div className="k-area__kartu">
+              <p className="k-area__kjudul">{sorot.judul}</p>
+              <p className="k-area__knilai">{sorot.nilai}</p>
+              {sorot.ket && <p className="k-area__kket">{sorot.ket}</p>}
+            </div>
+            {bentuk === "tangga" ? (
+              <span className="k-area__pita" style={{ top: `${sorotY}%` }} />
+            ) : (
+              <>
+                <span className="k-area__garis" style={{ top: `${sorotY}%` }} />
+                <span className="k-area__titik" style={{ top: `${sorotY}%` }} />
+              </>
+            )}
+          </div>
+        )}
       </div>
       {labelX && labelX.length > 0 && (
         <div className="k-area__labelx">
@@ -287,7 +388,11 @@ export function Busur({
   luar = 112,
   dalam = 85,
   celah = 2,
-  tengah,
+  sudut = 8,
+  label,
+  nilai,
+  tanda,
+  ket,
   className,
 }: {
   iris: IrisBusur[];
@@ -295,8 +400,23 @@ export function Busur({
   dalam?: number;
   /** Celah antar-irisan dalam DERAJAT, bukan piksel. */
   celah?: number;
-  /** Isi lubang di tengahnya — nominal dan keterangannya. */
-  tengah?: ReactNode;
+  /**
+   * Radius keempat sudut tiap irisan.
+   *
+   * Bukan hiasan — ujung irisan di framenya MEMBULAT, dan potongan lurus
+   * terlihat tajam berdampingan dengannya. Terukur pada irisan terkecil
+   * (18 derajat): kotaknya 29,4x33,1, sementara sudut siku memberi
+   * 31,2x34,6. Selisih ~1,6 ke dalam itu yang dibayar oleh pembulatan.
+   */
+  sudut?: number;
+  /* Tiga baris di lubang tengahnya. Dibuat prop dan bukan satu slot bebas
+     karena jaraknya diukur: label 10px, nominal 24px, keterangan 10px,
+     dengan celah 6,1 dan 8,1 — angka yang tidak mungkin ditebak pemanggil. */
+  label?: ReactNode;
+  nilai?: ReactNode;
+  /** Bagian bertinta gelap di baris ketiga, mis. "+5%". */
+  tanda?: ReactNode;
+  ket?: ReactNode;
   className?: string;
 }) {
   const total = iris.reduce((a, b) => a + b.nilai, 0) || 1;
@@ -305,21 +425,46 @@ export function Busur({
     return [luar + r * Math.cos(rad), luar - r * Math.sin(rad)];
   };
   let mulai = 180;
-  const potong = iris.map((s) => {
+  const potong = iris.map((s, i) => {
     const lebar = (s.nilai / total) * 180;
-    const a1 = mulai - celah / 2;
-    const a2 = mulai - lebar + celah / 2;
+    /* Celahnya diambil dari UJUNG irisan saja, bukan dibagi dua sisi. Itu
+       yang digambar framenya: tiap irisan mulai PERSIS di batas bagiannya
+       (81, 45, 18 derajat untuk 55/20/15/10) dan berhenti 2 derajat sebelum
+       batas berikutnya. Dibagi dua, keempat irisan menyempit 2 derajat DAN
+       bergeser 1 derajat searah jarum jam — terukur meleset 2px di tiap
+       irisan, dan itu kelihatan sebagai busur yang kependekan.
+
+       Irisan terakhir tidak diberi celah: di framenya ia berhenti tepat di
+       0 derajat, yaitu di garis dasar setengah lingkarannya. */
+    const a1 = mulai;
+    const a2 = mulai - lebar + (i === iris.length - 1 ? 0 : celah);
     mulai -= lebar;
-    const [x1, y1] = titik(a1, luar);
-    const [x2, y2] = titik(a2, luar);
-    const [x3, y3] = titik(a2, dalam);
-    const [x4, y4] = titik(a1, dalam);
+    /* Radius sudut dijepit supaya irisan sempit tidak melipat ke dalam
+       dirinya sendiri: setengah tebal cincin, dan setengah panjang busur
+       terpendeknya. Tanpa jepitan ini irisan 2 derajat tergambar sebagai
+       simpul, bukan sebagai potongan. */
+    const rc = Math.max(
+      0,
+      Math.min(sudut, (luar - dalam) / 2, ((a1 - a2) * Math.PI * dalam) / 180 / 2),
+    );
+    const dLuar = (rc / luar) * (180 / Math.PI);   // derajat setara rc di busur luar
+    const dDalam = (rc / dalam) * (180 / Math.PI); // ... dan di busur dalam
+    const P = (a: number, r: number) => titik(a, r).map((v) => v.toFixed(2)).join(" ");
     const besar = a1 - a2 > 180 ? 1 : 0;
-    return {
-      ...s,
-      d: `M${x1.toFixed(2)} ${y1.toFixed(2)} A${luar} ${luar} 0 ${besar} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} ` +
-         `L${x3.toFixed(2)} ${y3.toFixed(2)} A${dalam} ${dalam} 0 ${besar} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`,
-    };
+    /* Urutannya: busur luar, lengkung ke garis jari-jari, masuk, lengkung ke
+       busur dalam, balik, lengkung, keluar, lengkung menutup. Delapan
+       potongan untuk satu irisan — dan itu memang yang digambar Figma. */
+    const d =
+      `M${P(a1 - dLuar, luar)} ` +
+      `A${luar} ${luar} 0 ${besar} 1 ${P(a2 + dLuar, luar)} ` +
+      `A${rc} ${rc} 0 0 1 ${P(a2, luar - rc)} ` +
+      `L${P(a2, dalam + rc)} ` +
+      `A${rc} ${rc} 0 0 1 ${P(a2 + dDalam, dalam)} ` +
+      `A${dalam} ${dalam} 0 ${besar} 0 ${P(a1 - dDalam, dalam)} ` +
+      `A${rc} ${rc} 0 0 1 ${P(a1, dalam + rc)} ` +
+      `L${P(a1, luar - rc)} ` +
+      `A${rc} ${rc} 0 0 1 ${P(a1 - dLuar, luar)} Z`;
+    return { ...s, d };
   });
   return (
     <div className={kelas("k-busur", className)}>
@@ -328,8 +473,52 @@ export function Busur({
           <path key={i} d={s.d} fill={s.warna} />
         ))}
       </svg>
-      {tengah && <div className="k-busur__tengah">{tengah}</div>}
+      {(label || nilai || ket) && (
+        <div className="k-busur__tengah">
+          {label && <p className="k-busur__label">{label}</p>}
+          {nilai && <p className="k-busur__nilai">{nilai}</p>}
+          {(tanda || ket) && (
+            <p className="k-busur__ket">
+              {tanda && <b>{tanda}</b>}
+              {ket}
+            </p>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+/* -----------------------------------------------------------------------------
+   4a. Lencana tren 54x17 — BUKAN `Tren` dari Kartu.tsx.
+
+   Ada DUA lencana tren di file Figma ini, dan mereka berbeda ukuran:
+
+     frame Badges → 49x12, tanpa latar   → `Tren` di Kartu.tsx
+     frame halaman → 54x17 r8,5, mint    → yang ini
+
+   Yang 49x12 sempat dipakai di kartu statistik lebar dan di baris watchlist,
+   dan hasilnya lencana yang jelas kekecilan berdampingan dengan framenya —
+   terlihat sebagai pil mint pejal di peta selisih. Angka saja tidak
+   menangkapnya, karena lencananya slot bebas dan kotak kartunya tetap cocok.
+   -------------------------------------------------------------------------- */
+export function LencanaTren({
+  naik = true,
+  baik = naik,
+  children,
+  className,
+}: {
+  naik?: boolean;
+  /** Apakah arah itu kabar baik. Arah dan penilaian dua hal berbeda. */
+  baik?: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={kelas("k-trenlebar", !baik && "k-trenlebar--buruk", className)}>
+      <Ikon ikon={naik ? TrendUp : TrendDown} ukuran={9} />
+      {children}
+    </span>
   );
 }
 
