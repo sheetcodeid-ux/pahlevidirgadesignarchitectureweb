@@ -10,13 +10,50 @@ import { Remah } from "./Remah";
 import { Paginasi } from "./Paginasi";
 import { Cari, Isian, Centang, Sakelar } from "./Isian";
 import { KartuStatistik, KartuKas, Tren, TandaKas } from "./Kartu";
+import {
+  KepalaSeksi,
+  KepalaHalaman,
+  TombolBulat,
+  KakiHalaman,
+  Gelembung,
+  BarisPesan,
+  BarisAktivitas,
+  BarisLog,
+  KepingTagar,
+  KepingKategori,
+  BarisAset,
+  BarisPantau,
+  BarisTransfer,
+  BarisPenyedia,
+  BarisBeban,
+  BarisInbox,
+  BarisTagar,
+  BarisPenulis,
+} from "./Item";
+import { BarKemajuan, GrafikArea, Busur, KartuStatistikLebar, LencanaTren } from "./Ukuran";
 import { Ikon } from "./Ikon";
 import {
+  ArrowLeft,
+  Bell,
   CalendarBlank,
   CoinIn,
   CaretDown,
   ChatTeardropDots,
+  DotsThree,
+  FacebookLogo,
+  InstagramLogo,
+  LinkedinLogo,
   List,
+  MagnifyingGlass,
+  NavCalendarDots,
+  NavReceipt,
+  NavPersonSimpleTaiChi,
+  ShoppingCart,
+  Sliders,
+  SpecialAppleLogo,
+  SpecialShoppingCart,
+  TwitterLogo,
+  YoutubeLogo,
   NavArrowsLeftRight,
   NavCardholder,
   NavCoins,
@@ -24,7 +61,6 @@ import {
   NavCurrencyEth,
   NavEnvelope,
   NavNewspaper,
-  NavReceipt,
   NavSealPercent,
   NavSquaresFour,
   Paperclip,
@@ -55,15 +91,15 @@ const KOL_DASH: KolomTabel[] = [
   { judul: "Transaction Name", lebar: 170.6, urut: true },
   { judul: "Date & Time", lebar: 92.3, urut: true },
   { judul: "Amount", lebar: 72.7, urut: true },
-  { judul: "Note", lebar: 154.4, urut: true },
+  { judul: "Note", lebar: 154.4, urut: true, redup: true },
   { judul: "Status", lebar: 82, urut: true },
 ];
 const KOL_INVEST: KolomTabel[] = [
   { judul: "Stock Symbol", lebar: 165.75, urut: true },
   { judul: "Invest Date", lebar: 113.35, urut: true },
-  { judul: "Price", lebar: 99.3, urut: true },
-  { judul: "Change", lebar: 93.5, urut: true },
-  { judul: "Current Value", lebar: 99.85, urut: true },
+  { judul: "Price", lebar: 99.3, urut: true, redup: true },
+  { judul: "Change", lebar: 93.5, urut: true, redup: true },
+  { judul: "Current Value", lebar: 99.85, urut: true, redup: true },
 ];
 /* Transaction punya kolom kotak centang di paling kiri. Lebarnya 32,5 —
    yaitu jarak tepi baris ke tepi kiri kolom berikutnya, bukan lebar kotak
@@ -300,10 +336,10 @@ export function GaleriBanding() {
             mati, empat tombol angka, satu jeda, lalu tombol "berikutnya".
             Halaman ke-1 menghasilkan susunan yang persis sama. */}
         <Banding kunci="paginasi-default" zoom={2}>
-          <Paginasi kini={1} total={12} onPindah={setHal} />
+          <Paginasi kini={1} total={16} onPindah={setHal} />
         </Banding>
         <Banding kunci="paginasi-ponsel" zoom={2}>
-          <Paginasi kini={1} total={12} onPindah={setHal} ponsel />
+          <Paginasi kini={1} total={16} onPindah={setHal} ponsel />
         </Banding>
       </Grup>
 
@@ -427,11 +463,14 @@ export function GaleriBanding() {
               kolom={KOL_TRX}
               baris={[[
                 <SelIkon ikon={CoinIn} ukuran={30} ikonPx={14} jarak={10.48}>
-                  <SelDua besar atas="Comcast Bill Payment" bawah="Food & Dining" />
+                  {/* Transaction menyimpang: 12px/500 di atas dan 11px di bawah —
+                      tinta "Comcast Bill Payment" 113,54 dan "Food & Dining"
+                      64,84 di framenya. */}
+                  <SelDua besar bobotAtas={500} pxBawah={11} atas="Comcast Bill Payment" bawah="Food & Dining" />
                 </SelIkon>,
                 <SelKeping keping="Freedom">Freedom Unlimited Mastercard</SelKeping>,
                 "4567890123",
-                <SelDua besar atas="2024-09-24" bawah="14:30" />,
+                <SelDua besar bobotAtas={500} pxBawah={11} atas="2024-09-24" bawah="14:30" />,
                 <span style={{ color: "var(--danger)" }}>-$350.00</span>,
                 "Monthly entertainment subscription",
                 <Lencana bentuk="pil" nada="selesai">Completed</Lencana>,
@@ -581,7 +620,12 @@ export function GaleriBanding() {
         </Banding>
         <Banding kunci="isian-large" zoom={2}>
           <div style={{ width: 237 }}>
-            <Isian label="Label" placeholder="Placeholder" kiri={SmileySticker}
+            {/* Isinya NILAI, bukan placeholder. Di framenya teks di dalam
+                kotak ini bertinta #242E2C sama seperti labelnya — sementara
+                kotak cari ukuran Medium memang abu #6B7271. Jadi yang
+                digambar di sini kotak yang sudah terisi, dan dirender
+                begitu supaya perbandingannya jujur. */}
+            <Isian label="Label" defaultValue="Placeholder" kiri={SmileySticker}
               kanan={<Ikon ikon={Paperclip} ukuran={18} />} />
           </div>
         </Banding>
@@ -590,6 +634,449 @@ export function GaleriBanding() {
         <Banding kunci="centang-23" zoom={6}><Centang ukuran="big" defaultChecked /></Banding>
         <Banding kunci="sakelar-on" zoom={6}><Sakelar judul="Contoh" defaultChecked /></Banding>
         <Banding kunci="sakelar-off" zoom={6}><Sakelar judul="Contoh" /></Banding>
+      </Grup>
+
+      {/* ---------------------------------------------------------------------
+          Item — delapan belas jenis baris daftar.
+
+          Foto avatar di acuan Figma tergambar sebagai gambar sungguhan; di
+          kit ini tempatnya diisi bulatan polos, jadi selisih pikselnya di
+          situ MEMANG ada dan bukan cacat bentuk. Yang dibandingkan: tinggi
+          baris, radius, jarak, dan warna.
+          ------------------------------------------------------------------ */}
+      <Grup judul="Item — kerangka halaman">
+        <Banding kunci="kepalaseksi-1" zoom={1} catatan="Model=Default: judul kiri, tujuh kendali kanan">
+          <div style={{ width: 1280 }}>
+            <KepalaSeksi
+              judul="Header Title"
+              kanan={
+                <>
+                  <Cari ukuran="medium" judul="Cari" placeholder="Search placeholder" />
+                  <Segmen
+                    segmen={[
+                      { nilai: "a", label: "Button 1" },
+                      { nilai: "b", label: "Button 2" },
+                      { nilai: "c", label: "Button 3" },
+                    ]}
+                    nilai="a"
+                    onPilih={() => {}}
+                    judul="Contoh"
+                  />
+                  {/* Ukuran Medium, bukan small. Terukur di framenya: tiap
+                      pemilih "Popular" berbingkai 81x32 dan kedua tombol
+                      ikonnya 32x32 — small memberi 68x28 dan 28x28, jadi
+                      seluruh separuh kanan bilah ini melar ke kanan 50px
+                      dan tingginya tidak sama dengan tombol bersegmen di
+                      sebelahnya. */}
+                  {/* GHOST, bukan secondary. Di framenya ketiga pemilih dan
+                      tombol saringnya kotak PUTIH bergaris #E5E6E6 — bukan
+                      kotak mint. Sempat secondary semuanya, dan akibatnya
+                      seluruh bilah terbaca jauh lebih hijau: porsi mint
+                      15,6% di acuan lawan 52,3% di kit. */}
+                  <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown}>Popular</Tombol>
+                  <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown}>Popular</Tombol>
+                  <span className="k-kepalaseksi__kiri" style={{ gap: 10.6 }}>
+                    <span style={{ fontSize: "var(--k-t11)", color: "var(--text-muted)" }}>Sort by:</span>
+                    <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown}>Popular</Tombol>
+                  </span>
+                  <TombolIkon ukuran="medium" jenis="ghost" ikon={Sliders} judul="Saring" />
+                  {/* Titik tiga tergambar 22px di framenya — lebih besar
+                      daripada 16 yang dipakai ikon Medium lain. Terbaca dari
+                      tintanya: 13,06 lebar, dan tinta master DotsThree
+                      0,594 dari kotaknya. */}
+                  {/* Titik tiga TIDAK punya kotak sama sekali di framenya — bukan
+                      ghost yang bergaris, melainkan transparent. */}
+                  <TombolIkon ukuran="medium" jenis="transparent" ikon={DotsThree} ikonPx={22} judul="Lainnya" />
+                  <Tombol ukuran="medium">Popular</Tombol>
+                </>
+              }
+            />
+          </div>
+        </Banding>
+
+        <Banding kunci="kepalahal" zoom={1} catatan="Type=Default: judul, cari, dua tombol bulat, akun">
+          <div style={{ width: 1191 }}>
+            <KepalaHalaman
+              judul="Dashboard"
+              kanan={
+                <>
+                  <Cari ukuran="large" judul="Cari" placeholder="Search placeholder" />
+                  <span className="k-kepalahal__grup">
+                    <TombolBulat ikon={ChatTeardropDots} judul="Pesan" />
+                    <TombolBulat ikon={Bell} ukuran={13.5} judul="Notifikasi" tanda />
+                  </span>
+                  <span className="k-kepalahal__akun">
+                    Andrew Forbist
+                    <span className="k-banding__avatar" style={{ width: 38, height: 38 }} />
+                  </span>
+                </>
+              }
+            />
+          </div>
+        </Banding>
+
+        <Banding kunci="kepalahal-sub" zoom={1} catatan="Type=Subpage: tombol kembali 32px KOTAK di depan judul">
+          <div style={{ width: 1192 }}>
+            <KepalaHalaman
+              judul="Dashboard"
+              onKembali={() => {}}
+              ikonKembali={ArrowLeft}
+              kanan={
+                <>
+                  <Cari ukuran="large" judul="Cari" placeholder="Search placeholder" />
+                  <span className="k-kepalahal__grup">
+                    <TombolBulat ikon={ChatTeardropDots} judul="Pesan" />
+                    <TombolBulat ikon={Bell} ukuran={13.5} judul="Notifikasi" tanda />
+                  </span>
+                  <span className="k-kepalahal__akun">
+                    Andrew Forbist
+                    <span className="k-banding__avatar" style={{ width: 38, height: 38 }} />
+                  </span>
+                </>
+              }
+            />
+          </div>
+        </Banding>
+
+        <Banding kunci="kakihal" zoom={1}>
+          <div style={{ width: 1189 }}>
+            <KakiHalaman
+              hakCipta="Copyright © 2024 Peterdraw"
+              tautan={[
+                { label: "Privacy Policy", href: "#" },
+                { label: "Term and conditions", href: "#" },
+                { label: "Contact", href: "#" },
+              ]}
+              sosial={[
+                { ikon: FacebookLogo, judul: "Facebook", href: "#" },
+                { ikon: TwitterLogo, judul: "Twitter", href: "#" },
+                { ikon: InstagramLogo, judul: "Instagram", href: "#" },
+                { ikon: YoutubeLogo, judul: "YouTube", href: "#" },
+                { ikon: LinkedinLogo, judul: "LinkedIn", href: "#" },
+              ]}
+            />
+          </div>
+        </Banding>
+
+        <Banding
+          kunci="kakihal-ponsel"
+          zoom={2}
+          catatan="varian Mobile — di kit ini media query, jadi di lebar penuh ia tetap satu baris"
+        >
+          {/* Tanpa lebar tetap: di 252px ketiga tautannya membungkus jadi dua
+              baris, dan yang terukur lalu bukan lagi bentuk framenya. */}
+          <div style={{ width: "max-content" }}>
+            <KakiHalaman
+              hakCipta="Copyright © 2024 Peterdraw"
+              tautan={[
+                { label: "Privacy Policy", href: "#" },
+                { label: "Term and conditions", href: "#" },
+                { label: "Contact", href: "#" },
+              ]}
+              sosial={[
+                { ikon: FacebookLogo, judul: "Facebook", href: "#" },
+                { ikon: TwitterLogo, judul: "Twitter", href: "#" },
+                { ikon: InstagramLogo, judul: "Instagram", href: "#" },
+                { ikon: YoutubeLogo, judul: "YouTube", href: "#" },
+                { ikon: LinkedinLogo, judul: "LinkedIn", href: "#" },
+              ]}
+            />
+          </div>
+        </Banding>
+      </Grup>
+
+      <Grup judul="Item — percakapan">
+        <Banding kunci="chat-keluar" zoom={2} catatan="siku di kanan atas, centang ganda">
+          <div style={{ width: 270 }}>
+            <Gelembung sendiri dibaca nama="Name" waktu="9.46 PM">
+              Can I request a late check-out for Room 305?
+            </Gelembung>
+          </div>
+        </Banding>
+        <Banding kunci="chat-masuk" zoom={2} catatan="siku di kiri atas, beravatar, berlampiran 164px">
+          <div style={{ width: 318 }}>
+            <Gelembung
+              nama="Name"
+              waktu="9.46 PM"
+              avatar={<span className="k-banding__avatar" style={{ width: 36, height: 36 }} />}
+              lampiran={<span className="k-banding__gambar" style={{ height: 148 }} />}
+            >
+              Can I request a late check-out for Room 305?
+            </Gelembung>
+          </div>
+        </Banding>
+        <Banding kunci="pesan-belum" zoom={2} catatan="jam menebal, lencana jumlah merah muda">
+          <div style={{ width: 327 }}>
+            <BarisPesan
+              avatar={<span className="k-banding__avatar" style={{ width: 36, height: 36 }} />}
+              nama="Helen Martinez"
+              status={<span className="k-pesan__status">Trainer</span>}
+              waktu="09:15 AM"
+              belum={5}
+            >
+              Just confirming my booking for the Mazda 3…
+            </BarisPesan>
+          </div>
+        </Banding>
+        <Banding kunci="pesan-dibaca" zoom={2}>
+          <div style={{ width: 326 }}>
+            <BarisPesan
+              avatar={<span className="k-banding__avatar" style={{ width: 36, height: 36 }} />}
+              nama="Helen Martinez"
+              status={<span className="k-pesan__status">Trainer</span>}
+              waktu="09:15 AM"
+            >
+              Just confirming my booking for the Mazda 3 next…
+            </BarisPesan>
+          </div>
+        </Banding>
+        <Banding kunci="pesan-terbuka" zoom={2} catatan="berkartu r11,5 bergaris hijau muda">
+          <div style={{ width: 344 }}>
+            <BarisPesan
+              terbuka
+              avatar={<span className="k-banding__avatar" style={{ width: 36, height: 36 }} />}
+              nama="Helen Martinez"
+              status={<span className="k-pesan__status">Trainer</span>}
+              waktu="09:15 AM"
+            >
+              Just confirming my booking for the Mazda 3 next…
+            </BarisPesan>
+          </div>
+        </Banding>
+      </Grup>
+
+      <Grup judul="Item — linimasa">
+        <Banding kunci="aktivitas" zoom={2} catatan="ubin hijau muda #C2E66E + rel 1px ke bawah">
+          <div style={{ width: 287 }}>
+            <BarisAktivitas ikon={NavPersonSimpleTaiChi} waktu="10:30 AM">
+              <strong>Cardio progress updated</strong> – 7.5 km completed out of 10 km
+              goal for endurance improvement
+            </BarisAktivitas>
+          </div>
+        </Banding>
+        <Banding kunci="aktivitas-akhir" zoom={2} catatan="titik akhir — relnya mati">
+          <div style={{ width: 287 }}>
+            <BarisAktivitas akhir ikon={NavPersonSimpleTaiChi} waktu="10:30 AM">
+              <strong>Cardio progress updated</strong> – 7.5 km completed out of 10 km
+              goal for endurance improvement
+            </BarisAktivitas>
+          </div>
+        </Banding>
+        <Banding kunci="log" zoom={3} catatan="foto 30px, waktu DI BAWAH keterangan">
+          <div style={{ width: 204 }}>
+            <BarisLog
+              avatar={<span className="k-banding__avatar" style={{ width: 30, height: 30 }} />}
+              waktu="16:05"
+            >
+              <strong>Jamie Smith</strong> updated account settings
+            </BarisLog>
+          </div>
+        </Banding>
+        <Banding kunci="log-v2" zoom={3} catatan="ubin mint, waktu DI ATAS">
+          <div style={{ width: 204 }}>
+            <BarisLog akhir waktuDulu ikon={NavCalendarDots} waktu="16:05">
+              <strong>Jamie Smith</strong> updated account settings
+            </BarisLog>
+          </div>
+        </Banding>
+      </Grup>
+
+      <Grup judul="Item — keping">
+        <Banding kunci="keping-tagar" zoom={4}>
+          <KepingTagar>FinancialPlanning</KepingTagar>
+        </Banding>
+        <Banding kunci="kategori-aktif" zoom={5}>
+          <KepingKategori aktif>All</KepingKategori>
+        </Banding>
+        <Banding kunci="kategori-mati" zoom={5}>
+          <KepingKategori>All</KepingKategori>
+        </Banding>
+      </Grup>
+
+      <Grup judul="Item — baris daftar">
+        <Banding kunci="aset" zoom={3} catatan="batang warna 16x39 r5">
+          <div style={{ width: 250 }}>
+            <BarisAset warna="var(--ramp-1)" nama="Mutual Funds" persen="55%" total="$275,000" />
+          </div>
+        </Banding>
+        <Banding kunci="pantau" zoom={2} catatan="ubin bulat 48, lencana tren di kanan bawah">
+          <div style={{ width: 352 }}>
+            <BarisPantau
+              ikon={SpecialAppleLogo}
+              ikonUkuran={23}
+              simbol="GOOGL"
+              nama="Microsoft Corporation"
+              nilai="$3,204.50"
+              tren={<LencanaTren>+2.30%</LencanaTren>}
+            />
+          </div>
+        </Banding>
+        <Banding kunci="transfer" zoom={2} catatan="kartu 67 r15,5, avatar mint 40">
+          <div style={{ width: 300 }}>
+            <BarisTransfer
+              gambar={<span className="k-banding__avatar" style={{ width: 40, height: 40 }} />}
+              nama="Audrey Murphy"
+              rekening="120987654328"
+            />
+          </div>
+        </Banding>
+        <Banding kunci="transfer-akun" zoom={2} catatan="varian dengan blok kedua rata kanan">
+          <div style={{ width: 280 }}>
+            <BarisTransfer
+              gambar={<span className="k-banding__avatar" style={{ width: 40, height: 40 }} />}
+              nama="Abe Reeves"
+              rekening="120987654322"
+              kananAtas="$1,000"
+              kananBawah="Successful"
+            />
+          </div>
+        </Banding>
+        <Banding kunci="penyedia-kartu" zoom={2} catatan="kartu 57 dengan caret">
+          <div style={{ width: 303 }}>
+            <BarisPenyedia ikon={SpecialShoppingCart} nama="Healthcare" />
+          </div>
+        </Banding>
+        <Banding kunci="penyedia-rinci" zoom={2} catatan="rel tegak 1px di x29, ubin mint pucat">
+          <div style={{ width: 303 }}>
+            <BarisPenyedia bentuk="rinci" ikon={SpecialShoppingCart} nama="Healthcare" />
+          </div>
+        </Banding>
+        <Banding kunci="penyedia-aktif" zoom={2} catatan="aktif: rel jadi 4px mint, latar mint pucat">
+          <div style={{ width: 303 }}>
+            <BarisPenyedia bentuk="rinci" aktif ikon={SpecialShoppingCart} nama="Healthcare" />
+          </div>
+        </Banding>
+        <Banding kunci="beban" zoom={3} catatan="pil persen 32x25">
+          <div style={{ width: 250 }}>
+            <BarisBeban persen="60%" kategori="Rent &amp; Living" nominal="$2,100" />
+          </div>
+        </Banding>
+        <Banding kunci="beban-ponsel" zoom={3} catatan="varian Mobile: pil 40x30 — di kit media query">
+          <div style={{ width: 250 }}>
+            <BarisBeban persen="60%" kategori="Rent &amp; Living" nominal="$2,100" />
+          </div>
+        </Banding>
+        <Banding kunci="inbox" zoom={2} catatan="centang 13px, bintang di kanan bawah">
+          <div style={{ width: 350 }}>
+            <BarisInbox pengirim="New Feature: Advanced Budgeting Tools" waktu="07:00 AM">
+              Explore our new advanced budgeting tools to better manage your finances.
+            </BarisInbox>
+          </div>
+        </Banding>
+        <Banding kunci="tagar" zoom={3} catatan="judul di atas, kategori dan keterangan di bawah">
+          <div style={{ width: 289 }}>
+            <BarisTagar judul="#RetirementPlanning" kategori="Real Estate Investment" keterangan="120 articles" />
+          </div>
+        </Banding>
+        <Banding kunci="tagar-ponsel" zoom={2} catatan="varian Mobile: keterangan pindah ke kanan — media query">
+          <div style={{ width: 342 }}>
+            <BarisTagar judul="#RetirementPlanning" kategori="Real Estate Investment" keterangan="120 articles" />
+          </div>
+        </Banding>
+        <Banding kunci="penulis" zoom={3} catatan="avatar mint 36, nama di atas peran">
+          <div style={{ width: 289 }}>
+            <BarisPenulis
+              avatar={<span className="k-banding__avatar" style={{ width: 36, height: 36 }} />}
+              nama="Mark Thompson"
+              peran="3.5K Followers"
+            />
+          </div>
+        </Banding>
+        <Banding kunci="penulis-ponsel" zoom={2} catatan="varian Mobile: peran sebaris dengan nama — media query">
+          <div style={{ width: 342 }}>
+            <BarisPenulis
+              avatar={<span className="k-banding__avatar" style={{ width: 40, height: 40 }} />}
+              nama="Mark Thompson"
+              peran="3.5K Followers"
+            />
+          </div>
+        </Banding>
+      </Grup>
+
+      {/* ---------------------------------------------------------------------
+          Lima bentuk dari frame INTERFACE — tidak ada di satu pun frame
+          Style & Component, jadi P2 memang tidak pernah membangunnya.
+          ------------------------------------------------------------------ */}
+      <Grup judul="Ukuran — bentuk dari frame halaman">
+        <Banding kunci="bar-terpisah" zoom={3} catatan="dua kotak bersebelahan, celah 4 — bukan rel dengan isian">
+          <div style={{ width: 324 }}>
+            <BarKemajuan persen={58.1} judul="Contoh" />
+          </div>
+        </Banding>
+        <Banding kunci="bar-kartu" zoom={3} catatan="tinggi 25, celah 6">
+          <div style={{ width: 251 }}>
+            <BarKemajuan persen={72.9} tinggi={25} celah={6} judul="Contoh" />
+          </div>
+        </Banding>
+        <Banding kunci="bar-tumpuk" zoom={2} catatan="rel r8, isian tanpa radius sendiri">
+          <div style={{ width: 252 }}>
+            <BarKemajuan persen={57.6} bentuk="tumpuk" tinggi={51} judul="Contoh" />
+          </div>
+        </Banding>
+        {/* Angka kedua deret ini DIBACA dari simpul Bezier kurva Figma-nya,
+            bukan dikarang: tiap segmen C berakhir di satu titik data, jadi
+            tinggal dipetakan balik lewat kisinya (y421,5 = 2000, y562,5 = 0).
+            Sembilan titik, bukan tujuh — ada titik tambahan di tepi kiri dan
+            kanan plot supaya garisnya sampai ke ujung. */}
+        <Banding kunci="area-halus" zoom={1} catatan="dua deret, titik dari simpul kurva Figma">
+          <div style={{ width: 554.7 }}>
+            <GrafikArea
+              tinggi={141}
+              ruangAtas={29.5}
+              jarakLabelX={16}
+              labelY={["2000", "1500", "1000", "500", "0"]}
+              labelX={["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]}
+              maks={2000}
+              posisi={[0, 0.0681, 0.2111, 0.3538, 0.4965, 0.6392, 0.7793, 0.9247, 1]}
+              sorot={{ indeks: 3, deret: 0, judul: "Income", nilai: "$6,000", ket: "Tuesday, 6 June 2029" }}
+              deret={[
+                { titik: [909.5, 1031.9, 807.2, 1325.6, 661.5, 1751.8, 1233.3, 1545.8, 1396.7], nada: "kedua" },
+                { titik: [633.7, 755.1, 149.2, 755.1, 340.4, 955.0, 522.8, 825.9, 762.4] },
+              ]}
+            />
+          </div>
+        </Banding>
+        <Banding kunci="area-tangga" zoom={1} catatan="sepuluh anak tangga, nilainya dari simpul kurva Figma">
+          <div style={{ width: 553.7 }}>
+            <GrafikArea
+              bentuk="tangga"
+              tinggi={174}
+              ruangAtas={25.5}
+              jarakLabelX={18.5}
+              labelY={["40K", "30K", "20K", "10K", "0"]}
+              labelX={["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"]}
+              maks={40}
+              sorot={{ indeks: 5, judul: "June 2028", nilai: "$31,675.05" }}
+              deret={[{ titik: [10, 15.9, 12.8, 21.3, 7.4, 31.4, 23.3, 17.6, 26.6, 34.1] }]}
+            />
+          </div>
+        </Banding>
+        <Banding kunci="busur" zoom={2} catatan="setengah lingkaran, jari-jari 112/85, celah 2 derajat">
+          <div style={{ width: 223.695 }}>
+            <Busur
+              iris={[
+                { nilai: 55, warna: "var(--ramp-1)" },
+                { nilai: 20, warna: "var(--ramp-2)" },
+                { nilai: 15, warna: "var(--ramp-3)" },
+                { nilai: 10, warna: "var(--ramp-4)" },
+              ]}
+              label="Total Assets"
+              nilai="$500,000"
+              tanda="+5%"
+              ket="compared to last year"
+            />
+          </div>
+        </Banding>
+        <Banding kunci="statlebar" zoom={2} catatan="ikon 56 di KANAN, latar mint pucat — bukan KartuStatistik">
+          <div style={{ width: 386.667 }}>
+            <KartuStatistikLebar
+              judul="Total Savings"
+              nilai="$47,600"
+              tren={<LencanaTren>4.20 %</LencanaTren>}
+              ikon={NavReceipt}
+            />
+          </div>
+        </Banding>
       </Grup>
     </section>
   );

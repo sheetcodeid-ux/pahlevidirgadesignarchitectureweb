@@ -60,6 +60,31 @@
 }
 
 /* -----------------------------------------------------------------------------
+   LEBAR HURUF — `text-rendering: geometricPrecision`
+
+   Bawaan Chromium membulatkan lebar-maju TIAP GLIF ke piksel bulat; Figma
+   tidak. Terukur pada "Button" berbobot 600 di Urbanist:
+
+     ukuran   Chromium bawaan   geometricPrecision   Figma (0,288 em/huruf)
+       10px        31,000             28,875                 28,80
+       12px        35,000             34,656                 34,56
+       14px        41,000             40,422                 40,32
+
+   Jadi setiap kotak yang MEMELUK teksnya — tombol, lencana, keping, tab —
+   tergambar sampai 2,2px lebih lebar daripada framenya, dan selisih itu
+   tidak pernah bisa ditutup dengan padding karena besarnya berubah menurut
+   ukuran font dan panjang kalimat. Ini yang membuat empat tombol dan tiga
+   lencana meleset +-2px sementara angka paddingnya sendiri benar.
+
+   Dipasang di kit.css saja, yang cuma dimuat halaman kit — bukan di
+   global.css — supaya panel admin lama tidak ikut bergeser.
+   -------------------------------------------------------------------------- */
+#isi-kit,
+#isi-kit * {
+  text-rendering: geometricPrecision;
+}
+
+/* -----------------------------------------------------------------------------
    RESET — garis bawaan <button>.
 
    Peramban memberi setiap <button> garis dengan warna sistem (buttonborder)
@@ -75,7 +100,12 @@
 .k-tombolikon,
 .k-nav,
 .k-segmen__b,
-.k-paginasi__b {
+.k-paginasi__b,
+.k-bulat,
+.k-kategori,
+.k-penyedia,
+.k-kepalahal__kembali,
+.k-inbox__bintang {
   border: 0 solid transparent;
   font-family: var(--font-sans);
   -webkit-appearance: none;
@@ -189,32 +219,38 @@
      padding sisi  = kotak terluar di sisi itu, diukur dari tepi tombol
      jarak         = kotak berikutnya - ujung kotak sebelumnya
 
+   Bearing kiri "B" Urbanist SemiBold = 0,0723 em, diturunkan dari tiga
+   ukuran sekaligus: lebar tinta Figma 27,55/33,45/38,58 lawan lebar-maju
+   28,80/34,56/40,32.
+
    Semua angka di bawah SUDAH dikurangi 1px untuk `border-width: 1px` yang
    dipakai setiap tombol (termasuk yang garisnya transparan), karena
    box-sizing-nya border-box.
 
-   Empat varian per ukuran dan tiga ukuran = dua belas lebar. Sembilan di
-   antaranya jadi PERSIS lebar Figma dengan angka-angka ini. Tiga sisanya
-   meleset 2px, dan itu bukan angka yang bisa diperbaiki: Figma sendiri
-   memberi varian yang sama padding yang berbeda —
+   Dua belas lebar Figma, dua belas lebar kit, selisih terbesar 0,15px —
+   tapi EMPAT di antaranya butuh padding sendiri, karena Figma memberi
+   varian yang sama padding yang berbeda. Keempatnya ditulis sebagai
+   pengecualian di bawah blok ukuran, bukan disembunyikan:
 
-     small "Left"   padding kanannya 11,93 sementara varian tanpa ikon 9,93
-     Medium "Left"  padding kanannya 10,20 sementara tanpa ikon 12,20
-     Large "Right"  padding kirinya 15,97 sementara tanpa ikon 13,97
+     small  "Left"          padding kanan 12,02  (tanpa ikon: 10,06)
+     small  "No Icon" Ghost padding 12,06 dua sisi (Primary/Secondary: 10,06)
+     Medium "Left"          padding kanan 10,32  (tanpa ikon: 12,17)
+     Large  "Right"         padding kiri  15,84  (tanpa ikon: 13,79)
 
-   Ketiganya dipertahankan mengikuti mayoritas variannya, dan selisih 2px itu
-   dilaporkan apa adanya ketimbang ditutup dengan padding per-varian yang
-   akan membuat tombol di panel ini melebar-menyempit tanpa aturan. */
+   Arahnya acak — small melebar, Medium menyempit — jadi ini kekeliruan di
+   filenya, bukan aturan. Ditiru apa adanya karena yang diminta "100% mirip
+   framenya"; kalau suatu saat mau dirapikan, hapus keempat blok pengecualian
+   itu dan empat tombol akan meleset 2-4px dari acuannya. */
 .k-tombol--small {
   --k-tombol-turun: 1px;
   --k-tombol-h: 28px;
   --k-tombol-r: 7px;
   --k-tombol-padikon-kiri: 7px;
   --k-tombol-padikon-kanan: 7px;
-  --k-tombol-pad-kiri: 9.19px;
-  --k-tombol-pad-kanan: 8.94px;
-  --k-tombol-jarak-kiri: 6.19px;
-  --k-tombol-jarak-kanan: 3.93px;
+  --k-tombol-pad-kiri: 9.0625px;
+  --k-tombol-pad-kanan: 9.0625px;
+  --k-tombol-jarak-kiri: 6.1px;
+  --k-tombol-jarak-kanan: 4.1px;
   --k-tombol-font: var(--k-t10);
 }
 .k-tombol--medium {
@@ -222,11 +258,11 @@
   --k-tombol-h: 32px;
   --k-tombol-r: 8px;
   --k-tombol-padikon-kiri: 9px;
-  --k-tombol-padikon-kanan: 8px;
-  --k-tombol-pad-kiri: 11.14px;
-  --k-tombol-pad-kanan: 11.2px;
-  --k-tombol-jarak-kiri: 4.14px;
-  --k-tombol-jarak-kanan: 5.2px;
+  --k-tombol-padikon-kanan: 8.854px;
+  --k-tombol-pad-kiri: 11.172px;
+  --k-tombol-pad-kanan: 11.172px;
+  --k-tombol-jarak-kiri: 4.026px;
+  --k-tombol-jarak-kanan: 4.318px;
   --k-tombol-font: var(--k-t12);
 }
 .k-tombol--large {
@@ -235,11 +271,28 @@
   --k-tombol-r: 8px;
   --k-tombol-padikon-kiri: 11px;
   --k-tombol-padikon-kanan: 11px;
-  --k-tombol-pad-kiri: 12.97px;
-  --k-tombol-pad-kanan: 12.61px;
-  --k-tombol-jarak-kiri: 5.97px;
-  --k-tombol-jarak-kanan: 3.61px;
+  --k-tombol-pad-kiri: 12.789px;
+  --k-tombol-pad-kanan: 12.789px;
+  --k-tombol-jarak-kiri: 5.84px;
+  --k-tombol-jarak-kanan: 3.738px;
   --k-tombol-font: var(--k-t14);
+}
+
+/* Empat pengecualian Figma — lihat daftarnya di komentar di atas. `:not()`
+   dipakai supaya varian "Left & Right" TIDAK ikut kena: ia punya kedua kelas
+   ikon sekaligus, dan lebarnya justru sudah pas dengan aturan umumnya. */
+.k-tombol--small.k-tombol--ikonkiri:not(.k-tombol--ikonkanan) {
+  --k-tombol-pad-kanan: 11.025px;
+}
+.k-tombol--medium.k-tombol--ikonkiri:not(.k-tombol--ikonkanan) {
+  --k-tombol-pad-kanan: 9.318px;
+}
+.k-tombol--large.k-tombol--ikonkanan:not(.k-tombol--ikonkiri) {
+  --k-tombol-pad-kiri: 14.84px;
+}
+.k-tombol--small.k-tombol--ghost:not(.k-tombol--ikonkiri):not(.k-tombol--ikonkanan) {
+  --k-tombol-pad-kiri: 11.0625px;
+  --k-tombol-pad-kanan: 11.0625px;
 }
 
 /* -----------------------------------------------------------------------------
@@ -370,7 +423,12 @@
 .k-nav[aria-current="page"],
 .k-nav.is-aktif {
   background: var(--brand-mint);
-  color: var(--brand-mint-ink);
+  /* #242E2C, bukan #1E4841. Terukur: tinta ikon DAN label baris yang sedang
+     dibuka di framenya #242E2C — hijau tuanya cuma latar pilnya. Sempat
+     memakai --brand-mint-ink yang memang hijau tua, jadi tulisannya
+     kehijauan di atas latar hijau. Ketemu lewat porsi warna: #242E2C ada
+     5,5% di acuan dan 0% di kit. */
+  color: var(--text-strong);
 }
 /* Submenu: tanpa ikon. Teksnya TIDAK sejajar dengan label menu di atasnya —
    terukur, tinta submenu Figma mulai di 61,28 sementara menu induknya di
@@ -883,7 +941,16 @@
      dicentang — warna latarnya yang mengambil alih. Sempat tidak dibuat sama
      sekali karena yang dibandingkan cuma varian tercentang. */
   border: 1px solid var(--sakelar-mati);
-  border-radius: 4px;
+  /* Radius IKUT ukuran — sempat 4px tetap untuk ketiganya, jadi yang 13px
+     kebulatan dan yang 23px kepersegian. Di framenya sudutnya melebar
+     seperempat sisi: 3,25 pada 13, 4,25 pada 17, 5,99 pada 23.
+
+     Bentuknya sendiri bukan busur lingkaran melainkan sudut berhalus
+     (corner smoothing) — kurvanya mulai lebih jauh dari pojok lalu
+     membelok lebih tajam. `border-radius` tidak bisa menyatakan itu, jadi
+     yang diambil radius lingkaran yang paling mendekati; sisa selisihnya
+     ada di beberapa piksel pojok dan dibiarkan. */
+  border-radius: calc(var(--k-centang-s) * 0.23);
   background: var(--centang-bidang);
   cursor: pointer;
   display: inline-block;
@@ -1021,6 +1088,34 @@
   transform-origin: 0 0;
 }
 .k-banding__kit { overflow: visible; }
+
+/* Pengganti foto avatar di halaman banding. Acuan Figma menggambar foto
+   sungguhan; kit tidak punya fotonya, jadi tempatnya diisi bulatan polos.
+   Selisih piksel DI DALAM bulatan itu karena itu memang ada dan bukan cacat
+   bentuk — yang dibandingkan tinggi baris, radius, jarak, dan warna. */
+.k-banding__avatar {
+  display: block;
+  flex: none;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--brand-mint);
+}
+/* Pengganti FOTO biasa — bukan avatar. Di framenya lampiran gambar pesan
+   digambar sebagai bidang abu #E5E6E6, bukan mint: mint cuma dipakai untuk
+   avatar orang. Sempat keduanya memakai bulatan mint yang sama, dan itu
+   sendirian menyumbang 33% selisih piksel pada baris "Type=2". */
+.k-banding__gambar {
+  display: block;
+  flex: none;
+  width: 100%;
+  border-radius: 8px;
+  background: var(--border);
+}
+/* Figma menumpuk DUA bidang di tempat avatar: lingkaran persik #FFD9CF, lalu
+   kotak "Place Image Here" mint yang menutupinya habis. Jadi yang tergambar
+   mint, dan persiknya tidak pernah terlihat — audit warna tetap melaporkannya
+   hilang karena ia membaca atribut, bukan piksel. Dicatat di sini supaya
+   laporan itu tidak dikira cacat berikutnya. */
 
 .k-banding__ket { font-size: var(--k-t9); color: var(--text-muted); }
 
@@ -1324,6 +1419,7 @@
 }
 .k-tabel th.is-kanan,
 .k-tabel td.is-kanan { text-align: right; }
+.k-tabel td.is-redup { color: var(--text-muted); }
 
 /* Kepala bermint TIDAK punya garis: di Figma bidangnya #ECF4E9 penuh dan
    tidak ada satu pun stroke. Kepala polos (Transaction) tidak punya keduanya. */
@@ -1373,7 +1469,16 @@
    17,56 pada Investment (12px di atas, 10px di bawah) — jadi line-height-nya
    ikut varian, bukan angka tunggal. */
 .k-sel2 { display: flex; flex-direction: column; }
-.k-sel2__atas { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-strong); }
+/* Baris ATAS sel dua-baris berbobot 600 di kedua tabel — terukur dari tinta:
+   "Dinner at Italian Restaurant" 120,92 lebar (10px/600 memberi 120,38) dan
+   "GOOGL" 41,69 (12px/600 memberi 41,63). Tanpa bobot ia mewarisi 400 dan
+   judul barisnya tergambar setipis keterangan di bawahnya. */
+.k-sel2__atas {
+  font-size: var(--k-t10);
+  line-height: 15.37px;
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+}
 .k-sel2__bawah { font-size: var(--k-t10); line-height: 15.37px; color: var(--text-muted); }
 .k-sel2--besar .k-sel2__atas { font-size: var(--k-t12); line-height: 17.56px; }
 .k-sel2--besar .k-sel2__bawah { line-height: 17.56px; }
@@ -1544,7 +1649,7 @@
   margin-top: 16.1px;
   line-height: 1;
   font-size: var(--k-t10);
-  color: var(--text-muted);
+  color: var(--text-strong);
   white-space: nowrap;
 }
 
@@ -1557,7 +1662,10 @@
   right: 0;
   transform: translateY(-50%);
   font-size: var(--k-t10);
-  color: var(--text-muted);
+  /* Label sumbu di Coinest HITAM (#242E2C), bukan abu. Berlaku untuk sumbu-Y
+     maupun sumbu-X, dan di kedua frame grafik besarnya juga. Sempat abu
+     semuanya. */
+  color: var(--text-strong);
   white-space: nowrap;
 }
 
@@ -1580,3 +1688,1111 @@
 /* Nama hari — 10px abu, mis. "Mon". */
 /* Nama hari #B8B1A9, abu HANGAT — bukan abu netral panel. */
 .k-hari { font-size: var(--k-t10); color: var(--tgl-mati); }
+
+/* =============================================================================
+   ITEM — frame Item. Delapan belas jenis BARIS DAFTAR.
+
+   Angkanya dari ekspor SVG framenya, dibaca dengan alat yang memperhitungkan
+   `transform="translate()"`. Tanpa itu satu panel pernah terbaca 228x1110
+   padahal 192x1034, dan seluruh isinya seolah berada di luar kotaknya
+   sendiri.
+
+   Satu aturan yang berlaku untuk SEMUA garis pemisah di bawah ini: Figma
+   menulisnya sebagai <path> setinggi 2px karena strokenya mengangkangi tepi
+   — 1px di dalam, 1px di luar. Yang benar `border-bottom: 1px`. Mengambil
+   angka 2 apa adanya menumbuhkan setiap daftar satu piksel per baris, dan
+   itu baru kelihatan setelah dua puluh baris.
+   -------------------------------------------------------------------------- */
+
+/* --- 1. Header-Section — 1280x32 ----------------------------------------- */
+/* line-height 1 di SELURUH keluarga Item. Panel admin mewarisi 1.6, dan itu
+   yang membuat tiap baris tumbuh 4–8px tanpa satu pun angka di berkas ini
+   terlihat salah — tingginya benar, jarak antar-barisnya yang bukan milik
+   siapa pun. Yang butuh lebih dari satu baris menyetel sendiri di bawah. */
+.k-kepalaseksi,
+.k-kepalahal,
+.k-kakihal,
+.k-chat,
+.k-pesan,
+.k-aktivitas,
+.k-log,
+.k-keping,
+.k-kategori,
+.k-aset,
+.k-pantau,
+.k-transfer,
+.k-penyedia,
+.k-beban,
+.k-inbox,
+.k-tagar,
+.k-penulis,
+.k-bar,
+.k-area,
+.k-busur,
+.k-statlebar { line-height: 1; }
+
+.k-kepalaseksi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 11px;
+  min-height: 32px;
+}
+.k-kepalaseksi__kiri,
+.k-kepalaseksi__kanan {
+  display: flex;
+  align-items: center;
+  /* 10px, dan angka 11 yang pernah ada di sini salah baca: ia diukur dari
+     tepi <rect>, sementara <rect> yang bergaris di Figma digambar MASUK
+     setengah piksel di tiap sisi (rect 236 untuk bingkai 237). Jadi tiap
+     jarak yang bertetangga dengan kotak bergaris terbaca 1px kelebihan.
+
+     Yang memutuskan: tombol bersegmen TIDAK bergaris, jadi bingkainya sama
+     dengan rect-nya — 487,04..800,04 — dan pemilih sesudahnya mulai di
+     810,04. Sepuluh, tanpa ambiguitas. */
+  gap: 10px;
+  min-width: 0;
+}
+/* 16, bukan 14: "Header Title" bertinta 87,37 lebar di framenya, dan 16/600
+   memberi 87,7. Pada 14 ia cuma 76,7 — meleset sebelas piksel pada judul
+   yang berdiri paling kiri, tempat selisih paling kelihatan. */
+.k-kepalaseksi__judul {
+  margin: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+/* --- 2. Header — kepala halaman, 38 tinggi ------------------------------- */
+.k-kepalahal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 38px;
+}
+.k-kepalahal__kiri {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+/* Tombol kembali 32x32 r8 — KOTAK, bukan bulat seperti tombol kanan-atas.
+   Dua bentuk tombol ikon di satu bilah memang terlihat aneh dibaca dari
+   kode; di framenya memang begitu, dan bedanya membawa arti: yang kotak
+   berpindah halaman, yang bulat membuka panel. */
+.k-kepalahal__kembali {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+  cursor: pointer;
+}
+.k-kepalahal__judul {
+  margin: 0;
+  /* 22, bukan 18. "Dashboard" bertinta 106,84 lebar; 22/600 memberi 107,1,
+     sementara 18/600 cuma 87. Tinggi tintanya 16,79 memang membaca seperti
+     18 — dan itu persis kenapa tinggi tidak boleh dipakai. */
+  font-size: var(--k-h5);
+  font-weight: var(--k-semi);
+  color: var(--judul-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-kepalahal__kanan {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+.k-kepalahal__grup { display: flex; align-items: center; gap: 10px; }
+.k-kepalahal__akun {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: 15px;
+  font-size: var(--k-t16);
+  font-weight: var(--k-semi);
+  color: var(--judul-ink);
+  white-space: nowrap;
+}
+
+.k-bulat {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+  cursor: pointer;
+}
+/* Titik 8px — posisinya dari framenya: 21 dari kiri, 9 dari atas pada tombol
+   38px. Itu BUKAN sudut kanan atas; ia duduk agak ke dalam, menempel pada
+   lonceng di baliknya. */
+.k-bulat__tanda {
+  position: absolute;
+  left: 21px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--danger);
+}
+
+/* --- 3. Footer ------------------------------------------------------------ */
+.k-kakihal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 19.5px;
+  font-size: var(--k-t12);
+}
+.k-kakihal__legal { display: flex; align-items: center; gap: 20.85px; }
+.k-kakihal__cipta { color: var(--text-strong); }
+/* Jarak diukur dari TINTA ke TINTA di framenya lalu dikurangi bearing
+   hurufnya (~0,9 untuk sepasang tepi): tautan 17,46 - 0,9 = 16,55, dan
+   legal 21,74 - 0,9 = 20,85. Angka 18 dan 22 sebelumnya memakai jarak
+   tinta apa adanya, jadi baris tautannya 3,9px kelebaran di ponsel —
+   satu-satunya tempat lebar baris itu menentukan lebar komponennya. */
+.k-kakihal__tautan { display: flex; align-items: center; gap: 16.55px; }
+.k-kakihal__tautan a,
+.k-kakihal__sosial a { color: var(--text-faint); text-decoration: none; }
+.k-kakihal__tautan a:hover,
+.k-kakihal__sosial a:hover { color: var(--text-body); }
+.k-kakihal__sosial { display: flex; align-items: center; gap: 12px; }
+
+/* Varian Mobile: tiga baris tengah. Dikerjakan media query dan bukan prop —
+   yang menentukan lebar layar, bukan pemanggilnya. */
+@media (max-width: 40rem) {
+  .k-kakihal { flex-direction: column; gap: 14px; }
+  .k-kakihal__legal { flex-direction: column; gap: 14px; }
+  .k-kakihal__sosial { margin-top: -1px; }
+}
+
+/* --- 4. Bubble-chat ------------------------------------------------------- */
+.k-chat { display: flex; gap: 12px; }
+.k-chat--sendiri { justify-content: flex-end; }
+.k-chat__avatar { flex: none; width: 36px; height: 36px; }
+.k-chat__utama { max-width: 270px; min-width: 0; }
+.k-chat__info {
+  display: flex;
+  align-items: center;
+  gap: 6.7px;
+  margin: 0 0 9px;
+  font-size: var(--k-t11);
+  color: var(--item-waktu);
+}
+.k-chat--sendiri .k-chat__info { justify-content: flex-end; }
+.k-chat__nama { font-size: var(--k-t10); }
+/* Jam 12 sementara namanya 10. Keduanya sebaris dan sewarna, jadi ini
+   terbaca seperti salah ketik — tapi tinta framenya memang 27,13 untuk
+   "Name" (10px) dan 39,79 untuk "9.46 PM" (12px). Dicatat apa adanya. */
+.k-chat__waktu { font-size: var(--k-t12); }
+.k-chat__centang { margin-left: 1.4px; color: var(--centang-tanda); }
+/* Titik pemisah 4px antara dua keterangan kecil. Dipakai gelembung chat dan
+   baris tagar — di framenya r2, jadi 4px penuh, bukan 3. */
+.k-titikpisah {
+  flex: none;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--sakelar-mati);
+}
+/* Gelembung: r12 di tiga sudut, SIKU di sudut pangkalnya. Figma menuliskan
+   rentang sudutnya 21,6 — itu corner smoothing, bukan radiusnya; radius
+   tampaknya 12. Jebakan yang sama pernah membuat radius batang grafik
+   terbaca 7,2 padahal 4. */
+.k-chat__gelembung {
+  display: flex;
+  align-items: center;
+  min-height: 47px;
+  padding: 0 16px;
+  border-radius: 12px 12px 12px 0;
+  background: var(--tgl-pilih);
+  color: var(--centang-tanda);
+  font-size: var(--k-t12);
+}
+.k-chat--sendiri .k-chat__gelembung {
+  border-radius: 12px 0 12px 12px;
+  background: var(--centang-aktif);
+}
+.k-chat__lampiran {
+  width: 164px;
+  /* 11, bukan 8. Terukur di framenya: gelembung berakhir di 68 dari puncak
+     baris dan kotak lampiran mulai di 79. Delapan membuat seluruh baris
+     3px lebih pendek daripada acuannya. */
+  margin-top: 11px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--tgl-pilih);
+}
+.k-chat__lampiran > * { display: block; width: 100%; }
+
+/* --- 5. Item List Message -------------------------------------------------- */
+/* Avatar DIPUSATKAN tegak, tidak menempel ke atas. Di framenya ia duduk di
+   2,5 dari puncak baris setinggi 39,19 — dan kotak baris kita 41, jadi
+   memusatkan 36 di dalam 41 memberi 2,5 juga. Sempat menempel ke atas, dan
+   lingkarannya tergambar sebagai cincin merah utuh di peta selisih. */
+.k-pesan { display: flex; gap: 16px; }
+.k-pesan__avatar { flex: none; align-self: center; width: 36px; height: 36px; }
+.k-pesan__utama { flex: 1; min-width: 0; }
+.k-pesan__kepala {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 18px;
+}
+/* Lencana status milik frame Item: 50x18 r9. BUKAN lencana pil dari frame
+   Badges, yang 24 tinggi — dua lencana pil berbeda di satu file, dan memakai
+   yang salah menumbuhkan seluruh barisnya enam piksel. */
+.k-pesan__status {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 50px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--centang-aktif);
+  color: var(--item-ubin-ink);
+  font-size: var(--k-t11);
+}
+.k-pesan__nama {
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  color: var(--item-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-pesan__waktu {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--k-t12);
+  color: var(--item-waktu);
+}
+/* Yang belum dibaca menggelapkan JAM-nya, bukan namanya — dan yang berubah
+   cuma WARNANYA. Sempat saya tebalkan juga; di framenya tebalnya sama. */
+.k-pesan--belum .k-pesan__waktu { color: var(--centang-tanda); }
+.k-pesan__badan {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 5px;
+  height: 18px;
+}
+.k-pesan__cuplik {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--k-t12);
+  color: var(--item-cuplik);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-pesan__jumlah {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--item-belum);
+  color: var(--centang-tanda);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+}
+/* Kartunya 343x77 dengan isi yang SAMA persis (41 tinggi), jadi seluruh
+   sisanya padding: 18 di atas, 16 di bawah, dan kiri-kanan tidak sama —
+   6,5 dan 8 setelah dikurangi tebal garisnya. */
+/* Cuplikan pesan pada baris yang SEDANG DIBUKA lebih gelap: #555555 di
+   framenya lawan #8C8D8C pada baris biasa. Masuk akal — percakapan yang
+   sedang dibuka memang yang paling perlu terbaca — dan terukur, bukan
+   dikira: 15,2% tinta barisnya berwarna itu.  */
+.k-pesan--terbuka .k-pesan__cuplik { color: var(--item-cuplik-buka); }
+.k-pesan--terbuka {
+  padding: 18px 8px 17px 6.5px;
+  border: 1px solid var(--item-buka-garis);
+  border-radius: 11.5px;
+  background: var(--centang-bidang);
+}
+
+/* --- 6. Item List Recent Activity ------------------------------------------ */
+/* Padding bawah 11,22 supaya barisnya 84 seperti framenya: isinya sendiri
+   72,78 sejak ukuran teksnya dibetulkan jadi 12,5px. Angka lama 17 dipasang
+   waktu teksnya masih 16px dan isinya 67. Kalau ukuran teks di baris ini
+   diubah lagi, kedua angka padding di bawah ini ikut. */
+.k-aktivitas { position: relative; display: flex; gap: 11.3px; padding-bottom: 11.22px; background: var(--surface); }
+.k-aktivitas__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--item-ubin);
+  color: var(--item-ubin-ink);
+}
+/* Rel linimasa: mulai 4px di bawah ubin, sampai dasar barisnya. `akhir`
+   mematikannya — garis yang menjulur ke bawah tanpa tujuan adalah cacat yang
+   paling sering lolos di komponen linimasa, dan hanya pemanggil yang tahu
+   ini baris terakhir. */
+.k-aktivitas::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  /* 36..80 — relnya 44 panjang di framenya (Left Side 32+4+44 = 80 pada
+     kartu 84), jadi ia berhenti 4px sebelum dasar kartu, bukan menyentuhnya. */
+  top: 36px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--item-garis);
+}
+.k-aktivitas--akhir { padding-bottom: 0; }
+.k-aktivitas--akhir::before { display: none; }
+.k-aktivitas__isi { min-width: 0; }
+.k-aktivitas__waktu {
+  margin: 0 0 9px;
+  line-height: 1;
+  font-size: var(--k-t10);
+  font-weight: var(--k-med);
+  color: var(--item-ket);
+}
+.k-aktivitas__teks {
+  margin: 0;
+  /* 12,5 — dan angka 16 yang pernah ada di sini adalah kekeliruan baca yang
+     membuat teksnya 28% kebesaran, kelihatan jelas begitu render dan acuan
+     ditumpuk.
+
+     Sebabnya: `Title_10` di framenya bertinta 235,87 lebar, dan itu saya
+     kira lebar BARIS PERTAMA. Bukan — itu kotak gabungan TIGA baris, jadi
+     yang 235,87 adalah baris terpanjangnya. Dibuktikan dengan memecah
+     path teks yang sudah di-outline pada tiap perintah `M` lalu
+     mengelompokkannya menurut pusat-y:
+
+       baris 1  "Cardio progress updated - 7.5 km"            188,14
+       baris 2  "completed out of 10 km goal for endurance"   235,79
+       baris 3  "improvement"                                  73,75
+
+     Tinta Urbanist 12,5px memberi 235,25 dan 72,88 untuk baris 2 dan 3 —
+     dua kalimat berbeda panjang yang dua-duanya cocok, jadi ukurannya
+     memang segitu dan bukan kebetulan. 12px memberi 225,38 dan 69,75.
+
+     Jarak barisnya 17,93 diukur dari selisih dasar huruf ketiga barisnya
+     (11,63 / 29,59 / 47,48), bukan dari tinggi kotaknya. */
+  font-size: 12.5px;
+  line-height: 1.434;
+  color: var(--item-ink);
+}
+
+/* --- 7. Log Item ----------------------------------------------------------- */
+.k-log { position: relative; display: flex; gap: 13px; padding-bottom: 10px; }
+.k-log__kiri {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+}
+/* Ubin berwarna HANYA kalau isinya ikon. Varian Default memasang foto, dan
+   latar mint di belakang foto bulat tidak pernah terlihat — tapi ia terlihat
+   sekejap sebelum fotonya sampai, dan kilatan hijau itu yang kelihatan
+   salah. */
+.k-log__kiri:not(:has(img)):not(:empty) { background: var(--brand-mint); color: var(--text-strong); }
+/* Rel digambar oleh BARISNYA, bukan oleh ubinnya. Kalau ia pseudo-elemen
+   milik ubin, `overflow: hidden` yang memotong foto jadi bulat ikut memotong
+   relnya — dan yang tersisa cuma titik 1px yang tidak kelihatan sama sekali. */
+.k-log::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+}
+.k-log--akhir { padding-bottom: 0; }
+.k-log--akhir::before { display: none; }
+.k-log__kiri > img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.k-log__isi { min-width: 0; }
+.k-log__teks {
+  margin: 0;
+  /* 12, bukan 14: "Jamie Smith updated account" (dua kata pertama tebal)
+     bertinta 159,15 lebar, dan 12px memberi 160,6. Jarak baris 1,355 dari
+     tinta dua barisnya yang 28 tinggi. */
+  font-size: var(--k-t12);
+  line-height: 1.355;
+  color: var(--text-strong);
+}
+.k-log__waktu { margin: 0; line-height: 1; font-size: var(--k-t10); color: var(--text-muted); }
+.k-log__teks + .k-log__waktu { margin-top: 8px; }
+/* Varian V2 (waktu DI ATAS): 4,67 dan bukan 8. Kedua angka itu jarak KOTAK,
+   sementara yang 8 di framenya jarak TINTA — tinta waktu berakhir di 10,27
+   dan tinta baris pertama mulai di 18,0. Kotak baris teks kita punya ruang
+   baris 3,33px di atas tintanya, jadi memakai 8 menaruh seluruh dua baris
+   3,33px terlalu rendah. Terukur dengan memindai pita tinta per baris
+   (scripts/banding/baris.mjs): garis dasar baris pertama 30,33 padahal
+   acuannya 27,0. */
+.k-log__waktu + .k-log__teks { margin-top: 4.67px; }
+
+/* --- 8 & 14. Chips --------------------------------------------------------- */
+.k-keping {
+  display: inline-flex;
+  align-items: center;
+  /* TANPA jarak. Di framenya "#" dan labelnya dua layer terpisah, dan saya
+     sempat membacanya sebagai dua kotak berjarak 1,76px — padahal 1,76 itu
+     jarak TINTA-nya, yaitu bearing kanan "#" ditambah bearing kiri "F".
+     Diukur sebagai satu kalimat "#FinancialPlanning": tintanya 97,0 lebar,
+     dan rentang tinta di framenya 96,71. Jadi memang satu baris menyambung. */
+  gap: 0;
+  height: 32px;
+  padding: 0 12.14px 0 9.94px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--item-ink);
+  font-size: var(--k-t12);
+}
+/* Pagarnya seukuran labelnya — tinta "#" di framenya 7,52 lebar, dan itu
+   ukuran 12px. Sempat saya kecilkan jadi 11 karena tingginya cuma 7,7;
+   tingginya memang pendek karena "#" tidak setinggi huruf kapital. */
+.k-keping__pagar { color: var(--text-faint); }
+
+.k-kategori {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 16.1px;
+  border-radius: 15px;
+  background: var(--brand-soft);
+  color: var(--item-ink);
+  font-size: var(--k-t12);
+  /* Bobotnya BEDA antara yang aktif dan yang tidak — dan itu bukan tebakan.
+     Tinta "All" di framenya 12,55 saat aktif dan 11,400 saat tidak; diukur
+     dengan memindai piksel, Urbanist 12px memberi 12,6 pada 600 dan 11,4
+     pada 400. Sempat keduanya saya buat 600, jadi tab tidak aktif tergambar
+     1,2px lebih lebar dan jelas lebih tebal dari acuannya. */
+  font-weight: var(--k-reg);
+  cursor: pointer;
+}
+.k-kategori.is-aktif {
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: var(--k-semi);
+}
+
+/* --- 9. Item List Asset ---------------------------------------------------- */
+.k-aset { display: flex; align-items: center; min-height: 39px; }
+.k-aset__batang { flex: none; width: 16px; height: 39px; border-radius: 5px; }
+.k-aset__nama {
+  margin-left: 13px;
+  min-width: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-aset__kanan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+}
+.k-aset__persen {
+  font-size: var(--k-t16);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  line-height: 1;
+}
+.k-aset__total { font-size: var(--k-t14); color: var(--text-muted); line-height: 1; }
+
+/* --- 10. Item List Watchlist ----------------------------------------------- */
+.k-pantau { display: flex; align-items: center; min-height: 48px; }
+.k-pantau__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: var(--brand-soft);
+  color: var(--brand-isi);
+}
+.k-pantau__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 12.5px;
+  min-width: 0;
+}
+.k-pantau__simbol { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.k-pantau__nama {
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-pantau__kanan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  padding-left: 16px;
+}
+.k-pantau__nilai { font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); }
+
+/* --- 11 & 13. Transfer List / Recent Transfer ------------------------------ */
+.k-transfer {
+  display: flex;
+  align-items: center;
+  /* 68 dan bukan 67: garis Figma mengangkangi tepi, jadi batas LUAR yang
+     tergambar 68 — dan batas luar itulah yang harus sama. */
+  min-height: 68px;
+  /* 12,5 dan bukan 13,5: garis Figma MENGANGKANGI tepi (0,5 di dalam, 0,5 di
+     luar), sementara `border` CSS seluruhnya di dalam border-box. Yang harus
+     sama tepi luarnya, jadi paddingnya dikurangi setebal garisnya. */
+  padding: 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--bg);
+}
+.k-transfer__gambar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: var(--brand-mint);
+  color: var(--text-strong);
+  overflow: hidden;
+}
+.k-transfer__gambar > img { width: 100%; height: 100%; object-fit: cover; }
+.k-transfer__info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 16.5px;
+  min-width: 0;
+}
+.k-transfer__nama {
+  font-size: var(--k-t14);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-transfer__rek { font-size: var(--k-t11); color: var(--text-muted); }
+.k-transfer__kanan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+  padding-left: 12px;
+}
+.k-transfer__nilai { font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); }
+.k-transfer__ket { font-size: var(--k-t11); font-weight: var(--k-med); color: var(--brand-isi); }
+
+/* --- 12. Item List Providers ----------------------------------------------- */
+.k-penyedia {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.k-penyedia__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--brand-mint);
+  color: var(--text-strong);
+}
+.k-penyedia__nama {
+  margin-left: 15px;
+  min-width: 0;
+  font-size: var(--k-t14);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-penyedia--kartu {
+  min-height: 58px;
+  padding: 12.5px 16px 12.5px 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--bg);
+}
+.k-penyedia--kartu .k-penyedia__caret { margin-left: auto; padding-left: 12px; color: var(--brand-isi); }
+/* Varian Detail: baris polos, dan garis tegaknya TIDAK di tepi kiri
+   melainkan 29px ke dalam — ia rel daftar, bukan bingkai baris. */
+.k-penyedia--rinci {
+  min-height: 54px;
+  padding: 12px 12px 12px 58px;
+  background: var(--bg);
+}
+.k-penyedia--rinci::before {
+  content: "";
+  position: absolute;
+  left: 29px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+}
+.k-penyedia--rinci .k-penyedia__ubin { background: var(--brand-soft); }
+.k-penyedia--rinci.is-aktif { background: var(--brand-soft); }
+.k-penyedia--rinci.is-aktif::before { left: 27px; width: 4px; background: var(--brand-mint); }
+.k-penyedia--rinci.is-aktif .k-penyedia__ubin { background: var(--bg); }
+
+/* --- 15. Item List Expense Statistic --------------------------------------- */
+.k-beban { display: flex; align-items: center; min-height: 25px; }
+.k-beban__persen {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 25px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--text-strong);
+  font-size: var(--k-t10);
+}
+.k-beban__kategori {
+  margin-left: 12.5px;
+  min-width: 0;
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-beban__nominal {
+  margin-left: auto;
+  padding-left: 16px;
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+}
+@media (max-width: 40rem) {
+  /* Varian Mobile MENAIKKAN ukuran hurufnya, tidak menurunkannya seperti
+     yang saya kira sebelumnya. Tinta di framenya, dan Urbanist yang
+     memberikannya:
+
+       "60%"            25,15 x 10,16   ->  14px  (24,13 x 10,25)
+       "Rent & Living"  89,81 x 15,48   ->  16px  (88,75 x 15,50)
+       "$2,100"         45,07 x 14,78   ->  16px  (43,63 x 14,88)
+
+     Angka 12/14/14 sebelumnya menyalin ukuran desktopnya, jadi seluruh
+     baris ini tergambar satu tingkat lebih kecil daripada acuannya. */
+  .k-beban { min-height: 30px; }
+  .k-beban__persen { width: 40px; height: 30px; font-size: var(--k-t14); }
+  .k-beban__kategori { margin-left: 13px; font-size: var(--k-t16); }
+  .k-beban__nominal { font-size: var(--k-t16); }
+}
+
+/* --- 16. Item List Inbox ---------------------------------------------------- */
+.k-inbox {
+  display: flex;
+  min-height: 88px;
+  padding: 18.5px 5px 15.75px 3.5px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.k-inbox__centang { --k-centang-s: 13px; flex: none; }
+.k-inbox__isi { flex: 1; margin-left: 12px; min-width: 0; }
+.k-inbox__kepala { display: flex; align-items: center; gap: 12px; height: 14px; }
+.k-inbox__pengirim {
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-inbox__waktu { margin-left: auto; flex: none; font-size: var(--k-t11); color: var(--text-muted); }
+.k-inbox__badan { display: flex; align-items: flex-end; gap: 29px; margin-top: 7.25px; }
+.k-inbox__teks {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--k-t12);
+  line-height: 1.355;
+  color: var(--text-muted);
+}
+.k-inbox__bintang {
+  flex: none;
+  padding: 0;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.k-inbox__bintang.is-aktif { color: var(--warn); }
+
+/* --- 17. Item List Trending Tags -------------------------------------------- */
+.k-tagar {
+  min-height: 58px;
+  padding: 3px 0 4px;
+  border-bottom: 1px solid var(--item-garis);
+  background: var(--surface);
+}
+.k-tagar__judul { margin: 0; font-size: var(--k-t16); font-weight: var(--k-bold); color: var(--text-strong); }
+.k-tagar__bawah { display: flex; align-items: center; gap: 8.5px; margin: 9px 0 0; font-size: var(--k-t12); }
+.k-tagar__kategori { color: var(--brand-isi); }
+.k-tagar__ket { color: var(--text-muted); }
+/* Mobile: judul di kiri, kategori dan keterangan menumpuk di KANAN. Bukan
+   sekadar mengecil — susunannya memang berbeda di framenya. */
+@media (max-width: 40rem) {
+  .k-tagar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    /* padding 0: di varian ponsel isinya ditengahkan terhadap tinggi baris,
+       jadi padding tegak yang di varian desktop menahan judulnya di sini
+       justru menumbuhkan barisnya tiga piksel. */
+    padding: 0;
+    min-height: 50px;
+  }
+  .k-tagar__bawah { flex-direction: column; align-items: flex-end; gap: 7.4px; margin: 0; }
+}
+
+/* --- 18. Item List Top Author ------------------------------------------------ */
+.k-penulis {
+  display: flex;
+  align-items: flex-start;
+  min-height: 55px;
+  padding: 1px 0 3px;
+  border-bottom: 1px solid var(--item-garis);
+  background: var(--surface);
+}
+.k-penulis__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--brand-mint);
+  overflow: hidden;
+}
+.k-penulis__avatar > img { width: 100%; height: 100%; object-fit: cover; }
+.k-penulis__info {
+  display: flex;
+  flex-direction: column;
+  gap: 7.5px;
+  margin-left: 12.5px;
+  min-width: 0;
+}
+.k-penulis__nama {
+  font-size: var(--k-t14);
+  font-weight: var(--k-med);
+  color: var(--item-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.k-penulis__peran { font-size: var(--k-t12); color: var(--item-ket); }
+@media (max-width: 40rem) {
+  .k-penulis { align-items: center; min-height: 59px; }
+  .k-penulis__avatar { width: 40px; height: 40px; border-radius: 20px; }
+  .k-penulis__info { flex-direction: row; align-items: baseline; gap: 10px; margin-left: 13px; }
+  .k-penulis__nama { font-size: var(--k-t16); }
+}
+
+/* =============================================================================
+   UKURAN — lima bentuk dari frame INTERFACE.
+
+   Kelimanya tidak ada di satu pun frame Style & Component, jadi P2 memang
+   tidak pernah membangunnya. Angkanya diukur dari ekspor SVG halaman yang
+   memakainya.
+   -------------------------------------------------------------------------- */
+
+/* --- Bar kemajuan --------------------------------------------------------- */
+.k-bar { display: flex; align-items: stretch; height: var(--k-bar-t, 12px); }
+/* `terpisah`: DUA kotak bersebelahan dengan celah — bukan rel dengan isian
+   di atasnya. Terukur: gelap 188,2 + celah 4 + mint 131,8 = 324. */
+.k-bar--terpisah { gap: var(--k-bar-celah, 4px); }
+.k-bar--terpisah .k-bar__isi,
+.k-bar--terpisah .k-bar__sisa { border-radius: 4px; }
+.k-bar--terpisah .k-bar__isi { flex: 0 0 auto; width: var(--k-bar-isi); background: var(--brand); }
+.k-bar--terpisah .k-bar__sisa { flex: 1; background: var(--brand-mint); }
+/* `tumpuk`: rel mint ber-radius 8, isian gelap DI ATASNYA tanpa celah.
+   Isiannya tidak ber-radius sendiri — yang membulatkan ujungnya relnya,
+   lewat overflow. Di framenya rect isiannya memang tanpa rx. */
+.k-bar--tumpuk {
+  position: relative;
+  border-radius: 8px;
+  background: var(--brand-mint);
+  overflow: hidden;
+}
+.k-bar--tumpuk .k-bar__isi { width: var(--k-bar-isi); background: var(--brand); }
+.k-bar--tumpuk .k-bar__sisa { display: none; }
+
+/* --- Grafik area ---------------------------------------------------------- */
+/* Celah 8,4 antara label sumbu dan bidang plot — bukan 12. Terukur: label Y
+   berakhir di 258,6 dan kisinya mulai di 267. */
+.k-area {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 8.4px;
+  padding-top: var(--k-area-atas, 0);
+}
+.k-area__labely {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: var(--k-area-t, 141px);
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--text-strong);
+  text-align: right;
+  white-space: nowrap;
+}
+/* Label paling atas dan paling bawah DITENGAHKAN pada garis kisinya, bukan
+   duduk di atasnya. Tanpa geseran setengah tinggi, keduanya meleset setengah
+   baris dan seluruh kisinya terlihat miring sebaris. */
+.k-area__labely > span:first-child { margin-top: -0.5em; }
+.k-area__labely > span:last-child { margin-bottom: -0.5em; }
+.k-area__plot { position: relative; height: var(--k-area-t, 141px); min-width: 0; }
+.k-area__kisi {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.k-area__kisi > span { height: 1px; background: var(--border); }
+.k-area__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.k-area__deret { color: var(--brand); }
+.k-area__deret--kedua { color: var(--brand-mint); }
+/* Label X berpusat di TENGAH KOLOMNYA, bukan di tepi plot. `space-between`
+   menempelkan label pertama ke tepi kiri dan yang terakhir ke tepi kanan,
+   dan ketujuhnya lalu meleset makin jauh ke tengah. Terukur: tinta "Sun" di
+   framenya berpusat di 304,4 — persis tengah kolom pertama (267 + 74,7/2). */
+.k-area__labelx {
+  grid-column: 2;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin-top: var(--k-area-jarakx, 17.8px);
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--text-strong);
+  text-align: center;
+}
+
+/* --- Busur ---------------------------------------------------------------- */
+.k-busur { position: relative; display: block; }
+.k-busur > svg { display: block; width: 100%; height: auto; }
+/* Tiga baris di lubang busurnya, diukur dari framenya: tinta label
+   y54,5..62,1 dari puncak kotak, nominal y70,5..92,7, keterangan
+   y101,5..111,5 — jadi kotaknya mulai di 53,3 dari 112, yaitu 47,6%.
+
+   Sempat 40% DAN mewarisi line-height 1,6 panel admin, dan akibatnya baris
+   ketiganya mendarat di y112,5 — setengah piksel di bawah kotaknya, jadi
+   terpotong habis. Tidak ada galat, tidak ada peringatan, dan angka selisih
+   pun tidak menyebutnya; yang menemukannya menempelkannya di samping
+   framenya. */
+.k-busur__tengah {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 47.6%;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+/* WARNA DI SINI PUNYA ATURAN, dan sempat saya balik semua:
+
+     judul/keterangan  #242E2C  (--text-strong)
+     NOMINAL           #1E4841  (--brand)   <- hijau tua, bukan hitam
+     angka di lencana  #1E4841  (--brand)
+
+   Yang saya pasang sebelumnya judulnya abu (--text-muted) dan nominalnya
+   hitam — dua-duanya salah, dan yang paling kelihatan nominalnya: di
+   framenya "$500,000" hijau tua. `warna.mjs` tidak menangkapnya karena ia
+   membandingkan HIMPUNAN warna, dan #1E4841 tetap ada di komponen ini
+   lewat irisan busurnya. Yang menangkap `teks.mjs`, yang membandingkan
+   PORSI tiap warna: #1E4841 2,7% jadi 0,6% sementara #242E2C 0,7% jadi
+   2,2%. */
+.k-busur__label { margin: 0; font-size: var(--k-t10); color: var(--text-strong); }
+.k-busur__nilai {
+  margin: 6.1px 0 0;
+  font-size: var(--k-h4);
+  /* Bobot 700, bukan 600. Tinta "$500,000" di framenya 102,88x22,18, dan
+     Urbanist 24px memberi 103,00x22,25 pada 700 — pada 600 lebarnya
+     meleset lebih jauh dan tingginya tidak lagi cocok. */
+  font-weight: var(--k-bold);
+  color: var(--brand);
+}
+.k-busur__ket { margin: 8.1px 0 0; font-size: var(--k-t10); color: var(--text-strong); }
+.k-busur__ket b { margin-right: 5px; font-weight: var(--k-semi); color: var(--brand); }
+
+/* --- Kartu statistik lebar ------------------------------------------------ */
+.k-statlebar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  /* 86 + dua garis 1px = 88, dan 88 itulah batas LUAR yang tergambar di
+     framenya. Garis Figma mengangkangi tepi; border CSS tidak. */
+  min-height: 86px;
+  /* 15, bukan 15,5: ubin 56 + dua padding + dua garis harus jadi 88, dan
+     ubinnya yang menentukan tinggi kartu ini, bukan teksnya. */
+  padding: 15px;
+  border: 1px solid var(--bg);
+  border-radius: 15.5px;
+  background: var(--brand-soft);
+  line-height: 1;
+}
+.k-statlebar__info { flex: 1; min-width: 0; }
+.k-statlebar__judul {
+  margin: 0;
+  font-size: var(--k-t14);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+}
+.k-statlebar__baris { display: flex; align-items: center; gap: 11.4px; margin: 8px 0 0; }
+/* 24, bukan 22: tinta "$47,600" di framenya 87,6 lebar, dan 24/500 memberi
+   88,0 sementara 22 cuma 80,7. Gaya "Amount" yang sama dipakai di lubang
+   busur, dan di sana ukurannya juga 24. */
+.k-statlebar__nilai {
+  font-size: var(--k-h4);
+  /* 24/700 dan hijau tua — sama alasannya dengan .k-busur__nilai.
+     Tinta "$47,600" di framenya 87,64x22,18; 24px/700 memberi 87,75x22,25. */
+  font-weight: var(--k-bold);
+  color: var(--brand);
+}
+.k-statlebar__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: var(--bg);
+  color: var(--brand-isi);
+}
+
+/* --- Sorot satu titik pada grafik area ------------------------------------
+   Kartu 114x64 r7,5, penanda bulat r7 mint bergaris putih 2, dan garis putus
+   4-4 dari penanda ke dasar plot. Semuanya diukur dari layer `Tooltip` di
+   frame Dashboard v2.
+
+   Kartunya duduk di RUANG ATAS plot — itu sebabnya `ruangAtas` bukan sekadar
+   ruang bernapas untuk garisnya. */
+.k-area__sorot { position: absolute; top: 0; bottom: 0; width: 0; }
+.k-area__kartu {
+  position: absolute;
+  top: calc(-1 * var(--k-area-atas, 0px));
+  left: 0;
+  width: 114px;
+  /* Sisi 8, bukan 10,5: dengan 10,5 ruang dalamnya 91 dan "Tuesday, 6 June
+     2029" yang 93,5 lebar membungkus jadi dua baris — kartunya lalu tumbuh
+     dan seluruh isinya bergeser. */
+  padding: 9.5px 8px 8.5px;
+  border: 1px solid var(--border);
+  border-radius: 7.5px;
+  background: var(--surface);
+}
+/* Grafik tangga: kartunya dipusatkan pada anak tangganya, dan lebarnya
+   memeluk isi — 77 di framenya lawan 114 di grafik halus, karena yang di
+   sana punya baris tanggal panjang yang melebarkannya. */
+.k-area__kartu--tengah {
+  left: 50%;
+  width: max-content;
+  transform: translateX(-50%);
+}
+.k-area__kjudul { margin: 0; font-size: var(--k-t10); line-height: 1; color: var(--text-muted); }
+.k-area__knilai { margin: 5.25px 0 0; font-size: var(--k-t12); line-height: 1; color: var(--text-strong); }
+.k-area__kket {
+  margin: 8.7px 0 0;
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* `top` disetel inline ke tinggi titiknya; `bottom: 0` yang menariknya sampai
+   dasar plot. Menyetel `height` malah membuatnya bergantung pada tinggi plot
+   yang belum diketahui saat render server. */
+.k-area__garis {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(var(--border-strong) 50%, transparent 0) top / 1px 8px repeat-y;
+}
+.k-area__titik {
+  position: absolute;
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--brand-mint);
+}
+/* Varian tangga: bukan titik, melainkan pita mint selebar satu anak tangga
+   yang menunggangi tepi atasnya. */
+/* Lebar dan letaknya disetel inline dari komponennya — lihat catatannya di
+   Ukuran.tsx. Garisnya 2px MENUNGGANGI tepi (Figma: fill 40x8, kotak luar
+   42x10), jadi ditulis sebagai border 1px ke dalam + box-shadow 1px ke luar;
+   `outline` tidak dipakai karena ia tidak ikut radius di semua keadaan. */
+.k-area__pita {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 8px;
+  margin-top: -4px;
+  border: 1px solid var(--brand-soft);
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--brand-soft);
+  background: var(--brand-mint);
+}
+
+/* --- Lencana tren 54x17, dipakai kartu statistik lebar dan baris watchlist
+   Terukur di frame Investments: kotak 55x17 r8,5, ikon 8,76 lebar di 5,62
+   dari tepi kiri, teks mulai 5,02 sesudahnya, sisa 6,07 di kanan. */
+.k-trenlebar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 17px;
+  padding: 0 6px 0 5.6px;
+  border-radius: 8.5px;
+  background: var(--brand-mint);
+  color: var(--brand-isi);
+  font-size: var(--k-t10);
+  /* Tinta "4.20 %" 27,89x7,26; 10px/600 memberi 27,88x7,25. Tanpa bobot ia
+     mewarisi 400 dan angkanya tergambar tipis. */
+  font-weight: var(--k-semi);
+  line-height: 1;
+  white-space: nowrap;
+}
+/* Arah turun yang BURUK tetap memakai bentuk yang sama, cuma warnanya
+   berpindah — bukan lencana lain. */
+.k-trenlebar--buruk { background: var(--danger-soft); color: var(--danger); }

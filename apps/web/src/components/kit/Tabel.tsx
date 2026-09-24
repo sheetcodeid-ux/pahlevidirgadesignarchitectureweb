@@ -31,6 +31,15 @@ export interface KolomTabel {
   urut?: boolean;
   /** Angka dirapatkan ke kanan. Bawaannya kiri. */
   kanan?: boolean;
+  /**
+   * Isi kolom ini bertinta abu, bukan hitam.
+   *
+   * Bukan hiasan: di Coinest sebagian kolom memang diredupkan supaya kolom
+   * yang penting menonjol — kolom Note di tabel Dashboard, dan ketiga kolom
+   * nominal di tabel Investment. Terukur dari fill layer teksnya (#6B7271
+   * lawan #242E2C), bukan dikira dari tangkapan layar.
+   */
+  redup?: boolean;
 }
 
 export interface PropTabel {
@@ -133,7 +142,14 @@ export function Tabel({
               </td>
             )}
             {b.map((sel, j) => (
-              <td key={j} className={kolom[j]?.kanan ? "is-kanan" : undefined}>
+              <td
+                key={j}
+                className={
+                  [kolom[j]?.kanan && "is-kanan", kolom[j]?.redup && "is-redup"]
+                    .filter(Boolean)
+                    .join(" ") || undefined
+                }
+              >
                 {sel}
               </td>
             ))}
@@ -155,16 +171,38 @@ export function SelDua({
   atas,
   bawah,
   besar,
+  bobotAtas,
+  pxBawah,
 }: {
   atas: ReactNode;
   bawah: ReactNode;
   /** Baris atas 12px, bukan 10px. */
   besar?: boolean;
+  /**
+   * Bobot baris atas, kalau tabelnya menyimpang dari bawaan 600.
+   *
+   * Tiga tabel Coinest memakai TIGA setelan yang berbeda, dan itu terbaca
+   * dari tinta layernya, bukan dikira:
+   *
+   *   Dashboard    "Dinner at Italian Restaurant"  120,92 -> 10px/600
+   *   Investment   "GOOGL"                          41,69 -> 12px/600
+   *   Transaction  "Comcast Bill Payment"          113,54 -> 12px/500
+   *
+   * Jadi yang menyimpang cuma Transaction, dan ia menyebut angkanya sendiri
+   * di tempat pemanggilan. Ini bukan pintu untuk mengarang bobot.
+   */
+  bobotAtas?: number;
+  /** Ukuran baris bawah, kalau menyimpang dari bawaan 10px. */
+  pxBawah?: number;
 }) {
   return (
     <span className={["k-sel2", besar && "k-sel2--besar"].filter(Boolean).join(" ")}>
-      <span className="k-sel2__atas">{atas}</span>
-      <span className="k-sel2__bawah">{bawah}</span>
+      <span className="k-sel2__atas" style={bobotAtas ? { fontWeight: bobotAtas } : undefined}>
+        {atas}
+      </span>
+      <span className="k-sel2__bawah" style={pxBawah ? { fontSize: pxBawah } : undefined}>
+        {bawah}
+      </span>
     </span>
   );
 }

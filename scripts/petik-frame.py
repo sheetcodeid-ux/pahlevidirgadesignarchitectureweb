@@ -27,6 +27,11 @@ ET.register_namespace("", NS)
 Q = "{%s}" % NS
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 STYLE = AKAR / "apps/web/src/assets/figma/style"
+# Frame Interface ikut bisa dipetik. Lima bentuk yang dipakai halamannya —
+# bar kemajuan, dua grafik area, busur, kartu statistik lebar — memang tidak
+# ada di satu pun frame Style & Component, jadi acuannya harus datang dari
+# sini atau tidak ada sama sekali.
+INTERFACE = AKAR / "apps/web/src/assets/figma/interface"
 
 
 def _geser(el):
@@ -81,12 +86,26 @@ def kotak(el, dx=0.0, dy=0.0):
     return b
 
 
-def petik(frame: str, layer: str):
-    root = ET.parse(STYLE / f"{frame}.svg").getroot()
+def petik(frame: str, layer: str, kotak_paksa=None):
+    """`kotak_paksa` = (x, y, w, h) kalau bbox layernya tidak bisa dipakai.
+
+    Dua layer bar kemajuan di frame Interface memuat rect 1x24 tak terpakai
+    di titik (0,0) — sisa komponen Figma yang tidak tergambar. Bbox-nya lalu
+    membentang dari pojok kiri atas bingkai sampai barnya, dan potongan
+    acuannya jadi 574x357 untuk bar yang sebenarnya 324x12. Dipaksa, dan
+    alasannya ditulis di sini supaya tidak dikira angka karangan.
+    """
+    berkas = STYLE / f"{frame}.svg"
+    if not berkas.exists():
+        berkas = INTERFACE / f"{frame}.svg"
+    root = ET.parse(berkas).getroot()
     el = next((c for c in root.iter() if c.get("id") == layer), None)
     if el is None:
         sys.exit(f'tidak ada layer "{layer}" di {frame}.svg')
     b = kotak(el)
+    if kotak_paksa:
+        x, y, w, h = kotak_paksa
+        b = (x, y, x + w, y + h)
     isi = "".join(ET.tostring(c, encoding="unicode") for c in el)
 
     # <defs> WAJIB ikut. Gradien dan clipPath tinggal di akar berkas frame,
