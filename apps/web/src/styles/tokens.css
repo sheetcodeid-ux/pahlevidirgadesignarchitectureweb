@@ -341,6 +341,15 @@
   --brand-mint-ink: #1E4841;
   --brand-mint-hover: #CDF7B6;
 
+  /* Kotak centang dan sakelar SEMPAT tanpa nilai gelap: #FAF6F5 terbawa
+     apa adanya, dan tiap baris kotak masuk bertanda kotak putih pejal di atas
+     bidang gelap. Bidangnya sekarang sewarna latar kartu dengan garis
+     `--border-strong`; yang tercentang mint dengan tanda hijau tua. */
+  --centang-bidang: #1F2725;
+  --centang-aktif: #BBF49C;
+  --centang-tanda: #1E4841;
+  --sakelar-mati: #3D4A47;
+
   /* Sama persis dengan tema terang — lihat alasannya di blok terang. */
   --kas-bidang: #1E4841;
   --kas-ink: #ECF4E9;

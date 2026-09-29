@@ -142,6 +142,37 @@ const timAdmin = [
   active: true,
 }));
 
+/* Pesan masuk dari form kontak — dipakai halaman Pesan Masuk (frame 28).
+   Panjang pesannya sengaja beragam: baris daftar memotong di dua baris,
+   dan pesan satu kalimat tidak pernah menunjukkan potongannya. */
+const pesanAdmin = [
+  ["Rina Oktaviani", "rina.okta@gmail.com", "0812 5567 2210", "residential", "Rp500 jt – Rp1 M", "new", 0, 3,
+    "Halo, saya berencana membangun rumah dua lantai di Sungai Raya, luas tanah 12 x 25 m. Kami keluarga dengan tiga anak dan ingin rumah yang sejuk tanpa terlalu bergantung pada AC.\n\nApakah studio bisa membantu dari tahap konsep sampai gambar kerja? Kami juga ingin tahu kira-kira berapa lama prosesnya."],
+  ["Hendra Wijaya", "hendra@kopiruang.id", "0813 4400 9981", "commercial", "Rp250 – 500 jt", "new", 0, 9,
+    "Kami sedang mencari arsitek untuk coffee shop kedua kami di Jalan Gajah Mada. Bangunan eksisting ruko dua lantai, ingin dirombak jadi bar di lantai bawah dan ruang kerja di atas."],
+  ["Maria Susanti", "maria.s@yahoo.co.id", "", "interior", "Rp100 – 250 jt", "contacted", 1, 14,
+    "Selamat siang. Saya ingin renovasi interior dapur dan ruang keluarga. Apakah bisa survei lokasi minggu depan?"],
+  ["PT Kapuas Lestari", "admin@kapuaslestari.co.id", "0561 733 120", "masterplan", "Di atas Rp1 M", "qualified", 2, 10,
+    "Kami membutuhkan masterplan untuk kawasan guest house di tepi Sungai Kapuas seluas kurang lebih 1,2 hektar, termasuk 14 unit kamar, restoran, dan dermaga kecil. Mohon informasi portofolio proyek serupa dan tahapan kerja sama."],
+  ["Dimas Pratama", "dimas.pratama@outlook.com", "0857 2231 4410", "renovation", "Rp100 – 250 jt", "new", 3, 16,
+    "Rumah peninggalan orang tua, dibangun tahun 1990-an. Atapnya sering bocor dan ruangannya gelap. Ingin direnovasi tanpa menghilangkan karakter lamanya."],
+  ["Lestari Anggraini", "lestari.a@gmail.com", "", "landscape", "Di bawah Rp100 jt", "closed", 5, 11,
+    "Apakah studio menerima desain taman saja? Halaman belakang kami sekitar 80 m2."],
+  ["Yohanes Tan", "yohanes.tan@tanbrothers.com", "0811 567 8890", "commercial", "Rp500 jt – Rp1 M", "contacted", 6, 13,
+    "Kami pemilik restoran bakmi yang ingin membuka cabang baru dengan konsep semi terbuka. Kapasitas sekitar 60 kursi. Bisa kirim contoh proyek hospitality yang sudah selesai?"],
+  ["Nur Aisyah", "aisyah.nur@gmail.com", "0852 4410 7723", "residential", "Rp250 – 500 jt", "qualified", 8, 9,
+    "Terima kasih atas penjelasan kemarin. Kami setuju dengan ruang lingkupnya dan ingin lanjut ke tahap kontrak."],
+  ["Fajar Nugroho", "fajar.n@proton.me", "", "interior", "Rp100 – 250 jt", "closed", 12, 15,
+    "Kami sudah menemukan kontraktor lain, terima kasih atas waktunya."],
+  ["Clara Hartono", "clara.hartono@gmail.com", "0812 9900 1122", "residential", "Rp500 jt – Rp1 M", "contacted", 15, 10,
+    "Kami tinggal di Jakarta dan membangun rumah untuk orang tua di Pontianak. Apakah koordinasinya bisa dilakukan jarak jauh?"],
+].map(([name, email, phone, projectType, budgetRange, status, mundur, jam, message], i) => {
+  const d = new Date();
+  d.setDate(d.getDate() - mundur);
+  d.setHours(jam, (i * 17) % 60, 0, 0);
+  return { id: `q${i + 1}`, name, email, phone: phone || undefined, projectType, budgetRange, message, status, createdAt: d.toISOString() };
+});
+
 /* Riwayat biaya 30 bulan ke belakang — dipakai halaman Fee Proyek, yang
    grafiknya membaca biaya PER BULAN dan PER TAHUN. Lima baris di atas cuma
    menjangkau beberapa hari terakhir, dan grafik tangga sepuluh bulan dengan
@@ -365,6 +396,7 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
   if (path.startsWith("/api/v1/admin/costs")) return [...biayaKeu, ...biayaRiwayat];
+  if (path.startsWith("/api/v1/admin/inquiries")) return pesanAdmin;
   if (path.startsWith("/api/v1/admin/fee/people")) return feeOrang(path);
   if (path.startsWith("/api/v1/admin/fee/projects")) return feeProyek(path);
   if (path.startsWith("/api/v1/admin/team")) return timAdmin;
@@ -416,6 +448,13 @@ function tulis(metode, path, badan) {
     const t = tagihanAdmin.find((x) => x.id === m[1]);
     if (!t) return { galat: 404 };
     if (badan.status) t.status = badan.status;
+    return { updated: true };
+  }
+  const q = path.match(/^\/api\/v1\/admin\/inquiries\/([^/?]+)$/);
+  if (q && metode === "PATCH") {
+    const x = pesanAdmin.find((y) => y.id === q[1]);
+    if (!x) return { galat: 404 };
+    if (badan.status) x.status = badan.status;
     return { updated: true };
   }
   return null;

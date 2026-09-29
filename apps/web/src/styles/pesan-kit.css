@@ -1,0 +1,348 @@
+/* =============================================================================
+   Pesan Masuk — tata letak frame "28. Inbox".
+
+   Batas LUAR dalam koordinat frame 1440 (garis Figma mengangkangi tepi rect,
+   jadi kotak bergaris 1px lebih besar daripada rect-nya):
+
+     kartu             220,80     1192x974
+     daftar            221..559   338 lebar, isi 236..539 (pad 15,5 / 20)
+       cari + saring   y96, 255x38 lalu tombol 38, celah 10
+       kepala daftar   y150,5, centang 13 di y155,5, tombol 23 di kanan
+       baris           mulai y190, 72 (satu baris cuplikan) / 88 (dua)
+       baris terpilih  bidang mint selebar KOLOM (221..559), bukan selebar isi
+     isi pesan         559..1396, y96..1037,5, bilah atas mint 64
+       alat            panah x582,8, ikon 20 berjarak 40, "4 dari 36" + caret
+       surat           x624..1364 (pad 65 / 32), judul tinta y195
+       kartu jenis     624,516 381x286
+       dua kartu mint  1021,516 343x119 dan 1021,651 343x151, celah 16
+   ============================================================================= */
+
+.pes {
+  display: grid;
+  grid-template-columns: 338px minmax(0, 1fr);
+  height: 974px;
+  padding: 15px 15px 15px 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.pes--rangka { border-color: var(--border); }
+.pes--galat { display: block; height: auto; padding: 16px; }
+
+.pes__peringatan {
+  max-width: none;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--warn);
+  border-radius: 12px;
+  background: var(--warn-soft);
+  font-size: var(--k-t12);
+  line-height: 1.5;
+  color: var(--text-strong);
+}
+
+/* --- Daftar ---------------------------------------------------------------- */
+.pes__kiri {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 20px 0 15px;
+}
+.pes__atas { display: flex; align-items: center; gap: 10px; }
+.pes__cari { flex: 1; width: auto; min-width: 0; }
+.pes__saring { flex: none; }
+
+.pes__kepaladaftar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  height: 40.5px;
+  margin-top: 16.5px;
+  border-bottom: 1px solid var(--border);
+}
+.pes__semua { display: inline-flex; align-items: center; gap: 4px; padding: 5px 0 0 3.5px; }
+.pes__semua .k-centang { --k-centang-s: 13px; }
+.pes__caret { position: relative; display: inline-grid; place-items: center; width: 14px; height: 13px; color: var(--text-strong); cursor: pointer; }
+.pes__caret > select { position: absolute; inset: -4px; width: calc(100% + 8px); opacity: 0; cursor: pointer; }
+.pes__caret:focus-within { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 3px; }
+.pes__jumlahpilih { margin-left: 6px; font-size: var(--k-t11); color: var(--text-muted); }
+.pes__aksidaftar { display: inline-flex; gap: 9px; }
+.pes__aksidaftar .k-tombolikon { --k-tombol-h: 23px; }
+
+.pes__daftar {
+  flex: 1;
+  min-height: 0;
+  margin-right: -20px;
+  margin-left: -15px;
+  padding: 0 20px 0 15px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+}
+/* Tinggi barisnya mengikuti isi: 72 untuk cuplikan satu baris, 88 untuk
+   dua — kit memasang 88 sebagai minimum karena galerinya cuma punya yang
+   dua baris. */
+/* Tanpa min-height, tinggi alaminya 72,8 / 89 — satu piksel lebih dari
+   frame di setiap baris, dan selisihnya menumpuk sampai 12px di baris ke
+   sepuluh. Cuplikan 1,25 lebih dekat ke judul, dan padding bawah 16 (bukan
+   15,75) mengembalikan sisanya: tinta cuplikan framenya 23 di bawah tinta judul, kit 24,5. */
+.pes__baris { position: relative; min-height: 0; padding-bottom: 16px; background: transparent; }
+.pes__baris .k-inbox__badan { margin-top: 6px; }
+.pes__baris .k-inbox__teks {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pes__baris .k-inbox__pengirim { font-weight: var(--k-med); }
+.pes__baris.is-baru .k-inbox__pengirim { font-weight: var(--k-semi); }
+/* Bidang terpilih melebar ke tepi KOLOM (15 kiri, 20 kanan dari isinya) dan
+   naik 1px menutupi garis baris di atasnya — Click Effect framenya 89 tinggi
+   untuk baris 88. */
+.pes__baris.is-aktif::before {
+  content: "";
+  position: absolute;
+  inset: -1px -20px 0 -15px;
+  z-index: 0;
+  background: var(--brand-soft);
+}
+.pes__baris > * { position: relative; z-index: 1; }
+.pes__baris .k-inbox__centang,
+.pes__baris .k-inbox__bintang { position: relative; z-index: 2; }
+.pes__buka {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pes__buka::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.pes__buka:focus-visible { outline: none; }
+.pes__buka:focus-visible::after { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 4px; }
+/* `.k-inbox__isi` jadi induk posisi peregang: bukan barisnya, supaya kotak
+   centang di kiri tidak tertutup lapisan klik. */
+.pes__baris .k-inbox__isi { position: relative; }
+
+/* --- Isi pesan ------------------------------------------------------------- */
+.pes__kanan {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+}
+.pes__alat {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  margin: 0 -1px;
+  padding: 0 19.5px 0 20.5px;
+  background: var(--brand-soft);
+}
+/* Kotak ikon 22 (caret 24): tinta panah framenya 16,5 lebar, dan ikon 20
+   memberi 14,5. Letaknya terukur dari pusat tinta: 31,8 / 80 / 120 / 161
+   dari tepi panel, "4 dari 36" berakhir 20,5 sebelum caret pertama, dan
+   kedua caret berpusat 41,5 berjauhan. */
+.pes__alat .k-tombolikon { --k-tombol-h: 22px; color: var(--text-strong); }
+.pes__alatkanan .k-tombolikon { --k-tombol-h: 24px; }
+.pes__alatkiri,
+.pes__alattengah,
+.pes__alatkanan { display: inline-flex; align-items: center; }
+.pes__alatkiri { gap: 27px; }
+.pes__alattengah { gap: 18px; }
+.pes__alatkanan { gap: 19.5px; }
+.pes__alatkanan .k-tombolikon + .k-tombolikon { margin-left: -3px; }
+.pes__posisi { font-size: var(--k-t14); line-height: 1; color: var(--text-muted); }
+
+.pes__surat {
+  flex: 1;
+  min-height: 0;
+  padding: 33px 31px 32px 64px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.pes__kepala { padding-bottom: 17px; border-bottom: 1px solid var(--border); }
+.pes__judul {
+  margin: 0;
+  font-size: var(--k-h4);
+  font-weight: var(--k-med);
+  line-height: 1;
+  color: var(--text-strong);
+}
+.pes__waktu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: none;
+  margin: 10.5px 0 0;
+  font-size: var(--k-t12);
+  line-height: 1;
+  color: var(--text-muted);
+}
+.pes__status {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  font-size: var(--k-t10);
+  color: var(--text-strong);
+}
+.pes__badan { padding-top: 18.5px; }
+.pes__badan > p,
+.pes__kaki {
+  max-width: none;
+  margin: 0 0 16px;
+  font-size: var(--k-t14);
+  line-height: 18px;
+  color: var(--text-strong);
+  white-space: pre-line;
+}
+.pes__poin {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0 0 0 26.5px;
+  list-style: none;
+  font-size: var(--k-t14);
+  line-height: 18px;
+  color: var(--text-strong);
+}
+.pes__poin li { position: relative; }
+.pes__poin li::before {
+  content: "";
+  position: absolute;
+  left: -14.5px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--text-strong);
+}
+.pes__badan > .pes__kaki { margin: 15px 0 0; color: var(--text-muted); white-space: normal; }
+.pes__kaki a { color: var(--brand); }
+
+/* --- Tiga kartu ----------------------------------------------------------- */
+.pes__fitur {
+  display: grid;
+  grid-template-columns: minmax(0, 381fr) minmax(0, 343fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+.pes__jenis {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 17.5px 16px 15px 15px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  --k-donat-latar: var(--surface);
+}
+.pes__jeniskiri { display: flex; flex-direction: column; flex: none; }
+.pes__donat { margin-top: 53.5px; }
+.pes__jeniskanan { display: flex; flex-direction: column; flex: 0 1 181.3px; min-width: 0; }
+.pes__jenisdaftar { display: flex; flex-direction: column; gap: 22.6px; margin-top: 24px; }
+.pes__jenisdaftar .k-beban__nominal { white-space: nowrap; }
+.pes__kartujudul {
+  margin: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.pes__pilihteks {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--k-t12);
+  line-height: 1;
+  color: var(--brand);
+  cursor: pointer;
+}
+.pes__pilihteks > select { position: absolute; inset: -4px; width: calc(100% + 8px); opacity: 0; cursor: pointer; }
+.pes__pilihteks:focus-within { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 3px; }
+
+.pes__fiturkanan { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pes__mint {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 17px;
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+.pes__tangani { min-height: 119px; }
+.pes__prospek { min-height: 151px; padding-top: 21.5px; }
+.pes__mintkepala { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 22px; }
+.pes__mintkepala .k-tombolikon { --k-tombol-h: 22px; color: var(--text-strong); }
+.pes__bar { width: 100%; max-width: 251px; }
+.pes__tangani .pes__bar { margin-top: 17px; }
+.pes__barket {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: none;
+  margin: 13.5px 0 0;
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--text-strong);
+}
+.pes__barket b { margin-right: 4px; font-size: var(--k-t12); font-weight: var(--k-med); }
+.pes__barket > span:last-child { font-size: var(--k-t12); }
+.pes__skorlabel { max-width: none; margin: 13px 0 0; font-size: var(--k-t10); line-height: 1; color: var(--text-strong); }
+.pes__skorbaris {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: none;
+  margin: 6.5px 0 0;
+  line-height: 1;
+  color: var(--brand);
+}
+.pes__skorbaris b { font-size: var(--k-h4); font-weight: var(--k-bold); }
+.pes__skorbaris span { font-size: var(--k-h4); }
+.pes__prospek .pes__bar { margin-top: auto; }
+
+.pes__kosong { margin: 16px 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
+.pes__kosong--isi { margin: 32px 64px; }
+
+/* Tema gelap: bidang mint pucat (`--brand-soft`) jadi hijau gelap, dan bar
+   di atasnya memakai warna kit sendiri — tidak ada pasangan yang perlu
+   ditukar di sini. Donat membaca `--surface` untuk celahnya. */
+
+/* --- Lebar lebih sempit ----------------------------------------------------- */
+/* Kolom isi pesan di bawah 1240 cuma ~340 lebar: kartu jenis menumpuk
+   donat di atas daftarnya, kalau tidak nama jenisnya terpotong "Kome…". */
+@media (max-width: 1240px) {
+  .pes__fitur { grid-template-columns: minmax(0, 1fr); }
+  .pes__jenis { flex-direction: column; align-items: center; }
+  .pes__jeniskiri { align-self: stretch; align-items: center; }
+  .pes__jeniskiri .pes__kartujudul { align-self: flex-start; }
+  .pes__donat { margin-top: 24px; }
+  .pes__jeniskanan { flex-basis: auto; width: 100%; margin-top: 24px; }
+}
+/* Di bawah 60rem daftar dan isi tidak muat berdampingan: satu tampil,
+   ditukar lewat tombol panah dan klik baris. */
+@media (max-width: 60rem) {
+  .pes { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 640px; padding: 15px; }
+  .pes__kiri { padding: 0; }
+  .pes__daftar { margin: 0; padding: 0; max-height: 70vh; }
+  .pes--daftar .pes__kanan { display: none; }
+  .pes--isi .pes__kiri { display: none; }
+  .pes__kanan { border-top: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .pes__alat { margin: 0; }
+  .pes__surat { padding: 24px 16px; }
+}

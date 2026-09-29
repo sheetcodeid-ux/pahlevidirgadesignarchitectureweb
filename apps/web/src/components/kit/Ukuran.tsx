@@ -534,6 +534,104 @@ export function Busur({
 }
 
 /* -----------------------------------------------------------------------------
+   3a. Donat — lingkaran PENUH bersegmen, frame 28 "Budget Categories".
+
+   Terbaca dari path framenya, pusat (714,5, 678,5):
+
+     jari-jari luar 74,5, dalam 52,576 — tebal 21,924
+     lima irisan, mulai pukul 12 dan berputar SEARAH jarum jam
+     tiap irisan bergaris 4 sewarna latar kartunya
+
+   Dan cara Figma menggambarnya bukan lima potongan bersebelahan, melainkan
+   lima cincin-sebagian yang BERTUMPUK: yang terbawah lingkaran penuh, yang
+   di atasnya berhenti lebih awal, dan seterusnya. Garis sewarna latar di
+   ujung tiap lapisan itulah celahnya — jadi celah itu 4px lurus di setiap
+   batas, dan juga ada di pukul 12. Digambar dengan cara yang sama di sini,
+   karena irisan bersebelahan dengan celah bersudut memberi celah yang
+   melebar ke luar.
+
+   Garisnya juga memakan 2px dari tepi luar dan dalam, jadi cincin yang
+   KELIHATAN 72,5..54,6. Warna garis `--k-donat-latar` — setel ke warna
+   bidang di belakangnya kalau bukan `--surface`.
+   -------------------------------------------------------------------------- */
+export interface IrisDonat {
+  nilai: number;
+  warna: string;
+  label?: string;
+}
+
+export function Donat({
+  iris,
+  luar = 74.5,
+  dalam = 52.576,
+  garis = 4,
+  label,
+  nilai,
+  className,
+}: {
+  iris: IrisDonat[];
+  luar?: number;
+  dalam?: number;
+  garis?: number;
+  label?: ReactNode;
+  nilai?: ReactNode;
+  className?: string;
+}) {
+  const total = iris.reduce((a, b) => a + b.nilai, 0);
+  const c = luar;
+  const titik = (a: number, r: number) => {
+    const rad = (a * Math.PI) / 180;
+    return `${(c + r * Math.sin(rad)).toFixed(3)} ${(c - r * Math.cos(rad)).toFixed(3)}`;
+  };
+  /* Lapisan dari yang terbawah: irisan TERAKHIR berhenti di 360 derajat,
+     yang pertama berhenti paling awal dan digambar paling atas. */
+  let kumulatif = 0;
+  const ujung = iris.map((s) => {
+    kumulatif += s.nilai;
+    return total > 0 ? (kumulatif / total) * 360 : 0;
+  });
+  const lapis = iris
+    .map((s, i) => ({ ...s, akhir: ujung[i]! }))
+    .filter((s) => s.nilai > 0)
+    .reverse();
+  const cincin = (akhir: number) => {
+    if (akhir >= 359.99) {
+      return (
+        `M${c} ${c - luar} A${luar} ${luar} 0 1 1 ${c} ${c + luar} A${luar} ${luar} 0 1 1 ${c} ${c - luar} Z ` +
+        `M${c} ${c - dalam} A${dalam} ${dalam} 0 1 0 ${c} ${c + dalam} A${dalam} ${dalam} 0 1 0 ${c} ${c - dalam} Z`
+      );
+    }
+    const besar = akhir > 180 ? 1 : 0;
+    return (
+      `M${titik(0, luar)} A${luar} ${luar} 0 ${besar} 1 ${titik(akhir, luar)} ` +
+      `L${titik(akhir, dalam)} A${dalam} ${dalam} 0 ${besar} 0 ${titik(0, dalam)} Z`
+    );
+  };
+  return (
+    <div className={kelas("k-donat", className)}>
+      <svg viewBox={`0 0 ${luar * 2} ${luar * 2}`} aria-hidden="true">
+        {lapis.map((s, i) => (
+          <path
+            key={i}
+            d={cincin(s.akhir)}
+            fill={s.warna}
+            fillRule="evenodd"
+            stroke="var(--k-donat-latar, var(--surface))"
+            strokeWidth={garis}
+          />
+        ))}
+      </svg>
+      {(label || nilai) && (
+        <div className="k-donat__tengah">
+          {label && <p className="k-donat__label">{label}</p>}
+          {nilai && <p className="k-donat__nilai">{nilai}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -----------------------------------------------------------------------------
    3b. Cincin — donat SEPUSAT, satu cincin per kategori.
 
    Bentuk yang dipakai "Widget Expense Breakdown" di frame 04, dan ia BUKAN

@@ -583,16 +583,30 @@ export function BarisBeban({
   persen,
   kategori,
   nominal,
+  warna,
+  tinta,
   className,
 }: {
   persen: ReactNode;
   kategori: ReactNode;
   nominal: ReactNode;
+  /**
+   * Latar pil persentase. Di frame 28 pilnya SEWARNA irisan donat di
+   * sebelahnya (tangga `--ramp-1..5`), jadi ia menggantikan legenda.
+   */
+  warna?: string;
+  /** Tinta pil — pasangkan dengan `--ramp-N-ink` supaya terbaca di kedua tema. */
+  tinta?: string;
   className?: string;
 }) {
   return (
     <div className={kelas("k-beban", className)}>
-      <span className="k-beban__persen">{persen}</span>
+      <span
+        className="k-beban__persen"
+        style={warna || tinta ? { background: warna, color: tinta } : undefined}
+      >
+        {persen}
+      </span>
       <span className="k-beban__kategori">{kategori}</span>
       <span className="k-beban__nominal">{nominal}</span>
     </div>

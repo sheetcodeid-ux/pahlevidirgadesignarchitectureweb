@@ -2730,6 +2730,26 @@
    100, dan membesarkannya mengikuti lebar kartu akan menebalkan cincinnya
    ikut-ikutan. Yang digambar framenya cincin setebal 14 pada kartu 283, dan
    itu proporsi yang memang sengaja dipilih di sana. */
+/* Donat bersegmen frame 28: kotak 149, dua baris di lubangnya. */
+.k-donat { position: relative; display: block; width: 149px; max-width: 100%; line-height: 1; }
+.k-donat > svg { display: block; width: 100%; height: auto; overflow: visible; }
+.k-donat__tengah {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.k-donat__label { margin: 0; font-size: var(--k-t10); color: var(--text-muted); }
+.k-donat__nilai {
+  margin: 8px 0 0;
+  font-size: var(--k-h6);
+  font-weight: var(--k-bold);
+  color: var(--brand);
+  white-space: nowrap;
+}
 .k-cincin { display: block; width: 200px; max-width: 100%; }
 .k-cincin > svg { display: block; width: 100%; height: auto; }
 

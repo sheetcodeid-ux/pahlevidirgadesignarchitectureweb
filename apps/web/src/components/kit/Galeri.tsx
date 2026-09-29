@@ -7,7 +7,7 @@ import { Remah } from "./Remah";
 import { Paginasi } from "./Paginasi";
 import { Cari, Isian, Centang, Sakelar } from "./Isian";
 import { GaleriBanding } from "./GaleriBanding";
-import { Cincin, LencanaTren } from "./Ukuran";
+import { Cincin, Donat, LencanaTren } from "./Ukuran";
 import { KelompokTab } from "./Segmen";
 import { KartuStatistikRingkas } from "./Kartu";
 import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, CoinVertical, NavCreditCard, VirtualAccount, DotsThree, SEMUA_IKON } from "./ikon";
@@ -269,8 +269,8 @@ export function Galeri() {
       <section className="k-galeri__seksi">
         <h2 className="k-galeri__judul">Bentuk dari frame Interface</h2>
         <p className="k-galeri__ket">
-          Tiga bentuk yang tidak ada di frame Style &amp; Component, jadi
-          ketiganya diukur langsung dari frame halaman yang memakainya.
+          Bentuk yang tidak ada di frame Style &amp; Component, jadi
+          semuanya diukur langsung dari frame halaman yang memakainya.
         </p>
         <Baris judul="Cincin sepusat — frame 04, luar 100, tebal 14, lubang 30">
           <Cincin
@@ -278,6 +278,19 @@ export function Galeri() {
               { persen: 50, warna: "var(--brand)" },
               { persen: 30, warna: "var(--brand-mint)" },
               { persen: 20, warna: "var(--ramp-5)" },
+            ]}
+          />
+        </Baris>
+        <Baris judul="Donat bersegmen — frame 28, luar 74,5, dalam 52,6, celah garis 4">
+          <Donat
+            label="Total Budget"
+            nilai="$3,500"
+            iris={[
+              { nilai: 60, warna: "var(--ramp-1)" },
+              { nilai: 15, warna: "var(--ramp-2)" },
+              { nilai: 12, warna: "var(--ramp-3)" },
+              { nilai: 8, warna: "var(--ramp-4)" },
+              { nilai: 5, warna: "var(--ramp-5)" },
             ]}
           />
         </Baris>
