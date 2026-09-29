@@ -1311,7 +1311,8 @@
   padding: 0 4px;
   border-radius: 6px;
   background: var(--brand-mint);
-  color: var(--brand);
+  /* Sama dengan .k-selikon__bulat: `--brand` jadi mint di tema gelap. */
+  color: var(--brand-mint-ink);
   font-size: var(--k-t8);
   font-weight: var(--k-med);
   line-height: 1;
@@ -1510,7 +1511,11 @@
   place-items: center;
   border-radius: 999px;
   background: var(--brand-mint);
-  color: var(--brand);
+  /* `--brand-mint-ink`, bukan `--brand`: sama persis di tema terang, tapi di
+     gelap `--brand` bernilai mint dan ikonnya hilang di atas bulatan mint
+     (jebakan #37). Ketahuan di tabel Fee Proyek; pemindai kontras tidak
+     menangkapnya karena ikon bukan teks. */
+  color: var(--brand-mint-ink);
 }
 
 /* Sel berkeping — keping 23x15 radius 4, lalu teks berjarak 7,22. */

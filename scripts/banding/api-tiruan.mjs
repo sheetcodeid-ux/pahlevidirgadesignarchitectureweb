@@ -142,6 +142,46 @@ const timAdmin = [
   active: true,
 }));
 
+/* Riwayat biaya 30 bulan ke belakang — dipakai halaman Fee Proyek, yang
+   grafiknya membaca biaya PER BULAN dan PER TAHUN. Lima baris di atas cuma
+   menjangkau beberapa hari terakhir, dan grafik tangga sepuluh bulan dengan
+   sembilan anak tangga nol tidak menunjukkan apa pun tentang komponennya.
+   Satu baris fee sengaja tanpa nama tiap beberapa bulan, supaya jalur
+   "fee tanpa nama" ikut tergambar. */
+const biayaRiwayat = [];
+for (let m = 1; m <= 30; m++) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - m);
+  const tgl = (h) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(h).padStart(2, "0")}`;
+  const k = (m % 5) + 1;
+  const judul = proyekKeu[k - 1].projectTitle;
+  const baris = [
+    ["Drafter gambar kerja", "freelancer", 3_200_000 + ((m * 730_000) % 5_100_000), 6, (m % 3) + 2],
+    ["Render interior", "freelancer", 2_400_000 + ((m * 410_000) % 3_900_000), 14, (m % 3) + 4],
+    ["Sewa kantor", "operasional", 4_200_000, 3, null],
+    ["Fee prinsipal", "prinsipal", m % 3 === 0 ? 12_500_000 : 0, 20, 1],
+    ["Cetak & maket", "lainnya", 650_000 + ((m * 170_000) % 1_400_000), 24, null],
+  ];
+  baris.forEach(([label, category, amount, hari, t], j) => {
+    if (!amount) return;
+    const tanpaNama = category === "freelancer" && j === 1 && m % 4 === 0;
+    const orang = t === null || tanpaNama ? null : timAdmin[t - 1];
+    biayaRiwayat.push({
+      id: `r${m}-${j}`,
+      projectId: `k${k}`,
+      projectTitle: judul,
+      label,
+      category,
+      amount,
+      incurredOn: tgl(hari),
+      teamMemberId: orang ? orang.id : null,
+      teamMemberName: orang ? orang.name : null,
+    });
+  });
+}
+
+
 const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", role: "master" };
 
 /* Proyek versi ADMIN — beda bentuk dari `proyek` di atas, yang meniru
@@ -261,11 +301,72 @@ const tugasAdmin = Object.fromEntries(
   }),
 );
 
+/* Fee lintas proyek — tiruan dari repository/fee.ts: biaya berkategori
+   freelancer ATAU prinsipal, disaring `dari`/`sampai` kalau ada. */
+function saringFee(path) {
+  const q = new URLSearchParams(path.split("?")[1] ?? "");
+  const dari = q.get("dari") ?? q.get("from");
+  const sampai = q.get("sampai") ?? q.get("to");
+  return [...biayaKeu, ...biayaRiwayat].filter(
+    (b) =>
+      (b.category === "freelancer" || b.category === "prinsipal") &&
+      (!dari || b.incurredOn >= dari) &&
+      (!sampai || b.incurredOn <= sampai),
+  );
+}
+function feeOrang(path) {
+  const peta = new Map();
+  for (const b of saringFee(path)) {
+    if (!b.teamMemberId) continue;
+    const t = timAdmin.find((x) => x.id === b.teamMemberId);
+    const o = peta.get(b.teamMemberId) ?? {
+      teamMemberId: b.teamMemberId, name: t?.name ?? b.teamMemberName, kind: t?.kind ?? "proyek",
+      role: t?.role ?? null, total: 0, proyek: new Set(), lastOn: null,
+    };
+    o.total += b.amount;
+    o.proyek.add(b.projectId);
+    if (!o.lastOn || b.incurredOn > o.lastOn) o.lastOn = b.incurredOn;
+    peta.set(b.teamMemberId, o);
+  }
+  return [...peta.values()]
+    .map(({ proyek, ...o }) => ({ ...o, projectCount: proyek.size }))
+    .sort((a, z) => z.total - a.total);
+}
+function feeProyek(path) {
+  const peta = new Map();
+  for (const b of saringFee(path)) {
+    const p = proyekKeu.find((x) => x.projectId === b.projectId);
+    const o = peta.get(b.projectId) ?? {
+      projectId: b.projectId, projectTitle: p?.projectTitle ?? b.projectTitle,
+      contractValue: p?.contractValue ?? null, feeTotal: 0, feeTanpaNama: 0, orang: new Map(),
+    };
+    /* feeTotal HANYA yang bernama — sama dengan `fee_total` di fee.ts. */
+    if (!b.teamMemberId) o.feeTanpaNama += b.amount;
+    else {
+      o.feeTotal += b.amount;
+      const kind = timAdmin.find((t) => t.id === b.teamMemberId)?.kind ?? "proyek";
+      const x = o.orang.get(b.teamMemberId) ?? { teamMemberId: b.teamMemberId, name: b.teamMemberName, kind, amount: 0 };
+      x.amount += b.amount;
+      o.orang.set(b.teamMemberId, x);
+    }
+    peta.set(b.projectId, o);
+  }
+  return [...peta.values()]
+    .map((o) => ({
+      ...o,
+      orang: [...o.orang.values()].sort((a, z) => z.amount - a.amount),
+      feeShare: o.contractValue ? o.feeTotal / o.contractValue : null,
+    }))
+    .sort((a, z) => z.feeTotal - a.feeTotal);
+}
+
 const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
-  if (path.startsWith("/api/v1/admin/costs")) return biayaKeu;
+  if (path.startsWith("/api/v1/admin/costs")) return [...biayaKeu, ...biayaRiwayat];
+  if (path.startsWith("/api/v1/admin/fee/people")) return feeOrang(path);
+  if (path.startsWith("/api/v1/admin/fee/projects")) return feeProyek(path);
   if (path.startsWith("/api/v1/admin/team")) return timAdmin;
   if (path.startsWith("/api/v1/admin/invoices")) return tagihanAdmin;
   /* Yang PALING KHUSUS lebih dulu: "/admin/projects/<id>/payments" juga

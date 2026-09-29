@@ -57,6 +57,12 @@ export interface BatangGrafik {
   radiusBawah?: number;
   /** Keempat sudut sekaligus — varian Single, yang rect-nya memang rx 6. */
   radius?: number;
+  /**
+   * Warna bebas, menimpa `nada`. Dipakai grafik bertumpuk yang potongannya
+   * kategori — Profits di frame Investments memakai EMPAT rona (tangga
+   * `--ramp-1..4`), dan nada tetap cuma punya dua yang cocok.
+   */
+  warna?: string;
 }
 
 export interface PropKolomGrafik {
@@ -120,6 +126,7 @@ export function KolomGrafik({
               className={`k-kolom__b k-kolom__b--${b.nada ?? "mint"}`}
               style={{
                 width: lebarBatang,
+                ...(b.warna ? { background: b.warna } : {}),
                 top: `${b.atas}%`,
                 height: `${b.bawah - b.atas}%`,
                 borderRadius:
