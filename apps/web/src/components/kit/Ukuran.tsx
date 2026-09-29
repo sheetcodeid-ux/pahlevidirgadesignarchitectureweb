@@ -317,6 +317,13 @@ export function GrafikArea({
           </defs>
           {deret.map((d, i) => {
             const n = d.titik.length;
+            /* Deret KOSONG dilewati. `jalur([], [])` mengembalikan string
+               kosong, dan bidang di bawahnya jadi `d=" V141 H0 Z"` — yang
+               ditolak peramban dengan "Expected moveto path command". Bukan
+               kasus teoretis: halaman yang mengambil datanya dari API
+               merender sekali dengan deret kosong sebelum jawabannya datang,
+               jadi galat itu muncul di SETIAP muat halaman. */
+            if (n === 0) return null;
             const xs = d.titik.map((_, j) =>
               posisi ? posisi[j] * LEBAR : n < 2 ? 0 : (j / (n - 1)) * LEBAR,
             );
@@ -519,6 +526,95 @@ export function Busur({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* -----------------------------------------------------------------------------
+   3b. Cincin — donat SEPUSAT, satu cincin per kategori.
+
+   Bentuk yang dipakai "Widget Expense Breakdown" di frame 04, dan ia BUKAN
+   donat biasa: tiap kategori punya cincinnya sendiri, dan tiap cincin
+   menunjukkan porsinya terhadap keseluruhan. Membacanya jadi soal "seberapa
+   jauh cincin ini berkeliling", bukan soal membandingkan lebar irisan.
+
+   Terukur dari SVG framenya, pusat (968,248):
+
+     cincin 1   jari-jari luar 100   dalam 86      tengah 93     #1E4841
+     cincin 2   luar 72             dalam 57,6     tengah 64,8   #BBF49C
+     cincin 3   luar 44             dalam 29,92    tengah 36,96  #BCBEBD
+
+   Jadi tebalnya 14 dan celah antar-cincin juga 14, lubang tengahnya 30.
+   Angkanya digeneralisasi supaya jumlah kategori boleh berapa pun:
+   tebal = (luar - lubang) / (2n - 1) — yang untuk n=3 memberi tepat 14.
+
+   Busurnya mulai di pukul 6 dan berputar SEARAH jarum jam, dengan ujung
+   membulat. Itu yang digambar framenya; mulai di pukul 12 seperti kebanyakan
+   donat akan membuat ketiga cincinnya berakhir di tempat yang berbeda dari
+   acuannya.
+   -------------------------------------------------------------------------- */
+export interface IrisCincin {
+  /** Porsi 0..100. Bukan nilai mentah — pemanggil yang menormalkannya. */
+  persen: number;
+  warna: string;
+  label?: string;
+}
+
+export function Cincin({
+  iris,
+  luar = 100,
+  lubang = 30,
+  className,
+}: {
+  iris: IrisCincin[];
+  /** Jari-jari terluar. Framenya 100, jadi kotaknya 200x200. */
+  luar?: number;
+  /** Jari-jari lubang di tengah — ruang kosong, tidak ada teks di framenya. */
+  lubang?: number;
+  className?: string;
+}) {
+  const n = Math.max(1, iris.length);
+  const tebal = (luar - lubang) / (2 * n - 1);
+  const c = luar;
+
+  /* Titik pada sudut `a` derajat dari pukul 6, searah jarum jam. */
+  const titik = (a: number, r: number) => {
+    const rad = (a * Math.PI) / 180;
+    return `${(c - r * Math.sin(rad)).toFixed(3)} ${(c + r * Math.cos(rad)).toFixed(3)}`;
+  };
+
+  return (
+    <div className={kelas("k-cincin", className)}>
+      <svg viewBox={`0 0 ${luar * 2} ${luar * 2}`} aria-hidden="true">
+        {iris.map((s, i) => {
+          const r = luar - tebal * (2 * i) - tebal / 2;
+          const p = Math.max(0, Math.min(100, s.persen));
+          const sudut = (p / 100) * 360;
+          return (
+            <g key={i}>
+              <circle
+                cx={c}
+                cy={c}
+                r={r}
+                fill="none"
+                stroke="var(--brand-soft)"
+                strokeWidth={tebal}
+              />
+              {p >= 99.95 ? (
+                <circle cx={c} cy={c} r={r} fill="none" stroke={s.warna} strokeWidth={tebal} />
+              ) : p > 0 ? (
+                <path
+                  d={`M${titik(0, r)} A${r} ${r} 0 ${sudut > 180 ? 1 : 0} 1 ${titik(sudut, r)}`}
+                  fill="none"
+                  stroke={s.warna}
+                  strokeWidth={tebal}
+                  strokeLinecap="round"
+                />
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }

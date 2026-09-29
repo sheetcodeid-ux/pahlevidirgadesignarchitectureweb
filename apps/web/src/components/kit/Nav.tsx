@@ -28,6 +28,16 @@ export interface ItemNav {
   href?: string;
   /** Baris ini membuka submenu: caret di ujung kanannya. */
   lipat?: boolean;
+  /**
+   * Baris submenu di bawahnya.
+   *
+   * Digambar hanya kalau induknya `terbuka` — dan `terbuka` disetel pemanggil,
+   * bukan oleh keadaan di dalam komponen ini. Sebabnya rel ini dirender di
+   * server: kalau yang menentukan keadaan internal, seluruh rel harus
+   * dihidrasi cuma untuk menampilkan submenu halaman yang sedang dibuka.
+   */
+  anak?: ItemNav[];
+  terbuka?: boolean;
 }
 
 export interface PropSisiNav {
@@ -55,12 +65,17 @@ export function SisiNav({ logo, item, kaki, sempit, className }: PropSisiNav) {
               className={["k-nav", it.aktif && "is-aktif"].filter(Boolean).join(" ")}
               href={it.href ?? "#"}
               aria-current={it.aktif ? "page" : undefined}
+              aria-expanded={it.anak ? Boolean(it.terbuka) : undefined}
             >
               <Ikon ikon={it.ikon} ukuran={24} />
               {/* Label disembunyikan di rel sempit lewat CSS, bukan dibuang
                   dari DOM: pembaca layar tetap butuh namanya, dan tooltip
                   title-nya diambil dari teks yang sama. */}
-              <span className="k-sisi__label">{it.label}</span>
+              {/* `title`: rel 192 milik Coinest dirancang untuk label Inggris
+                  yang pendek, dan beberapa nama menu di sini lebih panjang
+                  daripada 91,6px yang tersisa setelah ikon dan padding. Yang
+                  terpotong tetap bisa dibaca dengan menunjuknya. */}
+              <span className="k-sisi__label" title={typeof it.label === "string" ? it.label : undefined}>{it.label}</span>
               {/* Di rel sempit angkanya tidak muat, dan Figma memang
                   menggantinya dengan TITIK 8px di sudut ikon — bukan
                   menyembunyikannya. Angka yang hilang sama saja dengan
@@ -71,8 +86,38 @@ export function SisiNav({ logo, item, kaki, sempit, className }: PropSisiNav) {
                 ) : (
                   <Angka jumlah={it.jumlah} judul={it.jumlahJudul ?? it.label} />
                 ))}
-              {it.lipat && <Ikon ikon={CaretDown} ukuran={16} className="k-sisi__lipat" />}
+              {(it.lipat || it.anak) && (
+                <Ikon
+                  ikon={CaretDown}
+                  ukuran={16}
+                  className={["k-sisi__lipat", it.terbuka && "is-terbuka"]
+                    .filter(Boolean)
+                    .join(" ")}
+                />
+              )}
             </a>
+            {/* Submenu HANYA dirender kalau terbuka — bukan disembunyikan
+                dengan CSS. Baris menu yang ada di DOM tapi tidak tergambar
+                tetap dibacakan pembaca layar sebagai tujuan yang bisa
+                dikunjungi, dan di rel sempit ia tidak punya tempat sama
+                sekali. */}
+            {it.anak && it.terbuka && !sempit && (
+              <ul className="k-sisi__anak">
+                {it.anak.map((a) => (
+                  <li key={a.label}>
+                    <a
+                      className={["k-nav", "k-nav--sub", a.aktif && "is-aktif"]
+                        .filter(Boolean)
+                        .join(" ")}
+                      href={a.href ?? "#"}
+                      aria-current={a.aktif ? "page" : undefined}
+                    >
+                      <span className="k-sisi__label" title={typeof a.label === "string" ? a.label : undefined}>{a.label}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>

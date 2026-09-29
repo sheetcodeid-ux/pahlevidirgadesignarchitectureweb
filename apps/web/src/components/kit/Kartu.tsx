@@ -160,3 +160,67 @@ export function KartuKas({ nama, nilai, kaki, kanan, label, terang, className }:
     </div>
   );
 }
+
+/* -----------------------------------------------------------------------------
+   KARTU STATISTIK RINGKAS — 284x87, frame "04. Dashboard (v2)".
+
+   Varian KETIGA dari kartu statistik, dan ketiganya memang berbeda bentuk —
+   bukan satu komponen dengan tiga ukuran:
+
+     KartuStatistik        183x174  tegak, ikon di atas, angka di bawah
+     KartuStatistikLebar   386x88   ikon BESAR di kanan, latar mint pucat
+     KartuStatistikRingkas 284x87   ikon kecil sebaris label, lencana di kanan
+
+   Terukur dari framenya (koordinat relatif terhadap pojok kartu):
+
+     kartu    284x87 radius 15,5 latar #FBFBFC garis #E5E6E6
+     ubin     22x22 radius 8 di (15,5 , 15,5), latar #ECF4E9
+     label    tinta di (46,6 , 21,7) — 14px/400
+     nominal  tinta di (16,5 , 47)   — 24px/700, #1E4841
+     lencana  51x17 radius 8,5 rata KANAN, puncaknya 23 dari atas kartu
+     ket      tinta di y50,3 rata kanan — "+$355" 12/700 lalu 12/400
+
+   Dua angka yang gampang salah ambil: nominalnya 24px meski TINGGI tintanya
+   22,18 (glif "$" menjulang, jadi tinggi tinta bukan ukuran font — jebakan
+   yang sudah ditulis di .k-stat__nilai), dan labelnya 400 bukan 600.
+   -------------------------------------------------------------------------- */
+export function KartuStatistikRingkas({
+  ikon,
+  judul,
+  nilai,
+  tren,
+  ket,
+  className,
+}: {
+  ikon: DataIkon;
+  judul: ReactNode;
+  nilai: ReactNode;
+  /** Lencana tren di sudut kanan atas. */
+  tren?: ReactNode;
+  /** Baris keterangan di bawah lencana. */
+  ket?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={["k-statkecil", className].filter(Boolean).join(" ")}>
+      <div className="k-statkecil__kiri">
+        <p className="k-statkecil__kepala">
+          <span className="k-statkecil__ubin">
+            <Ikon ikon={ikon} ukuran={16} />
+          </span>
+          <span className="k-statkecil__judul">{judul}</span>
+        </p>
+        <p className="k-statkecil__nilai">{nilai}</p>
+        {/* Keterangan di bawah NOMINAL, bukan di bawah lencana seperti
+            framenya — dan itu dipaksa isinya, bukan dipilih. Di framenya
+            nominalnya "$8,500" (73px); di sini "Rp532.000.000" (200px) pada
+            kartu selebar 285 dengan padding 31. Keterangan di kolom kanan
+            karena itu menabrak nominalnya, dan sempat benar-benar tertindih
+            sampai angkanya tidak terbaca. Yang dipertahankan dari framenya
+            lencananya — itu yang paling terbaca sekilas. */}
+        {ket && <p className="k-statkecil__ket">{ket}</p>}
+      </div>
+      {tren && <div className="k-statkecil__kanan">{tren}</div>}
+    </div>
+  );
+}

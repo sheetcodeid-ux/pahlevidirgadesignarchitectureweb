@@ -1,0 +1,360 @@
+/* =============================================================================
+   Keuangan — Ringkasan, tata letak frame "04. Dashboard (v2)".
+
+   Semua angka di berkas ini diukur dari framenya, bukan dipilih. Kotak
+   pentingnya, dalam koordinat frame 1440:
+
+     kolom konten   220 → 1412        1192
+     tiga kolom     586 / 283 / 283   celah 20
+     baris 1        y80 → y605,5      tinggi 525
+     baris 2        y626,5 → y1005,5  tinggi 379, celah 21 dari baris 1
+
+   Di dalam kolom kiri baris 1:
+     empat kartu statistik  284x87, celah 17 mendatar dan tegak → 585x191
+     celah                  21
+     kartu arus kas         585x313
+
+   Di dalam kolom kanan baris 1:
+     kartu marjin           283x151
+     celah                  20,5
+     kartu piutang          283x354
+   ============================================================================= */
+
+/* `minmax(0, …fr)`, bukan `…fr` telanjang. Ukuran minimum sebuah track grid
+   adalah min-content ISINYA, dan isinya di sini kartu bernominal rupiah yang
+   min-content-nya lebar — jadi kolom kiri melar jadi 724,8 dan mendorong dua
+   kolom lain menyempit. Gejalanya sama persis dengan jebakan #33 di
+   CLAUDE.md, cuma pada grid, bukan flex.
+
+   Tingginya 526 dan 380, bukan 525 dan 379: <rect> bergaris di Figma
+   digambar MASUK setengah piksel di tiap sisi, jadi bingkainya selalu satu
+   piksel lebih besar daripada rect-nya. Dengan itu seluruh halaman jatuh ke
+   satu kisi celah 20 — kolom, baris, dan isi kolomnya. */
+.keu {
+  display: grid;
+  grid-template-columns: minmax(0, 586fr) minmax(0, 283fr) minmax(0, 283fr);
+  grid-template-rows: 526px 380px;
+  gap: 20px;
+}
+
+/* Kolom kiri baris 1 — dua tumpuk: kartu statistik lalu grafik arus kas. */
+.keu__kolomkiri {
+  display: grid;
+  grid-template-rows: 192px 314px;
+  gap: 20px;
+  min-width: 0;
+}
+.keu__stat {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Kolom kanan baris 1 — kartu marjin lalu kartu piutang. */
+.keu__kolomkanan {
+  display: grid;
+  grid-template-rows: 151px 355px;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Wadah kartu. Radius 15,5 dan garis #E5E6E6 — sama untuk tujuh dari delapan
+   widget; yang satunya (marjin) berlatar mint dan tanpa garis. */
+.keu__kartu {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--surface);
+}
+.keu__beban,
+.keu__tabel,
+.keu__rencana,
+.keu__aktivitas {
+  overflow: hidden;
+}
+
+/* --- Kartu marjin (slot "Finance Score") ---------------------------------
+   Satu-satunya kartu berlatar mint di halaman ini, dan itu memang yang
+   membuatnya menonjol di framenya. Radius 16, TANPA garis. */
+.keu__skor {
+  border-color: transparent;
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+.keu__skorbaris {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+.keu__skornama {
+  margin: 6px 0 0;
+  font-size: var(--k-h5);
+  font-weight: var(--k-bold);
+  line-height: 1;
+  color: var(--brand);
+}
+.keu__skorpersen {
+  margin: 0;
+  font-size: var(--k-t18);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--brand);
+}
+.keu__skor .k-bar { margin-top: 16px; }
+
+/* --- Teks kecil yang berulang di beberapa kartu -------------------------- */
+.keu__minilabel {
+  margin: 14px 0 0;
+  font-size: var(--k-t10);
+  font-weight: var(--k-reg);
+  line-height: 1;
+  color: var(--text-strong);
+}
+.keu__mininilai {
+  margin: 6px 0 0;
+  font-size: var(--k-h4);
+  font-weight: var(--k-bold);
+  line-height: 1;
+  color: var(--brand);
+}
+.keu__ket {
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+.keu__kosong {
+  margin: 16px 0 0;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+
+/* --- Arus kas ------------------------------------------------------------ */
+.keu__arusinfo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.keu__legenda {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+}
+.keu__legenda li { display: flex; align-items: center; gap: 8px; }
+/* Kotak legenda 8x8 radius 2 — terukur, bukan bulatan. */
+.keu__kotak { display: block; width: 8px; height: 8px; border-radius: 2px; }
+.keu__kotak--mint { background: var(--brand-mint); }
+.keu__kotak--tua { background: var(--brand); }
+.keu__arus .k-area { margin-top: 12px; }
+
+/* --- Rincian beban -------------------------------------------------------
+   Angkanya dari frame 04, koordinat kartu 826,5 → 1108,5:
+
+     cincin        pusat (968,248), luar 100 → kotak 200x200 di y148..348
+     "Total beban" y368 (jadi 20 dari dasar cincin)
+     nominal       y385
+     legenda       baris pertama y447,5, langkah 51,5
+     keping persen 42x31 radius 6, latar #ECF4E9, rata kanan di x1051
+
+   Cincinnya dipusatkan mendatar: 842 + (251-200)/2 = 867,5, dan framenya
+   menggambarnya mulai 868. */
+.keu__beban .k-cincin { margin: 12px auto 0; }
+.keu__beban .keu__minilabel { margin-top: 20px; }
+/* `flex: 1` + `min-height: 0`: framenya memuat TIGA kategori dan pada tiga
+   baris daftar ini pas tanpa gulir. Studio ini punya empat (freelancer,
+   operasional, prinsipal, lainnya), dan yang keempat tidak muat di kartu 525
+   — tanpa kedua properti itu ia terpotong diam-diam di tepi kartu, bukan
+   bergulir. */
+.keu__bebandaftar {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 20.5px;
+  margin: 24px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+/* 13, bukan 20,5: empat baris 31 + tiga jarak 13 = 163, dan yang tersisa di
+   kartu 525 setelah cincin, nominal, dan kepala seksi adalah 165. */
+.keu__bebandaftar--rapat { gap: 13px; }
+.keu__bebandaftar li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--k-t12);
+}
+.keu__titik { flex: none; width: 10px; height: 10px; border-radius: 3px; }
+/* `line-height: 1` wajib. Tanpanya dua baris 12px memakan 35px, barisnya
+   jadi 44,5 alih-alih 31, dan empat kategori melewati kartu 53px — terukur
+   lewat scrollHeight daftarnya, bukan dari melihat. Di framenya barisnya
+   setinggi keping persennya (31), jadi teksnya memang serapat itu. */
+.keu__bebannama {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  line-height: 1;
+  color: var(--text-strong);
+}
+.keu__bebannama b { font-weight: var(--k-bold); color: var(--brand); }
+/* 42x31 radius 6 — keping, bukan teks telanjang. Tingginya yang menentukan
+   langkah 51,5 baris legendanya. */
+.keu__bebanpersen {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 31px;
+  border-radius: 6px;
+  background: var(--brand-soft);
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  color: var(--brand);
+}
+
+/* --- Piutang (slot "Balance") -------------------------------------------- */
+/* Jarak 16 dan tinggi 96 — kedua kartu di framenya duduk di y382 dan y494
+   di dalam widget 251,5..605,5, jadi keduanya memenuhi kartunya sampai
+   padding bawah. Tanpa tinggi tetap keduanya mengerut mengikuti teks dan
+   menyisakan 64px kosong di dasar kartu. */
+.keu__saldodaftar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+/* Kartu 250x95 radius 11,5 di framenya. Latar mint pucat dengan ubin gelap
+   di kiri — bentuk yang sama dengan kartu kredit di sana. */
+.keu__saldokartu {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  padding: 12px;
+  border-radius: 11.5px;
+  background: var(--brand-soft);
+}
+.keu__saldoubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.keu__saldoisi { min-width: 0; }
+.keu__saldonama,
+.keu__saldonilai,
+.keu__saldoket { margin: 0; line-height: 1; }
+.keu__saldonama {
+  overflow: hidden;
+  font-size: var(--k-t11);
+  color: var(--text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.keu__saldonilai {
+  margin-top: 7px;
+  font-size: var(--k-t16);
+  font-weight: var(--k-bold);
+  color: var(--brand);
+}
+.keu__saldoket { margin-top: 7px; font-size: var(--k-t10); color: var(--text-muted); }
+
+/* --- Proyek berjalan (slot "Saving Plans") -------------------------------- */
+/* Langkah 83 di framenya (bar kemajuan di y781, 864, 947), dan satu butir
+   di sini setinggi 50 — jadi jaraknya 33, bukan 18. Dengan 18 ketiga butir
+   menggerombol di atas dan menyisakan 71px kosong di dasar kartu. */
+.keu__rencanadaftar {
+  display: flex;
+  flex-direction: column;
+  gap: 33px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.keu__rencananama {
+  overflow: hidden;
+  margin: 0 0 10px;
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.keu__rencanakaki {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--text-strong);
+}
+.keu__rencanakaki i { font-style: normal; color: var(--text-muted); }
+.keu__rencanakaki b { font-weight: var(--k-semi); color: var(--brand); }
+
+/* --- Biaya terbaru (slot "Recent Activities") ----------------------------- */
+/* `flex: 1` + `min-height: 0` harus berdua. Tanpa `min-height: 0` sebuah
+   anak flex tidak pernah menyusut di bawah tinggi isinya, jadi `overflow-y`
+   tidak pernah menyala dan yang terjadi isinya terpotong di tepi kartu —
+   jebakan #33 di CLAUDE.md, arah tegaknya. */
+.keu__aktivitasisi { flex: 1; min-height: 0; margin-top: 16px; overflow-y: auto; }
+/* Satu baris ber-elipsis. Tanpa `min-width: 0` di .k-log__isi teks ini tidak
+   pernah memendek — lebar min-content sebuah anak flex adalah lebar isinya,
+   jebakan #33. */
+.keu__aktivitasisi .k-log__teks {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Langkah 45 di framenya: ubin 30 + 15. */
+.keu__aktivitasisi .k-log { padding-bottom: 15px; }
+.keu__aktivitasisi .k-log--akhir { padding-bottom: 0; }
+/* Kepala hari 12px dengan jarak rapat. Angkanya diturunkan dari ruang yang
+   tersisa, bukan dipilih: kartunya 380, dan setelah garis, padding, kepala
+   seksi dan jaraknya tersisa 298 untuk lima butir. Butirnya sendiri 49, jadi
+   empat kepala hari hanya boleh memakai 24 masing-masing. Di framenya cuma
+   ada DUA kepala hari untuk lima butir — data studio ini lebih menyebar. */
+.keu__harilabel {
+  margin: 0 0 8px;
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--text-strong);
+}
+.keu__aktivitasisi > div + div .keu__harilabel { margin-top: 4px; }
+
+/* --- Tabel rekap ---------------------------------------------------------- */
+.keu__tabel .k-tabel { margin-top: 14px; }
+
+/* Rangka saat sesi belum diperiksa: kotak kosong setinggi halamannya, supaya
+   tinggi halaman tidak melompat begitu isinya datang. */
+.keu--rangka { min-height: 925px; }
+
+/* Di bawah lebar framenya, tiga kolom jadi satu — bukan diperas. Kolom 283
+   yang menyempit membuat donat dan bar kemajuan tidak terbaca. */
+@media (max-width: 1240px) {
+  .keu {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+  .keu__kolomkiri,
+  .keu__kolomkanan { grid-template-rows: none; }
+  .keu__kartu { min-height: 0; }
+}

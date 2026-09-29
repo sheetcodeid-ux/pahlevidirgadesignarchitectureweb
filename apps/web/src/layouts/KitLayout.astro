@@ -1,0 +1,198 @@
+---
+import "../styles/global.css";
+import "../styles/kit.css";
+import { ClientRouter } from "astro:transitions";
+import { RelKit } from "../components/admin/RelKit";
+import { KepalaKit } from "../components/admin/KepalaKit";
+import { KakiHalaman } from "../components/kit/Item";
+
+/* =============================================================================
+   Kerangka panel admin versi KIT — frame Coinest.
+
+   Hidup BERDAMPINGAN dengan AdminLayout, tidak menggantikannya. Halaman
+   dipindahkan satu per satu (P4), dan yang belum pindah tetap memakai
+   kerangka lama; itu rencana yang sudah ditulis di CLAUDE.md sejak awalan
+   `k-` dipilih. Menukar AdminLayout sekaligus berarti keempat belas halaman
+   berubah dalam satu putaran, dan tidak satu pun sempat diukur.
+
+   Ukuran kerangkanya, dari frame 1440 lebar:
+
+     rel samping   0 → 192        latar #ECF4E9
+     talang kiri   192 → 220      28
+     kolom konten  220 → 1412     1192
+     talang kanan  1412 → 1440    28
+     kepala        y22, tinggi 38
+     badan         mulai y80      (jarak 20 dari kepala)
+     kaki          y1028,2        (jarak 22,7 dari dasar badan)
+
+   Latar halamannya PUTIH; yang mint cuma rel sampingnya. Membaca itu dari
+   SVG-nya menyesatkan — di sana ada rect mint 1440x1072 DAN rect putih
+   1440x1072, dan yang menang tergantung urutan gambar. Yang menjawab
+   melihat framenya sebagai gambar.
+   ============================================================================= */
+
+interface Props {
+  title: string;
+  /** Judul di kepala halaman. Jatuh ke `title` kalau kosong. */
+  judul?: string;
+}
+
+const { title, judul } = Astro.props;
+const path = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="id" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title} — Admin Dirga Pahlevi Architecture</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700&display=swap"
+    />
+
+    <ClientRouter fallback="none" />
+
+    <script is:inline>
+      (function () {
+        try {
+          var simpan = localStorage.getItem("tema");
+          var sistem = window.matchMedia("(prefers-color-scheme: light)").matches
+            ? "light"
+            : "dark";
+          document.documentElement.setAttribute("data-theme", simpan || sistem);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
+
+    <script is:inline>
+      (function () {
+        // Tema. Astro menyalin atribut <html> dari dokumen baru, dan dokumen
+        // baru selalu berisi data-theme="light" hasil build.
+        document.addEventListener("astro:before-swap", function (e) {
+          var tema = document.documentElement.getAttribute("data-theme");
+          if (tema) e.newDocument.documentElement.setAttribute("data-theme", tema);
+        });
+        // Overlay yang sedang terbuka menempel di <body> lewat portal, di luar
+        // bagian yang ikut ditukar.
+        document.addEventListener("astro:before-preparation", function () {
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        });
+      })();
+    </script>
+  </head>
+
+  <body class="kl-body">
+    <a href="#konten" class="sr-only">Lewati ke konten</a>
+
+    <div class="kl">
+      {/* transition:persist — rel samping tidak dipasang ulang tiap pindah
+          halaman. Ia tidak punya keadaan internal, tapi memasang ulang 12
+          baris ikon SVG di tiap klik menu adalah kerja yang tidak menghasilkan
+          apa-apa. */}
+      <RelKit client:load transition:persist path={path} namaStudio="Dirga Pahlevi" />
+
+      <div class="kl__utama">
+        <KepalaKit judul={judul ?? title} />
+
+        <main id="konten" class="kl__isi" transition:animate="none">
+          <slot />
+        </main>
+
+        <KakiHalaman
+          hakCipta={`© ${new Date().getFullYear()} Dirga Pahlevi Architecture`}
+          tautan={[
+            { label: "Kebijakan Privasi", href: "/privasi" },
+            { label: "Pertanyaan Umum", href: "/faq" },
+            { label: "Kontak", href: "/kontak" },
+          ]}
+        />
+      </div>
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  /* Latar halaman putih, bukan warna dasar panel lama. Yang mint cuma rel
+     sampingnya, dan itu sudah diurus .k-sisi sendiri. */
+  .kl-body {
+    margin: 0;
+    background: var(--surface);
+    font-family: var(--font-sans);
+  }
+
+  .kl {
+    display: flex;
+    min-height: 100vh;
+    /* Mint rel sampingnya dilukis DI SINI juga, bukan cuma di .k-sisi.
+       Sebabnya: .k-sisi menempel (`sticky`) dan karena itu setinggi viewport,
+       sementara halamannya lebih panjang — jadi mintnya berhenti di tengah
+       jalan dan sisanya putih. Terlihat jelas di tangkapan layar halaman
+       penuh. Gradien ini setinggi .kl, yang memang ikut isi halaman. */
+    background: linear-gradient(
+      to right,
+      var(--brand-soft) 0 var(--kl-rel, 192px),
+      transparent var(--kl-rel, 192px)
+    );
+  }
+  /* Rel samping menempel; isinya yang bergulir. Tanpa ini menu ikut hilang ke
+     atas di halaman yang panjang — dan di frame Coinest rel itu setinggi
+     kanvas, jadi ia memang tidak pernah bergulir. */
+  /* `.kl .k-sisi`, BUKAN `.kl > .k-sisi` — jebakan #1 di CLAUDE.md. RelKit
+     dihidrasi (`client:load`), jadi Astro membungkusnya dengan
+     `<astro-island>` ber-`display: contents`. Tata letaknya berperilaku
+     seolah rel itu anak langsung .kl, tapi bagi selektor CSS pembungkusnya
+     tetap ada — dan seluruh aturan di bawah ini diam-diam tidak pernah
+     menyala. Gejalanya: rel setinggi ISINYA (600) alih-alih setinggi
+     viewport, dan mintnya berhenti di tengah halaman. */
+  .kl .k-sisi {
+    position: sticky;
+    top: 0;
+    flex: none;
+    height: 100vh;
+  }
+  .kl__logo {
+    display: block;
+    padding-top: 30px;
+    font-size: var(--k-t16);
+    font-weight: var(--k-bold);
+    color: var(--brand);
+  }
+
+  .kl__utama {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    /* 22 atas / 28 samping / 24 bawah — talang framenya. */
+    padding: 22px 28px 24px;
+  }
+  /* 20 dari kepala ke badan, 22,7 dari badan ke kaki. Keduanya diukur dari
+     framenya, bukan dipilih: kepala berakhir di y60 dan badan mulai y80;
+     badan berakhir 1005,5 dan tinta kaki mulai 1028,2. */
+  .kl__isi {
+    flex: 1;
+    margin-top: 20px;
+  }
+  .kl__utama > .k-kakihal {
+    margin-top: 22.7px;
+  }
+
+  /* Di bawah lebar frame rel sampingnya menyempit jadi ikon saja. Halaman
+     admin ini tidak pernah dibuka dari ponsel oleh staf — tapi dibuka dari
+     laptop kecil, dan di situ 192 + 1192 + talang tidak muat. */
+  @media (max-width: 1200px) {
+    .kl__utama {
+      padding: 22px 20px 24px;
+    }
+  }
+</style>

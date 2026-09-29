@@ -1553,6 +1553,21 @@
 /* Titik di rel sempit menumpang di sudut kanan-atas ikonnya. */
 .k-sisi--sempit .k-nav { position: relative; }
 .k-sisi--sempit .k-titik { position: absolute; top: 9px; right: 9px; }
+/* Submenu — daftar bersarang di bawah induknya. Jaraknya 8 seperti baris
+   biasa; yang membedakan cuma padding kirinya (.k-nav--sub 60,4) dan garis
+   tegak penandanya, keduanya sudah ada sejak P2. */
+.k-sisi__anak {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* Caret ikut berputar saat submenunya terbuka — satu-satunya tanda bahwa
+   baris itu punya isi yang sedang ditampilkan. */
+.k-sisi__lipat { transition: transform var(--dur) var(--ease); }
+.k-sisi__lipat.is-terbuka { transform: rotate(180deg); }
 .k-sisi__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .k-sisi__kaki { margin-top: auto; padding: 0 0 26px; }
 
@@ -1729,6 +1744,7 @@
 .k-bar,
 .k-area,
 .k-busur,
+.k-cincin,
 .k-statlebar { line-height: 1; }
 
 .k-kepalaseksi {
@@ -2653,6 +2669,14 @@
 .k-busur__ket { margin: 8.1px 0 0; font-size: var(--k-t10); color: var(--text-strong); }
 .k-busur__ket b { margin-right: 5px; font-weight: var(--k-semi); color: var(--brand); }
 
+/* --- Cincin sepusat (Expense Breakdown, frame 04) -------------------------
+   Kotaknya bujur sangkar dan lebarnya dibatasi 200 — jari-jari luar framenya
+   100, dan membesarkannya mengikuti lebar kartu akan menebalkan cincinnya
+   ikut-ikutan. Yang digambar framenya cincin setebal 14 pada kartu 283, dan
+   itu proporsi yang memang sengaja dipilih di sana. */
+.k-cincin { display: block; width: 200px; max-width: 100%; }
+.k-cincin > svg { display: block; width: 100%; height: auto; }
+
 /* --- Kartu statistik lebar ------------------------------------------------ */
 .k-statlebar {
   display: flex;
@@ -2772,6 +2796,87 @@
   border-radius: 4px;
   box-shadow: 0 0 0 1px var(--brand-soft);
   background: var(--brand-mint);
+}
+
+/* --- Kartu statistik ringkas 284x87 — frame 04. Dashboard (v2) ------------
+   Angka-angkanya dan kenapa begitu ada di komentar komponennya di Kartu.tsx.
+   Yang ditulis di sini cuma akibatnya di CSS. */
+.k-statkecil {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  /* 88, bukan 87: 87 itu ukuran <rect>-nya, dan garisnya mengangkangi tepi.
+     box-sizing border-box, jadi 88 sudah termasuk garis 1px di dua sisi. */
+  height: 88px;
+  padding: 15.5px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  /* #FBFBFC — nyaris putih, tapi BUKAN putih. Latar halamannya putih, dan
+     kalau kartunya ikut putih yang memisahkannya tinggal garis 1px. */
+  background: var(--bg);
+  line-height: 1;
+}
+.k-statkecil__kiri { display: flex; flex-direction: column; min-width: 0; }
+.k-statkecil__kepala {
+  display: flex;
+  align-items: center;
+  /* 46,6 - (15,5 + 22) = 9,1 dari tepi kanan ubin ke tinta label; bearing
+     kiri "I" memakan sebagian, jadi kotaknya 8,6. */
+  gap: 8.6px;
+  margin: 0;
+}
+.k-statkecil__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.k-statkecil__judul {
+  overflow: hidden;
+  font-size: var(--k-t14);
+  font-weight: var(--k-reg);
+  color: var(--text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 24/700 hijau tua — sama seperti setiap nominal di Coinest. Jangan
+   diturunkan dari tinggi tintanya: stringnya memuat "Rp" atau "$". */
+.k-statkecil__nilai {
+  overflow: hidden;
+  margin: 8.6px 0 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--k-h4);
+  font-weight: var(--k-bold);
+  color: var(--brand);
+}
+/* Kolom kanan turun 7,5 lebih dalam daripada padding kartunya — lencananya
+   mulai di 23 dari puncak kartu, bukan 15,5. */
+.k-statkecil__kanan {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 7.5px;
+}
+.k-statkecil__ket {
+  overflow: hidden;
+  margin: 7px 0 0;
+  font-size: var(--k-t10);
+  font-weight: var(--k-reg);
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Angkanya sendiri lebih tebal dan hijau tua; kalimat sesudahnya tidak. */
+.k-statkecil__ket b {
+  font-weight: var(--k-bold);
+  color: var(--brand);
 }
 
 /* --- Lencana tren 54x17, dipakai kartu statistik lebar dan baris watchlist

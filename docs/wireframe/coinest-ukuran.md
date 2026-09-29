@@ -54,8 +54,15 @@ Lima hal ketahuan begitu, dan semuanya sudah diperbaiki di spek:
 - `Section Statistic` di Dashboard v2 berisi **empat** kartu 2x2, bukan dua.
 - `Widget Cashflow` grafik **area** dua garis, bukan batang.
 - `Widget Finance Score` kartu berbar kemajuan, bukan sparkline.
-- `Section Plans` di Dashboard v2 isinya **Recent Activities**, jadi
-  `BarisAktivitas` — bukan `BarisLog`.
+- ~~`Section Plans` di Dashboard v2 isinya **Recent Activities**, jadi
+  `BarisAktivitas` — bukan `BarisLog`.~~ **Ini salah, dan kebalikannya yang
+  benar.** SVG framenya menyebut `Section Plans > Div Logs > Div Log >
+  Log List > Log Item`, lima buah, dengan ubin **lingkaran 30x30** mint di
+  (1145, 723/768/813/901/946) — langkah 45, dua kepala hari. Itu bentuk
+  `BarisLog`. Ubin aktivitas justru 32 bujur sangkar dengan garis
+  penyambung tegak. Ketahuan waktu halamannya dibangun (P4) dan
+  tangkapan layarnya ditumpuk dengan framenya, bukan dari membaca
+  catatan ini.
 - `Section Plans` di Saving Plans kartu berbar kemajuan, bukan
   `BarisPenyedia`.
 
@@ -72,6 +79,15 @@ terbangun di P2:
 | Grafik area bertangga | Investments |
 | Busur (gauge) | Investments |
 | Kartu statistik LEBAR, ikon di kanan | Saving Plans, Invoices |
+| **Cincin sepusat** | Dashboard v2 (Expense Breakdown) |
+| **Kartu statistik RINGKAS 284x87** | Dashboard v2 (Section Statistic) |
+
+Dua yang terakhir baru ketahuan saat halaman `/admin/keuangan` dibangun,
+jadi keduanya lahir di P4 dan bukan di P2. Keduanya terdaftar di
+`/admin/kit` pada seksi "Bentuk dari frame Interface", dan sengaja TIDAK
+punya entri di seksi "Banding dengan Figma": acuan di sana dipotong dari
+lima belas frame Style &amp; Component, sementara keduanya hanya ada di frame
+Interface.
 
 Kelimanya harus dibangun sebelum halaman yang memakainya. Membangun
 halamannya dulu berarti memasang bentuk pengganti, lalu menggantinya lagi —

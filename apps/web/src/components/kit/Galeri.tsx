@@ -7,7 +7,9 @@ import { Remah } from "./Remah";
 import { Paginasi } from "./Paginasi";
 import { Cari, Isian, Centang, Sakelar } from "./Isian";
 import { GaleriBanding } from "./GaleriBanding";
-import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, SEMUA_IKON } from "./ikon";
+import { Cincin, LencanaTren } from "./Ukuran";
+import { KartuStatistikRingkas } from "./Kartu";
+import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, SEMUA_IKON } from "./ikon";
 
 /* =============================================================================
    Galeri kit — halaman kerja, bukan hiasan.
@@ -253,6 +255,44 @@ export function Galeri() {
         <Baris judul="Toggle — 28x16">
           <Sakelar judul="Tampilkan di beranda" defaultChecked />
           <Sakelar judul="Kirim notifikasi" />
+        </Baris>
+      </section>
+
+      {/* Dua bentuk yang lahir di P4, bukan di P2 — dan itu sebabnya keduanya
+          TIDAK punya entri di seksi "Banding dengan Figma" di atas: acuan di
+          sana dipotong dari lima belas frame Style & Component, sementara
+          keduanya cuma ada di frame Interface. Yang membuktikannya
+          penumpukan halaman utuh di `scripts/banding`, bukan potongan
+          per-komponen. */}
+      <section className="k-galeri__seksi">
+        <h2 className="k-galeri__judul">Bentuk dari frame Interface</h2>
+        <p className="k-galeri__ket">
+          Dua bentuk yang tidak ada di frame Style &amp; Component, jadi
+          keduanya diukur langsung dari frame halaman yang memakainya.
+        </p>
+        <Baris judul="Cincin sepusat — frame 04, luar 100, tebal 14, lubang 30">
+          <Cincin
+            iris={[
+              { persen: 50, warna: "var(--brand)" },
+              { persen: 30, warna: "var(--brand-mint)" },
+              { persen: 20, warna: "var(--ramp-5)" },
+            ]}
+          />
+        </Baris>
+        <Baris judul="Kartu statistik ringkas — 284x87, ubin 22, nominal 24/700">
+          <div style={{ width: 284 }}>
+            <KartuStatistikRingkas
+              ikon={CoinIn}
+              judul="Kas masuk"
+              nilai="Rp532.000.000"
+              tren={<LencanaTren>4,20 %</LencanaTren>}
+              ket={
+                <>
+                  <b>Rp48.000.000</b> bulan ini
+                </>
+              }
+            />
+          </div>
         </Baris>
       </section>
 
