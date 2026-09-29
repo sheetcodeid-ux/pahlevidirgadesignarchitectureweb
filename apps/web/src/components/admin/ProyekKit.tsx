@@ -14,7 +14,7 @@ import {
   CoinIn,
   CoinOut,
   DotsThreeVertical,
-  Globe,
+  Eye,
   NotePencil,
   Plus,
 } from "../kit/ikon";
@@ -47,7 +47,7 @@ import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
        nama kartu / logo        judul proyek / kategori
        saldo / Debit-Credit     nilai kontrak / status terbit
        Card Number, EXP, CVV    klien, tahun, kota
-     Top Up / Transfer / Pay    Ubah / Terima Bayar / Halaman publik
+     Top Up / Transfer / Pay    Buka (Satu Proyek) / Ubah / Terima Bayar
      Card Number                klien
      Expiry, CVC, Status        tahap pipeline, fase klien, status terbit
      Spending Limits            pembayaran: diterima terhadap nilai kontrak
@@ -83,7 +83,7 @@ const STATUS: Record<string, { teks: string; nada: "selesai" | "menunggu" | "net
 // Dua daftar ini SAMA dengan daftar lama (ProjectList) dan dengan editor
 // proyek — nilainya disimpan di database, jadi mengubah satu kata di sini
 // berarti tahap lama tidak lagi punya label.
-const TAHAP: { value: string; label: string }[] = [
+export const TAHAP: { value: string; label: string }[] = [
   { value: "proposal", label: "Proposal" },
   { value: "deal_kontrak", label: "Deal Kontrak" },
   { value: "dp_50", label: "DP 50%" },
@@ -173,7 +173,7 @@ interface Transaksi {
  * ditumpangkan transparan — pola `.k-pilihtombol` dalam ukuran teks. Yang
  * tergambar nilainya; yang dibuka daftar bawaan peramban.
  */
-function PilihTeks({
+export function PilihTeks({
   judul,
   nilai,
   opsi,
@@ -454,9 +454,12 @@ function Isi() {
                 tab={
                   kini
                     ? [
+                        /* "Buka" ke halaman Satu Proyek (frame 22). Tautan ke
+                           halaman publik pindah ke sana, di kepala daftar
+                           tahapnya. */
+                        { nilai: "buka", label: "Buka", ikon: Eye, href: `/admin/proyek/satu?id=${kini.id}` },
                         { nilai: "ubah", label: "Ubah", ikon: NotePencil, href: `/admin/proyek/edit?id=${kini.id}` },
                         { nilai: "terima", label: "Terima Bayar", ikon: CoinIn, href: `/admin/keuangan/terima?proyek=${kini.id}` },
-                        { nilai: "publik", label: "Halaman", ikon: Globe, href: `/proyek/${kini.slug}` },
                       ]
                     : []
                 }
