@@ -1518,4 +1518,116 @@ begin
 end;
 $$;
 
+-- service_tiers (paket layanan) ----------------------------------------
+--
+-- Dibaca beranda saat build. Publik hanya boleh melihat paket AKTIF; paket
+-- yang dihentikan tetap di tabel sebagai arsip harga lama dan tidak boleh
+-- bocor ke luar staf.
+
+insert into public.service_tiers (group_key, slug, name, fee_min, fee_max, is_active)
+values ('kafe', 'uji-mati', 'Paket Uji Mati', 5, 9, false);
+
+do $$
+declare aktif int; mati int;
+begin
+  perform pg_temp.jadi_anon();
+
+  select count(*) into aktif from public.service_tiers where slug = 'starter';
+  perform pg_temp.tolak(aktif <> 1, 'anon melihat paket aktif');
+
+  select count(*) into mati from public.service_tiers where slug = 'uji-mati';
+  perform pg_temp.tolak(mati <> 0, 'anon TIDAK melihat paket yang dihentikan');
+
+  begin
+    insert into public.service_tiers (group_key, slug, name, fee_min, fee_max)
+    values ('kafe', 'anon-nyelip', 'Nyelip', 1, 2);
+    raise exception 'GAGAL: anon berhasil menulis service_tiers';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis service_tiers';
+  end;
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terkena int; mati int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+
+  update public.service_tiers set fee_min = 1 where slug = 'starter';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 0, 'non-staf tidak bisa mengubah harga paket');
+
+  select count(*) into mati from public.service_tiers where slug = 'uji-mati';
+  perform pg_temp.tolak(mati <> 0, 'non-staf juga tidak melihat paket yang dihentikan');
+
+  reset role;
+end;
+$$;
+
+do $$
+declare terkena int; mati int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  select count(*) into mati from public.service_tiers where slug = 'uji-mati';
+  perform pg_temp.tolak(mati <> 1, 'staf melihat paket yang dihentikan');
+
+  update public.service_tiers set fee_min = 17, fee_max = 27 where slug = 'starter';
+  get diagnostics terkena = row_count;
+  perform pg_temp.tolak(terkena <> 1, 'staf bisa mengubah harga paket');
+
+  reset role;
+end;
+$$;
+
+do $$
+begin
+  begin
+    insert into public.service_tiers (group_key, slug, name, fee_min, fee_max)
+    values ('kafe', 'terbalik', 'Terbalik', 50, 20);
+    raise exception 'GAGAL: batas atas fee di bawah batas bawah diterima';
+  exception when check_violation then
+    raise notice 'ok: batas atas fee di bawah batas bawah ditolak';
+  end;
+
+  begin
+    insert into public.service_tiers (group_key, slug, name, fee_min, fee_max)
+    values ('kafe', 'Ada Spasi', 'Slug Buruk', 1, 2);
+    raise exception 'GAGAL: slug berspasi dan huruf besar diterima';
+  exception when check_violation then
+    raise notice 'ok: slug berspasi dan huruf besar ditolak';
+  end;
+
+  begin
+    insert into public.service_tiers (group_key, slug, name, fee_min, fee_max)
+    values ('kantor', 'kantor-a', 'Kelompok Asing', 1, 2);
+    raise exception 'GAGAL: kelompok di luar kafe/rumah diterima';
+  exception when check_violation then
+    raise notice 'ok: kelompok di luar kafe/rumah ditolak';
+  end;
+end;
+$$;
+
+-- Mengubah paket harus menyalakan tombol Terbitkan, termasuk menghapusnya.
+do $$
+declare sebelum timestamptz;
+begin
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+  update public.service_tiers set name = 'Starter Baru' where slug = 'starter';
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'mengubah paket mencap content_revision');
+
+  select changed_at into sebelum from public.content_revision;
+  perform pg_sleep(0.01);
+  delete from public.service_tiers where slug = 'uji-mati';
+  perform pg_temp.tolak(
+    (select changed_at from public.content_revision) <= sebelum,
+    'MENGHAPUS paket mencap content_revision');
+end;
+$$;
+
 rollback;

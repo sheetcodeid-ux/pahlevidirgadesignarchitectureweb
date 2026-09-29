@@ -1,7 +1,8 @@
 import {
   VALID_CATEGORIES, VALID_PROJECT_STATUS, VALID_PIPELINE_STAGE, VALID_JOURNAL_CATEGORY,
 } from "../types";
-import type { ProjectInput, JournalPostInput } from "../types";
+import type { ProjectInput, JournalPostInput, ServiceTierInput } from "../types";
+import { VALID_TIER_GROUP } from "../types";
 
 /** Slug hanya huruf kecil, angka, dan tanda hubung — aman dipakai di URL. */
 export function isValidSlug(s: string): boolean {
@@ -117,5 +118,54 @@ export function checkJournalInput(
     if (isi.length < 200) return "tulisan yang diterbitkan harus punya isi minimal 200 karakter";
     if (Number.isNaN(Date.parse(input.publishedAt))) return "tanggal terbit tidak sah";
   }
+  return null;
+}
+
+/**
+ * Paket layanan. Batas-batasnya sama dengan CHECK di migrasi 20260929000025 —
+ * yang di sini ada supaya pesannya menyebut sebabnya, bukan "check violation".
+ *
+ * `fee` diperiksa berpasangan kalau keduanya dikirim; kalau cuma satu yang
+ * berubah, perbandingannya dengan nilai lama dijaga CHECK di database.
+ */
+export function checkTierInput(input: ServiceTierInput, wajibLengkap: boolean): string | null {
+  const ada = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+  const teks = (v: unknown, maks: number) => v === undefined || (typeof v === "string" && v.length <= maks);
+
+  if (wajibLengkap || input.group !== undefined) {
+    if (!VALID_TIER_GROUP.has(input.group ?? "")) return "kelompok paket harus kafe atau rumah";
+  }
+  if (wajibLengkap || input.slug !== undefined) {
+    if (!ada(input.slug)) return "kode paket wajib diisi";
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(input.slug!) || input.slug!.length > 40) {
+      return "kode paket hanya huruf kecil, angka, dan tanda hubung (maks. 40)";
+    }
+  }
+  if (wajibLengkap || input.name !== undefined) {
+    if (!ada(input.name)) return "nama paket wajib diisi";
+    if (input.name!.trim().length > 60) return "nama paket maksimal 60 karakter";
+  }
+  if (wajibLengkap || input.feeMin !== undefined) {
+    if (!Number.isInteger(input.feeMin) || input.feeMin! < 0) return "fee terendah harus bilangan bulat, dalam juta";
+  }
+  if (wajibLengkap || input.feeMax !== undefined) {
+    if (!Number.isInteger(input.feeMax) || input.feeMax! < 0) return "fee tertinggi harus bilangan bulat, dalam juta";
+  }
+  if (input.feeMin !== undefined && input.feeMax !== undefined && input.feeMax < input.feeMin) {
+    return "fee tertinggi tidak boleh lebih kecil dari fee terendah";
+  }
+  if (!teks(input.summary, 240)) return "ringkasan maksimal 240 karakter";
+  if (!teks(input.forWhom, 160)) return "keterangan 'untuk siapa' maksimal 160 karakter";
+  if (!teks(input.includesHeading, 80)) return "judul daftar isi maksimal 80 karakter";
+  if (input.includes !== undefined) {
+    if (!Array.isArray(input.includes) || input.includes.some((b) => typeof b !== "string")) {
+      return "isi paket harus daftar teks";
+    }
+    if (input.includes.some((b) => b.includes("\n"))) return "satu butir isi paket tidak boleh berisi baris baru";
+    if (input.includes.join("\n").length > 2000) return "isi paket terlalu panjang (maks. 2000 karakter)";
+  }
+  if (input.sortOrder !== undefined && !Number.isInteger(input.sortOrder)) return "urutan harus bilangan bulat";
+  if (input.highlighted !== undefined && typeof input.highlighted !== "boolean") return "sorotan harus ya/tidak";
+  if (input.active !== undefined && typeof input.active !== "boolean") return "status aktif harus ya/tidak";
   return null;
 }

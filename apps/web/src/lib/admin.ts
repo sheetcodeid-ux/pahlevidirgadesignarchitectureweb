@@ -429,6 +429,28 @@ export const ubahStatusPesan = (id: string, status: string) =>
     body: JSON.stringify({ status }),
   });
 
+// --- Paket layanan -------------------------------------------------------
+
+/** Bentuknya sama dengan yang dibaca beranda — satu tipe untuk keduanya. */
+export type { Paket } from "./api";
+import type { Paket as PaketApi } from "./api";
+
+/** undefined = jangan diubah. Fee dalam juta. */
+export type PaketInput = Partial<Omit<PaketApi, "id" | "updatedAt">>;
+
+/** Semua paket, TERMASUK yang dihentikan — beranda cuma melihat yang aktif. */
+export const daftarPaket = () => panggil<PaketApi[]>("/admin/tiers");
+export const ambilPaket = (id: string) => panggil<PaketApi>(`/admin/tiers/${encodeURIComponent(id)}`);
+export const buatPaket = (p: PaketInput) =>
+  panggil<{ id: string }>("/admin/tiers", { method: "POST", body: JSON.stringify(p) });
+export const ubahPaket = (id: string, p: PaketInput) =>
+  panggil<{ updated: boolean }>(`/admin/tiers/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(p),
+  });
+export const hapusPaket = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/tiers/${encodeURIComponent(id)}`, { method: "DELETE" });
+
 // --- Unggahan -------------------------------------------------------------
 
 export const mintaUrlUnggah = (projectSlug: string, contentType: string) =>

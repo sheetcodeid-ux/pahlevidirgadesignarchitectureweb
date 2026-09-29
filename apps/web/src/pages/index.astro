@@ -4,6 +4,7 @@ import {
   listProjects,
   listClients,
   listTestimonials,
+  listTiers,
   getSettings,
   subjudulBerguna,
   KATEGORI_LABEL,
@@ -11,7 +12,7 @@ import {
   type ProjectImage,
 } from "../lib/api";
 import { SOROTAN_FAQ } from "../lib/faq";
-import { TIER } from "../lib/tier";
+import { kelompokkan } from "../lib/tier";
 
 const settings = await getSettings();
 const kota = settings.city?.trim() || "Indonesia";
@@ -22,6 +23,9 @@ const semua = await listProjects({ limit: 200 });
    sudah dikirim pemilik tapi yang tayang cuma namanya. */
 const klien = await listClients();
 const testimoni = await listTestimonials(true);
+/* Paket layanan dari database, diurus pemilik lewat /admin/paket. Hanya
+   yang aktif, dikelompokkan jadi dua tab. */
+const TIER = kelompokkan(await listTiers());
 
 /* Showcase: proyek yang diunggulkan lebih dulu, lalu yang terbaru.
    SELURUHNYA, tidak dipotong. Dulu dipotong tiga dengan alasan "bilah tabnya
@@ -468,7 +472,7 @@ const fakta = (p: Project) =>
 
   {/* ══ TARIF ═════════════════════════════════════════════════════════════
       Angkanya diterbitkan, bukan disembunyikan di balik "hubungi kami".
-      Alasannya ada di lib/tier.ts.
+      Alasannya ada di lib/tier.ts; angkanya dari /admin/paket.
 
       Dua kelompok dipisah jadi TAB, bukan enam kartu ditumpuk — enam kartu
       sekaligus adalah dinding yang tidak dibaca siapa pun, dan yang membaca

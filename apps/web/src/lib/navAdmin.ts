@@ -144,6 +144,7 @@ export const NAV: NavItem[] = [
     ikonKit: "Globe",
     group: "",
     children: [
+      { label: "Paket Layanan", href: "/admin/paket", icon: "cash", ikonKit: "NavSealPercent" },
       { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", ikonKit: "ImageSquare" },
       { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", ikonKit: "Users" },
       { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", ikonKit: "ArrowsLeftRight" },

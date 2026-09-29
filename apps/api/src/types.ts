@@ -548,6 +548,46 @@ export interface ClientLogoInput {
   sortOrder?: number;
 }
 
+/** Dua kelompok paket di beranda. Kelompoknya sendiri (nama tab, kalimat
+ *  pengantar) hidup di kode web — lihat migrasi 20260929000025. */
+export type TierGroup = "kafe" | "rumah";
+export const VALID_TIER_GROUP: ReadonlySet<string> = new Set(["kafe", "rumah"]);
+
+/** Satu paket layanan. Fee dalam JUTA rupiah. */
+export interface ServiceTier {
+  id: string;
+  group: TierGroup;
+  slug: string;
+  name: string;
+  summary: string;
+  feeMin: number;
+  feeMax: number;
+  forWhom: string;
+  includesHeading: string;
+  /** Satu butir per elemen — di database satu butir per baris. */
+  includes: string[];
+  highlighted: boolean;
+  active: boolean;
+  sortOrder: number;
+  updatedAt: string;
+}
+
+/** undefined = jangan diubah. */
+export interface ServiceTierInput {
+  group?: string;
+  slug?: string;
+  name?: string;
+  summary?: string;
+  feeMin?: number;
+  feeMax?: number;
+  forWhom?: string;
+  includesHeading?: string;
+  includes?: string[];
+  highlighted?: boolean;
+  active?: boolean;
+  sortOrder?: number;
+}
+
 /**
  * Empat jenis, diturunkan dari §5.2 dan §5.3 dokumen strategi. Yang
  * menentukan siapa muncul di halaman Gaji dan siapa dibayar per proyek.

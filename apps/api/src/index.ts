@@ -13,6 +13,7 @@ import { settings } from "./routes/settings";
 import { testimonials } from "./routes/testimonials";
 import { journal } from "./routes/journal";
 import { clients } from "./routes/clients";
+import { tiers } from "./routes/tiers";
 import { studioTeam } from "./routes/studioTeam";
 import { rateLimit } from "./middleware/rateLimit";
 
@@ -42,6 +43,7 @@ v1.route("/", settings);
 v1.route("/", testimonials);
 v1.route("/", journal);
 v1.route("/", clients);
+v1.route("/", tiers);
 v1.route("/", studioTeam);
 
 // Login dibatasi lebih ketat daripada form kontak: sepuluh percobaan per IP

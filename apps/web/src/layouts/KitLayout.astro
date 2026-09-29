@@ -41,9 +41,11 @@ interface Props {
   title: string;
   /** Judul di kepala halaman. Jatuh ke `title` kalau kosong. */
   judul?: string;
+  /** Alamat tombol panah kembali di kiri judul — frame detail Coinest. */
+  kembali?: string;
 }
 
-const { title, judul } = Astro.props;
+const { title, judul, kembali } = Astro.props;
 const path = Astro.url.pathname;
 ---
 
@@ -108,7 +110,13 @@ const path = Astro.url.pathname;
       <RelKit client:load transition:persist path={path} namaStudio="Dirga Pahlevi" />
 
       <div class="kl__utama">
-        <KepalaKit judul={judul ?? title} />
+        {/* Hanya kepala bertombol kembali yang dihidrasi: tombol itu satu-satunya
+            bagian kepala yang perlu JavaScript. */}
+        {kembali ? (
+          <KepalaKit client:load judul={judul ?? title} kembali={kembali} />
+        ) : (
+          <KepalaKit judul={judul ?? title} />
+        )}
 
         <main id="konten" class="kl__isi" transition:animate="none">
           <slot />

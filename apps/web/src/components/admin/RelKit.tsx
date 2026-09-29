@@ -69,6 +69,10 @@ function rapi(p: string): string {
 
 export function RelKit({ path, pesanBelumDibaca, master, namaStudio }: PropRelKit) {
   const kini = rapi(path);
+  /* Halaman detail "<daftar>/satu" (Satu Proyek, Detail Paket) tidak punya
+     baris sendiri di menu; yang menyala daftarnya. Tetap bukan startsWith —
+     cuma akhiran "/satu" yang persis itu. */
+  const cocok = (href: string) => rapi(href) === kini || `${rapi(href)}/satu` === kini;
   const item: ItemNav[] = NAV.filter((n) => !n.masterOnly || master).map((n) => {
     const anak = n.children?.map((c) => ({
       ikon: ikon(c.ikonKit, c.label),
@@ -77,13 +81,13 @@ export function RelKit({ path, pesanBelumDibaca, master, namaStudio }: PropRelKi
       /* Cocok PERSIS, bukan `startsWith`. "/admin/pengaturan" adalah awalan
          dari "/admin/pengaturan/akun", jadi startsWith menyalakan dua baris
          sekaligus dan yang terbaca aktif jadi dua halaman berbeda. */
-      aktif: rapi(c.href) === kini,
+      aktif: cocok(c.href),
     }));
     return {
       ikon: ikon(n.ikonKit, n.label),
       label: n.label,
       href: n.href,
-      aktif: n.href ? rapi(n.href) === kini : false,
+      aktif: n.href ? cocok(n.href) : false,
       anak,
       /* Submenu terbuka kalau salah satu anaknya yang sedang dibuka. Tidak
          ada tombol buka-tutup: rel ini dirender di server, dan menambah

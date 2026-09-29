@@ -20,17 +20,18 @@ import * as commentsRepo from "../repository/documentComments";
 import * as testimonialsRepo from "../repository/testimonials";
 import * as journalRepo from "../repository/journal";
 import * as clientLogosRepo from "../repository/clientLogos";
+import * as tiersRepo from "../repository/tiers";
 import * as revisiRepo from "../repository/contentRevision";
 import * as studioTeamRepo from "../repository/studioTeam";
 import * as payrollRepo from "../repository/payroll";
 import * as feeRepo from "../repository/fee";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload, sanitizeSlug } from "../lib/r2";
-import { checkProjectInput, checkJournalInput, ValidationError } from "../lib/validate";
+import { checkProjectInput, checkJournalInput, checkTierInput, ValidationError } from "../lib/validate";
 import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
   InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput, PaymentInput,
-  ProjectBriefInput, TestimonialInput, JournalPostInput, ClientLogoInput,
+  ProjectBriefInput, TestimonialInput, JournalPostInput, ClientLogoInput, ServiceTierInput,
   StudioPersonInput, PayrollInput,
 } from "../types";
 import {
@@ -1181,6 +1182,79 @@ admin.delete("/clients/:id", async (c) => {
   } catch (err) {
     if (err instanceof NotFoundError) {
       return c.json({ error: { status: 404, message: "klien tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});
+
+// ── Paket layanan ─────────────────────────────────────────────────────────
+//
+// Beranda membacanya saat build, jadi tiap tulisan di sini menyalakan tombol
+// Terbitkan lewat trigger cap isi. Admin melihat SEMUA paket, termasuk yang
+// dihentikan; beranda cuma yang aktif.
+
+admin.get("/tiers", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => tiersRepo.list(sql, true));
+  return c.json({ data });
+});
+
+admin.get("/tiers/:id", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) => tiersRepo.get(sql, c.req.param("id")));
+    return c.json({ data });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "paket tidak ditemukan" } }, 404);
+    }
+    throw err;
+  }
+});
+
+admin.post("/tiers", async (c) => {
+  const input = await c.req.json<ServiceTierInput>().catch(() => ({}) as ServiceTierInput);
+  const salah = checkTierInput(input, true);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => tiersRepo.create(sql, input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    if (err instanceof tiersRepo.SlugTakenError) {
+      return c.json({ error: { status: 409, message: "kode paket sudah dipakai paket lain" } }, 409);
+    }
+    throw err;
+  }
+});
+
+admin.patch("/tiers/:id", async (c) => {
+  const input = await c.req.json<ServiceTierInput>().catch(() => ({}) as ServiceTierInput);
+  const salah = checkTierInput(input, false);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => tiersRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "paket tidak ditemukan" } }, 404);
+    }
+    if (err instanceof tiersRepo.SlugTakenError) {
+      return c.json({ error: { status: 409, message: "kode paket sudah dipakai paket lain" } }, 409);
+    }
+    /* Satu batas yang cuma bisa diperiksa database: fee yang dikirim sendirian
+       dibandingkan dengan pasangannya yang lama. */
+    if ((err as { code?: string }).code === "23514") {
+      return c.json({ error: { status: 422, message: "fee tertinggi tidak boleh lebih kecil dari fee terendah" } }, 422);
+    }
+    throw err;
+  }
+});
+
+admin.delete("/tiers/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => tiersRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return c.json({ error: { status: 404, message: "paket tidak ditemukan" } }, 404);
     }
     throw err;
   }

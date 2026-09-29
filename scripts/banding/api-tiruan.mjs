@@ -173,6 +173,35 @@ const pesanAdmin = [
   return { id: `q${i + 1}`, name, email, phone: phone || undefined, projectType, budgetRange, message, status, createdAt: d.toISOString() };
 });
 
+/* Paket layanan — isi awalnya sama dengan migrasi 20260929000025, supaya
+   beranda yang dibangun dari API tiruan identik dengan yang tayang. */
+const paketAdmin = [
+  ["kafe", "starter", "Starter", "Untuk coffee shop pertama, dengan anggaran yang apa adanya.", 15, 25,
+    "Coffee shop pertama, budget terbatas", "Yang Anda dapat",
+    ["Konsep desain", "Denah dan tata ruang", "Visualisasi 3D dasar"], false, 1],
+  ["kafe", "signature", "Signature", "Untuk pemilik yang sudah punya gambaran jelas soal ruang yang ingin dikenang.", 45, 80,
+    "Visi kuat, target ikonik", "Semua di Starter, ditambah",
+    ["Gambar kerja lengkap (DED)", "Branding ruang dan palet material", "Pengarahan dan pendampingan kontraktor", "Perencanaan alur bar dan dapur"], true, 2],
+  ["kafe", "flagship", "Flagship", "Layanan penuh, dari sketsa pertama sampai foto pembukaan.", 100, 180,
+    "Grup F&B yang siap membuka cabang", "Semua di Signature, ditambah",
+    ["Supervisi konstruksi", "Desain furnitur custom", "Dokumentasi foto profesional"], false, 3],
+  ["rumah", "konsultasi", "Konsultasi", "Untuk pemilik yang akan membangun sendiri bersama tukangnya.", 10, 20,
+    "Membangun sendiri, dengan tukang", "Yang Anda dapat",
+    ["Konsep desain", "Denah skematik", "Saran orientasi dan ventilasi"], false, 1],
+  ["rumah", "standar", "Standar", "Dari konsep sampai gambar yang bisa dibangun kontraktor tanpa menelepon kami.", 35, 70,
+    "100–200 m², budget bangun Rp 500 juta–1,5 miliar", "Semua di Konsultasi, ditambah",
+    ["Gambar kerja lengkap (DED)", "Gambar kerja siap kontraktor", "Daftar material dan finishing"], true, 2],
+  ["rumah", "premium", "Premium", "Rumahnya, isinya, dan tanah tempat ia berdiri — diurus sebagai satu proyek.", 80, 200,
+    "Di atas 200 m², budget bangun di atas Rp 2 miliar", "Semua di Standar, ditambah",
+    ["Supervisi konstruksi", "Desain interior", "Desain lanskap", "Dokumentasi foto saat serah terima"], false, 3],
+].map(([group, slug, name, summary, feeMin, feeMax, forWhom, includesHeading, includes, highlighted, sortOrder], i) => ({
+  id: `t0000000-0000-4000-8000-00000000000${i + 1}`,
+  group, slug, name, summary, feeMin, feeMax, forWhom, includesHeading, includes, highlighted,
+  active: true, sortOrder, updatedAt: new Date(Date.now() - (i + 1) * 86_400_000 * 3).toISOString(),
+}));
+const urutPaket = () => [...paketAdmin].sort((a, z) =>
+  a.group.localeCompare(z.group) || a.sortOrder - z.sortOrder);
+
 /* Riwayat biaya 30 bulan ke belakang — dipakai halaman Fee Proyek, yang
    grafiknya membaca biaya PER BULAN dan PER TAHUN. Lima baris di atas cuma
    menjangkau beberapa hari terakhir, dan grafik tangga sepuluh bulan dengan
@@ -397,6 +426,12 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
   if (path.startsWith("/api/v1/admin/costs")) return [...biayaKeu, ...biayaRiwayat];
   if (path.startsWith("/api/v1/admin/inquiries")) return pesanAdmin;
+  {
+    const t = path.match(/^\/api\/v1\/admin\/tiers\/([^/?]+)/);
+    if (t) return paketAdmin.find((x) => x.id === t[1]) ?? null;
+  }
+  if (path.startsWith("/api/v1/admin/tiers")) return urutPaket();
+  if (path.startsWith("/api/v1/tiers")) return urutPaket().filter((x) => x.active);
   if (path.startsWith("/api/v1/admin/fee/people")) return feeOrang(path);
   if (path.startsWith("/api/v1/admin/fee/projects")) return feeProyek(path);
   if (path.startsWith("/api/v1/admin/team")) return timAdmin;
@@ -449,6 +484,25 @@ function tulis(metode, path, badan) {
     if (!t) return { galat: 404 };
     if (badan.status) t.status = badan.status;
     return { updated: true };
+  }
+  const tp = path.match(/^\/api\/v1\/admin\/tiers(?:\/([^/?]+))?$/);
+  if (tp && metode === "POST" && !tp[1]) {
+    const id = `t0000000-0000-4000-8000-0000000000${String(paketAdmin.length + 10).padStart(2, "0")}`;
+    paketAdmin.push({ id, summary: "", forWhom: "", includesHeading: "Yang Anda dapat", includes: [],
+      highlighted: false, active: true, sortOrder: 0, ...badan, updatedAt: new Date().toISOString() });
+    return { id };
+  }
+  if (tp && tp[1] && metode === "PATCH") {
+    const x = paketAdmin.find((y) => y.id === tp[1]);
+    if (!x) return { galat: 404 };
+    Object.assign(x, badan, { updatedAt: new Date().toISOString() });
+    return { updated: true };
+  }
+  if (tp && tp[1] && metode === "DELETE") {
+    const i = paketAdmin.findIndex((y) => y.id === tp[1]);
+    if (i < 0) return { galat: 404 };
+    paketAdmin.splice(i, 1);
+    return { deleted: true };
   }
   const q = path.match(/^\/api\/v1\/admin\/inquiries\/([^/?]+)$/);
   if (q && metode === "PATCH") {

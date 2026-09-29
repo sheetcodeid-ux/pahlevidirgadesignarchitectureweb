@@ -26,7 +26,9 @@ export interface Tanya {
   id: string;
   kat: KategoriFaq;
   tanya: string;
-  /** HTML — jawabannya memuat <p>, <strong>, dan <ul>. */
+  /** HTML — jawabannya memuat <p>, <strong>, dan <ul>. `{{TARIF}}` diganti
+   *  paragraf yang disusun dari paket layanan di database (lib/tier.ts
+   *  `kalimatTarif`), supaya angkanya tidak pernah menyimpang dari beranda. */
   jawab: string;
   /**
    * Angkanya ditunggu dari pemilik, dan INI nama isian yang mengisinya di
@@ -70,7 +72,7 @@ export const FAQ: Tanya[] = [
     id: "how-much-do-you-charge",
     kat: "uang",
     tanya: "Berapa tarif Anda?",
-    jawab: `<p><strong>Rentangnya diumumkan di beranda</strong>, dibagi tiga tier untuk coffee shop dan tiga untuk rumah. Coffee shop mulai Rp 15–25 juta untuk konsep dan denah sampai Rp 100–180 juta untuk layanan penuh; rumah mulai Rp 10–20 juta untuk konsultasi sampai Rp 80–200 juta untuk desain sampai lanskap.</p><p>Di mana Anda mendarat di dalam rentangnya tergantung tapak dan seberapa rumit ia ternyata, dan kami memberi tahu tier mana yang berlaku sebelum satu pun pekerjaan dimulai. Biayanya dibagi ke seluruh tahap, dan tiap tahap baru ditagih setelah diserahkan — Anda tidak pernah membayar pekerjaan yang belum sampai.</p><p>Di atas tier paling dasar kami tidak menghitung per meter persegi. Kafe 200 m² dengan tiga bar station bukan setengah pekerjaan kafe 400 m² berkonter tunggal, dan menghitung per luas diam-diam menghukum proyek yang justru paling butuh dipikirkan.</p>`,
+    jawab: `{{TARIF}}<p>Di mana Anda mendarat di dalam rentangnya tergantung tapak dan seberapa rumit ia ternyata, dan kami memberi tahu tier mana yang berlaku sebelum satu pun pekerjaan dimulai. Biayanya dibagi ke seluruh tahap, dan tiap tahap baru ditagih setelah diserahkan — Anda tidak pernah membayar pekerjaan yang belum sampai.</p><p>Di atas tier paling dasar kami tidak menghitung per meter persegi. Kafe 200 m² dengan tiga bar station bukan setengah pekerjaan kafe 400 m² berkonter tunggal, dan menghitung per luas diam-diam menghukum proyek yang justru paling butuh dipikirkan.</p>`,
   },
   {
     id: "how-much-do-you-need",

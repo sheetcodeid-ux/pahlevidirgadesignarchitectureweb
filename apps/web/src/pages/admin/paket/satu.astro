@@ -1,0 +1,12 @@
+---
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { PaketSatuKit } from "../../../components/admin/PaketSatuKit";
+import "../../../styles/paket-kit.css";
+
+/* Satu paket, frame Figma "34. Promo Details". `?id=` untuk membuka paket,
+   tanpa id untuk menambah paket baru. */
+---
+
+<KitLayout title="Detail Paket" judul="Detail Paket" kembali="/admin/paket">
+  <PaketSatuKit client:load />
+</KitLayout>

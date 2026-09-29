@@ -231,6 +231,36 @@ export function listClients(): Promise<Klien[]> {
   return safely<Klien[]>("/api/v1/clients", []);
 }
 
+// --- Paket layanan --------------------------------------------------------
+
+/** Satu paket layanan dari tabel service_tiers. Fee dalam JUTA rupiah. */
+export interface Paket {
+  id: string;
+  group: "kafe" | "rumah";
+  slug: string;
+  name: string;
+  summary: string;
+  feeMin: number;
+  feeMax: number;
+  forWhom: string;
+  includesHeading: string;
+  includes: string[];
+  highlighted: boolean;
+  active: boolean;
+  sortOrder: number;
+  updatedAt: string;
+}
+
+/**
+ * Seksi tarif beranda dan jawaban harga di /faq. wajib(), bukan safely():
+ * build yang "berhasil" dengan daftar kosong akan menayangkan beranda TANPA
+ * harga dan FAQ yang bilang "begitu paket kami terbit" — padahal harganya
+ * ada, cuma permintaannya yang gagal. Jebakan #12, bentuk yang sama.
+ */
+export function listTiers(): Promise<Paket[]> {
+  return wajib<Paket[]>("/api/v1/tiers");
+}
+
 export function getProject(slug: string): Promise<Project | null> {
   return safely<Project | null>(`/api/v1/projects/${encodeURIComponent(slug)}`, null);
 }
