@@ -4,29 +4,38 @@ import { KepalaSeksi, BarisLog } from "../kit/Item";
 import { KartuStatistikRingkas } from "../kit/Kartu";
 import { GrafikArea, BarKemajuan, Cincin, LencanaTren } from "../kit/Ukuran";
 import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
-import { Tombol } from "../kit/Tombol";
+import { Tombol, TombolIkon } from "../kit/Tombol";
+import { Lencana } from "../kit/Lencana";
 import { Ikon } from "../kit/Ikon";
 import {
   CoinIn,
   CoinOut,
   CurrencyCircleDollar,
   Hourglass,
+  HourglassHigh,
   CaretDown,
+  DotsThree,
+  NavCalendarDots,
   NavReceipt,
-  Wallet,
+  Ruler,
+  Sliders,
 } from "../kit/ikon";
 import {
   ambilRingkasanKeuangan,
   ambilBulanan,
   semuaBiaya,
+  semuaPembayaran,
+  semuaTagihan,
   bacaCache,
   tulisCache,
   type FinanceOverview,
   type BarisBulanan,
   type BiayaProyek,
+  type Pembayaran,
+  type Invoice,
 } from "../../lib/admin";
 import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
-import { formatRupiah } from "../../lib/format";
+import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 
 /* =============================================================================
    Keuangan — Ringkasan, mengikuti frame Figma "04. Dashboard (v2)".
@@ -48,27 +57,30 @@ import { formatRupiah } from "../../lib/format";
      Expense Breakdown         Rincian beban per kategori
      Finance Score             Marjin rata-rata — satu persentase berbar
      Balance                   Piutang: total, lalu dua proyek terbesar
-     Recent Transactions       Rekap per proyek
+     Recent Transactions       Transaksi terbaru — uang masuk DAN keluar
      Saving Plans              Proyek berjalan — termin diterima / kontrak
-     Recent Activities         Biaya terbaru, dikelompokkan per hari
+     Recent Activities         Tenggat tagihan yang sudah terbit
 
-   Dua yang TIDAK dipetakan satu-ke-satu, dan sebabnya:
+   Riwayat dua slot terakhir, karena keduanya sempat diisi lain:
 
-   - Recent Transactions di framenya daftar transaksi. Kalau diisi daftar
-     biaya, ia menampilkan hal yang SAMA dengan Recent Activities di
-     sebelahnya — satu halaman, dua daftar yang isinya sama. Jadi yang masuk
-     rekap per proyek: lima kolom, sama seperti framenya, dan menjawab
-     pertanyaan yang tidak dijawab widget lain di halaman ini.
-   - Recent Activities butuh daftar pembayaran lintas proyek, dan API-nya
-     baru ada per-proyek (`/admin/projects/:id/payments`). Mengambilnya
-     berarti satu permintaan per proyek. Sampai endpoint lintas proyeknya ada,
-     yang tampil biaya terbaru.
+   - Recent Transactions dulu berisi REKAP PER PROYEK — lima kolom angka.
+     Sebabnya dulu API pembayaran baru ada per proyek, dan daftar biaya
+     sudah dipakai slot di sebelahnya. Endpoint lintas proyek
+     (`/admin/payments`) sudah ada sejak halaman Semua Transaksi, jadi slot
+     ini sekarang berisi yang digambar framenya: satu daftar bertanda +/-,
+     berlencana arah, dengan proyek di kolom "Account". Rekap laba per
+     proyek tetap ada di Dashboard.
+   - Recent Activities dulu berisi biaya terbaru. Begitu slot transaksi
+     memuat biaya juga, dua widget bersebelahan menampilkan baris yang
+     sama. Yang masuk sekarang pertanyaan yang TIDAK dijawab widget lain:
+     tagihan mana yang sedang ditunggu, dan kapan tenggatnya.
 
    Ukuran kolomnya, dari framenya: 586 / 283 / 283 dengan celah 20, total
    1192 — sama dengan lebar kolom konten.
    ============================================================================= */
 
 const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
 /* #1E4841, #BBF49C, #BCBEBD — terukur dari "Chart_2" di frame 04.
 
@@ -76,12 +88,17 @@ const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "S
    menyediakannya: `--ramp-3` (#ECF4E9) persis warna jalur cincinnya sendiri
    dan `--ramp-4` (#E5E6E6) beda 7/14/3 per kanal darinya — cincin yang
    memakai keduanya tergambar seolah kosong. Jadi yang keempat dicampur dari
-   brand, yang jatuh di antara #1E4841 dan mintnya dan tetap satu keluarga. */
+   brand, yang jatuh di antara #1E4841 dan mintnya dan tetap satu keluarga.
+
+   `--keu-tua`/`--keu-abu`, bukan `--brand`/`--ramp-5` langsung: di tema
+   gelap `--brand` jadi mint (irisan pertama dan kedua tak bisa dibedakan)
+   dan `--ramp-5` nyaris sewarna latar kartu. Keduanya didefinisikan di
+   keuangan-kit.css. */
 const WARNA_CINCIN = [
-  "var(--brand)",
+  "var(--keu-tua)",
   "var(--brand-mint)",
-  "var(--ramp-5)",
-  "color-mix(in srgb, var(--brand) 45%, var(--brand-mint))",
+  "var(--keu-abu)",
+  "color-mix(in srgb, var(--keu-tua) 45%, var(--brand-mint))",
 ];
 
 const KATEGORI: Record<string, string> = {
@@ -99,15 +116,68 @@ function singkat(n: number): string {
   return String(n);
 }
 
-/** "2026-09-24" -> "Hari ini" / "Kemarin" / "24 Sep". */
-function hari(iso: string): string {
-  const d = new Date(iso + "T00:00:00");
+/** "2026-10-03" -> "Hari ini" / "Besok" / "3 Okt" — untuk tenggat, yang
+ *  arahnya ke depan. Yang sudah lewat tidak sampai ke sini: ia punya
+ *  kepala sendiri, "Lewat tenggat". */
+function hariTenggat(sisa: number, iso: string): string {
+  if (sisa === 0) return "Hari ini";
+  if (sisa === 1) return "Besok";
+  const [, b, h] = iso.slice(0, 10).split("-").map(Number);
+  return `${h} ${BULAN_PENDEK[(b ?? 1) - 1]}`;
+}
+
+/** Hari tersisa sampai tenggat; negatif berarti sudah lewat. Dihitung
+ *  dalam UTC dari tanggal kalendernya, sama dengan halaman Tagihan &
+ *  Termin — kalau keduanya menghitung beda, satu tagihan bisa "lewat" di
+ *  satu halaman dan "hari ini" di halaman lain. */
+function sisaHari(iso: string): number | null {
+  const [t, b, h] = iso.slice(0, 10).split("-").map(Number);
+  if (!t || !b || !h) return null;
   const kini = new Date();
-  const nol = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const beda = Math.round((nol(kini) - nol(d)) / 86_400_000);
-  if (beda === 0) return "Hari ini";
-  if (beda === 1) return "Kemarin";
-  return `${d.getDate()} ${BULAN_PENDEK[d.getMonth()]}`;
+  const hariIni = Date.UTC(kini.getFullYear(), kini.getMonth(), kini.getDate());
+  return Math.round((Date.UTC(t, b - 1, h) - hariIni) / 86_400_000);
+}
+
+const LABEL_JENIS: Record<string, string> = { dp: "DP", termin: "Termin", pelunasan: "Pelunasan" };
+const LABEL_METODE: Record<string, string> = {
+  tunai: "Tunai",
+  transfer: "Transfer",
+  qris: "QRIS",
+  lainnya: "Lainnya",
+};
+
+const RENTANG = [
+  { nilai: "1", label: "Bulan ini" },
+  { nilai: "3", label: "3 bulan" },
+  { nilai: "12", label: "12 bulan" },
+  { nilai: "0", label: "Semua" },
+];
+
+/** Batas bawah rentang (awal bulan ke-n ke belakang), atau null untuk semua. */
+function batasRentang(bulan: number): number | null {
+  if (bulan <= 0) return null;
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  d.setMonth(d.getMonth() - (bulan - 1));
+  return d.getTime();
+}
+
+/** `paid_at` timestamptz ATAU `incurred_on` date -> milidetik. Tanggal
+ *  telanjang dianggap akhir harinya, supaya biaya hari ini tidak kalah
+ *  urutan dari pembayaran pagi tadi. */
+function waktuKe(iso: string, akhirHari = true): number {
+  return new Date(iso.length === 10 ? iso + (akhirHari ? "T23:59:59" : "T00:00:00") : iso).getTime();
+}
+
+interface Transaksi {
+  kunci: string;
+  masuk: boolean;
+  nama: string;
+  sub: string;
+  proyek: string;
+  waktu: string;
+  nominal: number;
 }
 
 function persenAman(atas: number, bawah: number): number {
@@ -131,6 +201,13 @@ function Isi() {
   const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() =>
     bacaCache<BiayaProyek[]>("biaya-semua"),
   );
+  const [bayar, setBayar] = useState<Pembayaran[] | null>(() =>
+    bacaCache<Pembayaran[]>("bayar-semua"),
+  );
+  const [tagihan, setTagihan] = useState<Invoice[] | null>(() =>
+    bacaCache<Invoice[]>("tagihan-semua"),
+  );
+  const [rentangTrx, setRentangTrx] = useState("1");
 
   useEffect(() => onProyekAktif(setProyekId), []);
 
@@ -141,6 +218,18 @@ function Isi() {
         setBiaya(d);
       })
       .catch(() => setBiaya((l) => l ?? []));
+    semuaPembayaran()
+      .then((d) => {
+        tulisCache("bayar-semua", d);
+        setBayar(d);
+      })
+      .catch(() => setBayar((l) => l ?? []));
+    semuaTagihan()
+      .then((d) => {
+        tulisCache("tagihan-semua", d);
+        setTagihan(d);
+      })
+      .catch(() => setTagihan((l) => l ?? []));
   }, []);
 
   useEffect(() => {
@@ -249,104 +338,195 @@ function Isi() {
     [ringkas],
   );
 
-  const biayaTerbaru = useMemo(
-    () =>
-      [...(biaya ?? [])]
-        .sort((a, b) => b.incurredOn.localeCompare(a.incurredOn))
-        /* EMPAT, bukan lima seperti framenya — dan itu selisih yang disengaja.
-           Framenya memuat lima Log Item dengan hanya DUA kepala hari; biaya
-           studio ini menyebar satu-dua per hari, jadi lima butir berarti
-           empat kepala hari dan totalnya 26px melewati kartu 380. Yang
-           terlihat bukan gulir melainkan kepala hari menggantung di tepi
-           bawah, dan itu terbaca sebagai cacat. */
-        .slice(0, 4),
-    [biaya],
-  );
+  /* Slot "Recent Transactions": lima transaksi terbaru, uang masuk DAN
+     keluar dalam satu daftar — persis yang digambar framenya (+$200.00 di
+     atas -$154.20). Pola penggabungannya sama dengan halaman Semua
+     Transaksi; yang ini cuma memotongnya jadi lima. */
+  const transaksi = useMemo<Transaksi[]>(() => {
+    const batas = batasRentang(Number(rentangTrx));
+    const cocok = (projectId: string, waktu: string) =>
+      (!proyekId || projectId === proyekId) && (batas === null || waktuKe(waktu, false) >= batas);
+    const masuk = (bayar ?? [])
+      .filter((b) => cocok(b.projectId, b.paidAt))
+      .map<Transaksi>((b) => ({
+        kunci: `p:${b.id}`,
+        masuk: true,
+        nama: `Pembayaran ${LABEL_JENIS[b.kind] ?? b.kind}`,
+        sub: LABEL_METODE[b.method] ?? b.method,
+        proyek: b.projectTitle ?? "—",
+        waktu: b.paidAt,
+        nominal: b.amount,
+      }));
+    const keluar = (biaya ?? [])
+      .filter((k) => cocok(k.projectId, k.incurredOn))
+      .map<Transaksi>((k) => ({
+        kunci: `b:${k.id}`,
+        masuk: false,
+        nama: k.label,
+        sub: KATEGORI[k.category] ?? k.category,
+        proyek: k.projectTitle ?? "—",
+        waktu: k.incurredOn,
+        nominal: k.amount,
+      }));
+    return [...masuk, ...keluar].sort((x, y) => waktuKe(y.waktu) - waktuKe(x.waktu)).slice(0, 5);
+  }, [bayar, biaya, proyekId, rentangTrx]);
 
-  /* Lebar kolomnya berjumlah 552, bukan angka bebas: kartunya 586 dan
-     paddingnya 16 di dua sisi dan garisnya 1. Jumlah yang melebihi itu TIDAK membuat tabel
-     bergulir — `<col>` ber-`width` cuma usulan, dan yang terjadi kolom
-     terakhir terpotong di tepi kartu tanpa satu pun galat. */
+  /* Slot "Recent Activities": tagihan yang sudah TERBIT dan belum lunas,
+     urut tenggat. Yang lewat tenggat dikumpulkan di bawah satu kepala di
+     paling atas — itu yang paling perlu ditagih.
+
+     Jumlah butirnya dibatasi RUANG, bukan angka tetap. Framenya memuat lima
+     butir di bawah DUA kepala hari; tiap kepala tambahan memakan 42px (57
+     jarak antarkelompok lawan 15 jarak antarbutir), dan kartunya tidak
+     punya sisa. Jadi anggarannya 5 x 45 + 1 x 42 = 267: lima butir dengan
+     dua kepala muat, empat butir dengan tiga kepala muat, empat dengan
+     empat tidak. Tanpa batas ini butir terakhir terpotong di tepi kartu. */
+  const tenggat = useMemo(() => {
+    const semua = (tagihan ?? [])
+      .filter((t) => t.status === "terbit" && t.dueDate && (!proyekId || t.projectId === proyekId))
+      .map((t) => ({ t, sisa: sisaHari(t.dueDate!) }))
+      .filter((x): x is { t: Invoice; sisa: number } => x.sisa !== null)
+      .sort((x, y) => x.sisa - y.sisa);
+    const hasil: { kunci: string; kepala: string; atas: string; teks: string; lewat: boolean }[] = [];
+    let pakai = 0;
+    for (const { t, sisa } of semua) {
+      const kepala = sisa < 0 ? "Lewat tenggat" : hariTenggat(sisa, t.dueDate!);
+      const baru = hasil.length > 0 && hasil[hasil.length - 1]!.kepala !== kepala;
+      const ongkos = 45 + (baru ? 42 : 0);
+      if (hasil.length >= 5 || pakai + ongkos > 267) break;
+      pakai += ongkos;
+      hasil.push({
+        kunci: t.id,
+        kepala,
+        atas: sisa < 0 ? `lewat ${-sisa} hari · ${formatRupiah(t.amount)}` : formatRupiah(t.amount),
+        /* Proyeknya DULU, labelnya sesudahnya: di kolom 223 kalimatnya
+           terpotong elipsis, dan "Termin 2 — gambar kerja — Kedai Ko…"
+           menyisakan bagian yang sama di kelima butir sementara nama
+           proyeknya — satu-satunya yang membedakan — yang hilang. */
+        teks: `${t.projectTitle ?? "—"} · ${t.label}`,
+        lewat: sisa < 0,
+      });
+    }
+    return hasil;
+  }, [tagihan, proyekId]);
+
+  /* Lebar kolom dari jangkar tinta framenya (kartu 586, kotak-dalam
+     16..570): judul kolom mulai di x22 / 142 / 335 / 429 / 502, dan pad sel
+     6. Jumlahnya 554, persis kotak-dalamnya. */
   const kolom: KolomTabel[] = [
-    { judul: "Proyek", lebar: 168, urut: true },
-    { judul: "Nilai Kontrak", lebar: 100, urut: true, kanan: true },
-    { judul: "Diterima", lebar: 98, urut: true, kanan: true, redup: true },
-    { judul: "Biaya", lebar: 90, urut: true, kanan: true, redup: true },
-    { judul: "Laba", lebar: 96, urut: true, kanan: true },
+    { judul: "Transaksi", lebar: 120, urut: true },
+    { judul: "Proyek", lebar: 193, urut: true },
+    { judul: "Tanggal", lebar: 94, urut: true },
+    { judul: "Nominal", lebar: 73, urut: true },
+    { judul: "Status", lebar: 74, urut: true },
   ];
 
-  const baris = (ringkas?.proyek ?? []).slice(0, 5).map((p) => [
-    <SelDua atas={p.projectTitle} bawah={p.marginPct === null ? "belum berkontrak" : `marjin ${p.marginPct.toFixed(0)}%`} />,
-    formatRupiah(p.contractValue ?? 0),
-    formatRupiah(p.received),
-    formatRupiah(p.costsTotal),
-    formatRupiah(p.labaBersih),
-  ]);
+  const baris = transaksi.map((t) => {
+    const d = new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu);
+    return [
+      <SelDua atas={t.nama} bawah={t.sub} />,
+      <span className="keu__akun">
+        {/* Di framenya logo kartu kredit 23x15 bergaris. Proyek tidak punya
+            logo, jadi kotaknya diisi ikon penggaris — sama dengan kolom
+            proyek di halaman Semua Transaksi. */}
+        <span className="keu__akunlogo">
+          <Ikon ikon={Ruler} ukuran={10} />
+        </span>
+        <span className="keu__akunnama">{t.proyek}</span>
+      </span>,
+      <SelDua
+        atas={`${d.getDate()} ${BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`}
+        bawah={HARI[d.getDay()]}
+      />,
+      <span className={t.masuk ? "keu__masuk" : "keu__keluar"} title={formatRupiah(t.nominal)}>
+        {t.masuk ? "+" : "−"}
+        {formatRupiahRingkas(t.nominal)}
+      </span>,
+      <Lencana bentuk="pejalkecil" nada={t.masuk ? "selesai" : "menunggu"} className="keu__arah">
+        {t.masuk ? "Masuk" : "Keluar"}
+      </Lencana>,
+    ];
+  });
 
   const marjin = ringkas?.marginRataRata ?? null;
+  const jumlahBelumLunas = (ringkas?.proyek ?? []).filter((p) => (p.belumDiterima ?? 0) > 0).length;
+  const titikTiga = (href: string, judul: string) => (
+    /* 22px, bukan 16 bawaan Medium: titik tiga di kepala seksi Coinest
+       memang tergambar lebih besar — angka yang sama dengan frame 10. */
+    <TombolIkon ikon={DotsThree} jenis="transparent" judul={judul} ikonPx={22} href={href} />
+  );
 
   return (
     <div className="keu">
       {/* ---- Baris 1 ------------------------------------------------------ */}
       <section className="keu__kolomkiri">
         <div className="keu__stat">
+          {/* Nominal DIPENDEKKAN di keempat kartu ("Rp532 jt"), angka
+              penuhnya jadi tooltip. Kartunya 285 lebar dan dirancang untuk
+              "$8,500" dengan keterangan di sebelahnya; "Rp532.000.000"
+              sendirian sudah 200px. */}
           <KartuStatistikRingkas
             ikon={CoinIn}
             judul="Kas masuk"
-            nilai={formatRupiah(ringkas?.kasMasuk ?? 0)}
-            tren={tKas ? <LencanaTren naik={tKas.naik}>{tKas.teks}</LencanaTren> : undefined}
+            nilai={formatRupiahRingkas(ringkas?.kasMasuk ?? 0)}
+            nilaiPenuh={formatRupiah(ringkas?.kasMasuk ?? 0)}
+            tren={tKas ? <LencanaTren panah naik={tKas.naik}>{tKas.teks}</LencanaTren> : undefined}
             ket={
-              bulanLalu ? (
+              bulanIni ? (
                 <>
-                  <b>{formatRupiah(bulanIni?.kasMasuk ?? 0)}</b> bulan ini
+                  <b>{formatRupiahRingkas(bulanIni.kasMasuk)}</b> bulan ini
                 </>
-              ) : (
-                "bulan lalu belum ada kas masuk"
-              )
+              ) : undefined
             }
           />
           <KartuStatistikRingkas
             ikon={CoinOut}
             judul="Beban"
-            nilai={formatRupiah(ringkas?.totalBiaya ?? 0)}
+            nilai={formatRupiahRingkas(ringkas?.totalBiaya ?? 0)}
+            nilaiPenuh={formatRupiah(ringkas?.totalBiaya ?? 0)}
             /* Beban yang TURUN kabar baik, meski panahnya ke bawah — jadi
                `baik` dibalik dari `naik`, bukan mengikutinya. */
             tren={
               tBeban ? (
-                <LencanaTren naik={tBeban.naik} baik={!tBeban.naik}>
+                <LencanaTren panah naik={tBeban.naik} baik={!tBeban.naik}>
                   {tBeban.teks}
                 </LencanaTren>
               ) : undefined
             }
             ket={
-              bulanLalu ? (
+              bulanIni ? (
                 <>
-                  <b>{formatRupiah(bulanIni?.biaya ?? 0)}</b> bulan ini
+                  <b>{formatRupiahRingkas(bulanIni.biaya)}</b> bulan ini
                 </>
-              ) : (
-                "bulan lalu belum ada biaya"
-              )
+              ) : undefined
             }
           />
           <KartuStatistikRingkas
             ikon={CurrencyCircleDollar}
             judul="Laba bersih"
-            nilai={formatRupiah(ringkas?.labaBersih ?? 0)}
-            tren={tLaba ? <LencanaTren naik={tLaba.naik}>{tLaba.teks}</LencanaTren> : undefined}
-            ket={<>dari kas yang benar-benar masuk</>}
+            nilai={formatRupiahRingkas(ringkas?.labaBersih ?? 0)}
+            /* Tooltipnya sekalian membawa kalimat yang dulu jadi
+               keterangan kartu ini: laba di sini dihitung dari kas yang
+               benar-benar masuk, bukan dari nilai kontrak. */
+            nilaiPenuh={`${formatRupiah(ringkas?.labaBersih ?? 0)} — dari kas yang benar-benar masuk`}
+            tren={tLaba ? <LencanaTren panah naik={tLaba.naik}>{tLaba.teks}</LencanaTren> : undefined}
+            ket={
+              bulanIni ? (
+                <>
+                  <b>{formatRupiahRingkas(bulanIni.labaBersih)}</b> bulan ini
+                </>
+              ) : undefined
+            }
           />
           <KartuStatistikRingkas
             ikon={Hourglass}
             judul="Piutang"
-            nilai={formatRupiah(ringkas?.piutang ?? 0)}
+            nilai={formatRupiahRingkas(ringkas?.piutang ?? 0)}
+            nilaiPenuh={formatRupiah(ringkas?.piutang ?? 0)}
             ket={
-              marjin === null ? (
-                "belum ada proyek berkontrak"
-              ) : (
-                <>
-                  <b>{marjin.toFixed(1).replace(".", ",")}%</b> marjin rata-rata
-                </>
-              )
+              <>
+                <b>{jumlahBelumLunas}</b> proyek belum lunas
+              </>
             }
           />
         </div>
@@ -430,34 +610,43 @@ function Isi() {
 
       <section className="keu__kolomkanan">
         <article className="keu__kartu keu__skor">
-          <KepalaSeksi judul="Marjin Rata-rata" />
+          <KepalaSeksi
+            judul="Marjin Rata-rata"
+            kanan={titikTiga("/admin", "Laba tiap proyek ada di Dashboard")}
+          />
+          <p className="keu__minilabel">Kualitas marjin</p>
           <div className="keu__skorbaris">
-            <div>
-              <p className="keu__minilabel">Kualitas marjin</p>
-              <p className="keu__skornama">
-                {marjin === null ? "Belum ada" : marjin >= 30 ? "Sehat" : marjin >= 15 ? "Cukup" : "Tipis"}
-              </p>
-            </div>
+            <p className="keu__skornama">
+              {marjin === null ? "Belum ada" : marjin >= 30 ? "Sehat" : marjin >= 15 ? "Cukup" : "Tipis"}
+            </p>
             <p className="keu__skorpersen">{marjin === null ? "—" : `${Math.round(marjin)}%`}</p>
           </div>
           <BarKemajuan persen={marjin ?? 0} tinggi={25} celah={6} judul="Marjin rata-rata" />
         </article>
 
         <article className="keu__kartu keu__saldo">
-          <KepalaSeksi judul="Piutang" />
+          <KepalaSeksi
+            judul="Piutang"
+            kanan={titikTiga("/admin/keuangan/terima", "Catat pembayaran yang masuk")}
+          />
           <p className="keu__minilabel">Belum diterima</p>
           <p className="keu__mininilai">{formatRupiah(ringkas?.piutang ?? 0)}</p>
           <div className="keu__saldodaftar">
             {piutangTeratas.map((p) => (
               <div className="keu__saldokartu" key={p.projectId}>
-                <span className="keu__saldoubin">
+                {/* Bidang gelap di kiri kartu — di framenya tempat logo
+                    jaringan kartu kredit (VISA, Mastercard). Di sini ikon
+                    tagihan, karena yang dibawa kartu ini memang tagihan. */}
+                <span className="keu__saldobidang" aria-hidden="true">
                   <Ikon ikon={NavReceipt} ukuran={24} />
                 </span>
                 <div className="keu__saldoisi">
                   <p className="keu__saldonama">{p.projectTitle}</p>
-                  <p className="keu__saldonilai">{formatRupiah(p.belumDiterima ?? 0)}</p>
+                  <p className="keu__saldonilai" title={formatRupiah(p.belumDiterima ?? 0)}>
+                    {formatRupiahRingkas(p.belumDiterima ?? 0)}
+                  </p>
                   <p className="keu__saldoket">
-                    dari {formatRupiah(p.contractValue ?? 0)} nilai kontrak
+                    dari {formatRupiahRingkas(p.contractValue ?? 0)} nilai kontrak
                   </p>
                 </div>
               </div>
@@ -471,15 +660,54 @@ function Isi() {
 
       {/* ---- Baris 2 ------------------------------------------------------ */}
       <article className="keu__kartu keu__tabel">
-        <KepalaSeksi judul="Rekap per Proyek" kanan={<span className="keu__ket">Lima teratas</span>} />
-        <Tabel
-          kolom={kolom}
-          baris={baris}
-          pad={10}
-          tinggiKepala={34}
-          tinggiBaris={49}
-          fontBaris={10}
+        <KepalaSeksi
+          judul="Transaksi Terbaru"
+          kanan={
+            <>
+              {/* Pemilih ber-caret dengan <select> asli ditumpangkan
+                  transparan — pola yang sama dengan halaman Semua Transaksi. */}
+              <label className="k-pilihtombol keu__rentang">
+                <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown} tabIndex={-1}>
+                  {RENTANG.find((r) => r.nilai === rentangTrx)?.label ?? "Rentang"}
+                </Tombol>
+                <select
+                  aria-label="Rentang transaksi"
+                  value={rentangTrx}
+                  onChange={(e) => setRentangTrx(e.currentTarget.value)}
+                >
+                  {RENTANG.map((r) => (
+                    <option key={r.nilai} value={r.nilai}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <TombolIkon
+                ikon={Sliders}
+                jenis="ghost"
+                judul="Saring lebih rinci di Semua Transaksi"
+                href="/admin/keuangan/transaksi"
+              />
+            </>
+          }
         />
+        {baris.length > 0 ? (
+          <div className="keu__tabelisi">
+            <Tabel
+              kolom={kolom}
+              baris={baris}
+              kepala="polos"
+              pad={6}
+              tinggiKepala={35}
+              tinggiBaris={52}
+              fontBaris={10}
+            />
+          </div>
+        ) : (
+          <p className="keu__kosong">
+            {bayar === null || biaya === null ? "Memuat transaksi…" : "Belum ada transaksi pada rentang ini."}
+          </p>
+        )}
       </article>
 
       <article className="keu__kartu keu__rencana">
@@ -509,38 +737,35 @@ function Isi() {
       </article>
 
       <article className="keu__kartu keu__aktivitas">
-        <KepalaSeksi judul="Biaya Terbaru" />
-        {/* `BarisLog`, BUKAN `BarisAktivitas`. Catatan lama di
-            docs/wireframe/coinest-ukuran.md menyebut widget ini berisi
-            Recent Activities; SVG framenya menyebut lain — "Section Plans >
-            Div Logs > Div Log > Log List > Log Item", lima buah, dengan ubin
-            LINGKARAN 30x30 mint di (1145, 723/768/813/901/946), jadi
-            langkahnya 45 dan ada satu kepala hari di tengah. Itu bentuk Log,
-            dan ubin aktivitas justru 32 bujur sangkar dengan garis penyambung.
-
-            Teksnya satu baris ber-elipsis dengan sengaja: nama biaya di
-            studio ini panjang-panjang ("Render eksterior 6 frame"), dan dua
-            baris per butir membuat butir kelima terdorong keluar kartu 380.
-            Nominalnya turun ke baris waktu, yang di framenya memang baris
-            kedua tiap butir. */}
+        <KepalaSeksi
+          judul="Tenggat Tagihan"
+          kanan={titikTiga("/admin/keuangan/tagihan", "Buka Tagihan & Termin")}
+        />
+        {/* `BarisLog` varian V2 (waktu DI ATAS keterangan) — bentuk yang
+            digambar framenya: ubin bulat mint 30, baris kecil abu, lalu
+            kalimatnya. Tanpa rel penyambung; framenya tidak punya. */}
         <div className="keu__aktivitasisi">
-          {biayaTerbaru.map((b, i) => {
-            const judulHari = hari(b.incurredOn);
-            const sebelumnya = i > 0 ? hari(biayaTerbaru[i - 1].incurredOn) : null;
-            return (
-              <div key={b.id}>
-                {judulHari !== sebelumnya && <p className="keu__harilabel">{judulHari}</p>}
-                <BarisLog
-                  ikon={Wallet}
-                  waktu={`${formatRupiah(b.amount)} · ${KATEGORI[b.category] ?? b.category}`}
-                  akhir={i === biayaTerbaru.length - 1}
-                >
-                  {b.label}
-                </BarisLog>
-              </div>
-            );
-          })}
-          {biayaTerbaru.length === 0 && <p className="keu__kosong">Belum ada biaya tercatat.</p>}
+          {tenggat.map((t, i) => (
+            <div key={t.kunci}>
+              {(i === 0 || tenggat[i - 1]!.kepala !== t.kepala) && (
+                <p className="keu__harilabel">{t.kepala}</p>
+              )}
+              <BarisLog
+                ikon={t.lewat ? HourglassHigh : NavCalendarDots}
+                waktu={t.atas}
+                waktuDulu
+                akhir
+                ikonPx={16}
+              >
+                {t.teks}
+              </BarisLog>
+            </div>
+          ))}
+          {tenggat.length === 0 && (
+            <p className="keu__kosong">
+              {tagihan === null ? "Memuat tagihan…" : "Tidak ada tagihan terbit yang menunggu dibayar."}
+            </p>
+          )}
         </div>
       </article>
     </div>

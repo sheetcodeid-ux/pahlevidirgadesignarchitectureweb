@@ -358,6 +358,7 @@ export function BarisLog({
   waktu,
   waktuDulu,
   akhir,
+  ikonPx = 12,
   children,
   className,
 }: {
@@ -367,6 +368,12 @@ export function BarisLog({
   /** V2: waktu di atas keterangan, bukan di bawahnya. */
   waktuDulu?: boolean;
   akhir?: boolean;
+  /**
+   * Ukuran kotak ikon. Bawaannya 12 (frame Log Item); frame 04 menggambar
+   * ikon yang jauh lebih besar di ubin 30 yang sama — tinta loncengnya
+   * 12x13, dan tinta sebesar itu butuh kotak ikon 16.
+   */
+  ikonPx?: number;
   children: ReactNode;
   className?: string;
 }) {
@@ -374,7 +381,7 @@ export function BarisLog({
   return (
     <div className={kelas("k-log", akhir && "k-log--akhir", className)}>
       <span className="k-log__kiri">
-        {avatar ?? (ikon && <Ikon ikon={ikon} ukuran={12} />)}
+        {avatar ?? (ikon && <Ikon ikon={ikon} ukuran={ikonPx} />)}
       </span>
       <div className="k-log__isi">
         {waktuDulu && jam}

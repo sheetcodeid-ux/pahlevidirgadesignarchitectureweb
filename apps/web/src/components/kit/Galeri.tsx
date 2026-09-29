@@ -301,11 +301,12 @@ export function Galeri() {
             <KartuStatistikRingkas
               ikon={CoinIn}
               judul="Kas masuk"
-              nilai="Rp532.000.000"
-              tren={<LencanaTren>4,20 %</LencanaTren>}
+              nilai="Rp532 jt"
+              nilaiPenuh="Rp532.000.000"
+              tren={<LencanaTren panah>4,2 %</LencanaTren>}
               ket={
                 <>
-                  <b>Rp48.000.000</b> bulan ini
+                  <b>Rp48 jt</b> bulan ini
                 </>
               }
             />

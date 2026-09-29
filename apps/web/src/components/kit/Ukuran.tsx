@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
-import { TrendUp, TrendDown } from "./ikon";
+import { TrendUp, TrendDown, ArrowUp, ArrowDown } from "./ikon";
 
 /* =============================================================================
    Ukuran — lima bentuk yang dipakai frame INTERFACE dan tidak ada di satu pun
@@ -185,8 +185,11 @@ function tangen(xs: number[], ys: number[]) {
 }
 
 /** Warna satu deret. Disebut eksplisit karena gradien tidak mewarisi. */
+/* `--k-deret-tua` dan bukan `--brand` langsung: di tema gelap `--brand`
+   bernilai mint, sama persis dengan deret kedua (jebakan #37), dan kedua
+   garisnya jadi tak bisa dibedakan. Nilai gelapnya di kit.css. */
 const warnaDeret = (d: DeretArea) =>
-  d.nada === "kedua" ? "var(--brand-mint)" : "var(--brand)";
+  d.nada === "kedua" ? "var(--brand-mint)" : "var(--k-deret-tua, var(--brand))";
 
 /**
  * Kepekatan bidang di bawah garis — BERBEDA antar deret.
@@ -635,18 +638,29 @@ export function Cincin({
 export function LencanaTren({
   naik = true,
   baik = naik,
+  panah,
   children,
   className,
 }: {
   naik?: boolean;
   /** Apakah arah itu kabar baik. Arah dan penilaian dua hal berbeda. */
   baik?: boolean;
+  /**
+   * Panah lurus (ArrowUp/ArrowDown), bukan garis tren.
+   *
+   * Dua frame, dua ikon: Investments memakai garis tren, sementara kartu
+   * statistik frame 04 memakai panah tegak — terlihat jelas begitu
+   * lencananya diperbesar lima kali, dan tidak terlihat sama sekali pada
+   * ukuran aslinya yang 9px.
+   */
+  panah?: boolean;
   children: ReactNode;
   className?: string;
 }) {
+  const ikon = panah ? (naik ? ArrowUp : ArrowDown) : naik ? TrendUp : TrendDown;
   return (
     <span className={kelas("k-trenlebar", !baik && "k-trenlebar--buruk", className)}>
-      <Ikon ikon={naik ? TrendUp : TrendDown} ukuran={9} />
+      <Ikon ikon={ikon} ukuran={panah ? 14 : 9} />
       {children}
     </span>
   );

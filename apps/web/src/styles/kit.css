@@ -323,6 +323,9 @@
      tidak kelihatan dari membaca CSS-nya. */
   border-color: transparent;
   border-radius: var(--k-tombol-r);
+  /* Untuk varian <a> (prop `href`): tanpa ini peramban menggaris-bawahi
+     tautannya, dan garis itu tergambar di bawah ikon sebagai strip 1px. */
+  text-decoration: none;
   cursor: pointer;
   transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
     color var(--dur) var(--ease);
@@ -1843,6 +1846,12 @@
   gap: 20px;
   min-width: 0;
 }
+/* Ponsel: kotak cari 237 + dua tombol bulat + judul tidak muat di 358, dan
+   tanpa ini bilahnya mendorong SELURUH halaman 86px ke kanan — terukur di
+   kelima halaman keuangan pada 390. Bagian kanan turun ke baris sendiri. */
+@media (max-width: 40rem) {
+  .k-kepalahal { flex-wrap: wrap; row-gap: 12px; }
+}
 .k-kepalahal__grup { display: flex; align-items: center; gap: 10px; }
 .k-kepalahal__akun {
   display: flex;
@@ -2574,6 +2583,11 @@
 .k-bar--terpisah .k-bar__sisa { border-radius: 4px; }
 .k-bar--terpisah .k-bar__isi { flex: 0 0 auto; width: var(--k-bar-isi); background: var(--brand); }
 .k-bar--terpisah .k-bar__sisa { flex: 1; background: var(--brand-mint); }
+/* Tema gelap: `--brand` dan `--brand-mint` sama-sama #BBF49C (jebakan #37),
+   jadi bagian terisi dan sisanya tergambar satu warna — bar 42% terbaca
+   sebagai bar penuh yang terpotong celah. Sisanya diturunkan ke hijau
+   redup; yang terisi tetap mint, warna aksi di tema itu. */
+:root[data-theme="dark"] .k-bar--terpisah .k-bar__sisa { background: var(--brand-line); }
 /* `tumpuk`: rel mint ber-radius 8, isian gelap DI ATASNYA tanpa celah.
    Isiannya tidak ber-radius sendiri — yang membulatkan ujungnya relnya,
    lewat overflow. Di framenya rect isiannya memang tanpa rx. */
@@ -2623,6 +2637,12 @@
 .k-area__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .k-area__deret { color: var(--brand); }
 .k-area__deret--kedua { color: var(--brand-mint); }
+/* Sama dengan bar di atas: di gelap kedua deret jadi mint dan grafiknya
+   tidak bisa dibaca lagi mana yang mana. Deret pertama pindah ke abu —
+   lewat variabel, karena garis dan gradiennya diwarnai atribut SVG
+   (`warnaDeret` di Ukuran.tsx), bukan lewat `color`. */
+:root[data-theme="dark"] { --k-deret-tua: var(--text-muted); }
+:root[data-theme="dark"] .k-area__deret:not(.k-area__deret--kedua) { color: var(--k-deret-tua); }
 /* Label X berpusat di TENGAH KOLOMNYA, bukan di tepi plot. `space-between`
    menempelkan label pertama ke tepi kiri dan yang terakhir ke tepi kanan,
    dan ketujuhnya lalu meleset makin jauh ke tengah. Terukur: tinta "Sun" di
@@ -2954,18 +2974,21 @@
 }
 .k-statkecil__ket {
   overflow: hidden;
-  margin: 7px 0 0;
-  font-size: var(--k-t10);
+  /* Tinta di y50,3 dari puncak kartu; lencananya berakhir di 40. */
+  margin: 9.5px 0 0;
+  font-size: var(--k-t12);
   font-weight: var(--k-reg);
-  color: var(--text-muted);
+  line-height: 1;
+  /* #242E2C untuk kedua bagiannya — angkanya cuma lebih TEBAL, tidak
+     berwarna lain. Terukur dari piksel "+$355" dan "than last week". */
+  color: var(--text-strong);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Angkanya sendiri lebih tebal dan hijau tua; kalimat sesudahnya tidak. */
-.k-statkecil__ket b {
-  font-weight: var(--k-bold);
-  color: var(--brand);
-}
+.k-statkecil__ket b { font-weight: var(--k-bold); }
+/* Pengganti lencana untuk kartu yang tidak punya pembanding (mis. piutang):
+   setinggi lencananya, supaya keterangan keempat kartu tetap sebaris. */
+.k-statkecil__tanpatren { display: block; height: 17px; }
 
 /* --- Lencana tren 54x17, dipakai kartu statistik lebar dan baris watchlist
    Terukur di frame Investments: kotak 55x17 r8,5, ikon 8,76 lebar di 5,62

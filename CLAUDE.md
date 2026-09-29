@@ -314,6 +314,15 @@ dengan mengira.** Cara yang terbukti bekerja di sesi sebelumnya:
    dengan referensi, jangan menilai dari melihat tangkapan layar
 4. Laporkan angkanya ke pemilik bersama gambarnya, termasuk yang meleset
 
+Untuk ukuran huruf, cara yang paling tepat: **tukar kalimat acuannya masuk ke
+halaman, lalu bandingkan lebar tintanya.** `GANTI=berkas.json node
+scripts/banding/widget.mjs …` menukar isi elemen dengan kalimat acuan
+("$415,000", "Finance Quality") sebelum dipotret, dan `scripts/banding/pita.mjs`
+membaca pita tinta per baris kedua gambar. Dengan kalimat yang sama, rasio
+lebar = rasio ukuran huruf: 110,5 lawan 94,5 berarti 28px seharusnya 24px.
+Menebak dari tinggi tinta atau dari mata meleset 2–4px berkali-kali di frame
+04 — "Today" terbaca 16px padahal 14, isi tabel 12px padahal 10.
+
 Kalau permintaan pemilik bentrok dengan referensinya sendiri (mis. referensi
 aslinya bisa digulir sementara halaman kita tidak boleh), kerjakan yang paling
 mendekati, lalu **sebutkan bentroknya secara terbuka** dan biar pemilik yang
@@ -369,6 +378,12 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
    `svg[width][height] { flex: none; max-width: none; }` — jangan dilepas.
    Grafik tidak kena karena `<svg>`-nya memakai `viewBox` tanpa atribut
    lebar/tinggi.
+
+   Saudaranya: `height: auto` dari aturan yang sama membuat ikon di dalam
+   flex ber-`align-items: stretch` (bawaan) **meregang setinggi induknya**.
+   Ikon 24px di bidang gelap kartu piutang tergambar 24x66 dan tintanya
+   turun ke tengah bidang. Wadah flex yang memuat ikon perlu
+   `align-items` selain `stretch`.
 
 8. **Menulis cache dari satu island bisa merusak hidrasi island lain.**
    `tulisCache()` ikut menyimpan PANJANG daftar di localStorage, dan panjang

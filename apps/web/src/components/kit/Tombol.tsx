@@ -119,6 +119,13 @@ export interface PropTombolIkon extends Omit<ButtonHTMLAttributes<HTMLButtonElem
    * Figma-nya di tempat pemanggilan.
    */
   ikonPx?: number;
+  /**
+   * Tombol ini sebenarnya TAUTAN ke halaman lain. Digambar sebagai <a>, bukan
+   * <button> yang memanggil `location.href` — supaya klik tengah, "buka di
+   * tab baru", dan router sisi klien panel ini ikut bekerja tanpa satu baris
+   * kode pun.
+   */
+  href?: string;
 }
 
 export function TombolIkon({
@@ -130,6 +137,7 @@ export function TombolIkon({
   titik,
   titikJudul,
   ikonPx,
+  href,
   className,
   ...sisa
 }: PropTombolIkon) {
@@ -141,6 +149,13 @@ export function TombolIkon({
   ]
     .filter(Boolean)
     .join(" ");
+  if (href) {
+    return (
+      <a href={href} className={kelas} aria-label={judul} title={judul}>
+        <Ikon ikon={ikon} ukuran={ikonPx ?? IKON_PX_KOTAK[ukuran]} />
+      </a>
+    );
+  }
   return (
     <button type={tipeHtml} className={kelas} aria-label={judul} title={judul} {...sisa}>
       <Ikon ikon={ikon} ukuran={ikonPx ?? IKON_PX_KOTAK[ukuran]} />

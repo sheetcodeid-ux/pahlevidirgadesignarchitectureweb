@@ -188,6 +188,7 @@ export function KartuStatistikRingkas({
   ikon,
   judul,
   nilai,
+  nilaiPenuh,
   tren,
   ket,
   className,
@@ -195,6 +196,11 @@ export function KartuStatistikRingkas({
   ikon: DataIkon;
   judul: ReactNode;
   nilai: ReactNode;
+  /**
+   * Angka lengkapnya, kalau `nilai` dipendekkan ("Rp532 jt"). Muncul sebagai
+   * tooltip — yang dipendekkan cuma tampilannya, bukan datanya.
+   */
+  nilaiPenuh?: string;
   /** Lencana tren di sudut kanan atas. */
   tren?: ReactNode;
   /** Baris keterangan di bawah lencana. */
@@ -210,17 +216,24 @@ export function KartuStatistikRingkas({
           </span>
           <span className="k-statkecil__judul">{judul}</span>
         </p>
-        <p className="k-statkecil__nilai">{nilai}</p>
-        {/* Keterangan di bawah NOMINAL, bukan di bawah lencana seperti
-            framenya — dan itu dipaksa isinya, bukan dipilih. Di framenya
-            nominalnya "$8,500" (73px); di sini "Rp532.000.000" (200px) pada
-            kartu selebar 285 dengan padding 31. Keterangan di kolom kanan
-            karena itu menabrak nominalnya, dan sempat benar-benar tertindih
-            sampai angkanya tidak terbaca. Yang dipertahankan dari framenya
-            lencananya — itu yang paling terbaca sekilas. */}
+        <p className="k-statkecil__nilai" title={nilaiPenuh}>
+          {nilai}
+        </p>
+      </div>
+      {/* Keterangan di KOLOM KANAN, di bawah lencana — persis framenya.
+
+          Sempat dipindah ke bawah nominal karena "Rp532.000.000" (200px)
+          menabrak keterangannya di kartu selebar 285. Yang diperbaiki
+          sekarang penyebabnya, bukan letaknya: nominal di kartu ini
+          dipendekkan ("Rp532 jt", lihat `formatRupiahRingkas`), dan pada
+          lebar itu keduanya muat berdampingan seperti "$8,500" di Coinest.
+
+          Kartu tanpa lencana tetap memakai ruang lencananya, supaya
+          keterangannya duduk sebaris dengan keterangan kartu tetangganya. */}
+      <div className="k-statkecil__kanan">
+        {tren ?? <span className="k-statkecil__tanpatren" />}
         {ket && <p className="k-statkecil__ket">{ket}</p>}
       </div>
-      {tren && <div className="k-statkecil__kanan">{tren}</div>}
     </div>
   );
 }
