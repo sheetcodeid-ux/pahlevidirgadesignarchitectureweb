@@ -41,6 +41,10 @@
   gap: 19px;
   height: 825px;
 }
+/* `min-height: 0`: tanpa ini isi yang setengah piksel lebih tinggi
+   membuat kedua kolom melar jadi 825,5. */
+.sat__utama > * { min-height: 0; }
+.sat__trx { overflow: hidden; }
 .sat__w {
   display: flex;
   flex-direction: column;
@@ -79,9 +83,11 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 11.5px;
+  /* Bar 63 di bawah tinta baris kedua (2x: 83 -> 146) — terukur dengan
+     kalimat acuan "Vacation Fund / $3,000 / $5,000" ditukar masuk. */
+  gap: 15px;
   min-height: 99px;
-  padding: 14px 13px;
+  padding: 15.5px 13px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -108,7 +114,7 @@
 .sat__kartu[aria-pressed="true"] .sat__ubin,
 .sat__ubin--putih { background: var(--bg); }
 .sat__kartuinfo,
-.sat__kartukanan { display: flex; flex-direction: column; gap: 8px; line-height: 1; }
+.sat__kartukanan { display: flex; flex-direction: column; gap: 10.5px; line-height: 1; }
 .sat__kartuinfo { flex: 1; min-width: 0; }
 .sat__kartuinfo b {
   overflow: hidden;
@@ -180,14 +186,17 @@
 .sat__infokaki {
   display: flex;
   justify-content: space-between;
-  margin: 18px 0 0;
+  margin: 15.5px 0 0;
   font-size: var(--k-t16);
   line-height: 1;
   color: var(--brand);
 }
-.sat__infokaki b { font-weight: var(--k-semi); }
-.sat__infogaris { height: 0; margin: 24px 0; border: 0; border-top: 1px solid var(--text-faint); }
-.sat__fakta { display: flex; flex-direction: column; gap: 22px; margin: 0; }
+.sat__infokaki { font-weight: var(--k-semi); }
+.sat__infogaris { height: 0; margin: 26.5px 0 24px; border: 0; border-top: 1px solid var(--text-faint); }
+/* 16 dari daftar tim ke Tenggat, 14 dari Tenggat ke Sisa — tinta framenya
+   di y576 dan y610 dengan kotak baris 20. */
+.sat__fakta { display: flex; flex-direction: column; gap: 14px; margin: 0; }
+.sat__fakta > div:first-child { margin-bottom: 2px; }
 .sat__fakta > div { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: start; }
 .sat__fakta dt { font-size: var(--k-t12); line-height: 20px; color: var(--text-muted); }
 .sat__fakta dd {
@@ -220,7 +229,7 @@
   gap: 16px;
   min-width: 0;
 }
-.sat__tips { gap: 14px; }
+.sat__tips { gap: 15px; padding-top: 17px; }
 .sat__tipsdaftar {
   display: flex;
   flex-direction: column;
@@ -255,8 +264,29 @@
 .sat__tipskosong { margin: 0; font-size: var(--k-t12); }
 
 .sat__kas { min-height: 0; }
-.sat__kas .k-area { flex: 1; margin-top: 10px; }
-.sat__kas--balik .k-area__kartu { left: auto; right: 0; }
+/* Bidang plot 132 tinggi, mulai 23 di bawah kepala seksi — terukur dari
+   label sumbunya (6K di y70, 0 di y202 relatif widget). */
+.sat__kas .k-area { flex: 1; margin-top: 23px; }
+/* Kartu keterangan frame 22 BEDA dari frame 04: bidang hijau tua bertinta
+   putih, dipusatkan DI ATAS titiknya, dengan titik hijau tua bercincin. */
+.sat__kas .k-area__kartu {
+  top: -37px;
+  left: 0;
+  width: max-content;
+  padding: 7px 11px 8px;
+  border: 0;
+  border-radius: 7.5px;
+  background: var(--brand);
+  text-align: center;
+  transform: translateX(-50%);
+}
+.sat__kas .k-area__kjudul { color: var(--brand-soft); }
+.sat__kas .k-area__knilai { margin-top: 6px; font-weight: var(--k-semi); color: var(--brand-ink); }
+.sat__kas .k-area__titik { background: var(--brand); }
+/* Di dekat tepi kartunya ditambatkan ke sisi titik, supaya tidak keluar
+   widget — yang sempat mendorong halaman 54px ke samping. */
+.sat__kas--awal .k-area__kartu { transform: none; }
+.sat__kas--balik .k-area__kartu { transform: translateX(-100%); }
 
 /* --- Transaksi ------------------------------------------------------------ */
 .sat__trx { flex: 1; min-height: 0; }

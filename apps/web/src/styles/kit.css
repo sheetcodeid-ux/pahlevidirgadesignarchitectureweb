@@ -2607,6 +2607,10 @@
 }
 .k-bar--tumpuk .k-bar__isi { width: var(--k-bar-isi); background: var(--brand); }
 .k-bar--tumpuk .k-bar__sisa { display: none; }
+/* Sama dengan `.k-bar--terpisah` di atas: di gelap jalurnya (mint) dan isinya
+   (`--brand`, yang di sana juga mint) jadi satu warna, dan bar 40% terbaca
+   penuh. Jalurnya diturunkan ke hijau redup. */
+:root[data-theme="dark"] .k-bar--tumpuk { background: var(--brand-line); }
 
 /* --- Grafik area ---------------------------------------------------------- */
 /* Celah 8,4 antara label sumbu dan bidang plot — bukan 12. Terukur: label Y

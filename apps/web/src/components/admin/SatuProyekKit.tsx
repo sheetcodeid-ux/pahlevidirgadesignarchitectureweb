@@ -264,13 +264,13 @@ function Isi() {
     n >= 1e9 ? `${(n / 1e9).toFixed(1).replace(".", ",")} M` : n >= 1e6 ? `${Math.round(n / 1e6)} jt` : `${Math.round(n / 1e3)} rb`;
   /* Yang disorot bulan dengan kas masuk TERBESAR — di framenya pun yang
      disorot bukan bulan terakhir, melainkan titik yang layak dibicarakan.
-     Kalau jatuh di tiga bulan terakhir, kartunya dibalik ke kiri titiknya:
-     kartu yang menjorok ke kanan di ujung grafik keluar dari widget dan
-     sempat mendorong halaman 54px ke samping. */
+     Kartunya dipusatkan di atas titik; di dua bulan pertama/terakhir ia
+     ditambatkan ke sisi titik supaya tidak keluar widget — kartu yang
+     menjorok keluar sempat mendorong halaman 54px ke samping. */
   const iSorot = deret.length
     ? deret.reduce((m, b, i) => (b.kasMasuk > (deret[m]?.kasMasuk ?? 0) ? i : m), deret.length - 1)
     : -1;
-  const balik = iSorot >= deret.length - 3;
+  const tepi = iSorot < 2 ? " sat__kas--awal" : iSorot >= deret.length - 2 ? " sat__kas--balik" : "";
 
   /* --- Transaksi proyek ------------------------------------------------------ */
   const transaksi = useMemo(() => {
@@ -514,7 +514,7 @@ function Isi() {
                 )}
               </article>
 
-              <article className={`sat__w sat__kas${balik ? " sat__kas--balik" : ""}`}>
+              <article className={`sat__w sat__kas${tepi}`}>
                 <KepalaSeksi
                   judul="Kas Masuk"
                   kanan={
@@ -533,7 +533,8 @@ function Isi() {
                   labelX={deret.map((b) => BULAN[Number(b.bulan.slice(5, 7)) - 1])}
                   labelY={[singkat(maks), singkat(maks * 0.75), singkat(maks * 0.5), singkat(maks * 0.25), "0"]}
                   maks={maks}
-                  tinggi={136}
+                  tinggi={132}
+                  jarakLabelX={11.8}
                   sorot={
                     iSorot >= 0
                       ? {
