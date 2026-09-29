@@ -466,12 +466,64 @@ function feeProyek(path) {
     .sort((a, z) => z.feeTotal - a.feeTotal);
 }
 
+/* Gaji bulanan — halaman Gaji (frame 25 isi gaji). Tiga orang bergaji
+   tetap selama 14 bulan, naik di Januari; bulan berjalan sengaja belum
+   lunas untuk dua orang, supaya status "belum dibayar" ikut tergambar.
+   Fee TIDAK diketik di sini — sama dengan API sungguhan, ia dijumlahkan dari
+   biaya proyek yang bernama. */
+const gajiAdmin = [];
+{
+  const dasar = [["t1", 12_000_000], ["t2", 8_500_000], ["t3", 6_500_000]];
+  for (let m = 13; m >= 0; m--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - m);
+    const y = d.getFullYear();
+    const bln = String(d.getMonth() + 1).padStart(2, "0");
+    dasar.forEach(([orang, nominal], j) => {
+      const naik = y >= new Date().getFullYear() ? 1.1 : 1;
+      gajiAdmin.push({
+        id: `g${y}${bln}-${j}`,
+        teamMemberId: orang,
+        teamMemberName: timAdmin.find((t) => t.id === orang).name,
+        period: `${y}-${bln}-01`,
+        amount: Math.round((nominal * naik) / 50_000) * 50_000,
+        paidOn: m === 0 && j > 0 ? null : `${y}-${bln}-25`,
+        note: j === 0 ? "Termasuk tunjangan transport" : null,
+      });
+    });
+  }
+}
+function gajiSebulan(period) {
+  const awal = `${period.slice(0, 7)}-01`;
+  const semuaBiayaTiruan = [...biayaKeu, ...biayaRiwayat];
+  return timAdmin
+    .map((t) => {
+      const g = gajiAdmin.find((x) => x.teamMemberId === t.id && x.period === awal);
+      const fee = semuaBiayaTiruan.filter((b) => b.teamMemberId === t.id && b.incurredOn.slice(0, 7) === period.slice(0, 7));
+      const feeAmount = fee.reduce((a, b) => a + b.amount, 0);
+      if (!g && fee.length === 0) return null;
+      return {
+        teamMemberId: t.id, name: t.name, kind: t.kind, role: t.role,
+        salaryId: g ? g.id : null, salaryAmount: g ? g.amount : null,
+        salaryPaidOn: g ? g.paidOn : null, salaryNote: g ? g.note : null,
+        feeAmount, feeCount: fee.length, total: (g ? g.amount : 0) + feeAmount,
+      };
+    })
+    .filter(Boolean);
+}
+
 /* Tombol Terbitkan. Cap perubahan bergeser tiap kali ada penulisan — sama
    dengan trigger content_revision di database — dan mulai dari jauh di masa
    lalu, jadi halaman yang baru dimuat bertanda "sudah sama" sampai sesuatu
    disimpan. */
 let capBerubah = "2026-01-01T00:00:00.000Z";
 const jawab = (path) => {
+  {
+    const gb = path.match(/^\/api\/v1\/admin\/payroll\/month\?period=([0-9-]+)/);
+    if (gb) return gajiSebulan(gb[1]);
+  }
+  if (path.startsWith("/api/v1/admin/payroll")) return gajiAdmin;
   if (path.startsWith("/api/v1/admin/publish-status")) return { terakhirBerubah: capBerubah };
   if (path.startsWith("/api/v1/admin/settings")) return { ...setelan, terbitSitusAktif: true };
   if (path.startsWith("/api/v1/admin/me")) return profil;
@@ -542,6 +594,30 @@ const jawab = (path) => {
 function tulis(metode, path, badan) {
   if (path === "/api/v1/admin/publish" && metode === "POST") return { dimulai: true };
   if (path.startsWith("/api/v1/admin/")) capBerubah = new Date().toISOString();
+  if (path === "/api/v1/admin/payroll" && metode === "POST") {
+    const awal = `${String(badan.period).slice(0, 7)}-01`;
+    if (gajiAdmin.some((g) => g.teamMemberId === badan.teamMemberId && g.period === awal)) return { galat: 409 };
+    const id = `g-baru-${gajiAdmin.length}`;
+    gajiAdmin.push({ id, teamMemberId: badan.teamMemberId,
+      teamMemberName: timAdmin.find((t) => t.id === badan.teamMemberId)?.name ?? "?",
+      period: awal, amount: badan.amount, paidOn: badan.paidOn ?? null, note: badan.note ?? null });
+    return { id };
+  }
+  {
+    const gp = path.match(/^\/api\/v1\/admin\/payroll\/([^/?]+)$/);
+    if (gp && metode === "PATCH") {
+      const g = gajiAdmin.find((x) => x.id === gp[1]);
+      if (!g) return { galat: 404 };
+      Object.assign(g, badan);
+      return { updated: true };
+    }
+    if (gp && metode === "DELETE") {
+      const i = gajiAdmin.findIndex((x) => x.id === gp[1]);
+      if (i < 0) return { galat: 404 };
+      gajiAdmin.splice(i, 1);
+      return { deleted: true };
+    }
+  }
   const m = path.match(/^\/api\/v1\/admin\/invoices\/([^/?]+)$/);
   if (m && metode === "PATCH") {
     const t = tagihanAdmin.find((x) => x.id === m[1]);

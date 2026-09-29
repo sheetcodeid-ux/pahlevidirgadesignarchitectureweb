@@ -4,17 +4,21 @@ import { KepalaSeksi, BarisPantau, BarisAset } from "../kit/Item";
 import { GrafikArea, Busur, LencanaTren } from "../kit/Ukuran";
 import { KolomGrafik, type BatangGrafik } from "../kit/Grafik";
 import { Tabel, SelDua, SelIkon, type KolomTabel } from "../kit/Tabel";
-import { Tombol, TombolIkon } from "../kit/Tombol";
-import { Ikon, type DataIkon } from "../kit/Ikon";
+import { TombolIkon } from "../kit/Tombol";
+import { DownloadSimple, Ruler } from "../kit/ikon";
 import {
-  CaretDown,
-  DownloadSimple,
-  Ruler,
-  SpecialHandshake,
-  SpecialPersonSimple,
-  SpecialSealCheck,
-  SpecialSuitcase,
-} from "../kit/ikon";
+  BULAN,
+  BULAN_PENDEK,
+  JENIS,
+  IKON_JENIS,
+  bulatkan,
+  sumbu,
+  NominalBesar,
+  persen,
+  teksPersen,
+  PilihTombol,
+  PilihTeks,
+} from "./frame25";
 import {
   feePerProyek,
   feePerOrang,
@@ -25,7 +29,6 @@ import {
   type FeeProyek,
   type FeeOrang,
   type BiayaProyek,
-  type JenisAnggota,
 } from "../../lib/admin";
 import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 import { unduhCsv } from "../../lib/csv";
@@ -61,10 +64,6 @@ import { unduhCsv } from "../../lib/csv";
      baris 2   283 / 283 / 586, tinggi 485, celah 20 di kedua arah
    ============================================================================= */
 
-const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
-  "September", "Oktober", "November", "Desember"];
-const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-
 const KATEGORI_FEE = new Set(["freelancer", "prinsipal"]);
 
 /* Urutan tumpukan dari ATAS ke bawah, dan warnanya tangga `--ramp-1..4` —
@@ -79,14 +78,6 @@ const KATEGORI_TAHUN = [
   { nilai: "operasional", label: "Operasional", warna: "var(--ramp-3)" },
   { nilai: "lainnya", label: "Lainnya", warna: "var(--ramp-4)" },
 ] as const;
-
-const JENIS: JenisAnggota[] = ["partner", "inti", "proyek", "staf"];
-const IKON_JENIS: Record<JenisAnggota, DataIkon> = {
-  partner: SpecialHandshake,
-  inti: SpecialSealCheck,
-  proyek: SpecialSuitcase,
-  staf: SpecialPersonSimple,
-};
 
 /* Rentang siap pakai, sama dengan halaman lama. Bukan pemilih tanggal
    bebas: pertanyaan yang benar-benar muncul selalu "tahun ini" atau "bulan
@@ -119,103 +110,6 @@ function batas(r: string): { dari?: string; sampai?: string } {
     return { dari: `${y}-${m}-01`, sampai: `${y}-${m}-${akhir}` };
   }
   return {};
-}
-
-/** Batas atas sumbu yang enak dibaca: 13.748.211 -> 20.000.000. */
-function bulatkan(t: number): number {
-  const n = Math.max(1, t);
-  const pangkat = 10 ** Math.floor(Math.log10(n));
-  return Math.ceil(n / pangkat) * pangkat;
-}
-
-/** Label sumbu: 12.500.000 -> "12,5 jt". */
-function sumbu(n: number): string {
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1).replace(".", ",").replace(/,0$/, "")} M`;
-  if (n >= 1e6) return `${(n / 1e6).toFixed(1).replace(".", ",").replace(/,0$/, "")} jt`;
-  if (n >= 1e3) return `${Math.round(n / 1e3)} rb`;
-  return String(n);
-}
-
-/* Nominal besar dipecah jadi dua tinta, meniru "$349,256.45" framenya yang
-   sen-nya abu. Rupiah tidak punya sen, jadi yang diabukan tiga angka
-   terakhirnya: "Rp18.700" hijau tua, ".000" abu. Angkanya tetap utuh dan
-   terbaca sebagai satu bilangan; yang diredupkan cuma bagian yang tidak
-   pernah mengubah keputusan siapa pun. */
-function NominalBesar({ n }: { n: number }) {
-  const s = formatRupiah(n);
-  const i = s.lastIndexOf(".");
-  return (
-    <span className="fee__nominal">
-      <b>{i < 0 ? s : s.slice(0, i)}</b>
-      {i >= 0 && <span>{s.slice(i)}</span>}
-    </span>
-  );
-}
-
-function persen(atas: number, bawah: number): number {
-  return bawah > 0 ? (atas / bawah) * 100 : 0;
-}
-
-function teksPersen(p: number): string {
-  return `${p.toFixed(p >= 10 ? 0 : 1).replace(".", ",")}%`;
-}
-
-/** Pemilih bertombol berbingkai dengan <select> asli ditumpangkan — pola
- *  `.k-pilihtombol` yang sama dengan halaman Ringkasan. */
-function PilihTombol({
-  judul,
-  nilai,
-  opsi,
-  onUbah,
-}: {
-  judul: string;
-  nilai: string;
-  opsi: { nilai: string; label: string }[];
-  onUbah: (v: string) => void;
-}) {
-  return (
-    <label className="k-pilihtombol">
-      <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown} tabIndex={-1}>
-        {opsi.find((o) => o.nilai === nilai)?.label ?? judul}
-      </Tombol>
-      <select aria-label={judul} value={nilai} onChange={(e) => onUbah(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-/** Pemilih TEKS tanpa bingkai — "Today ▾" di kepala widget Assets. */
-function PilihTeks({
-  judul,
-  nilai,
-  opsi,
-  onUbah,
-  className,
-}: {
-  judul: string;
-  nilai: string;
-  opsi: { nilai: string; label: string }[];
-  onUbah: (v: string) => void;
-  className?: string;
-}) {
-  return (
-    <label className={["fee__pilihteks", className].filter(Boolean).join(" ")}>
-      <span>{opsi.find((o) => o.nilai === nilai)?.label ?? judul}</span>
-      <Ikon ikon={CaretDown} ukuran={12} />
-      <select aria-label={judul} value={nilai} onChange={(e) => onUbah(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
 }
 
 type Mode = "proyek" | "orang";

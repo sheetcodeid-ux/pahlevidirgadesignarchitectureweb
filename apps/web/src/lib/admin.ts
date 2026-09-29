@@ -901,6 +901,20 @@ export const feePerOrang = (r: { dari?: string; sampai?: string } = {}) =>
 
 /* ── Gaji ─────────────────────────────────────────────────────────────── */
 
+/** Satu baris gaji yang diketik — tanpa fee. `period` = tanggal 1 bulannya. */
+export interface EntriGaji {
+  id: string;
+  teamMemberId: string;
+  teamMemberName: string;
+  period: string;
+  amount: number;
+  paidOn: string | null;
+  note: string | null;
+}
+
+/** Seluruh riwayat gaji, semua bulan — untuk grafik bulanan dan tahunan. */
+export const riwayatGaji = () => panggil<EntriGaji[]>("/admin/payroll");
+
 export const gajiBulan = (period: string) =>
   panggil<BarisGajiBulan[]>(`/admin/payroll/month?period=${encodeURIComponent(period)}`);
 

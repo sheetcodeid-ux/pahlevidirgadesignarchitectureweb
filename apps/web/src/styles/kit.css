@@ -3060,3 +3060,28 @@
 /* Arah turun yang BURUK tetap memakai bentuk yang sama, cuma warnanya
    berpindah — bukan lencana lain. */
 .k-trenlebar--buruk { background: var(--danger-soft); color: var(--danger); }
+/* Amber = terbatas/menunggu (aturan warna #1) — mis. gaji yang belum dibayar.
+   Tintanya teks kuat di atas bidang amber lembut, bukan teks amber: --warn di
+   atas putih cuma 1,9:1. */
+.k-trenlebar--tunggu { background: var(--warn-soft); color: var(--text-strong); }
+.k-trenlebar--netral { background: var(--border); color: var(--text-body); }
+
+/* --- Dialog overlay di halaman kit ----------------------------------------
+   Tombol tutup Dialog memakai kelas `.btn` panel lama, dan stylesheet-nya
+   (components.css) TIDAK dimuat KitLayout — jebakan #5: tombolnya tergambar
+   sebagai kotak abu bawaan peramban tanpa satu pun galat. Diberi bentuk kit
+   di sini: kotak 32 r8 tanpa bingkai, seperti TombolIkon ghost. */
+.kl-body .ov-dialog__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.kl-body .ov-dialog__close:hover { background: var(--brand-soft); color: var(--text-strong); }
+.kl-body .ov-dialog__close:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
