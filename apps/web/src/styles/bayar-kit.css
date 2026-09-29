@@ -1,0 +1,279 @@
+/* =============================================================================
+   Kerangka halaman transaksi — DIPAKAI BERSAMA frame "07. Transfer" dan
+   "10. Payment".
+
+   Kedua frame itu memakai kerangka yang sama sampai ke piksel: kolom kiri
+   303, kolom kanan 868, kartu "terbaru" 837x140 dengan butir 279x67, dan
+   kartu form berpanel mint 805 di dalamnya. Yang berbeda cuma ISI kolom
+   kirinya (kartu penerima lawan akordeon penyedia) dan susunan isian di
+   dalam panelnya.
+
+   Berkas ini ada supaya keduanya tidak jadi dua salinan yang menyimpang —
+   jebakan #32 di CLAUDE.md. Aturan yang HANYA berlaku untuk satu halaman
+   tinggal di `terima-kit.css` atau `keluar-kit.css`, bukan di sini.
+
+   Awalan `tr` = transaksi, bukan transfer.
+
+   Angkanya diukur dari framenya, sebagian dari SVG dan sebagian dengan
+   MEMBACA PIKSEL gambarnya. Yang kedua perlu karena panel mint di dalam
+   kartu form tidak punya <rect> sendiri di SVG — warnanya berasal dari latar
+   bingkai yang menembus, jadi mencarinya di daftar rect tidak akan pernah
+   ketemu.
+
+   Kotak bersamanya, dalam koordinat frame 1440x1024:
+
+     kolom kiri      220 → 523        303
+     celah           20
+     kolom kanan     543 → 1412       869
+     badan           y80 → y958       878
+
+     tab (KelompokTab) 220,80    303x72  r16
+     cari              220,168,5 255x38  r18,5
+     tombol saring     485,168    38x38  r19
+
+     kartu "terbaru" 559,96  837x140 r16
+       butir          279x67, langkah 296 (jadi yang ketiga MELEWATI tepi —
+                      di framenya memang terpotong, striponya bergulir)
+     kartu form      559,252 837x687 r16
+       panel mint    575,317,5 805x603  (mint x575..1380, y318..920)
+       isi panel     599 → 1356 = 757   (padding 24 mendatar)
+   ============================================================================= */
+
+.tr {
+  display: grid;
+  /* Kolom kiri LEBARNYA TETAP 303 — di framenya ia tidak ikut melar, dan
+     kartu di dalamnya memang 302. `minmax(0, 1fr)` di kolom kanan karena
+     isinya strip yang bisa digulir mendatar: `1fr` telanjang minimumnya
+     min-content, dan min-content sebuah strip adalah seluruh panjangnya —
+     kolomnya melar dan halaman jadi bergulir mendatar. */
+  grid-template-columns: 303px minmax(0, 1fr);
+  /* 20, bukan 20,5: kartu kiri berakhir di 523 dan garis kartu kanan
+     berpusat di 543,5 — jadi tepi LUARNYA 543, dan 543 - 523 = 20. */
+  gap: 20px;
+  height: 878px;
+}
+
+/* --- Kolom kiri ----------------------------------------------------------- */
+/* Jalur tabnya komponen kit (`KelompokTab`); yang halaman tentukan cuma
+   bahwa ia tidak ikut menyusut. */
+.tr__metode { flex: none; }
+
+.tr__kiri {
+  display: flex;
+  min-width: 0;
+  /* `min-height: 0` supaya ia menurut pada tinggi barisnya. Tanpa itu
+     tinggi minimum sebuah item grid adalah min-content ISINYA, jadi daftar
+     panjang mendorong kolomnya melewati 878 — dan yang bergulir jadi
+     halamannya, bukan daftarnya. */
+  min-height: 0;
+  flex-direction: column;
+}
+
+.tr__cari {
+  display: flex;
+  flex: none;
+  align-items: center;
+  /* 475 → 485 di framenya. */
+  gap: 10px;
+  margin-top: 16px;
+}
+.tr__cari .k-cari { flex: 1; min-width: 0; }
+
+/* Daftar di kolom kiri. Bergulir sendiri; tirai pudar di dasarnya menandai
+   bahwa masih ada yang di bawah. */
+.tr__daftar {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 16px;
+}
+.tr__gulir {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+/* Tirai pudar, BUKAN `mask-image`: ia cuma perlu menutupi beberapa piksel di
+   dasar penampung, dan mask memaksa seluruh lapisan disusun ulang tiap frame
+   gulir (jebakan #23). */
+.tr__tirai {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(to bottom, transparent, var(--surface));
+  pointer-events: none;
+}
+
+/* --- Kolom kanan ---------------------------------------------------------- */
+/* Padding 15, bukan 16, di setiap kartu yang MEMUAT kartu lain. Jarak yang
+   terukur di Figma 16, tapi itu jarak antar-PUSAT garis: garis Figma
+   mengangkangi tepi (0,5 di dalam, 0,5 di luar) sementara `border` CSS
+   seluruhnya di dalam kotak. Dengan padding 16 seluruh kartu dalam bergeser
+   satu piksel ke dalam, dan selisih itu menumpuk di tiap tingkat sarang. */
+.tr__kanan {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--surface);
+}
+.tr__kartu {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--surface);
+}
+.tr__baru { flex: none; height: 140px; }
+.tr__form { flex: 1; min-height: 0; margin-top: 16px; padding-bottom: 17.5px; }
+
+/* Strip "terbaru" — bergulir MENDATAR, dan butir ketiga memang terpotong di
+   tepi kartu. Itu bukan cacat: di framenya ia berakhir di x1446 sementara
+   kartunya berhenti di 1396. */
+.tr__strip {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 17px;
+  margin-top: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tr__strip::-webkit-scrollbar { display: none; }
+.tr__strip > * { flex: none; width: 279px; }
+/* Butir strip lebarnya TETAP 279, jadi isinya yang harus mengalah. Tanpa
+   ini keterangan dan nama orang membungkus jadi dua baris dan kartunya
+   terbaca berantakan di sebelah kartu yang isinya kebetulan pendek. */
+.tr__strip .k-transfer__rek,
+.tr__strip .k-transfer__nilai,
+.tr__strip .k-transfer__ket {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tr__strip .k-transfer__kanan { max-width: 40%; }
+.tr__strip .k-transfer__ket { max-width: 100%; }
+
+/* --- Panel mint di dalam kartu form --------------------------------------- */
+.tr__panel {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  /* 300 (dasar kepala seksi) → 317,5 (puncak panel). */
+  margin-top: 17.5px;
+  padding: 22.5px 24px;
+  border-radius: 16px;
+  background: var(--brand-soft);
+  overflow-y: auto;
+}
+
+/* Langkah antar-kelompok 92: kotak 46 + label 12 + 14,25 + 19,75. Kotaknya
+   46 dan bukan 45 karena garis Figma mengangkangi tepi lagi; selisih 0,75
+   per kelompok menumpuk jadi 2,25 di isian terakhir.
+
+   Ditulis sebagai `* + *`, BUKAN `:first-of-type`. `:first-of-type` melihat
+   NAMA TAG, bukan kelas, jadi aturan berkelas pada anak pertama bisa tidak
+   pernah cocok dengan satu elemen pun — tanpa satu galat. */
+.tr__panel > * + * { margin-top: 19.75px; }
+
+.tr__grup {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  /* Sama dengan .k-isian — label lalu kotaknya. */
+  gap: 14.25px;
+}
+.tr__label {
+  margin: 0;
+  font-size: var(--k-t12);
+  font-weight: var(--k-reg);
+  line-height: 1;
+  color: var(--text-strong);
+}
+
+/* Dua kartu ringkasan di dalam wadah putih 757x128. */
+.tr__akun {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface);
+}
+.tr__akunkartu {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--surface);
+}
+/* Yang PERTAMA berlatar mint di framenya — di sana artinya "rekening yang
+   dipakai", di sini artinya angka yang jadi acuan. */
+.tr__akunkartu--utama { background: var(--brand-soft); }
+.tr__akunkartu--sisa { border-color: var(--border); }
+.tr__akunubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.tr__akunkartu--sisa .tr__akunubin {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.tr__akunisi { min-width: 0; }
+.tr__akunlabel,
+.tr__akunnilai,
+.tr__akunket { margin: 0; line-height: 1; }
+.tr__akunlabel { font-size: var(--k-t11); color: var(--text-muted); }
+.tr__akunnilai {
+  overflow: hidden;
+  margin-top: 8px;
+  font-size: var(--k-t18);
+  font-weight: var(--k-bold);
+  color: var(--brand);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tr__akunket { margin-top: 8px; font-size: var(--k-t11); color: var(--text-muted); }
+
+.tr__aksi {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.tr__kosong {
+  margin: 16px 0 0;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+
+/* Rangka saat sesi belum diperiksa. */
+.tr--rangka { min-height: 878px; }
+
+/* Di bawah lebar framenya kolomnya ditumpuk. Kolom kiri 303 tidak bisa
+   menyempit — kartu di dalamnya 302 — jadi yang harus mengalah kolom kanan,
+   dan di bawah 1240 tidak ada lagi ruang untuknya. */
+@media (max-width: 1240px) {
+  .tr {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+  .tr__kiri { height: 640px; }
+}

@@ -94,6 +94,23 @@ Kelimanya harus dibangun sebelum halaman yang memakainya. Membangun
 halamannya dulu berarti memasang bentuk pengganti, lalu menggantinya lagi —
 dua kali kerja untuk hasil yang sama.
 
+## Frame 07 dan 10 memakai KERANGKA YANG SAMA
+
+Keduanya identik sampai ke piksel di luar isi kolom kirinya: kolom 303 dan
+868, kartu "terbaru" 837x140 dengan butir 279x67, dan kartu form berpanel
+mint 805 di dalamnya. Karena itu CSS-nya satu berkas bersama
+(`styles/bayar-kit.css`), dengan yang khusus per-halaman di
+`terima-kit.css` dan `keluar-kit.css`.
+
+Tiga angka yang BERBEDA di antara keduanya, dan ketiganya sudah menggigit
+sekali masing-masing:
+
+| | frame 07 | frame 10 |
+| --- | --- | --- |
+| Dasar kartu form | y938 (sisa 4px di kolomnya) | y942 (mepet) |
+| Padding atas panel | 22,5 | 26,25 |
+| Jarak isian terakhir → tombol | 24 | 82 (tombol didorong ke dasar) |
+
 ## Panel yang TIDAK punya rect sendiri
 
 Panel mint di dalam kartu "Transfer Form" (frame 07) tidak ada di daftar

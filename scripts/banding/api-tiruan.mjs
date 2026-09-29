@@ -115,10 +115,32 @@ const biayaKeu = [
     category,
     amount,
     incurredOn: d.toISOString().slice(0, 10),
-    teamMemberId: null,
-    teamMemberName: null,
+    teamMemberId: category === "operasional" ? null : `t${(i % 5) + 2}`,
+    teamMemberName: category === "operasional"
+      ? null
+      : ["Sari Ningsih", "Bayu Prakoso", "Nanda Wijaya", "Rizki Ardian", "Tuti Hartati"][i % 5],
   };
 });
+
+/* Anggota tim — empat kelompok `member_kind`, dipakai akordeon di halaman
+   Catat Pengeluaran. Sengaja tidak rata: satu kelompok kosong supaya
+   keadaan "belum ada orang di kelompok ini" ikut tergambar. */
+const timAdmin = [
+  ["Dirga Pahlevi", "partner", "Principal architect"],
+  ["Sari Ningsih", "inti", "Arsitek"],
+  ["Bayu Prakoso", "inti", "Drafter"],
+  ["Nanda Wijaya", "proyek", "3D artist"],
+  ["Rizki Ardian", "proyek", "Drafter lepas"],
+  ["Tuti Hartati", "proyek", "Quantity surveyor"],
+].map(([name, kind, role], i) => ({
+  id: `t${i + 1}`,
+  name,
+  role,
+  kind,
+  rate: null,
+  phone: null,
+  active: true,
+}));
 
 const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", role: "master" };
 
@@ -172,6 +194,7 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
   if (path.startsWith("/api/v1/admin/costs")) return biayaKeu;
+  if (path.startsWith("/api/v1/admin/team")) return timAdmin;
   /* Yang PALING KHUSUS lebih dulu: "/admin/projects/<id>/payments" juga
      berawalan "/admin/projects", jadi urutan terbalik membuat daftar
      pembayaran dijawab dengan daftar proyek — dan halamannya menggambar
