@@ -235,3 +235,10 @@
   .tag__bar { flex-wrap: wrap; height: auto; row-gap: 10px; }
   .tag__dorong { display: none; }
 }
+
+/* Ponsel: sama dengan Semua Transaksi — paginasi boleh turun ke baris
+   sendiri. Di sini belum meluber karena halamannya cuma dua, tapi akan
+   meluber begitu tagihannya bertambah. */
+@media (max-width: 40rem) {
+  .tag__kaki { flex-wrap: wrap; row-gap: 12px; }
+}

@@ -162,3 +162,9 @@
   .trx__bar { flex-wrap: wrap; height: auto; row-gap: 10px; }
   .trx__dorong { display: none; }
 }
+
+/* Ponsel: hitungan dan paginasi tidak muat sebaris (paginasi 292px), dan
+   tanpa lipatan baris ini mendorong seluruh halaman 112px ke samping. */
+@media (max-width: 40rem) {
+  .trx__kaki { flex-wrap: wrap; row-gap: 12px; }
+}

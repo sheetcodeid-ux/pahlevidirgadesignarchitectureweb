@@ -1,6 +1,8 @@
 import { KepalaHalaman, TombolBulat } from "../kit/Item";
 import { Cari } from "../kit/Isian";
-import { ChatTeardropDots, Bell, ArrowLeft } from "../kit/ikon";
+import { useEffect, useState } from "react";
+import { ChatTeardropDots, Bell, ArrowLeft, List } from "../kit/ikon";
+import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, ID_REL } from "./RelKit";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 
@@ -17,9 +19,33 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
   /** Stempel build yang dipanggang ke HTML — lihat useTerbit. */
   dibangunPada: string;
 }) {
+  /* Keadaan menu geser milik RelKit; di sini cuma cerminnya untuk
+     aria-expanded. Kepala ini dipasang ulang tiap halaman, jadi ia bertanya
+     sekali saat dipasang. */
+  const [menuBuka, setMenuBuka] = useState(false);
+  useEffect(() => {
+    const dengar = (e: Event) => setMenuBuka(Boolean((e as CustomEvent<boolean>).detail));
+    window.addEventListener(PERISTIWA_REL_KEADAAN, dengar);
+    window.dispatchEvent(new CustomEvent(PERISTIWA_REL, { detail: "tanya" }));
+    return () => window.removeEventListener(PERISTIWA_REL_KEADAAN, dengar);
+  }, []);
+
   return (
     <KepalaHalaman
       judul={judul}
+      /* Hanya tampil di ponsel (CSS .kl__menu). Bulat, bukan kotak seperti
+         tombol kembali: di kit, yang bulat membuka panel. */
+      kiri={
+        <TombolBulat
+          className="kl__menu"
+          ikon={List}
+          judul={menuBuka ? "Tutup menu" : "Buka menu"}
+          aria-controls={ID_REL}
+          aria-expanded={menuBuka}
+          data-kl-rel-tombol=""
+          onClick={() => window.dispatchEvent(new CustomEvent(PERISTIWA_REL))}
+        />
+      }
       /* `kembali` berupa ALAMAT, bukan history.back(): halaman detail bisa
          dibuka langsung dari tautan, dan "kembali" ke halaman sebelumnya
          lalu berarti keluar dari panel. navigate() lewat router sisi klien,

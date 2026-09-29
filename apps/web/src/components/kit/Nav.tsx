@@ -49,11 +49,14 @@ export interface PropSisiNav {
   /** Rel sempit 72px berisi ikon saja — varian Tablet di Figma. */
   sempit?: boolean;
   className?: string;
+  /** Untuk `aria-controls` tombol menu geser di ponsel. */
+  id?: string;
 }
 
-export function SisiNav({ logo, item, kaki, sempit, className }: PropSisiNav) {
+export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav) {
   return (
     <nav
+      id={id}
       className={["k-sisi", sempit && "k-sisi--sempit", className].filter(Boolean).join(" ")}
       aria-label="Menu utama"
     >

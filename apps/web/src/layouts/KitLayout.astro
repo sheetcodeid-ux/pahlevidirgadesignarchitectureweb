@@ -244,6 +244,53 @@ const path = Astro.url.pathname;
     .kl--relkanan .kl__utama { padding-right: 28px; }
   }
 
+  /* --- Ponsel: rel samping jadi menu geser ---------------------------------
+     SEMENTARA, atas pilihan pemilik, sampai frame Mobile Coinest diekspor —
+     bentuknya mengikuti menu geser panel lama yang sudah di-ACC, bukan
+     dikarang dari frame. Sebelumnya rel tetap 192px di layar 390, isinya
+     tinggal ~160px, dan halaman bisa digeser 134px ke samping — terukur di
+     ketiga belas halaman kit.
+
+     Keadaannya milik RelKit (menutup sendiri saat pindah halaman, Esc, atau
+     layar melebar); tombolnya di kepala halaman. */
+  .k-kepalahal .kl__menu { display: none; }
+  @media (max-width: 40rem) {
+    .kl { background: none; }
+    .kl .k-sisi {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 81;
+      height: 100vh;
+      height: 100dvh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      transform: translateX(-100%);
+      /* visibility, bukan cuma geser: rel yang tergeser keluar layar tetap
+         bisa dicapai Tab, dan fokus yang hilang ke luar layar adalah cacat
+         yang tidak kelihatan sama sekali. */
+      visibility: hidden;
+      transition: transform 0.2s ease, visibility 0s linear 0.2s;
+    }
+    .kl .k-sisi.is-buka {
+      transform: none;
+      visibility: visible;
+      transition: transform 0.2s ease;
+    }
+    .k-kepalahal .kl__menu { display: grid; }
+    .kl__utama { padding: 16px 16px 24px; }
+    /* Kepala: baris kedua (cari + tombol bulat) selebar layar, kotak cari
+       yang mengalah — 237 + tiga tombol 38 tidak muat di 358. */
+    .kl-body .k-kepalahal__kanan { flex: 1 1 100%; gap: 10px; }
+    .kl-body .k-kepalahal__kanan > .k-cari { flex: 1 1 auto; width: auto; min-width: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kl .k-sisi { transition: none; }
+  }
+  /* Tirai menu geser: `.ov-scrim` overlay lama (warna per tema sudah ada di
+     sana), satu lapis di bawah relnya. */
+  .kl__tirai { z-index: 80; }
+
   /* Di bawah lebar frame rel sampingnya menyempit jadi ikon saja. Halaman
      admin ini tidak pernah dibuka dari ponsel oleh staf — tapi dibuka dari
      laptop kecil, dan di situ 192 + 1192 + talang tidak muat. */

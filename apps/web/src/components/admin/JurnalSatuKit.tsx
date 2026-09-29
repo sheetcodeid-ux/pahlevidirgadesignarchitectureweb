@@ -227,13 +227,19 @@ function Isi() {
     <div className="pjs">
       {/* ---- Kepala tulisan --------------------------------------------- */}
       <header className="pjs__kepala">
-        <input
+        {/* textarea satu baris, bukan <input>: judul yang panjang harus bisa
+            terlipat di ponsel, dan <input> tidak pernah terlipat — judulnya
+            terpotong jadi "Sembilan pertanyaan s". Enter dan baris baru dari
+            tempelan dibuang: judul tetap satu kalimat. */}
+        <textarea
           className="pjs__judul"
           aria-label="Judul tulisan"
           placeholder="Judul tulisan"
+          rows={1}
           maxLength={200}
           value={judul}
-          onChange={(e) => setJudul(e.currentTarget.value)}
+          onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+          onChange={(e) => setJudul(e.currentTarget.value.replace(/\s*\n\s*/g, " "))}
         />
         <textarea
           className="pjs__pembuka"

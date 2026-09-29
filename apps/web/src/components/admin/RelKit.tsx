@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { SisiNav, type ItemNav } from "../kit/Nav";
 import { SEMUA_IKON } from "../kit/ikon";
 import type { DataIkon } from "../kit/Ikon";
@@ -43,6 +44,18 @@ function ikon(nama: string, konteks: string): DataIkon {
   }
   return d;
 }
+
+/* Menu geser di ponsel. Tombolnya tinggal di kepala halaman (KepalaKit),
+   keadaannya di sini — dua island terpisah, jadi keduanya bicara lewat dua
+   peristiwa window, bukan lewat keadaan bersama yang tidak mereka punya.
+   Rel ini `transition:persist`, jadi keadaannya hidup lintas halaman;
+   kepalanya dipasang ulang tiap halaman dan menanyakan keadaannya lagi. */
+export const PERISTIWA_REL = "kit:rel";
+export const PERISTIWA_REL_KEADAAN = "kit:rel-keadaan";
+export const ID_REL = "kl-rel";
+
+/** Selebar-lebarnya ponsel. Di atas ini rel kembali menempel di kiri. */
+const PONSEL = "(max-width: 40rem)";
 
 export interface PropRelKit {
   /** Path halaman yang sedang dibuka — penanda baris aktif. */
@@ -98,10 +111,69 @@ export function RelKit({ path, pesanBelumDibaca, master, namaStudio }: PropRelKi
     };
   });
 
+  const [buka, setBuka] = useState(false);
+
+  useEffect(() => {
+    const ubah = (e: Event) => {
+      const d = (e as CustomEvent<boolean | undefined>).detail;
+      setBuka((b) => (typeof d === "boolean" ? d : !b));
+    };
+    /* Kepala halaman yang baru dipasang menanyakan keadaan lewat detail
+       "tanya" — jawabannya ikut dikirim lewat efek di bawah. */
+    const tanya = () => window.dispatchEvent(new CustomEvent(PERISTIWA_REL_KEADAAN, { detail: bukaRef.v }));
+    const ubahAtauTanya = (e: Event) =>
+      (e as CustomEvent).detail === "tanya" ? tanya() : ubah(e);
+    /* Menutup saat pindah halaman — di before-preparation, bukan page-load,
+       supaya menutupnya terasa seketika saat menu diklik. Pola yang sama
+       dengan sidebar lama. */
+    const tutup = () => setBuka(false);
+    const mq = window.matchMedia(PONSEL);
+    const lebar = () => !mq.matches && setBuka(false);
+    window.addEventListener(PERISTIWA_REL, ubahAtauTanya);
+    document.addEventListener("astro:before-preparation", tutup);
+    mq.addEventListener("change", lebar);
+    return () => {
+      window.removeEventListener(PERISTIWA_REL, ubahAtauTanya);
+      document.removeEventListener("astro:before-preparation", tutup);
+      mq.removeEventListener("change", lebar);
+    };
+  }, []);
+
+  useEffect(() => {
+    bukaRef.v = buka;
+    window.dispatchEvent(new CustomEvent(PERISTIWA_REL_KEADAAN, { detail: buka }));
+    if (!buka) return;
+    /* Gulir badan dikunci selama menu terbuka, dan fokus pindah ke menu —
+       tanpa itu Tab dari tombol menu berjalan ke isi halaman DI BELAKANG
+       tirai. Esc satu-satunya jalan keluar lewat keyboard, dan fokus kembali
+       ke tombol yang membukanya. */
+    document.body.style.overflow = "hidden";
+    document.querySelector<HTMLElement>(`#${ID_REL} .k-nav`)?.focus();
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setBuka(false);
+      document.querySelector<HTMLElement>("[data-kl-rel-tombol]")?.focus();
+    };
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", esc);
+    };
+  }, [buka]);
+
   return (
-    <SisiNav
-      logo={namaStudio ? <span className="kl__logo">{namaStudio}</span> : undefined}
-      item={item}
-    />
+    <>
+      <SisiNav
+        id={ID_REL}
+        className={buka ? "is-buka" : undefined}
+        logo={namaStudio ? <span className="kl__logo">{namaStudio}</span> : undefined}
+        item={item}
+      />
+      {buka && <div className="ov-scrim kl__tirai" data-state="open" aria-hidden="true" onClick={() => setBuka(false)} />}
+    </>
   );
 }
+
+/* Nilai terakhir, untuk menjawab "tanya" dari luar render. Satu objek
+   modul, bukan useRef: pendengar peristiwanya dipasang sekali. */
+const bukaRef = { v: false };

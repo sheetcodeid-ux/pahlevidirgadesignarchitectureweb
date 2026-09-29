@@ -235,7 +235,16 @@
 }
 .pjs__judul,
 .pjs__pembuka { padding: 0 8px; text-align: center; }
-.pjs__judul { height: 40px; font-size: var(--k-h1); font-weight: var(--k-bold); line-height: 38px; color: var(--brand); }
+.pjs__judul {
+  display: block;
+  min-height: 40px;
+  overflow: hidden;
+  field-sizing: content;
+  font-size: var(--k-h1);
+  font-weight: var(--k-bold);
+  line-height: 38px;
+  color: var(--brand);
+}
 .pjs__pembuka { margin-top: 8px; font-size: var(--k-t16); line-height: 25.5px; color: var(--text-muted); }
 .pjs__judul:hover,
 .pjs__pembuka:hover,
@@ -380,6 +389,8 @@
   .pjs__terkait .pj__kisi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 40rem) {
+  .pjs__kepala { padding-top: 28px; }
+  .pjs__judul { font-size: var(--k-h4); line-height: 30px; min-height: 32px; }
   .pjs__sampul, .pjs__terkait { margin-left: 0; margin-right: 0; }
   .pjs__badan { margin: 32px 0 0; }
   .pjs__terkait .pj__kisi { grid-template-columns: minmax(0, 1fr); }

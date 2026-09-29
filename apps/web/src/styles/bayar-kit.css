@@ -277,3 +277,10 @@
   }
   .tr__kiri { height: 640px; }
 }
+
+/* Ponsel (sementara, sampai frame Mobile diekspor): dua ubin ringkasan
+   berdampingan tinggal ~140px masing-masing di 358, dan labelnya terpotong
+   ("Nilai kontra…", "Beban sejauh" terlipat per kata). Ditumpuk. */
+@media (max-width: 40rem) {
+  .tr__akun { grid-template-columns: minmax(0, 1fr); }
+}

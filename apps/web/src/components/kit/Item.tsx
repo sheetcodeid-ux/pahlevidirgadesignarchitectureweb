@@ -108,18 +108,22 @@ export function KepalaHalaman({
   judul,
   onKembali,
   ikonKembali,
+  kiri,
   kanan,
   className,
 }: {
   judul: ReactNode;
   onKembali?: () => void;
   ikonKembali?: DataIkon;
+  /** Sebelum tombol kembali dan judul — tombol menu geser di ponsel. */
+  kiri?: ReactNode;
   kanan?: ReactNode;
   className?: string;
 }) {
   return (
     <header className={kelas("k-kepalahal", className)}>
       <div className="k-kepalahal__kiri">
+        {kiri}
         {onKembali && ikonKembali && (
           <button type="button" className="k-kepalahal__kembali" onClick={onKembali} aria-label="Kembali">
             <Ikon ikon={ikonKembali} ukuran={12} />
