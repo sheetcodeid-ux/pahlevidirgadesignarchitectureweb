@@ -1,0 +1,301 @@
+/* =============================================================================
+   Satu Proyek — tata letak frame "22. Saving Plans".
+
+   Batas LUAR tiap kotak dalam koordinat frame 1440 (garis Figma mengangkangi
+   tepi rect, jadi kotak bergaris 1px lebih besar daripada rect-nya):
+
+     kartu statistik   220,80   386x88, tiga buah, celah 17
+     garis pemisah     y188, selebar kolom konten
+     tahap             220,208  384x825  bergaris
+       judul           tinta y233,5
+       kartu tahap     236,272  352x99, langkah 115
+       tombol tambah   236,962  352x55, r8, hijau tua
+     rincian           623,208  789x825  bergaris
+       panel tahap     639,224  284x436  mint, r16
+       tugas tahap     939,224  457x174  bergaris
+       kas masuk       939,414  457x246  bergaris
+       transaksi       639,676  757x341  bergaris
+         kepala tabel  y740, 37 tinggi, mint; baris langkah 56
+   ============================================================================= */
+
+.sat { display: flex; flex-direction: column; }
+
+/* --- Kartu statistik ------------------------------------------------------ */
+.sat__stat {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 17px;
+}
+.sat__garis {
+  height: 0;
+  /* 168 → garis 188 → 208: garisnya sendiri memakan satu piksel. */
+  margin: 20px 0 19px;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+/* --- Dua kolom utama ------------------------------------------------------ */
+.sat__utama {
+  display: grid;
+  grid-template-columns: minmax(0, 384fr) minmax(0, 789fr);
+  gap: 19px;
+  height: 825px;
+}
+.sat__w {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.sat__judul {
+  margin: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--text-strong);
+}
+.sat__redup { color: var(--text-muted); }
+
+/* --- Tahap ---------------------------------------------------------------- */
+.sat__tahap { min-height: 0; }
+.sat__tahap .k-kepalaseksi__judul { min-width: 0; }
+.sat__tahap .pro__pilih { font-size: var(--k-t16); font-weight: var(--k-semi); }
+.sat__daftar {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+/* Kartu tahap 352x99: bergaris di latar putih, dan yang TERPILIH mint tanpa
+   garis — persis kartu kedua framenya. */
+.sat__kartu {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 11.5px;
+  min-height: 99px;
+  padding: 14px 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.sat__kartu:hover { border-color: var(--border-strong); }
+.sat__kartu[aria-pressed="true"] { border-color: transparent; background: var(--brand-soft); }
+.sat__kartu:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.sat__kartu .k-bar { flex: none; }
+.sat__kartuatas { display: flex; align-items: center; gap: 8.6px; }
+.sat__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: var(--brand-soft);
+  color: var(--text-strong);
+}
+.sat__kartu[aria-pressed="true"] .sat__ubin,
+.sat__ubin--putih { background: var(--bg); }
+.sat__kartuinfo,
+.sat__kartukanan { display: flex; flex-direction: column; gap: 8px; line-height: 1; }
+.sat__kartuinfo { flex: 1; min-width: 0; }
+.sat__kartuinfo b {
+  overflow: hidden;
+  font-size: var(--k-t16);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sat__kartuinfo span { font-size: var(--k-t14); color: var(--text-strong); }
+.sat__kartuinfo i { font-style: normal; color: var(--text-muted); }
+.sat__kartukanan { align-items: flex-end; text-align: right; }
+.sat__kartukanan b { font-size: var(--k-t16); font-weight: var(--k-med); color: var(--text-strong); }
+.sat__kartukanan span { font-size: var(--k-t14); color: var(--brand); white-space: nowrap; }
+
+.sat__tambah {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 55px;
+  margin-top: 16px;
+  border-radius: 8px;
+  background: var(--brand);
+  font-size: var(--k-t14);
+  font-weight: var(--k-med);
+  color: var(--brand-ink);
+  text-decoration: none;
+}
+.sat__tambah:hover { filter: brightness(1.08); }
+
+/* --- Rincian -------------------------------------------------------------- */
+.sat__rinci { gap: 16px; }
+.sat__atas {
+  display: grid;
+  grid-template-columns: minmax(0, 284fr) minmax(0, 457fr);
+  gap: 16px;
+  height: 436px;
+}
+.sat__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+.sat__infojudul {
+  display: flex;
+  align-items: center;
+  gap: 12.6px;
+  margin: 0;
+  font-size: var(--k-t18);
+  font-weight: var(--k-med);
+  line-height: 1;
+  color: var(--text-strong);
+}
+.sat__infonilai {
+  display: flex;
+  align-items: baseline;
+  margin: 25px 0 0;
+  line-height: 1;
+  color: var(--brand);
+}
+.sat__infonilai b { font-size: var(--k-h4); font-weight: var(--k-bold); }
+.sat__infonilai span { font-size: var(--k-t16); color: var(--text-muted); }
+.sat__info .k-bar { flex: none; margin-top: 16px; }
+.sat__infokaki {
+  display: flex;
+  justify-content: space-between;
+  margin: 18px 0 0;
+  font-size: var(--k-t16);
+  line-height: 1;
+  color: var(--brand);
+}
+.sat__infokaki b { font-weight: var(--k-semi); }
+.sat__infogaris { height: 0; margin: 24px 0; border: 0; border-top: 1px solid var(--text-faint); }
+.sat__fakta { display: flex; flex-direction: column; gap: 22px; margin: 0; }
+.sat__fakta > div { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: start; }
+.sat__fakta dt { font-size: var(--k-t12); line-height: 20px; color: var(--text-muted); }
+.sat__fakta dd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--k-t12);
+  line-height: 20px;
+  color: var(--text-strong);
+}
+.sat__orang { display: flex; align-items: center; gap: 6.5px; min-width: 0; }
+.sat__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--brand-mint);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--brand-mint-ink);
+}
+
+.sat__kanan {
+  display: grid;
+  grid-template-rows: 174px minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+.sat__tips { gap: 14px; }
+.sat__tipsdaftar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0 0 0 22px;
+  list-style: none;
+}
+.sat__tipsdaftar li {
+  position: relative;
+  overflow: hidden;
+  font-size: var(--k-t14);
+  line-height: 1;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Titik 6x6 di x963 — 15 sebelum teksnya, di tengah tinggi baris. */
+.sat__tipsdaftar li::before {
+  content: "";
+  position: absolute;
+  left: -15px;
+  top: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--text-strong);
+}
+.sat__tipsdaftar li { overflow: visible; }
+.sat__tipsdaftar li.is-berikut { color: var(--text-strong); font-weight: var(--k-med); }
+.sat__tipsdaftar li.is-selesai { text-decoration: line-through; }
+.sat__tipskosong { margin: 0; font-size: var(--k-t12); }
+
+.sat__kas { min-height: 0; }
+.sat__kas .k-area { flex: 1; margin-top: 10px; }
+.sat__kas--balik .k-area__kartu { left: auto; right: 0; }
+
+/* --- Transaksi ------------------------------------------------------------ */
+.sat__trx { flex: 1; min-height: 0; }
+.sat__tabel { margin-top: 16px; overflow-x: auto; }
+.sat__tabel .k-tabel { min-width: 725px; }
+.sat__tabel .k-tabel thead th:first-child { border-radius: 4px 0 0 4px; }
+.sat__tabel .k-tabel thead th:last-child { border-radius: 0 4px 4px 0; }
+.sat__jenis { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.sat__jenis b { font-weight: var(--k-med); }
+.sat__jenis i { font-style: normal; color: var(--text-muted); }
+.sat__jenisubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-right: 5px;
+  border-radius: 12px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+}
+.sat__jenisubin--keluar { background: var(--brand-soft); color: var(--brand); }
+.sat__masuk { color: var(--brand); }
+.sat__keluar { color: var(--danger); }
+.sat__catatan { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sat__kosong { margin: 16px 0 0; font-size: var(--k-t12); color: var(--text-muted); }
+.sat--rangka { min-height: 1000px; }
+
+/* Di bawah lebar framenya seluruh kolom menumpuk. */
+@media (max-width: 1240px) {
+  .sat__stat,
+  .sat__utama,
+  .sat__atas,
+  .sat__kanan {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    height: auto;
+  }
+  .sat__tahap { max-height: 640px; }
+  .sat__kas .k-area { min-height: 180px; }
+}
