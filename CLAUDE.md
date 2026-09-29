@@ -789,6 +789,20 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     yang memang warna Coinest sendiri — dibiarkan karena mengubahnya berarti
     menyimpang dari framenya, dan itu keputusan pemilik.
 
+    **Alat itu sendiri sempat buta satu kelas (jebakan #36).** Ia cuma
+    memeriksa elemen yang SEKALIGUS punya teks langsung dan latar sendiri,
+    jadi teks yang latarnya milik LELUHUR — label `<span>` di dalam pil
+    `<a>` bermint — tidak pernah diperiksa. Sekarang latar dicari ke leluhur
+    buram terdekat, dan tiga cacat tema gelap langsung ketahuan, semuanya
+    lolos berbulan-bulan: menu aktif rel kit putih-di-atas-mint (1,23),
+    kategori kartu proyek hijau-di-atas-hijau-yang-sama (1,00), dan label
+    "Terbit" kartu kas (1,4) — ditambah satu buatan saya sendiri di halaman
+    Fee: kolom "Tanpa nama" bertinta amber di atas putih (1,91), yang kini
+    membawa amber-nya lewat titik. Temuan baru yang SENGAJA dibiarkan karena warna
+    frame: abu `#BCBEBD` di atas putih (1,87) pada tautan kaki halaman dan
+    tanda "—" — tautan kaki di SVG framenya memang `#BCBEBD`. `<option>`
+    dilewati: ia digambar menu sistem operasi, bukan halaman.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1033,6 +1047,7 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Editor jurnal = halaman BACA frame 40 yang bisa disunting di tempat** | Judul, pembuka, dan isi adalah kotak tanpa garis yang baru bergaris saat disentuh, sehingga teksnya jatuh persis di posisi teks framenya (x321, 16/25). Isi TETAP markdown mentah, tanpa perender kedua — keputusan lama tidak berubah; yang diturunkan ke kolom kanan cuma daftar baris `## ` sebagai daftar isi. Tombol Simpan yang mati selalu menyebut alasannya (syarat yang sama dengan `checkJournalInput`) |
 | **Tombol Terbitkan juga ada di kepala halaman kit, dengan SATU logika** | Halaman yang pindah ke KitLayout kehilangan bilah atas lama beserta tombolnya, padahal toast Jurnal dan Paket menyuruh menekannya. Keadaannya (polling `cap-build.json`, status, "belum tayang") dipindah ke `components/admin/useTerbit.ts` dan dipakai `Topbar` maupun `TerbitKit`; yang dua cuma tampilannya. Ikonnya bola dunia karena pustaka ikon Coinest tidak punya panah unggah — menggambarnya sendiri berarti menjiplak. Konsekuensinya, `KepalaKit` sekarang SELALU dihidrasi, dan `TombolBulat` meneruskan ref supaya bisa jadi pemicu Radix |
 | **Gaji dibangun dari frame 25 LAGI, bukan halaman sendiri tanpa frame** | Dipilih pemilik: Gaji tidak punya frame, dan di pemetaan ia berbagi frame 25 dengan Fee. Kerangkanya sama persis dengan Fee Proyek — terbukti: kotak kelima widget identik — dan helpernya (nominal, pemilih, sumbu) hidup di `components/admin/frame25.tsx` yang dipakai keduanya, bukan disalin; Fee terbukti identik piksel demi piksel setelah helpernya dipindah. Aturan "fee menulis, gaji membaca" tidak berubah: kolom Fee di tabel tidak bisa diketik. Mengubah dan menghapus lewat NAMA orang di tabel, karena tabel kit tidak punya kolom aksi. Grafik Total Gaji diberi ruang kepala 80% seperti framenya — gaji hampir rata, dan tanpa itu garisnya menimpa tooltip puncak |
+| **Halaman kit di ponsel: menu geser SEMENTARA, sampai frame Mobile diekspor** | Dipilih pemilik. Sebelumnya rel samping tetap 192px di layar 390, isi tinggal ~160px, dan halaman bisa digeser 134px ke samping — di ketiga belas halaman kit yang sudah tayang, padahal pemilik memang membuka panel dari ponsel. Di bawah 40rem rel jadi menu geser (bentuknya menu geser panel lama yang sudah di-ACC, BUKAN dikarang dari frame); keadaannya milik `RelKit`, tombolnya di `KepalaKit`, keduanya bicara lewat peristiwa `kit:rel`. Tabel lebar tetap digulir di dalam kartunya sendiri. Terbukti tidak menyentuh desktop: ke-14 halaman identik piksel demi piksel dengan versi yang tayang pada 1440, 1024, dan 768 — kecuali judul Detail Tulisan pada 768 yang kini terlipat alih-alih terpotong. Begitu frame Mobile Coinest diekspor, tampilannya disamakan dengan frame itu |
 | **Keuangan jadi satu pintu; halaman "Kerja Internal" dibuang** | Pemilik melaporkannya sebagai "sangat membingungkan". Sebabnya bukan tata letak: halaman itu tidak punya isi sendiri — ia potongan dua halaman lintas-proyek yang disaring ke satu proyek, jadi tugas, biaya, dan pipeline masing-masing punya DUA pintu masuk. Sekarang pengeluaran dicatat dari satu tempat dengan dropdown proyek di dalam dialognya |
 | **Fee menulis, Gaji membaca** | Pemilik memilih fee per proyek ke orang DAN halaman gaji yang memuat freelancer — dua jawaban yang kalau diikuti mentah membuat satu bayaran freelancer bisa diketik dua kali, dan beban studio tercatat ganda. Ditutup di lapisan data, bukan di UI: tabel `payroll` secara struktur TIDAK BISA memuat bayaran proyek, dan baris freelancer di halaman Gaji diturunkan SQL dari `project_costs`. Jadi angka ganda bukan cuma tidak dianjurkan — ia tidak bisa terjadi |
 | Biaya proyek menyimpan SIAPA yang dibayar, dan boleh kosong | Tanpa kolom itu pertanyaan "orang ini tahun ini terima berapa dari semua proyek" tidak pernah bisa dijawab. Boleh kosong dua kali disengaja: biaya operasional memang bukan milik siapa pun, dan puluhan baris lama tidak punya nama — menautkannya satu per satu memakan waktu pemilik untuk angka yang sudah lewat. `on delete set null`, bukan cascade: menghapus freelancer tidak boleh menghapus biaya yang sudah keluar |

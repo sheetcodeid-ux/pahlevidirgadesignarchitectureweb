@@ -106,8 +106,12 @@
   font-style: italic;
   color: var(--brand);
 }
+/* Mint di KEDUA tema. Sempat ada pengganti tema gelap ke `--brand-ink`, yang
+   di gelap bernilai #1E4841 — sama persis dengan bidang kartu kas, yang
+   sengaja tidak ikut berbalik (`--kas-bidang`). Kategorinya hilang sama
+   sekali, rasio 1,00; ketahuan setelah pemindai kontras berhenti buta pada
+   latar milik leluhur. */
 .k-kas:not(.k-kas--terang) .pro__kategori { color: var(--brand-mint); }
-:root[data-theme="dark"] .k-kas:not(.k-kas--terang) .pro__kategori { color: var(--brand-ink); }
 /* Nama klien di kaki kartu bisa panjang; kolomnya yang menyusut. */
 .pro__kartub .k-kas__kaki > :first-child { min-width: 0; }
 .pro__kartub .k-kas__kaki > :first-child .k-kas__isi {

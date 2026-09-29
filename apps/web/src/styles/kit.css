@@ -433,6 +433,13 @@
      5,5% di acuan dan 0% di kit. */
   color: var(--text-strong);
 }
+/* Tema gelap: `--text-strong` di sana PUTIH, dan latar pilnya tetap mint —
+   putih di atas mint 1,23, labelnya nyaris hilang (jebakan #37). Lolos
+   lama karena pemindai kontras buta pada teks yang latarnya milik leluhur;
+   alatnya sudah diperbaiki. Garis penanda submenu ikut, karena ia
+   `currentColor`. */
+:root[data-theme="dark"] .k-nav[aria-current="page"],
+:root[data-theme="dark"] .k-nav.is-aktif { color: var(--brand-mint-ink); }
 /* Submenu: tanpa ikon. Teksnya TIDAK sejajar dengan label menu di atasnya —
    terukur, tinta submenu Figma mulai di 61,28 sementara menu induknya di
    53,28, jadi ia menjorok 8px lagi ke dalam. */
@@ -1375,7 +1382,10 @@
 .k-kas__tengah { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 28px; }
 /* 14px, dan warnanya BEDA per varian: mint pucat di kartu gelap, abu di
    kartu terang — bukan sekadar nominal yang diredupkan. */
-.k-kas__label { margin: 0; font-size: var(--k-t14); font-weight: var(--k-semi); line-height: 1; color: var(--brand-soft); }
+/* `--kas-ink`, bukan `--brand-soft`: nilainya sama di tema terang (#ECF4E9),
+   tapi `--brand-soft` berbalik jadi #1E2E24 di gelap sementara bidang kartu
+   ini TIDAK — label "Terbit" tergambar 1,4 : 1 di atas #1E4841. */
+.k-kas__label { margin: 0; font-size: var(--k-t14); font-weight: var(--k-semi); line-height: 1; color: var(--kas-ink); }
 .k-kas--terang .k-kas__label { color: var(--text-muted); }
 .k-kas__nilai {
   margin: 0;

@@ -38,15 +38,32 @@ for (const tema of ["light", "dark"]) {
       for (const el of document.querySelectorAll("*")) {
         const teks = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
         if (!teks) continue;
+        /* <option> tidak digambar di halaman: daftarnya menu bawaan sistem
+           operasi dengan warnanya sendiri. Warna hitungannya (abu di atas
+           abu) alarm palsu. */
+        if (el.tagName === "OPTION") continue;
         const g = getComputedStyle(el);
-        const latar = rgb(g.backgroundColor);
-        if (latar.length < 3 || (latar[3] !== undefined && latar[3] === 0)) continue;
+        /* Latar dicari ke LELUHUR terdekat yang buram, bukan cuma elemennya
+           sendiri. Sempat buta di sini (jebakan #36): label menu aktif rel
+           kit adalah <span> tanpa latar di dalam pil <a> bermint, jadi
+           putih-di-atas-mint 1,23 di tema gelap tidak pernah terlaporkan —
+           karena elemen yang punya teks tidak punya latar, dan yang punya
+           latar tidak punya teks langsung. Latar setengah tembus dilewati
+           (tidak bisa dihitung tanpa tahu apa di belakangnya), dan
+           pencarian berhenti di <body>, yang latarnya milik halaman. */
+        let latar = null;
+        for (let x = el; x && x !== document.documentElement; x = x.parentElement) {
+          const c = rgb(getComputedStyle(x).backgroundColor);
+          if (c.length >= 3 && (c[3] === undefined || c[3] === 1)) { latar = c; break; }
+          if (c.length >= 3 && c[3] > 0) { latar = null; break; }
+        }
+        if (!latar) continue;
         const r = rasio(rgb(g.color), latar);
         if (r < 3) {
           out.push({
             kelas: (el.className.toString() || el.tagName).slice(0, 40),
             isi: (el.textContent || "").trim().slice(0, 24),
-            kontras: +r.toFixed(2), teks: g.color, latar: g.backgroundColor,
+            kontras: +r.toFixed(2), teks: g.color, latar: `rgb(${latar.slice(0, 3).join(", ")})`,
           });
         }
       }

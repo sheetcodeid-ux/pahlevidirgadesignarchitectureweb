@@ -206,7 +206,10 @@
 .fee__sel .k-sel2__atas,
 .fee__sel .k-sel2__bawah { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fee__redup { color: var(--text-faint); }
-.fee__tanpa { color: var(--warn); }
+/* Amber (terbatas: fee yang belum bernama) dibawa TITIK, bukan warna teks —
+   --warn di atas putih cuma 1,91 : 1, angka rupiahnya sulit dibaca. */
+.fee__tanpa { display: inline-flex; align-items: center; gap: 5px; color: var(--text-strong); }
+.fee__tanpa::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
 
 .fee__kosong { margin: 16px 0 0; font-size: var(--k-t12); color: var(--text-muted); }
 
