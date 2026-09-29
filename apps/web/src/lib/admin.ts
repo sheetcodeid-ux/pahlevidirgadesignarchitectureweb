@@ -372,7 +372,11 @@ export const daftarPembayaran = (projectId: string) =>
 
 export const catatPembayaran = (
   projectId: string,
-  isi: { amount: number; kind: string; method: string; receiver?: string | null },
+  /* `note` memang diterima endpoint-nya — `PaymentInput` di apps/api
+     memuatnya dan `paymentsRepo.create` menulisnya ke kolom `note`. Yang
+     kurang cuma tipe di sisi klien ini, jadi kolomnya tidak pernah bisa
+     diisi dari panel sampai sekarang. */
+  isi: { amount: number; kind: string; method: string; receiver?: string | null; note?: string | null },
 ) =>
   panggil<Pembayaran>(`/admin/projects/${projectId}/payments`, {
     method: "POST",

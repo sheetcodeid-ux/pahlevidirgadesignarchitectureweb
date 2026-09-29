@@ -1,6 +1,12 @@
 ---
 import "../styles/global.css";
 import "../styles/kit.css";
+/* Toast masih memakai overlay lama — satu-satunya bagian sistem lama yang
+   ikut ke kerangka kit, dan sengaja: membangun ulang toast berarti dua
+   perender pesan yang pasti menyimpang. Kelasnya (.ov-toast) hidup di sini,
+   dan halaman yang tidak memuatnya menggambar pesan itu sebagai teks polos
+   tanpa satu pun galat — jebakan #5. */
+import "../styles/overlay.css";
 import { ClientRouter } from "astro:transitions";
 import { RelKit } from "../components/admin/RelKit";
 import { KepalaKit } from "../components/admin/KepalaKit";

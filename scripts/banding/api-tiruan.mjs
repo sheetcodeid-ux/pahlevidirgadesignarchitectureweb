@@ -122,11 +122,65 @@ const biayaKeu = [
 
 const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", role: "master" };
 
+/* Proyek versi ADMIN — beda bentuk dari `proyek` di atas, yang meniru
+   endpoint publik. Yang ini memuat contractValue dan paidTotal, dua kolom
+   yang dibaca halaman Terima Pembayaran untuk menghitung sisa tagihan. */
+const proyekAdmin = proyekKeu.map((p, i) => ({
+  id: p.projectId,
+  slug: `proyek-${i + 1}`,
+  title: p.projectTitle,
+  category: i % 2 ? "residential" : "hospitality",
+  status: "published",
+  city: "Pontianak",
+  client: ["Bu Ratna", "Pak Hendra", "Bakmi Hauw", "Notaris Ahmad", "PT Kapuas Jaya"][i],
+  isFeatured: i === 0,
+  contractValue: p.contractValue,
+  paidTotal: p.received,
+  pipelineStage: "konstruksi",
+}));
+
+/* Pembayaran per proyek. Dua sampai empat butir, mundur beberapa minggu —
+   cukup untuk mengisi strip mendatar di frame 07 dan untuk membuktikan
+   striponya memang MELEWATI tepi kartu seperti di framenya. */
+const bayarAdmin = Object.fromEntries(
+  proyekAdmin.map((p, i) => {
+    const n = 2 + (i % 3);
+    const potong = Math.round(p.paidTotal / n);
+    return [
+      p.id,
+      Array.from({ length: n }, (_, j) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (j * 26 + i * 3));
+        return {
+          id: `${p.id}-bayar-${j + 1}`,
+          projectId: p.id,
+          amount: j === 0 ? p.paidTotal - potong * (n - 1) : potong,
+          kind: j === n - 1 ? "dp" : "termin",
+          method: ["transfer", "tunai", "qris", "lainnya"][(i + j) % 4],
+          receiver: ["Dirga", "Sari", "Dirga"][j % 3],
+          note: null,
+          paidAt: d.toISOString(),
+          receiptToken: `tok${i}${j}`,
+        };
+      }),
+    ];
+  }),
+);
+
 const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
   if (path.startsWith("/api/v1/admin/costs")) return biayaKeu;
+  /* Yang PALING KHUSUS lebih dulu: "/admin/projects/<id>/payments" juga
+     berawalan "/admin/projects", jadi urutan terbalik membuat daftar
+     pembayaran dijawab dengan daftar proyek — dan halamannya menggambar
+     kartu pembayaran berisi judul proyek tanpa satu pun galat. */
+  {
+    const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/payments/);
+    if (m) return bayarAdmin[m[1]] ?? [];
+  }
+  if (path.startsWith("/api/v1/admin/projects")) return proyekAdmin;
   if (path.startsWith("/api/v1/projects/")) return proyek[0];
   if (path.startsWith("/api/v1/projects")) return proyek;
   if (path.startsWith("/api/v1/settings")) return setelan;

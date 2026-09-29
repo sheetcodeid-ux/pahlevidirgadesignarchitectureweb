@@ -81,17 +81,30 @@ terbangun di P2:
 | Kartu statistik LEBAR, ikon di kanan | Saving Plans, Invoices |
 | **Cincin sepusat** | Dashboard v2 (Expense Breakdown) |
 | **Kartu statistik RINGKAS 284x87** | Dashboard v2 (Section Statistic) |
+| **Kelompok tab berikon 303x72** | Transfer, Payment (kolom kiri) |
 
-Dua yang terakhir baru ketahuan saat halaman `/admin/keuangan` dibangun,
-jadi keduanya lahir di P4 dan bukan di P2. Keduanya terdaftar di
+Tiga yang terakhir baru ketahuan saat halamannya dibangun, jadi ketiganya
+lahir di P4 dan bukan di P2. Keduanya terdaftar di
 `/admin/kit` pada seksi "Bentuk dari frame Interface", dan sengaja TIDAK
 punya entri di seksi "Banding dengan Figma": acuan di sana dipotong dari
-lima belas frame Style &amp; Component, sementara keduanya hanya ada di frame
+lima belas frame Style &amp; Component, sementara ketiganya hanya ada di frame
 Interface.
 
 Kelimanya harus dibangun sebelum halaman yang memakainya. Membangun
 halamannya dulu berarti memasang bentuk pengganti, lalu menggantinya lagi —
 dua kali kerja untuk hasil yang sama.
+
+## Panel yang TIDAK punya rect sendiri
+
+Panel mint di dalam kartu "Transfer Form" (frame 07) tidak ada di daftar
+`<rect>` mana pun. Warnanya berasal dari latar BINGKAI yang menembus, dan
+bingkai itu ditimpa rect putih selebar kanvas di urutan berikutnya — jadi
+mencarinya di SVG tidak akan pernah ketemu, dan kesimpulan "tidak ada
+panel di situ" salah.
+
+Yang menjawab MEMBACA PIKSEL gambarnya: mint mulai x575 berhenti x1380,
+y318 sampai y920. Alat kecilnya `/tmp/probe.mjs` pada sesi itu — pola yang
+sama dipakai untuk membuktikan keempat tab metode berlatar sama persis.
 
 ## Frame yang belum ada
 

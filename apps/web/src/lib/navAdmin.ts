@@ -120,6 +120,7 @@ export const NAV: NavItem[] = [
     group: "",
     children: [
       { label: "Ringkasan", href: "/admin/keuangan", icon: "finance", ikonKit: "ChartBar" },
+      { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "CoinIn" },
       { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "NavCurrencyCircleDollar" },
       { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "Wallet" },
     ],

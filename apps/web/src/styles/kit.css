@@ -2677,6 +2677,41 @@
 .k-cincin { display: block; width: 200px; max-width: 100%; }
 .k-cincin > svg { display: block; width: 100%; height: auto; }
 
+/* --- Kelompok tab berikon (Button Group, frame Interface) ------------------
+   Jalur 72 tinggi radius 16 berlatar mint, tab dibagi rata, ikon 24 di atas
+   label 12. Pilihan ditandai TINTA, bukan latar: terukur pada frame 07,
+   latar keempat tab sama persis. */
+.k-jalurtab {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: 72px;
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+.k-jalurtab__b {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 16px;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: var(--k-t12);
+  font-weight: var(--k-reg);
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+.k-jalurtab__b:hover { background: rgba(30, 72, 65, 0.05); }
+.k-jalurtab__b[aria-pressed="true"] {
+  font-weight: var(--k-semi);
+  color: var(--brand);
+}
+
 /* --- Kartu statistik lebar ------------------------------------------------ */
 .k-statlebar {
   display: flex;

@@ -8,8 +8,9 @@ import { Paginasi } from "./Paginasi";
 import { Cari, Isian, Centang, Sakelar } from "./Isian";
 import { GaleriBanding } from "./GaleriBanding";
 import { Cincin, LencanaTren } from "./Ukuran";
+import { KelompokTab } from "./Segmen";
 import { KartuStatistikRingkas } from "./Kartu";
-import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, SEMUA_IKON } from "./ikon";
+import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, CoinVertical, NavCreditCard, VirtualAccount, DotsThree, SEMUA_IKON } from "./ikon";
 
 /* =============================================================================
    Galeri kit — halaman kerja, bukan hiasan.
@@ -65,6 +66,7 @@ const NADA: [NadaLencana, string][] = [
 export function Galeri() {
   const [segmen, setSegmen] = useState("bulan");
   const [halaman, setHalaman] = useState(3);
+  const [tabKit, setTabKit] = useState("transfer");
 
   return (
     <div className="k-galeri">
@@ -258,7 +260,7 @@ export function Galeri() {
         </Baris>
       </section>
 
-      {/* Dua bentuk yang lahir di P4, bukan di P2 — dan itu sebabnya keduanya
+      {/* Tiga bentuk yang lahir di P4, bukan di P2 — dan itu sebabnya ketiganya
           TIDAK punya entri di seksi "Banding dengan Figma" di atas: acuan di
           sana dipotong dari lima belas frame Style & Component, sementara
           keduanya cuma ada di frame Interface. Yang membuktikannya
@@ -267,8 +269,8 @@ export function Galeri() {
       <section className="k-galeri__seksi">
         <h2 className="k-galeri__judul">Bentuk dari frame Interface</h2>
         <p className="k-galeri__ket">
-          Dua bentuk yang tidak ada di frame Style &amp; Component, jadi
-          keduanya diukur langsung dari frame halaman yang memakainya.
+          Tiga bentuk yang tidak ada di frame Style &amp; Component, jadi
+          ketiganya diukur langsung dari frame halaman yang memakainya.
         </p>
         <Baris judul="Cincin sepusat — frame 04, luar 100, tebal 14, lubang 30">
           <Cincin
@@ -278,6 +280,21 @@ export function Galeri() {
               { persen: 20, warna: "var(--ramp-5)" },
             ]}
           />
+        </Baris>
+        <Baris judul="Kelompok tab berikon — jalur 72 r16, ikon 24 di atas label 12">
+          <div style={{ width: 303 }}>
+            <KelompokTab
+              judul="Contoh kelompok tab"
+              nilai={tabKit}
+              onPilih={setTabKit}
+              tab={[
+                { nilai: "tunai", label: "Tunai", ikon: CoinVertical },
+                { nilai: "transfer", label: "Transfer", ikon: NavCreditCard },
+                { nilai: "qris", label: "QRIS", ikon: VirtualAccount },
+                { nilai: "lainnya", label: "Lainnya", ikon: DotsThree },
+              ]}
+            />
+          </div>
         </Baris>
         <Baris judul="Kartu statistik ringkas — 284x87, ubin 22, nominal 24/700">
           <div style={{ width: 284 }}>
