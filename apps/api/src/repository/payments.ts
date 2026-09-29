@@ -38,6 +38,26 @@ export async function listByProject(sql: Sql, projectID: string): Promise<Paymen
 }
 
 /**
+ * Seluruh pembayaran LINTAS proyek, terbaru dulu.
+ *
+ * Ada supaya halaman "Semua Transaksi" tidak perlu satu permintaan per
+ * proyek. Bentuknya disamakan dengan `costsRepo.listAll` — judul proyek ikut
+ * di baris, batas 500, urutan menurun — karena halaman itu menggabungkan
+ * kedua daftar jadi satu dan dua bentuk yang berbeda berarti dua jalur
+ * penggabungan yang pasti menyimpang.
+ */
+export async function listAll(sql: Sql, limit = 200): Promise<Payment[]> {
+  const rows = await sql<(Row & { project_title: string })[]>`
+    select b.id, b.project_id, b.amount, b.kind, b.method, b.receiver, b.note,
+           b.paid_at, b.receipt_token, p.title as project_title
+      from public.project_payments b
+      join public.projects p on p.id = b.project_id
+     order by b.paid_at desc
+     limit ${Math.min(Math.max(limit, 1), 500)}`;
+  return rows.map((r) => ({ ...rowToPayment(r), projectTitle: r.project_title }));
+}
+
+/**
  * Mencatat satu uang masuk.
  *
  * receipt_token TIDAK diisi di sini — biarkan default kolomnya yang membuat

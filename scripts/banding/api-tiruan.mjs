@@ -180,7 +180,9 @@ const bayarAdmin = Object.fromEntries(
           kind: j === n - 1 ? "dp" : "termin",
           method: ["transfer", "tunai", "qris", "lainnya"][(i + j) % 4],
           receiver: ["Dirga", "Sari", "Dirga"][j % 3],
-          note: null,
+          /* Sebagian saja yang bercatatan — kolom Catatan di halaman Semua
+             Transaksi harus terlihat apa adanya, termasuk yang kosong. */
+          note: j % 2 === 0 ? null : ["setelah gambar kerja", "lewat rekening BCA", "tunai di kantor"][i % 3],
           paidAt: d.toISOString(),
           receiptToken: `tok${i}${j}`,
         };
@@ -202,6 +204,16 @@ const jawab = (path) => {
   {
     const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/payments/);
     if (m) return bayarAdmin[m[1]] ?? [];
+  }
+  /* Lintas proyek — judul proyek ikut di baris, sama seperti /admin/costs. */
+  if (path.startsWith("/api/v1/admin/payments")) {
+    return Object.values(bayarAdmin)
+      .flat()
+      .map((b) => ({
+        ...b,
+        projectTitle: proyekAdmin.find((p) => p.id === b.projectId)?.title,
+      }))
+      .sort((a, z) => z.paidAt.localeCompare(a.paidAt));
   }
   if (path.startsWith("/api/v1/admin/projects")) return proyekAdmin;
   if (path.startsWith("/api/v1/projects/")) return proyek[0];

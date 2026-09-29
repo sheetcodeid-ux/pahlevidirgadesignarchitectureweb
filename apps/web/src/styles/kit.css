@@ -684,6 +684,22 @@
 
 .k-lencana--selesai:not(.k-lencana--garis) { background: var(--brand); color: var(--brand-mint); }
 .k-lencana--menunggu:not(.k-lencana--garis) { background: var(--brand-mint); color: var(--brand); }
+/* Di tema GELAP `--brand` dan `--brand-mint` bernilai sama persis (#BBF49C) —
+   mint memang warna aksi di sana, dan hijau tua jadi warna bidang. Akibatnya
+   kedua aturan di atas menggambar mint di atas mint: kotaknya ada, teksnya
+   hilang sama sekali. Tanpa satu galat, dan tidak kelihatan dari membaca
+   CSS-nya; yang menemukannya menjalankan halaman Semua Transaksi dalam tema
+   gelap dan melihat dua belas lencana kosong.
+
+   Pasangan gelapnya dibalik, bukan ditambal: yang "selesai" jadi mint pejal
+   bertinta gelap, yang "menunggu" jadi bidang hijau tua bertinta mint. */
+:root[data-theme="dark"] .k-lencana--selesai:not(.k-lencana--garis) {
+  color: var(--brand-ink);
+}
+:root[data-theme="dark"] .k-lencana--menunggu:not(.k-lencana--garis) {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
 .k-lencana--gagal:not(.k-lencana--garis) { background: var(--danger-soft); color: var(--danger); }
 .k-lencana--netral:not(.k-lencana--garis) { background: var(--border-strong); color: var(--text-strong); }
 
@@ -2676,6 +2692,40 @@
    itu proporsi yang memang sengaja dipilih di sana. */
 .k-cincin { display: block; width: 200px; max-width: 100%; }
 .k-cincin > svg { display: block; width: 100%; height: auto; }
+
+/* --- Pemilih bertopeng tombol ----------------------------------------------
+   Frame Interface memakai "Button Picker": tombol ber-caret yang kalau
+   disentuh membuka daftar. Di sini yang tergambar tombol kit dan yang
+   membuka daftar <select> ASLI, ditumpangkan transparan di atasnya.
+
+   Kenapa bukan daftar buatan sendiri: papan ketik, ketik-untuk-melompat,
+   dan pemilih layar penuh di ponsel semuanya sudah benar pada <select> dan
+   tidak bisa rusak diam-diam — alasan yang sama dengan <details> untuk
+   akordeon di situs publik.
+
+   Tombolnya diberi `tabIndex={-1}` oleh pemanggil supaya Tab mendarat di
+   <select>-nya, bukan singgah dua kali di satu kontrol. */
+.k-pilihtombol {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.k-pilihtombol > select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+/* Fokus papan ketik tetap terlihat — yang menerima fokus <select> yang
+   tembus pandang, jadi cincinnya digambar di tombol yang tampak. */
+.k-pilihtombol:focus-within > .k-tombol {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 
 /* --- Kelompok tab berikon (Button Group, frame Interface) ------------------
    Jalur 72 tinggi radius 16 berlatar mint, tab dibagi rata, ikon 24 di atas

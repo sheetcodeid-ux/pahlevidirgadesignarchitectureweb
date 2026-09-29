@@ -145,6 +145,9 @@ export interface Payment {
   paidAt: string;
   /** Kunci tautan bukti publik. Tidak pernah sama dengan id barisnya. */
   receiptToken: string;
+  /** Ikut terbawa oleh daftar LINTAS proyek, tidak oleh daftar per proyek —
+   *  sama persis dengan `ProjectCost.projectTitle`. */
+  projectTitle?: string;
 }
 
 export interface PaymentInput {

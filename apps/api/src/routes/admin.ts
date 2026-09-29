@@ -444,6 +444,20 @@ admin.post("/projects/:id/costs", async (c) => {
  * proyek. Proyeknya dipilih dari dropdown saat mencatat, bukan dari halaman
  * mana staf kebetulan berada.
  */
+/**
+ * GET /api/v1/admin/payments — uang MASUK lintas proyek.
+ *
+ * Pasangan dari GET /admin/costs di bawah. Halaman "Semua Transaksi"
+ * menggabungkan keduanya jadi satu daftar berurut waktu; tanpa endpoint ini
+ * ia harus memanggil /projects/:id/payments satu kali per proyek.
+ */
+admin.get("/payments", async (c) => {
+  const limit = Number(c.req.query("limit") ?? 200);
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    paymentsRepo.listAll(sql, Number.isFinite(limit) ? limit : 200));
+  return c.json({ data });
+});
+
 admin.get("/costs", async (c) => {
   const limit = Number(c.req.query("limit") ?? 200);
   const data = await withDb(c.env, c.executionCtx, (sql) =>

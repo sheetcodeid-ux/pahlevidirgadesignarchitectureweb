@@ -749,6 +749,21 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     melihat apa yang Anda kira ia lihat** — biasanya dengan menumpuk
     gambarnya dan melihat sendiri.
 
+37. **Dua token yang BERBEDA di tema terang bisa bernilai SAMA di tema
+    gelap.** `--brand` #1E4841 dan `--brand-mint` #BBF49C jelas berbeda di
+    terang; di gelap keduanya #BBF49C, karena di sana mint memang warna aksi
+    dan hijau tua jadi warna bidang. Jadi `background: var(--brand); color:
+    var(--brand-mint)` — yang benar dan terukur di terang — menggambar mint
+    di atas mint begitu temanya ditukar: kotaknya ada, teksnya hilang sama
+    sekali. Terukur: rasio kontras 1,00. Sudah menggigit di lencana pejal,
+    yang dipakai di setiap tabel berstatus, dan lolos berbulan-bulan karena
+    galeri kit dan seluruh pengukuran banding dijalankan dalam tema terang
+    saja. Aturannya: **setiap pasangan latar-dan-tinta yang dirakit dari dua
+    token berbeda harus dilihat di KEDUA tema**, dan yang membuktikan rasio
+    kontras yang dihitung dari `getComputedStyle`, bukan tangkapan layar —
+    mint di atas mint tetap terbaca sebagai "ada kotaknya" oleh mata yang
+    sedang mencari hal lain.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA

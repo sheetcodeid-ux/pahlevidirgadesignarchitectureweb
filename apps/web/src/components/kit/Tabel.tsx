@@ -47,6 +47,24 @@ export interface PropTabel {
   baris: ReactNode[][];
   /** Kolom kotak centang di paling kiri, seperti Transaction dan Invoice. */
   pilih?: boolean;
+  /**
+   * Kunci tiap baris, sebaris dengan `baris`. Wajib kalau pilihannya mau
+   * dikendalikan: tanpa kunci yang stabil, mengurutkan ulang tabel membuat
+   * yang tercentang berpindah ke baris lain tanpa ada yang menyentuhnya.
+   */
+  kunci?: string[];
+  /** Kunci baris yang sedang tercentang. Kosong berarti tidak ada. */
+  terpilih?: string[];
+  /**
+   * Dipanggil dengan daftar kunci yang BARU, bukan dengan satu baris yang
+   * berubah — pemanggil tidak perlu tahu cara "pilih semua" digabung dengan
+   * pilihan yang sudah ada.
+   *
+   * Kalau tidak dikirim, kotak centangnya tetap tergambar tapi tidak
+   * dikendalikan siapa pun; itu perilaku lama dan dipakai halaman
+   * perbandingan, yang cuma mengukur bentuknya.
+   */
+  onPilih?: (kunci: string[]) => void;
   /** Jarak sel ke tepi baris. Figma: 10,5 / 12,25 / 16,2 tergantung jenisnya. */
   pad?: number;
   tinggiKepala?: number;
@@ -75,6 +93,9 @@ export function Tabel({
   kolom,
   baris,
   pilih,
+  kunci,
+  terpilih,
+  onPilih,
   pad = 10.5,
   tinggiKepala = 34,
   tinggiBaris = 49,
@@ -83,6 +104,17 @@ export function Tabel({
   tanpaKepala,
   className,
 }: PropTabel) {
+  /* Set, bukan `includes`: tabel ini bisa memuat ratusan baris dan
+     `includes` di dalam render tiap baris membuatnya kuadratik. */
+  const set = new Set(terpilih ?? []);
+  /* Kotak centang di kepala BERLAKU PADA HALAMAN INI SAJA, dan hanya baris
+     halaman ini yang boleh disentuhnya. Pemanggil boleh saja menyimpan
+     pilihan dari halaman lain di `terpilih`; membersihkannya seluruhnya
+     saat "lepas semua" ditekan akan menghapus pilihan yang tidak pernah
+     terlihat di layar. */
+  const kunciHalaman = kunci ?? [];
+  const semuaTercentang = kunciHalaman.length > 0 && kunciHalaman.every((k) => set.has(k));
+  const dasar = terpilih ?? [];
   const gaya = {
     "--k-tabel-pad": `${pad}px`,
     "--k-tabel-h-kepala": `${tinggiKepala}px`,
@@ -112,6 +144,17 @@ export function Tabel({
                 type="checkbox"
                 className="k-centang k-centang--default"
                 aria-label="Pilih semua baris"
+                {...(onPilih && kunci
+                  ? {
+                      checked: semuaTercentang,
+                      onChange: () =>
+                        onPilih(
+                          semuaTercentang
+                            ? dasar.filter((x) => !kunciHalaman.includes(x))
+                            : [...dasar, ...kunciHalaman.filter((k) => !set.has(k))],
+                        ),
+                    }
+                  : {})}
               />
             </th>
           )}
@@ -138,6 +181,18 @@ export function Tabel({
                   type="checkbox"
                   className="k-centang k-centang--default"
                   aria-label={`Pilih baris ${i + 1}`}
+                  {...(onPilih && kunci
+                    ? {
+                        checked: set.has(kunci[i]!),
+                        onChange: () => {
+                          const k = kunci[i]!;
+                          /* Melepas satu baris menyaring DASAR-nya, bukan
+                             kunci halaman ini — kalau disaring dari kunci
+                             halaman, pilihan dari halaman lain ikut hilang. */
+                          onPilih(set.has(k) ? dasar.filter((x) => x !== k) : [...dasar, k]);
+                        },
+                      }
+                    : {})}
                 />
               </td>
             )}

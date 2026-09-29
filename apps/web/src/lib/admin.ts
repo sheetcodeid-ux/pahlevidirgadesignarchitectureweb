@@ -365,10 +365,16 @@ export interface Pembayaran {
   note?: string | null;
   paidAt: string;
   receiptToken: string;
+  /** Ikut terbawa oleh daftar LINTAS proyek, tidak oleh daftar per proyek —
+   *  sama persis dengan `BiayaProyek.projectTitle`. */
+  projectTitle?: string;
 }
 
 export const daftarPembayaran = (projectId: string) =>
   panggil<Pembayaran[]>(`/admin/projects/${projectId}/payments`);
+
+/** Uang MASUK lintas proyek — pasangan dari `semuaBiaya()`. */
+export const semuaPembayaran = () => panggil<Pembayaran[]>("/admin/payments");
 
 export const catatPembayaran = (
   projectId: string,

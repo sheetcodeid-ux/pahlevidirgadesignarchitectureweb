@@ -1,0 +1,158 @@
+/* =============================================================================
+   Semua Transaksi — tata letak frame "13. Transactions".
+
+   Satu kartu selebar kolom konten, bukan grid. Kotaknya, dalam koordinat
+   frame 1440x1075:
+
+     kartu          220,80   1192x929  r16
+     bilah alat     y96, tinggi 32     (kotak-dalam 236 → 1396)
+       cari         236,96   237x32  r16
+       pemilih 1    483,96   108x32  r8
+       pemilih 2    601,96   101x32  r8
+       pemilih 3   1135,96   172x32  r8   (berikon kalender)
+       unduh       1317,96    79x32  r8
+     kepala tabel   y149, tinggi 32
+     baris          y181, langkah 64   ikon bulat 30 di x278
+     kaki           y965, tinggi 28    (dasar kotak-dalam 993)
+
+   Lebar kolomnya diturunkan dari jangkar yang benar-benar ada di SVG —
+   ikon baris x278, logo akun x480, lencana status x1287 — lalu diperiksa
+   ulang terhadap padding sel 10,5 bawaan kit:
+
+     centang  32      nama    202     akun   242     penerima 121
+     tanggal 113      nominal  94     catatan 237    status   119
+
+   Jumlahnya 1160, persis lebar kotak-dalam kartunya (1396 - 236).
+   ============================================================================= */
+
+.trx {
+  display: flex;
+  flex-direction: column;
+  height: 929px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--surface);
+}
+
+/* --- Bilah alat ----------------------------------------------------------- */
+.trx__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  /* 473 → 483, 591 → 601, 1307 → 1317: sepuluh di ketiga celahnya. */
+  gap: 10px;
+  height: 32px;
+}
+.trx__bar .k-cari { flex: none; width: 237px; }
+/* Pendorong yang memisahkan kelompok kiri dari kelompok kanan. Ruang
+   kosongnya 702 → 1135 di framenya, dan itu memang sisa, bukan ukuran. */
+.trx__dorong { flex: 1; min-width: 12px; }
+
+/* --- Tabel ---------------------------------------------------------------- */
+/* 128 (dasar bilah alat) → 149 (puncak kepala tabel). */
+.trx__tabel {
+  flex: 1;
+  min-height: 0;
+  margin-top: 21px;
+  overflow-y: auto;
+}
+.trx__tabel .k-tabel { width: 100%; }
+
+/* Ubin bulat 30 di kolom pertama — mint untuk uang masuk, abu untuk keluar.
+   Warnanya yang membedakan arah uang, bukan cuma tanda di kolom nominal:
+   kolom itu ada di seberang tabel dan tidak pernah terbaca bersamaan. */
+.trx__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--brand-mint);
+  color: var(--text-strong);
+}
+.trx__ubin--keluar { background: var(--brand-soft); color: var(--brand); }
+.trx__sel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.trx__sel > .k-sel2 { min-width: 0; }
+
+/* Kotak 23x15 di kolom proyek — di framenya logo kartu kredit; di sini ubin
+   berikon, karena proyek tidak punya logo. */
+.trx__ubinkecil {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 23px;
+  height: 15px;
+  border-radius: 2.5px;
+  border: 1px solid var(--border);
+  color: var(--brand);
+}
+.trx__nama {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nominal: masuk bertinta brand, keluar merah. Tanda +/- ikut dicetak —
+   warna saja tidak cukup untuk yang tidak membedakan merah dan hijau. */
+.trx__masuk { color: var(--brand); font-weight: var(--k-semi); }
+.trx__keluar { color: var(--danger); font-weight: var(--k-semi); }
+
+/* --- Kaki ----------------------------------------------------------------- */
+.trx__kaki {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  /* Didorong ke dasar kartu: di framenya kaki duduk di y965 sementara baris
+     terakhir berhenti di 949, jadi jaraknya memang sisa ruang. */
+  margin-top: auto;
+  padding-top: 16px;
+}
+.trx__hitung {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+.trx__hitung select {
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  font-family: var(--font-sans);
+  font-size: var(--k-t12);
+  color: var(--brand);
+  background: var(--brand-soft);
+  cursor: pointer;
+}
+
+.trx__kosong {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+
+/* Rangka saat sesi belum diperiksa. */
+.trx--rangka { min-height: 929px; }
+
+/* Di bawah lebar framenya tabelnya digulir MENDATAR, bukan diperas: delapan
+   kolom pada 900px membuat setiap selnya membungkus jadi tiga baris. */
+@media (max-width: 1240px) {
+  .trx { height: auto; }
+  .trx__tabel { overflow-x: auto; }
+  .trx__tabel .k-tabel { min-width: 1160px; }
+  .trx__bar { flex-wrap: wrap; height: auto; row-gap: 10px; }
+  .trx__dorong { display: none; }
+}

@@ -8,6 +8,7 @@ import postgres from "postgres";
 import * as payroll from "../src/repository/payroll";
 import * as fee from "../src/repository/fee";
 import * as costs from "../src/repository/costs";
+import * as payments from "../src/repository/payments";
 import * as team from "../src/repository/team";
 
 /**
@@ -99,6 +100,24 @@ it.skipIf(!adaPostgres)("repository uang jalan dengan setelan koneksi produksi",
   const semua = await costs.listAll(sql);
   cek("listAll membawa judul proyek", semua[0]?.projectTitle === "CANO Coffee", semua[0]);
   cek("listAll memuat empat biaya", semua.length === 4, semua.length);
+
+  console.log("\n── pembayaran lintas proyek ──");
+  await payments.create(sql, proyek.id, { amount: 40000000, kind: "dp", method: "transfer", receiver: "Dirga" });
+  await payments.create(sql, proyek.id, { amount: 20000000, kind: "termin", method: "tunai", note: "termin kedua" });
+  const bayarSemua = await payments.listAll(sql);
+  cek("listAll pembayaran membawa judul proyek",
+    bayarSemua[0]?.projectTitle === "CANO Coffee", bayarSemua[0]);
+  cek("listAll pembayaran memuat dua baris", bayarSemua.length === 2, bayarSemua.length);
+  cek("nominal jadi angka, bukan string",
+    bayarSemua.every((b) => typeof b.amount === "number"), bayarSemua.map((b) => typeof b.amount));
+  cek("terbaru dulu", bayarSemua[0]!.paidAt >= bayarSemua[1]!.paidAt);
+  cek("catatan ikut terbawa",
+    bayarSemua.some((b) => b.note === "termin kedua"), bayarSemua.map((b) => b.note));
+  /* Yang per-proyek TIDAK membawa judul — kalau suatu saat ia ikut membawa,
+     halaman Semua Transaksi akan diam-diam bergantung pada dua bentuk yang
+     berbeda untuk data yang sama. */
+  const bayarSatu = await payments.listByProject(sql, proyek.id);
+  cek("daftar per proyek tidak membawa judul", bayarSatu[0]?.projectTitle === undefined);
 
   console.log("\n── fee per proyek ──");
   const fp = await fee.perProyek(sql);

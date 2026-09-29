@@ -1,0 +1,19 @@
+---
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { TransaksiKit } from "../../../components/admin/TransaksiKit";
+import "../../../styles/transaksi-kit.css";
+
+/* Halaman KEEMPAT yang pindah ke kit (P4), mengikuti frame Figma
+   "13. Transactions".
+
+   Satu-satunya halaman yang membaca DUA tabel database sekaligus:
+   `project_payments` dan `project_costs`, digabung jadi satu daftar berurut
+   waktu. Endpoint lintas proyek untuk pembayaran (`GET /admin/payments`)
+   dibuat bersama halaman ini — sebelumnya pembayaran cuma bisa diambil satu
+   proyek per permintaan, dan halaman ini akan butuh satu permintaan per
+   proyek untuk menggambar satu tabel. */
+---
+
+<KitLayout title="Semua Transaksi" judul="Semua Transaksi">
+  <TransaksiKit client:load />
+</KitLayout>
