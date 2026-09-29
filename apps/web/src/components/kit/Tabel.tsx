@@ -48,6 +48,13 @@ export interface PropTabel {
   /** Kolom kotak centang di paling kiri, seperti Transaction dan Invoice. */
   pilih?: boolean;
   /**
+   * Lebar kolom centang. Bawaannya 32,5 (frame Transaction, yang tabelnya
+   * duduk di dalam kartu berpadding); frame Invoice memakai 41,5 karena
+   * tabelnya menempel langsung ke tepi kolom konten. Angkanya memang beda
+   * per frame, jadi ia prop — bukan satu nilai yang dipaksakan ke keduanya.
+   */
+  lebarPilih?: number;
+  /**
    * Kunci tiap baris, sebaris dengan `baris`. Wajib kalau pilihannya mau
    * dikendalikan: tanpa kunci yang stabil, mengurutkan ulang tabel membuat
    * yang tercentang berpindah ke baris lain tanpa ada yang menyentuhnya.
@@ -93,6 +100,7 @@ export function Tabel({
   kolom,
   baris,
   pilih,
+  lebarPilih = 32.5,
   kunci,
   terpilih,
   onPilih,
@@ -127,7 +135,7 @@ export function Tabel({
       style={gaya}
     >
       <colgroup>
-        {pilih && <col style={{ width: 32.5 }} />}
+        {pilih && <col style={{ width: lebarPilih }} />}
         {kolom.map((k, i) => (
           <col key={i} style={{ width: k.lebar }} />
         ))}

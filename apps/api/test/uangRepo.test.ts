@@ -9,6 +9,7 @@ import * as payroll from "../src/repository/payroll";
 import * as fee from "../src/repository/fee";
 import * as costs from "../src/repository/costs";
 import * as payments from "../src/repository/payments";
+import * as invoices from "../src/repository/invoices";
 import * as team from "../src/repository/team";
 
 /**
@@ -118,6 +119,26 @@ it.skipIf(!adaPostgres)("repository uang jalan dengan setelan koneksi produksi",
      berbeda untuk data yang sama. */
   const bayarSatu = await payments.listByProject(sql, proyek.id);
   cek("daftar per proyek tidak membawa judul", bayarSatu[0]?.projectTitle === undefined);
+
+  console.log("\n── tagihan lintas proyek ──");
+  await invoices.create(sql, proyek.id, { label: "Termin 1 — DP", amount: 40000000, dueDate: `${bulanIni}-10` });
+  await invoices.create(sql, proyek.id, { label: "Termin 2 — gambar kerja", amount: 40000000, dueDate: `${bulanIni}-20` });
+  /* Tanpa tenggat — draf yang belum dijadwalkan. Ia harus jatuh di BAWAH
+     yang bertenggat, bukan di puncak daftar. */
+  await invoices.create(sql, proyek.id, { label: "Termin 3 — serah terima", amount: 40000000, dueDate: null });
+  const tagihan = await invoices.listAll(sql);
+  cek("listAll tagihan membawa judul proyek",
+    tagihan[0]?.projectTitle === "CANO Coffee", tagihan[0]);
+  cek("listAll tagihan memuat tiga baris", tagihan.length === 3, tagihan.length);
+  cek("nominal jadi angka, bukan string",
+    tagihan.every((t) => typeof t.amount === "number"), tagihan.map((t) => typeof t.amount));
+  cek("yang TANPA tenggat jatuh terakhir",
+    tagihan[2]?.dueDate === null, tagihan.map((t) => t.dueDate));
+  cek("bertenggat diurut menurun",
+    tagihan[0]!.dueDate! > tagihan[1]!.dueDate!, [tagihan[0]?.dueDate, tagihan[1]?.dueDate]);
+  cek("status bawaannya draft", tagihan.every((t) => t.status === "draft"), tagihan.map((t) => t.status));
+  const tagihanSatu = await invoices.listForProject(sql, proyek.id);
+  cek("daftar per proyek tidak membawa judul", tagihanSatu[0]?.projectTitle === undefined);
 
   console.log("\n── fee per proyek ──");
   const fp = await fee.perProyek(sql);

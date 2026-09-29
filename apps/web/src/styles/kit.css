@@ -2312,7 +2312,10 @@
   height: 40px;
   border-radius: 20px;
   background: var(--brand-mint);
-  color: var(--text-strong);
+  /* Ubinnya mint di KEDUA tema, jadi tintanya harus tinta-mint — bukan
+     `--text-strong`, yang ikut membalik jadi terang di tema gelap dan
+     membuat inisial di atasnya nyaris hilang (kontras 1,23). */
+  color: var(--brand-mint-ink);
   overflow: hidden;
 }
 .k-transfer__gambar > img { width: 100%; height: 100%; object-fit: cover; }
@@ -2975,7 +2978,12 @@
   padding: 0 6px 0 5.6px;
   border-radius: 8.5px;
   background: var(--brand-mint);
-  color: var(--brand-isi);
+  /* `--brand-mint-ink`, BUKAN `--brand-isi`. Keduanya gelap di tema terang
+     sehingga tidak ada bedanya di sana, tapi di gelap `--brand-isi` bernilai
+     #BBF49C — sama persis dengan latarnya — dan angkanya hilang sama sekali.
+     Terukur: rasio kontras 1,00 di kartu statistik frame 04 dan frame 16.
+     Jebakan #37 di CLAUDE.md, dan ini kejadian keduanya. */
+  color: var(--brand-mint-ink);
   font-size: var(--k-t10);
   /* Tinta "4.20 %" 27,89x7,26; 10px/600 memberi 27,88x7,25. Tanpa bobot ia
      mewarisi 400 dan angkanya tergambar tipis. */

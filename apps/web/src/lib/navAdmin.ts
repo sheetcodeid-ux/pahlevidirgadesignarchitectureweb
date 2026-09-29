@@ -123,6 +123,7 @@ export const NAV: NavItem[] = [
       { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "CoinIn" },
       { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar", icon: "cash", ikonKit: "CoinOut" },
       { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", icon: "list", ikonKit: "Nav-ArrowsLeftRight" },
+      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "Nav-Receipt" },
       { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "NavCurrencyCircleDollar" },
       { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "Wallet" },
     ],

@@ -610,6 +610,9 @@ export interface Invoice {
   dueDate?: string | null;
   paidAt?: string | null;
   sortOrder: number;
+  /** Ikut terbawa oleh daftar LINTAS proyek, tidak oleh daftar per proyek —
+   *  sama persis dengan `ProjectCost.projectTitle` dan `Payment.projectTitle`. */
+  projectTitle?: string;
 }
 
 export interface InvoiceInput {

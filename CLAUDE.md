@@ -764,6 +764,16 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     mint di atas mint tetap terbaca sebagai "ada kotaknya" oleh mata yang
     sedang mencari hal lain.
 
+    Alatnya sudah ada: `node scripts/banding/kontras.mjs <jalur halaman…>`
+    memindai tiap elemen yang menggambar teks di atas latarnya sendiri, di
+    KEDUA tema, dan melaporkan yang di bawah rasio 3. Ia langsung menemukan
+    dua cacat lagi yang tidak kelihatan dari melihat: lencana tren
+    (`.k-trenlebar`) mint-di-atas-mint pada 1,00, dan inisial proyek di ubin
+    transfer putih-di-atas-mint pada 1,23. Yang tersisa di bawah 3 setelah
+    itu cuma pasangan merah-di-atas-merah-muda (#F73541 pada #FDCED1, 2,69)
+    yang memang warna Coinest sendiri — dibiarkan karena mengubahnya berarti
+    menyimpang dari framenya, dan itu keputusan pemilik.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA

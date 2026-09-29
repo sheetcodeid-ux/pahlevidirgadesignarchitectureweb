@@ -191,12 +191,40 @@ const bayarAdmin = Object.fromEntries(
   }),
 );
 
+/* Tagihan (termin) lintas proyek. Sengaja tidak rata: satu proyek punya
+   termin tanpa tenggat (draf yang belum dijadwalkan) dan satu punya termin
+   yang tenggatnya sudah lewat, supaya keempat lencana statusnya ikut
+   tergambar di halaman Tagihan & Termin. */
+const tagihanAdmin = proyekAdmin.flatMap((p, i) => {
+  const n = 3 + (i % 2);
+  const potong = Math.round(p.contractValue / n);
+  return Array.from({ length: n }, (_, j) => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - 1 + j + (i % 2));
+    const tanpaTenggat = j === n - 1 && i % 3 === 0;
+    return {
+      id: `${p.id}-tagih-${j + 1}`,
+      projectId: p.id,
+      projectTitle: p.title,
+      label: ["Termin 1 — DP", "Termin 2 — gambar kerja", "Termin 3 — konstruksi", "Termin 4 — serah terima"][j],
+      amount: j === n - 1 ? p.contractValue - potong * (n - 1) : potong,
+      status: j === 0 ? "lunas" : j === 1 ? "terbit" : "draft",
+      dueDate: tanpaTenggat ? null : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-10`,
+      paidAt: j === 0 ? d.toISOString() : null,
+      sortOrder: j,
+    };
+  });
+});
+
+
 const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
   if (path.startsWith("/api/v1/admin/costs")) return biayaKeu;
   if (path.startsWith("/api/v1/admin/team")) return timAdmin;
+  if (path.startsWith("/api/v1/admin/invoices")) return tagihanAdmin;
   /* Yang PALING KHUSUS lebih dulu: "/admin/projects/<id>/payments" juga
      berawalan "/admin/projects", jadi urutan terbalik membuat daftar
      pembayaran dijawab dengan daftar proyek — dan halamannya menggambar
@@ -226,11 +254,52 @@ const jawab = (path) => {
   return [];
 };
 
+/* Satu-satunya PENULISAN yang ditiru: mengubah status tagihan.
+ *
+ * Ada karena tanpanya halaman Tagihan & Termin tidak bisa diuji sampai
+ * selesai — ia menulis, lalu MENGAMBIL ULANG daftarnya, jadi tanpa
+ * penyimpanan di sini lencananya selalu kembali ke nilai lama dan jalur
+ * suksesnya tidak pernah benar-benar terlihat. Sisanya tetap baca saja;
+ * meniru seluruh API berarti membuat API kedua yang pasti menyimpang. */
+function tulis(metode, path, badan) {
+  const m = path.match(/^\/api\/v1\/admin\/invoices\/([^/?]+)$/);
+  if (m && metode === "PATCH") {
+    const t = tagihanAdmin.find((x) => x.id === m[1]);
+    if (!t) return { galat: 404 };
+    if (badan.status) t.status = badan.status;
+    return { updated: true };
+  }
+  return null;
+}
+
 createServer((req, res) => {
   const path = (req.url || "/").split("#")[0];
-  res.writeHead(200, {
+  const metode = (req.method || "GET").toUpperCase();
+  const kepala = {
     "content-type": "application/json",
     "access-control-allow-origin": "*",
-  });
+    "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
+    "access-control-allow-headers": "content-type,authorization",
+  };
+  if (metode === "OPTIONS") {
+    res.writeHead(204, kepala);
+    return res.end();
+  }
+  if (metode !== "GET") {
+    let mentah = "";
+    req.on("data", (c) => (mentah += c));
+    return req.on("end", () => {
+      let badan = {};
+      try { badan = JSON.parse(mentah || "{}"); } catch { /* biarkan kosong */ }
+      const hasil = tulis(metode, path, badan);
+      if (hasil && hasil.galat) {
+        res.writeHead(hasil.galat, kepala);
+        return res.end(JSON.stringify({ error: { status: hasil.galat, message: "tidak ada" } }));
+      }
+      res.writeHead(hasil ? 200 : 201, kepala);
+      res.end(JSON.stringify({ data: hasil ?? { id: "baru" } }));
+    });
+  }
+  res.writeHead(200, kepala);
   res.end(JSON.stringify({ data: jawab(path) }));
 }).listen(PORT, () => console.log(`api tiruan: http://127.0.0.1:${PORT}`));

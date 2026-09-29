@@ -35,6 +35,29 @@ export async function listForProject(sql: Sql, projectID: string): Promise<Invoi
   return rows.map(rowToInvoice);
 }
 
+/**
+ * Seluruh tagihan LINTAS proyek.
+ *
+ * Ketiga dari keluarga yang sama bentuknya — `costsRepo.listAll`,
+ * `paymentsRepo.listAll`, dan ini: judul proyek ikut di baris, batas 500,
+ * terbaru dulu. Halaman Tagihan & Termin menyaring dan menjumlahkannya di
+ * sisi klien, jadi urutannya cuma perlu stabil.
+ *
+ * Diurutkan menurut `due_date` dengan NULLS LAST: tagihan tanpa tenggat
+ * masih sah (draf yang belum dijadwalkan), dan menaruhnya di puncak daftar
+ * akan mendorong yang benar-benar mendesak ke bawah.
+ */
+export async function listAll(sql: Sql, limit = 200): Promise<Invoice[]> {
+  const rows = await sql<(Row & { project_title: string })[]>`
+    select i.id, i.project_id, i.label, i.amount, i.status, i.due_date,
+           i.paid_at, i.sort_order, p.title as project_title
+      from public.invoices i
+      join public.projects p on p.id = i.project_id
+     order by i.due_date desc nulls last, i.created_at desc
+     limit ${Math.min(Math.max(limit, 1), 500)}`;
+  return rows.map((r) => ({ ...rowToInvoice(r), projectTitle: r.project_title }));
+}
+
 export async function create(sql: Sql, projectID: string, input: InvoiceInput): Promise<string> {
   const label = (input.label ?? "").trim();
   if (label.length < 2) throw new Error("label invoice wajib diisi");

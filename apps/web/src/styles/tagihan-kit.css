@@ -1,0 +1,237 @@
+/* =============================================================================
+   Tagihan & Termin — tata letak frame "16. Invoices".
+
+   Beda bentuk dari frame 13: di sini TIDAK ada kartu besar yang membungkus
+   tabelnya. Tiga kartu statistik berdiri sendiri, bilah alatnya di atas
+   tabel telanjang, dan baris kepala tabelnya berlatar mint penuh — varian
+   `kepala="mint"` yang sudah ada di kit sejak P2 dan baru dipakai di sini.
+
+   Kotaknya, dalam koordinat frame 1440x1126:
+
+     kartu statistik  220,80   386x89  r16, tiga buah, celah 17
+       ubin bulat     236,96,5  56x56  r28
+       lencana tren   536,96    54x17  r8,5
+     bilah alat       y190, tinggi 32
+       segmented      220,190  318x32  r8  (78 / 88 / 71 / 75, celah 2)
+       cari           985,189,5 237x32 r16
+       saring        1232,189,5  83x32 r8
+       tombol utama  1325,189    87x32 r8
+     kepala tabel     y241, tinggi 45, LATAR MINT selebar 1192
+     baris            y286, langkah 66, ikon bulat 30 di x272
+     lencana status   x1201,2, tinggi 24, radius 12 (PIL, bukan kotak r6
+                      seperti frame 13)
+     kaki             y1032, tinggi 28
+
+   Lebar kolomnya dari jangkar tinta yang benar-benar ada di gambarnya —
+   ikon baris 272, teks nama 313, id 571, lencana 1201,2 — dikurangi padding
+   sel 10,5 bawaan kit:
+
+     centang 41,5   nama 299   id 186   nominal 168
+     tanggal 276,2  status 173,8   aksi 47,5        jumlah 1192
+   ============================================================================= */
+
+.tag {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Tiga kartu statistik ------------------------------------------------- */
+.tag__stat {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 17px;
+}
+.tag__kartu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 89px;
+  /* 15, bukan 15,5: ubin bulatnya mulai di x236 dan kartunya di 220, jadi
+     jarak yang tergambar 16 — dan garis 1px CSS memakan satu di antaranya. */
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--surface);
+}
+.tag__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.tag__isi { min-width: 0; flex: 1; }
+.tag__label,
+.tag__nilai { margin: 0; line-height: 1; }
+.tag__label { font-size: var(--k-t12); color: var(--text-muted); }
+.tag__nilai {
+  overflow: hidden;
+  margin-top: 10px;
+  font-size: var(--k-h4);
+  font-weight: var(--k-bold);
+  color: var(--brand);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Kolom kanan kartu: lencana tren di atas, pembandingnya di bawah. */
+.tag__kanan {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 9px;
+  text-align: right;
+}
+.tag__banding {
+  margin: 0;
+  font-size: var(--k-t10);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.tag__banding b { font-weight: var(--k-semi); color: var(--text-strong); }
+
+/* --- Bilah alat ----------------------------------------------------------- */
+/* 169 (dasar kartu statistik) → 190 (puncak bilah alat). */
+.tag__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-top: 21px;
+  height: 32px;
+}
+.tag__bar .k-cari { flex: none; width: 237px; }
+.tag__dorong { flex: 1; min-width: 12px; }
+
+/* Segmented status. Framenya 32 tinggi dengan segmen yang tidak terpilih
+   MINT — ia duduk di atas latar halaman yang putih, kebalikan dari panel
+   form di frame 07 yang latarnya sudah mint. */
+.tag__bar .k-segmen {
+  flex: none;
+  width: 318px;
+  height: 32px;
+}
+
+/* --- Tabel ---------------------------------------------------------------- */
+/* 222 (dasar bilah alat) → 241 (puncak kepala tabel). */
+/* `overflow-x: auto` di SEGALA lebar, bukan cuma di bawah 1240.
+
+   Tabelnya dirancang 1192 dan `<col width>` cuma usulan — yang menentukan
+   lebar minimum tabel adalah min-content SELURUH selnya, dan jumlahnya di
+   sini persis 1192. Jadi di antara 1240 dan 1440 tabelnya tidak menyusut
+   melainkan mendorong halaman: terukur 132px gulir mendatar pada 1280, yang
+   melanggar aturan responsif ke-7 di CLAUDE.md. Frame 13 tidak kena hanya
+   karena penampungnya kebetulan ber-`overflow-y: auto`, dan CSS menjadikan
+   sumbu satunya `auto` juga — kebetulan yang tidak boleh diandalkan. */
+.tag__tabel { margin-top: 19px; overflow-x: auto; }
+.tag__tabel .k-tabel { width: 100%; min-width: 1192px; }
+
+.tag__sel {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.tag__ikonbaris {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--brand-mint);
+  color: var(--text-strong);
+}
+.tag__nama {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Lencana status berbentuk PIL (r12), bukan kotak r6 seperti frame 13 —
+   terukur di keempat statusnya. Keempatnya dirakit di sini dan bukan lewat
+   `Lencana` kit karena `lewat tenggat` tidak punya padanan nada di sana:
+   nada `gagal` bertinta danger di atas danger-soft, dan itu memang yang
+   digambar framenya (#FDCED1). */
+.tag__status {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: var(--k-t12);
+  font-weight: var(--k-med);
+  white-space: nowrap;
+}
+.tag__status--draf   { background: var(--ramp-5); color: var(--ramp-5-ink); }
+.tag__status--terbit { background: var(--brand-mint); color: var(--brand-mint-ink); }
+.tag__status--telat  { background: var(--danger-soft); color: var(--danger); }
+.tag__status--lunas  { background: var(--brand); color: var(--brand-ink); }
+
+/* Pemilih status yang ditumpangkan di atas lencananya — bentuknya lencana,
+   perilakunya <select> asli. Pola yang sama dengan `.k-pilihtombol`. */
+.tag__pilihstatus { position: relative; display: inline-flex; }
+.tag__pilihstatus > select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.tag__pilihstatus:focus-within > .tag__status {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* --- Kaki ----------------------------------------------------------------- */
+.tag__kaki {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+}
+.tag__hitung {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+.tag__hitung select {
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  font-family: var(--font-sans);
+  font-size: var(--k-t12);
+  color: var(--brand);
+  background: var(--brand-soft);
+  cursor: pointer;
+}
+
+.tag__kosong {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+
+.tag--rangka { min-height: 1000px; }
+
+/* Di bawah lebar framenya tabelnya digulir MENDATAR dan kartu statistiknya
+   menumpuk — tujuh kolom pada 900px membuat tiap selnya membungkus. */
+@media (max-width: 1240px) {
+  .tag__stat { grid-template-columns: minmax(0, 1fr); }
+  .tag__bar { flex-wrap: wrap; height: auto; row-gap: 10px; }
+  .tag__dorong { display: none; }
+}

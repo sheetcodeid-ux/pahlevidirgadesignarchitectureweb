@@ -451,6 +451,14 @@ admin.post("/projects/:id/costs", async (c) => {
  * menggabungkan keduanya jadi satu daftar berurut waktu; tanpa endpoint ini
  * ia harus memanggil /projects/:id/payments satu kali per proyek.
  */
+/** GET /api/v1/admin/invoices — tagihan lintas proyek. */
+admin.get("/invoices", async (c) => {
+  const limit = Number(c.req.query("limit") ?? 200);
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    invoicesRepo.listAll(sql, Number.isFinite(limit) ? limit : 200));
+  return c.json({ data });
+});
+
 admin.get("/payments", async (c) => {
   const limit = Number(c.req.query("limit") ?? 200);
   const data = await withDb(c.env, c.executionCtx, (sql) =>

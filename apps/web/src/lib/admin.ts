@@ -772,9 +772,14 @@ export interface Invoice {
   dueDate?: string | null;
   paidAt?: string | null;
   sortOrder: number;
+  /** Ikut terbawa oleh daftar LINTAS proyek, tidak oleh daftar per proyek. */
+  projectTitle?: string;
 }
 
 export const daftarInvoice = (projectId: string) => panggil<Invoice[]>(`/admin/projects/${projectId}/invoices`);
+
+/** Tagihan LINTAS proyek — pasangan dari `semuaBiaya()` dan `semuaPembayaran()`. */
+export const semuaTagihan = () => panggil<Invoice[]>("/admin/invoices");
 
 export const tambahInvoice = (projectId: string, label: string, amount: number, dueDate: string | null) =>
   panggil<{ id: string }>(`/admin/projects/${projectId}/invoices`, {
