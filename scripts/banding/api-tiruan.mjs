@@ -221,6 +221,46 @@ const tagihanAdmin = proyekAdmin.flatMap((p, i) => {
 });
 
 
+/* Tugas per proyek, tersebar di tahap pipeline. Sebagian lewat tenggat dan
+   sebagian selesai, supaya kartu tahap di halaman Satu Proyek memperlihatkan
+   keempat keadaannya (selesai, berjalan, terlambat, kosong). */
+const JUDUL_TUGAS = {
+  proposal: ["Survei lokasi", "Susun proposal biaya"],
+  deal_kontrak: ["Tanda tangan kontrak", "Kirim salinan kontrak"],
+  dp_50: ["Terbitkan tagihan DP", "Konfirmasi DP masuk"],
+  desain_1: ["Denah lantai 1", "Denah lantai 2", "Konsep fasad", "Presentasi konsep", "Revisi konsep"],
+  desain_2: ["Gambar kerja arsitektur", "Detail bar dan dapur", "Rencana pencahayaan", "RAB"],
+  finish: ["Serah terima gambar", "Kunjungan akhir"],
+  pelunasan: ["Terbitkan tagihan pelunasan"],
+};
+const TIM = ["Dirga", "Sari Ningsih", "Bima", null];
+const tugasAdmin = Object.fromEntries(
+  proyekAdmin.map((p, i) => {
+    const urut = ["proposal", "deal_kontrak", "dp_50", "desain_1", "desain_2", "finish", "pelunasan"];
+    const kini = urut.indexOf(p.pipelineStage);
+    const daftar = [];
+    urut.forEach((tahap, t) => {
+      (JUDUL_TUGAS[tahap] ?? []).forEach((judul, j) => {
+        const d = new Date();
+        d.setDate(d.getDate() + (t - kini) * 12 + j * 3 - 4);
+        daftar.push({
+          id: `${p.id}-tugas-${t}-${j}`,
+          projectId: p.id,
+          projectTitle: p.title,
+          title: judul,
+          stage: tahap,
+          assigneeId: null,
+          assigneeName: TIM[(i + t + j) % TIM.length],
+          status: t < kini ? "selesai" : t === kini ? (j < 2 ? "selesai" : j === 2 ? "berjalan" : "belum_mulai") : "belum_mulai",
+          dueDate: d.toISOString().slice(0, 10),
+          sortOrder: j,
+        });
+      });
+    });
+    return [p.id, daftar];
+  }),
+);
+
 const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
@@ -232,6 +272,11 @@ const jawab = (path) => {
      berawalan "/admin/projects", jadi urutan terbalik membuat daftar
      pembayaran dijawab dengan daftar proyek — dan halamannya menggambar
      kartu pembayaran berisi judul proyek tanpa satu pun galat. */
+  {
+    const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/tasks/);
+    if (m) return tugasAdmin[m[1]] ?? [];
+  }
+  if (path.startsWith("/api/v1/admin/tasks")) return Object.values(tugasAdmin).flat();
   {
     const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/payments/);
     if (m) return bayarAdmin[m[1]] ?? [];
