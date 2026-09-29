@@ -62,26 +62,36 @@ export function KelompokTab({
   judul,
   className,
 }: {
-  tab: { nilai: string; label: string; ikon: DataIkon }[];
-  nilai: string;
-  onPilih: (nilai: string) => void;
+  /** `href` membuat butir itu TAUTAN, bukan tab — frame 19 memakai bentuk
+   *  yang sama untuk tiga aksi (Top Up / Transfer / Payment) yang masing-
+   *  masing pindah halaman. Tautan tidak punya keadaan terpilih. */
+  tab: { nilai: string; label: string; ikon: DataIkon; href?: string }[];
+  nilai?: string;
+  onPilih?: (nilai: string) => void;
   judul: string;
   className?: string;
 }) {
   return (
     <div role="group" aria-label={judul} className={["k-jalurtab", className].filter(Boolean).join(" ")}>
-      {tab.map((t) => (
-        <button
-          key={t.nilai}
-          type="button"
-          className="k-jalurtab__b"
-          aria-pressed={t.nilai === nilai}
-          onClick={() => onPilih(t.nilai)}
-        >
-          <Ikon ikon={t.ikon} ukuran={24} />
-          {t.label}
-        </button>
-      ))}
+      {tab.map((t) =>
+        t.href ? (
+          <a key={t.nilai} className="k-jalurtab__b" href={t.href}>
+            <Ikon ikon={t.ikon} ukuran={24} />
+            {t.label}
+          </a>
+        ) : (
+          <button
+            key={t.nilai}
+            type="button"
+            className="k-jalurtab__b"
+            aria-pressed={t.nilai === nilai}
+            onClick={() => onPilih?.(t.nilai)}
+          >
+            <Ikon ikon={t.ikon} ukuran={24} />
+            {t.label}
+          </button>
+        ),
+      )}
     </div>
   );
 }

@@ -15,7 +15,14 @@ import type { ReactNode } from "react";
    piksel yang diambil dari satu frame akan diam-diam salah di halaman lain.
    ============================================================================= */
 
-export type NadaBatang = "mint" | "tua" | "hitam" | "pudar";
+/**
+ * `mintpudar` / `tuapudar`: batang yang TIDAK disorot di grafik arus kas
+ * frame 19 — bidang gradien (mint 24% → 0, hijau tua 16% → 0) dengan tepi
+ * pejal 1,5px di ujung LUARNYA saja: atas untuk batang positif, bawah untuk
+ * batang negatif. Terbaca dari path-nya: satu rect bergradien dan satu rect
+ * 3px yang dimask separuh.
+ */
+export type NadaBatang = "mint" | "tua" | "hitam" | "pudar" | "mintpudar" | "tuapudar";
 
 export interface BatangGrafik {
   /** Puncak batang, persen dari ATAS bidang plot. */

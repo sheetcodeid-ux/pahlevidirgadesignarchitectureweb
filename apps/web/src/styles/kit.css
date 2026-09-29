@@ -1675,6 +1675,14 @@
 .k-kolom__b--tua   { background: var(--brand); }
 .k-kolom__b--hitam { background: var(--text-strong); }
 .k-kolom__b--pudar { background: var(--surface-hover); }
+.k-kolom__b--mintpudar {
+  border-top: 1.5px solid var(--brand-mint);
+  background: linear-gradient(color-mix(in srgb, var(--brand-mint) 24%, transparent), transparent);
+}
+.k-kolom__b--tuapudar {
+  border-bottom: 1.5px solid var(--k-deret-tua, var(--brand));
+  background: linear-gradient(transparent, color-mix(in srgb, var(--k-deret-tua, var(--brand)) 16%, transparent));
+}
 /* Label sumbu-X: 21 di bawah dasar bidang plot, 10px abu. */
 /* line-height 1 dan jarak 16,1: yang harus mendarat tepat tinta labelnya di
    176,63 dari puncak bidang plot, bukan kotak barisnya. Sisa 1,47 di bawah
@@ -2768,6 +2776,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  /* Untuk varian tautan (prop `href`). */
+  text-decoration: none;
   border: 0;
   border-radius: 16px;
   padding: 0;

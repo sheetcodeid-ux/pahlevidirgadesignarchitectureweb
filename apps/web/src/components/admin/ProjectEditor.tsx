@@ -15,7 +15,7 @@ import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { proyekAktif, onProyekAktif, setProyekAktif } from "../../lib/proyekAktif";
 import {
-  daftarProyek, simpanProyek, mintaUrlUnggah, type Proyek,
+  daftarProyek, simpanProyek, hapusProyek, mintaUrlUnggah, type Proyek,
   ambilProgress, ubahFaseProgress, buatUlangTokenProgress,
   tambahCatatanProgress, hapusCatatanProgress, type ProjectProgress,
   daftarTim, daftarTugasProyek, tambahTugas, ubahTugas, hapusTugas,
@@ -2200,6 +2200,30 @@ function Isi({ halaman }: { halaman: HalamanProyek }) {
             <Icon name="globe" size={15} />Lihat di situs
           </a>
         )}
+
+        {/* Pindahan dari daftar proyek lama. Halaman Semua Proyek yang baru
+            mengikuti frame 19, dan framenya tidak punya tempat untuk aksi
+            merusak — jadi ia tinggal di sini, di sebelah hal yang dihapusnya. */}
+        <AlertDialog
+          destructive
+          title={`Hapus ${asli.title}?`}
+          description="Gambar, tagihan, pembayaran, dan biaya proyek ini ikut terhapus dan tidak bisa dikembalikan."
+          confirmLabel="Ya, hapus"
+          onConfirm={async () => {
+            try {
+              await hapusProyek(asli.id);
+              toast({ judul: "Proyek dihapus", keterangan: `${asli.title} beserta gambarnya.`, nada: "sukses" });
+              location.href = "/admin/proyek";
+            } catch (e) {
+              toast({ judul: "Gagal menghapus", keterangan: (e as Error).message, nada: "gagal" });
+            }
+          }}
+          trigger={
+            <button type="button" className="btn btn--ghost btn--sm btn--hapus sisi-proyek__tautan">
+              <Icon name="trash" size={15} />Hapus proyek
+            </button>
+          }
+        />
       </section>
 
       {aksi}

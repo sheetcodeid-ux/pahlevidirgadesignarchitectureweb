@@ -152,13 +152,16 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
   slug: `proyek-${i + 1}`,
   title: p.projectTitle,
   category: i % 2 ? "residential" : "hospitality",
-  status: "published",
-  city: "Pontianak",
+  status: i === 3 ? "draft" : "published",
+  city: ["Pontianak", "Singkawang", "Pontianak", "Kubu Raya", "Pontianak"][i],
   client: ["Bu Ratna", "Pak Hendra", "Bakmi Hauw", "Notaris Ahmad", "PT Kapuas Jaya"][i],
   isFeatured: i === 0,
   contractValue: p.contractValue,
   paidTotal: p.received,
-  pipelineStage: "konstruksi",
+  pipelineStage: ["dp_50", "desain_1", "desain_2", "finish", "pelunasan"][i],
+  phase: ["konsep", "ded", "perizinan", "konstruksi", "selesai"][i],
+  year: 2026 - (i % 3),
+  publishedAt: `2026-0${9 - i}-01T00:00:00Z`,
 }));
 
 /* Pembayaran per proyek. Dua sampai empat butir, mundur beberapa minggu —

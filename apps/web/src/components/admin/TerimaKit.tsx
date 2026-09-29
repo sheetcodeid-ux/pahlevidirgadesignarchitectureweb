@@ -128,7 +128,16 @@ function Isi() {
   const toast = useToast();
 
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
-  const [pilih, setPilih] = useState<string | null>(() => proyekAktif());
+  /* `?proyek=` lebih dulu — dipakai tombol "Terima Bayar" di halaman Semua
+     Proyek, supaya proyek yang sedang dibuka di sana langsung terpilih tanpa
+     mengubah proyek aktif GLOBAL (yang ikut menyaring halaman lain). */
+  const [pilih, setPilih] = useState<string | null>(() => {
+    try {
+      return new URLSearchParams(location.search).get("proyek") ?? proyekAktif();
+    } catch {
+      return proyekAktif();
+    }
+  });
   const [cari, setCari] = useState("");
   const [metode, setMetode] = useState("transfer");
   const [jenis, setJenis] = useState<string | null>(null);
