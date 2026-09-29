@@ -204,7 +204,7 @@ satu keluarga di `components/kit/Item.tsx`:
 | Frame Figma | Komponen |
 | --- | --- |
 | Header-Section | `KepalaSeksi` |
-| Header | `KepalaHalaman`, `TombolBulat` |
+| Header | `KepalaHalaman`, `TombolBulat` (titik `nadaTanda`: merah = butuh tindakan, amber = terbatas; meneruskan ref untuk pemicu Radix) |
 | Footer | `KakiHalaman` |
 | Bubble-chat | `Gelembung` |
 | Item List Message | `BarisPesan` |

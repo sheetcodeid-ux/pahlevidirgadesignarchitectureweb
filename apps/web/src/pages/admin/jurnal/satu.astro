@@ -1,0 +1,14 @@
+---
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { JurnalSatuKit } from "../../../components/admin/JurnalSatuKit";
+import "../../../styles/jurnal-kit.css";
+import "../../../styles/paket-kit.css";
+
+/* Satu tulisan, frame Figma "40. Insight Details" — sekaligus editornya.
+   `?id=` membuka tulisan, `?baru=1` menulis yang baru. Tombol hapus memakai
+   `.pas__hapus` milik Paket Layanan, bukan salinannya. */
+---
+
+<KitLayout title="Detail Tulisan" judul="Detail Tulisan" kembali="/admin/jurnal">
+  <JurnalSatuKit client:load />
+</KitLayout>

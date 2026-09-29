@@ -72,7 +72,7 @@ const ldjson = {
 };
 ---
 
-<BaseLayout title={tulisan.title} description={tulisan.excerpt} jsonLd={[ldjson]}>
+<BaseLayout title={tulisan.title} description={tulisan.excerpt} image={tulisan.coverUrl ?? undefined} jsonLd={[ldjson]}>
   <div class="pita">
     <div class="dalam">
       <div class="isi isi--longgar" style="padding-top:64px;padding-bottom:40px">
@@ -97,6 +97,17 @@ const ldjson = {
       </div>
     </div>
   </div>
+
+  {/* Sampul — hanya kalau ada. Tulisan tanpa sampul tetap berdiri di atas
+      tipografinya sendiri, seperti rancangan yang di-ACC; sampul adalah
+      tambahan, bukan kotak kosong yang menunggu diisi. */}
+  {tulisan.coverUrl && (
+    <div class="pita">
+      <div class="dalam">
+        <img class="art-sampul" src={tulisan.coverUrl} alt="" width="1200" height="630" loading="eager" decoding="async" />
+      </div>
+    </div>
+  )}
 
   <div class="pita pita--akhir">
     <div class="dalam">
@@ -159,6 +170,9 @@ const ldjson = {
 </BaseLayout>
 
 <style is:global>
+  /* Sampul tulisan: selebar kolom, rasio kartu bagikan (1200x630) supaya
+     gambar yang sama tampil utuh di sini dan di pratinjau WhatsApp. */
+  .art-sampul { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 630; object-fit: cover; }
   /* ══ Halaman tulisan ═══════════════════════════════════════════════════
      Satu tugas: dibaca sampai habis. Ukuran badan teks dinaikkan ke 17px dan
      lebar barisnya dikunci ~52ch — di bawah itu mata melompat baris, di

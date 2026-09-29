@@ -1,8 +1,13 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
-import { JournalPanel } from "../../components/admin/JournalPanel";
+import KitLayout from "../../layouts/KitLayout.astro";
+import { JurnalKit } from "../../components/admin/JurnalKit";
+import "../../styles/jurnal-kit.css";
+
+/* Halaman KESEBELAS yang pindah ke kit (P4), frame Figma "37. Insights".
+   Menggantikan JournalPanel; menulis dan menyunting pindah ke
+   /admin/jurnal/satu (frame 40). */
 ---
 
-<AdminLayout title="Jurnal">
-  <JournalPanel client:load />
-</AdminLayout>
+<KitLayout title="Jurnal" judul="Jurnal" relKanan>
+  <JurnalKit client:load />
+</KitLayout>

@@ -7,10 +7,12 @@ import "../styles/kit.css";
    dan halaman yang tidak memuatnya menggambar pesan itu sebagai teks polos
    tanpa satu pun galat — jebakan #5. */
 import "../styles/overlay.css";
+import "../styles/terbit-kit.css";
 import { ClientRouter } from "astro:transitions";
 import { RelKit } from "../components/admin/RelKit";
 import { KepalaKit } from "../components/admin/KepalaKit";
 import { KakiHalaman } from "../components/kit/Item";
+import { CAP_BUILD } from "../lib/capBuild";
 
 /* =============================================================================
    Kerangka panel admin versi KIT — frame Coinest.
@@ -43,9 +45,16 @@ interface Props {
   judul?: string;
   /** Alamat tombol panah kembali di kiri judul — frame detail Coinest. */
   kembali?: string;
+  /**
+   * Rel kanan 305px — frame "37. Insights". Isinya TIDAK lewat slot: island
+   * halamannya mengisinya lewat portal ke `#kl-relkanan`, supaya data yang
+   * sama tidak diambil dua island (dan cache cuma ditulis pemiliknya,
+   * jebakan #8).
+   */
+  relKanan?: boolean;
 }
 
-const { title, judul, kembali } = Astro.props;
+const { title, judul, kembali, relKanan } = Astro.props;
 const path = Astro.url.pathname;
 ---
 
@@ -102,7 +111,7 @@ const path = Astro.url.pathname;
   <body class="kl-body">
     <a href="#konten" class="sr-only">Lewati ke konten</a>
 
-    <div class="kl">
+    <div class={relKanan ? "kl kl--relkanan" : "kl"}>
       {/* transition:persist — rel samping tidak dipasang ulang tiap pindah
           halaman. Ia tidak punya keadaan internal, tapi memasang ulang 12
           baris ikon SVG di tiap klik menu adalah kerja yang tidak menghasilkan
@@ -110,13 +119,11 @@ const path = Astro.url.pathname;
       <RelKit client:load transition:persist path={path} namaStudio="Dirga Pahlevi" />
 
       <div class="kl__utama">
-        {/* Hanya kepala bertombol kembali yang dihidrasi: tombol itu satu-satunya
-            bagian kepala yang perlu JavaScript. */}
-        {kembali ? (
-          <KepalaKit client:load judul={judul ?? title} kembali={kembali} />
-        ) : (
-          <KepalaKit judul={judul ?? title} />
-        )}
+        {/* Selalu dihidrasi: tombol Terbitkan di dalamnya hidup dari JavaScript
+            (status build, polling). Stempel build dipanggang ke HTML di sini,
+            sama seperti AdminLayout — panel ini hasil build yang sama dengan
+            situs publiknya, jadi ia satu-satunya yang tahu umur dirinya. */}
+        <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} />
 
         <main id="konten" class="kl__isi" transition:animate="none">
           <slot />
@@ -131,6 +138,7 @@ const path = Astro.url.pathname;
           ]}
         />
       </div>
+      {relKanan && <aside id="kl-relkanan" class="kl__relkanan" aria-label="Ringkasan halaman"></aside>}
     </div>
   </body>
 </html>
@@ -199,6 +207,41 @@ const path = Astro.url.pathname;
   }
   .kl__utama > .k-kakihal {
     margin-top: 22.7px;
+  }
+
+  /* Rel kanan frame 37: 305 lebar, bergaris kiri, isinya 248 di x+29. Ia
+     menempel seperti rel kiri, dan bergulir sendiri kalau isinya lebih tinggi
+     dari layar. */
+  .kl__relkanan {
+    position: sticky;
+    top: 0;
+    flex: none;
+    align-self: flex-start;
+    width: 305px;
+    height: 100vh;
+    padding: 25.5px 28px 24px 28px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  /* Garis kiri rel kanan dilukis di .kl, bukan di rel-nya — alasan yang sama
+     dengan mint rel kiri: rel yang menempel setinggi viewport, halamannya
+     lebih panjang, dan garisnya berhenti di tengah jalan. */
+  .kl--relkanan {
+    background:
+      /* 100% - 304: persentase posisi dihitung dari (lebar - 1px), jadi garis 1px ini jatuh tepat di x tepi kiri rel (lebar - 305). */
+      linear-gradient(var(--border), var(--border)) calc(100% - 304px) 0 / 1px 100% no-repeat,
+      linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
+  }
+  .kl--relkanan .kl__utama { padding-right: 27px; }
+  /* Di bawah 1360 rel kanan memakan terlalu banyak dari kolom konten — pada
+     1280 kartu "Baru Diubah" tinggal 160px teks; isinya ringkasan yang juga
+     bisa dicapai dari keping kategori di atas. */
+  @media (max-width: 1360px) {
+    .kl__relkanan { display: none; }
+    .kl--relkanan {
+      background: linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
+    }
+    .kl--relkanan .kl__utama { padding-right: 28px; }
   }
 
   /* Di bawah lebar frame rel sampingnya menyempit jadi ikon saja. Halaman

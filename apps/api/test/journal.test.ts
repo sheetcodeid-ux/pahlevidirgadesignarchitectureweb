@@ -91,3 +91,15 @@ describe("checkJournalInput — menerbitkan", () => {
     expect(checkJournalInput({ publishedAt: null }, false)).toBeNull();
   });
 });
+
+describe("checkJournalInput — sampul", () => {
+  it("menerima sampul di folder jurnal/", () => {
+    expect(checkJournalInput({ coverKey: "jurnal/3f2a-sampul.webp" }, false)).toBeNull();
+  });
+  it("menerima null — membuang sampul", () => {
+    expect(checkJournalInput({ coverKey: null }, false)).toBeNull();
+  });
+  it("menolak kunci di luar folder jurnal/ — mis. foto proyek yang masih draf", () => {
+    expect(checkJournalInput({ coverKey: "projects/draf/rahasia.jpg" }, false)).toMatch(/folder jurnal/);
+  });
+});

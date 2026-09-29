@@ -1630,4 +1630,32 @@ begin
 end;
 $$;
 
+-- Sampul jurnal ------------------------------------------------------
+--
+-- Kolomnya ikut aturan baris journal_posts: sampul tulisan terbit terbaca
+-- anon, dan kuncinya harus di folder jurnal/ — bukan foto proyek draf.
+
+do $$
+declare sampul text;
+begin
+  update public.journal_posts set cover_key = 'jurnal/uji-sampul.jpg'
+   where slug = (select slug from public.journal_posts
+                  where published_at is not null and published_at <= now() limit 1);
+
+  perform pg_temp.jadi_anon();
+  select cover_key into sampul from public.journal_posts where cover_key is not null limit 1;
+  perform pg_temp.tolak(sampul is distinct from 'jurnal/uji-sampul.jpg',
+    'anon membaca sampul tulisan yang sudah terbit');
+  reset role;
+
+  begin
+    update public.journal_posts set cover_key = 'projects/draf/rahasia.jpg'
+     where cover_key = 'jurnal/uji-sampul.jpg';
+    raise exception 'GAGAL: sampul di luar folder jurnal/ diterima';
+  exception when check_violation then
+    raise notice 'ok: sampul di luar folder jurnal/ ditolak';
+  end;
+end;
+$$;
+
 rollback;

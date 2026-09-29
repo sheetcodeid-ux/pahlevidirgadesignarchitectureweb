@@ -80,6 +80,9 @@ admin.post("/uploads", async (c) => {
     // deploy berjalan, "studio" untuk pemakai baru — potret tim dan foto
     // sebelum/sesudah, yang juga aset studio tapi jelas bukan logo.
     folder = "studio";
+  } else if (body.scope === "jurnal") {
+    // Sampul tulisan jurnal — folder sendiri, alasan yang sama dengan klien.
+    folder = "jurnal";
   } else if (body.scope === "klien") {
     // Logo klien untuk marquee beranda. Folder sendiri, alasan yang sama
     // seperti `studio`: aset yang bukan milik proyek tidak boleh ikut terhapus
@@ -987,12 +990,12 @@ admin.delete("/progress-updates/:id", async (c) => {
 
 // GET /api/v1/admin/journal — termasuk draf dan rencana.
 admin.get("/journal", async (c) => {
-  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.listAll(sql));
+  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.listAll(sql, assetBase(c.env)));
   return c.json({ data });
 });
 
 admin.get("/journal/:id", async (c) => {
-  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.getById(sql, c.req.param("id")));
+  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.getById(sql, c.req.param("id"), assetBase(c.env)));
   if (!data) return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
   return c.json({ data });
 });

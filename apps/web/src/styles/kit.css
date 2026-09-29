@@ -1901,6 +1901,10 @@
   border-radius: 999px;
   background: var(--danger);
 }
+/* Amber = terbatas (aturan warna #1): ada yang belum tayang, bukan kerusakan. */
+.k-bulat__tanda--amber { background: var(--warn); }
+.k-bulat:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.k-bulat[data-state="open"] { background: var(--brand-line, var(--brand-soft)); }
 
 /* --- 3. Footer ------------------------------------------------------------ */
 .k-kakihal {

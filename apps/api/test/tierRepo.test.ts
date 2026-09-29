@@ -6,6 +6,7 @@ import { it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import postgres from "postgres";
 import * as tiers from "../src/repository/tiers";
+import * as journal from "../src/repository/journal";
 
 const DIR = "/var/lib/postgresql/uji";
 const adaPostgres = existsSync(`${DIR}/sock/.s.PGSQL.55432`);
@@ -77,4 +78,30 @@ it.skipIf(!adaPostgres)("repository paket jalan dengan setelan koneksi produksi"
 
   await sql.end();
   expect(gagal, gagal.join("; ")).toEqual([]);
+});
+
+/* Sampul jurnal, di database yang sama — tes di atas sudah membangunnya dari
+   bootstrap, dan vitest menjalankan tes dalam SATU berkas berurutan. */
+it.skipIf(!adaPostgres)("sampul jurnal tersimpan dan jadi URL", { timeout: 30_000 }, async () => {
+  const sql = postgres({
+    host: `${DIR}/sock`, port: 55432, user: "postgres", database: "uji_paket",
+    fetch_types: false, prepare: false, max: 1,
+  });
+  const id = await journal.create(sql, {
+    slug: "uji-sampul", title: "Uji sampul jurnal", excerpt: "Kalimat pembuka yang cukup panjang.",
+    coverKey: "jurnal/abc.webp",
+  });
+  const a = await journal.getById(sql, id, "https://media.contoh.id/");
+  expect(a?.coverKey).toBe("jurnal/abc.webp");
+  expect(a?.coverUrl).toBe("https://media.contoh.id/jurnal/abc.webp");
+  await journal.update(sql, id, { coverKey: null });
+  const b = await journal.getById(sql, id, "https://media.contoh.id");
+  expect(b?.coverKey).toBeNull();
+  expect(b?.coverUrl).toBeNull();
+  // Yang berencana ikut di indeks publik, lengkap dengan sampulnya kalau ada.
+  await journal.update(sql, id, { coverKey: "jurnal/abc.webp" });
+  const indeks = await journal.listForIndex(sql, "https://media.contoh.id");
+  expect(indeks.find((t) => t.id === id)?.coverUrl).toBe("https://media.contoh.id/jurnal/abc.webp");
+  await journal.remove(sql, id);
+  await sql.end();
 });

@@ -111,6 +111,13 @@ export function checkJournalInput(
       return "lama baca 1–90 menit";
     }
   }
+  /* Sampul harus di folder jurnal/ — CHECK di database menjaga hal yang sama.
+   * Yang di sini ada supaya pesannya jelas, bukan "check violation". */
+  if (input.coverKey !== undefined && input.coverKey !== null) {
+    if (typeof input.coverKey !== "string" || !/^jurnal\/[A-Za-z0-9._-]+$/.test(input.coverKey)) {
+      return "sampul harus berkas yang diunggah ke folder jurnal/";
+    }
+  }
   /* Menerbitkan yang kosong ditolak di sini DAN oleh CHECK di database. Yang
    * di sini ada supaya pesannya menyebut sebabnya, bukan "check violation". */
   if (input.publishedAt) {

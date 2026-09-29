@@ -14,7 +14,7 @@ export const journal = new Hono<{ Bindings: Env }>();
  * Yang tidak ikut cuma body-nya — draf tidak perlu sampai ke halaman publik.
  */
 journal.get("/journal", async (c) => {
-  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.listForIndex(sql));
+  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.listForIndex(sql, c.env.R2_PUBLIC_BASE_URL ?? ""));
   c.header("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=86400");
   return c.json({ data });
 });
@@ -29,7 +29,8 @@ journal.get("/journal/:slug", async (c) => {
     return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
   }
 
-  const data = await withDb(c.env, c.executionCtx, (sql) => journalRepo.getPublishedBySlug(sql, slug));
+  const data = await withDb(c.env, c.executionCtx, (sql) =>
+    journalRepo.getPublishedBySlug(sql, slug, c.env.R2_PUBLIC_BASE_URL ?? ""));
   if (!data) return c.json({ error: { status: 404, message: "tulisan tidak ditemukan" } }, 404);
 
   c.header("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=86400");

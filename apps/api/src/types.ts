@@ -513,6 +513,9 @@ export interface JournalPost {
   readMinutes: number;
   /** null = masih rencana. Tanggal di masa depan = terjadwal. */
   publishedAt?: string | null;
+  /** Kunci R2 sampulnya (folder jurnal/). Kosong = belum bersampul. */
+  coverKey?: string | null;
+  coverUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -526,6 +529,8 @@ export interface JournalPostInput {
   category?: JournalCategory;
   readMinutes?: number;
   publishedAt?: string | null;
+  /** null = buang sampulnya. */
+  coverKey?: string | null;
 }
 
 /* ── Logo klien ──────────────────────────────────────────────────────────

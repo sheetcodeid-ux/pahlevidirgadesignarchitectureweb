@@ -1116,9 +1116,19 @@ export interface TulisanAdmin {
   readMinutes: number;
   /** null = masih rencana. Tanggal di masa depan = terjadwal. */
   publishedAt?: string | null;
+  /** Kunci R2 sampul (folder jurnal/); null = belum bersampul. */
+  coverKey?: string | null;
+  coverUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
+
+/** URL unggah sampul tulisan — folder jurnal/ di R2. */
+export const mintaUrlUnggahSampul = (contentType: string) =>
+  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
+    method: "POST",
+    body: JSON.stringify({ scope: "jurnal", contentType }),
+  });
 
 export const daftarTulisan = () => panggil<TulisanAdmin[]>("/admin/journal");
 

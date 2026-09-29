@@ -189,6 +189,8 @@ export interface Tulisan {
   readMinutes: number;
   /** null = masih rencana; indeks menandainya "belum ditulis". */
   publishedAt?: string | null;
+  /** Sampul (R2, folder jurnal/). Kosong = belum bersampul. */
+  coverUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }

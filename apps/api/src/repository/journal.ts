@@ -11,11 +11,18 @@ interface Row {
   category: string;
   read_minutes: number;
   published_at: string | null;
+  cover_key: string | null;
   created_at: string;
   updated_at: string;
 }
 
-function rowToPost(row: Row): JournalPost {
+/** Kunci R2 → URL publik. Sama dengan logo klien. */
+function url(assetBase: string, key: string | null): string | null {
+  if (!key) return null;
+  return `${assetBase.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
+}
+
+function rowToPost(row: Row, assetBase: string): JournalPost {
   return {
     id: row.id,
     slug: row.slug,
@@ -25,13 +32,15 @@ function rowToPost(row: Row): JournalPost {
     category: row.category as JournalCategory,
     readMinutes: row.read_minutes,
     publishedAt: row.published_at,
+    coverKey: row.cover_key,
+    coverUrl: url(assetBase, row.cover_key),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 const KOLOM = `id, slug, title, excerpt, body, category::text as category,
-               read_minutes, published_at, created_at, updated_at`;
+               read_minutes, published_at, cover_key, created_at, updated_at`;
 
 /**
  * Dilihat pengunjung. Yang berencana dan yang tanggalnya masih di depan tidak
@@ -43,13 +52,13 @@ const KOLOM = `id, slug, title, excerpt, body, category::text as category,
  * dalam bentuk yang paling gampang terlupakan — bukan endpoint admin, tapi
  * tetap query yang harus menyaring sendiri.
  */
-export async function listPublished(sql: Sql): Promise<JournalPost[]> {
+export async function listPublished(sql: Sql, assetBase: string): Promise<JournalPost[]> {
   const rows = await sql<Row[]>`
     select ${sql.unsafe(KOLOM)}
     from public.journal_posts
     where published_at is not null and published_at <= now()
     order by published_at desc`;
-  return rows.map(rowToPost);
+  return rows.map((r) => rowToPost(r, assetBase));
 }
 
 /**
@@ -58,45 +67,45 @@ export async function listPublished(sql: Sql): Promise<JournalPost[]> {
  * tegas. Isinya (body) SENGAJA tidak ikut: indeks tidak memakainya, dan draf
  * yang belum terbit tidak perlu ikut terkirim ke halaman publik.
  */
-export async function listForIndex(sql: Sql): Promise<JournalPost[]> {
+export async function listForIndex(sql: Sql, assetBase: string): Promise<JournalPost[]> {
   const rows = await sql<Row[]>`
     select id, slug, title, excerpt, null as body, category::text as category,
-           read_minutes, published_at, created_at, updated_at
+           read_minutes, published_at, cover_key, created_at, updated_at
     from public.journal_posts
     order by published_at desc nulls last, created_at desc`;
-  return rows.map(rowToPost);
+  return rows.map((r) => rowToPost(r, assetBase));
 }
 
 /** Satu tulisan yang sudah terbit. Draf tidak bisa dibuka lewat URL-nya. */
-export async function getPublishedBySlug(sql: Sql, slug: string): Promise<JournalPost | null> {
+export async function getPublishedBySlug(sql: Sql, slug: string, assetBase: string): Promise<JournalPost | null> {
   const rows = await sql<Row[]>`
     select ${sql.unsafe(KOLOM)}
     from public.journal_posts
     where slug = ${slug} and published_at is not null and published_at <= now()`;
-  return rows[0] ? rowToPost(rows[0]) : null;
+  return rows[0] ? rowToPost(rows[0], assetBase) : null;
 }
 
 /** Seluruhnya, termasuk draf — dilihat staf. */
-export async function listAll(sql: Sql): Promise<JournalPost[]> {
+export async function listAll(sql: Sql, assetBase: string): Promise<JournalPost[]> {
   const rows = await sql<Row[]>`
     select ${sql.unsafe(KOLOM)}
     from public.journal_posts
     order by published_at desc nulls first, updated_at desc`;
-  return rows.map(rowToPost);
+  return rows.map((r) => rowToPost(r, assetBase));
 }
 
-export async function getById(sql: Sql, id: string): Promise<JournalPost | null> {
+export async function getById(sql: Sql, id: string, assetBase: string): Promise<JournalPost | null> {
   const rows = await sql<Row[]>`
     select ${sql.unsafe(KOLOM)} from public.journal_posts where id = ${id}::uuid`;
-  return rows[0] ? rowToPost(rows[0]) : null;
+  return rows[0] ? rowToPost(rows[0], assetBase) : null;
 }
 
 export async function create(sql: Sql, input: JournalPostInput): Promise<string> {
   const rows = await sql<{ id: string }[]>`
-    insert into public.journal_posts (slug, title, excerpt, body, category, read_minutes, published_at)
+    insert into public.journal_posts (slug, title, excerpt, body, category, read_minutes, published_at, cover_key)
     values (${input.slug ?? ""}, ${input.title ?? ""}, ${input.excerpt ?? ""},
             ${input.body ?? null}, ${input.category ?? "site"}::public.journal_category,
-            ${input.readMinutes ?? 5}, ${input.publishedAt ?? null})
+            ${input.readMinutes ?? 5}, ${input.publishedAt ?? null}, ${input.coverKey ?? null})
     returning id`;
   return rows[0].id;
 }
@@ -116,6 +125,8 @@ export async function update(sql: Sql, id: string, input: JournalPostInput): Pro
   // null di sini BERARTI sesuatu — kembalikan tulisan jadi rencana — jadi
   // yang diperiksa `!== undefined`, bukan kebenaran nilainya.
   if (input.publishedAt !== undefined) fragments.push(sql`published_at = ${input.publishedAt}`);
+  // null = buang sampulnya; undefined = jangan diubah.
+  if (input.coverKey !== undefined) fragments.push(sql`cover_key = ${input.coverKey}`);
 
   if (fragments.length === 0) return;
 

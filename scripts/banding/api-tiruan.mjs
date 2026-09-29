@@ -202,6 +202,52 @@ const paketAdmin = [
 const urutPaket = () => [...paketAdmin].sort((a, z) =>
   a.group.localeCompare(z.group) || a.sortOrder - z.sortOrder);
 
+/* Jurnal — sembilan tulisan dalam tiga keadaan (terbit, terjadwal, rencana),
+   sebagian bersampul. Sampulnya SVG yang dibangkitkan server ini sendiri di
+   /media/jurnal/<n>.svg, supaya halaman bisa dipotret tanpa foto sungguhan. */
+const ISI_CONTOH = `Tanah di tepi sungai selalu tampak murah di brosur. Yang jarang disebut: air tanahnya.
+
+## Sebelum membeli
+
+Tanyakan tinggi banjir terakhir kepada tetangga, bukan kepada penjual. Lihat bekas garis air di dinding pagar.
+
+## Orientasi
+
+Bukaan besar ke utara dan selatan, dinding masif ke barat. Matahari sore di khatulistiwa tidak kenal ampun.
+
+## Biaya tersembunyi
+
+Pengurukan, cerucuk, dan saluran pembuangan sering lebih mahal daripada selisih harga tanahnya.`;
+const hariLalu = (n, jam = 9) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(jam, 0, 0, 0); return d.toISOString(); };
+const jurnalAdmin = [
+  ["sembilan-pertanyaan-tapak", "Sembilan pertanyaan sebelum membeli tanah", "Orientasi, akses, air, dan tembok tetangga menentukan lebih banyak daripada gambar mana pun.", "site", 7, 2, 1],
+  ["uang-muka-yang-wajar", "Berapa uang muka yang wajar untuk jasa arsitek", "Pembayaran per tahap melindungi kedua pihak — ini cara kami membaginya dan alasannya.", "money", 5, 9, 2],
+  ["pbg-tanpa-drama", "PBG tanpa drama: urutan dokumen yang benar", "Persetujuan Bangunan Gedung bisa selesai dalam hitungan minggu kalau berkasnya disusun sejak desain.", "permit", 8, 16, 3],
+  ["atap-untuk-hujan-tropis", "Atap untuk hujan tropis yang tidak kenal jeda", "Kemiringan, talang, dan overstek adalah tiga keputusan yang menentukan umur bangunan di Pontianak.", "build", 6, 24, 4],
+  ["kafe-pertama-anggaran", "Kafe pertama dengan anggaran yang apa adanya", "Di mana uang harus dihabiskan dan di mana cukup rapi: bar, cahaya, dan kursi yang membuat orang betah.", "money", 6, 33, null],
+  ["menghitung-cerucuk", "Menghitung cerucuk di tanah gambut", "Fondasi di tanah lunak Kalimantan tidak bisa ditebak dari gambar standar — ini cara kami memeriksanya.", "build", 9, -5, 5],
+  ["ventilasi-silang", "Ventilasi silang yang benar-benar mengalir", "", "site", 5, null, null],
+  ["izin-renovasi-ruko", "Apakah renovasi ruko perlu izin baru?", "", "permit", 4, null, null],
+  ["membaca-rab", "Membaca RAB kontraktor tanpa tertipu", "", "money", 6, null, null],
+].map(([slug, title, excerpt, category, readMinutes, lalu, sampul], i) => ({
+  id: `j0000000-0000-4000-8000-00000000000${i + 1}`,
+  slug, title, category, readMinutes,
+  excerpt: excerpt || "Rencana tulisan — kalimat pembukanya menyusul.",
+  body: lalu === null ? null : ISI_CONTOH,
+  publishedAt: lalu === null ? null : hariLalu(lalu),
+  coverKey: sampul ? `jurnal/contoh-${sampul}.svg` : null,
+  coverUrl: sampul ? `http://127.0.0.1:${PORT}/media/jurnal/contoh-${sampul}.svg` : null,
+  createdAt: hariLalu(40 + i),
+  updatedAt: hariLalu(lalu === null ? 3 + i : Math.max(0, lalu)),
+}));
+const sampulSvg = (n) => {
+  const rona = [["#1E4841", "#BBF49C"], ["#2F5D50", "#ECF4E9"], ["#BCBEBD", "#1E4841"], ["#7FC98E", "#1E4841"], ["#E5E6E6", "#2F5D50"]][(n - 1) % 5];
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="${rona[0]}"/>` +
+    `<path d="M0 470 L300 300 L520 420 L820 210 L1200 430 L1200 630 L0 630Z" fill="${rona[1]}" opacity=".55"/>` +
+    `<rect x="760" y="120" width="260" height="190" rx="8" fill="none" stroke="${rona[1]}" stroke-width="10" opacity=".8"/>` +
+    `<circle cx="210" cy="150" r="70" fill="${rona[1]}" opacity=".7"/></svg>`;
+};
+
 /* Riwayat biaya 30 bulan ke belakang — dipakai halaman Fee Proyek, yang
    grafiknya membaca biaya PER BULAN dan PER TAHUN. Lima baris di atas cuma
    menjangkau beberapa hari terakhir, dan grafik tangga sepuluh bulan dengan
@@ -420,12 +466,24 @@ function feeProyek(path) {
     .sort((a, z) => z.feeTotal - a.feeTotal);
 }
 
+/* Tombol Terbitkan. Cap perubahan bergeser tiap kali ada penulisan — sama
+   dengan trigger content_revision di database — dan mulai dari jauh di masa
+   lalu, jadi halaman yang baru dimuat bertanda "sudah sama" sampai sesuatu
+   disimpan. */
+let capBerubah = "2026-01-01T00:00:00.000Z";
 const jawab = (path) => {
+  if (path.startsWith("/api/v1/admin/publish-status")) return { terakhirBerubah: capBerubah };
+  if (path.startsWith("/api/v1/admin/settings")) return { ...setelan, terbitSitusAktif: true };
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
   if (path.startsWith("/api/v1/admin/costs")) return [...biayaKeu, ...biayaRiwayat];
   if (path.startsWith("/api/v1/admin/inquiries")) return pesanAdmin;
+  {
+    const j = path.match(/^\/api\/v1\/admin\/journal\/([^/?]+)/);
+    if (j) return jurnalAdmin.find((x) => x.id === j[1]) ?? null;
+  }
+  if (path.startsWith("/api/v1/admin/journal")) return jurnalAdmin;
   {
     const t = path.match(/^\/api\/v1\/admin\/tiers\/([^/?]+)/);
     if (t) return paketAdmin.find((x) => x.id === t[1]) ?? null;
@@ -463,7 +521,11 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/projects/")) return proyek[0];
   if (path.startsWith("/api/v1/projects")) return proyek;
   if (path.startsWith("/api/v1/settings")) return setelan;
-  if (path.startsWith("/api/v1/journal")) return [];
+  {
+    const j = path.match(/^\/api\/v1\/journal\/([^/?]+)/);
+    if (j) return jurnalAdmin.find((x) => x.slug === j[1] && x.publishedAt && x.publishedAt <= new Date().toISOString()) ?? null;
+  }
+  if (path.startsWith("/api/v1/journal")) return jurnalAdmin.map(({ body, ...x }) => x);
   if (path.startsWith("/api/v1/team")) return [];
   if (path.startsWith("/api/v1/clients")) return [];
   if (path.startsWith("/api/v1/testimonials")) return [];
@@ -478,6 +540,8 @@ const jawab = (path) => {
  * suksesnya tidak pernah benar-benar terlihat. Sisanya tetap baca saja;
  * meniru seluruh API berarti membuat API kedua yang pasti menyimpang. */
 function tulis(metode, path, badan) {
+  if (path === "/api/v1/admin/publish" && metode === "POST") return { dimulai: true };
+  if (path.startsWith("/api/v1/admin/")) capBerubah = new Date().toISOString();
   const m = path.match(/^\/api\/v1\/admin\/invoices\/([^/?]+)$/);
   if (m && metode === "PATCH") {
     const t = tagihanAdmin.find((x) => x.id === m[1]);
@@ -504,6 +568,35 @@ function tulis(metode, path, badan) {
     paketAdmin.splice(i, 1);
     return { deleted: true };
   }
+  /* Unggah tiruan: URL "presigned" menunjuk server ini sendiri, dan PUT ke
+     sana diterima begitu saja. Kuncinya menunjuk salah satu sampul contoh
+     supaya gambar hasil unggahan tetap tergambar. */
+  if (path === "/api/v1/admin/uploads" && metode === "POST") {
+    return { key: `${badan.scope === "jurnal" ? "jurnal" : "projects/uji"}/contoh-3.svg`,
+      uploadUrl: `http://127.0.0.1:${PORT}/unggah`, expiresAt: new Date(Date.now() + 6e5).toISOString() };
+  }
+  if (path === "/unggah" && metode === "PUT") return { ok: true };
+  const jp = path.match(/^\/api\/v1\/admin\/journal(?:\/([^/?]+))?$/);
+  if (jp && metode === "POST" && !jp[1]) {
+    const id = `j0000000-0000-4000-8000-0000000000${String(jurnalAdmin.length + 10).padStart(2, "0")}`;
+    const kini = new Date().toISOString();
+    jurnalAdmin.push({ id, body: null, publishedAt: null, coverKey: null, coverUrl: null, readMinutes: 5, category: "site",
+      ...badan, createdAt: kini, updatedAt: kini });
+    return { id };
+  }
+  if (jp && jp[1] && metode === "PATCH") {
+    const x = jurnalAdmin.find((y) => y.id === jp[1]);
+    if (!x) return { galat: 404 };
+    Object.assign(x, badan, { updatedAt: new Date().toISOString() });
+    if ("coverKey" in badan) x.coverUrl = badan.coverKey ? `http://127.0.0.1:${PORT}/media/${badan.coverKey}` : null;
+    return { updated: true };
+  }
+  if (jp && jp[1] && metode === "DELETE") {
+    const i = jurnalAdmin.findIndex((y) => y.id === jp[1]);
+    if (i < 0) return { galat: 404 };
+    jurnalAdmin.splice(i, 1);
+    return { deleted: true };
+  }
   const q = path.match(/^\/api\/v1\/admin\/inquiries\/([^/?]+)$/);
   if (q && metode === "PATCH") {
     const x = pesanAdmin.find((y) => y.id === q[1]);
@@ -520,7 +613,7 @@ createServer((req, res) => {
   const kepala = {
     "content-type": "application/json",
     "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
+    "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
     "access-control-allow-headers": "content-type,authorization",
   };
   if (metode === "OPTIONS") {
@@ -541,6 +634,13 @@ createServer((req, res) => {
       res.writeHead(hasil ? 200 : 201, kepala);
       res.end(JSON.stringify({ data: hasil ?? { id: "baru" } }));
     });
+  }
+  {
+    const m = path.match(/^\/media\/jurnal\/contoh-(\d+)\.svg$/);
+    if (m) {
+      res.writeHead(200, { "content-type": "image/svg+xml", "access-control-allow-origin": "*" });
+      return res.end(sampulSvg(Number(m[1])));
+    }
   }
   res.writeHead(200, kepala);
   res.end(JSON.stringify({ data: jawab(path) }));

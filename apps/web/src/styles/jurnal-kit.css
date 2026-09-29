@@ -1,0 +1,386 @@
+/* =============================================================================
+   Jurnal — frame "37. Insights" (daftar) dan "40. Insight Details" (satu).
+
+   Frame 37, koordinat frame 1440 (kolom konten 220..1108, rel kanan 1135..1440):
+     keping          y80, 30 tinggi, celah 8
+     baris 1         judul seksi tinta y139,5; kartu mulai y162
+       unggulan      dua kartu 282,5 lebar, celah 16; sampul 185 r16;
+                     meta 11px di +193, judul 20/600 di +220, ringkas 12/20
+                     di +275, baris keadaan di +322
+       baru diubah   281 lebar, 24 dari unggulan; kartu 100 tinggi, langkah
+                     116; gambar 100x100 r12, info di x+115
+     belum ditulis   judul y533,5; kartu mint 436x134 r16 celah 16; gambar
+                     108x121 di (12,7); info di x+136
+     semua tulisan   judul y729,5; kisi 4 kolom 210, celah 16; sampul 124 r16
+
+   Frame 40:
+     judul 30/700 di tengah, pembuka 14/20 abu, baris meta 12
+     sampul          selebar kolom (sisi 28), rasio 1200/630
+     badan           kolom utama 721 di x+100, samping 210 di x+878
+   ============================================================================= */
+
+/* --- Frame 37 --------------------------------------------------------------- */
+.pj { display: flex; flex-direction: column; }
+.pj--rangka { min-height: 800px; }
+.pj__keping { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.pj__baris1 {
+  display: grid;
+  grid-template-columns: minmax(0, 581fr) minmax(0, 281fr);
+  gap: 24px;
+  margin-top: 25px;
+}
+/* Kepala seksi di frame ini setinggi tombol titik-tiganya (24), bukan 32
+   seperti halaman lain: tinta judul di y139,5 dan kartu mulai y162. Kepala
+   yang tidak bertombol tetap setinggi itu, supaya keempat seksi berjarak
+   sama. */
+.pj .k-kepalaseksi { min-height: 24px; }
+.pj__unggulandaftar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 3px; }
+.pj__barudaftar { display: flex; flex-direction: column; gap: 16px; margin-top: 13px; }
+
+.pj__kartubesar,
+.pj__kartukecil,
+.pj__kartumint,
+.pj__kartugrid {
+  display: flex;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 16px;
+}
+.pj__kartubesar,
+.pj__kartugrid { flex-direction: column; }
+.pj__kartubesar:focus-visible,
+.pj__kartukecil:focus-visible,
+.pj__kartumint:focus-visible,
+.pj__kartugrid:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.pj__kartubesar:hover .pj__judulbesar,
+.pj__kartukecil:hover .pj__judulkecil,
+.pj__kartumint:hover .pj__judulsedang,
+.pj__kartugrid:hover .pj__judulsedang { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Sampul: gambar, atau bidang warna kategori. Keempat bidang memakai tangga
+   hijau→abu kit, yang punya nilai sendiri di tema gelap. */
+.pj__sampul {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 100%;
+  height: 185px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: var(--ramp-3);
+  color: var(--ramp-3-ink);
+  font-size: var(--k-t16);
+  font-weight: var(--k-semi);
+}
+.pj__sampul--site { background: var(--ramp-2); color: var(--ramp-2-ink); }
+.pj__sampul--money { background: var(--ramp-1); color: var(--ramp-1-ink); }
+.pj__sampul--permit { background: var(--ramp-4); color: var(--ramp-4-ink); }
+.pj__sampul--build { background: var(--ramp-3); color: var(--ramp-3-ink); }
+.pj__sampul--kecil { width: 100px; height: 100px; border-radius: 12px; font-size: var(--k-t10); }
+.pj__sampul--mint { width: 108px; height: 121px; margin: 6.5px 0 0 12px; border-radius: 12px; font-size: var(--k-t11); }
+.pj__sampul--grid { height: 124px; }
+
+.pj__info { display: flex; flex-direction: column; min-width: 0; }
+.pj__kartubesar .pj__info { padding: 7px 4px 0; }
+.pj__kartukecil .pj__info { flex: 1; justify-content: space-between; padding: 3px 0 3px 15px; }
+.pj__kartumint .pj__info { flex: 1; padding: 13.5px 20px 13px 16px; }
+.pj__kartugrid .pj__info { padding: 17px 4.5px 0; }
+
+.pj__meta { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: var(--k-t11); line-height: 1; color: var(--text-muted); white-space: nowrap; }
+.pj__meta b { overflow: hidden; font-weight: var(--k-reg); color: var(--brand); text-overflow: ellipsis; }
+.pj__judulbesar {
+  display: -webkit-box;
+  margin-top: 12.5px;
+  overflow: hidden;
+  font-size: var(--k-h6);
+  font-weight: var(--k-bold);
+  line-height: 25px;
+  color: var(--text-strong);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pj__judulkecil {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--k-t18);
+  font-weight: var(--k-med);
+  line-height: 22.5px;
+  color: var(--text-strong);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pj__judulsedang {
+  display: -webkit-box;
+  margin-top: 12px;
+  overflow: hidden;
+  font-size: var(--k-t18);
+  font-weight: var(--k-semi);
+  line-height: 22.5px;
+  color: var(--text-strong);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pj__kartumint .pj__judulsedang { margin-top: 9px; -webkit-line-clamp: 1; }
+.pj__kartugrid .pj__judulsedang { margin-top: 14px; font-weight: var(--k-med); }
+.pj__ringkas {
+  display: -webkit-box;
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: var(--k-t12);
+  line-height: 20px;
+  color: var(--text-muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.pj__kartumint .pj__ringkas { margin-top: 2px; font-size: var(--k-t11); line-height: 18px; }
+.pj__keadaan {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: var(--k-t12);
+  line-height: 20px;
+  color: var(--text-strong);
+}
+.pj__kartukecil .pj__keadaan { margin-top: 0; }
+/* Satu baris, selalu. Di kartu sempit (1280, 1024) kalimat ini sempat
+   terlipat dua dan mendorong baris kategori menindih judulnya. */
+.pj__keadaanteks { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pj__kartumint .pj__keadaan { margin-top: auto; }
+
+/* Titik keadaan — pengganti avatar penulis 20px framenya. Warnanya membawa
+   makna tetap (aturan desain #1): hijau hidup/terbit, amber terbatas/
+   terjadwal, abu rencana. */
+.pj__titik { display: inline-block; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ramp-4); }
+.pj__titik--terbit { background: var(--brand-mint); }
+.pj__titik--terjadwal { background: var(--warn); }
+.pj__titik--rencana { background: var(--ramp-4); }
+.pj__titik--besar { width: 36px; height: 36px; }
+
+.pj__menunggu { margin-top: 25.5px; }
+.pj__menunggudaftar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 13px; }
+.pj__kartumint { min-height: 134px; background: var(--brand-soft); }
+
+.pj__semua { margin-top: 24px; }
+.pj__kisi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 16px; margin-top: 13px; }
+.pj__tambah { font-size: var(--k-t12); font-weight: var(--k-med); color: var(--brand); text-decoration: none; }
+.pj__tambah:hover { text-decoration: underline; }
+.pj__kosong { grid-column: 1 / -1; margin: 8px 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
+
+/* Rel kanan */
+.pj-rel { display: flex; flex-direction: column; gap: 29px; }
+.pj-rel__seksi { display: flex; flex-direction: column; }
+.pj-rel__seksi .k-kepalaseksi { min-height: 16px; }
+.pj-rel__daftar { display: flex; flex-direction: column; gap: 15.5px; margin-top: 20px; }
+.pj-rel__daftar--penulis { gap: 15px; margin-top: 18.5px; }
+.pj-rel__daftar--penulis .k-penulis { padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.pj-rel__tagar {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.pj-rel__tagar[aria-pressed="true"] .k-tagar__judul { color: var(--brand); }
+.pj-rel__tagar:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 4px; }
+.pj-rel__tombol { align-self: flex-start; margin-top: 16px; text-decoration: none; }
+
+@media (max-width: 1100px) {
+  .pj__baris1 { grid-template-columns: minmax(0, 1fr); }
+  .pj__barudaftar { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .pj__kisi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 60rem) {
+  .pj__menunggudaftar,
+  .pj__barudaftar { grid-template-columns: minmax(0, 1fr); }
+  .pj__kisi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 40rem) {
+  .pj__unggulandaftar,
+  .pj__kisi { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- Frame 40 ---------------------------------------------------------------
+   Angka dari frame 1440 (kolom konten 220..1412):
+     garis kepala    y80
+     judul           32/700, tinta y132,5, di tengah
+     pembuka         16/25,5 abu, 782 lebar, tinta y180,5
+     baris meta      14px, lingkaran 20 di y237
+     sampul          248..1384 (sisi 28), tinta y313, 1136x592
+     badan           isi 16/25 di x321 selebar 724; kolom kanan x1101, 210
+                     lebar; keduanya mulai tinta y964–967
+     kanan           daftar isi 16/20 celah 15; judul seksi 18/600; tombol
+                     bagikan 32 celah 8; keping tagar 32 celah 8
+     terkait         garis y2031 (sisi 28), judul tinta +42,5, kartu y2112:
+                     4 x 269 celah 20, gambar 136, kategori 11, judul 16
+   ----------------------------------------------------------------------------- */
+.pjs { padding: 0 0 63.5px; border-top: 1px solid var(--border); }
+.pjs--rangka { min-height: 900px; }
+.pjs__kepala { display: flex; flex-direction: column; align-items: center; max-width: 800px; margin: 0 auto; padding-top: 45px; text-align: center; }
+.pjs__judul,
+.pjs__pembuka,
+.pjs__isi {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  resize: none;
+}
+.pjs__judul,
+.pjs__pembuka { padding: 0 8px; text-align: center; }
+.pjs__judul { height: 40px; font-size: var(--k-h1); font-weight: var(--k-bold); line-height: 38px; color: var(--brand); }
+.pjs__pembuka { margin-top: 8px; font-size: var(--k-t16); line-height: 25.5px; color: var(--text-muted); }
+.pjs__judul:hover,
+.pjs__pembuka:hover,
+.pjs__isi:hover { border-color: var(--border); }
+.pjs__judul:focus,
+.pjs__pembuka:focus,
+.pjs__isi:focus { border-color: var(--brand); outline: none; }
+.pjs__meta { display: flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 9px; margin: 9px 0 0; max-width: none; font-size: var(--k-t14); line-height: 20px; color: var(--text-muted); }
+.pjs__meta > .pj__titik { margin-right: -2.5px; }
+.pjs__meta b { font-weight: var(--k-reg); color: var(--brand); }
+.pjs__menit { display: inline-flex; align-items: center; gap: 4px; }
+.pjs__menit input {
+  width: 3.2em;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  font: inherit;
+  text-align: center;
+  color: var(--text-strong);
+}
+
+.pjs__sampul {
+  position: relative;
+  margin: 55px 28px 0;
+  overflow: hidden;
+  /* Rasio kartu bagikan, sama dengan sampul di /jurnal/<slug>: yang tampil di
+     sini potongan yang sama persis dengan yang dilihat pembaca. Framenya
+     1136x592 — rasio ini memberi 596, 4px lebih tinggi. */
+  aspect-ratio: 1200 / 630;
+  border-radius: 16px;
+  background: var(--ramp-4);
+}
+.pjs__sampul img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pjs__sampul--kosong { display: grid; place-items: center; border: 1px dashed var(--border-strong); background: var(--brand-soft); }
+.pjs__sampulkosong { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 420px; padding: 24px; text-align: center; }
+.pjs__sampulkosong b { font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); }
+.pjs__sampulkosong small { font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
+.pjs__sampulaksi { position: absolute; right: 16px; bottom: 16px; display: flex; gap: 8px; }
+.pjs__unggah { position: relative; cursor: pointer; }
+.pjs__unggah input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.pjs__unggah:focus-within { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.pjs__badan {
+  display: grid;
+  grid-template-columns: minmax(0, 724fr) minmax(0, 210fr);
+  gap: 56px;
+  margin: 52.5px 101px 0;
+}
+.pjs__utama { display: flex; flex-direction: column; min-width: 0; }
+/* Teksnya jatuh tepat di x321: kotaknya melebar 12px ke kiri-kanan dan
+   padding-nya mengembalikan jarak itu, supaya garis saat disentuh tidak
+   menempel pada huruf. */
+.pjs__isi {
+  min-height: 300px;
+  margin: -9px -12px 0;
+  width: calc(100% + 24px);
+  padding: 8px 11px;
+  field-sizing: content;
+  font-size: var(--k-t16);
+  line-height: 25px;
+  color: var(--text-muted);
+}
+.pjs__bantu { max-width: none; margin: 8px 0 0; font-size: var(--k-t12); line-height: 1.6; color: var(--text-muted); }
+.pjs__bantu code { font-family: var(--font-kode, monospace); font-size: 0.95em; color: var(--text-strong); }
+
+/* Kotak status — tempat kutipan mint di framenya. */
+.pjs__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 18px 20px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+}
+.pjs__centang { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.pjs__centang span { display: flex; flex-direction: column; gap: 4px; }
+.pjs__centang b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.pjs__centang small { max-width: 44ch; font-size: var(--k-t12); line-height: 1.45; color: var(--text-muted); }
+.pjs__aksi { display: flex; align-items: center; gap: 16px; }
+/* Abu, bukan amber: --warn di atas bidang mint cuma 1,9:1 dan tidak ada
+   token tinta amber untuk teks kecil. */
+.pjs__alasan { max-width: 22ch; font-size: var(--k-t12); line-height: 1.4; color: var(--text-muted); text-align: right; }
+
+.pjs__samping { display: flex; flex-direction: column; min-width: 0; }
+.pjs__sampingjudul { margin: 0; font-size: var(--k-t18); font-weight: var(--k-semi); line-height: 18px; color: var(--text-strong); }
+.pjs__sampingket { max-width: none; margin: 12px 0 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
+.pjs__kerangka { display: flex; flex-direction: column; gap: 15px; margin: 0; padding: 0; list-style: none; font-size: var(--k-t16); line-height: 20px; color: var(--text-strong); }
+.pjs__kerangka li:first-child { color: var(--brand); font-weight: var(--k-semi); }
+.pjs__garis { height: 0; margin: 32px 0 0; border: 0; border-top: 1px solid var(--border); }
+.pjs__samping > section + section { margin-top: 28.5px; }
+.pjs__samping > .pjs__garis + section { margin-top: 27px; }
+.pjs__ikon,
+.pjs__keping { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 17.5px; }
+.pjs__ikon { margin-top: 17px; }
+.pjs__tagar { padding: 0; border: 0; border-radius: 8px; background: none; font: inherit; cursor: pointer; }
+.pjs__tagar:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.pjs__tagar[aria-checked="true"] .k-keping { background: var(--brand); color: var(--brand-ink); }
+.pjs__tagar[aria-checked="true"] .k-keping__pagar { color: inherit; opacity: 0.6; }
+.pjs__alamat {
+  display: flex;
+  align-items: center;
+  margin-top: 18px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+.pjs__alamat input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text-strong);
+}
+.pjs__alamat input:focus { outline: none; }
+.pjs__alamat:focus-within { border-color: var(--brand); }
+
+.pjs__terkait { margin: 91px 28px 0; padding-top: 34px; border-top: 1px solid var(--border); }
+.pjs__terkait .pj__kisi { gap: 20px; margin-top: 14px; }
+.pjs__terkait .pj__sampul--grid { height: 136px; }
+.pjs__terkait .pj__kartugrid .pj__info { padding: 13px 6.5px 0; }
+.pjs__terkait .pj__judulsedang {
+  display: block;
+  margin-top: 7.5px;
+  font-size: var(--k-t16);
+  font-weight: var(--k-med);
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1240px) {
+  .pjs__badan { grid-template-columns: minmax(0, 1fr); gap: 40px; margin: 40px 28px 0; }
+  .pjs__terkait .pj__kisi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 40rem) {
+  .pjs__sampul, .pjs__terkait { margin-left: 0; margin-right: 0; }
+  .pjs__badan { margin: 32px 0 0; }
+  .pjs__terkait .pj__kisi { grid-template-columns: minmax(0, 1fr); }
+}

@@ -1,0 +1,89 @@
+/* =============================================================================
+   Panel Terbitkan di kepala kit (TerbitKit). Dimuat KitLayout.
+
+   Panelnya menempel di <body> lewat portal, jadi aturannya tidak boleh
+   bergantung pada leluhur .kl — dan animasinya ditulis di sini sendiri:
+   `terbit-sapu` milik bilah atas lama tinggal di admin.css, yang TIDAK
+   dimuat halaman kit (jebakan #5).
+   ============================================================================= */
+.kterbit {
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+}
+.kterbit__judul { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); line-height: 20px; color: var(--text-strong); }
+.kterbit__ket { max-width: none; margin: 6px 0 0; font-size: var(--k-t12); line-height: 18px; color: var(--text-muted); }
+
+.kterbit__waktu { display: flex; flex-direction: column; margin: 16px 0 0; border-top: 1px solid var(--border); }
+.kterbit__waktu > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.kterbit__waktu dt { display: flex; align-items: center; gap: 8px; font-size: var(--k-t12); color: var(--text-muted); }
+.kterbit__waktu dd { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin: 0; font-size: var(--k-t11); color: var(--text-muted); }
+.kterbit__waktu dd b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+
+/* Hijau = hidup/sama (aturan warna #1); amber = belum tayang. Tintanya dari
+   bidang lembut + teks kuat, bukan teks amber: --warn di atas putih cuma
+   1,9:1. */
+.kterbit__status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: none;
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  font-size: var(--k-t12);
+  line-height: 18px;
+  color: var(--text-strong);
+}
+.kterbit__status svg { color: var(--brand-mint-ink); }
+.kterbit__status--belum { background: var(--warn-soft); }
+.kterbit__status--belum svg { color: var(--text-strong); }
+
+.kterbit__maju { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.kterbit__bar { position: relative; flex: 1; height: 6px; overflow: hidden; border-radius: 999px; background: var(--brand-soft); }
+.kterbit__bar > span {
+  position: absolute;
+  inset-block: 0;
+  width: 38%;
+  border-radius: 999px;
+  background: var(--brand);
+  animation: kterbit-sapu 1.4s ease-in-out infinite;
+}
+@keyframes kterbit-sapu {
+  from { left: -38%; }
+  to { left: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kterbit__bar > span { animation: none; width: 100%; }
+}
+.kterbit__jam { font-size: var(--k-t12); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+.kterbit__galat { max-width: none; margin: 12px 0 0; font-size: var(--k-t12); line-height: 18px; color: var(--danger); }
+.kterbit__kunci {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: none;
+  margin: 16px 0 0;
+  font-size: var(--k-t12);
+  line-height: 18px;
+  color: var(--text-muted);
+}
+.kterbit__kunci svg { flex: none; color: var(--info, var(--text-muted)); }
+.kterbit__aksi { width: 100%; margin-top: 16px; justify-content: center; }
