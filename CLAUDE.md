@@ -712,6 +712,43 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     `min-width: 0` di item yang boleh menyusut, `align-self: stretch` di
     teks yang harus memendek.
 
+34. **Chromium membulatkan lebar-maju TIAP GLIF ke piksel bulat; alat
+    desain tidak.** Terukur pada "Button" berbobot 600 di Urbanist: 31,000
+    pada 10px lawan 28,800 yang seharusnya. Jadi setiap kotak yang MEMELUK
+    teksnya — tombol, lencana, keping, tab — tergambar sampai 2,2px lebih
+    lebar daripada rancangannya, dan selisih itu tidak pernah bisa ditutup
+    dengan padding karena besarnya berubah menurut ukuran font dan panjang
+    kalimat. Penawarnya `text-rendering: geometricPrecision`, yang
+    menghidupkan penempatan sub-piksel: 28,875 / 34,656 / 40,422 pada
+    10/12/14px, meleset 0,08px dari angka rancangannya. Dipasang di
+    `kit.css` saja, yang cuma dimuat halaman kit — jangan dinaikkan ke
+    `global.css` tanpa mengukur ulang seluruh panel admin lama.
+
+35. **Kotak sebuah GRUP teks adalah kotak baris TERPANJANGNYA, bukan baris
+    pertamanya.** Sudah menggigit telak: tinta `Title_10` di frame Figma
+    255,87 lebar saya baca sebagai lebar baris pertama, lalu ukuran
+    fontnya dinaikkan jadi 16px supaya cocok — padahal itu kotak gabungan
+    TIGA baris dan ukuran sebenarnya 12,5px. Teksnya tergambar 28%
+    kebesaran, dan tidak ada satu pun angka di CSS-nya yang terlihat
+    salah. Yang membuktikannya memecah path teks yang sudah di-outline
+    pada tiap perintah `M` lalu mengelompokkannya menurut pusat-y —
+    hasilnya 188,14 / 235,79 / 73,75, dan yang 235 itu baris KEDUA.
+
+36. **Alat ukur yang buta pada satu properti akan selalu menyalahkan
+    komponen yang benar.** Sudah enam kali di proyek ini, dan tiap kali
+    gejalanya sama: angkanya merah, komponennya tidak apa-apa. Yang sudah
+    kejadian — membaca `borderTopColor` saja padahal barisnya cuma
+    bergaris bawah; tidak membaca `stroke` SVG sama sekali; menumpuk dua
+    gambar dari pojok kiri-atas padahal ekspor Figma dipotong pada TINTA;
+    memaksakan geseran tinta pada gambar yang piksel teratasnya bukan
+    benda yang sama; membandingkan warna sama-persis sehingga #EEEEEF
+    lawan #EFF0F0 terbaca "hilang"; dan menghitung porsi warna terhadap
+    seluruh sel termasuk latar putihnya, sehingga dua gambar yang piksel
+    demi pikselnya identik terbaca 25,4% lawan 40,9%. Aturannya:
+    **sebelum memperbaiki komponen karena angka, buktikan dulu alatnya
+    melihat apa yang Anda kira ia lihat** — biasanya dengan menumpuk
+    gambarnya dan melihat sendiri.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
