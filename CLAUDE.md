@@ -900,6 +900,16 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     `letter-spacing`, `text-rendering`), seperti di `button.k-nav` dan
     `.k-transfer--tombol`.
 
+44. **`outline: none` tidak mematikan cincin fokus global.** `global.css`
+    memberi tiap elemen fokus DUA tanda: outline 2px dan halo
+    `box-shadow` 6px. Isian kit yang menandai fokusnya di kotak pembungkus
+    (`:focus-within`) cuma mematikan outline — jadi halonya tergambar sebagai
+    kotak hijau kedua DI DALAM kotaknya, di setiap isian dan pemilih kit,
+    berbulan-bulan di produksi. Kalau menandai fokus di pembungkus, matikan
+    keduanya (`outline: none; box-shadow: none`) dan pastikan pembungkusnya
+    memang punya aturan `:focus-within` yang terlihat — garis mint di atas
+    bidang abu (kotak cari, kontras ~1,2) tidak dihitung.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA

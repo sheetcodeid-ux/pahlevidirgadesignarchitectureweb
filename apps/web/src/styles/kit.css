@@ -868,7 +868,12 @@
 .k-cari--medium { --k-cari-h: 32px; --k-cari-padkiri: 13px; --k-cari-padkanan: 11.5px; --k-cari-font: var(--k-t12); width: 237px; }
 .k-cari--small  { --k-cari-h: 28px; --k-cari-padkiri: 11.1px; --k-cari-padkanan: 9.5px; --k-cari-font: var(--k-t11); width: 223px; }
 .k-cari { max-width: 100%; }
-.k-cari:focus-within { border-color: var(--brand-mint); }
+/* `--brand`, bukan `--brand-mint`: garis mint di atas bidang abu nyaris
+   tidak terlihat (kontras ~1,2), dan sejak halo global dilepas dari input di
+   dalamnya garis inilah SATU-SATUNYA tanda fokus kotak cari — sama dengan
+   `.k-isian__kotak`. Di tema gelap --brand memang mint, dan di sana ia
+   terbaca jelas. */
+.k-cari:focus-within { border-color: var(--brand); }
 /* Ikon kacanya hijau tua #1E4841, sementara teksnya abu #6B7271 — dua warna
    berbeda dalam satu kotak, dan itu memang begitu di Figma. */
 .k-cari > svg { color: var(--brand); }
@@ -883,7 +888,7 @@
   font-family: inherit;
   font-size: var(--k-cari-font);
 }
-.k-cari__input:focus { outline: none; }
+.k-cari__input:focus { outline: none; box-shadow: none; }
 .k-cari__input::placeholder { color: var(--text-muted); }
 
 /* Terukur dari TINTA-nya, bukan dari kotak teksnya: di Figma tinta "Label"
@@ -950,7 +955,12 @@
   font-family: inherit;
   font-size: var(--k-t14);
 }
-.k-isian__input:focus { outline: none; }
+/* `box-shadow: none` juga, bukan cuma outline: cincin fokus global
+   (global.css) memberi tiap input halo 6px, dan di dalam kotak yang sudah
+   bergaris fokus sendiri (:focus-within) halo itu tergambar sebagai kotak
+   hijau KEDUA di dalam kotaknya — terlihat di setiap isian kit, dan sudah
+   begitu di produksi. */
+.k-isian__input:focus { outline: none; box-shadow: none; }
 .k-isian__input::placeholder { color: var(--text-muted); }
 .k-isian__bantu { font-size: var(--k-t12); color: var(--text-muted); }
 

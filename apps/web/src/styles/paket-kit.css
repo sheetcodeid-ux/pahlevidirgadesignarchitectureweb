@@ -227,7 +227,7 @@
   font-size: var(--k-t14);
   color: var(--text-strong);
 }
-.pas__pilih select:focus { outline: none; }
+.pas__pilih select:focus { outline: none; box-shadow: none; }
 .pas__area {
   width: 100%;
   padding: 12px 13px;

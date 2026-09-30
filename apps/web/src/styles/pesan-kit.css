@@ -121,7 +121,7 @@
   cursor: pointer;
 }
 .pes__buka::after { content: ""; position: absolute; inset: 0; z-index: 1; }
-.pes__buka:focus-visible { outline: none; }
+.pes__buka:focus-visible { outline: none; box-shadow: none; }
 .pes__buka:focus-visible::after { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 4px; }
 /* `.k-inbox__isi` jadi induk posisi peregang: bukan barisnya, supaya kotak
    centang di kiri tidak tertutup lapisan klik. */
