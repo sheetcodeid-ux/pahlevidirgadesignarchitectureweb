@@ -2392,6 +2392,18 @@ button.k-nav { border: 0; font-family: inherit; text-align: left; }
 }
 .k-transfer__nilai { font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); }
 .k-transfer__ket { font-size: var(--k-t11); font-weight: var(--k-med); color: var(--brand-isi); }
+/* Baris transfer yang bisa DIBUKA (bukti pembayaran). Bawaan <button>
+   dibuang supaya bentuknya sama persis dengan baris biasa; yang menandainya
+   cuma kursor, latar saat disentuh, dan cincin fokus papan ketik. */
+.k-transfer--tombol {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.k-transfer--tombol:hover { background: var(--brand-soft); }
+.k-transfer--tombol:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 /* --- 12. Item List Providers ----------------------------------------------- */
 .k-penyedia {
@@ -3220,4 +3232,35 @@ button.k-nav { border: 0; font-family: inherit; text-align: left; }
 @media (prefers-reduced-motion: reduce) {
   .k-rekam__titik { animation: none; }
   .k-suara__batang { transition: background-color var(--dur); }
+}
+
+/* --- Bukti pembayaran (components/admin/buktiKit.tsx) ----------------------
+   Di kit.css, bukan stylesheet halaman: dialognya dirender di portal
+   <body> dan dipakai lebih dari satu halaman (jebakan #5). */
+.bk { display: flex; flex-direction: column; gap: 18px; font-family: var(--font-sans); }
+.bk__puncak { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bk__nominal {
+  margin: 0;
+  font-size: var(--k-h2);
+  font-weight: var(--k-semi);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+.bk__rinci { display: grid; gap: 10px; margin: 0; padding: 14px 0; border-block: 1px solid var(--border); }
+.bk__rinci > div { display: flex; justify-content: space-between; gap: 16px; }
+.bk__rinci dt { font-size: var(--k-t12); color: var(--text-muted); }
+.bk__rinci dd { margin: 0; font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); text-align: right; overflow-wrap: anywhere; }
+.bk__tautan {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+.bk__ket { margin: -8px 0 0; font-size: var(--k-t12); color: var(--text-muted); }
+.bk__aksi { flex-wrap: wrap; }
+@media (max-width: 40rem) {
+  .bk__aksi > .k-tombol { flex: 1 1 100%; justify-content: center; }
 }

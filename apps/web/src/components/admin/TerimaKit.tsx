@@ -28,6 +28,7 @@ import {
 } from "../../lib/admin";
 import { proyekAktif, setProyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
+import { DialogBukti } from "./buktiKit";
 
 /* =============================================================================
    Terima Pembayaran — frame Figma "07. Transfer".
@@ -146,6 +147,9 @@ function Isi() {
   const [catatan, setCatatan] = useState("");
   const [kirim, setKirim] = useState(false);
   const [bayar, setBayar] = useState<Pembayaran[] | null>(null);
+  /* Bukti yang sedang dibuka: otomatis sesudah pembayaran tercatat (itu
+     saatnya tautan dikirim ke klien), atau dari baris Pembayaran Terbaru. */
+  const [bukti, setBukti] = useState<Pembayaran | null>(null);
 
   useEffect(() => onProyekAktif(setPilih), []);
 
@@ -213,7 +217,7 @@ function Isi() {
     if (!aktif || angka <= 0) return;
     setKirim(true);
     try {
-      await catatPembayaran(aktif.id, {
+      const baru = await catatPembayaran(aktif.id, {
         amount: angka,
         kind: jenisBerlaku,
         method: metode,
@@ -237,6 +241,9 @@ function Isi() {
       tulisCache("proyek", d);
       setBayar(b);
       setProyek(d);
+      /* Endpoint membalas baris yang baru dibuat beserta receiptToken-nya;
+         kalau suatu saat tidak, cari di daftar yang baru diambil. */
+      setBukti(baru?.receiptToken ? baru : b.find((x) => x.id === baru?.id) ?? null);
     } catch (e) {
       toast({
         judul: "Gagal mencatat",
@@ -337,6 +344,8 @@ function Isi() {
                 rekening={`${LABEL_JENIS[b.kind] ?? b.kind} · ${LABEL_METODE[b.method] ?? b.method}`}
                 kananAtas={tanggalPendek(b.paidAt)}
                 kananBawah={b.receiver || "—"}
+                onClick={() => setBukti(b)}
+                judul={`Bukti pembayaran ${formatRupiah(b.amount)}, ${tanggalPendek(b.paidAt)}`}
               />
             ))}
             {(bayar ?? []).length === 0 && (
@@ -490,6 +499,16 @@ function Isi() {
           </div>
         </article>
       </section>
+
+      <DialogBukti
+        bayar={bukti}
+        judulProyek={aktif?.title ?? ""}
+        whatsapp={aktif?.clientWhatsapp}
+        jenis={bukti ? LABEL_JENIS[bukti.kind] ?? bukti.kind : ""}
+        metode={bukti ? LABEL_METODE[bukti.method] ?? bukti.method : ""}
+        open={bukti !== null}
+        onOpenChange={(b) => !b && setBukti(null)}
+      />
     </div>
   );
 }

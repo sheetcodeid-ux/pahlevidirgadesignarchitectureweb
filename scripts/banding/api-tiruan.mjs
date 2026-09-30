@@ -713,6 +713,15 @@ const jawab = (path) => {
     if (m) return tugasAdmin[m[1]] ?? [];
   }
   if (path.startsWith("/api/v1/admin/tasks")) return Object.values(tugasAdmin).flat();
+  /* Per proyek — dipakai PDF Rincian Biaya dan Daftar Tagihan di Satu
+     Proyek. Tanpa ini keduanya jatuh ke "/admin/projects" dan PDF-nya
+     tersusun dari daftar PROYEK. */
+  {
+    const bp = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/costs$/);
+    if (bp) return [...biayaKeu, ...biayaRiwayat].filter((b) => b.projectId === bp[1]);
+    const tp = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/invoices$/);
+    if (tp) return tagihanAdmin.filter((t) => t.projectId === tp[1]).map(({ projectTitle, ...t }) => t);
+  }
   {
     const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/payments/);
     if (m) return bayarAdmin[m[1]] ?? [];
@@ -792,6 +801,22 @@ function tulis(metode, path, badan) {
       if (metode === "DELETE") { daftar.splice(i, 1); return { deleted: true }; }
       Object.assign(daftar[i], badan, { updatedAt: new Date().toISOString() });
       return { updated: true };
+    }
+  }
+  /* Pembayaran baru — dibalas BARIS UTUH beserta receiptToken, sama dengan
+     `returning … receipt_token` di paymentsRepo.create: panel membuka dialog
+     bukti dari balasan ini. paidTotal proyeknya ikut naik. */
+  {
+    const pb = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/payments$/);
+    if (pb && metode === "POST") {
+      const baris = { id: `${pb[1]}-bayar-baru-${Date.now()}`, projectId: pb[1], amount: badan.amount,
+        kind: badan.kind ?? "termin", method: badan.method ?? "transfer", receiver: badan.receiver ?? null,
+        note: badan.note ?? null, paidAt: new Date().toISOString(),
+        receiptToken: [...Array(40)].map(() => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("") };
+      (bayarAdmin[pb[1]] ??= []).unshift(baris);
+      const p = proyekAdmin.find((x) => x.id === pb[1]);
+      if (p) p.paidTotal = (p.paidTotal ?? 0) + badan.amount;
+      return baris;
     }
   }
   /* Situs Publik & Pengaturan. Kunci R2 yang dikirim diterjemahkan ke URL

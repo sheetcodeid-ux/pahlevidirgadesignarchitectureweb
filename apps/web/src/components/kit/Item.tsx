@@ -524,6 +524,8 @@ export function BarisTransfer({
   kananAtas,
   kananBawah,
   className,
+  onClick,
+  judul,
 }: {
   gambar?: ReactNode;
   ikon?: DataIkon;
@@ -532,9 +534,19 @@ export function BarisTransfer({
   kananAtas?: ReactNode;
   kananBawah?: ReactNode;
   className?: string;
+  /** Barisnya bisa dibuka (mis. bukti pembayaran). Dirender sebagai
+      <button> sungguhan — papan ketik dan pembaca layar ikut, bukan div
+      yang diberi onClick. Isinya span semua, jadi sah di dalam tombol. */
+  onClick?: () => void;
+  /** Nama tombolnya untuk pembaca layar, kalau barisnya bisa dibuka. */
+  judul?: string;
 }) {
+  const Akar = onClick ? "button" : "div";
   return (
-    <div className={kelas("k-transfer", className)}>
+    <Akar
+      className={kelas("k-transfer", onClick && "k-transfer--tombol", className)}
+      {...(onClick ? { type: "button" as const, onClick, "aria-label": judul } : {})}
+    >
       <span className="k-transfer__gambar">
         {gambar ?? (ikon && <Ikon ikon={ikon} ukuran={17} />)}
       </span>
@@ -548,7 +560,7 @@ export function BarisTransfer({
           {kananBawah && <span className="k-transfer__ket">{kananBawah}</span>}
         </span>
       )}
-    </div>
+    </Akar>
   );
 }
 

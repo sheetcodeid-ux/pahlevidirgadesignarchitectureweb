@@ -84,3 +84,10 @@
 @media (max-width: 1240px) {
   .trx { height: auto; }
 }
+
+/* Nama pembayaran = tombol yang membuka bukti pembayaran. Bentuknya sama
+   dengan nama orang di Gaji (.gaji__nama, fee-kit.css) — halaman ini tidak
+   memuat stylesheet itu, jadi tiga aturannya ditulis di sini. */
+.trx__bukti { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.trx__bukti:hover .k-sel2__atas { text-decoration: underline; text-underline-offset: 2px; }
+.trx__bukti:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
+import { ToastProvider } from "../ui/overlay/Toast";
+import { DialogBukti } from "./buktiKit";
 import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Cari } from "../kit/Isian";
@@ -65,6 +67,8 @@ interface Transaksi {
   waktu: string;
   nominal: number;
   catatan: string;
+  /** Baris pembayaran aslinya — namanya membuka bukti pembayaran. */
+  bayar?: Pembayaran;
 }
 
 const LABEL_JENIS: Record<string, string> = {
@@ -142,6 +146,7 @@ function Isi() {
   const [filterProyek, setFilterProyek] = useState("semua");
   const [rentang, setRentang] = useState("12");
   const [terpilih, setTerpilih] = useState<string[]>([]);
+  const [bukti, setBukti] = useState<Pembayaran | null>(null);
 
   useEffect(() => {
     semuaPembayaran()
@@ -175,6 +180,7 @@ function Isi() {
       waktu: b.paidAt,
       nominal: b.amount,
       catatan: b.note || "—",
+      bayar: b,
     }));
     const keluar = (biaya ?? []).map<Transaksi>((k) => ({
       kunci: `b:${k.id}`,
@@ -267,7 +273,20 @@ function Isi() {
         <span className={`trx__ubin${t.masuk ? "" : " trx__ubin--keluar"}`}>
           <Ikon ikon={t.masuk ? CoinIn : CoinOut} ukuran={16} />
         </span>
-        <SelDua atas={t.nama} bawah={t.sub} />
+        {/* Nama pembayaran membuka buktinya — pola yang sama dengan nama
+            orang di Gaji. Biaya keluar tidak punya bukti untuk klien. */}
+        {t.bayar ? (
+          <button
+            type="button"
+            className="trx__bukti"
+            title={`Bukti pembayaran ${formatRupiah(t.nominal)}`}
+            onClick={() => setBukti(t.bayar!)}
+          >
+            <SelDua atas={t.nama} bawah={t.sub} />
+          </button>
+        ) : (
+          <SelDua atas={t.nama} bawah={t.sub} />
+        )}
       </div>,
       <div className="trx__sel">
         <span className="trx__ubinkecil">
@@ -297,6 +316,7 @@ function Isi() {
   const memuat = bayar === null || biaya === null;
 
   return (
+    <>
     <DaftarKit
       className="trx"
       kunciSaring={`${cari}|${jenis}|${filterProyek}|${rentang}`}
@@ -343,13 +363,25 @@ function Isi() {
       teksMemuat="Memuat transaksi…"
       kosong="Tidak ada transaksi pada saringan ini."
     />
+    <DialogBukti
+      bayar={bukti}
+      judulProyek={bukti?.projectTitle ?? ""}
+      whatsapp={(proyek ?? []).find((p) => p.id === bukti?.projectId)?.clientWhatsapp}
+      jenis={bukti ? LABEL_JENIS[bukti.kind] ?? bukti.kind : ""}
+      metode={bukti ? LABEL_METODE[bukti.method] ?? bukti.method : ""}
+      open={bukti !== null}
+      onOpenChange={(b) => !b && setBukti(null)}
+    />
+    </>
   );
 }
 
 export function TransaksiKit() {
   return (
     <RequireAuth skeleton={<div className="kd trx trx--rangka" />}>
-      <Isi />
+      <ToastProvider>
+        <Isi />
+      </ToastProvider>
     </RequireAuth>
   );
 }

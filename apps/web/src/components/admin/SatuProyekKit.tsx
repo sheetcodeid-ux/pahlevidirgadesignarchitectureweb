@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
+import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { DropdownMenu } from "../ui/overlay/Menu";
+import { unduhRincianBiaya, unduhDaftarTagihan } from "../../lib/pdfProyek";
 import { KepalaSeksi } from "../kit/Item";
 import { KartuStatistikLebar, BarKemajuan, GrafikArea } from "../kit/Ukuran";
 import { Tabel, type KolomTabel } from "../kit/Tabel";
@@ -12,6 +15,7 @@ import {
   CoinIn,
   CoinOut,
   FileText,
+  FilePdf,
   Globe,
   NotePencil,
   Plus,
@@ -164,6 +168,20 @@ function Isi() {
   }, []);
 
   const kini = (proyek ?? []).find((p) => p.id === id) ?? proyek?.[0] ?? null;
+  const toast = useToast();
+  const [membuatPdf, setMembuatPdf] = useState(false);
+  async function pdf(buat: (p: Proyek) => Promise<string>) {
+    if (!kini || membuatPdf) return;
+    setMembuatPdf(true);
+    try {
+      const nama = await buat(kini);
+      toast({ judul: "PDF diunduh", keterangan: nama, nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal membuat PDF", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMembuatPdf(false);
+    }
+  }
 
   useEffect(() => {
     if (!kini) return;
@@ -396,14 +414,40 @@ function Isi() {
               )
             }
             kanan={
-              kini && kini.status === "published" ? (
-                <TombolIkon
-                  ikon={Globe}
-                  jenis="transparent"
-                  ukuran="small"
-                  judul="Lihat halaman publik proyek ini"
-                  href={`/proyek/${kini.slug}`}
-                />
+              kini ? (
+                <span className="sat__aksikepala">
+                  {/* Dua PDF berkop studio — sempat hilang sejak Keuangan
+                      pindah ke kit; lihat lib/pdfProyek.ts. */}
+                  <DropdownMenu
+                    trigger={
+                      <TombolIkon
+                        ikon={FilePdf}
+                        jenis="transparent"
+                        ukuran="small"
+                        judul={membuatPdf ? "Menyusun PDF…" : "Unduh PDF proyek ini"}
+                        disabled={membuatPdf}
+                      />
+                    }
+                    sections={[
+                      {
+                        label: "Unduh PDF",
+                        items: [
+                          { label: "Daftar tagihan — untuk klien", icon: "receipt", onSelect: () => pdf(unduhDaftarTagihan) },
+                          { label: "Rincian biaya — internal", icon: "document", onSelect: () => pdf(unduhRincianBiaya) },
+                        ],
+                      },
+                    ]}
+                  />
+                  {kini.status === "published" && (
+                    <TombolIkon
+                      ikon={Globe}
+                      jenis="transparent"
+                      ukuran="small"
+                      judul="Lihat halaman publik proyek ini"
+                      href={`/proyek/${kini.slug}`}
+                    />
+                  )}
+                </span>
               ) : undefined
             }
           />
@@ -599,7 +643,9 @@ function Isi() {
 export function SatuProyekKit() {
   return (
     <RequireAuth skeleton={<div className="sat sat--rangka" />}>
-      <Isi />
+      <ToastProvider>
+        <Isi />
+      </ToastProvider>
     </RequireAuth>
   );
 }

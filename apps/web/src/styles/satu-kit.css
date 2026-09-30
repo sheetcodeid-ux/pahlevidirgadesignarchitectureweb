@@ -329,3 +329,4 @@
   .sat__tahap { max-height: 640px; }
   .sat__kas .k-area { min-height: 180px; }
 }
+.sat__aksikepala { display: flex; align-items: center; gap: 4px; }
