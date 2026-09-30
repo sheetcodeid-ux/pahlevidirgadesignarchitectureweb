@@ -279,7 +279,7 @@
 /* Kartu daftar: potret 4:5 dipotong, sama seperti di situs. Kolomnya lebih
    sempit daripada kisi logo — potret selebar itu membuat tiga orang setinggi
    satu layar. */
-.ts-kisi { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.ts-kisi { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .ts-ubin__foto { background: var(--bg); color: var(--text-muted); border-bottom: 1px solid var(--border); }
 
 /* --- Sebelum & Sesudah ----------------------------------------------------
@@ -361,7 +361,12 @@
 
 /* --- Info Studio ------------------------------------------------------------ */
 .is-logo { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: stretch; }
+/* align-self:start — kalau ikut meregang setinggi kotak seret di
+   sebelahnya, aspect-ratio 1 menurunkan lebarnya dari tinggi itu, dan di
+   390px kotaknya melebar 32px menimpa kotak seret. */
 .is-logo__kotak {
+  align-self: start;
+  width: 100%;
   display: grid;
   place-items: center;
   aspect-ratio: 1;
