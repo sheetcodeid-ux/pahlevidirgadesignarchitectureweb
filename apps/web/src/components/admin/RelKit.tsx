@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { SisiNav, type ItemNav } from "../kit/Nav";
-import { SEMUA_IKON } from "../kit/ikon";
-import type { DataIkon } from "../kit/Ikon";
+import { SEMUA_IKON, NavSignOut } from "../kit/ikon";
+import { Ikon, type DataIkon } from "../kit/Ikon";
 import { NAV } from "../../lib/navAdmin";
+import { hapusSesi } from "../../lib/admin";
 
 /* =============================================================================
    Rel samping panel admin, versi kit.
@@ -168,6 +169,26 @@ export function RelKit({ path, pesanBelumDibaca, master, namaStudio }: PropRelKi
         className={buka ? "is-buka" : undefined}
         logo={namaStudio ? <span className="kl__logo">{namaStudio}</span> : undefined}
         item={item}
+        /* Keluar tinggal di kaki rel — slot yang di Coinest berisi banner
+           promo, dengan ikon Nav-SignOut dari pustaka ikon Coinest sendiri.
+           Sempat HILANG dari seluruh panel: satu-satunya tombol Keluar ada
+           di Topbar kerangka lama, dan halaman terakhir yang memakainya
+           (Info Studio, Akun) pindah ke kit di run #134. Perilakunya sama
+           dengan tombol lama: sesi DAN cache data dibuang (hapusSesi),
+           lalu ganti riwayat supaya tombol Kembali tidak membuka panel. */
+        kaki={
+          <button
+            type="button"
+            className="k-nav kl__keluar"
+            onClick={() => {
+              hapusSesi();
+              window.location.replace("/admin/masuk");
+            }}
+          >
+            <Ikon ikon={NavSignOut} ukuran={24} />
+            <span className="k-sisi__label">Keluar</span>
+          </button>
+        }
       />
       {buka && <div className="ov-scrim kl__tirai" data-state="open" aria-hidden="true" onClick={() => setBuka(false)} />}
     </>

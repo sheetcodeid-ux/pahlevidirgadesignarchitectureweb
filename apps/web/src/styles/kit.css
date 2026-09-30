@@ -1604,6 +1604,13 @@
 .k-sisi__lipat.is-terbuka { transform: rotate(180deg); }
 .k-sisi__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .k-sisi__kaki { margin-top: auto; padding: 0 0 26px; }
+/* Baris rel yang berupa TOMBOL (Keluar), bukan tautan: bawaan <button>
+   membawa garis, font sistem, dan teks rata tengah. Selebihnya .k-nav apa
+   adanya, jadi ia terbaca sebagai satu baris menu lagi. Jarak 8 dari baris
+   terakhir = jarak antarbaris daftar, dipakai saat relnya penuh dan kaki
+   tidak lagi terdorong ke dasar. */
+button.k-nav { border: 0; font-family: inherit; text-align: left; }
+.k-sisi__kaki:has(button.k-nav) { padding-top: 8px; }
 
 /* Rel sempit: 72 lebar, isinya ikon saja, dan barisnya jadi bujur sangkar 40. */
 .k-sisi--sempit { width: 72px; padding: 0 16px; }

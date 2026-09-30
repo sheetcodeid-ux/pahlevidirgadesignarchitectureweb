@@ -181,6 +181,13 @@ const path = Astro.url.pathname;
     top: 0;
     flex: none;
     height: 100vh;
+    /* Rel lengket setinggi layar HARUS bergulir sendiri. Dengan kelompok
+       Situs Publik terbuka, baris terakhir berakhir di y936 — di layar
+       setinggi 800 (MacBook dengan bilah peramban) baris Pengaturan dan
+       Keluar tergambar di bawah tepi layar, dan karena relnya lengket,
+       menggulir halaman tidak pernah membawanya naik. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   .kl__logo {
     display: block;
