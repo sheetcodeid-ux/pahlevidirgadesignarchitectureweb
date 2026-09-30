@@ -1,8 +1,11 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { SettingsForm } from "../../../components/admin/SettingsForm";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { InfoStudioKit } from "../../../components/admin/InfoStudioKit";
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/situs-kit.css";
 ---
 
-<AdminLayout title="Info Studio">
-  <SettingsForm client:load />
-</AdminLayout>
+<KitLayout title="Info Studio" judul="Info Studio">
+  <InfoStudioKit client:load />
+</KitLayout>

@@ -1,12 +1,12 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { ClientLogosPanel } from "../../../components/admin/ClientLogosPanel";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { LogoKlienKit } from "../../../components/admin/LogoKlienKit";
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/daftar-kit.css";
+import "../../../styles/situs-kit.css";
 ---
 
-{/* Tanpa prop heading, sama seperti Halaman Proyek: judul halaman raksasa
-    sudah dibuang atas permintaan pemilik. Judulnya tetap ada di breadcrumb
-    topbar (yang membacanya dari `title`), dan panel ini membawa judul kecil
-    per kartu plus panel kanan yang menyebut bagian situsnya. */}
-<AdminLayout title="Logo Klien">
-  <ClientLogosPanel client:load />
-</AdminLayout>
+<KitLayout title="Logo Klien" judul="Logo Klien">
+  <LogoKlienKit client:load />
+</KitLayout>

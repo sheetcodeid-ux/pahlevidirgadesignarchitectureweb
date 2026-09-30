@@ -1,6 +1,9 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { IsiHalamanKit, type Isian } from "../../../components/admin/IsiHalamanKit";
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/situs-kit.css";
 
 /* Pertanyaan di /faq yang jawabannya sudah benar dan sudah tayang — yang belum
    ada cuma angkanya. Selama kosong, pertanyaan itu memakai lencana "ANGKA
@@ -46,8 +49,8 @@ const isian: Isian[] = [
 ];
 ---
 
-<AdminLayout title="Angka di FAQ">
-  <IsiHalamanPanel
+<KitLayout title="Angka di FAQ" judul="Angka di FAQ">
+  <IsiHalamanKit
     client:load
     isian={isian}
     pratinjau="tanya-jawab"
@@ -56,4 +59,4 @@ const isian: Isian[] = [
     tautanLabel="Lihat halaman FAQ"
     catatan="Isi dengan kalimat pendek, bukan sekadar bilangan — yang dibaca calon klien adalah kalimatnya, dan boleh berupa rentang. Tarif jasa tidak ada di sini lagi: sejak rentangnya diumumkan di beranda, jawaban FAQ soal tarif menunjuk ke sana."
   />
-</AdminLayout>
+</KitLayout>

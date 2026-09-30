@@ -1,6 +1,9 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { IsiHalamanPanel, type Isian } from "../../../components/admin/IsiHalamanPanel";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { IsiHalamanKit, type Isian } from "../../../components/admin/IsiHalamanKit";
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/situs-kit.css";
 
 /* Dua tahun yang dipakai garis waktu di halaman Studio.
 
@@ -38,8 +41,8 @@ const isian: Isian[] = [
 ];
 ---
 
-<AdminLayout title="Identitas Studio">
-  <IsiHalamanPanel
+<KitLayout title="Identitas Studio" judul="Identitas Studio">
+  <IsiHalamanKit
     client:load
     isian={isian}
     pratinjau="garis-waktu"
@@ -48,4 +51,4 @@ const isian: Isian[] = [
     tautanLabel="Lihat halaman Studio"
     catatan="Nama studio, email, telepon, dan logo diurus terpisah di Pengaturan → Info Studio, karena keempatnya juga dipakai panel admin — bukan hanya halaman publik. Yang ada di sini cuma dua tahun yang tidak bisa ditebak dari data lain."
   />
-</AdminLayout>
+</KitLayout>

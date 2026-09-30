@@ -1,8 +1,12 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { AccountPanel } from "../../../components/admin/AccountPanel";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { AkunKit } from "../../../components/admin/AkunKit";
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/daftar-kit.css";
+import "../../../styles/situs-kit.css";
 ---
 
-<AdminLayout title="Akun">
-  <AccountPanel client:load />
-</AdminLayout>
+<KitLayout title="Akun" judul="Akun">
+  <AkunKit client:load />
+</KitLayout>

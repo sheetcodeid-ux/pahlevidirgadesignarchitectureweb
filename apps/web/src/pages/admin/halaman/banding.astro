@@ -1,8 +1,11 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { BandingPanel } from "../../../components/admin/BandingPanel";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { BandingKit } from "../../../components/admin/BandingKit";
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/situs-kit.css";
 ---
 
-<AdminLayout title="Sebelum & Sesudah">
-  <BandingPanel client:load />
-</AdminLayout>
+<KitLayout title="Sebelum & Sesudah" judul="Sebelum & Sesudah">
+  <BandingKit client:load />
+</KitLayout>

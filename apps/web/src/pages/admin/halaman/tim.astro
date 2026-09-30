@@ -1,8 +1,12 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { TimStudioPanel } from "../../../components/admin/TimStudioPanel";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { TimStudioKit } from "../../../components/admin/TimStudioKit";
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/daftar-kit.css";
+import "../../../styles/situs-kit.css";
 ---
 
-<AdminLayout title="Tim Studio">
-  <TimStudioPanel client:load />
-</AdminLayout>
+<KitLayout title="Tim Studio" judul="Tim Studio">
+  <TimStudioKit client:load />
+</KitLayout>

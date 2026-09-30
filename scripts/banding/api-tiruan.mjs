@@ -34,13 +34,49 @@ const setelan = {
   studioName: "Dirga Pahlevi Architecture",
   city: "Pontianak",
   email: "halo@pahlevidirgaarchitecture.com",
-  phone: "",
+  phone: "+62 812 0000 0000",
   whatsapp: "",
   instagram: "",
   address: "",
   logoUrl: null,
   timezone: "Asia/Jakarta",
+  tagline: "Arsitektur untuk iklim khatulistiwa",
+  instagramUrl: "",
+  /* Isi halaman publik — sengaja setengah terisi, supaya pratinjau yang
+     kosong dan yang terisi sama-sama terlihat. */
+  foundedYear: 2019,
+  firstCommercialYear: null,
+  beforeUrl: null,
+  afterUrl: null,
+  legalEntity: "CV Dirga Pahlevi Arsitektur",
+  legalAddress: null,
+  retentionMessages: "24 bulan",
+  retentionDocuments: null,
+  governingLaw: "Hukum Republik Indonesia",
+  faqTarif: null,
+  faqUangMuka: "30% saat kontrak",
+  faqLamaKerja: null,
+  faqKunjungan: null,
 };
+
+/* Logo klien — rasio sengaja berbeda-beda (lebar, persegi, tinggi), karena
+   ambang lib/logoBentuk hanya teruji kalau ketiganya ada. */
+const klienAdmin = [
+  ["Kedai Kopi Ruas", "klien/logo-1.svg"],
+  ["Bakmi Hauw", "klien/logo-2.svg"],
+  ["Notaris Ahmad & Rekan", null],
+  ["Guest House Kapuas", "klien/logo-3.svg"],
+  ["Elsana Coffee", null],
+].map(([name, key], i) => ({ id: `kl${i + 1}`, name, logoKey: key, sortOrder: i + 1 }));
+const urlMedia = (key) => (key ? `http://127.0.0.1:${PORT}/media/${key}` : null);
+const urutKlien = () =>
+  [...klienAdmin].sort((a, b) => a.sortOrder - b.sortOrder).map(({ logoKey, ...k }) => ({ ...k, logoUrl: urlMedia(logoKey) }));
+
+const orangStudio = [
+  { id: "os1", name: "Dirga Pahlevi", role: "Arsitek utama", bio: null, photoUrl: null, slotLabel: "Pendiri", sortOrder: 1 },
+  { id: "os2", name: null, role: "Arsitek interior", bio: null, photoUrl: null, slotLabel: "Interior", sortOrder: 2 },
+  { id: "os3", name: "Rina Maharani", role: "Drafter", bio: null, photoUrl: null, slotLabel: "Gambar kerja", sortOrder: 3 },
+];
 
 /* Data admin — dipakai halaman P4 yang datanya datang saat DIJALANKAN, bukan
    saat build. Angkanya sengaja berbentuk rupiah studio arsitektur, bukan angka
@@ -288,7 +324,7 @@ for (let m = 1; m <= 30; m++) {
 }
 
 
-const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", role: "master" };
+const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", role: "master", isMasterAdmin: true };
 
 /* Proyek versi ADMIN — beda bentuk dari `proyek` di atas, yang meniru
    endpoint publik. Yang ini memuat contractValue dan paidTotal, dua kolom
@@ -633,6 +669,8 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/tiers")) return urutPaket().filter((x) => x.active);
   if (path.startsWith("/api/v1/admin/fee/people")) return feeOrang(path);
   if (path.startsWith("/api/v1/admin/fee/projects")) return feeProyek(path);
+  if (path.startsWith("/api/v1/admin/clients")) return urutKlien();
+  if (path.startsWith("/api/v1/admin/studio-team")) return orangStudio;
   if (path.startsWith("/api/v1/admin/team")) return timAdmin;
   if (path.startsWith("/api/v1/admin/directory")) return kontakAdmin;
   if (path.startsWith("/api/v1/admin/testimonials")) return testimoniAdmin;
@@ -753,6 +791,50 @@ function tulis(metode, path, badan) {
       if (i < 0) return { galat: 404 };
       if (metode === "DELETE") { daftar.splice(i, 1); return { deleted: true }; }
       Object.assign(daftar[i], badan, { updatedAt: new Date().toISOString() });
+      return { updated: true };
+    }
+  }
+  /* Situs Publik & Pengaturan. Kunci R2 yang dikirim diterjemahkan ke URL
+     seperti di Worker, jadi pratinjau sesudah Simpan menggambar berkasnya. */
+  if (path === "/api/v1/admin/settings" && metode === "PATCH") {
+    for (const [k, v] of Object.entries(badan)) {
+      const url = { logoKey: "logoUrl", beforeKey: "beforeUrl", afterKey: "afterUrl" }[k];
+      if (url) setelan[url] = urlMedia(v);
+      else setelan[k] = v;
+    }
+    return { updated: true };
+  }
+  if (path === "/api/v1/admin/account/password" && metode === "PATCH") {
+    return String(badan.newPassword ?? "").length >= 12 ? { updated: true } : { galat: 422 };
+  }
+  {
+    const kl = path.match(/^\/api\/v1\/admin\/clients(?:\/([^/?]+))?$/);
+    if (kl && !kl[1] && metode === "POST") {
+      const id = `kl${Date.now()}`;
+      klienAdmin.push({ id, name: badan.name, logoKey: badan.logoKey ?? null, sortOrder: badan.sortOrder ?? 99 });
+      return { id };
+    }
+    if (kl && kl[1]) {
+      const i = klienAdmin.findIndex((x) => x.id === kl[1]);
+      if (i < 0) return { galat: 404 };
+      if (metode === "DELETE") { klienAdmin.splice(i, 1); return { deleted: true }; }
+      Object.assign(klienAdmin[i], badan);
+      return { updated: true };
+    }
+    const os = path.match(/^\/api\/v1\/admin\/studio-team(?:\/([^/?]+))?$/);
+    if (os && !os[1] && metode === "POST") {
+      const id = `os${Date.now()}`;
+      orangStudio.push({ id, name: null, bio: null, photoUrl: null, slotLabel: "", sortOrder: 99, ...badan });
+      return { id };
+    }
+    if (os && os[1]) {
+      const i = orangStudio.findIndex((x) => x.id === os[1]);
+      if (i < 0) return { galat: 404 };
+      if (metode === "DELETE") { orangStudio.splice(i, 1); return { deleted: true }; }
+      const { photoKey, ...sisa } = badan;
+      Object.assign(orangStudio[i], sisa);
+      if ("photoKey" in badan) orangStudio[i].photoUrl = urlMedia(photoKey);
+      orangStudio.sort((a, b) => a.sortOrder - b.sortOrder);
       return { updated: true };
     }
   }
@@ -878,7 +960,8 @@ function tulis(metode, path, badan) {
      sana diterima begitu saja. Kuncinya menunjuk salah satu sampul contoh
      supaya gambar hasil unggahan tetap tergambar. */
   if (path === "/api/v1/admin/uploads" && metode === "POST") {
-    return { key: `${badan.scope === "jurnal" ? "jurnal" : "projects/uji"}/contoh-3.svg`,
+    const kunci = { jurnal: "jurnal/contoh-3.svg", klien: "klien/logo-2.svg", logo: "studio/logo-2.svg", studio: "studio/contoh-4.svg" };
+    return { key: kunci[badan.scope] ?? "projects/uji/contoh-3.svg",
       uploadUrl: `http://127.0.0.1:${PORT}/unggah`, expiresAt: new Date(Date.now() + 6e5).toISOString() };
   }
   if (path === "/unggah" && metode === "PUT") return { ok: true };
@@ -946,6 +1029,15 @@ createServer((req, res) => {
     if (m) {
       res.writeHead(200, { "content-type": "image/svg+xml", "access-control-allow-origin": "*" });
       return res.end(sampulSvg(Number(m[1])));
+    }
+    /* Logo tiruan: lebar (4:1), persegi, dan tinggi (2:3). */
+    const lg = path.match(/^\/media\/.*logo-(\d+)\.svg$/);
+    if (lg) {
+      const [w, h, teks] = [[400, 100, "RUAS"], [200, 200, "BH"], [160, 240, "GK"]][(Number(lg[1]) - 1) % 3];
+      res.writeHead(200, { "content-type": "image/svg+xml", "access-control-allow-origin": "*" });
+      return res.end(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">` +
+        `<rect width="${w}" height="${h}" rx="12" fill="#C2410C"/><text x="50%" y="58%" text-anchor="middle" ` +
+        `font-family="sans-serif" font-weight="700" font-size="${h * 0.4}" fill="#fff">${teks}</text></svg>`);
     }
   }
   res.writeHead(200, kepala);
