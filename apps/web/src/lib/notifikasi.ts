@@ -9,6 +9,13 @@
 
 import type { IconName } from "../components/ui/Icon";
 import { daftarPesan, daftarTugas, daftarTestimoni, daftarProyek, type Proyek } from "./admin";
+import { CATEGORY_LABELS } from "./api";
+
+/* Nilai enum `project_category` jadi kata yang dibaca staf. Sebelumnya
+   tercetak mentah — "commercial", "residential" — di lonceng, Dashboard,
+   dan halaman Notifikasi. */
+const jenis = (v: string | null | undefined) =>
+  v ? (CATEGORY_LABELS as Record<string, string>)[v] ?? v : "";
 
 export interface BarisNotifikasi {
   id: string;
@@ -67,13 +74,16 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
         id: `pesan-${p.id}`,
         ikon: "inquiry" as const,
         judul: "Pesan baru belum dibaca",
-        detail: `${p.name} — ${p.projectType || "tanpa jenis proyek"}`,
+        detail: `${p.name} — ${jenis(p.projectType) || "tanpa jenis proyek"}`,
         waktu: tanggal(p.createdAt),
         tanggal: p.createdAt,
         ke: "/admin/pesan",
       })),
     ...tugas
-      .filter((t) => t.status !== "done" && t.dueDate && t.dueDate <= hariIni)
+      /* "selesai", bukan "done": enum `task_status` berbahasa Indonesia.
+         Dengan "done" saringannya tidak pernah menyaring apa pun, dan tugas
+         yang SUDAH selesai tetap dilaporkan terlewat selamanya. */
+      .filter((t) => t.status !== "selesai" && t.dueDate && t.dueDate <= hariIni)
       .map((t) => ({
         id: `tugas-${t.id}`,
         ikon: "clock" as const,
@@ -84,7 +94,9 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
         ke: "/admin/list-kerjaan",
       })),
     ...testimoni
-      .filter((t) => t.status === "pending")
+      /* "menunggu", bukan "pending": enum `testimonial_status`. Dengan
+         "pending" testimoni yang menunggu persetujuan tidak pernah muncul. */
+      .filter((t) => t.status === "menunggu")
       .map((t) => ({
         id: `testimoni-${t.id}`,
         ikon: "quote" as const,
@@ -105,7 +117,7 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
       id: `tahap-${p.id}`,
       ikon: "project" as const,
       judul: `${p.title} sampai tahap ${TAHAP_PROYEK[p.pipelineStage!]}`,
-      detail: p.city ? `${p.category} — ${p.city}` : p.category,
+      detail: p.city ? `${jenis(p.category)} — ${p.city}` : jenis(p.category),
       ke: `/admin/proyek/edit?id=${p.id}`,
     }));
 

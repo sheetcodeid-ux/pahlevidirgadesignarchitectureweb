@@ -1,8 +1,9 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
-import { TeamPanel } from "../../components/admin/TeamPanel";
+import KitLayout from "../../layouts/KitLayout.astro";
+import { TimKit } from "../../components/admin/TimKit";
+import "../../styles/daftar-kit.css";
 ---
 
-<AdminLayout title="Tim & Freelancer">
-  <TeamPanel client:load />
-</AdminLayout>
+<KitLayout title="Tim & Freelancer" judul="Tim & Freelancer">
+  <TimKit client:load />
+</KitLayout>

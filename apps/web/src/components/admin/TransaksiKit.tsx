@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
-import { Paginasi } from "../kit/Paginasi";
+import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Cari } from "../kit/Isian";
 import { Tombol } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
-import { CaretDown, CalendarBlank, DownloadSimple, CoinIn, CoinOut, Ruler } from "../kit/ikon";
+import { CalendarBlank, DownloadSimple, CoinIn, CoinOut, Ruler } from "../kit/ikon";
+import { DaftarKit, PilihTombol } from "./daftarKit";
 import {
   semuaPembayaran,
   semuaBiaya,
@@ -141,8 +141,6 @@ function Isi() {
   const [jenis, setJenis] = useState<"semua" | "masuk" | "keluar">("semua");
   const [filterProyek, setFilterProyek] = useState("semua");
   const [rentang, setRentang] = useState("12");
-  const [halaman, setHalaman] = useState(1);
-  const [perHalaman, setPerHalaman] = useState(12);
   const [terpilih, setTerpilih] = useState<string[]>([]);
 
   useEffect(() => {
@@ -223,14 +221,6 @@ function Isi() {
     });
   }, [semua, cari, jenis, filterProyek, rentang]);
 
-  const totalHalaman = Math.max(1, Math.ceil(tersaring.length / perHalaman));
-  /* Halaman dijepit saat RENDER, bukan disetel ulang lewat efek. Menyaring
-     dari halaman 5 ke daftar yang cuma punya 2 halaman akan menampilkan
-     tabel kosong selama satu frame kalau perbaikannya lewat useEffect. */
-  const halamanKini = Math.min(halaman, totalHalaman);
-  const mulai = (halamanKini - 1) * perHalaman;
-  const tampil = tersaring.slice(mulai, mulai + perHalaman);
-
   function unduh() {
     const set = new Set(terpilih);
     const isi = terpilih.length ? tersaring.filter((t) => set.has(t.kunci)) : tersaring;
@@ -270,7 +260,7 @@ function Isi() {
     { judul: "Status", lebar: 119, urut: true },
   ];
 
-  const baris = tampil.map((t) => {
+  const baris = tersaring.map((t) => {
     const tgl = tanggalBaris(t.waktu);
     return [
       <div className="trx__sel">
@@ -307,141 +297,58 @@ function Isi() {
   const memuat = bayar === null || biaya === null;
 
   return (
-    <section className="trx">
-      <div className="trx__bar">
-        <Cari
-          ukuran="medium"
-          judul="Cari transaksi"
-          placeholder="Cari transaksi"
-          value={cari}
-          onChange={(e) => {
-            setCari(e.currentTarget.value);
-            setHalaman(1);
-          }}
-        />
-
-        {/* Pemilih di framenya tombol ber-caret, bukan <select> telanjang —
-            jadi <select> aslinya ditumpangkan transparan di atas tombolnya.
-            Yang tergambar tombol kit, yang dibuka daftar bawaan peramban:
-            papan ketik, ketik-untuk-melompat, dan pemilih layar penuh di
-            ponsel semuanya ikut, dan tidak bisa rusak diam-diam. */}
-        <label className="k-pilihtombol">
-          <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown} tabIndex={-1}>
-            {jenis === "semua" ? "Semua jenis" : jenis === "masuk" ? "Uang masuk" : "Uang keluar"}
-          </Tombol>
-          <select
-            aria-label="Saring jenis transaksi"
-            value={jenis}
-            onChange={(e) => {
-              setJenis(e.currentTarget.value as typeof jenis);
-              setHalaman(1);
-            }}
-          >
-            <option value="semua">Semua jenis</option>
-            <option value="masuk">Uang masuk</option>
-            <option value="keluar">Uang keluar</option>
-          </select>
-        </label>
-
-        <label className="k-pilihtombol">
-          <Tombol ukuran="medium" jenis="secondary" kanan={CaretDown} tabIndex={-1}>
-            {filterProyek === "semua" ? "Semua proyek" : filterProyek}
-          </Tombol>
-          <select
-            aria-label="Saring proyek"
-            value={filterProyek}
-            onChange={(e) => {
-              setFilterProyek(e.currentTarget.value);
-              setHalaman(1);
-            }}
-          >
-            <option value="semua">Semua proyek</option>
-            {judulProyek.map((j) => (
-              <option key={j} value={j}>
-                {j}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <span className="trx__dorong" />
-
-        <label className="k-pilihtombol">
-          <Tombol ukuran="medium" jenis="secondary" kiri={CalendarBlank} kanan={CaretDown} tabIndex={-1}>
-            {RENTANG.find((r) => r.nilai === rentang)?.label ?? "Rentang"}
-          </Tombol>
-          <select
-            aria-label="Rentang waktu"
-            value={rentang}
-            onChange={(e) => {
-              setRentang(e.currentTarget.value);
-              setHalaman(1);
-            }}
-          >
-            {RENTANG.map((r) => (
-              <option key={r.nilai} value={r.nilai}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <Tombol ukuran="medium" kiri={DownloadSimple} onClick={unduh} disabled={tersaring.length === 0}>
-          Unduh
-        </Tombol>
-      </div>
-
-      <div className="trx__tabel">
-        {tampil.length === 0 ? (
-          <p className="trx__kosong">
-            {memuat ? "Memuat transaksi…" : "Tidak ada transaksi pada saringan ini."}
-          </p>
-        ) : (
-          <Tabel
-            kolom={kolom}
-            baris={baris}
-            pilih
-            kunci={tampil.map((t) => t.kunci)}
-            terpilih={terpilih}
-            onPilih={setTerpilih}
-            kepala="polos"
-            pad={10.5}
-            tinggiKepala={32}
-            tinggiBaris={64}
-            fontBaris={12}
+    <DaftarKit
+      className="trx"
+      kunciSaring={`${cari}|${jenis}|${filterProyek}|${rentang}`}
+      kiri={
+        <>
+          <Cari
+            ukuran="medium"
+            judul="Cari transaksi"
+            placeholder="Cari transaksi"
+            value={cari}
+            onChange={(e) => setCari(e.currentTarget.value)}
           />
-        )}
-      </div>
-
-      <div className="trx__kaki">
-        <p className="trx__hitung">
-          Menampilkan
-          <select
-            aria-label="Baris per halaman"
-            value={perHalaman}
-            onChange={(e) => {
-              setPerHalaman(Number(e.currentTarget.value));
-              setHalaman(1);
-            }}
-          >
-            {[12, 25, 50].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-          dari {tersaring.length}
-          {terpilih.length > 0 && ` · ${terpilih.length} dipilih`}
-        </p>
-        <Paginasi kini={halamanKini} total={totalHalaman} onPindah={setHalaman} />
-      </div>
-    </section>
+          <PilihTombol
+            judul="Saring jenis transaksi"
+            nilai={jenis}
+            onPilih={(v) => setJenis(v as typeof jenis)}
+            opsi={[
+              { nilai: "semua", label: "Semua jenis" },
+              { nilai: "masuk", label: "Uang masuk" },
+              { nilai: "keluar", label: "Uang keluar" },
+            ]}
+          />
+          <PilihTombol
+            judul="Saring proyek"
+            nilai={filterProyek}
+            onPilih={setFilterProyek}
+            opsi={[{ nilai: "semua", label: "Semua proyek" }, ...judulProyek.map((j) => ({ nilai: j, label: j }))]}
+          />
+        </>
+      }
+      kanan={
+        <>
+          <PilihTombol judul="Rentang waktu" kiri={CalendarBlank} nilai={rentang} onPilih={setRentang} opsi={RENTANG} />
+          <Tombol ukuran="medium" kiri={DownloadSimple} onClick={unduh} disabled={tersaring.length === 0}>
+            Unduh
+          </Tombol>
+        </>
+      }
+      kolom={kolom}
+      baris={baris}
+      kunci={tersaring.map((t) => t.kunci)}
+      pilih={{ terpilih, onPilih: setTerpilih }}
+      memuat={memuat}
+      teksMemuat="Memuat transaksi…"
+      kosong="Tidak ada transaksi pada saringan ini."
+    />
   );
 }
 
 export function TransaksiKit() {
   return (
-    <RequireAuth skeleton={<div className="trx trx--rangka" />}>
+    <RequireAuth skeleton={<div className="kd trx trx--rangka" />}>
       <Isi />
     </RequireAuth>
   );

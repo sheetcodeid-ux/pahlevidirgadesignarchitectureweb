@@ -12,6 +12,7 @@ import { CaretDown, CopySimple, FilePdf, FileText, Globe, Note, Trash } from "..
 import { PemutarSuaraKit, PerekamSuaraKit } from "../kit/Suara";
 import { formatDurasi } from "../ui/misc/VoiceNote";
 import { usePilihProyek, JudulPilihProyek } from "./pilihProyekKit";
+import { PilihStatus, type NadaStatus } from "./daftarKit";
 import {
   ambilBrief,
   ubahBrief,
@@ -731,22 +732,13 @@ function PanelDokumen({
                     )}
                     <span className="pk__dokmeta">{meta.join(" · ")}</span>
                   </span>
-                  <label className="pk__status" data-nada={st.nada}>
-                    <span className="pk__statustitik" aria-hidden="true" />
-                    <select
-                      aria-label={`Status ${d.title}`}
-                      value={d.status}
-                      onChange={(e) => ubahStatus(d.id, e.currentTarget.value)}
-                    >
-                      {Object.entries(STATUS_DOKUMEN).map(([v, s]) => (
-                        <option key={v} value={v}>
-                          {s.label}
-                        </option>
-                      ))}
-                      {!STATUS_DOKUMEN[d.status] && <option value={d.status}>{d.status}</option>}
-                    </select>
-                    <Ikon ikon={CaretDown} ukuran={12} />
-                  </label>
+                  <PilihStatus
+                    judul={`Status ${d.title}`}
+                    nilai={d.status}
+                    nada={st.nada as NadaStatus}
+                    onPilih={(v) => ubahStatus(d.id, v)}
+                    opsi={Object.entries(STATUS_DOKUMEN).map(([v, x]) => ({ nilai: v, label: x.label }))}
+                  />
                   <AlertDialog
                     destructive
                     title={`Hapus ${d.title}?`}

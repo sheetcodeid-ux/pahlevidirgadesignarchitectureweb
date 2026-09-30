@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
 import { Icon } from "../ui/Icon";
-import { RequireAuth } from "./RequireAuth";
-import { SkeletonDaftar } from "../ui/Skeleton";
-import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
+import type { BarisNotifikasi } from "../../lib/notifikasi";
 
 /** Daftar dan keadaan kosong, dipakai halaman ini DAN popover lonceng. */
 export function IsiNotifikasi({
@@ -81,29 +78,6 @@ export function TabNotifikasi({
   );
 }
 
-function Isi() {
-  const [tab, setTab] = useState<"notifikasi" | "milestone">("notifikasi");
-  const [notif, setNotif] = useState<BarisNotifikasi[] | null>(null);
-  const [milestone, setMilestone] = useState<BarisNotifikasi[] | null>(null);
-
-  useEffect(() => {
-    ambilNotifikasi()
-      .then((d) => { setNotif(d.notifikasi); setMilestone(d.milestone); })
-      .catch(() => { setNotif([]); setMilestone([]); });
-  }, []);
-
-  const isi = tab === "notifikasi" ? notif : milestone;
-
-  return (
-    <div className="notifpage__isi">
-      <TabNotifikasi tab={tab} setTab={setTab} />
-      <div className="notifkotak">
-        <IsiNotifikasi baris={isi} tab={tab} />
-      </div>
-    </div>
-  );
-}
-
-export function NotifikasiPanel() {
-  return <RequireAuth skeleton={<SkeletonDaftar jumlah={4} aksi={0} />}><Isi /></RequireAuth>;
-}
+/* Halaman /admin/notifikasi pindah ke kerangka kit (NotifikasiKit.tsx).
+   Yang tersisa di sini cuma dua bagian yang dipakai lonceng di bilah atas
+   kerangka lama; keduanya ikut pergi begitu halaman terakhir pindah. */

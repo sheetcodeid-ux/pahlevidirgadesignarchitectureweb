@@ -1,8 +1,9 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
-import { DirectoryPanel } from "../../components/admin/DirectoryPanel";
+import KitLayout from "../../layouts/KitLayout.astro";
+import { DirektoriKit } from "../../components/admin/DirektoriKit";
+import "../../styles/daftar-kit.css";
 ---
 
-<AdminLayout title="Direktori">
-  <DirectoryPanel client:load />
-</AdminLayout>
+<KitLayout title="Direktori" judul="Direktori">
+  <DirektoriKit client:load />
+</KitLayout>

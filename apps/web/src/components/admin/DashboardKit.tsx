@@ -12,13 +12,10 @@ import { Ikon, type DataIkon } from "../kit/Ikon";
 import { PilihTombol, PilihTeks } from "./frame25";
 import {
   CheckCircle,
-  ChatTeardropDots,
   Clock,
   CoinIn,
   CoinOut,
   DotsThreeVertical,
-  HourglassHigh,
-  NavEnvelope,
   NavReceipt,
   Plus,
   Ruler,
@@ -49,6 +46,7 @@ import {
   type Profil,
 } from "../../lib/admin";
 import { ambilNotifikasi, type IsiNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
+import { kepalaHari, waktuButir, ikonButir } from "./linimasaNotif";
 import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 
 /* =============================================================================
@@ -270,42 +268,6 @@ function limaTerbesar(peta: Map<string, { label: string; nilai: number }>): Iris
   if (urut.length <= 5) return urut;
   const sisa = urut.slice(4).reduce((a, b) => a + b.nilai, 0);
   return [...urut.slice(0, 4), { kunci: "lainnya", label: "Lainnya", nilai: sisa }];
-}
-
-/** "Hari ini" / "Kemarin" / "3 Okt" — kepala kelompok linimasa. */
-function kepalaHari(iso: string): string {
-  const d = iso.length === 10 ? new Date(iso + "T00:00:00") : new Date(iso);
-  const kini = new Date();
-  const hari = (x: Date) => Date.UTC(x.getFullYear(), x.getMonth(), x.getDate());
-  const selisihHari = Math.round((hari(kini) - hari(d)) / 86_400_000);
-  if (selisihHari === 0) return "Hari ini";
-  if (selisihHari === 1) return "Kemarin";
-  const tahun = d.getFullYear() === kini.getFullYear() ? "" : ` ${d.getFullYear()}`;
-  return `${d.getDate()} ${BULAN_PENDEK[d.getMonth()]}${tahun}`;
-}
-
-/** Baris kecil di bawah keterangan: jam untuk yang punya jam, umur tenggat
- *  untuk tenggat kerjaan (yang cuma punya tanggal). */
-function waktuButir(n: BarisNotifikasi): string {
-  if (!n.tanggal) return n.waktu ?? "";
-  if (n.tanggal.length > 10) {
-    return new Date(n.tanggal).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-  }
-  const kini = new Date();
-  const [t, b, h] = n.tanggal.split("-").map(Number);
-  const lewat = Math.round(
-    (Date.UTC(kini.getFullYear(), kini.getMonth(), kini.getDate()) - Date.UTC(t!, b! - 1, h!)) / 86_400_000,
-  );
-  return lewat <= 0 ? "Tenggat hari ini" : `Lewat ${lewat} hari`;
-}
-
-/* Ikon butir linimasa menurut sumbernya. Id-nya berawalan sumbernya sendiri
-   (pesan-, tugas-, testimoni-) — lihat lib/notifikasi.ts. */
-function ikonButir(n: BarisNotifikasi): DataIkon {
-  if (n.id.startsWith("pesan-")) return NavEnvelope;
-  if (n.id.startsWith("tugas-")) return HourglassHigh;
-  if (n.id.startsWith("testimoni-")) return ChatTeardropDots;
-  return Clock;
 }
 
 function Isi() {

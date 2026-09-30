@@ -1,0 +1,269 @@
+/* =============================================================================
+   Kerangka daftar kit — components/admin/daftarKit.tsx.
+
+   Bentuknya frame "13. Transactions" (angka ukurnya ada di kepala
+   transaksi-kit.css). Berkas ini satu-satunya sumber bilah alat, tabel,
+   dan kaki untuk SETIAP halaman daftar kit: Semua Transaksi, Tugas,
+   Direktori, Testimoni, dan Tim. Yang milik satu halaman saja — ubin arah
+   uang, warna nominal — tetap di berkas halaman itu.
+   ============================================================================= */
+
+.kd {
+  display: flex;
+  flex-direction: column;
+  /* Tinggi frame 13 cuma milik Semua Transaksi (.trx). Daftar lain boleh
+     pendek, tapi tidak lebih pendek dari ini: kaki paginasi yang menempel
+     di bawah tiga baris membuat kartu terbaca setengah jadi. */
+  min-height: 560px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 15.5px;
+  background: var(--surface);
+}
+
+/* --- Bilah alat ----------------------------------------------------------- */
+.kd__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+}
+.kd__bar .k-cari { flex: none; width: 237px; }
+/* Pendorong yang memisahkan kelompok kiri dari kelompok kanan. */
+.kd__dorong { flex: 1; min-width: 12px; }
+
+/* --- Tabel ---------------------------------------------------------------- */
+/* `overflow` DISEBUT: tabelnya selebar jumlah <col>, dan tanpa penampung
+   yang menggulir ia mendorong halaman di layar sempit. */
+.kd__tabel {
+  flex: 1;
+  min-height: 0;
+  margin-top: 21px;
+  overflow: auto;
+}
+.kd__tabel .k-tabel { width: 100%; }
+
+.kd__kosong {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 160px;
+  margin: 0;
+  max-width: none;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* --- Kaki ----------------------------------------------------------------- */
+.kd__kaki {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+.kd__hitung {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+.kd__hitung select {
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  font-family: var(--font-sans);
+  font-size: var(--k-t12);
+  color: var(--brand);
+  background: var(--brand-soft);
+  cursor: pointer;
+}
+
+/* --- Sel yang dipakai beberapa daftar -------------------------------------- */
+/* Ubin bulat 30 di kolom pertama + dua baris teks. */
+.kd__sel { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.kd__sel > .k-sel2 { min-width: 0; }
+.kd__redup { color: var(--text-muted); }
+.kd__tautan { color: var(--brand); text-decoration: none; }
+.kd__tautan:hover { text-decoration: underline; }
+/* Ubin inisial — bentuk ubin bulat frame 13 (.trx__ubin). */
+.kd__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--brand-mint);
+  color: var(--text-strong);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.02em;
+}
+/* Jebakan #37: di tema gelap --text-strong terang di atas mint (1,23). */
+:root[data-theme="dark"] .kd__ubin { color: var(--brand-mint-ink); }
+.kd__ubin--redup { background: var(--brand-soft); color: var(--text-muted); }
+:root[data-theme="dark"] .kd__ubin--redup { color: var(--text-muted); }
+/* Isian di dalam sel — catatan kontak yang disunting langsung di barisnya. */
+.kd__isian {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+}
+.kd__isian::placeholder { color: var(--text-muted); }
+.kd__isian:focus { border-color: var(--brand); outline: none; }
+/* Sakelar + kata keadaannya di satu sel. */
+.kd__sakelar { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
+/* Testimoni: bintang di bawah nama, kutipan yang diklik untuk dibaca utuh. */
+.kd__klien { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kd__bintang { display: inline-flex; gap: 1px; color: var(--text-muted); }
+.kd__bintang [data-isi] { color: var(--text-strong); }
+.kd__kutipan {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--k-t12);
+  color: var(--text-strong);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.kd__kutipan:hover { text-decoration: underline; }
+.kd__kutipan:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 3px; }
+.kd__kutipanutuh {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--brand-soft);
+  font-size: var(--k-t14);
+  line-height: 1.6;
+  color: var(--text-strong);
+}
+/* Tenggat lewat: titik merah DAN kata "lewat". */
+.kd__lewat { display: inline-flex; align-items: center; gap: 6px; color: var(--danger); font-weight: var(--k-med); }
+.kd__lewat > span { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
+.kd__tampilan { width: 150px; }
+/* Tombol aksi baris: kotak ikon kit berjajar. */
+.kd__aksi { display: flex; align-items: center; gap: 6px; }
+.kd__hapus { color: var(--danger); }
+
+/* Status yang sekaligus pemilih — Portal Klien dan Tugas. */
+.kd-status {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.kd-status:focus-within { border-color: var(--brand); }
+.kd-status select {
+  min-width: 0;
+  padding: 0 18px 0 0;
+  margin-right: -18px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--k-t12);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  appearance: none;
+  cursor: pointer;
+}
+.kd-status select:focus { outline: none; }
+.kd-status > svg { pointer-events: none; }
+.kd-status__titik { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+.kd-status[data-nada="tunggu"] .kd-status__titik,
+.kd-status__titik[data-nada="tunggu"] { background: var(--warn); }
+.kd-status[data-nada="tindak"] .kd-status__titik,
+.kd-status__titik[data-nada="tindak"] { background: var(--danger); }
+/* Berjalan = cincin, beres = titik penuh warna yang sama: setengah jalan
+   menuju selesai. Mint pejal sempat dipakai dan nyaris hilang di atas putih. */
+.kd-status[data-nada="jalan"] .kd-status__titik,
+.kd-status__titik[data-nada="jalan"] { background: transparent; box-shadow: inset 0 0 0 2px var(--success); }
+.kd-status[data-nada="beres"] .kd-status__titik,
+.kd-status__titik[data-nada="beres"] { background: var(--success); }
+
+/* --- Papan (Tugas) ---------------------------------------------------------
+   Empat kolom status, kartu bergaris seperti isian kit. */
+.kd-papan { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.kd-papan__kolom { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 12px; border-radius: 12px; background: var(--brand-soft); }
+.kd-papan__kepala { display: flex; align-items: center; gap: 8px; font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--text-strong); }
+.kd-papan__jumlah { margin-left: auto; font-weight: var(--k-med); color: var(--text-muted); }
+.kd-papan__kosong { margin: 0; font-size: var(--k-t12); color: var(--text-muted); }
+.kd-papan__kartu { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.kd-papan__kartu b { font-size: var(--k-t14); font-weight: var(--k-semi); line-height: 1.3; color: var(--text-strong); }
+.kd-papan__proyek { font-size: var(--k-t10); color: var(--text-muted); }
+.kd-papan__kaki { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: var(--k-t12); }
+.kd-papan__kaki .kd-status { margin-left: auto; }
+.kd-papan__tgl { color: var(--text-muted); }
+@media (max-width: 1240px) { .kd-papan { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 40rem) { .kd-papan { grid-template-columns: minmax(0, 1fr); } }
+
+/* --- Deret kartu angka di atas daftar -------------------------------------- */
+.kd-angka {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+/* Ponsel: dua sebaris dan yang ketiga selebar penuh — aturan yang sama
+   dengan kartu statistik Dashboard. */
+@media (max-width: 40rem) {
+  .kd-angka { gap: 12px; }
+  .kd-angka > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+.kd-angka .k-stat { width: auto; min-height: 0; }
+/* Tanpa lencana tren, angkanya naik tepat di bawah ubinnya — tinggi 174
+   frame 01 dirancang untuk memuat lencana itu, dan tanpanya kartu
+   terbaca setengah kosong. */
+.kd-angka .k-stat__nilai { margin-top: 18px; }
+
+/* --- Dialog tambah/ubah ----------------------------------------------------
+   Isiannya kit; bingkai dialognya overlay lama — satu perilaku focus-trap
+   untuk seluruh panel. Bentuknya sama dengan dialog Gaji. */
+.kd-form { display: flex; flex-direction: column; gap: 16px; font-family: var(--font-sans); }
+.kd-form__dua { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+.kd-form select.k-isian__input { appearance: auto; cursor: pointer; }
+.kd-form__kaki { display: flex; align-items: center; justify-content: flex-end; gap: 16px; width: 100%; }
+.kd-form__alasan { font-size: var(--k-t12); color: var(--text-muted); }
+.kd-form__centang { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.kd-form__centang span { display: flex; flex-direction: column; gap: 4px; }
+.kd-form__centang b { font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); }
+.kd-form__centang small { font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
+
+/* Di bawah lebar framenya tabelnya digulir MENDATAR, bukan diperas. */
+@media (max-width: 1240px) {
+  .kd__tabel { overflow-x: auto; }
+  .kd__tabel .k-tabel { min-width: var(--kd-lebar, 1160px); }
+  .kd__bar { flex-wrap: wrap; height: auto; row-gap: 10px; }
+  .kd__dorong { display: none; }
+}
+/* Ponsel: hitungan dan paginasi tidak muat sebaris. */
+@media (max-width: 40rem) {
+  .kd__kaki { flex-wrap: wrap; row-gap: 12px; }
+}

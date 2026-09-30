@@ -375,6 +375,30 @@ const progresAdmin = Object.fromEntries(
   }]),
 );
 
+/* Direktori dan testimoni — halaman Tugas & daftar. Kategori direktori
+   sengaja tidak rata (supplier cuma satu), dan testimoni membawa ketiga
+   status beserta satu yang tampil di beranda. */
+const kontakAdmin = [
+  ["Bu Ratna Sari", "klien", "Kedai Kopi Ruas", "0812-5566-7788", "ratna@ruas.id", "Suka ditelepon sore"],
+  ["Pak Hendra", "klien", null, "0813-2222-1111", null, null],
+  ["CV Karya Bangun", "kontraktor", "CV Karya Bangun", "0561-733-201", "proyek@karyabangun.co.id", "Tukang kayu bagus"],
+  ["Andi Saputra", "kontraktor", "Saputra Konstruksi", "0852-4545-9090", null, null],
+  ["Toko Kayu Jati Borneo", "supplier", null, "0561-744-118", "jatiborneo@gmail.com", "Diskon 5% di atas 10 m³"],
+  ["Studio Cahaya", "lainnya", "Konsultan pencahayaan", null, "halo@studiocahaya.id", null],
+].map(([name, category, company, phone, email, note], i) => ({
+  id: `kt${i + 1}`, name, category, company, phone, email, note,
+  createdAt: hariLalu(40 - i * 5), updatedAt: hariLalu(40 - i * 5),
+}));
+const testimoniAdmin = [
+  ["Ratna Sari", "k1", "Kedai Kopi Ruas", "Alur bar-nya benar-benar dipikirkan. Barista kami tidak lagi saling tabrak di jam ramai, dan pelanggan betah duduk lama.", 5, "disetujui", true, 20],
+  ["Hendra Wijaya", "k2", "Rumah Tropis Sungai Raya", "Rumahnya sejuk tanpa AC di siang hari. Tim studio sabar menjelaskan setiap revisi.", 5, "disetujui", false, 12],
+  ["Liana", "k3", "Renovasi Bakmi Hauw", "Renovasinya selesai tepat waktu dan dapur jadi jauh lebih lega.", 4, "menunggu", false, 3],
+  ["Anonim", null, null, "Bagus.", null, "ditolak", false, 30],
+].map(([clientName, projectId, projectTitle, quote, rating, status, isFeatured, umur], i) => ({
+  id: `ts${i + 1}`, clientName, projectId, projectTitle, quote, rating, status, isFeatured,
+  createdAt: hariLalu(umur), updatedAt: hariLalu(umur),
+}));
+
 /* Pembayaran per proyek. Dua sampai empat butir, mundur beberapa minggu —
    cukup untuk mengisi strip mendatar di frame 07 dan untuk membuktikan
    striponya memang MELEWATI tepi kartu seperti di framenya. */
@@ -610,6 +634,8 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/fee/people")) return feeOrang(path);
   if (path.startsWith("/api/v1/admin/fee/projects")) return feeProyek(path);
   if (path.startsWith("/api/v1/admin/team")) return timAdmin;
+  if (path.startsWith("/api/v1/admin/directory")) return kontakAdmin;
+  if (path.startsWith("/api/v1/admin/testimonials")) return testimoniAdmin;
   if (path.startsWith("/api/v1/admin/invoices")) return tagihanAdmin;
   /* Yang PALING KHUSUS lebih dulu: "/admin/projects/<id>/payments" juga
      berawalan "/admin/projects", jadi urutan terbalik membuat daftar
@@ -688,6 +714,48 @@ const jawab = (path) => {
 function tulis(metode, path, badan) {
   if (path === "/api/v1/admin/publish" && metode === "POST") return { dimulai: true };
   if (path.startsWith("/api/v1/admin/")) capBerubah = new Date().toISOString();
+  /* Tugas, tim, direktori, testimoni — halaman Tugas & daftar menulis lalu
+     mengambil ulang, jadi tanpa penyimpanan di sini jalur suksesnya tidak
+     pernah benar-benar terlihat. */
+  {
+    const tb = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/tasks$/);
+    if (tb && metode === "POST") {
+      const p = proyekAdmin.find((x) => x.id === tb[1]);
+      const orang = timAdmin.find((t) => t.id === badan.assigneeId);
+      const id = `${tb[1]}-tugas-baru-${Date.now()}`;
+      (tugasAdmin[tb[1]] ??= []).push({ id, projectId: tb[1], projectTitle: p?.title, title: badan.title,
+        stage: badan.stage ?? null, assigneeId: badan.assigneeId ?? null, assigneeName: orang?.name ?? null,
+        status: "belum_mulai", dueDate: badan.dueDate ?? null, sortOrder: 99 });
+      return { id };
+    }
+    const tu = path.match(/^\/api\/v1\/admin\/tasks\/([^/?]+)$/);
+    if (tu) {
+      for (const daftar of Object.values(tugasAdmin)) {
+        const i = daftar.findIndex((t) => t.id === tu[1]);
+        if (i < 0) continue;
+        if (metode === "DELETE") { daftar.splice(i, 1); return { deleted: true }; }
+        Object.assign(daftar[i], badan);
+        return { updated: true };
+      }
+      return { galat: 404 };
+    }
+    const sumber = [["team", timAdmin, "t"], ["directory", kontakAdmin, "kt"], ["testimonials", testimoniAdmin, "ts"]];
+    for (const [nama, daftar, awalan] of sumber) {
+      const m = path.match(new RegExp(`^/api/v1/admin/${nama}(?:/([^/?]+))?$`));
+      if (!m) continue;
+      if (!m[1] && metode === "POST") {
+        const id = `${awalan}${daftar.length + 100}`;
+        const kini = new Date().toISOString();
+        daftar.push({ id, active: true, createdAt: kini, updatedAt: kini, ...badan });
+        return { id };
+      }
+      const i = daftar.findIndex((x) => x.id === m[1]);
+      if (i < 0) return { galat: 404 };
+      if (metode === "DELETE") { daftar.splice(i, 1); return { deleted: true }; }
+      Object.assign(daftar[i], badan, { updatedAt: new Date().toISOString() });
+      return { updated: true };
+    }
+  }
   if (path === "/api/v1/admin/payroll" && metode === "POST") {
     const awal = `${String(badan.period).slice(0, 7)}-01`;
     if (gajiAdmin.some((g) => g.teamMemberId === badan.teamMemberId && g.period === awal)) return { galat: 409 };

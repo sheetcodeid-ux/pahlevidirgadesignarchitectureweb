@@ -1,8 +1,9 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
-import { NotifikasiPanel } from "../../components/admin/NotifikasiPanel";
+import KitLayout from "../../layouts/KitLayout.astro";
+import { NotifikasiKit } from "../../components/admin/NotifikasiKit";
+import "../../styles/notifikasi-kit.css";
 ---
 
-<AdminLayout title="Notifikasi">
-  <NotifikasiPanel client:load />
-</AdminLayout>
+<KitLayout title="Notifikasi" judul="Notifikasi">
+  <NotifikasiKit client:load />
+</KitLayout>

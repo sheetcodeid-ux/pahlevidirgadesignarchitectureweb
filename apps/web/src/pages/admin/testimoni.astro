@@ -1,8 +1,9 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
-import { TestimonialsPanel } from "../../components/admin/TestimonialsPanel";
+import KitLayout from "../../layouts/KitLayout.astro";
+import { TestimoniKit } from "../../components/admin/TestimoniKit";
+import "../../styles/daftar-kit.css";
 ---
 
-<AdminLayout title="Testimoni">
-  <TestimonialsPanel client:load />
-</AdminLayout>
+<KitLayout title="Testimoni" judul="Testimoni">
+  <TestimoniKit client:load />
+</KitLayout>

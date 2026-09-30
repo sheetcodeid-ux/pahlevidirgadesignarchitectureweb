@@ -122,43 +122,7 @@ button.pk__pratinjau:focus-visible { outline: 2px solid var(--brand); outline-of
 a.pk__dokjudul:hover { text-decoration: underline; }
 .pk__dokmeta { font-size: var(--k-t12); color: var(--text-muted); }
 
-/* Status: <select> asli dengan titik warna di depannya, bukan lencana
-   ditambah pemilih terpisah — satu benda yang sekaligus menunjukkan dan
-   mengubah. */
-.pk__status {
-  position: relative;
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.pk__status:focus-within { border-color: var(--brand); }
-.pk__status select {
-  min-width: 0;
-  padding: 0 18px 0 0;
-  margin-right: -18px;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: var(--k-t12);
-  font-weight: var(--k-med);
-  color: var(--text-strong);
-  appearance: none;
-  cursor: pointer;
-}
-.pk__status select:focus { outline: none; }
-.pk__status > svg { pointer-events: none; }
-.pk__statustitik { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
-.pk__status[data-nada="tunggu"] .pk__statustitik { background: var(--warn); }
-.pk__status[data-nada="tindak"] .pk__statustitik { background: var(--danger); }
-.pk__status[data-nada="beres"] .pk__statustitik { background: var(--success); }
+/* Status-pemilihnya `.kd-status` di daftar-kit.css — sama dengan Tugas. */
 .pk__hapus { flex: none; color: var(--danger); }
 .pk__suara { margin-left: 70px; }
 
@@ -234,7 +198,7 @@ a.pk__dokjudul:hover { text-decoration: underline; }
   .pk__fase { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
   .pk__dokbaris { flex-wrap: wrap; }
   .pk__dokteks { flex-basis: calc(100% - 70px); }
-  .pk__status { margin-left: 70px; }
+  .pk__dokbaris .kd-status { margin-left: 70px; }
   .pk__hapus { margin-left: auto; }
   .pk__suara,
   .pk__catatanklien,
