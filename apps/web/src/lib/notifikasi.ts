@@ -16,6 +16,14 @@ export interface BarisNotifikasi {
   judul: string;
   detail: string;
   waktu?: string;
+  /**
+   * Waktu mentahnya (ISO), di samping `waktu` yang sudah jadi kalimat.
+   * Dashboard mengelompokkan daftar ini per hari ("Hari ini", "Kemarin"),
+   * dan itu tidak bisa dikerjakan dari kalimat "3 Okt 2026". Tanggal
+   * telanjang ("2026-10-03") berarti butir itu cuma punya hari, tanpa jam —
+   * tenggat kerjaan.
+   */
+  tanggal?: string;
   ke: string;
 }
 
@@ -61,6 +69,7 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
         judul: "Pesan baru belum dibaca",
         detail: `${p.name} — ${p.projectType || "tanpa jenis proyek"}`,
         waktu: tanggal(p.createdAt),
+        tanggal: p.createdAt,
         ke: "/admin/pesan",
       })),
     ...tugas
@@ -71,6 +80,7 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
         judul: "Tenggat kerjaan terlewat",
         detail: `${t.title}${t.projectTitle ? ` — ${t.projectTitle}` : ""}`,
         waktu: t.dueDate ? tanggal(t.dueDate) : undefined,
+        tanggal: t.dueDate ?? undefined,
         ke: "/admin/list-kerjaan",
       })),
     ...testimoni
@@ -81,6 +91,7 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
         judul: "Testimoni menunggu persetujuan",
         detail: `${t.clientName}${t.projectTitle ? ` — ${t.projectTitle}` : ""}`,
         waktu: tanggal(t.createdAt),
+        tanggal: t.createdAt,
         ke: "/admin/testimoni",
       })),
   ];

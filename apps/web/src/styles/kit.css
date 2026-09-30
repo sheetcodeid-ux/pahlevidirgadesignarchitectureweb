@@ -2178,6 +2178,10 @@
    sekejap sebelum fotonya sampai, dan kilatan hijau itu yang kelihatan
    salah. */
 .k-log__kiri:not(:has(img)):not(:empty) { background: var(--brand-mint); color: var(--text-strong); }
+/* Jebakan #37: di tema gelap `--text-strong` terang, dan ikonnya tergambar
+   terang di atas mint — nyaris hilang. Pemindai kontras tidak menangkapnya
+   karena yang digambar SVG, bukan teks. Tema terang dibiarkan persis. */
+:root[data-theme="dark"] .k-log__kiri:not(:has(img)):not(:empty) { color: var(--brand-mint-ink); }
 /* Rel digambar oleh BARISNYA, bukan oleh ubinnya. Kalau ia pseudo-elemen
    milik ubin, `overflow: hidden` yang memotong foto jadi bulat ikut memotong
    relnya — dan yang tersisa cuma titik 1px yang tidak kelihatan sama sekali. */
@@ -2401,6 +2405,10 @@
   background: var(--brand-mint);
   color: var(--text-strong);
 }
+/* Jebakan #37: di tema gelap `--text-strong` terang, dan ikonnya
+   tergambar terang di atas mint (1,23). Tema terang dibiarkan persis. */
+/* Varian rinci berlatar lain dan tidak ikut. */
+:root[data-theme="dark"] .k-penyedia:not(.k-penyedia--rinci) .k-penyedia__ubin { color: var(--brand-mint-ink); }
 .k-penyedia__nama {
   margin-left: 15px;
   min-width: 0;

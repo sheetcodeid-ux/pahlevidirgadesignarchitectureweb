@@ -1,15 +1,22 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
-import { DashboardHome } from "../../components/admin/DashboardHome";
+import KitLayout from "../../layouts/KitLayout.astro";
+import { DashboardKit } from "../../components/admin/DashboardKit";
+/* Pemilih teks (`PilihTeks`) milik frame 25 hidup di fee-kit.css. Dimuat
+   LEBIH DULU supaya penyesuaian halaman ini (.dsb__pilihteks, satu kelas
+   juga) menang karena urutan. */
+import "../../styles/fee-kit.css";
+import "../../styles/dash-kit.css";
+
+/* Frame Figma "01. Dashboard (v1)" — halaman keempat belas, yang terakhir
+   pindah ke kerangka kit.
+
+   Judulnya "Dashboard", bukan "Hari Ini" seperti di kerangka lama: rel
+   samping sudah lama menyebutnya "Dashboard" (lib/navAdmin.ts), dan satu
+   halaman dengan dua nama membuat orang ragu apakah ia sampai di tempat
+   yang dimaksud. Isinya tetap antrean hari ini — kolom kanannya daftar
+   yang belum ditangani. */
 ---
 
-<!-- "Hari Ini", bukan "Dashboard". Yang dibuka halaman ini antrean pekerjaan
-     hari ini — pesan yang belum dibalas, tenggat yang lewat, uang yang belum
-     masuk — bukan papan angka untuk dipandangi. Nama yang menyebut isinya
-     membuat orang tahu kenapa ia membukanya.
-
-     Tanpa heading di badan halaman: judulnya sudah ditulis topbar, dan dua
-     judul yang sama bertumpuk cuma memakan tinggi layar. -->
-<AdminLayout title="Hari Ini">
-  <DashboardHome client:load />
-</AdminLayout>
+<KitLayout title="Dashboard" judul="Dashboard">
+  <DashboardKit client:load />
+</KitLayout>

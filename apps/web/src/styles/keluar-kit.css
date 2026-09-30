@@ -112,6 +112,9 @@
   background: var(--brand-mint);
   color: var(--text-strong);
 }
+/* Jebakan #37: di tema gelap `--text-strong` terang, dan ikonnya
+   tergambar terang di atas mint (1,23). Tema terang dibiarkan persis. */
+:root[data-theme="dark"] .tr__pilihubin { color: var(--brand-mint-ink); }
 .tr__pilih select {
   flex: 1;
   min-width: 0;

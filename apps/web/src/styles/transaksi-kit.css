@@ -79,6 +79,9 @@
   color: var(--text-strong);
 }
 .trx__ubin--keluar { background: var(--brand-soft); color: var(--brand); }
+/* Jebakan #37: di tema gelap `--text-strong` terang, dan ikonnya
+   tergambar terang di atas mint (1,23). Tema terang dibiarkan persis. */
+:root[data-theme="dark"] .trx__ubin:not(.trx__ubin--keluar) { color: var(--brand-mint-ink); }
 .trx__sel {
   display: flex;
   align-items: center;

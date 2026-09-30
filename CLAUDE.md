@@ -803,6 +803,16 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     tanda "—" — tautan kaki di SVG framenya memang `#BCBEBD`. `<option>`
     dilewati: ia digambar menu sistem operasi, bukan halaman.
 
+    **Ia juga sempat buta pada IKON.** Yang diperiksa cuma simpul teks, jadi
+    ikon SVG terang di atas ubin mint tema gelap (1,23) lolos di lima tempat
+    — linimasa kit (`BarisLog`), ubin transaksi, ubin tagihan, ubin penyedia,
+    dan pemilih proyek Catat Pengeluaran. Sekarang `<svg>` berlebar-tinggi
+    ikut diperiksa (warnanya `color` miliknya, karena ikon kit menggambar
+    dengan `currentColor`), dan kelimanya sudah diperbaiki dengan penimpa
+    khusus tema gelap — tema terang terbukti identik piksel demi piksel.
+    Sisa ikon di bawah 3 yang dibiarkan: warna frame (bintang inbox abu dan
+    amber, lencana tren merah-muda) dan panah paginasi yang memang mati.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -920,7 +930,11 @@ mewarnai ulang tata letak lama lalu menyebutnya rombak.
 
 Tangkapan layar frame lewat `get_screenshot` dengan `enableBase64Response`
 datang lewat jalur MCP, bukan HTTP — jadi ia tidak kena blokir gateway. Tapi
-ia tetap MEMAKAI kuota. Yang benar-benar gratis: PNG yang diekspor pemilik
+ia tetap MEMAKAI kuota. Gambarnya DISIMPAN sebagai berkas PNG di folder
+`tool-results` sesi (namanya disebut di hasil panggilan), jadi bisa diukur
+dengan alat banding seperti PNG ekspor pemilik — tidak perlu meminta ulang.
+Hasil `get_design_context` juga tersimpan utuh di transkrip sesi; ambil dari
+sana sebelum memakai kuota lagi. Yang benar-benar gratis: PNG yang diekspor pemilik
 sendiri dan dilampirkan ke percakapan.
 
 ### Bahan yang sudah ditarik dan tidak perlu diulang
@@ -1048,6 +1062,7 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Tombol Terbitkan juga ada di kepala halaman kit, dengan SATU logika** | Halaman yang pindah ke KitLayout kehilangan bilah atas lama beserta tombolnya, padahal toast Jurnal dan Paket menyuruh menekannya. Keadaannya (polling `cap-build.json`, status, "belum tayang") dipindah ke `components/admin/useTerbit.ts` dan dipakai `Topbar` maupun `TerbitKit`; yang dua cuma tampilannya. Ikonnya bola dunia karena pustaka ikon Coinest tidak punya panah unggah — menggambarnya sendiri berarti menjiplak. Konsekuensinya, `KepalaKit` sekarang SELALU dihidrasi, dan `TombolBulat` meneruskan ref supaya bisa jadi pemicu Radix |
 | **Gaji dibangun dari frame 25 LAGI, bukan halaman sendiri tanpa frame** | Dipilih pemilik: Gaji tidak punya frame, dan di pemetaan ia berbagi frame 25 dengan Fee. Kerangkanya sama persis dengan Fee Proyek — terbukti: kotak kelima widget identik — dan helpernya (nominal, pemilih, sumbu) hidup di `components/admin/frame25.tsx` yang dipakai keduanya, bukan disalin; Fee terbukti identik piksel demi piksel setelah helpernya dipindah. Aturan "fee menulis, gaji membaca" tidak berubah: kolom Fee di tabel tidak bisa diketik. Mengubah dan menghapus lewat NAMA orang di tabel, karena tabel kit tidak punya kolom aksi. Grafik Total Gaji diberi ruang kepala 80% seperti framenya — gaji hampir rata, dan tanpa itu garisnya menimpa tooltip puncak |
 | **Halaman kit di ponsel: menu geser SEMENTARA, sampai frame Mobile diekspor** | Dipilih pemilik. Sebelumnya rel samping tetap 192px di layar 390, isi tinggal ~160px, dan halaman bisa digeser 134px ke samping — di ketiga belas halaman kit yang sudah tayang, padahal pemilik memang membuka panel dari ponsel. Di bawah 40rem rel jadi menu geser (bentuknya menu geser panel lama yang sudah di-ACC, BUKAN dikarang dari frame); keadaannya milik `RelKit`, tombolnya di `KepalaKit`, keduanya bicara lewat peristiwa `kit:rel`. Tabel lebar tetap digulir di dalam kartunya sendiri. Terbukti tidak menyentuh desktop: ke-14 halaman identik piksel demi piksel dengan versi yang tayang pada 1440, 1024, dan 768 — kecuali judul Detail Tulisan pada 768 yang kini terlipat alih-alih terpotong. Begitu frame Mobile Coinest diekspor, tampilannya disamakan dengan frame itu |
+| **Dashboard (frame 01) di kerangka kit — halaman keempat belas, yang terakhir** | Tata letak 100% frame, isinya milik studio (pemetaan slotnya di kepala `DashboardKit.tsx`). Judulnya **"Dashboard"**, bukan "Hari Ini" milik kerangka lama: rel samping sudah lama menyebutnya begitu, dan satu halaman dengan dua nama membuat orang ragu. Slot "Recent Transactions" berisi **laba per proyek**, bukan transaksi — "Transaksi Terbaru" sudah ada di Keuangan. Status "Rugi" hanya untuk proyek yang SUDAH lunas: laba dihitung dari kas yang masuk, jadi proyek yang baru DP selalu tampak minus. Kartu keterangan grafik **tidak menyala sejak awal** seperti di framenya (Juni, di tengah): bulan yang wajar dinyalakan adalah bulan ini, yang selalu di ujung kanan, dan di sana ia menutupi legenda. Butir "Perlu Ditangani" dibatasi RUANG kartu (diukur sekali per perubahan data/ukuran), bukan angka tetap. Tablet: kolom tengah naik selebar penuh supaya tabelnya tidak digulir mendatar. `DashboardHome` lama dan ~570 baris CSS `.dash*` dibuang |
 | **Keuangan jadi satu pintu; halaman "Kerja Internal" dibuang** | Pemilik melaporkannya sebagai "sangat membingungkan". Sebabnya bukan tata letak: halaman itu tidak punya isi sendiri — ia potongan dua halaman lintas-proyek yang disaring ke satu proyek, jadi tugas, biaya, dan pipeline masing-masing punya DUA pintu masuk. Sekarang pengeluaran dicatat dari satu tempat dengan dropdown proyek di dalam dialognya |
 | **Fee menulis, Gaji membaca** | Pemilik memilih fee per proyek ke orang DAN halaman gaji yang memuat freelancer — dua jawaban yang kalau diikuti mentah membuat satu bayaran freelancer bisa diketik dua kali, dan beban studio tercatat ganda. Ditutup di lapisan data, bukan di UI: tabel `payroll` secara struktur TIDAK BISA memuat bayaran proyek, dan baris freelancer di halaman Gaji diturunkan SQL dari `project_costs`. Jadi angka ganda bukan cuma tidak dianjurkan — ia tidak bisa terjadi |
 | Biaya proyek menyimpan SIAPA yang dibayar, dan boleh kosong | Tanpa kolom itu pertanyaan "orang ini tahun ini terima berapa dari semua proyek" tidak pernah bisa dijawab. Boleh kosong dua kali disengaja: biaya operasional memang bukan milik siapa pun, dan puluhan baris lama tidak punya nama — menautkannya satu per satu memakan waktu pemilik untuk angka yang sudah lewat. `on delete set null`, bukan cascade: menghapus freelancer tidak boleh menghapus biaya yang sudah keluar |

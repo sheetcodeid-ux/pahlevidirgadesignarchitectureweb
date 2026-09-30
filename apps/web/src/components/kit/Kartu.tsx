@@ -48,6 +48,12 @@ export interface PropKartuStatistik {
   tren?: ReactNode;
   /** Menu titik-tiga di pojok kanan atas. Tanpa ini, menunya tidak digambar. */
   onMenu?: () => void;
+  /**
+   * Titik-tiganya jadi TAUTAN, bukan tombol. Dipakai kalau "pilihan" kartu
+   * itu sebenarnya halaman lain — tombol yang cuma memindah halaman tidak
+   * bisa dibuka di tab baru dan tidak dibacakan sebagai tautan.
+   */
+  menuHref?: string;
   menuJudul?: string;
   className?: string;
 }
@@ -58,6 +64,7 @@ export function KartuStatistik({
   nilai,
   tren,
   onMenu,
+  menuHref,
   menuJudul,
   className,
 }: PropKartuStatistik) {
@@ -67,7 +74,11 @@ export function KartuStatistik({
         <span className="k-stat__ubin">
           <Ikon ikon={ikon} ukuran={20} />
         </span>
-        {onMenu && (
+        {menuHref ? (
+          <a className="k-stat__menu" href={menuHref} aria-label={menuJudul ?? `Pilihan untuk ${judul}`} title={menuJudul}>
+            <Ikon ikon={DotsThreeVertical} ukuran={18} />
+          </a>
+        ) : onMenu && (
           <button
             type="button"
             className="k-stat__menu"

@@ -35,9 +35,20 @@ for (const tema of ["light", "dark"]) {
       };
       const rasio = (a, z) => { const [x, y] = [lum(a), lum(z)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
       const out = [];
+      /* Ikon juga diperiksa, bukan cuma teks. Sempat buta di sini (jebakan
+         #36): ikon di bulatan mint linimasa kit tergambar terang di atas mint
+         di tema gelap, dan pemindai yang cuma mencari simpul teks tidak
+         pernah melihatnya. Ikon kit menggambar dengan `currentColor`, jadi
+         warnanya `color` milik <svg>-nya; ambangnya sama, 3 — batas WCAG
+         untuk grafik yang membawa makna. */
       for (const el of document.querySelectorAll("*")) {
-        const teks = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+        const ikon = el.tagName === "svg" && el.hasAttribute("width") && el.hasAttribute("height");
+        const teks = ikon || [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
         if (!teks) continue;
+        if (ikon) {
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === "hidden") continue;
+        }
         /* <option> tidak digambar di halaman: daftarnya menu bawaan sistem
            operasi dengan warnanya sendiri. Warna hitungannya (abu di atas
            abu) alarm palsu. */
@@ -61,8 +72,8 @@ for (const tema of ["light", "dark"]) {
         const r = rasio(rgb(g.color), latar);
         if (r < 3) {
           out.push({
-            kelas: (el.className.toString() || el.tagName).slice(0, 40),
-            isi: (el.textContent || "").trim().slice(0, 24),
+            kelas: (ikon ? "ikon " : "") + ((el.className.baseVal ?? el.className).toString() || el.tagName).slice(0, 40),
+            isi: ikon ? `di ${(el.parentElement?.className.toString() || "?").slice(0, 30)}` : (el.textContent || "").trim().slice(0, 24),
             kontras: +r.toFixed(2), teks: g.color, latar: `rgb(${latar.slice(0, 3).join(", ")})`,
           });
         }
