@@ -287,7 +287,13 @@ function Isi() {
           </span>
         )}
         <span className="pjs__sampulaksi">
-          <label className="k-tombol k-tombol--medium k-tombol--secondary pjs__unggah">
+          {/* Utama selagi sampulnya kosong: bidang kosong berlatar mint pucat
+              yang SAMA dengan tombol secondary, jadi tombolnya dulu tergambar
+              sebagai teks lepas tanpa kotak. Di atas gambar, secondary
+              terbaca jelas. */}
+          <label
+            className={`k-tombol k-tombol--medium ${sampul.url ? "k-tombol--secondary" : "k-tombol--primary"} pjs__unggah`}
+          >
             {mengunggah ? "Mengunggah…" : sampul.url ? "Ganti sampul" : "Unggah sampul"}
             <input
               ref={berkasRef}

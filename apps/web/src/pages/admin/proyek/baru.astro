@@ -1,14 +1,12 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { ProjectCreate } from "../../../components/admin/ProjectCreate";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { ProyekBaruKit } from "../../../components/admin/ProyekBaruKit";
+/* Kelas formulir frame 34 (.pas__*) hidup di paket-kit.css — dipakai apa
+   adanya, lihat kepala ProyekBaruKit.tsx. */
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekbaru-kit.css";
 ---
 
-{/* `description` dibuang bersama judul halaman, dan getSettings() ikut:
-    satu-satunya pemakainya adalah description itu, jadi yang tersisa cuma
-    panggilan API saat build yang hasilnya tidak dipakai siapa pun.
-
-    `back` TETAP — halaman ini satu-satunya yang punya tombol Kembali, dan
-    sejak judulnya dibuang tombol itulah isi blok kepalanya. */}
-<AdminLayout title="Proyek Baru" back="/admin/proyek" backLabel="Kembali ke semua proyek">
-  <ProjectCreate client:load />
-</AdminLayout>
+<KitLayout title="Proyek Baru" judul="Proyek Baru" kembali="/admin/proyek">
+  <ProyekBaruKit client:load />
+</KitLayout>

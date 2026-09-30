@@ -1,23 +1,30 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import "../../../styles/proyekbaru-kit.css";
 ---
 
-<!-- Alamat lama. Tombol Sunting sudah tidak ada — tiga halaman proyek di
-     sidebar menggantikannya — tapi tautan lama yang masih tersimpan di
-     riwayat browser atau di-bookmark tidak boleh berakhir di halaman kosong.
-     Yang dibawanya (?id=) dipakai sekali untuk menetapkan proyek aktif, lalu
-     dialihkan ke halaman pertama. -->
-<AdminLayout title="Membuka proyek">
-  <div class="empty">
-    <span class="spinner"></span>
-    <p class="t-muted">Membuka proyek…</p>
-  </div>
-</AdminLayout>
+<!-- Alamat lama untuk "ubah proyek". Tautan yang masih tersimpan di riwayat
+     browser, bookmark, atau tombol Ubah di Semua Proyek tidak boleh berakhir
+     di halaman kosong: ?id= dipakai sekali untuk menetapkan proyek aktif,
+     lalu halaman ini dialihkan ke halaman proyek pertama. -->
+<KitLayout title="Membuka proyek" judul="Membuka proyek">
+  <p class="pbr__membuka" role="status">Membuka proyek…</p>
+</KitLayout>
 
 <script>
+  import { navigate } from "astro:transitions/client";
   import { setProyekAktif, HALAMAN_PROYEK } from "../../../lib/proyekAktif";
 
-  const id = new URLSearchParams(location.search).get("id");
-  if (id) setProyekAktif(id);
-  location.replace(HALAMAN_PROYEK[0]);
+  /* Lewat `astro:page-load`, bukan langsung di badan skrip. Skrip modul
+     dijalankan SEKALI per sesi, dan kerangka kit memakai router sisi klien —
+     jadi kunjungan kedua ke halaman ini lewat tautan tidak akan menjalankan
+     badan skripnya lagi, dan halamannya berhenti di "Membuka proyek…".
+     Peristiwanya menyala di tiap perpindahan halaman, karena itu ia
+     memeriksa sendiri bahwa yang sedang terbuka memang halaman ini. */
+  document.addEventListener("astro:page-load", () => {
+    if (!/^\/admin\/proyek\/edit\/?$/.test(location.pathname)) return;
+    const id = new URLSearchParams(location.search).get("id");
+    if (id) setProyekAktif(id);
+    navigate(HALAMAN_PROYEK[0]!, { history: "replace" });
+  });
 </script>
