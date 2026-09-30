@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Command as Cmdk } from "cmdk";
 import * as RDialog from "@radix-ui/react-dialog";
 import { Icon, type IconName } from "../ui/Icon";
@@ -37,8 +37,27 @@ const HALAMAN: { label: string; ikon: IconName; ke: string }[] = [
  * satu-satunya adalah sidebar, dan permintaannya sudah dilayani cache
  * sessionStorage yang sama dengan halaman Semua Proyek.
  */
-export function Perintah({ tanpaTombol = false }: { tanpaTombol?: boolean } = {}) {
-  const [buka, setBuka] = useState(false);
+export function Perintah({
+  tanpaTombol = false,
+  buka: bukaLuar,
+  onBuka,
+}: {
+  tanpaTombol?: boolean;
+  /** Dikendalikan dari luar — kotak "Cari di panel" di kepala kit membukanya. */
+  buka?: boolean;
+  onBuka?: (b: boolean) => void;
+} = {}) {
+  const [bukaSendiri, setBukaSendiri] = useState(false);
+  const buka = bukaLuar ?? bukaSendiri;
+  /* Nilai terkini lewat ref: pendengar Ctrl/Cmd+K dipasang SEKALI, jadi
+     closure-nya akan terus membaca `buka` saat pemasangan. */
+  const kini = useRef({ buka, onBuka });
+  kini.current = { buka, onBuka };
+  const setBuka = (b: boolean | ((v: boolean) => boolean)) => {
+    const nilai = typeof b === "function" ? b(kini.current.buka) : b;
+    if (kini.current.onBuka) kini.current.onBuka(nilai);
+    else setBukaSendiri(nilai);
+  };
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
 
   useEffect(() => {
@@ -103,7 +122,12 @@ export function Perintah({ tanpaTombol = false }: { tanpaTombol?: boolean } = {}
                 <Cmdk.Group heading="Proyek" className="ov-command__group">
                   {(proyek ?? []).map((p) => (
                     <Cmdk.Item key={p.id} value={`${p.title} ${p.category}`} className="ov-command__item"
-                      onSelect={() => bukaProyek(p.id)}>
+                      /* Di kerangka kit proyek dibuka di Satu Proyek (frame
+                         22). bukaProyek() menuju Halaman Publik — tujuan
+                         kerangka lama, dipertahankan untuk /admin/ui. */
+                      onSelect={() => (bukaLuar === undefined
+                        ? bukaProyek(p.id)
+                        : (window.location.href = `/admin/proyek/satu?id=${p.id}`))}>
                       <Icon name="project" size={16} />{p.title}
                     </Cmdk.Item>
                   ))}

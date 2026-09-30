@@ -3,7 +3,7 @@ import { SisiNav, type ItemNav } from "../kit/Nav";
 import { SEMUA_IKON, NavSignOut } from "../kit/ikon";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { NAV } from "../../lib/navAdmin";
-import { hapusSesi } from "../../lib/admin";
+import { hapusSesi, profilTersimpan } from "../../lib/admin";
 
 /* =============================================================================
    Rel samping panel admin, versi kit.
@@ -53,6 +53,11 @@ function ikon(nama: string, konteks: string): DataIkon {
    kepalanya dipasang ulang tiap halaman dan menanyakan keadaannya lagi. */
 export const PERISTIWA_REL = "kit:rel";
 export const PERISTIWA_REL_KEADAAN = "kit:rel-keadaan";
+/** Jumlah pesan belum dibaca, dikabarkan kepala kit sesudah ia menghitung
+    notifikasi — angka merah baris Pesan Masuk. Rel ini dirender statis dan
+    tidak mengambil data sendiri; mengambil dua kali untuk angka yang sama
+    berarti dua angka yang suatu saat tidak sepakat. */
+export const PERISTIWA_PESAN = "kit:pesan";
 export const ID_REL = "kl-rel";
 
 /** Selebar-lebarnya ponsel. Di atas ini rel kembali menempel di kiri. */
@@ -81,8 +86,22 @@ function rapi(p: string): string {
   return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
 }
 
-export function RelKit({ path, pesanBelumDibaca, master, namaStudio }: PropRelKit) {
+export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio }: PropRelKit) {
   const kini = rapi(path);
+  /* Angka pesan dan peran akun datang SESUDAH hidrasi: rel ini dirender
+     statis, jadi keduanya tidak diketahui saat build. KitLayout memang tidak
+     pernah mengoperkannya, dan akibatnya baris Pesan Masuk kehilangan angka
+     merahnya dan baris UI Component hilang dari master admin. Dibaca di
+     efek, bukan saat render — kalau di render, HTML server dan klien
+     berbeda dan React membuang pohonnya (jebakan #8). */
+  const [pesan, setPesan] = useState(pesanBelumDibaca);
+  const [master, setMaster] = useState(masterProp);
+  useEffect(() => {
+    setMaster(masterProp ?? profilTersimpan()?.isMasterAdmin);
+    const dengar = (e: Event) => setPesan((e as CustomEvent<number>).detail);
+    window.addEventListener(PERISTIWA_PESAN, dengar);
+    return () => window.removeEventListener(PERISTIWA_PESAN, dengar);
+  }, [masterProp]);
   /* Halaman detail "<daftar>/satu" (Satu Proyek, Detail Paket) tidak punya
      baris sendiri di menu; yang menyala daftarnya. Tetap bukan startsWith —
      cuma akhiran "/satu" yang persis itu. */
@@ -107,7 +126,9 @@ export function RelKit({ path, pesanBelumDibaca, master, namaStudio }: PropRelKi
          ada tombol buka-tutup: rel ini dirender di server, dan menambah
          keadaan internal berarti seluruh rel harus dihidrasi cuma untuk itu. */
       terbuka: anak?.some((a) => a.aktif),
-      jumlah: n.lencana === "pesan" ? pesanBelumDibaca : undefined,
+      /* 0 disembunyikan: angka merah "0" berarti "ada yang perlu dilihat"
+         padahal tidak ada. */
+      jumlah: n.lencana === "pesan" && pesan ? pesan : undefined,
       jumlahJudul: n.lencana === "pesan" ? "pesan belum dibaca" : undefined,
     };
   });
