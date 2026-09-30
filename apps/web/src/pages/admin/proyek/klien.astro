@@ -1,8 +1,14 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { ProyekPanel } from "../../../components/admin/ProjectEditor";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { PortalKlienKit } from "../../../components/admin/PortalKlienKit";
+/* Kerangka frame 34 (.pas__*) dan potongan formulir proyek (.pf__*) dipakai
+   bersama Halaman Publik; yang milik portal klien sendiri di
+   portalklien-kit.css. */
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
+import "../../../styles/portalklien-kit.css";
 ---
 
-<AdminLayout title="Portal Klien">
-  <ProyekPanel client:load halaman="klien" />
-</AdminLayout>
+<KitLayout title="Portal Klien" judul="Portal Klien">
+  <PortalKlienKit client:load />
+</KitLayout>

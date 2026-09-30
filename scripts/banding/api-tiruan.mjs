@@ -333,6 +333,48 @@ const gambarAdmin = Object.fromEntries(
   }),
 );
 
+/* Portal klien per proyek: brief, dokumen (berikut komentarnya), dan
+   progres. Proyek pertama terisi lengkap; yang kedua belum diisi klien —
+   supaya dua keadaan brief ("dikirim klien" lawan "belum") bisa dilihat. */
+const briefAdmin = Object.fromEntries(
+  proyekAdmin.map((p, i) => [p.id, i === 0
+    ? { budgetRange: null, budgetAmount: 450_000_000, startDate: "2026-10-05", endDate: "2027-03-30", timeline: null,
+        stylePreference: "Tropis modern, banyak kayu", requirements: "Bar kopi 6 m, 40 kursi, dapur terbuka, mushola kecil, parkir motor 20.",
+        internalNotes: "Sudah ditelepon 22 Sep. Minta contoh referensi kafe di Singkawang.", submittedAt: hariLalu(9) }
+    : { budgetRange: null, budgetAmount: null, startDate: null, endDate: null, timeline: null,
+        stylePreference: null, requirements: null, internalNotes: null, submittedAt: null }]),
+);
+const dokumenAdmin = Object.fromEntries(
+  proyekAdmin.map((p, i) => [p.id, i > 1 ? [] : [
+    ["Denah lantai 1 Rev.2", "berkas", "menunggu_klien", "denah-lt1-rev2.pdf", 2_480_000, "application/pdf", null, null, 2],
+    ["Tampak depan", "berkas", "revisi_diminta", "tampak-depan.png", 1_120_000, "image/png", "Jendela samping tolong diperbesar.", null, 4],
+    ["Pesan suara 0:42", "suara", "final", null, 180_000, "audio/webm", null, 42_000, 6],
+    ["RAB tahap 1", "berkas", "disetujui", "rab-tahap-1.pdf", 640_000, "application/pdf", null, null, 11],
+  ].map(([title, kind, status, fileName, fileSize, mimeType, clientNote, durationMs, umur], k) => ({
+    id: `${p.id}-dok-${k + 1}`, projectId: p.id, title, kind, status, fileName, fileSize, mimeType, clientNote, durationMs,
+    fileUrl: `http://127.0.0.1:${PORT}/media/projects/${p.slug}/contoh-${k + 1}.svg`, sortOrder: k,
+    createdAt: hariLalu(umur), updatedAt: hariLalu(umur),
+  }))]),
+);
+const komentarAdmin = {
+  "k1-dok-2": [
+    { id: "c1", documentId: "k1-dok-2", author: "klien", body: "Jendela samping tolong diperbesar, supaya dapur lebih terang.", createdAt: hariLalu(3, 14) },
+    { id: "c2", documentId: "k1-dok-2", author: "staf", body: "Baik, kami revisi minggu ini.", createdAt: hariLalu(2, 9) },
+  ],
+};
+const progresAdmin = Object.fromEntries(
+  proyekAdmin.map((p, i) => [p.id, {
+    phase: p.phase ?? "konsultasi",
+    /* 40 heksa, persis bentuk token sungguhan — /progres menolak bentuk
+       lain sebagai "tautan tidak lengkap" sebelum sempat bertanya ke API. */
+    accessToken: `${String(i + 1).padStart(2, "0")}${"7f3a9c".repeat(7)}`.slice(0, 40),
+    updates: i > 1 ? [] : [
+      { id: `${p.id}-up-1`, title: "Survei lokasi selesai", note: "Ukuran tapak sesuai sertifikat. Pohon mangga dipertahankan.", photoUrl: null, createdAt: hariLalu(12) },
+      { id: `${p.id}-up-2`, title: "Konsep disetujui", note: null, photoUrl: null, createdAt: hariLalu(5) },
+    ].reverse(),
+  }]),
+);
+
 /* Pembayaran per proyek. Dua sampai empat butir, mundur beberapa minggu —
    cukup untuk mengisi strip mendatar di frame 07 dan untuk membuktikan
    striponya memang MELEWATI tepi kartu seperti di framenya. */
@@ -573,6 +615,31 @@ const jawab = (path) => {
      berawalan "/admin/projects", jadi urutan terbalik membuat daftar
      pembayaran dijawab dengan daftar proyek — dan halamannya menggambar
      kartu pembayaran berisi judul proyek tanpa satu pun galat. */
+  /* Portal klien publik (/progres?t=…) — disusun dari data admin yang sama,
+     jadi yang ditulis staf di Portal Klien terlihat di sini seperti di
+     produksi. Termasuk komentar berpenulis "staf": portal pernah memeriksa
+     "studio", dan balasan studio tampil sebagai "Anda". */
+  {
+    const m = path.match(/^\/api\/v1\/progress\/([^/?]+)$/);
+    if (m) {
+      const p = proyekAdmin.find((x) => progresAdmin[x.id]?.accessToken === m[1]);
+      if (!p) return { galat: 404 };
+      return {
+        projectTitle: p.title, coverImageUrl: p.coverImageUrl ?? null, phase: progresAdmin[p.id].phase,
+        category: p.category, city: p.city ?? "Pontianak", contractValue: p.contractValue, updatedAt: new Date().toISOString(),
+        updates: progresAdmin[p.id].updates,
+        documents: (dokumenAdmin[p.id] ?? []).map((d) => ({ ...d, comments: komentarAdmin[d.id] ?? [] })),
+        invoices: tagihanAdmin.filter((t) => t.projectId === p.id),
+        brief: briefAdmin[p.id] ?? {},
+      };
+    }
+  }
+  {
+    const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/(brief|documents|progress)$/);
+    if (m) return { brief: briefAdmin, documents: dokumenAdmin, progress: progresAdmin }[m[2]][m[1]] ?? null;
+    const k = path.match(/^\/api\/v1\/admin\/documents\/([^/?]+)\/comments$/);
+    if (k) return komentarAdmin[k[1]] ?? [];
+  }
   {
     const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/images(?:\?kind=(\w+))?/);
     if (m) return gambarAdmin[m[1]]?.[m[2] ?? "galeri"] ?? [];
@@ -670,6 +737,51 @@ function tulis(metode, path, badan) {
     if (i < 0) return { galat: 404 };
     paketAdmin.splice(i, 1);
     return { deleted: true };
+  }
+  {
+    const b = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/brief$/);
+    if (b && metode === "PATCH") { Object.assign(briefAdmin[b[1]] ??= {}, badan); return { updated: true }; }
+    const pr = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/progress(\/token|\/updates)?$/);
+    if (pr) {
+      const x = progresAdmin[pr[1]];
+      if (!x) return { galat: 404 };
+      if (!pr[2] && metode === "PATCH") { x.phase = badan.phase; return { updated: true }; }
+      if (pr[2] === "/token") { x.accessToken = Array.from({ length: 40 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join(""); return { accessToken: x.accessToken }; }
+      if (pr[2] === "/updates" && metode === "POST") {
+        const id = `${pr[1]}-up-${Date.now()}`;
+        x.updates.unshift({ id, title: badan.title, note: badan.note, photoUrl: null, createdAt: new Date().toISOString() });
+        return { id };
+      }
+    }
+    const pu = path.match(/^\/api\/v1\/admin\/progress-updates\/([^/?]+)$/);
+    if (pu && metode === "DELETE") {
+      for (const x of Object.values(progresAdmin)) x.updates = x.updates.filter((u) => u.id !== pu[1]);
+      return { deleted: true };
+    }
+    const dp = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/documents$/);
+    if (dp && metode === "POST") {
+      const daftar = (dokumenAdmin[dp[1]] ??= []);
+      const id = `${dp[1]}-dok-baru-${daftar.length + 1}`;
+      const kini = new Date().toISOString();
+      daftar.unshift({ id, projectId: dp[1], status: "draft", clientNote: null, sortOrder: daftar.length,
+        fileUrl: `http://127.0.0.1:${PORT}/media/${badan.fileKey}`, createdAt: kini, updatedAt: kini, ...badan });
+      return { id };
+    }
+    const dk = path.match(/^\/api\/v1\/admin\/documents\/([^/?]+)(\/comments)?$/);
+    if (dk && dk[2] && metode === "POST") {
+      (komentarAdmin[dk[1]] ??= []).push({ id: `c${Date.now()}`, documentId: dk[1], author: "staf", body: badan.body, createdAt: new Date().toISOString() });
+      return { id: "c" };
+    }
+    if (dk && !dk[2]) {
+      for (const [pid, daftar] of Object.entries(dokumenAdmin)) {
+        const i = daftar.findIndex((d) => d.id === dk[1]);
+        if (i < 0) continue;
+        if (metode === "DELETE") { daftar.splice(i, 1); return { deleted: true }; }
+        Object.assign(daftar[i], badan);
+        return { updated: true, pid };
+      }
+      return { galat: 404 };
+    }
   }
   const gi = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/images$/);
   if (gi && metode === "POST") {

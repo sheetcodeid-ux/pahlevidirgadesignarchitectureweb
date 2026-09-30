@@ -1,0 +1,242 @@
+/* =============================================================================
+   Portal Klien di kerangka kit — /admin/proyek/klien.
+
+   Kerangkanya frame 34 (.pas__* dari paket-kit.css) dan potongan formulir
+   proyek (.pf__* dari proyekform-kit.css); yang di sini cuma bagian yang
+   memang milik portal klien: pita fase, daftar dokumen, komentar, linimasa.
+   ============================================================================= */
+
+/* Tanpa bidang besar di atas, judulnya berjarak sama dari garis kepala
+   seperti jarak judul dari bidang besar di halaman frame 34 lainnya. */
+.pk .pas__badan { margin-top: 20px; }
+
+.pk__kepala { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.pk__kepala .pf__subjudul { margin: 0; }
+.pk__ke { font-size: var(--k-t12); color: var(--text-muted); }
+
+/* --- Pita fase ----------------------------------------------------------------
+   Enam langkah sama lebar. Yang sudah lewat dan yang sedang berjalan diberi
+   dua warna tangga yang BERBEDA di kedua tema (--ramp-2 lawan --ramp-1) —
+   bukan --brand-mint lawan --brand, yang di tema gelap bernilai sama persis
+   dan membuat "sedang" tidak bisa dibedakan dari "sudah" (jebakan #37). */
+.pk__fase {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pk__fase button {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 0 0 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pk__fase button:disabled { cursor: default; }
+.pk__fase button:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; border-radius: 4px; }
+.pk__fasebar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ramp-4);
+  transition: background-color var(--dur) var(--ease);
+}
+.pk__fase button[data-lewat] .pk__fasebar { background: var(--ramp-2); }
+.pk__fase button[aria-pressed="true"] .pk__fasebar { background: var(--ramp-1); }
+.pk__fase button:hover:not([aria-pressed="true"]):not(:disabled) .pk__fasebar { background: var(--ramp-5); }
+.pk__fasenama { font-size: var(--k-t14); line-height: 1.2; color: var(--text-muted); }
+.pk__fase button[data-lewat] .pk__fasenama { color: var(--text-body); }
+.pk__fase button[aria-pressed="true"] .pk__fasenama { font-weight: var(--k-semi); color: var(--text-strong); }
+
+/* --- Brief -------------------------------------------------------------------- */
+.pk__keadaan {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--k-t12);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.pk__keadaan span {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warn);
+  transform: translateY(-1px);
+}
+.pk__keadaan[data-ada] span { background: var(--success); }
+
+/* --- Dokumen ------------------------------------------------------------------ */
+.pf__seret:focus-within { outline: 2px solid var(--brand); outline-offset: 2px; }
+.pk__dokdaftar { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.pk__dok {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+/* Yang menunggu klien bergaris kiri amber, yang diminta revisi merah —
+   terbaca sebelum satu kata pun dibaca, sama dengan portal kliennya. */
+.pk__dok[data-nada="tunggu"] { box-shadow: inset 3px 0 0 var(--warn); }
+.pk__dok[data-nada="tindak"] { box-shadow: inset 3px 0 0 var(--danger); }
+.pk__dokbaris { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.pk__pratinjau {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+button.pk__pratinjau { cursor: zoom-in; }
+button.pk__pratinjau:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.pk__pratinjau img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pk__dokteks { display: flex; flex: 1 1 auto; flex-direction: column; gap: 6px; min-width: 0; }
+.pk__dokjudul {
+  overflow: hidden;
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  line-height: 1.25;
+  color: var(--text-strong);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.pk__dokjudul:hover { text-decoration: underline; }
+.pk__dokmeta { font-size: var(--k-t12); color: var(--text-muted); }
+
+/* Status: <select> asli dengan titik warna di depannya, bukan lencana
+   ditambah pemilih terpisah — satu benda yang sekaligus menunjukkan dan
+   mengubah. */
+.pk__status {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.pk__status:focus-within { border-color: var(--brand); }
+.pk__status select {
+  min-width: 0;
+  padding: 0 18px 0 0;
+  margin-right: -18px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--k-t12);
+  font-weight: var(--k-med);
+  color: var(--text-strong);
+  appearance: none;
+  cursor: pointer;
+}
+.pk__status select:focus { outline: none; }
+.pk__status > svg { pointer-events: none; }
+.pk__statustitik { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+.pk__status[data-nada="tunggu"] .pk__statustitik { background: var(--warn); }
+.pk__status[data-nada="tindak"] .pk__statustitik { background: var(--danger); }
+.pk__status[data-nada="beres"] .pk__statustitik { background: var(--success); }
+.pk__hapus { flex: none; color: var(--danger); }
+.pk__suara { margin-left: 70px; }
+
+.pk__catatanklien {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: none;
+  margin: 0 0 0 70px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--danger-soft);
+  font-size: var(--k-t12);
+  line-height: 1.5;
+  color: var(--text-strong);
+}
+.pk__catatanklien b { font-weight: var(--k-semi); }
+
+.pk__komentar { margin-left: 70px; }
+.pk__komentar summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--k-t12);
+  font-weight: var(--k-med);
+  color: var(--brand);
+  cursor: pointer;
+  list-style: none;
+}
+.pk__komentar summary::-webkit-details-marker { display: none; }
+.pk__komentar summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 3px; }
+.pk__komentar summary svg { transition: transform var(--dur) var(--ease); }
+.pk__komentar[open] summary svg { transform: rotate(180deg); }
+.pk__komentarisi { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+.pk__balas { display: flex; gap: 8px; }
+.pk__balas .k-isian__kotak { flex: 1 1 auto; min-width: 0; }
+.pk__balas .k-isian__input { width: 100%; }
+
+/* --- Kolom samping ------------------------------------------------------------ */
+.pk__tautan {
+  max-width: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  font-size: var(--k-t12);
+  line-height: 1.45;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.pk .pf__info > .k-tombol { width: 100%; justify-content: center; }
+.pk__tindak { color: var(--danger); }
+.pk__ulang { display: flex; flex-direction: column; gap: 6px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* --- Kabar -------------------------------------------------------------------- */
+.pk__kabarform { display: flex; flex-direction: column; gap: 20px; }
+.pk__kabaraksi { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pk__lini { display: flex; flex-direction: column; margin: 16px 0 0; padding: 0; list-style: none; }
+.pk__lini > li { display: flex; align-items: flex-start; gap: 12px; }
+.pk__lini .k-aktivitas { flex: 1 1 auto; min-width: 0; padding-bottom: 20px; }
+.pk__lini .k-aktivitas--akhir { padding-bottom: 0; }
+.pk__kabarjudul { display: block; font-weight: var(--k-semi); color: var(--text-strong); }
+.pk__kabarcatatan { display: block; margin-top: 4px; color: var(--text-muted); }
+
+/* Satu kolom: kartu tautan turun ke bawah isi. Dibatasi lebarnya supaya
+   tombol Salin tidak jadi bilah selebar 760px di tablet. */
+@media (max-width: 1240px) {
+  .pk .pf__info { max-width: 440px; }
+}
+@media (max-width: 40rem) {
+  .pk .pf__info { max-width: none; }
+  .pk__fase { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
+  .pk__dokbaris { flex-wrap: wrap; }
+  .pk__dokteks { flex-basis: calc(100% - 70px); }
+  .pk__status { margin-left: 70px; }
+  .pk__hapus { margin-left: auto; }
+  .pk__suara,
+  .pk__catatanklien,
+  .pk__komentar { margin-left: 0; }
+}

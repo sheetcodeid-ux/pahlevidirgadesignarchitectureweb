@@ -733,7 +733,7 @@ import "../../styles/publik.css";
            </div>`
         : "";
       const thr = d.comments.length ? `<div class="thr">${d.comments.map((c) =>
-        `<div class="thr__k"><div class="thr__w"><b>${c.author === "studio" ? t("studio") : t("klien")}</b> · ${tgl(c.createdAt)}</div>
+        `<div class="thr__k"><div class="thr__w"><b>${c.author === "staf" ? t("studio") : t("klien")}</b> · ${tgl(c.createdAt)}</div>
           <div class="thr__b">${E(c.body)}</div></div>`).join("")}</div>` : "";
       const catatan = d.status === "revisi_diminta" && d.clientNote
         ? `<div class="thr"><div class="thr__k"><div class="thr__w"><b>${t("klien")}</b></div>

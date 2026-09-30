@@ -1,7 +1,7 @@
 /**
  * Unduh CSV dari daftar baris.
  *
- * Diangkat dari FinancePanel karena halaman Fee memerlukan yang sama persis.
+ * Diangkat dari panel Keuangan lama karena halaman Fee memerlukan yang sama persis.
  * Disalin akan berarti dua fungsi yang isinya sama — dan yang pertama lupa
  * diperbaiki saat yang kedua diperbaiki adalah pola yang sudah berkali-kali
  * memakan waktu di proyek ini.

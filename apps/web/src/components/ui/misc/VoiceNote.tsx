@@ -89,7 +89,12 @@ interface PemutarProps {
   label?: string;
 }
 
-export function PemutarSuara({ url, durationMs, label = "Pesan suara" }: PemutarProps) {
+/* Logika pemutar dipisah dari kulitnya. Panel lama dan kerangka kit
+   menggambar pemutar yang berbeda rupa, tapi pendekodean gelombang, posisi,
+   dan pengakuan durasi Infinity dari MediaRecorder cukup ada di SATU tempat
+   — dua salinan logika audio pasti menyimpang, dan yang menyimpang baru
+   ketahuan saat klien mengeluh suaranya tidak bisa diputar. */
+export function usePemutarSuara(url: string, durationMs?: number | null) {
   const audio = useRef<HTMLAudioElement>(null);
   const [main, setMain] = useState(false);
   const [posisi, setPosisi] = useState(0);
@@ -105,67 +110,86 @@ export function PemutarSuara({ url, durationMs, label = "Pesan suara" }: Pemutar
   const rasio = durasi > 0 ? Math.min(1, posisi / durasi) : 0;
   const batang = puncak ?? Array.from({ length: JUMLAH_BATANG }, () => 0.35);
 
+  return {
+    main,
+    rasio,
+    batang,
+    /** Sisa waktu saat diam, posisi berjalan saat diputar. */
+    waktu: formatDurasi((main || posisi > 0 ? posisi : durasi) * 1000),
+    alih() {
+      const el = audio.current;
+      if (!el) return;
+      if (el.paused) void el.play();
+      else el.pause();
+    },
+    /** Disebar ke satu elemen <audio> milik kulitnya. */
+    propAudio: {
+      ref: audio,
+      src: url,
+      preload: "metadata" as const,
+      onPlay: () => setMain(true),
+      onPause: () => setMain(false),
+      onEnded: () => { setMain(false); setPosisi(0); },
+      onTimeUpdate: (e: React.SyntheticEvent<HTMLAudioElement>) => setPosisi(e.currentTarget.currentTime),
+      onLoadedMetadata: (e: React.SyntheticEvent<HTMLAudioElement>) => {
+        const d = e.currentTarget.duration;
+        // Rekaman MediaRecorder kerap melaporkan Infinity sampai diputar
+        // sampai habis; durasi dari database yang menyelamatkan tampilan.
+        if (Number.isFinite(d) && d > 0) setDurasi(d);
+      },
+    },
+  };
+}
+
+export function PemutarSuara({ url, durationMs, label = "Pesan suara" }: PemutarProps) {
+  const p = usePemutarSuara(url, durationMs);
+
   return (
-    <div className="vn" data-main={main || undefined}>
+    <div className="vn" data-main={p.main || undefined}>
       <button
         type="button"
         className="vn__tombol"
-        aria-label={main ? `Jeda ${label}` : `Putar ${label}`}
-        onClick={() => {
-          const el = audio.current;
-          if (!el) return;
-          if (el.paused) void el.play();
-          else el.pause();
-        }}
+        aria-label={p.main ? `Jeda ${label}` : `Putar ${label}`}
+        onClick={p.alih}
       >
-        <Icon name={main ? "pause" : "play"} size={16} />
+        <Icon name={p.main ? "pause" : "play"} size={16} />
       </button>
 
       <div className="vn__gelombang" aria-hidden="true">
-        {batang.map((tinggi, i) => (
+        {p.batang.map((tinggi, i) => (
           <span
             key={i}
             className="vn__batang"
-            data-lewat={i / JUMLAH_BATANG <= rasio || undefined}
+            data-lewat={(p.rasio > 0 && i / JUMLAH_BATANG < p.rasio) || undefined}
             style={{ height: `${Math.max(12, tinggi * 100)}%` }}
           />
         ))}
       </div>
 
-      <span className="vn__waktu mono">
-        {formatDurasi((main || posisi > 0 ? posisi : durasi) * 1000)}
-      </span>
+      <span className="vn__waktu mono">{p.waktu}</span>
 
-      <audio
-        ref={audio}
-        src={url}
-        preload="metadata"
-        onPlay={() => setMain(true)}
-        onPause={() => setMain(false)}
-        onEnded={() => { setMain(false); setPosisi(0); }}
-        onTimeUpdate={(e) => setPosisi(e.currentTarget.currentTime)}
-        onLoadedMetadata={(e) => {
-          const d = e.currentTarget.duration;
-          // Rekaman MediaRecorder kerap melaporkan Infinity sampai diputar
-          // sampai habis; durasi dari database yang menyelamatkan tampilan.
-          if (Number.isFinite(d) && d > 0) setDurasi(d);
-        }}
-      />
+      <audio {...p.propAudio} />
     </div>
   );
 }
+
+/** Jumlah batang gelombang — dipakai kulit lain untuk menandai bagian yang sudah lewat. */
+export const BATANG_SUARA = JUMLAH_BATANG;
 
 /* ---------------------------------------------------------------- Perekam */
 
 type Fase = "diam" | "merekam" | "pratinjau" | "ditolak";
 
-interface PerekamProps {
+export interface PerekamProps {
   /** Dipanggil saat staf menekan Kirim. Komponen tidak tahu apa-apa soal unggahan. */
   onKirim: (blob: Blob, durasiMs: number, mime: string) => Promise<void> | void;
   disabled?: boolean;
 }
 
-export function PerekamSuara({ onKirim, disabled }: PerekamProps) {
+/* Logika perekam, dipisah dari kulitnya dengan alasan yang sama seperti
+   pemutar di atas: MediaRecorder, pelepasan mikrofon, dan batas lima menit
+   cukup ditulis sekali. */
+export function useRekamSuara(onKirim: PerekamProps["onKirim"]) {
   const [fase, setFase] = useState<Fase>("diam");
   const [ms, setMs] = useState(0);
   const [level, setLevel] = useState<number[]>([]);
@@ -271,6 +295,23 @@ export function PerekamSuara({ onKirim, disabled }: PerekamProps) {
     }
   }
 
+  return {
+    fase,
+    ms,
+    level,
+    hasil,
+    mengirim,
+    mulaiRekam,
+    /** Menghentikan rekaman; hasilnya masuk ke pratinjau lewat onstop. */
+    selesai: () => recorder.current?.stop(),
+    buang,
+    kirim,
+  };
+}
+
+export function PerekamSuara({ onKirim, disabled }: PerekamProps) {
+  const { fase, ms, level, hasil, mengirim, mulaiRekam, selesai, buang, kirim } = useRekamSuara(onKirim);
+
   if (fase === "ditolak") {
     return (
       <div className="vn-rekam vn-rekam--tolak">
@@ -314,7 +355,7 @@ export function PerekamSuara({ onKirim, disabled }: PerekamProps) {
           ))}
         </div>
         <button type="button" className="btn btn--danger btn--icon" aria-label="Selesai merekam"
-          onClick={() => recorder.current?.stop()}>
+          onClick={selesai}>
           <Icon name="stop" size={15} />
         </button>
       </div>

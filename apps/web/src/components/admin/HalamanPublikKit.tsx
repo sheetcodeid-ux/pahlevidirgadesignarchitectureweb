@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
 import { AlertDialog } from "../ui/overlay/Dialog";
@@ -9,7 +9,6 @@ import { Lencana, type NadaLencana } from "../kit/Lencana";
 import { Ikon } from "../kit/Ikon";
 import {
   ArchiveTray,
-  CaretDown,
   CaretLeft,
   CaretRight,
   Globe,
@@ -18,7 +17,6 @@ import {
   Trash,
 } from "../kit/ikon";
 import {
-  daftarProyek,
   simpanProyek,
   hapusProyek,
   mintaUrlUnggah,
@@ -32,7 +30,7 @@ import {
   type GambarProyek,
   type JenisGambar,
 } from "../../lib/admin";
-import { proyekAktif, setProyekAktif } from "../../lib/proyekAktif";
+import { usePilihProyek, JudulPilihProyek } from "./pilihProyekKit";
 import { TAHAP_PROYEK } from "../../lib/notifikasi";
 import { subjudulBerguna } from "../../lib/api";
 import { useCegahPindah } from "../../lib/cegahPindah";
@@ -93,40 +91,12 @@ type Tab = "detail" | "galeri" | "seo";
 
 function Isi() {
   const toast = useToast();
-  const [semua, setSemua] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
-  const [id, setId] = useState<string | null>(null);
+  const { semua, setSemua, id, asli, galat, pilih } = usePilihProyek();
   const [draf, setDraf] = useState<Draf>({});
   const [tab, setTab] = useState<Tab>("detail");
   const [menyimpan, setMenyimpan] = useState(false);
   const [mengunggah, setMengunggah] = useState(false);
   const [pratinjauSampul, setPratinjauSampul] = useState<string | null>(null);
-  const [galat, setGalat] = useState<string | null>(null);
-
-  /* Proyek yang dibuka dibaca SEBELUM paint pertama: ?id= di alamat (dari
-     Semua Proyek atau Satu Proyek), lalu proyek aktif yang diingat. Dua-duanya
-     cuma ada di browser, jadi tidak boleh masuk nilai awal useState —
-     bedanya akan jadi ketidakcocokan hidrasi. */
-  useLayoutEffect(() => {
-    const dariAlamat = new URLSearchParams(location.search).get("id");
-    if (dariAlamat) setProyekAktif(dariAlamat);
-    setId(dariAlamat ?? proyekAktif());
-  }, []);
-
-  useEffect(() => {
-    daftarProyek()
-      .then((d) => {
-        tulisCache("proyek", d);
-        setSemua(d);
-      })
-      .catch((e) => setSemua((l) => {
-        if (!l) setGalat((e as Error).message);
-        return l;
-      }));
-  }, []);
-
-  /* Tanpa proyek yang diingat, yang dibuka proyek pertama di daftar — bukan
-     halaman kosong yang menyuruh pergi ke tempat lain. */
-  const asli = semua?.find((p) => p.id === id) ?? (semua && !id ? semua[0] : undefined) ?? null;
 
   const berubah = asli
     ? (Object.keys(draf) as (keyof Draf)[]).filter((k) => draf[k] !== (asli as Draf)[k])
@@ -145,17 +115,12 @@ function Isi() {
   function gantiProyek(baru: string) {
     if (baru === asli?.id) return;
     if (adaPerubahan && !confirm(`Ada ${berubah.length} perubahan yang belum disimpan. Tinggalkan?`)) return;
-    setProyekAktif(baru);
-    setId(baru);
+    pilih(baru);
     setDraf({});
     setPratinjauSampul((l) => {
       if (l) URL.revokeObjectURL(l);
       return null;
     });
-    /* Alamatnya ikut, supaya muat ulang dan tautan yang disalin membuka
-       proyek yang sama. replaceState, bukan pushState: berpindah proyek di
-       sini bukan langkah yang perlu dibatalkan dengan tombol Kembali. */
-    history.replaceState(history.state, "", `?id=${encodeURIComponent(baru)}`);
   }
 
   async function simpan() {
@@ -264,17 +229,7 @@ function Isi() {
         <div className="pas__utama pf__utama">
           {/* ---- Judul yang sekaligus pemilih proyek ------------------------ */}
           <div className="pas__judulbaris">
-            <label className="pf__pilihjudul">
-              <span className="pas__judul">{asli.title}</span>
-              <Ikon ikon={CaretDown} ukuran={20} />
-              <select aria-label="Pilih proyek" value={asli.id} onChange={(e) => gantiProyek(e.currentTarget.value)}>
-                {semua.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <JudulPilihProyek semua={semua} asli={asli} onPilih={gantiProyek} />
           </div>
 
           {/* ---- Status terbit ---------------------------------------------- */}

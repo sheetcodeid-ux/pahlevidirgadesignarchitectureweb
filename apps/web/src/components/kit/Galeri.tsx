@@ -10,6 +10,7 @@ import { GaleriBanding } from "./GaleriBanding";
 import { Cincin, Donat, LencanaTren } from "./Ukuran";
 import { KelompokTab } from "./Segmen";
 import { KartuStatistikRingkas } from "./Kartu";
+import { PemutarSuaraKit, PerekamSuaraKit } from "./Suara";
 import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, CoinVertical, NavCreditCard, VirtualAccount, DotsThree, SEMUA_IKON } from "./ikon";
 
 /* =============================================================================
@@ -323,6 +324,26 @@ export function Galeri() {
                 </>
               }
             />
+          </div>
+        </Baris>
+      </section>
+
+      <section className="k-galeri__seksi">
+        <h2 className="k-galeri__judul">Pesan suara</h2>
+        <p className="k-galeri__ket">
+          Bukan frame Coinest — Coinest tidak punya komponen audio. Kulit kit di
+          atas logika <code>VoiceNote</code> yang sama dengan panel lama; dipakai
+          di Portal Klien. Ikon putar/jeda/mikrofon milik situs sendiri, diisi
+          penuh supaya sebahasa dengan ikon Coinest.
+        </p>
+        <Baris judul="Pemutar — 44 tinggi, r12, tombol 32 sewarna tombol utama">
+          <div style={{ width: 420 }}>
+            <PemutarSuaraKit url="" durationMs={42000} label="contoh pesan suara" />
+          </div>
+        </Baris>
+        <Baris judul="Perekam — keadaan diam (merekam dan pratinjau muncul setelah Rekam)">
+          <div style={{ width: 520 }}>
+            <PerekamSuaraKit onKirim={() => {}} />
           </div>
         </Baris>
       </section>
