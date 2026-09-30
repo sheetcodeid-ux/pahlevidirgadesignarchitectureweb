@@ -155,11 +155,11 @@ function Isi() {
 
   return (
     <div className="pas">
-      <div className={`pbr__sampul${sampul ? "" : " pbr__sampul--kosong"}`}>
+      <div className={`pf__sampul${sampul ? "" : " pf__sampul--kosong"}`}>
         {sampul ? (
           <img src={sampul.url} alt="Sampul proyek" />
         ) : (
-          <span className="pbr__sampulkosong">
+          <span className="pf__sampulkosong">
             <Ikon ikon={ImageSquare} ukuran={32} />
             <b>Gambar sampul (opsional)</b>
             <small>
@@ -168,9 +168,9 @@ function Isi() {
             </small>
           </span>
         )}
-        <span className="pbr__sampulaksi">
+        <span className="pf__sampulaksi">
           {/* Utama selagi kosong — secondary sewarna dengan bidang kosongnya. */}
-          <label className={`k-tombol k-tombol--medium ${sampul ? "k-tombol--secondary" : "k-tombol--primary"} pbr__unggah`}>
+          <label className={`k-tombol k-tombol--medium ${sampul ? "k-tombol--secondary" : "k-tombol--primary"} pf__unggah`}>
             {mengunggah ? "Mengunggah…" : sampul ? "Ganti sampul" : "Pilih gambar"}
             <input
               type="file"
@@ -295,7 +295,7 @@ function Isi() {
               />
             </label>
 
-            <p className="pbr__catatan">
+            <p className="pf__catatan">
               Selain judul, semuanya boleh dikosongkan dan diisi belakangan. Proyek baru tersimpan sebagai draf —
               belum tampil di situs sampai diterbitkan dari Halaman Publik.
             </p>
@@ -307,9 +307,9 @@ function Isi() {
               <Tombol ukuran="large" jenis="ghost" disabled={menyimpan} onClick={() => navigate("/admin/proyek")}>
                 Batal
               </Tombol>
-              {alasan && <span className="pbr__alasan">{alasan}</span>}
+              {alasan && <span className="pf__alasan">{alasan}</span>}
               {adaIsian && (
-                <button type="button" className="pbr__kosongkan" onClick={kosongkan} disabled={menyimpan}>
+                <button type="button" className="pf__kosongkan" onClick={kosongkan} disabled={menyimpan}>
                   Kosongkan isian
                 </button>
               )}

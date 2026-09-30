@@ -1,11 +1,13 @@
 ---
-import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { ProyekPanel } from "../../../components/admin/ProjectEditor";
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { HalamanPublikKit } from "../../../components/admin/HalamanPublikKit";
+/* Kelas formulir frame 34 (.pas__*) hidup di paket-kit.css; kotak sampul,
+   kisi foto, dan kolom samping di proyekform-kit.css — keduanya dipakai
+   bersama Proyek Baru. */
+import "../../../styles/paket-kit.css";
+import "../../../styles/proyekform-kit.css";
 ---
 
-{/* Tanpa prop heading: judul halaman raksasa dibuang atas permintaan pemilik.
-    Judulnya tetap ada di breadcrumb topbar (yang membacanya dari `title`),
-    dan panel ini membawa judul kecilnya sendiri seperti gambar referensi. */}
-<AdminLayout title="Halaman Proyek">
-  <ProyekPanel client:load halaman="publik" />
-</AdminLayout>
+<KitLayout title="Halaman Publik" judul="Halaman Publik">
+  <HalamanPublikKit client:load />
+</KitLayout>

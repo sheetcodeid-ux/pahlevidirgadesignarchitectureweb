@@ -297,7 +297,11 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
   id: p.projectId,
   slug: `proyek-${i + 1}`,
   title: p.projectTitle,
-  category: i % 2 ? "residential" : "hospitality",
+  /* Enum project_category di database tidak punya "hospitality" — proyek
+     kafe masuk "commercial". Data tiruan mengikuti databasenya, bukan peta
+     label di panel. */
+  category: i % 2 ? "residential" : "commercial",
+  coverImageUrl: i < 3 ? `http://127.0.0.1:${PORT}/media/projects/uji/contoh-${i + 1}.svg` : null,
   status: i === 3 ? "draft" : "published",
   city: ["Pontianak", "Singkawang", "Pontianak", "Kubu Raya", "Pontianak"][i],
   client: ["Bu Ratna", "Pak Hendra", "Bakmi Hauw", "Notaris Ahmad", "PT Kapuas Jaya"][i],
@@ -309,6 +313,25 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
   year: 2026 - (i % 3),
   publishedAt: `2026-0${9 - i}-01T00:00:00Z`,
 }));
+
+/* Foto galeri dan material per proyek. Proyek pertama penuh (enam galeri,
+   tiga material), yang lain berkurang — supaya kisi foto, batas sepuluh,
+   dan keadaan kosong bisa diperiksa di proyek yang berbeda. */
+const gambarAdmin = Object.fromEntries(
+  proyekAdmin.map((p, i) => {
+    const buat = (kind, n, awal) =>
+      Array.from({ length: n }, (_, k) => ({
+        id: `${p.id}-${kind}-${k + 1}`,
+        storageKey: `projects/${p.slug}/contoh-${((awal + k) % 6) + 1}.svg`,
+        url: `http://127.0.0.1:${PORT}/media/projects/${p.slug}/contoh-${((awal + k) % 6) + 1}.svg`,
+        thumbUrl: null,
+        caption: kind === "material" ? ["Kayu ulin", "Beton ekspos", "Batu alam"][k % 3] : k === 0 ? "Fasad depan" : null,
+        altText: null,
+        sortOrder: k,
+      }));
+    return [p.id, { galeri: buat("galeri", Math.max(0, 6 - i * 2), i), material: buat("material", Math.max(0, 3 - i), i + 2) }];
+  }),
+);
 
 /* Pembayaran per proyek. Dua sampai empat butir, mundur beberapa minggu —
    cukup untuk mengisi strip mendatar di frame 07 dan untuk membuktikan
@@ -551,6 +574,10 @@ const jawab = (path) => {
      pembayaran dijawab dengan daftar proyek — dan halamannya menggambar
      kartu pembayaran berisi judul proyek tanpa satu pun galat. */
   {
+    const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/images(?:\?kind=(\w+))?/);
+    if (m) return gambarAdmin[m[1]]?.[m[2] ?? "galeri"] ?? [];
+  }
+  {
     const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/tasks/);
     if (m) return tugasAdmin[m[1]] ?? [];
   }
@@ -644,6 +671,29 @@ function tulis(metode, path, badan) {
     paketAdmin.splice(i, 1);
     return { deleted: true };
   }
+  const gi = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/images$/);
+  if (gi && metode === "POST") {
+    const kind = badan.kind ?? "galeri";
+    const daftar = (gambarAdmin[gi[1]] ??= { galeri: [], material: [] })[kind];
+    const id = `${gi[1]}-${kind}-baru-${daftar.length + 1}`;
+    daftar.push({ id, storageKey: badan.storageKey, url: `http://127.0.0.1:${PORT}/media/${badan.storageKey}`,
+      thumbUrl: null, caption: null, altText: null, sortOrder: badan.sortOrder ?? daftar.length });
+    return { id };
+  }
+  const ig = path.match(/^\/api\/v1\/admin\/images\/([^/?]+)$/);
+  if (ig) {
+    for (const per of Object.values(gambarAdmin)) {
+      for (const kind of ["galeri", "material"]) {
+        const i = per[kind].findIndex((x) => x.id === ig[1]);
+        if (i < 0) continue;
+        if (metode === "DELETE") { per[kind].splice(i, 1); return { deleted: true }; }
+        Object.assign(per[kind][i], badan);
+        per[kind].sort((a, b) => a.sortOrder - b.sortOrder);
+        return { updated: true };
+      }
+    }
+    return { galat: 404 };
+  }
   /* Unggah tiruan: URL "presigned" menunjuk server ini sendiri, dan PUT ke
      sana diterima begitu saja. Kuncinya menunjuk salah satu sampul contoh
      supaya gambar hasil unggahan tetap tergambar. */
@@ -712,7 +762,7 @@ createServer((req, res) => {
     });
   }
   {
-    const m = path.match(/^\/media\/jurnal\/contoh-(\d+)\.svg$/);
+    const m = path.match(/^\/media\/.*contoh-(\d+)\.svg$/);
     if (m) {
       res.writeHead(200, { "content-type": "image/svg+xml", "access-control-allow-origin": "*" });
       return res.end(sampulSvg(Number(m[1])));
