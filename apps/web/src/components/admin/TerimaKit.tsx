@@ -106,10 +106,9 @@ function tanggalPendek(iso: string): string {
 }
 
 /**
- * Jenis DITEBAK dari angkanya, sama seperti di dialog lama
- * (`PaymentFlow.tebakJenis`) — dan memang disalin dari sana dengan sengaja:
- * dua tempat yang menebak dengan aturan berbeda akan memberi jawaban berbeda
- * untuk pembayaran yang sama.
+ * Jenis DITEBAK dari angkanya, dengan aturan yang sama seperti dialog
+ * pembayaran lama (PaymentFlow.tsx, sudah dibuang) — staf yang terbiasa
+ * dengan tebakan lama mendapat tebakan yang sama.
  *
  * Kalau sisa tagihan lunas oleh pembayaran ini, itu pelunasan. Kalau ini
  * yang pertama, itu DP. Sisanya termin. Staf tetap bisa mengubahnya.

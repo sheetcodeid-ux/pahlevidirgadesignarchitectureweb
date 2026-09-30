@@ -11,8 +11,8 @@ import type { Pembayaran } from "../../lib/admin";
    Bukti pembayaran — tautan yang dikirim studio ke klien sesudah uang masuk.
 
    Fitur ini SEMPAT HILANG dari panel sejak Semua Proyek dan Terima
-   Pembayaran pindah ke kit (P4): dialognya tinggal di PaymentFlow.tsx, yang
-   tidak lagi dipasang halaman mana pun. Halaman /bukti-nya sendiri tetap
+   Pembayaran pindah ke kit (P4): dialognya tinggal di PaymentFlow.tsx (kini
+   dibuang), yang tidak lagi dipasang halaman mana pun. Halaman /bukti-nya sendiri tetap
    hidup, jadi yang hilang cuma jalan staf untuk MENDAPATKAN tautannya.
 
    Isinya dibawa apa adanya dari dialog lama (nominal, lunas, rincian,

@@ -813,6 +813,30 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     Sisa ikon di bawah 3 yang dibiarkan: warna frame (bintang inbox abu dan
     amber, lencana tren merah-muda) dan panah paginasi yang memang mati.
 
+38. **Memindahkan halaman ke kerangka baru bisa MENGHAPUS FITUR tanpa satu
+    pun galat.** Selama rombak ke kit, delapan hal hilang dari produksi dan
+    tidak ada satu pun langkah merah: tombol **Keluar** (satu-satunya ada di
+    Topbar lama; halaman terakhir yang memakainya pindah di run #134 — panel
+    sempat tanpa jalan keluar sama sekali), palet **Ctrl/Cmd+K**, **lonceng**
+    berangka, tombol **Pesan**, **angka merah** Pesan Masuk di rel, baris
+    **UI Component** untuk master, dialog **bukti pembayaran** untuk klien,
+    dan dua **PDF** berkop (Rincian Biaya, Daftar Tagihan). Polanya selalu
+    sama: fiturnya tinggal di komponen LAMA yang tidak lagi dipasang halaman
+    mana pun, atau kerangka barunya menggambar kontrolnya dari frame tanpa
+    menyambungkannya — kotak cari, lonceng, dan tombol pesan di kepala kit
+    cuma hiasan sejak hari pertama.
+
+    Yang menemukannya bukan membaca halaman melainkan audit mekanis, dan
+    itu yang wajib diulang tiap kali satu kelompok halaman pindah:
+    - **fungsi API tanpa pemanggil** — tiap fungsi yang diekspor
+      `lib/admin.ts` tapi tidak dipanggil komponen hidup mana pun adalah
+      fitur yang tidak bisa dijangkau (di sini: `daftarInvoice`,
+      `daftarBiaya`, `ambilLogoStudio` → PDF);
+    - **berkas tanpa pengimpor** — `PaymentFlow.tsx`, `lib/pdf.ts`;
+    - **kontrol tanpa handler** di kerangka — `onClick`/`href` kosong;
+    - **prop layout yang tidak dioper** — `RelKit` menerima
+      `pesanBelumDibaca` dan `master`, `KitLayout` tidak pernah mengisinya.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1074,3 +1098,4 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Portal Klien pindah ke kit; `ProjectEditor.tsx` dan `FinancePanel.tsx` DIBUANG** | Halaman terakhir kelompok Proyek. Kerangka frame 34 yang sama dengan Halaman Publik; pemilih proyeknya satu modul bersama (`components/admin/pilihProyekKit.tsx`), bukan salinan. `FinancePanel` ternyata sudah tidak diimpor halaman mana pun sejak Keuangan pindah ke kit — `PanelKeuangan` cuma hidup untuknya, jadi editor lama bisa dibuang utuh. Dua cacat produksi ketahuan di jalan: (1) panel Brief lama MENAMPILKAN anggaran dan kedua tanggal tapi tidak pernah MENGIRIMNYA — "Brief disimpan", lalu angkanya hilang saat dimuat ulang; (2) `/progres` membandingkan penulis komentar dengan `"studio"`, padahal enum database `staf`/`klien` — jadi di layar klien balasan studio tertulis "Anda". Logika `VoiceNote` dipecah jadi `usePemutarSuara`/`useRekamSuara`, dan kulit kitnya (`kit/Suara.tsx`) terdaftar di `/admin/kit`. CSS editor lama (`.proyekpage`, `.pilihproyek__*`) SENGAJA belum dibuang: tiap aturannya berpasangan dengan `.kartudaftar__*` yang masih dipakai enam halaman lama, dan keduanya pergi bersama begitu halaman itu pindah |
 | **Kelompok Tugas & daftar pindah ke kit, di atas SATU kerangka daftar (`daftarKit.tsx`)** | Tugas, Direktori, Testimoni, dan Tim memakai kerangka frame 13 yang diangkat dari Semua Transaksi — bilah cari + `PilihTombol`, tabel kit, kaki paginasi — dengan stylesheet tunggal `daftar-kit.css`. Semua Transaksi sendiri dipindah ke kerangka itu dan terbukti identik piksel demi piksel (1440/1024/390, terang dan gelap), begitu juga Portal Klien setelah status-pemilihnya jadi `PilihStatus` bersama. Menyaring tetap urusan tiap halaman; kerangka cuma memotong halaman, dan kembali ke halaman 1 saat saringan berubah dibandingkan saat RENDER (bukan efek). Notifikasi memakai linimasa yang sama dengan "Perlu Ditangani" di Dashboard lewat `linimasaNotif.tsx`. Tiga cacat produksi ketahuan di `lib/notifikasi.ts` dan sudah diperbaiki: tugas disaring `!== "done"` padahal enumnya `selesai` (tugas yang sudah selesai dilaporkan terlewat selamanya), testimoni `=== "pending"` padahal enumnya `menunggu` (testimoni yang menunggu tidak pernah muncul di lonceng), dan jenis proyek tercetak mentah ("commercial"). `TaskBoard`, `DirectoryPanel`, `TestimonialsPanel`, `TeamPanel` dibuang; `NotifikasiPanel` tinggal dua bagian yang masih dipakai lonceng kerangka lama |
 | **Situs Publik & Pengaturan pindah ke kit, di atas SATU kerangka (`situsKit.tsx`)** | Kelompok terakhir halaman kerangka lama: Logo Klien, Tim Studio, Sebelum & Sesudah, Angka di FAQ, Halaman Privasi, Identitas Studio, Info Studio, Akun. Kerangka frame 34 yang sama dengan Halaman Publik — kolom utama berisi PRATINJAU gelap persis seperti di situs, lalu isiannya; kolom samping menjawab "sudah lengkap belum, dan di mana saya melihatnya". `HalamanSitus` menggantikan `SisiSitus`, `IsiHalamanKit` menggantikan `IsiHalamanPanel` dengan antarmuka `Isian` yang sama, jadi tiga halaman teks (FAQ, Privasi, Identitas) tetap satu komponen. Logika lama dibawa apa adanya (ambang `lib/logoBentuk`, tukar `sort_order` tetangga, kunci R2 baru disimpan sesudah unggah berhasil, isian kosong dikirim sebagai null, hanya kolom yang berubah yang dikirim). Tiga perbaikan: tahun di Identitas wajib empat angka (dulu "21" lolos dan tercetak di garis waktu); halaman Akun memeriksa aturan kata sandi SUPABASE — 12 karakter, besar, kecil, angka, simbol — padahal halaman lama menyebut "minimal 8" sehingga sandi 8–11 karakter ditolak server tanpa alasan yang terbaca; dan label loncatan pembanding dibetulkan (0% = sesudah penuh). Tujuh panel lama dibuang: `SisiSitus`, `IsiHalamanPanel`, `ClientLogosPanel`, `TimStudioPanel`, `BandingPanel`, `SettingsForm`, `AccountPanel`. Kerangka lama (`AdminLayout`/`Topbar`) sekarang cuma dipakai `/admin/ui`, `/admin/kit`, dan `/admin/masuk` |
+| **Fitur yang hilang saat rombak ke kit dipulihkan DI DALAM kit, bukan dengan menghidupkan komponen lama** | Delapan fitur (jebakan #38) kembali memakai bagian kit: Keluar jadi baris terakhir rel (ikon Nav-SignOut milik Coinest, di slot kaki yang di framenya berisi banner promo) dan relnya kini bergulir sendiri — dengan Situs Publik terbuka baris terakhir berakhir di y936, di bawah tepi layar 800; kotak "Cari di panel" membuka palet `Perintah` yang sama; lonceng dan tombol pesan memakai titik `TombolBulat` dengan angka dari `lib/notifikasi` (sumber yang sama dengan Notifikasi dan Dashboard) dan mengabarkan angka pesan ke rel lewat `kit:pesan`; bukti pembayaran jadi `buktiKit.tsx` (muncul sendiri sesudah Terima Pembayaran mencatat, dibuka ulang dari baris Pembayaran Terbaru dan dari nama pembayaran di Semua Transaksi); PDF jadi `lib/pdfProyek.ts` dengan menu di kepala Satu Proyek, datanya diambil SEGAR saat ditekan. Isi keduanya dibawa apa adanya dari versi lama. Kolom isi ke-30 halaman kit terbukti identik piksel demi piksel dengan build produksi (1440 terang/gelap, 390), kecuali ikon PDF di Satu Proyek. `PaymentFlow.tsx`, `LoginForm.tsx`, dan `lib/pakaiData.ts` — tanpa pengimpor — dibuang |

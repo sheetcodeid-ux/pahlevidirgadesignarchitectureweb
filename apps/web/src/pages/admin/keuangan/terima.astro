@@ -7,13 +7,10 @@ import "../../../styles/terima-kit.css";
 /* Halaman KEDUA yang pindah ke kit (P4), mengikuti frame Figma
    "07. Transfer".
 
-   Berdampingan, bukan menggantikan: dialog terima pembayaran yang lama
-   (`PaymentFlow.KolomPembayaran`) tetap hidup di tabel Semua Proyek. Yang
-   itu kontekstual — staf sedang melihat satu proyek dan mencatat uang yang
-   baru masuk untuknya. Yang ini berdiri sendiri: staf memegang uangnya
-   dulu, baru mencari proyeknya. Keduanya menulis lewat endpoint yang SAMA
-   dengan bentuk isian yang sama, jadi tidak ada angka yang bisa tercatat
-   dua kali — yang bertambah cuma pintu masuknya.
+   Sejak Semua Proyek pindah ke kit, halaman ini SATU-SATUNYA pintu untuk
+   mencatat uang masuk — dialog lama (PaymentFlow.KolomPembayaran) sudah
+   dibuang. Sesudah mencatat, bukti pembayaran untuk klien muncul sendiri
+   (components/admin/buktiKit.tsx).
 
    Letaknya di bawah /admin/keuangan/, bukan di akar /admin/, karena
    Keuangan memang sudah jadi satu pintu (lihat Riwayat keputusan di

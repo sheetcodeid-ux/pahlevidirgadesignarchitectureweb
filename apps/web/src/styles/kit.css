@@ -1609,7 +1609,7 @@
    adanya, jadi ia terbaca sebagai satu baris menu lagi. Jarak 8 dari baris
    terakhir = jarak antarbaris daftar, dipakai saat relnya penuh dan kaki
    tidak lagi terdorong ke dasar. */
-button.k-nav { border: 0; font-family: inherit; text-align: left; }
+button.k-nav { border: 0; font-family: inherit; letter-spacing: inherit; text-rendering: inherit; text-align: left; }
 .k-sisi__kaki:has(button.k-nav) { padding-top: 8px; }
 
 /* Rel sempit: 72 lebar, isinya ikon saja, dan barisnya jadi bujur sangkar 40. */
@@ -2395,9 +2395,18 @@ button.k-nav { border: 0; font-family: inherit; text-align: left; }
 /* Baris transfer yang bisa DIBUKA (bukti pembayaran). Bawaan <button>
    dibuang supaya bentuknya sama persis dengan baris biasa; yang menandainya
    cuma kursor, latar saat disentuh, dan cincin fokus papan ketik. */
+/* BUKAN `font: inherit`: shorthand itu ikut menyetel ulang line-height dan
+   mengalahkan `.k-transfer { line-height: 1 }` di atas — baris tergeser
+   8px dan terukur 3.000 piksel beda. Bawaan <button> peramban juga
+   menyetel ulang warna dan text-rendering; ketiganya diwarisi sendiri. */
 .k-transfer--tombol {
   width: 100%;
-  font: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-rendering: inherit;
   text-align: left;
   cursor: pointer;
   transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);

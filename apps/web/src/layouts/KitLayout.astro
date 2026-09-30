@@ -188,7 +188,13 @@ const path = Astro.url.pathname;
        menggulir halaman tidak pernah membawanya naik. */
     overflow-y: auto;
     overscroll-behavior: contain;
+    /* Batang gulirnya disembunyikan. Di Windows (komputer kantor) batang
+       klasik 17px muncul begitu relnya meluap dan memotong setiap label menu
+       17px lebih pendek; di macOS batangnya melayang dan tidak memakan
+       tempat. Menggulir tetap jalan lewat roda, trackpad, sentuh, dan Tab. */
+    scrollbar-width: none;
   }
+  .kl .k-sisi::-webkit-scrollbar { display: none; }
   .kl__logo {
     display: block;
     padding-top: 30px;
