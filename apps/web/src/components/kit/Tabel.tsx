@@ -123,7 +123,18 @@ export function Tabel({
   const kunciHalaman = kunci ?? [];
   const semuaTercentang = kunciHalaman.length > 0 && kunciHalaman.every((k) => set.has(k));
   const dasar = terpilih ?? [];
+  /* Lebar kolom dipasang sebagai PERSEN dari jumlah lebar frame-nya, bukan
+     px. Pada lebar frame hasilnya identik — `table-layout: fixed` membagi
+     sisa ruang menurut perbandingan yang sama. Bedanya baru terasa kalau
+     wadahnya lebih sempit dari frame: px membuat tabel tetap selebar
+     jumlahnya dan wadahnya harus digeser, persen membuatnya menyempit
+     dengan perbandingan kolom yang sama. Seberapa jauh ia boleh menyempit
+     ditentukan lantainya (`--k-tabel-lebar`, lihat kit.css) — di bawah itu
+     tetap digulir, bukan diperas. */
+  const jumlah = kolom.reduce((n, k) => n + k.lebar, pilih ? lebarPilih : 0);
+  const persen = (w: number) => `${(w / jumlah) * 100}%`;
   const gaya = {
+    "--k-tabel-lebar": `${jumlah}px`,
     "--k-tabel-pad": `${pad}px`,
     "--k-tabel-h-kepala": `${tinggiKepala}px`,
     "--k-tabel-h-baris": `${tinggiBaris}px`,
@@ -135,9 +146,9 @@ export function Tabel({
       style={gaya}
     >
       <colgroup>
-        {pilih && <col style={{ width: lebarPilih }} />}
+        {pilih && <col style={{ width: persen(lebarPilih) }} />}
         {kolom.map((k, i) => (
-          <col key={i} style={{ width: k.lebar }} />
+          <col key={i} style={{ width: persen(k.lebar) }} />
         ))}
       </colgroup>
       {/* Tidak dirender sama sekali, bukan disembunyikan dengan [hidden]:

@@ -819,6 +819,42 @@ function tulis(metode, path, badan) {
       return baris;
     }
   }
+  /* Termin baru, hapus termin, hapus biaya — dibalas seperti Worker API. */
+  {
+    const tb = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/invoices$/);
+    if (tb && metode === "POST") {
+      if (!badan.label || String(badan.label).trim().length < 2) return { galat: 422 };
+      const p = proyekAdmin.find((x) => x.id === tb[1]);
+      const id = `inv-baru-${Date.now()}`;
+      tagihanAdmin.push({ id, projectId: tb[1], projectTitle: p?.title, label: badan.label, amount: badan.amount,
+        status: "draft", dueDate: badan.dueDate ?? null, paidAt: null, sortOrder: badan.sortOrder ?? 0 });
+      return { id };
+    }
+    const th = path.match(/^\/api\/v1\/admin\/invoices\/([^/?]+)$/);
+    if (th && metode === "DELETE") {
+      const i = tagihanAdmin.findIndex((x) => x.id === th[1]);
+      if (i < 0) return { galat: 404 };
+      tagihanAdmin.splice(i, 1);
+      return { deleted: true };
+    }
+    /* Hapus proyek — sebelumnya jatuh ke balasan umum "ok" tanpa menghapus
+       apa pun, jadi Semua Proyek tetap menampilkan proyek yang "dihapus". */
+    const hp = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)$/);
+    if (hp && metode === "DELETE") {
+      const i = proyekAdmin.findIndex((x) => x.id === hp[1]);
+      if (i < 0) return { galat: 404 };
+      proyekAdmin.splice(i, 1);
+      return { deleted: true };
+    }
+    const bh = path.match(/^\/api\/v1\/admin\/costs\/([^/?]+)$/);
+    if (bh && metode === "DELETE") {
+      for (const d of [biayaKeu, biayaRiwayat]) {
+        const i = d.findIndex((x) => x.id === bh[1]);
+        if (i >= 0) { d.splice(i, 1); return { deleted: true }; }
+      }
+      return { galat: 404 };
+    }
+  }
   /* Situs Publik & Pengaturan. Kunci R2 yang dikirim diterjemahkan ke URL
      seperti di Worker, jadi pratinjau sesudah Simpan menggambar berkasnya. */
   if (path === "/api/v1/admin/settings" && metode === "PATCH") {

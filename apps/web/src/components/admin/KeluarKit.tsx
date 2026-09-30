@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
+import { DialogBiaya } from "./biayaKit";
+import { DropdownMenu } from "../ui/overlay/Menu";
+import { navigate } from "astro:transitions/client";
 import { KepalaSeksi, BarisTransfer, BarisPenyedia } from "../kit/Item";
 import { KelompokTab } from "../kit/Segmen";
 import { Cari } from "../kit/Isian";
@@ -134,6 +137,8 @@ function Isi() {
 
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [tim, setTim] = useState<AnggotaTim[] | null>(() => bacaCache<AnggotaTim[]>("tim"));
+  /* Biaya yang sedang dibuka rinciannya (dan bisa dihapus). */
+  const [rinci, setRinci] = useState<BiayaProyek | null>(null);
   const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() =>
     bacaCache<BiayaProyek[]>("biaya-semua"),
   );
@@ -278,7 +283,8 @@ function Isi() {
             value={cari}
             onChange={(e) => setCari(e.currentTarget.value)}
           />
-          <TombolBulat ikon={Sliders} judul="Kelola di Tim & Freelancer" />
+          {/* Membawa ke tempat daftar orangnya diurus — sempat tanpa aksi. */}
+          <TombolBulat ikon={Sliders} judul="Kelola di Tim & Freelancer" onClick={() => navigate("/admin/tim")} />
         </div>
 
         <div className="tr__daftar">
@@ -336,7 +342,9 @@ function Isi() {
               <Tombol
                 ukuran="small"
                 jenis="transparent"
-                onClick={() => (window.location.href = "/admin/keuangan")}
+                /* Ke Semua Transaksi yang sudah tersaring ke uang KELUAR — dulu
+                   ke Ringkasan, yang tidak memuat daftar biaya sama sekali. */
+                onClick={() => navigate("/admin/keuangan/transaksi?jenis=keluar")}
               >
                 Lihat semua
               </Tombol>
@@ -355,6 +363,8 @@ function Isi() {
                 rekening={b.projectTitle ?? "tanpa proyek"}
                 kananAtas={tanggalPendek(b.incurredOn)}
                 kananBawah={LABEL_KATEGORI[b.category] ?? b.category}
+                onClick={() => setRinci(b)}
+                judul={`Rincian biaya ${b.label}, ${formatRupiah(b.amount)}`}
               />
             ))}
             {(biaya ?? []).length === 0 && (
@@ -366,7 +376,19 @@ function Isi() {
         <article className="tr__kartu tr__form">
           <KepalaSeksi
             judul="Catat Pengeluaran"
-            kanan={<TombolIkon ikon={DotsThree} jenis="transparent" judul="Aksi lain" ikonPx={22} />}
+            kanan={
+              /* ⋯ di framenya: sempat hiasan tanpa aksi. Isinya halaman yang
+                 wajar dituju sesudah mencatat — bukan aksi baru. */
+              <DropdownMenu
+                trigger={<TombolIkon ikon={DotsThree} jenis="transparent" judul="Aksi lain" ikonPx={22} />}
+                sections={[
+                  {
+                    label: "Buka",
+                    items: ([["Semua transaksi", "list", "/admin/keuangan/transaksi"], ["Fee proyek", "cash", "/admin/fee"], ["Gaji", "bank", "/admin/gaji"]] as const).map(([label, icon, ke]) => ({ label, icon, onSelect: () => navigate(ke) })),
+                  },
+                ]}
+              />
+            }
           />
 
           <div className="tr__panel">
@@ -524,6 +546,20 @@ function Isi() {
           </div>
         </article>
       </section>
+      <DialogBiaya
+        biaya={rinci}
+        kategori={rinci ? LABEL_KATEGORI[rinci.category] ?? rinci.category : ""}
+        open={rinci !== null}
+        onOpenChange={(b) => !b && setRinci(null)}
+        onDihapus={() =>
+          semuaBiaya()
+            .then((d) => {
+              tulisCache("biaya-semua", d);
+              setBiaya(d);
+            })
+            .catch(() => {})
+        }
+      />
     </div>
   );
 }

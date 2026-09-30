@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
+import { DropdownMenu } from "../ui/overlay/Menu";
+import { navigate } from "astro:transitions/client";
 import { KepalaSeksi, BarisTransfer, TombolBulat } from "../kit/Item";
 import { Segmen, KelompokTab } from "../kit/Segmen";
 import { Cari } from "../kit/Isian";
@@ -280,11 +282,12 @@ function Isi() {
             value={cari}
             onChange={(e) => setCari(e.currentTarget.value)}
           />
-          {/* Ikon Sliders, sama seperti di framenya. Tanpa aksi: penyaringan
-              yang sebenarnya ada di /admin/proyek, dan tombol yang membuka
-              panel saringan kedua di sini cuma menambah tempat untuk
-              menyaring hal yang sama dengan aturan yang bisa menyimpang. */}
-          <TombolBulat ikon={Sliders} judul="Saring di Semua Proyek" />
+          {/* Ikon Sliders, sama seperti di framenya — dan ia MEMBAWA ke tempat
+              penyaringan yang sebenarnya, /admin/proyek. Panel saringan kedua
+              di sini cuma menambah tempat untuk menyaring hal yang sama
+              dengan aturan yang bisa menyimpang. Sempat tanpa aksi sama
+              sekali (audit kontrol mati). */}
+          <TombolBulat ikon={Sliders} judul="Saring di Semua Proyek" onClick={() => navigate("/admin/proyek")} />
         </div>
 
         <div className="tr__daftar">
@@ -318,7 +321,8 @@ function Isi() {
           <span className="tr__tirai" />
         </div>
 
-        <Tombol ukuran="large" kiri={Plus} onClick={() => (window.location.href = "/admin/proyek")}>
+        {/* Ke formulir proyek baru, bukan ke daftar Semua Proyek. */}
+        <Tombol ukuran="large" kiri={Plus} onClick={() => navigate("/admin/proyek/baru")}>
           Proyek Baru
         </Tombol>
       </section>
@@ -329,7 +333,7 @@ function Isi() {
           <KepalaSeksi
             judul="Pembayaran Terbaru"
             kanan={
-              <Tombol ukuran="small" jenis="transparent" onClick={() => (window.location.href = "/admin/keuangan")}>
+              <Tombol ukuran="small" jenis="transparent" onClick={() => navigate("/admin/keuangan/transaksi?jenis=masuk")}>
                 Lihat semua
               </Tombol>
             }
@@ -363,7 +367,19 @@ function Isi() {
                `Button Icon` di kanan atas halaman yang memang berlingkaran
                38. Memakai `TombolBulat` di sini menaikkan kepala seksi dari
                32 jadi 38, dan seluruh isi panel di bawahnya ikut turun 6px. */
-            kanan={<TombolIkon ikon={DotsThree} jenis="transparent" judul="Aksi lain" ikonPx={22} />}
+            kanan={
+              /* ⋯ di framenya: sempat hiasan tanpa aksi. Isinya halaman yang
+                 wajar dituju sesudah mencatat — bukan aksi baru. */
+              <DropdownMenu
+                trigger={<TombolIkon ikon={DotsThree} jenis="transparent" judul="Aksi lain" ikonPx={22} />}
+                sections={[
+                  {
+                    label: "Buka",
+                    items: ([["Semua transaksi", "list", "/admin/keuangan/transaksi"], ["Tagihan & termin", "receipt", "/admin/keuangan/tagihan"], ["Ringkasan keuangan", "finance", "/admin/keuangan"]] as const).map(([label, icon, ke]) => ({ label, icon, onSelect: () => navigate(ke) })),
+                  },
+                ]}
+              />
+            }
           />
 
           <div className="tr__panel">

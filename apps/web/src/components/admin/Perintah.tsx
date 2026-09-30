@@ -4,6 +4,7 @@ import * as RDialog from "@radix-ui/react-dialog";
 import { Icon, type IconName } from "../ui/Icon";
 import { halamanRata } from "../../lib/navAdmin";
 import { bukaProyek } from "../../lib/proyekAktif";
+import { navigate } from "astro:transitions/client";
 import { daftarProyek, bacaCache, type Proyek } from "../../lib/admin";
 
 /* Diturunkan dari peta nav yang sama dengan sidebar — lihat lib/navAdmin.ts
@@ -77,9 +78,15 @@ export function Perintah({
   // dari sini bisa mendarat SEBELUM halaman itu hidrasi, sehingga jumlah baris
   // yang dirender server (6) beda dari yang dihitung klien (3) dan React
   // membuang seluruh pohonnya. Terukur: 3 dari 8 muat halaman.
+  /* Diambil saat palet DIBUKA, bukan tiap halaman dipasang: palet ini ikut
+     dipasang di kepala setiap halaman kit, dan mengambil daftar proyek di
+     tiap perpindahan halaman untuk palet yang jarang dibuka adalah satu
+     permintaan sia-sia per klik menu. Isi cache tetap tampil seketika. */
   useEffect(() => {
+    if (!buka) return;
+    setProyek((l) => l ?? bacaCache<Proyek[]>("proyek"));
     daftarProyek().then(setProyek).catch(() => {});
-  }, []);
+  }, [buka]);
 
   return (
     <RDialog.Root open={buka} onOpenChange={setBuka}>
@@ -112,7 +119,7 @@ export function Perintah({
               <Cmdk.Group heading="Halaman" className="ov-command__group">
                 {HALAMAN.map((h) => (
                   <Cmdk.Item key={h.ke} className="ov-command__item"
-                    onSelect={() => { window.location.href = h.ke; }}>
+                    onSelect={() => { setBuka(false); navigate(h.ke); }}>
                     <Icon name={h.ikon} size={16} />{h.label}
                   </Cmdk.Item>
                 ))}
@@ -127,7 +134,7 @@ export function Perintah({
                          kerangka lama, dipertahankan untuk /admin/ui. */
                       onSelect={() => (bukaLuar === undefined
                         ? bukaProyek(p.id)
-                        : (window.location.href = `/admin/proyek/satu?id=${p.id}`))}>
+                        : (setBuka(false), navigate(`/admin/proyek/satu?id=${p.id}`)))}>
                       <Icon name="project" size={16} />{p.title}
                     </Cmdk.Item>
                   ))}

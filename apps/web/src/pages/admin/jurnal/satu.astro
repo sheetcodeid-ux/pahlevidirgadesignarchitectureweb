@@ -3,6 +3,7 @@ import KitLayout from "../../../layouts/KitLayout.astro";
 import { JurnalSatuKit } from "../../../components/admin/JurnalSatuKit";
 import "../../../styles/jurnal-kit.css";
 import "../../../styles/paket-kit.css";
+import { CAP_BUILD } from "../../../lib/capBuild";
 
 /* Satu tulisan, frame Figma "40. Insight Details" — sekaligus editornya.
    `?id=` membuka tulisan, `?baru=1` menulis yang baru. Tombol hapus memakai
@@ -10,5 +11,5 @@ import "../../../styles/paket-kit.css";
 ---
 
 <KitLayout title="Detail Tulisan" judul="Detail Tulisan" kembali="/admin/jurnal">
-  <JurnalSatuKit client:load />
+  <JurnalSatuKit client:load dibangunPada={CAP_BUILD} />
 </KitLayout>

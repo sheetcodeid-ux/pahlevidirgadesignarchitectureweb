@@ -10,7 +10,7 @@
  */
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { createMarkdownProcessor } from "@astrojs/markdown-remark";
-import { listJournal, getSettings, type Tulisan, type KategoriJurnal } from "../../lib/api";
+import { listJournal, getJournal, getSettings, type Tulisan, type KategoriJurnal } from "../../lib/api";
 
 export async function getStaticPaths() {
   const semua = await listJournal();
@@ -18,20 +18,28 @@ export async function getStaticPaths() {
   /* Hanya yang BENAR-BENAR sudah terbit yang dibuatkan halaman. Yang masih
      rencana maupun yang tanggalnya di depan tidak punya alamat sama sekali —
      kalau dibuatkan, isinya kosong dan langsung terindeks mesin pencari. */
-  const terbit = semua.filter(
-    (t) => t.publishedAt && Date.parse(t.publishedAt) <= sekarang && (t.body ?? "").trim(),
-  );
+  /* Indeksnya TIDAK membawa isi (lihat getJournal), jadi yang disaring di
+     sini cuma tanggalnya; isinya diambil per tulisan. Yang isinya kosong
+     tetap dilewati — CHECK database memang melarangnya, tapi halaman kosong
+     yang terindeks lebih buruk daripada tidak ada halaman. */
+  const kandidat = semua.filter((t) => t.publishedAt && Date.parse(t.publishedAt) <= sekarang);
+  const lengkap = await Promise.all(kandidat.map((t) => getJournal(t.slug)));
+  const terbit = lengkap.filter((t) => (t.body ?? "").trim());
   return terbit.map((t) => ({ params: { slug: t.slug }, props: { tulisan: t, semua: terbit } }));
 }
 
 interface Props { tulisan: Tulisan; semua: Tulisan[] }
 const { tulisan, semua } = Astro.props;
 
+/* Sama persis dengan label di indeks /jurnal. Halaman ini sempat tidak
+   pernah dibangun (lihat getJournal), jadi sapuan bahasa Inggris saat situs
+   publik dijadikan Indonesia — yang memindai halaman hasil build — tidak
+   pernah melihatnya. */
 const KAT: Record<KategoriJurnal, string> = {
-  site: "Site & climate",
-  money: "Money",
-  permit: "Permits",
-  build: "Building",
+  site: "Tapak & iklim",
+  money: "Biaya",
+  permit: "Perizinan",
+  build: "Konstruksi",
 };
 
 const settings = await getSettings();
@@ -77,7 +85,7 @@ const ldjson = {
     <div class="dalam">
       <div class="isi isi--longgar" style="padding-top:64px;padding-bottom:40px">
         <a href="/jurnal" class="label" style="text-decoration:none">
-          ← JOURNAL · {(KAT[tulisan.category] ?? tulisan.category).toUpperCase()}
+          ← JURNAL · {(KAT[tulisan.category] ?? tulisan.category).toUpperCase()}
         </a>
         <div class="s24"></div>
         <h1 class="h1" style="font-size:clamp(2rem,3.9vw,3rem);max-width:20ch">{tulisan.title}</h1>
@@ -89,7 +97,7 @@ const ldjson = {
             {/* Foto penulis belum ada — kotaknya tetap dipasang seperti di
                 rancangan, bertanda menunggu, bukan dihilangkan. */}
             <span>FOTO</span>
-            <span><b>{PENULIS}</b><br />Principal architect</span>
+            <span><b>{PENULIS}</b><br />Arsitek utama</span>
           </span>
           <span><b>{tgl(tulisan.publishedAt)}</b><br />Diperbarui kalau aturannya berubah</span>
           <span><b>{tulisan.readMinutes} menit baca</b><br />{kata} kata</span>

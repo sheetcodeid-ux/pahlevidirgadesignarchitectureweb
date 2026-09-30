@@ -429,7 +429,7 @@
    tanpa garis atas. */
 .keu__tabel .k-kepalaseksi__kanan { gap: 10px; }
 .keu__tabelisi { margin-top: 18px; overflow-x: auto; }
-.keu__tabel .k-tabel { min-width: 554px; }
+/* Lantai lebarnya milik .k-tabel di kit.css (jumlah kolom; 94% di desktop), bukan angka di sini. */
 /* Isi baris 1,5 lebih TINGGI daripada bawaan kit, kepalanya 1 — terukur
    terhadap garis baris yang berimpit tepat di y101/153/205/257/309. Kit
    menurunkan isi sel 1px (padding atas 2) untuk tabel lain; tabel frame 04
@@ -482,7 +482,7 @@
 
 /* Di bawah lebar framenya, tiga kolom jadi satu — bukan diperas. Kolom 283
    yang menyempit membuat donat dan bar kemajuan tidak terbaca. */
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .keu {
     grid-template-columns: 1fr;
     grid-template-rows: none;

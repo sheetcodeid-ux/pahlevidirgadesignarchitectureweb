@@ -75,13 +75,16 @@
 
 /* Nominal: masuk bertinta brand, keluar merah. Tanda +/- ikut dicetak —
    warna saja tidak cukup untuk yang tidak membedakan merah dan hijau. */
-.trx__masuk { color: var(--brand); font-weight: var(--k-semi); }
-.trx__keluar { color: var(--danger); font-weight: var(--k-semi); }
+/* `nowrap`: nominal yang terlipat ("+Rp56,7" / "jt") terbaca sebagai dua
+   angka. Terukur terlipat di kolom Nominal Semua Proyek (85px di frame) —
+   "−Rp820 rb" bahkan sudah terlipat di produksi dengan rel 192. */
+.trx__masuk { color: var(--brand); font-weight: var(--k-semi); white-space: nowrap; }
+.trx__keluar { color: var(--danger); font-weight: var(--k-semi); white-space: nowrap; }
 
 /* Rangka saat sesi belum diperiksa. */
 .trx--rangka { min-height: 929px; }
 
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .trx { height: auto; }
 }
 

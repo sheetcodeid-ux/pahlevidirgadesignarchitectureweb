@@ -250,7 +250,7 @@
   justify-content: space-between;
   gap: 8px;
   /* `max-width: none`: global.css membatasi setiap <p> 65ch, dan di tata
-     letak bertumpuk (<=1240) itu menaruh persennya di tengah kartu. */
+     letak bertumpuk (<=1288) itu menaruh persennya di tengah kartu. */
   max-width: none;
   margin: 14px 0 0;
   font-size: var(--k-t12);
@@ -336,7 +336,7 @@
 /* --- Transaksi ------------------------------------------------------------ */
 .pro__trx .k-kepalaseksi { min-height: 31px; }
 .pro__tabel { margin-top: 16px; overflow-x: auto; }
-.pro__tabel .k-tabel { min-width: 857px; }
+/* Lantai lebarnya milik .k-tabel di kit.css (jumlah kolom; 94% di desktop), bukan angka di sini. */
 /* Isi baris 2 lebih tinggi daripada bawaan kit (yang menurunkannya 1) —
    terukur terhadap tinta baris kedua dan ketiga framenya. */
 .pro__tabel .k-tabel td { padding-top: 0; padding-bottom: 2px; }
@@ -360,7 +360,7 @@
 
 /* Di bawah lebar framenya kolom-kolomnya menumpuk. Daftar proyek tetap
    bergulir sendiri, dibatasi 520 supaya rinciannya tidak terdorong jauh. */
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .pro,
   .pro__kanan,
   .pro__atas,

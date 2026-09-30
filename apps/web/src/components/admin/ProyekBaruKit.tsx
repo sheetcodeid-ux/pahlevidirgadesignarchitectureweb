@@ -1,13 +1,24 @@
 import { useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
 import { Tombol } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
 import { Ikon } from "../kit/Ikon";
 import { ImageSquare } from "../kit/ikon";
 import { buatProyek, simpanProyek, mintaUrlUnggah, type Proyek } from "../../lib/admin";
 import { useCegahPindah } from "../../lib/cegahPindah";
+import { setProyekAktif, HALAMAN_PROYEK } from "../../lib/proyekAktif";
+
+/* Langsung ke Halaman Publik proyeknya, BUKAN lewat /admin/proyek/edit.
+   Alamat lama itu halaman kit sungguhan yang lalu mengalihkan sendiri — jadi
+   ia yang menjemput toast titipan "Proyek dibuat", lalu membuangnya bersama
+   dirinya saat mengalihkan. Hasilnya sama: proyek aktif ditetapkan, lalu
+   halaman pertama proyek dibuka. */
+async function bukaHalamanProyek(id: string) {
+  setProyekAktif(id);
+  await navigate(HALAMAN_PROYEK[0]!);
+}
 
 /* =============================================================================
    Proyek Baru di kerangka kit.
@@ -139,14 +150,19 @@ function Isi() {
         try {
           await simpanProyek(id, patch);
         } catch (err) {
-          toast({
+          /* Dititipkan: toast() di sini lenyap bersama halamannya, dan
+             pemilik tidak pernah tahu ada detail yang tidak tersimpan. */
+          titipToast({
             judul: "Proyek dibuat, sebagian detail gagal disimpan",
-            keterangan: (err as Error).message,
+            keterangan: `${(err as Error).message} Isi ulang di halaman ini.`,
             nada: "gagal",
           });
+          await bukaHalamanProyek(id);
+          return;
         }
       }
-      await navigate(`/admin/proyek/edit?id=${encodeURIComponent(id)}`);
+      titipToast({ judul: "Proyek dibuat", keterangan: "Lengkapi foto dan ceritanya di sini, lalu tekan Terbitkan.", nada: "sukses" });
+      await bukaHalamanProyek(id);
     } catch (err) {
       toast({ judul: "Gagal membuat proyek", keterangan: (err as Error).message, nada: "gagal" });
       setMenyimpan(false);

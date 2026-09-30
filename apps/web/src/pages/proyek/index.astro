@@ -35,7 +35,10 @@ const kategori = [
 ];
 const hitung = (kunci: string) =>
   kunci === "all" ? proyek.length : proyek.filter((p) => p.category === kunci).length;
-const kata = (n: number) => (n === 1 ? "1 project" : `${n} projects`);
+/* Kalimat yang SAMA dengan yang ditulis skrip penyaring di bawah. Versi
+   server sempat masih "6 projects", jadi halaman terbuka berbahasa Inggris
+   dan baru jadi "6 proyek" setelah satu kategori diklik. */
+const kata = (n: number) => `${n} proyek`;
 
 // Baris di bawah judul: kategori · tempat · tahun, hanya bagian yang terisi.
 const meta = (p: Project) =>

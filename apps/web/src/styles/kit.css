@@ -1435,10 +1435,24 @@
      Tanpa ini peramban menghitung sendiri dari isinya dan seluruh angka
      kolomnya jadi tidak berarti. */
   table-layout: fixed;
+  /* Lantai lebar = jumlah lebar kolom frame-nya (--k-tabel-lebar, dipasang
+     Tabel.tsx). Kolomnya persen, jadi tanpa lantai tabel akan diperas
+     sesempit apa pun wadahnya. Di tablet dan ponsel tabelnya digulir di
+     dalam kartunya dengan lebar frame penuh, persis seperti sebelumnya. */
+  min-width: var(--k-tabel-lebar, 0px);
   font-family: var(--font-sans);
   /* Barisnya berlatar putih di Figma, bukan tembus pandang. Kelihatan sekali
      di halaman yang latarnya abu: tanpa ini tabel menyatu dengan halamannya. */
   background: var(--surface);
+}
+/* Di mode desktop tabelnya boleh menyempit SEDIKIT, sampai 94% — cukup
+   untuk rel samping 240 pada layar 1440, yang menyisakan 95,6% lebar frame.
+   Di bawah itu kembali digulir. HANYA di desktop: kalau lantai 94% berlaku
+   juga di ponsel, tabel yang memang digulir ikut 6% lebih sempit tanpa
+   alasan — terukur berubah di sembilan halaman pada 390. 1289 = titik-patah
+   tablet halaman kit (lihat KitLayout). */
+@media (min-width: 1289px) {
+  .k-tabel { min-width: calc(var(--k-tabel-lebar, 0px) * 0.94); }
 }
 .k-tabel th,
 .k-tabel td {
@@ -1609,7 +1623,7 @@
    adanya, jadi ia terbaca sebagai satu baris menu lagi. Jarak 8 dari baris
    terakhir = jarak antarbaris daftar, dipakai saat relnya penuh dan kaki
    tidak lagi terdorong ke dasar. */
-button.k-nav { border: 0; font-family: inherit; letter-spacing: inherit; text-rendering: inherit; text-align: left; }
+button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spacing: inherit; text-rendering: inherit; text-align: left; }
 .k-sisi__kaki:has(button.k-nav) { padding-top: 8px; }
 
 /* Rel sempit: 72 lebar, isinya ikon saja, dan barisnya jadi bujur sangkar 40. */

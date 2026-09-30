@@ -6,7 +6,8 @@ import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from ".
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 import { Perintah } from "./Perintah";
-import { ambilNotifikasi } from "../../lib/notifikasi";
+import { ambilBarisNotifikasi } from "../../lib/notifikasi";
+import { TitipanToast } from "../ui/overlay/Toast";
 
 /* Kepala halaman panel admin — `KepalaHalaman` kit dengan isi kanan yang
    sama di seluruh halaman.
@@ -47,11 +48,11 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
   const [jumlah, setJumlah] = useState({ semua: 0, pesan: 0 });
   useEffect(() => {
     let hidup = true;
-    ambilNotifikasi()
-      .then((n) => {
+    ambilBarisNotifikasi()
+      .then((baris) => {
         if (!hidup) return;
-        const pesan = n.notifikasi.filter((b) => b.id.startsWith("pesan-")).length;
-        setJumlah({ semua: n.notifikasi.length, pesan });
+        const pesan = baris.filter((b) => b.id.startsWith("pesan-")).length;
+        setJumlah({ semua: baris.length, pesan });
         window.dispatchEvent(new CustomEvent(PERISTIWA_PESAN, { detail: pesan }));
       })
       .catch(() => {});
@@ -114,6 +115,9 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
               if (!b) requestAnimationFrame(() => document.querySelector<HTMLElement>(".k-kepalahal .k-cari__input")?.focus());
             }}
           />
+          {/* Konfirmasi dari halaman sebelumnya ("Proyek dihapus") — lihat
+              titipToast. Portal ke <body>, jadi tidak menambah apa pun di sini. */}
+          <TitipanToast />
           <span className="k-kepalahal__grup">
             <TerbitKit dibangunPada={dibangunPada} />
             <TombolBulat

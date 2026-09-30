@@ -196,7 +196,7 @@
   overflow: auto;
   scrollbar-width: thin;
 }
-.fee__tabel .k-tabel { min-width: 554px; }
+/* Lantai lebarnya milik .k-tabel di kit.css (jumlah kolom; 94% di desktop), bukan angka di sini. */
 /* Garis barisnya sudah berimpit dengan frame (y575,5 / 636,5 / …); yang
    meleset tintanya: isi baris 1px terlalu rendah, judul kolom 1px terlalu
    tinggi. Pola yang sama dengan tabel frame 04 dan 19. */
@@ -252,7 +252,7 @@
 .gaji__alasan { font-size: var(--k-t12); color: var(--text-muted); }
 
 /* Di bawah lebar framenya: dua kolom, lalu satu. */
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .fee {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: none;

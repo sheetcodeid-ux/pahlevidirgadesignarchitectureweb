@@ -129,7 +129,18 @@ interface RingkasTahap {
   keadaan: string;
 }
 
-function Isi() {
+/* Halaman /proyek/<slug> baru ada sesudah build berikutnya: proyek yang
+   diterbitkan sesudah build terakhir belum punya halaman, dan tautannya
+   berujung 404 sampai Terbitkan ditekan. Stempel build dioper dari .astro
+   (lihat JurnalSatuKit). */
+/* Tanggal terbit yang KOSONG dianggap sudah dibangun: proyek lama bisa
+   saja terbit tanpa published_at, dan menyembunyikan tautannya selamanya
+   lebih buruk daripada sesekali 404. Yang disembunyikan cuma yang PASTI
+   terbit sesudah build. */
+const sudahDibangun = (terbitPada: string | null | undefined, dibangunPada?: string) =>
+  !dibangunPada || !terbitPada || terbitPada <= dibangunPada;
+
+function Isi({ dibangunPada }: { dibangunPada?: string }) {
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [id, setId] = useState<string | null>(() => {
     try {
@@ -438,7 +449,7 @@ function Isi() {
                       },
                     ]}
                   />
-                  {kini.status === "published" && (
+                  {kini.status === "published" && sudahDibangun(kini.publishedAt, dibangunPada) && (
                     <TombolIkon
                       ikon={Globe}
                       jenis="transparent"
@@ -640,11 +651,11 @@ function Isi() {
   );
 }
 
-export function SatuProyekKit() {
+export function SatuProyekKit({ dibangunPada }: { dibangunPada?: string }) {
   return (
     <RequireAuth skeleton={<div className="sat sat--rangka" />}>
       <ToastProvider>
-        <Isi />
+        <Isi dibangunPada={dibangunPada} />
       </ToastProvider>
     </RequireAuth>
   );

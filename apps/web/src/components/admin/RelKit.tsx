@@ -60,8 +60,10 @@ export const PERISTIWA_REL_KEADAAN = "kit:rel-keadaan";
 export const PERISTIWA_PESAN = "kit:pesan";
 export const ID_REL = "kl-rel";
 
-/** Selebar-lebarnya ponsel. Di atas ini rel kembali menempel di kiri. */
-const PONSEL = "(max-width: 40rem)";
+/** Di bawah ini rel jadi menu geser; di atasnya rel kembali menempel di
+    kiri. Harus sama dengan titik-patah menu geser di KitLayout — 56rem
+    (tablet tegak juga), bukan 40rem, sejak relnya selebar 240. */
+const PONSEL = "(max-width: 56rem)";
 
 export interface PropRelKit {
   /** Path halaman yang sedang dibuka — penanda baris aktif. */
@@ -106,6 +108,21 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
      baris sendiri di menu; yang menyala daftarnya. Tetap bukan startsWith —
      cuma akhiran "/satu" yang persis itu. */
   const cocok = (href: string) => rapi(href) === kini || `${rapi(href)}/satu` === kini;
+
+  /* Kelompok yang terbuka. Bawaannya: kelompok halaman yang sedang dibuka —
+     dihitung dari `path`, jadi server dan klien sepakat dan hidrasi tidak
+     pecah. Sesudah itu staf yang menentukan: caret membuka-menutup, dan
+     kelompok yang dibukanya tetap terbuka saat pindah halaman (rel ini
+     `transition:persist`). Pindah ke halaman di kelompok lain ikut
+     membuka kelompok itu, supaya baris yang menyala selalu kelihatan. */
+  const grupAktif = NAV.find((n) => n.children?.some((c) => cocok(c.href)))?.label;
+  const [terbuka, setTerbuka] = useState<string[]>(() => (grupAktif ? [grupAktif] : []));
+  useEffect(() => {
+    if (grupAktif) setTerbuka((t) => (t.includes(grupAktif) ? t : [...t, grupAktif]));
+  }, [grupAktif]);
+  const lipat = (label: string) =>
+    setTerbuka((t) => (t.includes(label) ? t.filter((x) => x !== label) : [...t, label]));
+
   const item: ItemNav[] = NAV.filter((n) => !n.masterOnly || master).map((n) => {
     const anak = n.children?.map((c) => ({
       ikon: ikon(c.ikonKit, c.label),
@@ -122,10 +139,8 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
       href: n.href,
       aktif: n.href ? cocok(n.href) : false,
       anak,
-      /* Submenu terbuka kalau salah satu anaknya yang sedang dibuka. Tidak
-         ada tombol buka-tutup: rel ini dirender di server, dan menambah
-         keadaan internal berarti seluruh rel harus dihidrasi cuma untuk itu. */
-      terbuka: anak?.some((a) => a.aktif),
+      terbuka: anak ? terbuka.includes(n.label) : undefined,
+      onLipat: anak ? () => lipat(n.label) : undefined,
       /* 0 disembunyikan: angka merah "0" berarti "ada yang perlu dilihat"
          padahal tidak ada. */
       jumlah: n.lencana === "pesan" && pesan ? pesan : undefined,

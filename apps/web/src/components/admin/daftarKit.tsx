@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Tabel, type KolomTabel } from "../kit/Tabel";
 import { Paginasi } from "../kit/Paginasi";
 import { Tombol } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { CaretDown, Trash } from "../kit/ikon";
 import { AlertDialog } from "../ui/overlay/Dialog";
+import { jagaFokusSesudahHapus } from "../../lib/fokus";
 
 /* =============================================================================
    Kerangka daftar kit — diangkat dari frame "13. Transactions".
@@ -261,17 +262,22 @@ export function HapusBaris({
   keterangan: string;
   /** Nama tombolnya untuk pembaca layar, mis. "Hapus Bu Ratna". */
   label: string;
-  onHapus: () => void;
+  /** Boleh mengembalikan janji — fokus baru dipindahkan sesudahnya. */
+  onHapus: () => unknown;
 }) {
+  /* Di daftar berkartu (Logo Klien, Tim Studio) tombol ini lenyap bersama
+     kartunya, dan fokus yang dikembalikan Radix ke sini jatuh ke <body>.
+     lib/fokus memindahkannya ke kontrol berikutnya. */
+  const pemicu = useRef<HTMLButtonElement>(null);
   return (
     <AlertDialog
       destructive
       title={judul}
       description={keterangan}
       confirmLabel="Ya, hapus"
-      onConfirm={onHapus}
+      onConfirm={() => void jagaFokusSesudahHapus(pemicu.current, onHapus)}
       trigger={
-        <button type="button" className="k-tombolikon k-tombolikon--small k-tombol--ghost kd__hapus" aria-label={label}>
+        <button ref={pemicu} type="button" className="k-tombolikon k-tombolikon--small k-tombol--ghost kd__hapus" aria-label={label}>
           <Ikon ikon={Trash} ukuran={14} />
         </button>
       }

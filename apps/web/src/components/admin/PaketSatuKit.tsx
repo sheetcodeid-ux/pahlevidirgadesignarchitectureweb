@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian, Sakelar } from "../kit/Isian";
@@ -169,7 +169,8 @@ function Isi() {
     try {
       if (baru) {
         const { id: idBaru } = await buatPaket(kirim);
-        toast({ judul: "Paket ditambahkan", keterangan: "Tekan Terbitkan supaya beranda ikut berubah.", nada: "sukses" });
+        /* Dititipkan — halamannya berganti sebelum toast sempat tergambar. */
+        titipToast({ judul: "Paket ditambahkan", keterangan: "Tekan Terbitkan supaya beranda ikut berubah.", nada: "sukses" });
         await navigate(`/admin/paket/satu?id=${encodeURIComponent(idBaru)}`);
         return;
       }
@@ -190,6 +191,7 @@ function Isi() {
     try {
       await hapusPaket(paket.id);
       tulisCache("paket", (semua ?? []).filter((p) => p.id !== paket.id));
+      titipToast({ judul: `Paket ${paket.name} dihapus`, keterangan: "Tekan Terbitkan supaya beranda ikut berubah.", nada: "sukses" });
       await navigate("/admin/paket");
     } catch (err) {
       toast({ judul: "Gagal menghapus", keterangan: (err as Error).message, nada: "gagal" });

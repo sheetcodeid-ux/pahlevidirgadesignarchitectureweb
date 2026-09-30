@@ -117,17 +117,16 @@
 
 /* --- Tabel ---------------------------------------------------------------- */
 /* 222 (dasar bilah alat) → 241 (puncak kepala tabel). */
-/* `overflow-x: auto` di SEGALA lebar, bukan cuma di bawah 1240.
+/* `overflow-x: auto` di SEGALA lebar, bukan cuma di bawah 1288.
 
-   Tabelnya dirancang 1192 dan `<col width>` cuma usulan — yang menentukan
-   lebar minimum tabel adalah min-content SELURUH selnya, dan jumlahnya di
-   sini persis 1192. Jadi di antara 1240 dan 1440 tabelnya tidak menyusut
-   melainkan mendorong halaman: terukur 132px gulir mendatar pada 1280, yang
-   melanggar aturan responsif ke-7 di CLAUDE.md. Frame 13 tidak kena hanya
-   karena penampungnya kebetulan ber-`overflow-y: auto`, dan CSS menjadikan
-   sumbu satunya `auto` juga — kebetulan yang tidak boleh diandalkan. */
+   Tabelnya dirancang 1192. Dulu kolomnya px, jadi tabel tidak pernah lebih
+   sempit dari 1192 dan di bawah lebar frame ia mendorong HALAMAN — terukur
+   132px gulir mendatar pada 1280, pelanggaran aturan responsif ke-7.
+   Sekarang kolomnya persen dan lantainya milik .k-tabel di kit.css (94% di
+   desktop, 100% di bawahnya), jadi ia menyempit sedikit lalu digulir di
+   dalam wadah ini, tidak pernah di halaman. */
 .tag__tabel { margin-top: 19px; overflow-x: auto; }
-.tag__tabel .k-tabel { width: 100%; min-width: 1192px; }
+.tag__tabel .k-tabel { width: 100%; }
 
 .tag__sel {
   display: flex;
@@ -233,7 +232,7 @@
 
 /* Di bawah lebar framenya tabelnya digulir MENDATAR dan kartu statistiknya
    menumpuk — tujuh kolom pada 900px membuat tiap selnya membungkus. */
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .tag__stat { grid-template-columns: minmax(0, 1fr); }
   .tag__bar { flex-wrap: wrap; height: auto; row-gap: 10px; }
   .tag__dorong { display: none; }
@@ -245,3 +244,10 @@
 @media (max-width: 40rem) {
   .tag__kaki { flex-wrap: wrap; row-gap: 12px; }
 }
+
+/* Konteks kontrak di dialog Termin baru — dirender di portal, jadi aturannya
+   harus di stylesheet yang dimuat halaman ini (jebakan #5). */
+.tag__konteks { margin: -4px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); font-size: var(--k-t12); line-height: 1.6; color: var(--text-muted); }
+.tag__konteks b { font-weight: var(--k-semi); color: var(--text-strong); }
+.tag__kaki { flex-wrap: wrap; }
+.tag__konteks--awas { margin: 0; color: var(--text-strong); box-shadow: inset 3px 0 0 var(--warn); }

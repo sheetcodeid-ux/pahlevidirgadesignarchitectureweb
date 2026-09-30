@@ -64,10 +64,31 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
   const [pesan, tugas, testimoni, proyek] = await Promise.all([
     daftarPesan(), daftarTugas(), daftarTestimoni(), daftarProyek(),
   ]);
+  const notifikasi = susunNotifikasi(pesan, tugas, testimoni);
+  return { notifikasi, ...susunMilestone(proyek) };
+}
 
+/**
+ * Baris notifikasi SAJA — tanpa daftar proyek. Untuk titik di lonceng dan
+ * tombol pesan di kepala kit, yang dipasang ulang tiap pindah halaman:
+ * mengambil daftar proyek di sana cuma untuk milestone yang tidak ia
+ * tampilkan adalah satu permintaan sia-sia per klik menu. Aturan barisnya
+ * SATU (`susunNotifikasi`), dipakai keduanya — dua salinan aturan yang sama
+ * pasti menyimpang (jebakan #32).
+ */
+export async function ambilBarisNotifikasi(): Promise<BarisNotifikasi[]> {
+  const [pesan, tugas, testimoni] = await Promise.all([daftarPesan(), daftarTugas(), daftarTestimoni()]);
+  return susunNotifikasi(pesan, tugas, testimoni);
+}
+
+function susunNotifikasi(
+  pesan: Awaited<ReturnType<typeof daftarPesan>>,
+  tugas: Awaited<ReturnType<typeof daftarTugas>>,
+  testimoni: Awaited<ReturnType<typeof daftarTestimoni>>,
+): BarisNotifikasi[] {
   const hariIni = new Date().toISOString().slice(0, 10);
 
-  const notifikasi: BarisNotifikasi[] = [
+  return [
     ...pesan
       .filter((p) => p.status === "new")
       .map((p) => ({
@@ -107,7 +128,9 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
         ke: "/admin/testimoni",
       })),
   ];
+}
 
+function susunMilestone(proyek: Proyek[]): Omit<IsiNotifikasi, "notifikasi"> {
   // Milestone di sini adalah pencapaian PROYEK, bukan lama berlangganan
   // seperti di aplikasi rujukan — studio arsitektur tidak punya anggota
   // berlangganan. Yang setara maknanya adalah tahap yang sudah dilewati.
@@ -123,5 +146,5 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
 
   const proyekAktif = proyek.filter((p) => p.pipelineStage && p.pipelineStage !== "pelunasan").length;
 
-  return { notifikasi, milestone, proyekAktif, proyek };
+  return { milestone, proyekAktif, proyek };
 }

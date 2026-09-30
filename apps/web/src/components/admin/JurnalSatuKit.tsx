@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { KepalaSeksi, KepingTagar } from "../kit/Item";
 import { Tombol, TombolIkon } from "../kit/Tombol";
@@ -53,7 +53,7 @@ const ISI_MINIMAL = 200;
 const JENIS_GAMBAR = ["image/jpeg", "image/png", "image/webp"];
 const UKURAN_MAKS = 8 * 1024 * 1024;
 
-function Isi() {
+function Isi({ dibangunPada }: { dibangunPada?: string }) {
   const toast = useToast();
   const kueri = typeof location === "undefined" ? new URLSearchParams() : new URLSearchParams(location.search);
   const id = kueri.get("id");
@@ -163,7 +163,9 @@ function Isi() {
     try {
       if (baru) {
         const { id: idBaru } = await buatTulisan(kirim);
-        toast({ judul: "Tulisan tersimpan", keterangan: "Tekan Terbitkan di bilah atas supaya situs ikut berubah.", nada: "sukses" });
+        /* Dititipkan, bukan toast() — halamannya berganti sebelum toast
+           sempat tergambar. Lihat titipToast. */
+        titipToast({ judul: "Tulisan tersimpan", keterangan: "Tekan Terbitkan di bilah atas supaya situs ikut berubah.", nada: "sukses" });
         await navigate(`/admin/jurnal/satu?id=${encodeURIComponent(idBaru)}`);
         return;
       }
@@ -210,6 +212,11 @@ function Isi() {
   async function hapus() {
     try {
       await hapusTulisan(id!);
+      titipToast({
+        judul: judul.trim() ? `"${judul.trim()}" dihapus` : "Tulisan dihapus",
+        keterangan: "Kalau sudah pernah terbit, tekan Terbitkan supaya halamannya ikut hilang dari situs.",
+        nada: "sukses",
+      });
       await navigate("/admin/jurnal");
     } catch (e) {
       toast({ judul: "Gagal menghapus", keterangan: (e as Error).message, nada: "gagal" });
@@ -221,7 +228,16 @@ function Isi() {
 
   const k = awal ? keadaan(awal) : "rencana";
   const tautanPublik = `${SITUS}/jurnal/${slugKini}`;
-  const bisaDibuka = awal && k === "terbit";
+  /* Terbit di database BELUM berarti ada di situs: situsnya statis, dan
+     halaman /jurnal/<slug> baru dibuat saat build berikutnya. Tanpa ini
+     "Buka di situs" dan tautan yang disalin berujung 404 sampai tombol
+     Terbitkan ditekan — persis kebingungan "datanya ada, situsnya belum"
+     yang membuat tombol Terbitkan dibuat. Stempel build diterima dari
+     halaman .astro; CAP_BUILD yang diimpor di island ini akan dievaluasi di
+     peramban dan selalu bernilai "sekarang". */
+  const sudahDibangun = !dibangunPada || Boolean(awal?.publishedAt && awal.publishedAt <= dibangunPada);
+  const menungguTerbitkan = Boolean(awal && k === "terbit" && !sudahDibangun);
+  const bisaDibuka = Boolean(awal && k === "terbit" && sudahDibangun);
 
   return (
     <div className="pjs">
@@ -258,6 +274,7 @@ function Isi() {
               : k === "terjadwal" && awal?.publishedAt
                 ? `Terjadwal ${tglPanjang(awal.publishedAt)}`
                 : "Rencana"}
+            {menungguTerbitkan && " · belum ada di situs — tekan Terbitkan"}
           </span>
           <span className="k-titikpisah" aria-hidden="true" />
           <b>{KATEGORI[kategori]}</b>
@@ -390,7 +407,13 @@ function Isi() {
                 ikon={IkonTautan}
                 jenis="secondary"
                 ukuran="medium"
-                judul={bisaDibuka ? "Salin tautan tulisan" : "Tautan hidup setelah terbit"}
+                judul={
+                  bisaDibuka
+                    ? "Salin tautan tulisan"
+                    : menungguTerbitkan
+                      ? "Tautan hidup setelah Terbitkan ditekan (bola dunia di kanan atas)"
+                      : "Tautan hidup setelah terbit"
+                }
                 disabled={!bisaDibuka}
                 onClick={() =>
                   navigator.clipboard
@@ -486,11 +509,11 @@ function Isi() {
   );
 }
 
-export function JurnalSatuKit() {
+export function JurnalSatuKit({ dibangunPada }: { dibangunPada?: string }) {
   return (
     <RequireAuth skeleton={<div className="pjs pjs--rangka" />}>
       <ToastProvider>
-        <Isi />
+        <Isi dibangunPada={dibangunPada} />
       </ToastProvider>
     </RequireAuth>
   );

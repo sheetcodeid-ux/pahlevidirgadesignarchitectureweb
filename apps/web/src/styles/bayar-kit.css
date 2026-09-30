@@ -269,8 +269,8 @@
 
 /* Di bawah lebar framenya kolomnya ditumpuk. Kolom kiri 303 tidak bisa
    menyempit — kartu di dalamnya 302 — jadi yang harus mengalah kolom kanan,
-   dan di bawah 1240 tidak ada lagi ruang untuknya. */
-@media (max-width: 1240px) {
+   dan di bawah 1288 tidak ada lagi ruang untuknya. */
+@media (max-width: 1288px) {
   .tr {
     grid-template-columns: minmax(0, 1fr);
     height: auto;

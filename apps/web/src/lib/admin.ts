@@ -249,7 +249,31 @@ async function jalankanPenyegaran(): Promise<boolean> {
  * penyegaran juga gagal, sesi dibersihkan dan pemanggil menerima GagalAuth —
  * itu sinyal untuk mengarahkan ke halaman masuk.
  */
-async function panggil<T>(path: string, init: RequestInit = {}, ulang = true): Promise<T> {
+/* GET yang SAMA dan sedang berjalan dipakai bersama, bukan dikirim ulang.
+ *
+ * Kerangka kit memuat beberapa pembaca data sekaligus saat halaman dibuka:
+ * isi halaman, lonceng dan tombol pesan di kepala, tombol Terbitkan. Terukur
+ * sebelum ini: /admin/projects terkirim TIGA kali dalam satu muat Dashboard,
+ * dan settings/inquiries/tasks/testimonials dua kali — 17 permintaan untuk
+ * data yang sama. Hanya yang sedang berjalan yang dibagi; begitu selesai,
+ * permintaan berikutnya tetap segar (keputusan cache ada di bacaCache/
+ * tulisCache, bukan di sini). Tiap pemanggil menerima SALINANnya sendiri,
+ * supaya halaman yang mengurutkan daftarnya di tempat tidak mengubah daftar
+ * milik komponen lain. */
+const sedangBerjalan = new Map<string, Promise<unknown>>();
+
+function panggil<T>(path: string, init: RequestInit = {}, ulang = true): Promise<T> {
+  const hanyaMembaca = !init.method || init.method === "GET";
+  if (!hanyaMembaca || init.body) return panggilSungguh<T>(path, init, ulang);
+  let janji = sedangBerjalan.get(path);
+  if (!janji) {
+    janji = panggilSungguh<unknown>(path, init, ulang).finally(() => sedangBerjalan.delete(path));
+    sedangBerjalan.set(path, janji);
+  }
+  return janji.then((d) => (d === null || typeof d !== "object" ? d : structuredClone(d)) as T);
+}
+
+async function panggilSungguh<T>(path: string, init: RequestInit = {}, ulang = true): Promise<T> {
   const token = baca(KUNCI_AKSES);
   if (!token) throw new GagalAuth("belum masuk");
 
@@ -263,7 +287,7 @@ async function panggil<T>(path: string, init: RequestInit = {}, ulang = true): P
   });
 
   if (res.status === 401 && ulang) {
-    if (await segarkan()) return panggil<T>(path, init, false);
+    if (await segarkan()) return panggilSungguh<T>(path, init, false);
     hapusSesi();
     throw new GagalAuth("sesi berakhir");
   }
@@ -803,10 +827,13 @@ export const daftarInvoice = (projectId: string) => panggil<Invoice[]>(`/admin/p
 /** Tagihan LINTAS proyek — pasangan dari `semuaBiaya()` dan `semuaPembayaran()`. */
 export const semuaTagihan = () => panggil<Invoice[]>("/admin/invoices");
 
-export const tambahInvoice = (projectId: string, label: string, amount: number, dueDate: string | null) =>
+/** `sortOrder` wajib dikirim pemanggil: API menyimpannya apa adanya dengan
+ *  bawaan 0, dan termin baru bernilai 0 tersusun DI DEPAN termin lama —
+ *  "Termin 1 dari 4" jadi milik termin yang baru ditambahkan. */
+export const tambahInvoice = (projectId: string, label: string, amount: number, dueDate: string | null, sortOrder?: number) =>
   panggil<{ id: string }>(`/admin/projects/${projectId}/invoices`, {
     method: "POST",
-    body: JSON.stringify({ label, amount, dueDate }),
+    body: JSON.stringify({ label, amount, dueDate, sortOrder }),
   });
 
 export const ubahInvoice = (id: string, patch: Partial<Invoice>) =>

@@ -153,6 +153,26 @@ const path = Astro.url.pathname;
   }
 
   .kl {
+    /* 240, bukan 192 milik frame Coinest. Rel 192 dirancang untuk label
+       Inggris yang pendek; terukur di sini 17 dari 32 label menu terpotong
+       ("Terima Pem…", "Pengatu…", "Pesan M…") — label terpanjang, "Terima
+       Pembayaran", butuh 127px sementara barisnya cuma menyisakan 84. Pada
+       240 seluruhnya tampil utuh. Satu-satunya tempat angka ini disetel:
+       latar mint di bawah dan lebar rel membacanya dari variabel yang sama.
+       Galeri kit (/admin/kit) tetap 192 karena dipakai membandingkan
+       komponennya dengan frame.
+
+       Rel yang 48px lebih lebar berarti kolom konten 48px lebih SEMPIT pada
+       lebar layar yang sama. Seluruh titik-patah halaman kit (1240, 1360,
+       1200, 1100, 1000, 60rem) dirancang untuk rel 192, jadi semuanya ikut
+       digeser +48 (1288, 1408, 1248, 1148, 1048, 63rem) — tata letak tablet
+       tetap menyala pada lebar KONTEN yang sama seperti sebelumnya. Tanpa
+       itu, di antara 1241 dan 1288 halaman tetap bertata-letak desktop di
+       kolom yang lebih sempit dari yang pernah diuji: tombol "Tambah tugas"
+       terukur keluar kartunya 21px pada 1280. Kalau angka 240 ini diubah,
+       geser titik-patah itu sebesar selisihnya. 40rem tidak ikut: di
+       bawahnya rel sudah jadi menu geser. */
+    --kl-rel: 240px;
     display: flex;
     min-height: 100vh;
     /* Mint rel sampingnya dilukis DI SINI juga, bukan cuma di .k-sisi.
@@ -180,6 +200,7 @@ const path = Astro.url.pathname;
     position: sticky;
     top: 0;
     flex: none;
+    width: var(--kl-rel);
     height: 100vh;
     /* Rel lengket setinggi layar HARUS bergulir sendiri. Dengan kelompok
        Situs Publik terbuka, baris terakhir berakhir di y936 — di layar
@@ -246,10 +267,10 @@ const path = Astro.url.pathname;
       linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
   }
   .kl--relkanan .kl__utama { padding-right: 27px; }
-  /* Di bawah 1360 rel kanan memakan terlalu banyak dari kolom konten — pada
+  /* Di bawah 1408 (1360 + selisih rel) rel kanan memakan terlalu banyak dari kolom konten — pada
      1280 kartu "Baru Diubah" tinggal 160px teks; isinya ringkasan yang juga
      bisa dicapai dari keping kategori di atas. */
-  @media (max-width: 1360px) {
+  @media (max-width: 1408px) {
     .kl__relkanan { display: none; }
     .kl--relkanan {
       background: linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
@@ -267,7 +288,15 @@ const path = Astro.url.pathname;
      Keadaannya milik RelKit (menutup sendiri saat pindah halaman, Esc, atau
      layar melebar); tombolnya di kepala halaman. */
   .k-kepalahal .kl__menu { display: none; }
-  @media (max-width: 40rem) {
+  /* 56rem, bukan 40rem seperti semula. Rel 240 menyisakan kolom konten
+     cuma 488px pada layar 768 (iPad tegak) — lima halaman terukur bisa
+     digeser mendatar di sana, dan delapan belas pada 700; build produksi
+     dengan rel 192 sudah bocor pada 700. Di bawah 896 menu geser memberi
+     konten seluruh lebar layar (736 pada 768), lebih lega daripada yang
+     pernah ada. Padding dan kepala dua baris TETAP milik ponsel (40rem) —
+     tablet masih punya ruang untuk kepala sebaris. Angka ini harus sama
+     dengan PONSEL di RelKit. */
+  @media (max-width: 56rem) {
     .kl { background: none; }
     .kl .k-sisi {
       position: fixed;
@@ -291,7 +320,13 @@ const path = Astro.url.pathname;
       transition: transform 0.2s ease;
     }
     .k-kepalahal .kl__menu { display: grid; }
-    .kl__utama { padding: 16px 16px 24px; }
+  }
+  @media (max-width: 40rem) {
+    /* Padding ponsel SENGAJA tidak disetel di sini. Dulu ada
+       `padding: 16px 16px 24px`, tapi blok 1248 di bawah juga cocok di
+       ponsel dan datang belakangan, jadi yang selalu berlaku 22/20 — dan
+       itulah yang sudah di-ACC dan tayang. Aturan yang tidak pernah menyala
+       lebih menyesatkan daripada tidak ada. */
     /* Kepala: baris kedua (cari + tombol bulat) selebar layar, kotak cari
        yang mengalah — 237 + tiga tombol 38 tidak muat di 358. */
     .kl-body .k-kepalahal__kanan { flex: 1 1 100%; gap: 10px; }
@@ -307,7 +342,7 @@ const path = Astro.url.pathname;
   /* Di bawah lebar frame rel sampingnya menyempit jadi ikon saja. Halaman
      admin ini tidak pernah dibuka dari ponsel oleh staf — tapi dibuka dari
      laptop kecil, dan di situ 192 + 1192 + talang tidak muat. */
-  @media (max-width: 1200px) {
+  @media (max-width: 1248px) {
     .kl__utama {
       padding: 22px 20px 24px;
     }

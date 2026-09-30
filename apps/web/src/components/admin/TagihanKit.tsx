@@ -8,6 +8,9 @@ import { Tombol, TombolIkon } from "../kit/Tombol";
 import { LencanaTren } from "../kit/Ukuran";
 import { Ikon } from "../kit/Ikon";
 import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
+import { Isian } from "../kit/Isian";
+import { navigate } from "astro:transitions/client";
 import {
   CaretDown,
   Funnel,
@@ -16,17 +19,19 @@ import {
   CircleWavyCheck,
   WarningOctagon,
   ArrowRight,
+  Trash,
 } from "../kit/ikon";
 import {
   semuaTagihan,
   ubahInvoice,
+  tambahInvoice,
+  hapusInvoice,
   daftarProyek,
   bacaCache,
   tulisCache,
   type Invoice,
   type Proyek,
 } from "../../lib/admin";
-import { setProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
 
 /* =============================================================================
@@ -51,7 +56,7 @@ import { formatRupiah } from "../../lib/format";
      Total Amount         nominal
      Date & Time          tenggat + sisa hari
      Filter               proyek
-     Add Invoice          buka proyeknya — termin DIBUAT di halaman proyek
+     Add Invoice          dialog Termin Baru — proyeknya dipilih di dalamnya
 
    Tiga keputusan yang perlu diketahui:
 
@@ -67,11 +72,15 @@ import { formatRupiah } from "../../lib/format";
       ditampilkan dan dilabeli terpisah; lencana trennya membandingkan bulan
       ini dengan bulan lalu, dan dilewatkan sama sekali kalau bulan lalu
       kosong — persentase terhadap nol tidak berarti apa-apa.
-   3. **Termin DIBUAT di halaman proyeknya, bukan di sini.** Satu termin
-      milik satu kontrak, dan urutannya (`sort_order`) cuma masuk akal di
-      dalam proyeknya. Yang bisa dilakukan dari halaman ini mengubah STATUS —
-      itu justru pekerjaan lintas proyek: "yang mana saja yang sudah dibayar
-      minggu ini".
+   3. **Termin dibuat DI SINI, dengan proyeknya dipilih di dalam dialog.**
+      Catatan lama berbunyi "dibuat di halaman proyeknya" — halaman itu
+      editor proyek lama, yang sudah dibuang, jadi tombol Tagihan Baru
+      sempat cuma membawa ke Semua Proyek dan termin baru TIDAK BISA dibuat
+      dari mana pun. Alasan lamanya tetap dijaga: satu termin milik satu
+      kontrak, jadi dialognya mewajibkan proyek, menampilkan sisa kontrak
+      yang belum ditagihkan, dan menaruh termin baru di URUTAN TERAKHIR
+      proyeknya (`sort_order` = terbesar + 1). Menghapus lewat baris yang
+      dicentang — kotak centangnya sempat tidak mengerjakan apa pun.
    ============================================================================= */
 
 const STATUS = [
@@ -257,10 +266,40 @@ function Isi() {
     }
   }
 
+  /* Ke Satu Proyek milik termin ini, lewat id — dulu dicocokkan lewat
+     JUDUL lalu dibawa ke daftar Semua Proyek, jadi staf masih harus mencari
+     proyeknya sendiri. */
   function bukaProyeknya(i: Invoice) {
-    const p = (proyek ?? []).find((x) => x.title === i.projectTitle);
-    if (p) setProyekAktif(p.id);
-    window.location.href = "/admin/proyek";
+    navigate(`/admin/proyek/satu?id=${i.projectId}`);
+  }
+
+  async function muatUlang() {
+    const segar = await semuaTagihan();
+    tulisCache("tagihan-semua", segar);
+    setTagihan(segar);
+  }
+
+  async function hapusTerpilih() {
+    const ids = [...terpilih];
+    setSibuk("hapus");
+    let gagal = 0;
+    /* Satu per satu, bukan Promise.all: kalau satu gagal, yang lain tetap
+       jalan dan staf diberi tahu berapa yang tertinggal. */
+    for (const id of ids) {
+      try {
+        await hapusInvoice(id);
+      } catch {
+        gagal++;
+      }
+    }
+    setTerpilih([]);
+    await muatUlang().catch(() => {});
+    setSibuk(null);
+    toast(
+      gagal
+        ? { judul: `${ids.length - gagal} dari ${ids.length} termin dihapus`, keterangan: "Sisanya gagal — coba lagi.", nada: "gagal" }
+        : { judul: `${ids.length} termin dihapus`, nada: "sukses" },
+    );
   }
 
   const kolom: KolomTabel[] = [
@@ -335,42 +374,6 @@ function Isi() {
 
   const memuat = tagihan === null;
 
-  function Kartu({
-    ikon,
-    label,
-    angka,
-  }: {
-    ikon: Parameters<typeof Ikon>[0]["ikon"];
-    label: string;
-    angka: { total: number; ini: number; lalu: number };
-  }) {
-    const bisaBanding = angka.lalu > 0;
-    const beda = bisaBanding ? ((angka.ini - angka.lalu) / angka.lalu) * 100 : 0;
-    return (
-      <article className="tag__kartu">
-        <span className="tag__ubin">
-          <Ikon ikon={ikon} ukuran={26} />
-        </span>
-        <div className="tag__isi">
-          <p className="tag__label">{label}</p>
-          <p className="tag__nilai">{formatRupiah(angka.total)}</p>
-        </div>
-        <div className="tag__kanan">
-          {bisaBanding && (
-            <LencanaTren naik={beda >= 0}>
-              {Math.abs(beda).toFixed(1).replace(".", ",")} %
-            </LencanaTren>
-          )}
-          <p className="tag__banding">
-            bulan ini
-            <br />
-            <b>{formatRupiah(angka.ini)}</b>
-          </p>
-        </div>
-      </article>
-    );
-  }
-
   return (
     <div className="tag">
       <section className="tag__stat">
@@ -424,17 +427,12 @@ function Isi() {
           </select>
         </label>
 
-        {/* Termin dibuat DI HALAMAN PROYEKNYA — lihat catatan di kepala
-            berkas ini. Tombolnya tetap ada di tempat yang sama dengan
-            framenya, dan yang berubah cuma ke mana ia membawa. */}
-        <Tombol
-          ukuran="medium"
-          kiri={Plus}
-          title="Termin dibuat dari halaman proyeknya"
-          onClick={() => (window.location.href = "/admin/proyek")}
-        >
-          Tagihan Baru
-        </Tombol>
+        <DialogTermin
+          proyek={proyek ?? []}
+          tagihan={semua}
+          awal={(proyek ?? []).find((p) => p.title === filterProyek)?.id}
+          onSelesai={() => muatUlang().catch(() => {})}
+        />
       </div>
 
       <div className="tag__tabel">
@@ -480,9 +478,216 @@ function Isi() {
           dari {tersaring.length}
           {terpilih.length > 0 && ` · ${terpilih.length} dipilih`}
         </p>
+        {terpilih.length > 0 && (
+          <AlertDialog
+            destructive
+            title={`Hapus ${terpilih.length} termin?`}
+            description={
+              semua.some((i) => terpilih.includes(i.id) && i.status === "lunas")
+                ? "Ada termin LUNAS di antaranya — riwayat pembayarannya di Semua Transaksi tidak ikut terhapus, tapi termin ini hilang permanen dari daftar tagihan."
+                : "Termin yang dicentang hilang permanen dari daftar tagihan."
+            }
+            confirmLabel="Ya, hapus"
+            onConfirm={hapusTerpilih}
+            trigger={
+              <Tombol ukuran="small" jenis="secondary" kiri={Trash} disabled={sibuk === "hapus"} className="tag__hapus">
+                {sibuk === "hapus" ? "Menghapus…" : `Hapus ${terpilih.length} termin`}
+              </Tombol>
+            }
+          />
+        )}
         <Paginasi kini={halamanKini} total={totalHalaman} onPindah={setHalaman} />
       </div>
     </div>
+  );
+}
+
+/* Di LUAR Isi: komponen yang didefinisikan di dalam komponen lain jadi
+   JENIS BARU tiap render, dan React membongkar lalu memasang ulang ketiga
+   kartu setiap kali satu huruf diketik di kotak cari. */
+function Kartu({
+  ikon,
+  label,
+  angka,
+}: {
+  ikon: Parameters<typeof Ikon>[0]["ikon"];
+  label: string;
+  angka: { total: number; ini: number; lalu: number };
+}) {
+  const bisaBanding = angka.lalu > 0;
+  const beda = bisaBanding ? ((angka.ini - angka.lalu) / angka.lalu) * 100 : 0;
+  return (
+    <article className="tag__kartu">
+      <span className="tag__ubin">
+        <Ikon ikon={ikon} ukuran={26} />
+      </span>
+      <div className="tag__isi">
+        <p className="tag__label">{label}</p>
+        <p className="tag__nilai">{formatRupiah(angka.total)}</p>
+      </div>
+      <div className="tag__kanan">
+        {bisaBanding && (
+          <LencanaTren naik={beda >= 0}>
+            {Math.abs(beda).toFixed(1).replace(".", ",")} %
+          </LencanaTren>
+        )}
+        <p className="tag__banding">
+          bulan ini
+          <br />
+          <b>{formatRupiah(angka.ini)}</b>
+        </p>
+      </div>
+    </article>
+  );
+}
+
+
+/* Termin baru. Proyeknya dipilih DI DALAM dialog — bentuk yang sama dengan
+   Tambah tugas dan Catat Pengeluaran. Sisa kontrak yang belum ditagihkan
+   ditampilkan begitu proyeknya dipilih, karena kesalahan yang paling mahal
+   di sini menagih melebihi kontrak. */
+function DialogTermin({
+  proyek,
+  tagihan,
+  awal,
+  onSelesai,
+}: {
+  proyek: Proyek[];
+  tagihan: Invoice[];
+  /** Proyek yang sedang disaring di halaman, kalau ada — dipilihkan dulu. */
+  awal?: string;
+  onSelesai: () => void;
+}) {
+  const toast = useToast();
+  const [buka, setBuka] = useState(false);
+  const [idProyek, setIdProyek] = useState("");
+  const [label, setLabel] = useState("");
+  const [nominal, setNominal] = useState("");
+  const [tenggat, setTenggat] = useState("");
+  const [kirim, setKirim] = useState(false);
+
+  const angka = Number(nominal.replace(/\D/g, "")) || 0;
+  const p = proyek.find((x) => x.id === idProyek);
+  const milik = tagihan.filter((i) => i.projectId === idProyek);
+  const ditagihkan = milik.reduce((a, i) => a + i.amount, 0);
+  const kontrak = p?.contractValue ?? 0;
+  const sisa = kontrak - ditagihkan;
+  const alasan = !idProyek
+    ? "Pilih proyeknya dulu."
+    : label.trim().length < 2
+      ? "Isi nama termin, minimal 2 huruf."
+      : angka <= 0
+        ? "Isi nominalnya."
+        : null;
+  const lewatKontrak = kontrak > 0 && angka > sisa;
+
+  function saatBuka(b: boolean) {
+    setBuka(b);
+    if (b) {
+      setIdProyek(awal ?? "");
+      setLabel(`Termin ${tagihan.filter((i) => i.projectId === (awal ?? "")).length + 1}`);
+      setNominal("");
+      setTenggat("");
+    }
+  }
+
+  function gantiProyek(id: string) {
+    setIdProyek(id);
+    /* Nama bawaan mengikuti nomor urut di proyek itu — "Termin 3" untuk
+       proyek yang sudah punya dua — selama staf belum mengetik sendiri. */
+    setLabel((l) => (/^Termin \d+$/.test(l) || !l ? `Termin ${tagihan.filter((i) => i.projectId === id).length + 1}` : l));
+  }
+
+  async function simpan() {
+    if (alasan) return;
+    setKirim(true);
+    try {
+      const urutan = milik.reduce((m, i) => Math.max(m, i.sortOrder), 0) + 1;
+      await tambahInvoice(idProyek, label.trim(), angka, tenggat || null, urutan);
+      setBuka(false);
+      onSelesai();
+      toast({
+        judul: "Termin ditambahkan sebagai Draf",
+        keterangan: `${label.trim()} — ${formatRupiah(angka)}. Ubah statusnya jadi Terbit saat ditagihkan ke klien.`,
+        nada: "sukses",
+      });
+    } catch (e) {
+      toast({ judul: "Gagal menambah termin", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setKirim(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={buka}
+      onOpenChange={saatBuka}
+      title="Termin baru"
+      description="Satu termin milik satu kontrak — pilih proyeknya di sini."
+      trigger={
+        <Tombol ukuran="medium" kiri={Plus}>
+          Tagihan Baru
+        </Tombol>
+      }
+      footer={
+        <div className="kd-form__kaki">
+          {alasan && <small className="kd-form__alasan">{alasan}</small>}
+          <Tombol ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
+            {kirim ? "Menyimpan…" : "Simpan"}
+          </Tombol>
+        </div>
+      }
+    >
+      <div className="kd-form">
+        <div className="k-isian">
+          <label className="k-isian__label" htmlFor="tag-proyek">
+            Proyek
+          </label>
+          <div className="k-isian__kotak">
+            <select id="tag-proyek" className="k-isian__input" value={idProyek} onChange={(e) => gantiProyek(e.currentTarget.value)}>
+              <option value="">Pilih proyek…</option>
+              {proyek.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {p && (
+          <p className="tag__konteks">
+            {kontrak > 0 ? (
+              <>
+                Kontrak <b>{formatRupiah(kontrak)}</b> · sudah ditagihkan <b>{formatRupiah(ditagihkan)}</b> dalam{" "}
+                {milik.length} termin · sisa <b>{formatRupiah(Math.max(0, sisa))}</b>
+              </>
+            ) : (
+              <>Nilai kontrak proyek ini belum diisi — sisa kontrak tidak bisa dihitung.</>
+            )}
+          </p>
+        )}
+        <Isian label="Nama termin" placeholder="mis. Termin 2 — gambar kerja" maxLength={120} value={label} onChange={(e) => setLabel(e.currentTarget.value)} />
+        <div className="kd-form__dua">
+          <Isian
+            label="Nominal"
+            inputMode="numeric"
+            placeholder="0"
+            value={angka ? angka.toLocaleString("id-ID") : nominal}
+            onChange={(e) => setNominal(e.currentTarget.value)}
+          />
+          <Isian label="Tenggat (boleh kosong)" type="date" value={tenggat} onChange={(e) => setTenggat(e.currentTarget.value)} />
+        </div>
+        {/* Peringatan, bukan penghalang: adendum kontrak memang ada, dan
+            menagih lebih dari kontrak kadang disengaja. Garis amber (terbatas),
+            teksnya tetap gelap — amber di atas putih cuma 1,91 (jebakan #37). */}
+        {lewatKontrak && (
+          <p className="tag__konteks tag__konteks--awas" role="status">
+            Nominal ini melebihi sisa kontrak <b>{formatRupiah(Math.max(0, sisa))}</b>. Periksa lagi — atau perbarui
+            nilai kontraknya dulu kalau memang ada adendum.
+          </p>
+        )}
+      </div>
+    </Dialog>
   );
 }
 

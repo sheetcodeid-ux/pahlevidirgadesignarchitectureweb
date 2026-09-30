@@ -837,6 +837,69 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     - **prop layout yang tidak dioper** — `RelKit` menerima
       `pesanBelumDibaca` dan `master`, `KitLayout` tidak pernah mengisinya.
 
+39. **Fokus yang dikembalikan ke tombol yang sudah LENYAP jatuh ke
+    `<body>`.** Dialog konfirmasi Radix mengembalikan fokus ke pemicunya —
+    tapi pemicu tombol hapus adalah milik kartu yang baru dihapus. Di daftar
+    berkartu (kunci id) kartunya lenyap begitu daftar digambar ulang, dan
+    pemakai papan ketik terlempar ke awal halaman tanpa tanda apa pun.
+    Terukur di Catat Pengeluaran, Logo Klien, dan Tim Studio; tabel kit
+    tidak kena karena barisnya berkunci URUTAN, jadi tombolnya dipakai ulang
+    untuk baris berikutnya. Penangkalnya `lib/fokus.ts`
+    (`jagaFokusSesudahHapus`), dipakai `HapusBaris` dan dialog biaya. Tiga
+    hal yang masing-masing sempat membuatnya gagal:
+    - janji "sudah dihapus" selesai saat state DISETEL, belum digambar —
+      `isConnected` masih true;
+    - Radix baru mengembalikan fokus SESUDAH animasi tutup dialognya, dan
+      perangkap fokusnya menarik balik fokus yang dipindah lebih awal — jadi
+      ditunggu sampai tidak ada `[role=dialog]` lagi;
+    - kontrol cadangannya bisa MATI sesudah digambar ulang ("geser ke kiri"
+      kartu yang naik ke urutan pertama jadi `disabled`), jadi yang difokus
+      kontrol hidup pertama mulai dari cadangan itu.
+    Mengujinya: tekan Enter di tombol hapus lewat PAPAN KETIK, lalu baca
+    `document.activeElement` — klik tetikus menyembunyikan seluruh kelas ini.
+
+40. **`toast()` tepat sebelum `navigate()` tidak pernah terlihat.** Toast
+    hidup di island halaman, dan pindah halaman membuang island itu sebelum
+    toastnya sempat tergambar. Lima alur berakhir di halaman lain tanpa satu
+    kata pun bahwa perbuatannya berhasil: hapus proyek (yang malah memakai
+    `location.href`, muat ulang penuh), hapus tulisan, hapus paket, tambah
+    tulisan, tambah paket. Pakai `titipToast()` dari `ui/overlay/Toast` —
+    pesannya dititipkan di sessionStorage dan dijemput SEKALI oleh
+    `<TitipanToast/>` di kepala halaman kit, berumur 15 detik. Dan jangan
+    pindah lewat halaman yang mengalihkan sendiri (`/admin/proyek/edit`):
+    halaman perantara itu ikut menjemput titipannya lalu membuangnya.
+
+41. **Rel samping dan titik-patah halaman kit SATU paket.** Seluruh
+    titik-patah halaman kit (1240, 1360, 1200, 1100, 1000, 60rem) dirancang
+    untuk rel 192. Melebarkan rel ke 240 tanpa menggesernya membuat halaman
+    bertata-letak desktop di kolom 48px lebih sempit dari yang pernah diuji
+    — "Tambah tugas" keluar kartunya 21px pada 1280, dan 11 tabel harus
+    digeser di dalam kartunya pada 1440. Semuanya digeser +48 (1288, 1408,
+    1248, 1148, 1048, 63rem), menu geser naik dari 40rem ke 56rem, dan kolom
+    tabel kit jadi PERSEN dari jumlah lebar frame dengan lantai 94% di
+    desktop. **Kalau lebar rel diubah lagi, geser semuanya sebesar
+    selisihnya** — catatannya di `.kl` di `KitLayout.astro`. Buktinya: build
+    baru dengan rel dipaksa 192 identik dengan produksi kecuali pergeseran
+    sub-piksel anti-alias.
+
+42. **Daftar dari API tidak memuat isi tulisan — dan satu saringan membuang
+    SELURUH halaman jurnal.** `/api/v1/journal` membalas `null as body`
+    (sengaja: daftar tidak perlu isi), sementara `getStaticPaths` di
+    `jurnal/[slug].astro` menyaring tulisan berisi kosong. Hasilnya tidak
+    SATU PUN halaman tulisan pernah dibangun: indeks jurnal menautkan ke
+    404, tanpa satu langkah merah pun. Sekarang tiap kandidat diambil utuh
+    lewat `getJournal(slug)` (memakai `wajib()`) sebelum disaring. Yang
+    menemukannya audit tautan internal ke halaman yang tidak ada, bukan
+    membaca kodenya.
+
+43. **`<button>` TIDAK mewarisi font maupun `line-height`.** Baris menu
+    yang dipindah dari `<a>` ke `<button>` bergeser beberapa piksel karena
+    `line-height` tombol kembali ke `normal`. `font: inherit` juga bukan
+    jawabannya — ia ikut mereset `line-height` dari shorthand-nya. Yang
+    benar: warisi properti satu per satu (`font-family`, `line-height`,
+    `letter-spacing`, `text-rendering`), seperti di `button.k-nav` dan
+    `.k-transfer--tombol`.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1085,7 +1148,7 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Editor jurnal = halaman BACA frame 40 yang bisa disunting di tempat** | Judul, pembuka, dan isi adalah kotak tanpa garis yang baru bergaris saat disentuh, sehingga teksnya jatuh persis di posisi teks framenya (x321, 16/25). Isi TETAP markdown mentah, tanpa perender kedua — keputusan lama tidak berubah; yang diturunkan ke kolom kanan cuma daftar baris `## ` sebagai daftar isi. Tombol Simpan yang mati selalu menyebut alasannya (syarat yang sama dengan `checkJournalInput`) |
 | **Tombol Terbitkan juga ada di kepala halaman kit, dengan SATU logika** | Halaman yang pindah ke KitLayout kehilangan bilah atas lama beserta tombolnya, padahal toast Jurnal dan Paket menyuruh menekannya. Keadaannya (polling `cap-build.json`, status, "belum tayang") dipindah ke `components/admin/useTerbit.ts` dan dipakai `Topbar` maupun `TerbitKit`; yang dua cuma tampilannya. Ikonnya bola dunia karena pustaka ikon Coinest tidak punya panah unggah — menggambarnya sendiri berarti menjiplak. Konsekuensinya, `KepalaKit` sekarang SELALU dihidrasi, dan `TombolBulat` meneruskan ref supaya bisa jadi pemicu Radix |
 | **Gaji dibangun dari frame 25 LAGI, bukan halaman sendiri tanpa frame** | Dipilih pemilik: Gaji tidak punya frame, dan di pemetaan ia berbagi frame 25 dengan Fee. Kerangkanya sama persis dengan Fee Proyek — terbukti: kotak kelima widget identik — dan helpernya (nominal, pemilih, sumbu) hidup di `components/admin/frame25.tsx` yang dipakai keduanya, bukan disalin; Fee terbukti identik piksel demi piksel setelah helpernya dipindah. Aturan "fee menulis, gaji membaca" tidak berubah: kolom Fee di tabel tidak bisa diketik. Mengubah dan menghapus lewat NAMA orang di tabel, karena tabel kit tidak punya kolom aksi. Grafik Total Gaji diberi ruang kepala 80% seperti framenya — gaji hampir rata, dan tanpa itu garisnya menimpa tooltip puncak |
-| **Halaman kit di ponsel: menu geser SEMENTARA, sampai frame Mobile diekspor** | Dipilih pemilik. Sebelumnya rel samping tetap 192px di layar 390, isi tinggal ~160px, dan halaman bisa digeser 134px ke samping — di ketiga belas halaman kit yang sudah tayang, padahal pemilik memang membuka panel dari ponsel. Di bawah 40rem rel jadi menu geser (bentuknya menu geser panel lama yang sudah di-ACC, BUKAN dikarang dari frame); keadaannya milik `RelKit`, tombolnya di `KepalaKit`, keduanya bicara lewat peristiwa `kit:rel`. Tabel lebar tetap digulir di dalam kartunya sendiri. Terbukti tidak menyentuh desktop: ke-14 halaman identik piksel demi piksel dengan versi yang tayang pada 1440, 1024, dan 768 — kecuali judul Detail Tulisan pada 768 yang kini terlipat alih-alih terpotong. Begitu frame Mobile Coinest diekspor, tampilannya disamakan dengan frame itu |
+| **Halaman kit di ponsel: menu geser SEMENTARA, sampai frame Mobile diekspor** | Dipilih pemilik. Sebelumnya rel samping tetap 192px di layar 390, isi tinggal ~160px, dan halaman bisa digeser 134px ke samping — di ketiga belas halaman kit yang sudah tayang, padahal pemilik memang membuka panel dari ponsel. Di bawah 40rem (sejak rel 240: 56rem, jebakan #41) rel jadi menu geser (bentuknya menu geser panel lama yang sudah di-ACC, BUKAN dikarang dari frame); keadaannya milik `RelKit`, tombolnya di `KepalaKit`, keduanya bicara lewat peristiwa `kit:rel`. Tabel lebar tetap digulir di dalam kartunya sendiri. Terbukti tidak menyentuh desktop: ke-14 halaman identik piksel demi piksel dengan versi yang tayang pada 1440, 1024, dan 768 — kecuali judul Detail Tulisan pada 768 yang kini terlipat alih-alih terpotong. Begitu frame Mobile Coinest diekspor, tampilannya disamakan dengan frame itu |
 | **Dashboard (frame 01) di kerangka kit — halaman keempat belas, yang terakhir** | Tata letak 100% frame, isinya milik studio (pemetaan slotnya di kepala `DashboardKit.tsx`). Judulnya **"Dashboard"**, bukan "Hari Ini" milik kerangka lama: rel samping sudah lama menyebutnya begitu, dan satu halaman dengan dua nama membuat orang ragu. Slot "Recent Transactions" berisi **laba per proyek**, bukan transaksi — "Transaksi Terbaru" sudah ada di Keuangan. Status "Rugi" hanya untuk proyek yang SUDAH lunas: laba dihitung dari kas yang masuk, jadi proyek yang baru DP selalu tampak minus. Kartu keterangan grafik **tidak menyala sejak awal** seperti di framenya (Juni, di tengah): bulan yang wajar dinyalakan adalah bulan ini, yang selalu di ujung kanan, dan di sana ia menutupi legenda. Butir "Perlu Ditangani" dibatasi RUANG kartu (diukur sekali per perubahan data/ukuran), bukan angka tetap. Tablet: kolom tengah naik selebar penuh supaya tabelnya tidak digulir mendatar. `DashboardHome` lama dan ~570 baris CSS `.dash*` dibuang |
 | **Keuangan jadi satu pintu; halaman "Kerja Internal" dibuang** | Pemilik melaporkannya sebagai "sangat membingungkan". Sebabnya bukan tata letak: halaman itu tidak punya isi sendiri — ia potongan dua halaman lintas-proyek yang disaring ke satu proyek, jadi tugas, biaya, dan pipeline masing-masing punya DUA pintu masuk. Sekarang pengeluaran dicatat dari satu tempat dengan dropdown proyek di dalam dialognya |
 | **Fee menulis, Gaji membaca** | Pemilik memilih fee per proyek ke orang DAN halaman gaji yang memuat freelancer — dua jawaban yang kalau diikuti mentah membuat satu bayaran freelancer bisa diketik dua kali, dan beban studio tercatat ganda. Ditutup di lapisan data, bukan di UI: tabel `payroll` secara struktur TIDAK BISA memuat bayaran proyek, dan baris freelancer di halaman Gaji diturunkan SQL dari `project_costs`. Jadi angka ganda bukan cuma tidak dianjurkan — ia tidak bisa terjadi |
@@ -1099,3 +1162,8 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Kelompok Tugas & daftar pindah ke kit, di atas SATU kerangka daftar (`daftarKit.tsx`)** | Tugas, Direktori, Testimoni, dan Tim memakai kerangka frame 13 yang diangkat dari Semua Transaksi — bilah cari + `PilihTombol`, tabel kit, kaki paginasi — dengan stylesheet tunggal `daftar-kit.css`. Semua Transaksi sendiri dipindah ke kerangka itu dan terbukti identik piksel demi piksel (1440/1024/390, terang dan gelap), begitu juga Portal Klien setelah status-pemilihnya jadi `PilihStatus` bersama. Menyaring tetap urusan tiap halaman; kerangka cuma memotong halaman, dan kembali ke halaman 1 saat saringan berubah dibandingkan saat RENDER (bukan efek). Notifikasi memakai linimasa yang sama dengan "Perlu Ditangani" di Dashboard lewat `linimasaNotif.tsx`. Tiga cacat produksi ketahuan di `lib/notifikasi.ts` dan sudah diperbaiki: tugas disaring `!== "done"` padahal enumnya `selesai` (tugas yang sudah selesai dilaporkan terlewat selamanya), testimoni `=== "pending"` padahal enumnya `menunggu` (testimoni yang menunggu tidak pernah muncul di lonceng), dan jenis proyek tercetak mentah ("commercial"). `TaskBoard`, `DirectoryPanel`, `TestimonialsPanel`, `TeamPanel` dibuang; `NotifikasiPanel` tinggal dua bagian yang masih dipakai lonceng kerangka lama |
 | **Situs Publik & Pengaturan pindah ke kit, di atas SATU kerangka (`situsKit.tsx`)** | Kelompok terakhir halaman kerangka lama: Logo Klien, Tim Studio, Sebelum & Sesudah, Angka di FAQ, Halaman Privasi, Identitas Studio, Info Studio, Akun. Kerangka frame 34 yang sama dengan Halaman Publik — kolom utama berisi PRATINJAU gelap persis seperti di situs, lalu isiannya; kolom samping menjawab "sudah lengkap belum, dan di mana saya melihatnya". `HalamanSitus` menggantikan `SisiSitus`, `IsiHalamanKit` menggantikan `IsiHalamanPanel` dengan antarmuka `Isian` yang sama, jadi tiga halaman teks (FAQ, Privasi, Identitas) tetap satu komponen. Logika lama dibawa apa adanya (ambang `lib/logoBentuk`, tukar `sort_order` tetangga, kunci R2 baru disimpan sesudah unggah berhasil, isian kosong dikirim sebagai null, hanya kolom yang berubah yang dikirim). Tiga perbaikan: tahun di Identitas wajib empat angka (dulu "21" lolos dan tercetak di garis waktu); halaman Akun memeriksa aturan kata sandi SUPABASE — 12 karakter, besar, kecil, angka, simbol — padahal halaman lama menyebut "minimal 8" sehingga sandi 8–11 karakter ditolak server tanpa alasan yang terbaca; dan label loncatan pembanding dibetulkan (0% = sesudah penuh). Tujuh panel lama dibuang: `SisiSitus`, `IsiHalamanPanel`, `ClientLogosPanel`, `TimStudioPanel`, `BandingPanel`, `SettingsForm`, `AccountPanel`. Kerangka lama (`AdminLayout`/`Topbar`) sekarang cuma dipakai `/admin/ui`, `/admin/kit`, dan `/admin/masuk` |
 | **Fitur yang hilang saat rombak ke kit dipulihkan DI DALAM kit, bukan dengan menghidupkan komponen lama** | Delapan fitur (jebakan #38) kembali memakai bagian kit: Keluar jadi baris terakhir rel (ikon Nav-SignOut milik Coinest, di slot kaki yang di framenya berisi banner promo) dan relnya kini bergulir sendiri — dengan Situs Publik terbuka baris terakhir berakhir di y936, di bawah tepi layar 800; kotak "Cari di panel" membuka palet `Perintah` yang sama; lonceng dan tombol pesan memakai titik `TombolBulat` dengan angka dari `lib/notifikasi` (sumber yang sama dengan Notifikasi dan Dashboard) dan mengabarkan angka pesan ke rel lewat `kit:pesan`; bukti pembayaran jadi `buktiKit.tsx` (muncul sendiri sesudah Terima Pembayaran mencatat, dibuka ulang dari baris Pembayaran Terbaru dan dari nama pembayaran di Semua Transaksi); PDF jadi `lib/pdfProyek.ts` dengan menu di kepala Satu Proyek, datanya diambil SEGAR saat ditekan. Isi keduanya dibawa apa adanya dari versi lama. Kolom isi ke-30 halaman kit terbukti identik piksel demi piksel dengan build produksi (1440 terang/gelap, 390), kecuali ikon PDF di Satu Proyek. `PaymentFlow.tsx`, `LoginForm.tsx`, dan `lib/pakaiData.ts` — tanpa pengimpor — dibuang |
+| **Kepala kelompok rel (Proyek, Keuangan, Situs Publik, Pengaturan) jadi TOMBOL buka-tutup** | Dilaporkan pemilik: "klik panah bawah ga muncul". Sebabnya: baris induknya `<a href="#">` tanpa penangan, dan submenunya cuma terbuka kalau salah satu anaknya sedang dibuka — jadi caret-nya hiasan sejak rel kit dibuat, dan audit kontrol mati menemukan empat baris mati di tiap halaman. Sekarang `<button aria-expanded aria-controls>`; kelompok halaman yang sedang dibuka terbuka sendiri, sisanya menurut klik, dan keadaannya bertahan antarhalaman karena rel ber-`transition:persist` |
+| **Rel samping 240, BUKAN 192 milik frame Coinest** — bentrok dengan frame, disebutkan terbuka ke pemilik | Rel 192 dirancang untuk label Inggris yang pendek. Terukur 17 dari 32 label menu terpotong ("Terima Pem…", "Pengatu…", "Tim & Freela…"); "Terima Pembayaran" butuh 127px sementara barisnya menyisakan 84, jadi tidak ada padding yang bisa menutupnya. Ongkosnya kolom konten 48px lebih sempit — ditutup di titik-patah dan tabel (jebakan #41), sehingga pada 1440 tidak ada tabel yang perlu digeser dan tinggi tiap tabel sama persis dengan produksi. Tablet tegak (≤896) kini memakai menu geser: dengan rel 240, layar 768 cuma menyisakan 488px konten. Galeri kit tetap 192 untuk membandingkan komponennya dengan frame. Kalau pemilik memilih kembali ke 192, cukup `--kl-rel` dan geser balik titik-patahnya |
+| **Termin baru dan hapus termin di Tagihan & Termin; rincian dan hapus biaya dari Catat Pengeluaran & Semua Transaksi** | Sisa dari audit fungsi API tanpa pemanggil (jebakan #38): `tambahInvoice`, `hapusInvoice`, `hapusBiaya` tidak bisa dijangkau dari kerangka kit. "Tagihan Baru" dulu cuma mengalihkan ke halaman lain; sekarang dialognya sendiri, dengan konteks kontrak (sudah ditagihkan, sisa), nama bawaan "Termin N", urutan = urutan terakhir + 1, dan peringatan kalau nominal melewati sisa kontrak — peringatan, bukan penolakan, karena adendum memang terjadi. Termin baru selalu Draf. Hapus massal menyebut kalau ada termin LUNAS di antaranya. Tombol dan menu ⋯ yang cuma hiasan di Terima/Keluar sekarang menuju halaman yang masuk akal, dan "Lihat semua" mendarat di Semua Transaksi yang sudah tersaring per jenis |
+| **Permintaan GET yang sama dan sedang berjalan DIGABUNG di `panggil`** | Kepala halaman (angka lonceng), rel, dan isi halaman meminta data yang sama saat halaman dibuka. Digabung di satu tempat — bukan dengan menyuruh tiap komponen saling menunggu — dan tiap pemanggil menerima SALINANNYA sendiri (`structuredClone`), supaya satu komponen yang mengubah hasilnya tidak mengubah milik yang lain. Terukur: muat penuh `/admin` 17 → 11 permintaan, pindah ke Pesan Masuk 10 → 6. Hanya yang sedang berjalan; hasil yang sudah selesai tidak disimpan di sini (itu tugas `bacaCache`) |
+| **Tautan "lihat di situs" disembunyikan sampai halamannya benar-benar dibangun** | Halaman Publik, Satu Proyek, dan Detail Tulisan membandingkan waktu terbit/ubah dengan stempel build (`CAP_BUILD`, dioper dari `.astro` — dievaluasi di peramban ia jadi "sekarang"). Proyek atau tulisan yang belum ikut build menampilkan "Belum ada di situs — tekan Terbitkan" alih-alih tautan yang berakhir 404. Gagal-terbuka: kalau salah satu stempel tidak ada, tautannya tetap tampil |

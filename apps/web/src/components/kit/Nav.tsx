@@ -38,6 +38,14 @@ export interface ItemNav {
    */
   anak?: ItemNav[];
   terbuka?: boolean;
+  /**
+   * Membuka-menutup submenu. Kalau ada, barisnya dirender sebagai <button>
+   * sungguhan — bukan <a href="#">. Baris induk tidak punya halaman sendiri,
+   * dan tautan "#" yang dulu dipakai membuat caret-nya tidak mengerjakan
+   * apa pun: submenu cuma terbuka kalau halamannya sudah dibuka lewat jalan
+   * lain. Terukur di audit: 4 baris mati di tiap halaman kit.
+   */
+  onLipat?: () => void;
 }
 
 export interface PropSisiNav {
@@ -62,12 +70,16 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
     >
       <div className="k-sisi__kepala">{logo}</div>
       <ul className="k-sisi__daftar">
-        {item.map((it) => (
+        {item.map((it) => {
+          const idAnak = it.anak ? `${id ?? "k-sisi"}-anak-${it.label.replace(/[^A-Za-z0-9]+/g, "-").toLowerCase()}` : undefined;
+          const Akar = it.onLipat ? "button" : "a";
+          return (
           <li key={it.label}>
-            <a
+            <Akar
               className={["k-nav", it.aktif && "is-aktif"].filter(Boolean).join(" ")}
-              href={it.href ?? "#"}
-              aria-current={it.aktif ? "page" : undefined}
+              {...(it.onLipat
+                ? { type: "button" as const, onClick: it.onLipat, "aria-controls": it.terbuka ? idAnak : undefined }
+                : { href: it.href ?? "#", "aria-current": it.aktif ? ("page" as const) : undefined })}
               aria-expanded={it.anak ? Boolean(it.terbuka) : undefined}
             >
               <Ikon ikon={it.ikon} ukuran={24} />
@@ -98,14 +110,14 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
                     .join(" ")}
                 />
               )}
-            </a>
+            </Akar>
             {/* Submenu HANYA dirender kalau terbuka — bukan disembunyikan
                 dengan CSS. Baris menu yang ada di DOM tapi tidak tergambar
                 tetap dibacakan pembaca layar sebagai tujuan yang bisa
                 dikunjungi, dan di rel sempit ia tidak punya tempat sama
                 sekali. */}
             {it.anak && it.terbuka && !sempit && (
-              <ul className="k-sisi__anak">
+              <ul className="k-sisi__anak" id={idAnak}>
                 {it.anak.map((a) => (
                   <li key={a.label}>
                     <a
@@ -122,7 +134,8 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
               </ul>
             )}
           </li>
-        ))}
+          );
+        })}
       </ul>
       {kaki && <div className="k-sisi__kaki">{kaki}</div>}
     </nav>

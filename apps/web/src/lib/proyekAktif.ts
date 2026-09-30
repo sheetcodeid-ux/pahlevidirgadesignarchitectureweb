@@ -50,8 +50,10 @@ export function onProyekAktif(cb: (id: string | null) => void): () => void {
   };
 }
 
-/** Ketiga halaman yang bergantung pada proyek yang sedang dibuka. */
-export const HALAMAN_PROYEK = ["/admin/proyek/publik", "/admin/proyek/klien", "/admin/proyek/internal"];
+/** Halaman yang bergantung pada proyek yang sedang dibuka. "Kerja Internal"
+    (/admin/proyek/internal) sudah dibuang — alamatnya tidak boleh tinggal di
+    sini, atau bukaProyek() menganggap halaman yang 404 sebagai halaman proyek. */
+export const HALAMAN_PROYEK = ["/admin/proyek/publik", "/admin/proyek/klien"];
 
 /**
  * Membuka sebuah proyek: menetapkannya aktif lalu pindah halaman kalau perlu.

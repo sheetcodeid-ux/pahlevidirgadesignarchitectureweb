@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { navigate } from "astro:transitions/client";
+import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
 import { AlertDialog } from "../ui/overlay/Dialog";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian, Sakelar } from "../kit/Isian";
@@ -89,7 +90,18 @@ const MAKS_FOTO = 10;
 type Draf = Partial<Proyek> & { coverImageKey?: string };
 type Tab = "detail" | "galeri" | "seo";
 
-function Isi() {
+/* Halaman /proyek/<slug> baru ada sesudah build berikutnya: proyek yang
+   diterbitkan sesudah build terakhir belum punya halaman, dan tautannya
+   berujung 404 sampai Terbitkan ditekan. Stempel build dioper dari .astro
+   (lihat JurnalSatuKit). */
+/* Tanggal terbit yang KOSONG dianggap sudah dibangun: proyek lama bisa
+   saja terbit tanpa published_at, dan menyembunyikan tautannya selamanya
+   lebih buruk daripada sesekali 404. Yang disembunyikan cuma yang PASTI
+   terbit sesudah build. */
+const sudahDibangun = (terbitPada: string | null | undefined, dibangunPada?: string) =>
+  !dibangunPada || !terbitPada || terbitPada <= dibangunPada;
+
+function Isi({ dibangunPada }: { dibangunPada?: string }) {
   const toast = useToast();
   const { semua, setSemua, id, asli, galat, pilih } = usePilihProyek();
   const [draf, setDraf] = useState<Draf>({});
@@ -476,7 +488,10 @@ function Isi() {
               <dd className="pf__alamat">/proyek/{teks("slug")}</dd>
             </div>
           </dl>
-          {asli.status === "published" && (
+          {asli.status === "published" && !sudahDibangun(asli.publishedAt, dibangunPada) && (
+            <p className="pf__statusket">Belum ada di situs — tekan Terbitkan (bola dunia di kanan atas).</p>
+          )}
+          {asli.status === "published" && sudahDibangun(asli.publishedAt, dibangunPada) && (
             <a className="pf__tautan" href={`/proyek/${asli.slug}`} target="_blank" rel="noreferrer">
               <Ikon ikon={Globe} ukuran={14} />
               Lihat di situs
@@ -502,8 +517,15 @@ function Isi() {
             onConfirm={async () => {
               try {
                 await hapusProyek(asli.id);
-                toast({ judul: "Proyek dihapus", keterangan: `${asli.title} beserta gambarnya.`, nada: "sukses" });
-                location.href = "/admin/proyek";
+                /* Dititipkan ke halaman tujuan, dan pindahnya lewat router —
+                   dulu `location.href` memuat ulang panel penuh dan toastnya
+                   lenyap bersama halaman ini sebelum sempat terbaca. */
+                titipToast({
+                  judul: "Proyek dihapus",
+                  keterangan: `${asli.title} beserta gambarnya. Tekan Terbitkan supaya halamannya ikut hilang dari situs.`,
+                  nada: "sukses",
+                });
+                await navigate("/admin/proyek");
               } catch (e) {
                 toast({ judul: "Gagal menghapus", keterangan: (e as Error).message, nada: "gagal" });
               }
@@ -826,11 +848,11 @@ function PanelFoto({
   );
 }
 
-export function HalamanPublikKit() {
+export function HalamanPublikKit({ dibangunPada }: { dibangunPada?: string }) {
   return (
     <RequireAuth skeleton={<div className="pas pas--rangka" />}>
       <ToastProvider>
-        <Isi />
+        <Isi dibangunPada={dibangunPada} />
       </ToastProvider>
     </RequireAuth>
   );

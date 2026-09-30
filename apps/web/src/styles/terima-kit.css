@@ -69,6 +69,6 @@
 /* 836 (dasar isian terakhir) → 860 (puncak tombol). */
 .tr__panel > .tr__aksi { margin-top: 24px; }
 
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .tr__baris { grid-template-columns: minmax(0, 1fr); }
 }

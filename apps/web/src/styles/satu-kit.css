@@ -291,7 +291,7 @@
 /* --- Transaksi ------------------------------------------------------------ */
 .sat__trx { flex: 1; min-height: 0; }
 .sat__tabel { margin-top: 16px; overflow-x: auto; }
-.sat__tabel .k-tabel { min-width: 725px; }
+/* Lantai lebarnya milik .k-tabel di kit.css (jumlah kolom; 94% di desktop), bukan angka di sini. */
 .sat__tabel .k-tabel thead th:first-child { border-radius: 4px 0 0 4px; }
 .sat__tabel .k-tabel thead th:last-child { border-radius: 0 4px 4px 0; }
 .sat__jenis { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
@@ -317,7 +317,7 @@
 .sat--rangka { min-height: 1000px; }
 
 /* Di bawah lebar framenya seluruh kolom menumpuk. */
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .sat__stat,
   .sat__utama,
   .sat__atas,

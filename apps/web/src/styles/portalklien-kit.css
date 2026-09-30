@@ -190,7 +190,7 @@ a.pk__dokjudul:hover { text-decoration: underline; }
 
 /* Satu kolom: kartu tautan turun ke bawah isi. Dibatasi lebarnya supaya
    tombol Salin tidak jadi bilah selebar 760px di tablet. */
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .pk .pf__info { max-width: 440px; }
 }
 @media (max-width: 40rem) {

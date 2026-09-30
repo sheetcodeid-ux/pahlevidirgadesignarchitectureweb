@@ -231,7 +231,7 @@
 .pf__jadisampul:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 3px; }
 .pf__hapusfoto { margin-left: auto; color: var(--danger); }
 
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .pf__sampul { height: 280px; margin: 0; }
   /* Satu kolom: kolom samping turun ke bawah formulir, dan baris Simpan-nya
      menempel di dasar layar selama formulirnya masih digulir. Lengket

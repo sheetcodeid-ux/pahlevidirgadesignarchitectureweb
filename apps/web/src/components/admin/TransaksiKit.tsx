@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider } from "../ui/overlay/Toast";
 import { DialogBukti } from "./buktiKit";
+import { DialogBiaya } from "./biayaKit";
 import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Cari } from "../kit/Isian";
@@ -69,6 +70,8 @@ interface Transaksi {
   catatan: string;
   /** Baris pembayaran aslinya — namanya membuka bukti pembayaran. */
   bayar?: Pembayaran;
+  /** Baris biaya aslinya — namanya membuka rinciannya (dan hapus). */
+  biaya?: BiayaProyek;
 }
 
 const LABEL_JENIS: Record<string, string> = {
@@ -147,6 +150,16 @@ function Isi() {
   const [rentang, setRentang] = useState("12");
   const [terpilih, setTerpilih] = useState<string[]>([]);
   const [bukti, setBukti] = useState<Pembayaran | null>(null);
+  const [rinci, setRinci] = useState<BiayaProyek | null>(null);
+
+  /* "Lihat semua" dari Terima Pembayaran dan Catat Pengeluaran membawa
+     ?jenis=masuk|keluar. Dibaca di efek, bukan di useState: halaman ini
+     dirender di server tanpa URL, dan membacanya saat render memecah
+     hidrasi. */
+  useEffect(() => {
+    const j = new URLSearchParams(window.location.search).get("jenis");
+    if (j === "masuk" || j === "keluar") setJenis(j);
+  }, []);
 
   useEffect(() => {
     semuaPembayaran()
@@ -195,6 +208,7 @@ function Isi() {
          barisnya. Mengisi kolom ini dengan keterangan yang sama berarti
          satu kalimat dicetak dua kali dalam satu baris. */
       catatan: "—",
+      biaya: k,
     }));
     /* Dibandingkan sebagai ANGKA, bukan sebagai string. `paid_at` timestamptz
        ("2026-09-29T02:17:36.031Z") dan `incurred_on` date ("2026-09-29")
@@ -281,6 +295,15 @@ function Isi() {
             className="trx__bukti"
             title={`Bukti pembayaran ${formatRupiah(t.nominal)}`}
             onClick={() => setBukti(t.bayar!)}
+          >
+            <SelDua atas={t.nama} bawah={t.sub} />
+          </button>
+        ) : t.biaya ? (
+          <button
+            type="button"
+            className="trx__bukti"
+            title={`Rincian biaya ${formatRupiah(t.nominal)}`}
+            onClick={() => setRinci(t.biaya!)}
           >
             <SelDua atas={t.nama} bawah={t.sub} />
           </button>
@@ -371,6 +394,20 @@ function Isi() {
       metode={bukti ? LABEL_METODE[bukti.method] ?? bukti.method : ""}
       open={bukti !== null}
       onOpenChange={(b) => !b && setBukti(null)}
+    />
+    <DialogBiaya
+      biaya={rinci}
+      kategori={rinci ? LABEL_KATEGORI[rinci.category] ?? rinci.category : ""}
+      open={rinci !== null}
+      onOpenChange={(b) => !b && setRinci(null)}
+      onDihapus={() =>
+        semuaBiaya()
+          .then((d) => {
+            tulisCache("biaya-semua", d);
+            setBiaya(d);
+          })
+          .catch(() => {})
+      }
     />
     </>
   );

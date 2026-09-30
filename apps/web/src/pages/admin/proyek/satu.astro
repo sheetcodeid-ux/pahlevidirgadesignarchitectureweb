@@ -1,6 +1,7 @@
 ---
 import KitLayout from "../../../layouts/KitLayout.astro";
 import { SatuProyekKit } from "../../../components/admin/SatuProyekKit";
+import { CAP_BUILD } from "../../../lib/capBuild";
 /* `.pro__pilih` (pemilih teks ber-<select>) milik halaman Semua Proyek
    dipakai ulang untuk judul pemilih proyek, bukan disalin. */
 import "../../../styles/proyek-kit.css";
@@ -12,5 +13,5 @@ import "../../../styles/satu-kit.css";
 ---
 
 <KitLayout title="Satu Proyek" judul="Satu Proyek">
-  <SatuProyekKit client:load />
+  <SatuProyekKit client:load dibangunPada={CAP_BUILD} />
 </KitLayout>

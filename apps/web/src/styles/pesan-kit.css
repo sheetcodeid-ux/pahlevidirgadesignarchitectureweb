@@ -324,9 +324,9 @@
    ditukar di sini. Donat membaca `--surface` untuk celahnya. */
 
 /* --- Lebar lebih sempit ----------------------------------------------------- */
-/* Kolom isi pesan di bawah 1240 cuma ~340 lebar: kartu jenis menumpuk
+/* Kolom isi pesan di bawah 1288 cuma ~340 lebar: kartu jenis menumpuk
    donat di atas daftarnya, kalau tidak nama jenisnya terpotong "Kome…". */
-@media (max-width: 1240px) {
+@media (max-width: 1288px) {
   .pes__fitur { grid-template-columns: minmax(0, 1fr); }
   .pes__jenis { flex-direction: column; align-items: center; }
   .pes__jeniskiri { align-self: stretch; align-items: center; }
@@ -336,7 +336,7 @@
 }
 /* Di bawah 60rem daftar dan isi tidak muat berdampingan: satu tampil,
    ditukar lewat tombol panah dan klik baris. */
-@media (max-width: 60rem) {
+@media (max-width: 63rem) {
   .pes { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 640px; padding: 15px; }
   .pes__kiri { padding: 0; }
   .pes__daftar { margin: 0; padding: 0; max-height: 70vh; }

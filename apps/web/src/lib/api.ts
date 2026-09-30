@@ -206,6 +206,24 @@ export function listJournal(): Promise<Tulisan[]> {
   return safely<Tulisan[]>("/api/v1/journal", []);
 }
 
+/**
+ * Satu tulisan yang sudah terbit, BESERTA isinya.
+ *
+ * Indeks di atas sengaja tidak membawa `body` (API mengirim `null as body`
+ * supaya draf tidak ikut sampai ke halaman publik). Halaman /jurnal/<slug>
+ * dulu menyaring daftar INDEKS itu dengan "isinya tidak kosong" — jadi tidak
+ * satu pun halaman tulisan pernah dibuat, dan setiap judul terbit di /jurnal
+ * menautkan ke 404. Isinya diambil dari sini, satu per tulisan terbit.
+ *
+ * wajib(), bukan safely(): indeksnya sudah menyatakan tulisan ini terbit,
+ * jadi gagal mengambil isinya berarti API sedang bermasalah — dan
+ * melanjutkan build berarti men-deploy situs tanpa halaman itu, mematikan
+ * tautan yang sudah dibagikan (alasan yang sama dengan listProjects).
+ */
+export function getJournal(slug: string): Promise<Tulisan> {
+  return wajib<Tulisan>(`/api/v1/journal/${encodeURIComponent(slug)}`);
+}
+
 // --- Logo klien -----------------------------------------------------------
 
 export interface Klien {
