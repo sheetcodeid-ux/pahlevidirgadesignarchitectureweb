@@ -1,12 +1,12 @@
 import { KepalaHalaman, TombolBulat } from "../kit/Item";
 import { Cari } from "../kit/Isian";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { ArrowLeft, List } from "../kit/ikon";
 import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from "./RelKit";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 import { Perintah } from "./Perintah";
-import { ambilBarisNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
+import { ambilBarisNotifikasi, barisNotifikasiTerakhir, type BarisNotifikasi } from "../../lib/notifikasi";
 import { PanelPesan, PanelNotifikasi } from "./panelKabar";
 import { TitipanToast } from "../ui/overlay/Toast";
 
@@ -49,6 +49,13 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
   /* null = belum tiba (panel lonceng menggambar kerangka), [] = kosong. */
   const [baris, setBaris] = useState<BarisNotifikasi[] | null>(null);
   const pesanBaru = (baris ?? []).filter((b) => b.id.startsWith("pesan-")).length;
+  /* Angka halaman sebelumnya dipasang SEBELUM paint pertama, bukan sebagai
+     nilai awal useState: server merender "belum tahu", dan nilai awal yang
+     berbeda di klien membuang pohon saat hidrasi (jebakan #8). */
+  useLayoutEffect(() => {
+    const kini = barisNotifikasiTerakhir();
+    if (kini) setBaris(kini);
+  }, []);
   useEffect(() => {
     let hidup = true;
     ambilBarisNotifikasi()

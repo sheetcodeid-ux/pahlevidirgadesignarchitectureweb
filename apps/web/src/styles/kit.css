@@ -3560,3 +3560,62 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 /* Pemilih berbentuk teks ("Bulan ini ⌄") di kepala kartu: <select> tak
    tampak di atas teksnya, jadi teksnya yang bergaris bawah. */
 .fee__pilihteks:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* -----------------------------------------------------------------------------
+   DI ATAS LATAR HALAMAN
+
+   Latar halaman kit abu tipis (--k-latar), bukan putih seperti frame Coinest.
+   Kartu putih terangkat sendiri, tapi kontrol yang di frame-nya duduk
+   LANGSUNG di latar putih — kotak cari abu, bilah segmen mint, keping
+   kategori — kini abu/mint di atas abu dan nyaris hilang (selisih 3–9 per
+   kanal, terukur). Daftarnya diturunkan dari audit mekanis: elemen berlatar
+   yang leluhur buram terdekatnya adalah <body>. Kalau menambah kontrol di
+   luar kartu, periksa di sini; di dalam kartu tidak perlu apa-apa.
+
+   Dua perlakuan, menurut perannya:
+   - KONTROL (cari, segmen, keping, tombol bulat) jadi putih bergaris —
+     bentuk yang sama dengan isian di dalam kartu.
+   - BIDANG MINT yang memang bagian rancangan (panel daftar proyek, kotak
+     catatan, zona seret) tetap mint, diberi tepi tipis supaya batasnya
+     terbaca di atas abu.
+   ----------------------------------------------------------------------------- */
+.kl-body :is(
+  .k-kepalahal .k-cari,
+  .k-kepalahal .k-bulat,
+  .k-kepalahal__kembali,
+  .dsb__kol > .k-jalurtab,
+  .tr__kiri > .k-jalurtab,
+  .tr__cari > .k-cari,
+  .tr__cari > .k-bulat,
+  .tag__bar > .k-segmen,
+  .tag__bar > .k-cari,
+  .tag__bar .k-pilihtombol > .k-tombol,
+  .tag__kaki .k-paginasi__b:not([aria-current="page"]),
+  .tag__hitung > select,
+  .pas__utama > .k-segmen,
+  .pf__bagian > .k-jalurtab,
+  .pk__tautan,
+  .pj__keping > .k-kategori:not(.is-aktif),
+  .pjs__status,
+  .pjs__ikon .k-tombolikon,
+  .pjs__tagar .k-keping,
+  .pak__alatkiri > .k-cari,
+  .pak__alatkiri .k-pilihtombol > .k-tombol
+) {
+  background-color: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.kl-body :is(.pro__daftar, .sat__stat > .k-statlebar, .pj__kartumint, .situs__catatan, .pf__seret, .pf__sampul--kosong, .keu__skor) {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+/* Tema gelap: ubin yang memakai --bg sebagai bidang dalam kartu jatuh sama
+   persis dengan latar halaman (#171D1C) begitu ia duduk di luar kartu. */
+:root[data-theme="dark"] .kl-body :is(
+  .keu__stat > .k-statkecil,
+  .tr__gulir > .k-transfer:not([aria-pressed="true"]),
+  .tr__akor > .k-penyedia,
+  .is-logo__kotak
+) {
+  background-color: var(--surface);
+}
+:root[data-theme="dark"] .kl-body .ih { box-shadow: 0 0 0 1px var(--border); }

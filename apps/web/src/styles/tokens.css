@@ -119,6 +119,11 @@
      memang tidak pernah dipakai begitu di file aslinya. */
   --bg: #FBFBFC;
   --bg-sunken: #F6F7F6;
+  /* Latar halaman panel kit — abu tipis, sedikit condong ke hijau brand,
+     supaya kartu putih terangkat tanpa bayangan. Permintaan pemilik: latar
+     putih polos terasa mati. Bukan --bg-sunken: nilai itu terlalu dekat ke
+     putih untuk memisahkan kartu bergaris 1px. */
+  --k-latar: #F1F3F2;
   --surface: #FFFFFF;
   --surface-raised: #FFFDFC;
   --surface-hover: #EFF0F0;
@@ -304,6 +309,9 @@
 :root[data-theme="dark"] {
   --bg: #171D1C;
   --bg-sunken: #121716;
+  /* Di gelap kartu (--surface) yang lebih terang; latarnya turun satu anak
+     tangga supaya hubungan kartu-di-atas-latar sama dengan tema terang. */
+  --k-latar: #171D1C;
   --surface: #1F2725;
   --surface-raised: #242E2C;
   --surface-hover: #2C3735;

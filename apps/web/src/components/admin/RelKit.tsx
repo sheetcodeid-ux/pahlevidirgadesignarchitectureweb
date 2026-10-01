@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { SisiNav, type ItemNav } from "../kit/Nav";
-import { SEMUA_IKON, NavSignOut } from "../kit/ikon";
+import {
+  ArrowsLeftRight, ChartBar, ChatTeardropDots, CircleDashed, CoinIn, CoinOut, FileText, GearSix, Globe, House,
+  IdentificationBadge, ImageSquare, Info, List, NavArrowsLeftRight, NavCoins, NavCurrencyCircleDollar, NavEnvelope,
+  NavNewspaper, NavReceipt, NavSealPercent, NavSignOut, NavSquaresFour, Question, Ruler, SpecialCheckSquare,
+  SpecialCube, UserCircle, Users, Wallet,
+} from "../kit/ikon";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { NAV } from "../../lib/navAdmin";
 import { hapusSesi, profilTersimpan } from "../../lib/admin";
@@ -15,21 +20,25 @@ import { hapusSesi, profilTersimpan } from "../../lib/admin";
 
    Yang diterjemahkan di sini cuma kosakata ikonnya: navAdmin menyebut nama
    ikon kit sebagai STRING (`ikonKit`), dan string itu diresolusi ke komponen
-   lewat `SEMUA_IKON`. Kalau namanya salah ketik, barisnya tergambar tanpa
+   lewat `IKON_NAV` di bawah. Kalau namanya salah ketik, barisnya tergambar tanpa
    ikon — bukan halaman yang gagal dibangun — jadi ada pemeriksaan di bawah
    yang melaporkannya ke konsol saat dev.
    ============================================================================= */
 
-/* Kunci dicatat DUA kali: apa adanya, dan versi yang dibuang tanda bacanya.
-   Sebabnya bukan kerapian — `SEMUA_IKON` memakai "Nav-Coins" sementara nama
-   ekspornya `NavCoins`, dan menulis salah satunya di navAdmin.ts membuat
-   barisnya tergambar sebagai lingkaran putus-putus TANPA satu pun galat.
-   Sudah menggigit sekali, di lima baris menu sekaligus. */
-const PETA: Map<string, DataIkon> = new Map();
-for (const [nama, d] of SEMUA_IKON) {
-  PETA.set(nama, d);
-  PETA.set(nama.replace(/[^A-Za-z0-9]/g, ""), d);
-}
+/* Peta ikon menu, DITULIS satu per satu — bukan diturunkan dari daftar
+   seluruh ikon. Rel ini dipasang di setiap halaman admin; menyebut daftar
+   lengkapnya dulu menarik 325 KB ikon ke tiap muat halaman demi 28 bentuk.
+   Kuncinya nama ekspor (tanpa tanda baca). `NamaIkonNav` dipakai navAdmin.ts,
+   jadi nama yang salah ketik kini merah di typecheck, bukan lingkaran
+   putus-putus yang baru ketahuan dari tangkapan layar. */
+export const IKON_NAV = {
+  ArrowsLeftRight, ChartBar, ChatTeardropDots, CoinIn, CoinOut, FileText, GearSix, Globe, House,
+  IdentificationBadge, ImageSquare, Info, List, NavArrowsLeftRight, NavCoins, NavCurrencyCircleDollar, NavEnvelope,
+  NavNewspaper, NavReceipt, NavSealPercent, NavSquaresFour, Question, Ruler, SpecialCheckSquare, SpecialCube,
+  UserCircle, Users, Wallet,
+} satisfies Record<string, DataIkon>;
+export type NamaIkonNav = keyof typeof IKON_NAV;
+const PETA = new Map<string, DataIkon>(Object.entries(IKON_NAV));
 
 function ikon(nama: string, konteks: string): DataIkon {
   const d = PETA.get(nama) ?? PETA.get(nama.replace(/[^A-Za-z0-9]/g, ""));
@@ -41,7 +50,7 @@ function ikon(nama: string, konteks: string): DataIkon {
        menemukan cacat ini bukan `npm run dev` melainkan tangkapan layar
        halaman yang sudah dibangun. */
     console.warn(`[RelKit] ikon kit "${nama}" tidak ada (${konteks})`);
-    return PETA.get("CircleDashed")!;
+    return CircleDashed;
   }
   return d;
 }

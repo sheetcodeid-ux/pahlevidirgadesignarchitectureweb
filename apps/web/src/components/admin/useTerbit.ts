@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { statusTerbit, terbitkanSitus, PERISTIWA_TULIS } from "../../lib/admin";
 
 /* =============================================================================
@@ -37,6 +37,14 @@ export function jamTanggal(iso: string, zona: string): string {
   }).format(new Date(iso)).replace(/\./g, ".").replace(" pukul ", ", ");
 }
 
+/* Jawaban terakhir diingat di modul, dengan alasan yang sama seperti baris
+   notifikasi (lib/notifikasi.ts): kepala kit dipasang ulang tiap klik menu,
+   dan tanpa ini tiap klik menembak publish-status + cap-build.json, sementara
+   penanda "belum tayang" padam sesaat lalu menyala lagi. Menulis apa pun
+   membuangnya (PERISTIWA_TULIS di bawah). */
+const UMUR_STATUS_MS = 20_000;
+let statusTerakhir: { waktu: number; berubahPada: string | null; capBuild: string | null } | null = null;
+
 export function useTerbit(dibangunPada: string) {
   const [berubahPada, setBerubahPada] = useState<string | null | undefined>(undefined);
   const [kirim, setKirim] = useState<KeadaanKirim>("diam");
@@ -60,23 +68,43 @@ export function useTerbit(dibangunPada: string) {
   /* Menanyakan stempel build yang sedang tayang. no-store DAN penanda waktu di
      query: satu saja tidak cukup — proxy di tengah jalan mengabaikan header,
      peramban mengabaikan query kalau headernya mengizinkan menyimpan. */
-  const periksaBuild = useCallback(async () => {
+  const periksaBuild = useCallback(async (): Promise<string | null> => {
     try {
       const r = await fetch(`/cap-build.json?t=${Date.now()}`, { cache: "no-store" });
-      if (!r.ok) return;
+      if (!r.ok) return null;
       const d = (await r.json()) as { dibangunPada?: string };
       if (d.dibangunPada) setCapBuild(d.dibangunPada);
+      return d.dibangunPada ?? null;
     } catch {
       // Jaringan putus sesaat: stempel yang sudah ada tetap dipakai.
+      return null;
     }
+  }, []);
+
+  /* Sebelum paint pertama, bukan nilai awal useState — jebakan #8. */
+  useLayoutEffect(() => {
+    if (!statusTerakhir) return;
+    setBerubahPada(statusTerakhir.berubahPada);
+    if (statusTerakhir.capBuild) setCapBuild(statusTerakhir.capBuild);
   }, []);
 
   useEffect(() => {
     const perbarui = () => {
-      statusTerbit()
-        .then((d) => setBerubahPada(d.terakhirBerubah))
-        .catch(() => setBerubahPada(null));
-      periksaBuild();
+      if (statusTerakhir && Date.now() - statusTerakhir.waktu < UMUR_STATUS_MS) return;
+      const waktu = Date.now();
+      Promise.all([
+        statusTerbit()
+          .then((d) => d.terakhirBerubah)
+          .catch(() => null),
+        periksaBuild(),
+      ]).then(([berubah, cap]) => {
+        setBerubahPada(berubah);
+        statusTerakhir = { waktu, berubahPada: berubah, capBuild: cap ?? statusTerakhir?.capBuild ?? null };
+      });
+    };
+    const sesudahTulis = () => {
+      statusTerakhir = null;
+      perbarui();
     };
     perbarui();
     setKini(new Date());
@@ -89,11 +117,11 @@ export function useTerbit(dibangunPada: string) {
     // Tanpa yang kedua, penandanya baru menyala setelah pindah halaman, dan
     // itu justru saat yang paling salah.
     document.addEventListener("astro:page-load", perbarui);
-    window.addEventListener(PERISTIWA_TULIS, perbarui);
+    window.addEventListener(PERISTIWA_TULIS, sesudahTulis);
     return () => {
       clearInterval(t);
       document.removeEventListener("astro:page-load", perbarui);
-      window.removeEventListener(PERISTIWA_TULIS, perbarui);
+      window.removeEventListener(PERISTIWA_TULIS, sesudahTulis);
     };
   }, [periksaBuild]);
 

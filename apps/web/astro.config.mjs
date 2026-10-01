@@ -49,6 +49,15 @@ export default defineConfig({
     inlineStylesheets: "auto",
   },
 
+  /* Chunk kecil digabung. Ikon kit tinggal satu berkas per ikon (lihat
+   * scripts/buat-ikon-ts.py) supaya galeri tidak menyeret seluruhnya ke tiap
+   * halaman; akibatnya bundler membuat puluhan chunk ber-ukuran 0,5–2 KB, dan
+   * halaman admin memuat 70-an berkas. Modul ikon tidak punya efek samping,
+   * jadi aman digabung ke chunk tetangganya. */
+  vite: {
+    build: { rollupOptions: { output: { experimentalMinChunkSize: 10_000 } } },
+  },
+
   image: {
     // Gambar proyek dilayani dari R2 lewat CDN Cloudflare.
     remotePatterns: [{ protocol: "https" }],

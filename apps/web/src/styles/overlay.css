@@ -13,10 +13,14 @@
   inset: 0;
   z-index: 80;
   background: rgba(0, 0, 0, 0.62);
-  backdrop-filter: blur(3px);
+  /* Tanpa backdrop-filter. Kabur selayar penuh yang sedang memudar dilukis
+     ulang tiap frame animasinya — persis saat dialog seharusnya terasa
+     sigap — dan kerjanya di GPU, jadi tidak muncul di penghitung main
+     thread mana pun (jebakan #23). Lapisannya sedikit dipekatkan sebagai
+     ganti. */
 }
 
-:root[data-theme="light"] .ov-scrim { background: rgba(13, 13, 12, 0.32); }
+:root[data-theme="light"] .ov-scrim { background: rgba(13, 13, 12, 0.38); }
 
 .ov-scrim[data-state="open"] { animation: ov-fade-in var(--dur) var(--ease); }
 .ov-scrim[data-state="closed"] { animation: ov-fade-out var(--dur-fast) var(--ease); }

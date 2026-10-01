@@ -8,7 +8,7 @@
  */
 
 import type { IconName } from "../components/ui/Icon";
-import { daftarPesan, daftarTugas, daftarTestimoni, daftarProyek, type Proyek } from "./admin";
+import { daftarPesan, daftarTugas, daftarTestimoni, daftarProyek, PERISTIWA_TULIS, type Proyek } from "./admin";
 import { CATEGORY_LABELS } from "./api";
 
 /* Nilai enum `project_category` jadi kata yang dibaca staf. Sebelumnya
@@ -77,8 +77,32 @@ export async function ambilNotifikasi(): Promise<IsiNotifikasi> {
  * pasti menyimpang (jebakan #32).
  */
 export async function ambilBarisNotifikasi(): Promise<BarisNotifikasi[]> {
+  if (terakhir && Date.now() - terakhir.waktu < UMUR_BARIS_MS) return terakhir.baris;
   const [pesan, tugas, testimoni] = await Promise.all([daftarPesan(), daftarTugas(), daftarTestimoni()]);
-  return susunNotifikasi(pesan, tugas, testimoni);
+  const baris = susunNotifikasi(pesan, tugas, testimoni);
+  terakhir = { waktu: Date.now(), baris };
+  return baris;
+}
+
+/* Hasil terakhir diingat di MODUL — modul ini hidup sepanjang sesi router,
+   sementara kepala halaman dipasang ulang tiap klik menu. Tanpa ini tiap
+   klik menu menembak tiga permintaan, dan titik merah lonceng serta tombol
+   pesan HILANG sesaat lalu muncul lagi: kepalanya mulai dari "belum tahu".
+   Dibuang begitu panel menulis apa pun (pesan dibaca, tugas selesai) —
+   aturan yang sama dengan cache sesi di lib/admin.ts. Pesan yang masuk dari
+   luar terlihat paling lambat UMUR_BARIS_MS kemudian. */
+const UMUR_BARIS_MS = 20_000;
+let terakhir: { waktu: number; baris: BarisNotifikasi[] } | null = null;
+
+/** Baris yang terakhir diketahui, tanpa mengambil apa pun. null = belum ada. */
+export function barisNotifikasiTerakhir(): BarisNotifikasi[] | null {
+  return terakhir?.baris ?? null;
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener(PERISTIWA_TULIS, () => {
+    terakhir = null;
+  });
 }
 
 function susunNotifikasi(

@@ -11,7 +11,8 @@ import { Cincin, Donat, LencanaTren } from "./Ukuran";
 import { KelompokTab } from "./Segmen";
 import { KartuStatistikRingkas } from "./Kartu";
 import { PemutarSuaraKit, PerekamSuaraKit } from "./Suara";
-import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, CoinVertical, NavCreditCard, VirtualAccount, DotsThree, SEMUA_IKON } from "./ikon";
+import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, CoinVertical, NavCreditCard, VirtualAccount, DotsThree } from "./ikon";
+import { SEMUA_IKON } from "./ikon/semua";
 
 /* =============================================================================
    Galeri kit — halaman kerja, bukan hiasan.

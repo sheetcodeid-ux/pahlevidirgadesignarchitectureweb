@@ -1,3 +1,4 @@
+import type { NamaIkonNav } from "../components/admin/RelKit";
 import type { IconName } from "../components/ui/Icon";
 
 /* =============================================================================
@@ -44,7 +45,7 @@ export interface SubItem {
   href: string;
   icon: IconName;
   /** Lihat `NavItem.ikonKit`. */
-  ikonKit: string;
+  ikonKit: NamaIkonNav;
 }
 
 export interface NavItem {
@@ -80,13 +81,13 @@ export interface NavItem {
    * Kenapa string dan bukan komponennya: berkas ini dipakai command palette
    * dan sidebar LAMA juga, dan keduanya berjalan di luar kit. Mengimpor
    * komponen React ke sini menyeret seluruh pustaka ikon kit ke tiap
-   * pemakainya. Yang memakai kit meresolusinya lewat `SEMUA_IKON`.
+   * pemakainya. Yang memakai kit meresolusinya lewat `IKON_NAV` di RelKit.
    *
    * Kenapa di berkas INI dan bukan di daftar sendiri: dua daftar berisi hal
    * yang sama pasti menyimpang, dan yang jarang dilihat yang salah — persis
    * cacat yang membuat berkas ini ada.
    */
-  ikonKit: string;
+  ikonKit: NamaIkonNav;
 }
 
 // Ikon dipilih agar cocok dengan labelnya, bukan sekadar mengisi ruang:
@@ -122,8 +123,8 @@ export const NAV: NavItem[] = [
       { label: "Ringkasan", href: "/admin/keuangan", icon: "finance", ikonKit: "ChartBar" },
       { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "CoinIn" },
       { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar", icon: "cash", ikonKit: "CoinOut" },
-      { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", icon: "list", ikonKit: "Nav-ArrowsLeftRight" },
-      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "Nav-Receipt" },
+      { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", icon: "list", ikonKit: "NavArrowsLeftRight" },
+      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "NavReceipt" },
       { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "NavCurrencyCircleDollar" },
       { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "Wallet" },
     ],

@@ -110,6 +110,13 @@ const path = Astro.url.pathname;
         });
       })();
     </script>
+
+    {/* Halaman tujuan dihangatkan saat kursor menyentuh tautannya —
+        HTML, CSS, dan modul island-nya. Lihat lib/hangat.ts. */}
+    <script>
+      import { pasangHangat } from "../lib/hangat";
+      pasangHangat();
+    </script>
   </head>
 
   <body class="kl-body">
@@ -148,11 +155,12 @@ const path = Astro.url.pathname;
 </html>
 
 <style is:global>
-  /* Latar halaman putih, bukan warna dasar panel lama. Yang mint cuma rel
-     sampingnya, dan itu sudah diurus .k-sisi sendiri. */
+  /* Latar halaman abu tipis (--k-latar), kartu putih di atasnya. Frame
+     Coinest berlatar putih; diganti atas permintaan pemilik ("latar putih
+     terasa mati"). Yang mint tetap cuma rel sampingnya. */
   .kl-body {
     margin: 0;
-    background: var(--surface);
+    background: var(--k-latar);
     font-family: var(--font-sans);
   }
 
