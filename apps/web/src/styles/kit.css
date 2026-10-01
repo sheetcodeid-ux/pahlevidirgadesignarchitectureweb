@@ -639,7 +639,7 @@
 /* Nada. Pada bentuk bergaris yang berwarna cuma tintanya; pada bentuk pejal
    latar DAN tintanya, dan pasangannya dari Figma apa adanya. */
 .k-lencana--garis.k-lencana--selesai { color: var(--brand); }
-.k-lencana--garis.k-lencana--menunggu { color: var(--warn); }
+.k-lencana--garis.k-lencana--menunggu { color: var(--warn-ink); border-color: var(--warn-line); }
 .k-lencana--garis.k-lencana--gagal { color: var(--danger); }
 .k-lencana--garis.k-lencana--netral { color: var(--text-body); }
 

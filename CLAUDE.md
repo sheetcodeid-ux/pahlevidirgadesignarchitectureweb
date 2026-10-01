@@ -876,7 +876,7 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     toastnya sempat tergambar. Lima alur berakhir di halaman lain tanpa satu
     kata pun bahwa perbuatannya berhasil: hapus proyek (yang malah memakai
     `location.href`, muat ulang penuh), hapus tulisan, hapus paket, tambah
-    tulisan, tambah paket. Pakai `titipToast()` dari `ui/overlay/Toast` —
+    tulisan, tambah paket. Pakai `titipToast()` dari `kit/Toast` —
     pesannya dititipkan di sessionStorage dan dijemput SEKALI oleh
     `<TitipanToast/>` di kepala halaman kit, berumur 15 detik. Dan jangan
     pindah lewat halaman yang mengalihkan sendiri (`/admin/proyek/edit`):
@@ -1001,6 +1001,37 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     halaman kit menggambar tombol MENTAH bawaan peramban — itu persis cacat
     produksi yang ditemukan di dialog konfirmasi hapus (jebakan #5). Yang
     masih memakai `ui/overlay` hanya kerangka lama (`/admin/ui`, `/admin/masuk`).
+
+55. **Angka ringkas terpenggal di kolom sempit: "Rp170 / jt".** Spasi biasa
+    antara angka dan satuan boleh dipenggal, dan di tabel Laba per Proyek,
+    Fee per Proyek, serta legenda Fee per Jenis separuh angkanya turun ke
+    baris berikutnya — terbaca sebagai dua angka. `formatRupiahRingkas`
+    kini memakai spasi tak-terputus (U+00A0). Kalau membuat pemformat
+    satuan lain, lakukan hal yang sama.
+
+56. **Kolom kanan yang `flex: none` + `nowrap` mencuri ruang dari angka
+    utamanya.** Kartu ringkas Keuangan memotong keempat nominal ("Rp532…")
+    karena keterangan kanannya dikunci selebar teksnya. Yang boleh mengalah
+    di kartu angka adalah keterangannya, bukan angkanya: angka `flex: none`,
+    keterangan `min-width: 0` dan boleh dua baris (`text-wrap: balance`).
+    Diukur dengan membandingkan `scrollWidth` dengan `clientWidth` tiap
+    nominal di 1440/1280/1024/390 — bukan dengan melihat.
+
+57. **Kartu keterangan grafik vs. titik PUNCAK.** Kartunya duduk di ruang
+    atas plot; ketika titik yang disorot menjulang sampai ke situ, pita
+    penanda tergambar MENIMPA angkanya (Fee Proyek, September). `GrafikArea`
+    kini memindah kartunya ke bawah penanda kalau ruang di atas tidak cukup
+    (tinggi kartu 64 dengan keterangan, 44 tanpanya), dan kartunya
+    ber-`z-index` di atas pita.
+
+58. **Pemindai kode mati: knip.** `npx knip` dengan entry `src/pages/**`
+    menemukan komponen tanpa pemakai, ekspor yang tak pernah diimpor, dan
+    fungsi API usang — termasuk `tambahBiaya` yang sudah lama digantikan dan
+    mekanisme "jumlah baris diingat" yang tetap menulis ke localStorage
+    padahal tidak dibaca siapa pun. Kecualikan `kit/ikon/daftar.ts`: itu
+    pustaka ikon yang ditampilkan galeri, bukan kode mati. Untuk CSS yatim
+    tidak ada alat jadi — pindai nama kelas tiap stylesheet terhadap seluruh
+    `src`, dengan memperhitungkan kelas yang dirakit (`k-tgl--${…}`).
 
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
@@ -1270,8 +1301,9 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Permintaan GET yang sama dan sedang berjalan DIGABUNG di `panggil`** | Kepala halaman (angka lonceng), rel, dan isi halaman meminta data yang sama saat halaman dibuka. Digabung di satu tempat — bukan dengan menyuruh tiap komponen saling menunggu — dan tiap pemanggil menerima SALINANNYA sendiri (`structuredClone`), supaya satu komponen yang mengubah hasilnya tidak mengubah milik yang lain. Terukur: muat penuh `/admin` 17 → 11 permintaan, pindah ke Pesan Masuk 10 → 6. Hanya yang sedang berjalan; hasil yang sudah selesai tidak disimpan di sini (itu tugas `bacaCache`) |
 | **Tautan "lihat di situs" disembunyikan sampai halamannya benar-benar dibangun** | Halaman Publik, Satu Proyek, dan Detail Tulisan membandingkan waktu terbit/ubah dengan stempel build (`CAP_BUILD`, dioper dari `.astro` — dievaluasi di peramban ia jadi "sekarang"). Proyek atau tulisan yang belum ikut build menampilkan "Belum ada di situs — tekan Terbitkan" alih-alih tautan yang berakhir 404. Gagal-terbuka: kalau salah satu stempel tidak ada, tautannya tetap tampil |
 | **Tombol Pesan dan lonceng membuka PANEL PRATINJAU, bukan pindah halaman** | Dari kebebasan yang diberikan pemilik ("saat saya klik pesan di nav tampilannya harus kyk gimana"). Pindah halaman hanya untuk menjawab "ada apa?" adalah satu muat halaman yang sia-sia. Panel Pesan: lima teratas, yang belum dibaca lebih dulu (avatar pejal + titik merah), nama/waktu relatif/jenis·anggaran/cuplikan; klik membuka pesan itu langsung (`/admin/pesan?id=`). Panel lonceng: dikelompokkan per hari seperti linimasa Dashboard, isinya sumber yang sama dengan angkanya. Keduanya punya keadaan memuat, kosong, dan galat sendiri, dan tautan "Buka semua" di kaki. Pesan diambil saat panel DIBUKA, bukan tiap muat halaman (`components/admin/panelKabar.tsx`) |
-| **Submenu aktif = pil mint saja, tanpa garis tegak** | Garis 3px itu ada di frame Coinest, tapi pemilik membacanya sebagai "efek" yang cuma muncul di submenu Pengaturan dkk. Atas kebebasan yang diberikan, menu atas dan submenu kini satu bentuk |
+| **Baris rel yang aktif BERGARIS — membalik "pil mint saja"** | Permintaan pemilik: "pastikan sidebar ada garis saat dipilih". Dua garis, masing-masing satu tugas: garis TEPI 4px di sisi kiri rel sejajar baris yang dibuka (menu atas maupun submenu), dan garis POHON 1px yang menyusuri submenu di poros ikon induknya (x28) dengan ruas 3px di submenu aktif — garis `Line` frame Coinest yang dulu dibuang karena dikira "efek" (yang sebenarnya pudar silang router, jebakan #45). Tanpa transisi. Submenu sekalian dimulai di 44px dan 13px: lima label Indonesia butuh 133–158px di slot 132 dan terpotong; slotnya kini 148 |
 | **"UI Component" di rel membuka galeri KIT di kerangka kit** | Dulu membuka `/admin/ui` — sistem lama di kerangka lama, huruf dan rel yang sama sekali lain, terbaca sebagai panel yang rusak. `/admin/kit` kini di KitLayout; `/admin/ui` masih bisa dibuka lewat alamatnya |
 | **Latar panel kit ABU tipis (`--k-latar` #F1F3F2 / gelap #171D1C), bukan putih** | Permintaan pemilik: "latar diberi abu tipis agar lebih terlihat hidup". Kartu tetap putih, jadi kartunya kini terbaca sebagai benda di atas meja tanpa satu bayangan pun. Ongkosnya ditanggung di dua tempat: kontrol yang duduk langsung di latar diberi bidang (jebakan #53), dan teks di luar kartu diturunkan ke `--text-muted` supaya lolos kontras |
 | **Pindah menu dihangatkan saat kursor MENDEKATI tautan (`lib/hangat.ts`)** | Prefetch bawaan Astro cuma mengambil HTML; CSS dan modul island halaman tujuan baru diminta sesudah klik, satu RTT per lapis. `hangat.ts` mengambil ketiganya saat hover (jeda 60 ms, cuma tetikus) dan menyuapkan HTML-nya ke `astro:before-preparation`. Terukur dengan RTT 120 ms, kunjungan pertama: 514–778 → 180–364 ms. Ikon dipecah satu berkas per ikon (Rollup tidak pernah memecah satu modul), jadi JS per halaman 739 → ~660–690 KB. Angka lonceng dan status Terbitkan disimpan di modul selama 20 detik, dihapus tiap penulisan, supaya kepala halaman tidak mengambil ulang tiap pindah menu |
 | **Pustaka 62 komponen kit + halaman UI Component berbentuk FOLDER** | Permintaan pemilik: dirapikan per kategori, klik folder → daftar, klik komponen → demo hidup. Tiap tingkat punya alamat hash (`#overlay/alert-dialog`) supaya tombol Kembali dan tautan berbagi bekerja. Komponen kit yang setara dengan komponen lama (dialog, menu, toast) MENGGANTIKAN pemakaian lama di seluruh halaman kit, bukan hidup berdampingan — dua komponen untuk satu tugas pasti menyimpang (jebakan #32) |
+| **Ubin ikon kartu angka MINT, dan kartu statistik Dashboard bergaris tren** | Permintaan pemilik: "warna menyala, web hidup". Ubin pucat `--brand-soft` di atas kartu putih nyaris tak terbaca sebagai benda, sementara ubin ikon di daftar dan linimasa sudah mint — sekarang satu bahasa: ikon di ubin = mint, tinta hijau tua di kedua tema. Kartu statistik Dashboard memuat `Kilau` (grafik garis mungil enam bulan, dari data arus kas yang sudah dimuat — tanpa permintaan baru); warnanya token brand/bahaya, bukan biru #1F3045 milik frame yang tidak punya nilai tema gelap. Tanpa animasi masuk: "one klik pindah one klik berubah, jangan ada yang melekat" |

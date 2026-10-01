@@ -264,6 +264,10 @@
   --upgrade-soft: #F5F3FF;
 
   --warn: #F2B007;
+  /* Tinta amber untuk TEKS kecil di atas putih: #F2B007 cuma 1,91 di sana,
+     jadi lencana "Berjalan" nyaris tak terbaca. Bidang dan titik tetap
+     memakai --warn. */
+  --warn-ink: #8F6600;
   --warn-soft: #FEF6E0;
   --warn-line: #F7DA9A;
 
@@ -399,6 +403,7 @@
   --upgrade-soft: #241F38;
 
   --warn: #F2B007;
+  --warn-ink: #F2B007;
   --warn-soft: #2E2408;
   --warn-line: #6B5210;
 
