@@ -27,3 +27,6 @@ Thumbs.db
 # Backup lokal
 *.dump
 __pycache__/
+
+# Tangkapan layar pratinjau untuk ACC — dikirim lewat percakapan, bukan isi repo
+acc/
