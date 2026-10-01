@@ -267,11 +267,24 @@ Aturan yang mengikat:
 7. **Responsif wajib**, termasuk ponsel sempit. Tidak boleh ada gulir
    horizontal pada badan halaman.
 
-**Halaman UI Component (`/admin/ui`) adalah satu-satunya sumber kebenaran
-komponen.** Hanya master admin yang bisa membukanya. Seluruh 64 komponen sudah
-dibangun. Saat membangun fitur baru, ambil komponen dari sana — jangan membuat
-komponen baru kecuali diminta, dan kalau membuat, daftarkan ke halaman itu.
-Inventaris lengkapnya ada di `docs/design-system.md`.
+**Halaman UI Component (`/admin/kit`) adalah satu-satunya sumber kebenaran
+komponen panel.** Hanya master admin yang bisa membukanya. Isinya **62
+komponen dalam 8 folder** (Aksi, Formulir, Overlay, Navigasi, Data, Umpan
+Balik, Tata Letak, Percakapan) plus folder Ikon; daftarnya
+`components/kit/galeri/katalog.tsx`, demonya `demoSatu.tsx`/`demoDua.tsx`.
+Saat membangun fitur baru, ambil komponen dari sana — jangan membuat komponen
+baru kecuali diminta, dan kalau membuat, daftarkan ke katalog itu. Perbandingan
+dengan frame Figma SENGAJA dibuang dari halaman ini atas permintaan pemilik:
+komponen yang sudah jadi kini acuannya sendiri.
+
+"Dipakai di" pada tiap komponen dihitung saat BUILD oleh
+`pages/admin/kit.astro` dari rantai impor sumbernya — bukan ditulis tangan.
+59 dari 62 terpakai; tiga sisanya (Input OTP, Direction, Questionnaire)
+sengaja belum, dengan alasannya tertulis di `BELUM_DIPAKAI` di `Galeri.tsx`.
+Jangan menempelkannya paksa ke halaman yang tidak membutuhkannya.
+
+`/admin/ui` (sistem lama, 64 komponen, `docs/design-system.md`) masih bisa
+dibuka lewat alamatnya tapi tidak lagi jadi acuan.
 
 Komponen yang butuh perilaku rumit memakai primitif headless; yang bisa
 dikerjakan elemen HTML asli tetap memakai elemen aslinya (`<details>` untuk
@@ -951,6 +964,44 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     dipakai untuk pesan karangan. Selama data ini ada, angka keuangan panel
     BUKAN angka studio.
 
+49. **cmdk menandai SETIAP butir dengan `data-disabled="false"`.** Selektor
+    `[data-disabled]` karena itu cocok untuk semua butir, dan seluruh isi
+    Combobox serta palet perintah tergambar redup seperti mati. Radix justru
+    menulis `data-disabled=""` hanya saat mati. Tulis nilainya eksplisit:
+    `[data-disabled=""], [data-disabled="true"], [aria-disabled="true"]`.
+
+50. **Radix ScrollArea membungkus isinya dengan `<div style="display:table">`**,
+    jadi `text-overflow: ellipsis` di dalamnya tidak pernah menyala — tabel
+    tumbuh selebar isinya. Ditutup di `kit-komponen.css` dengan
+    `.k-gulir__viewport > div { display:block !important }`.
+
+51. **Palet perintah TIDAK boleh dimuat malas.** Versi `lazy()` menelan huruf
+    yang diketik sesudah Ctrl/Cmd+K tapi sebelum modulnya tiba: "gaji"
+    sampai sebagai "ji", dan Enter membuka halaman yang salah. Tes alur
+    menangkapnya; mata tidak. `PaletPanel` diimpor langsung di `KepalaKit`.
+
+52. **`import.meta.glob` tidak pernah memuat berkas pemanggilnya sendiri.**
+    Pemindai "Dipakai di" mem-glob `pages/admin/**`, jadi `/admin/kit` —
+    halaman yang memanggil glob itu — diam-diam tidak ikut, dan Navigation
+    Menubar terhitung tidak dipakai. Galeri sekarang dihitung langsung dari
+    grafnya (`semuaPakai("kit/Galeri")`).
+
+53. **Latar halaman kit kini ABU (`--k-latar`), dan kontrol yang duduk
+    langsung di atasnya perlu bidang sendiri.** Kotak cari, tombol bulat,
+    dan pemilih yang dulu putih-di-atas-putih tinggal sebagai garis di atas
+    abu. Daftarnya di `kit.css` bagian "DI ATAS LATAR HALAMAN" — kalau
+    menaruh kontrol baru di luar kartu, tambahkan ke sana. Teks di atas abu
+    juga kena: remah dan tautan kaki turun ke rasio 2,94 dan 1,68 sebelum
+    dipindah ke `--text-muted`; jalankan `kontras.mjs` sesudah menambah teks
+    di luar kartu.
+
+54. **`overlay.css` tidak lagi dimuat halaman kit.** Dialog, laci, menu, dan
+    toast di kerangka kit memakai `components/kit/Overlay.tsx` + `Toast.tsx`
+    dengan gaya di `kit-komponen.css`. Mengimpor dari `ui/overlay/*` di
+    halaman kit menggambar tombol MENTAH bawaan peramban — itu persis cacat
+    produksi yang ditemukan di dialog konfirmasi hapus (jebakan #5). Yang
+    masih memakai `ui/overlay` hanya kerangka lama (`/admin/ui`, `/admin/masuk`).
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1221,3 +1272,6 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Tombol Pesan dan lonceng membuka PANEL PRATINJAU, bukan pindah halaman** | Dari kebebasan yang diberikan pemilik ("saat saya klik pesan di nav tampilannya harus kyk gimana"). Pindah halaman hanya untuk menjawab "ada apa?" adalah satu muat halaman yang sia-sia. Panel Pesan: lima teratas, yang belum dibaca lebih dulu (avatar pejal + titik merah), nama/waktu relatif/jenis·anggaran/cuplikan; klik membuka pesan itu langsung (`/admin/pesan?id=`). Panel lonceng: dikelompokkan per hari seperti linimasa Dashboard, isinya sumber yang sama dengan angkanya. Keduanya punya keadaan memuat, kosong, dan galat sendiri, dan tautan "Buka semua" di kaki. Pesan diambil saat panel DIBUKA, bukan tiap muat halaman (`components/admin/panelKabar.tsx`) |
 | **Submenu aktif = pil mint saja, tanpa garis tegak** | Garis 3px itu ada di frame Coinest, tapi pemilik membacanya sebagai "efek" yang cuma muncul di submenu Pengaturan dkk. Atas kebebasan yang diberikan, menu atas dan submenu kini satu bentuk |
 | **"UI Component" di rel membuka galeri KIT di kerangka kit** | Dulu membuka `/admin/ui` — sistem lama di kerangka lama, huruf dan rel yang sama sekali lain, terbaca sebagai panel yang rusak. `/admin/kit` kini di KitLayout; `/admin/ui` masih bisa dibuka lewat alamatnya |
+| **Latar panel kit ABU tipis (`--k-latar` #F1F3F2 / gelap #171D1C), bukan putih** | Permintaan pemilik: "latar diberi abu tipis agar lebih terlihat hidup". Kartu tetap putih, jadi kartunya kini terbaca sebagai benda di atas meja tanpa satu bayangan pun. Ongkosnya ditanggung di dua tempat: kontrol yang duduk langsung di latar diberi bidang (jebakan #53), dan teks di luar kartu diturunkan ke `--text-muted` supaya lolos kontras |
+| **Pindah menu dihangatkan saat kursor MENDEKATI tautan (`lib/hangat.ts`)** | Prefetch bawaan Astro cuma mengambil HTML; CSS dan modul island halaman tujuan baru diminta sesudah klik, satu RTT per lapis. `hangat.ts` mengambil ketiganya saat hover (jeda 60 ms, cuma tetikus) dan menyuapkan HTML-nya ke `astro:before-preparation`. Terukur dengan RTT 120 ms, kunjungan pertama: 514–778 → 180–364 ms. Ikon dipecah satu berkas per ikon (Rollup tidak pernah memecah satu modul), jadi JS per halaman 739 → ~660–690 KB. Angka lonceng dan status Terbitkan disimpan di modul selama 20 detik, dihapus tiap penulisan, supaya kepala halaman tidak mengambil ulang tiap pindah menu |
+| **Pustaka 62 komponen kit + halaman UI Component berbentuk FOLDER** | Permintaan pemilik: dirapikan per kategori, klik folder → daftar, klik komponen → demo hidup. Tiap tingkat punya alamat hash (`#overlay/alert-dialog`) supaya tombol Kembali dan tautan berbagi bekerja. Komponen kit yang setara dengan komponen lama (dialog, menu, toast) MENGGANTIKAN pemakaian lama di seluruh halaman kit, bukan hidup berdampingan — dua komponen untuk satu tugas pasti menyimpang (jebakan #32) |
