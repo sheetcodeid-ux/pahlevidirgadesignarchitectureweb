@@ -910,6 +910,47 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     memang punya aturan `:focus-within` yang terlihat — garis mint di atas
     bidang abu (kotak cari, kontras ~1,2) tidak dihitung.
 
+45. **Router sisi klien memakai animasi PUDAR SILANG bawaan untuk seluruh
+    dokumen.** `transition:animate="none"` di `<main>` saja tidak cukup:
+    semua yang di luarnya — termasuk judul di kepala halaman — tergambar
+    tumpang-tindih ±120 ms tiap pindah menu ("Tugas" di atas "Info Studio"),
+    dilaporkan pemilik sebagai "efek". Ditutup dengan
+    `transition:animate="none"` di `<html>` KitLayout. Saudaranya: transisi
+    `background-color` di aturan dasar `.k-nav` ikut berjalan saat baris
+    AKTIF berpindah, jadi dua pil tampak aktif bersamaan; transisi kini cuma
+    di `:hover`.
+
+46. **Aturan layout berkelas ikut mengenai salinan komponen di dalam
+    halaman.** `.kl .k-sisi { position: sticky; height: 100vh }` dimaksudkan
+    untuk rel halaman, tapi galeri UI Component memuat contoh SisiNav di
+    dalam `.kl` — contohnya ikut menempel 240x900. Aturan yang menyasar SATU
+    elemen kerangka ditulis dengan id-nya (`#kl-rel`).
+
+47. **Hover yang warnanya sama dengan latar induknya adalah hover yang tidak
+    ada.** Menu sidebar sempat ber-hover `--brand-soft` di atas rel yang juga
+    `--brand-soft`: aturannya ada, tidak ada yang pernah melihatnya. Audit
+    hover mekanis (`/tmp/uji01/rg/interaksi.mjs` di sesi; polanya: hover tiap
+    kontrol, bandingkan gaya diri + induk + SELURUH keturunan, tandai kelas
+    hanya kalau TAK SATU PUN elemennya bereaksi, lewati yang aktif) menemukan
+    29 jenis elemen bisu. Alat pertamanya sendiri buta pada `background-image`
+    dan pada garis bawah judul di dalam kartu — jebakan #36 lagi. Polanya
+    sekarang satu: `--k-hover-tint` dilapis lewat `background-image`, jadi
+    bekerja di atas latar apa pun dan di kedua tema.
+
+48. **Data contoh di produksi: ID berawalan `c0de000`.** Atas permintaan
+    pemilik, Jan–Sep 2026 diisi data contoh untuk enam proyek ASLI (tanpa
+    proyek baru): 16 tagihan, 10 pembayaran, 32 biaya, 16 gaji, 19 tugas, 14
+    pesan masuk, 6 kontak, 6 anggota tim; nilai kontrak dan tahap lima proyek
+    ikut diubah. Sumbernya `scripts/contoh/buat.py`; **`scripts/contoh/
+    hapus.sql` membuang semuanya dan mengembalikan nilai asli proyek** —
+    jalankan lewat konektor Supabase (`execute_sql`) begitu pemilik selesai
+    melihatnya. Sengaja TIDAK diisi: testimoni (yang disetujui tampil di
+    situs publik — itu ulasan palsu) dan pembaruan portal klien. Email
+    memakai `example.com` dan telepon dikosongkan supaya tombol WhatsApp/
+    email tidak pernah sampai ke orang sungguhan; nama klien asli tidak
+    dipakai untuk pesan karangan. Selama data ini ada, angka keuangan panel
+    BUKAN angka studio.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1177,3 +1218,6 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Termin baru dan hapus termin di Tagihan & Termin; rincian dan hapus biaya dari Catat Pengeluaran & Semua Transaksi** | Sisa dari audit fungsi API tanpa pemanggil (jebakan #38): `tambahInvoice`, `hapusInvoice`, `hapusBiaya` tidak bisa dijangkau dari kerangka kit. "Tagihan Baru" dulu cuma mengalihkan ke halaman lain; sekarang dialognya sendiri, dengan konteks kontrak (sudah ditagihkan, sisa), nama bawaan "Termin N", urutan = urutan terakhir + 1, dan peringatan kalau nominal melewati sisa kontrak — peringatan, bukan penolakan, karena adendum memang terjadi. Termin baru selalu Draf. Hapus massal menyebut kalau ada termin LUNAS di antaranya. Tombol dan menu ⋯ yang cuma hiasan di Terima/Keluar sekarang menuju halaman yang masuk akal, dan "Lihat semua" mendarat di Semua Transaksi yang sudah tersaring per jenis |
 | **Permintaan GET yang sama dan sedang berjalan DIGABUNG di `panggil`** | Kepala halaman (angka lonceng), rel, dan isi halaman meminta data yang sama saat halaman dibuka. Digabung di satu tempat — bukan dengan menyuruh tiap komponen saling menunggu — dan tiap pemanggil menerima SALINANNYA sendiri (`structuredClone`), supaya satu komponen yang mengubah hasilnya tidak mengubah milik yang lain. Terukur: muat penuh `/admin` 17 → 11 permintaan, pindah ke Pesan Masuk 10 → 6. Hanya yang sedang berjalan; hasil yang sudah selesai tidak disimpan di sini (itu tugas `bacaCache`) |
 | **Tautan "lihat di situs" disembunyikan sampai halamannya benar-benar dibangun** | Halaman Publik, Satu Proyek, dan Detail Tulisan membandingkan waktu terbit/ubah dengan stempel build (`CAP_BUILD`, dioper dari `.astro` — dievaluasi di peramban ia jadi "sekarang"). Proyek atau tulisan yang belum ikut build menampilkan "Belum ada di situs — tekan Terbitkan" alih-alih tautan yang berakhir 404. Gagal-terbuka: kalau salah satu stempel tidak ada, tautannya tetap tampil |
+| **Tombol Pesan dan lonceng membuka PANEL PRATINJAU, bukan pindah halaman** | Dari kebebasan yang diberikan pemilik ("saat saya klik pesan di nav tampilannya harus kyk gimana"). Pindah halaman hanya untuk menjawab "ada apa?" adalah satu muat halaman yang sia-sia. Panel Pesan: lima teratas, yang belum dibaca lebih dulu (avatar pejal + titik merah), nama/waktu relatif/jenis·anggaran/cuplikan; klik membuka pesan itu langsung (`/admin/pesan?id=`). Panel lonceng: dikelompokkan per hari seperti linimasa Dashboard, isinya sumber yang sama dengan angkanya. Keduanya punya keadaan memuat, kosong, dan galat sendiri, dan tautan "Buka semua" di kaki. Pesan diambil saat panel DIBUKA, bukan tiap muat halaman (`components/admin/panelKabar.tsx`) |
+| **Submenu aktif = pil mint saja, tanpa garis tegak** | Garis 3px itu ada di frame Coinest, tapi pemilik membacanya sebagai "efek" yang cuma muncul di submenu Pengaturan dkk. Atas kebebasan yang diberikan, menu atas dan submenu kini satu bentuk |
+| **"UI Component" di rel membuka galeri KIT di kerangka kit** | Dulu membuka `/admin/ui` — sistem lama di kerangka lama, huruf dan rel yang sama sekali lain, terbaca sebagai panel yang rusak. `/admin/kit` kini di KitLayout; `/admin/ui` masih bisa dibuka lewat alamatnya |

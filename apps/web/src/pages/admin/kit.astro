@@ -1,5 +1,5 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
+import KitLayout from "../../layouts/KitLayout.astro";
 import { MasterGuard } from "../../components/admin/MasterGuard";
 import { Galeri } from "../../components/kit/Galeri";
 import "../../styles/kit.css";
@@ -13,9 +13,12 @@ import "../../styles/kit.css";
    (jebakan #32), jadi jangan menambah komponen baru ke /admin/ui. */
 ---
 
-<AdminLayout title="Kit Komponen" heading="Kit Komponen">
+<!-- Di KitLayout, bukan AdminLayout: baris "UI Component" di rel membawa ke
+     sini, dan dulu ia membuka kerangka LAMA — rel, kepala, dan huruf yang sama
+     sekali lain. Pindah menu tiba-tiba berganti seluruh tampilan. -->
+<KitLayout title="UI Component" judul="UI Component">
   <MasterGuard client:load target="isi-kit" />
   <div id="isi-kit" hidden>
     <Galeri client:load />
   </div>
-</AdminLayout>
+</KitLayout>

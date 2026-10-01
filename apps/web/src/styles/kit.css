@@ -420,9 +420,14 @@
   color: var(--text-muted);
   background: transparent;
   cursor: pointer;
+}
+/* Transisi HANYA saat disentuh kursor. Kalau dipasang di aturan dasar, ia
+   juga berjalan saat baris aktif berpindah halaman — pil lama memudar 180 ms
+   sementara pil baru menyala, jadi dua baris tampak aktif bersamaan. */
+.k-nav:hover {
+  background: var(--brand-soft);
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.k-nav:hover { background: var(--brand-soft); }
 .k-nav[aria-current="page"],
 .k-nav.is-aktif {
   background: var(--brand-mint);
@@ -445,20 +450,11 @@
    53,28, jadi ia menjorok 8px lagi ke dalam. */
 .k-nav--sub { padding-left: 60.4px; }
 
-/* Garis tegak penanda submenu yang sedang dibuka. Ada di frame Figma sebagai
-   `Line` setebal 3px dari y10 ke y30, berpusat di x28 — dan sempat tidak
-   dibuat sama sekali, sehingga submenu aktif cuma berbeda warna latarnya.
-   Hanya muncul pada yang aktif: garis yang selalu ada tidak menandai apa-apa. */
-.k-nav--sub[aria-current="page"]::before,
-.k-nav--sub.is-aktif::before {
-  content: "";
-  position: absolute;
-  left: 26px;
-  top: 10px;
-  width: 3px;
-  height: 20px;
-  background: currentColor;
-}
+/* Garis tegak penanda submenu yang sedang dibuka DIBUANG. Ia ada di frame
+   Figma (`Line` 3px), tapi pemilik membacanya sebagai "efek" yang cuma muncul
+   di submenu — menu atas yang aktif hanya pil mint, submenu aktif pil mint
+   PLUS garis gelap. Atas kebebasan yang diberikan pemilik, keduanya kini satu
+   bentuk: yang aktif ditandai pilnya saja. */
 
 /* -----------------------------------------------------------------------------
    TOMBOL BERSEGMEN — frame Button, keluarga "Segmented Button"
@@ -2892,7 +2888,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   cursor: pointer;
   transition: color var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }
-.k-jalurtab__b:hover { background: rgba(30, 72, 65, 0.05); }
+.k-jalurtab__b:hover { background: var(--k-hover-tint); }
 .k-jalurtab__b[aria-pressed="true"] {
   font-weight: var(--k-semi);
   color: var(--brand);
@@ -3297,3 +3293,270 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 @media (max-width: 40rem) {
   .bk__aksi > .k-tombol { flex: 1 1 100%; justify-content: center; }
 }
+
+/* -----------------------------------------------------------------------------
+   PANEL PRATINJAU KEPALA — tombol Pesan dan lonceng (components/admin/
+   panelKabar.tsx). Bahasa bentuknya kartu kit: radius 16, garis 1px, tanpa
+   bayangan keras — bayangan lembut cuma untuk memisahkannya dari halaman di
+   bawahnya, karena ia melayang. Lebar 368: cukup untuk nama + waktu
+   sebaris, dan di ponsel menyusut sampai sisa layar.
+   -------------------------------------------------------------------------- */
+.kp {
+  z-index: 85;
+  display: flex;
+  flex-direction: column;
+  width: min(368px, calc(100vw - 24px));
+  max-height: min(520px, calc(100vh - 96px));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+.kp[data-state="open"] { animation: ov-pop-in var(--dur) var(--ease); }
+.kp[data-state="closed"] { animation: ov-fade-out var(--dur-fast) var(--ease); }
+.kp:focus { outline: none; }
+
+.kp__kepala {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.kp__judul { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); }
+.kp__ket { margin: 0; font-size: var(--k-t12); color: var(--text-muted); white-space: nowrap; }
+
+.kp__isi { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px; scrollbar-width: thin; }
+.kp__kelompok + .kp__kelompok { margin-top: 4px; }
+.kp__hari {
+  margin: 8px 10px 4px;
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.kp__daftar { margin: 0; padding: 0; list-style: none; }
+
+.kp__butir {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.kp__butir:hover { background: var(--surface-hover); }
+.kp__butir:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; box-shadow: none; }
+
+.kp__avatar,
+.kp__ubin {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+}
+.kp__ubin { border-radius: 10px; }
+/* Pesan yang belum dibaca: avatarnya pejal, bukan lembut — terbaca sebelum
+   satu kata pun dibaca, seperti titik di sampingnya. */
+.kp__butir.is-baru .kp__avatar { background: var(--brand); color: var(--brand-ink); }
+
+.kp__teks { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.kp__baris1 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.kp__baris1 b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+}
+.kp__butir:not(.is-baru) .kp__baris1 b { font-weight: var(--k-med); }
+.kp__baris1 time { flex: none; font-size: var(--k-t11); color: var(--text-muted); }
+.kp__baris2 { font-size: var(--k-t12); color: var(--text-muted); }
+.kp__cuplik {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--k-t12);
+  color: var(--text-body);
+}
+.kp__titik {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+.kp__butir.is-baru .kp__teks { padding-right: 14px; }
+
+.kp__kaki {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--brand);
+  font-family: inherit;
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  cursor: pointer;
+}
+.kp__kaki:hover { background: var(--brand-soft); }
+.kp__kaki:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; box-shadow: none; }
+
+.kp__kosong {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 20px;
+  text-align: center;
+  font-size: var(--k-t12);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.kp__kosong b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.kp__kosongikon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.kp__rangka { display: flex; align-items: center; gap: 12px; padding: 10px; }
+.kp__rangkabulat { flex: none; width: 36px; height: 36px; border-radius: 999px; background: var(--surface-hover); }
+.kp__rangkagaris { flex: 1; height: 28px; border-radius: 8px; background: var(--surface-hover); }
+
+/* Tema gelap: --brand di sana mint, dan tinta di atasnya harus gelap. */
+:root[data-theme="dark"] .kp__butir.is-baru .kp__avatar { color: var(--brand-mint-ink); }
+@media (prefers-reduced-motion: reduce) {
+  .kp[data-state] { animation: none; }
+}
+
+/* Penjaga halaman master (MasterGuard) di kerangka kit. Gayanya yang asli
+   hidup di admin.css, yang tidak dimuat KitLayout (jebakan #5) — tanpa ini
+   "Memeriksa akses…" tampil sebagai teks mentah. */
+.kl .guard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 24px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  text-align: center;
+  font-size: var(--k-t14);
+  color: var(--text-muted);
+}
+.kl .guard p { max-width: 42ch; margin: 0; }
+.kl .guard h2 { margin: 0; font-size: var(--k-t18); font-weight: var(--k-semi); color: var(--text-strong); }
+.kl .guard .icon-tile { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); }
+.kl .guard .btn { margin-top: 8px; padding: 10px 18px; border-radius: 999px; background: var(--brand); color: var(--brand-ink); font-size: var(--k-t12); font-weight: var(--k-semi); text-decoration: none; }
+.kl .guard__spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: k-putar 700ms linear infinite; }
+@keyframes k-putar { to { transform: rotate(360deg); } }
+
+/* -----------------------------------------------------------------------------
+   RESPONS HOVER — satu lapisan untuk semua yang bisa diklik.
+
+   Diaudit mekanis (hover tiap tombol/tautan di 31 halaman kit, bandingkan
+   gayanya sebelum-sesudah): 29 jenis elemen yang BISA diklik tidak memberi
+   tanda apa pun saat disentuh kursor — tombol bulat di kepala, paginasi,
+   segmen, kartu proyek, baris pesan, tab dashboard, tagar jurnal. Yang paling
+   parah menu sidebar: warna hovernya (--brand-soft) SAMA PERSIS dengan latar
+   relnya, jadi hovernya ada di CSS tapi tidak pernah terlihat.
+
+   Polanya satu: lapisan tipis warna tinta di ATAS latar elemen apa pun,
+   lewat background-image — jadi ia bekerja di atas putih, mint, maupun
+   gelap tanpa harus tahu latar asalnya, dan tidak menimpa box-shadow yang
+   sudah ada. Tinta di tema gelap terang, jadi lapisannya otomatis
+   mencerahkan di sana dan menggelapkan di terang.
+   -------------------------------------------------------------------------- */
+:root { --k-hover-tint: color-mix(in srgb, var(--text-strong) 6%, transparent); }
+:root[data-theme="dark"] { --k-hover-tint: color-mix(in srgb, var(--text-strong) 9%, transparent); }
+
+:is(
+  .k-bulat,
+  .k-segmen__b,
+  .k-paginasi__b,
+  .k-penyedia,
+  .dsb__tabb,
+  .k-inbox__bintang,
+  .k-kategori,
+  .k-kepalahal__kembali,
+  .is-zona__b,
+  .pj-rel__tagar,
+  .pjs__tagar
+):not(:disabled):not([aria-disabled="true"]):hover {
+  background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint));
+}
+
+/* Menu sidebar: latar hover harus BEDA dari latar rel (keduanya sempat
+   --brand-soft). Di terang mint tipis, di gelap hijau tua sedikit lebih
+   terang dari relnya — tinta putih di atasnya tetap terbaca. */
+.k-sisi .k-nav:not([aria-current="page"]):not(.is-aktif):hover {
+  background: color-mix(in srgb, var(--brand-mint) 42%, var(--brand-soft));
+  color: var(--text-strong);
+}
+:root[data-theme="dark"] .k-sisi .k-nav:not([aria-current="page"]):not(.is-aktif):hover {
+  background: color-mix(in srgb, var(--brand-mint) 16%, var(--brand-soft));
+}
+
+/* Baris kotak masuk: tombolnya peregang tak terlihat (::after), jadi yang
+   diberi tanda barisnya. */
+.k-inbox:has(.pes__buka:hover) { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
+
+/* Kartu proyek di Semua Proyek: kartunya anak tombol, dan latar kartu menutup
+   lapisan apa pun di tombolnya — jadi kartunya sendiri yang terangkat. */
+.pro__kartub .k-kas { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.pro__kartub:hover .k-kas { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+/* Nama orang di tabel Gaji dan status gaji: teks yang bisa diklik bergaris
+   bawah saat disentuh, sama dengan nama transaksi di Semua Transaksi. */
+.fee__sel:hover .k-sel2__atas,
+.gaji__status:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pro__kartub .k-kas { transition: none; }
+  .pro__kartub:hover .k-kas { transform: none; }
+}
+
+/* <select> asli di dalam pembungkus: pembungkusnya yang menanggapi kursor.
+   `:not(:focus-within)` — garis fokus (--brand) tidak boleh ditimpa garis
+   hover saat kursor kebetulan melintas di kotak yang sedang diisi. */
+.k-pilihtombol:hover > .k-tombol { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
+:is(.k-isian__kotak, .kd-status, .tr__pilih):hover:not(:focus-within) { border-color: var(--border-strong); }
+/* Pemilih berbentuk teks ("Bulan ini ⌄") di kepala kartu: <select> tak
+   tampak di atas teksnya, jadi teksnya yang bergaris bawah. */
+.fee__pilihteks:hover { text-decoration: underline; text-underline-offset: 3px; }

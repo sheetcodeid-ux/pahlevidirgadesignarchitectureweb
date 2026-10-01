@@ -1,12 +1,13 @@
 import { KepalaHalaman, TombolBulat } from "../kit/Item";
 import { Cari } from "../kit/Isian";
 import { useEffect, useState } from "react";
-import { ChatTeardropDots, Bell, ArrowLeft, List } from "../kit/ikon";
+import { ArrowLeft, List } from "../kit/ikon";
 import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from "./RelKit";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 import { Perintah } from "./Perintah";
-import { ambilBarisNotifikasi } from "../../lib/notifikasi";
+import { ambilBarisNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
+import { PanelPesan, PanelNotifikasi } from "./panelKabar";
 import { TitipanToast } from "../ui/overlay/Toast";
 
 /* Kepala halaman panel admin — `KepalaHalaman` kit dengan isi kanan yang
@@ -45,17 +46,20 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
      halaman, jadi angkanya ikut segar tanpa polling. Membaca saja, tidak
      menulis cache (jebakan #8). */
   const [cariBuka, setCariBuka] = useState(false);
-  const [jumlah, setJumlah] = useState({ semua: 0, pesan: 0 });
+  /* null = belum tiba (panel lonceng menggambar kerangka), [] = kosong. */
+  const [baris, setBaris] = useState<BarisNotifikasi[] | null>(null);
+  const pesanBaru = (baris ?? []).filter((b) => b.id.startsWith("pesan-")).length;
   useEffect(() => {
     let hidup = true;
     ambilBarisNotifikasi()
-      .then((baris) => {
+      .then((d) => {
         if (!hidup) return;
-        const pesan = baris.filter((b) => b.id.startsWith("pesan-")).length;
-        setJumlah({ semua: baris.length, pesan });
-        window.dispatchEvent(new CustomEvent(PERISTIWA_PESAN, { detail: pesan }));
+        setBaris(d);
+        window.dispatchEvent(
+          new CustomEvent(PERISTIWA_PESAN, { detail: d.filter((b) => b.id.startsWith("pesan-")).length }),
+        );
       })
-      .catch(() => {});
+      .catch(() => hidup && setBaris([]));
     return () => {
       hidup = false;
     };
@@ -120,18 +124,9 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
           <TitipanToast />
           <span className="k-kepalahal__grup">
             <TerbitKit dibangunPada={dibangunPada} />
-            <TombolBulat
-              ikon={ChatTeardropDots}
-              judul={jumlah.pesan > 0 ? `Pesan Masuk, ${jumlah.pesan} belum dibaca` : "Pesan Masuk"}
-              tanda={jumlah.pesan > 0}
-              onClick={() => navigate("/admin/pesan")}
-            />
-            <TombolBulat
-              ikon={Bell}
-              judul={jumlah.semua > 0 ? `Notifikasi, ${jumlah.semua} perlu ditangani` : "Notifikasi"}
-              tanda={jumlah.semua > 0}
-              onClick={() => navigate("/admin/notifikasi")}
-            />
+            {/* Panel pratinjau, bukan pindah halaman — lihat panelKabar. */}
+            <PanelPesan belumDibaca={pesanBaru} />
+            <PanelNotifikasi baris={baris} />
           </span>
         </>
       }

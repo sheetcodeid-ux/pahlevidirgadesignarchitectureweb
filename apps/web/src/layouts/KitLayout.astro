@@ -59,7 +59,11 @@ const path = Astro.url.pathname;
 ---
 
 <!doctype html>
-<html lang="id" data-theme="light">
+<!-- transition:animate="none" di <html>: tanpa ini router memakai animasi
+     bawaan (pudar silang) untuk SELURUH dokumen kecuali <main>, dan judul di
+     kepala halaman tergambar tumpang-tindih ±120 ms ("Tugas" di atas "Info
+     Studio") tiap pindah menu — dilaporkan pemilik sebagai "efek". -->
+<html lang="id" data-theme="light" transition:animate="none">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -189,14 +193,16 @@ const path = Astro.url.pathname;
   /* Rel samping menempel; isinya yang bergulir. Tanpa ini menu ikut hilang ke
      atas di halaman yang panjang — dan di frame Coinest rel itu setinggi
      kanvas, jadi ia memang tidak pernah bergulir. */
-  /* `.kl .k-sisi`, BUKAN `.kl > .k-sisi` — jebakan #1 di CLAUDE.md. RelKit
+  /* `.kl #kl-rel` — berid, bukan `.kl .k-sisi`: galeri UI Component memuat
+     contoh SisiNav di dalam .kl, dan aturan berkelas ikut membuat contoh itu
+     menempel setinggi layar (terukur 240x900). BUKAN `.kl > .k-sisi` — jebakan #1 di CLAUDE.md. RelKit
      dihidrasi (`client:load`), jadi Astro membungkusnya dengan
      `<astro-island>` ber-`display: contents`. Tata letaknya berperilaku
      seolah rel itu anak langsung .kl, tapi bagi selektor CSS pembungkusnya
      tetap ada — dan seluruh aturan di bawah ini diam-diam tidak pernah
      menyala. Gejalanya: rel setinggi ISINYA (600) alih-alih setinggi
      viewport, dan mintnya berhenti di tengah halaman. */
-  .kl .k-sisi {
+  .kl #kl-rel {
     position: sticky;
     top: 0;
     flex: none;
@@ -215,7 +221,7 @@ const path = Astro.url.pathname;
        tempat. Menggulir tetap jalan lewat roda, trackpad, sentuh, dan Tab. */
     scrollbar-width: none;
   }
-  .kl .k-sisi::-webkit-scrollbar { display: none; }
+  .kl #kl-rel::-webkit-scrollbar { display: none; }
   .kl__logo {
     display: block;
     padding-top: 30px;
@@ -298,7 +304,7 @@ const path = Astro.url.pathname;
      dengan PONSEL di RelKit. */
   @media (max-width: 56rem) {
     .kl { background: none; }
-    .kl .k-sisi {
+    .kl #kl-rel {
       position: fixed;
       top: 0;
       left: 0;
@@ -314,7 +320,7 @@ const path = Astro.url.pathname;
       visibility: hidden;
       transition: transform 0.2s ease, visibility 0s linear 0.2s;
     }
-    .kl .k-sisi.is-buka {
+    .kl #kl-rel.is-buka {
       transform: none;
       visibility: visible;
       transition: transform 0.2s ease;
@@ -333,7 +339,7 @@ const path = Astro.url.pathname;
     .kl-body .k-kepalahal__kanan > .k-cari { flex: 1 1 auto; width: auto; min-width: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .kl .k-sisi { transition: none; }
+    .kl #kl-rel { transition: none; }
   }
   /* Tirai menu geser: `.ov-scrim` overlay lama (warna per tema sudah ada di
      sana), satu lapis di bawah relnya. */

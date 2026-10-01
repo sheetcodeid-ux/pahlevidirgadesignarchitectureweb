@@ -164,7 +164,10 @@ export const NAV: NavItem[] = [
       { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "UserCircle" },
     ],
   },
-  { label: "UI Component", href: "/admin/ui", icon: "component", ikonKit: "SpecialCube", group: "", masterOnly: true },
+  /* Ke pustaka komponen KIT, bukan /admin/ui: /admin/ui berisi sistem lama di
+     kerangka lama, dan menu yang membawa ke tampilan lain sama sekali terbaca
+     sebagai panel yang rusak. /admin/ui masih bisa dibuka lewat alamatnya. */
+  { label: "UI Component", href: "/admin/kit", icon: "component", ikonKit: "SpecialCube", group: "", masterOnly: true },
 ];
 
 /**
