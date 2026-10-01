@@ -205,8 +205,9 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--brand-soft);
-  color: var(--text-strong);
+  /* Mint, sama dengan ubin kartu statistik di atasnya (lihat .k-stat__ubin). */
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
 }
 .dsb__pnama {
   min-width: 0;

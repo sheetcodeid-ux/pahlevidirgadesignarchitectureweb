@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { KepalaSeksi, BarisLog, BarisBeban } from "../kit/Item";
 import { KartuStatistik, Tren } from "../kit/Kartu";
+import { Kilau } from "../kit/Grafik";
 import { KolomGrafik, LabelYGrafik } from "../kit/Grafik";
 import { BarKemajuan, Donat } from "../kit/Ukuran";
 import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
@@ -350,6 +351,22 @@ function Isi() {
   const tBeban = selisih(bebanKini, bulanLalu?.biaya ?? 0);
   const tLaba = selisih(labaKini, bulanLalu?.labaBersih ?? 0);
 
+  /* Enam bulan terakhir untuk garis mungil di kartu statistik — dari data
+     arus kas yang sudah dimuat halaman ini, tanpa permintaan baru. Kosong
+     sampai datanya tiba: garis datar nol akan terbaca sebagai "tidak ada
+     uang", bukan "belum dimuat". */
+  const enam = useMemo(() => {
+    if (!bulanan) return null;
+    const b = Array.from({ length: 6 }, (_, i) => perBulan.get(kunciBulan(5 - i)));
+    return {
+      kas: b.map((x) => x?.kasMasuk ?? 0),
+      beban: b.map((x) => x?.biaya ?? 0),
+      laba: b.map((x) => x?.labaBersih ?? (x ? x.kasMasuk - x.biaya : 0)),
+    };
+  }, [bulanan, perBulan]);
+  const kilau = (titik: number[] | undefined, buruk: boolean) =>
+    titik ? <Kilau titik={titik} turun={buruk} lebar={76} tinggi={34} /> : undefined;
+
   /* Dua belas kolom di kedua rentang. "Tahun ini" = Januari sampai Desember
      tahun berjalan, persis framenya ("This Year", Jan..Dec) — bulan yang
      belum datang tetap punya kolomnya, cuma tanpa batang. */
@@ -677,6 +694,7 @@ function Isi() {
           <KartuStatistik
             ikon={CoinIn}
             judul="Kas masuk bulan ini"
+            grafik={kilau(enam?.kas, Boolean(tKas && !tKas.naik))}
             nilai={<span title={formatRupiah(kasKini)}>{formatRupiahRingkas(kasKini)}</span>}
             tren={tKas ? <Tren naik={tKas.naik}>{tKas.teks}</Tren> : <span className="k-tren dsb__trenkosong" />}
             menuHref="/admin/keuangan/transaksi"
@@ -685,6 +703,7 @@ function Isi() {
           <KartuStatistik
             ikon={CoinOut}
             judul="Beban bulan ini"
+            grafik={kilau(enam?.beban, Boolean(tBeban?.naik))}
             nilai={<span title={formatRupiah(bebanKini)}>{formatRupiahRingkas(bebanKini)}</span>}
             /* Beban yang naik bukan kabar baik — arah dan penilaian dipisah. */
             tren={
@@ -702,6 +721,7 @@ function Isi() {
           <KartuStatistik
             ikon={Wallet}
             judul="Laba bersih bulan ini"
+            grafik={kilau(enam?.laba, Boolean(tLaba && !tLaba.naik))}
             nilai={<span title={formatRupiah(labaKini)}>{formatRupiahRingkas(labaKini)}</span>}
             tren={tLaba ? <Tren naik={tLaba.naik}>{tLaba.teks}</Tren> : <span className="k-tren dsb__trenkosong" />}
             menuHref="/admin/keuangan"

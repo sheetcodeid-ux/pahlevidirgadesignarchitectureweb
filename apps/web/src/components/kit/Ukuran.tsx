@@ -269,6 +269,12 @@ export function GrafikArea({
         : (posisi ? posisi[sorot.indeks] : nS < 2 ? 0 : sorot.indeks / (nS - 1)) * 100;
   const sorotY =
     sorot === undefined || !sD ? 0 : (1 - sD.titik[sorot.indeks] / atas) * 100;
+  /* Kartu keterangan duduk di ruang atas plot — kecuali titik yang disorot
+     PUNCAK yang menjulang sampai ke situ. Dulu kartunya tetap di atas dan
+     pita/penanda tergambar MENIMPA angkanya (Fee Proyek, September: "Rp2▬▬000").
+     Tingginya diketahui: 64 dengan baris keterangan, 44 tanpanya. */
+  const tinggiKartu = sorot?.ket ? 64 : 44;
+  const kartuBawah = sorot !== undefined && (sorotY / 100) * tinggi - 6 < tinggiKartu - ruangAtas + 4;
   return (
     <div
       className={kelas("k-area", className)}
@@ -379,7 +385,10 @@ export function GrafikArea({
                 DIPUSATKAN pada anak tangga yang disorot (pusat kartu 316,2
                 lawan pusat tangga 315,7). Sebelumnya keduanya kiri, jadi
                 kartu di grafik tangga meleset 36px ke kanan. */}
-            <div className={kelas("k-area__kartu", bentuk === "tangga" && "k-area__kartu--tengah")}>
+            <div
+              className={kelas("k-area__kartu", bentuk === "tangga" && "k-area__kartu--tengah")}
+              style={kartuBawah ? { top: `calc(${sorotY}% + 14px)` } : undefined}
+            >
               <p className="k-area__kjudul">{sorot.judul}</p>
               <p className="k-area__knilai">{sorot.nilai}</p>
               {sorot.ket && <p className="k-area__kket">{sorot.ket}</p>}

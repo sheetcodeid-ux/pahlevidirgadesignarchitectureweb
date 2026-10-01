@@ -55,6 +55,8 @@ export interface PropKartuStatistik {
    */
   menuHref?: string;
   menuJudul?: string;
+  /** Grafik mungil di kepala kartu, di antara ubin dan titik-tiga — `Kilau`. */
+  grafik?: ReactNode;
   className?: string;
 }
 
@@ -66,6 +68,7 @@ export function KartuStatistik({
   onMenu,
   menuHref,
   menuJudul,
+  grafik,
   className,
 }: PropKartuStatistik) {
   return (
@@ -74,6 +77,7 @@ export function KartuStatistik({
         <span className="k-stat__ubin">
           <Ikon ikon={ikon} ukuran={20} />
         </span>
+        {grafik && <span className="k-stat__grafik">{grafik}</span>}
         {menuHref ? (
           <a className="k-stat__menu" href={menuHref} aria-label={menuJudul ?? `Pilihan untuk ${judul}`} title={menuJudul}>
             <Ikon ikon={DotsThreeVertical} ukuran={18} />

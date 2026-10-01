@@ -1044,6 +1044,7 @@
    Versi Tab (182x109) membuang kepalanya dan menyisakan tiga baris bawah.
    -------------------------------------------------------------------------- */
 .k-stat {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   width: 183px;
@@ -1067,8 +1068,12 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: var(--brand-soft);
-  color: var(--brand);
+  /* Mint, bukan --brand-soft: ubin pucat di atas kartu putih nyaris tidak
+     terbaca sebagai benda, dan ubin ikon di daftar, linimasa, dan pemilih
+     proyek sudah mint. Satu bahasa: ikon di ubin = mint. Tinta hijau tua di
+     kedua tema (--brand di gelap ikut jadi mint — jebakan #37). */
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
 }
 
 /* 18x18, bukan 24x24 berlatar. Di Figma tombol ini cuma ikonnya sendiri,
@@ -1088,6 +1093,20 @@
   cursor: pointer;
 }
 .k-stat__menu:hover { background: var(--surface-hover); }
+/* Kilau di kepala kartu: mengisi ruang antara ubin dan titik-tiga, rata
+   bawah dengan ubinnya. Lebarnya ikut kartu (maks 76) — pada kartu 134px di
+   ponsel ia menyempit, bukan mendorong titik-tiganya keluar. */
+.k-stat__grafik {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  align-self: flex-end;
+  min-width: 0;
+  margin: 0 6px 0 10px;
+}
+/* Berkekhususan (0,3,1) supaya mengalahkan `svg[width][height] { max-width:
+   none }` global (jebakan #7). */
+.k-stat .k-stat__grafik svg.k-kilau { width: 100%; max-width: 76px; height: auto; }
 
 /* Jarak antarbaris diambil dari POSISI tinta di framenya, bukan dari
    `margin-bottom: auto` yang mendorong isinya ke bawah. Terukur pada kartu
@@ -1109,7 +1128,12 @@
    Cocokkan lebarnya. */
 .k-stat__nilai {
   margin: 12.5px 0 0;
-  font-size: 24px;
+  /* Satu baris, selalu. "−Rp131 rb" di kartu 174px dulu terlipat jadi dua
+     baris dan mendorong judulnya turun — kartu tetangganya tidak, jadi
+     ketiganya tidak lagi sebaris. Hurufnya mengecil menurut lebar KARTU
+     (container query unit; wadahnya .k-stat sendiri), mentok di 24 frame. */
+  white-space: nowrap;
+  font-size: clamp(18px, 16.8cqi, 24px);
   font-weight: var(--k-bold);
   line-height: 1;
   color: var(--text-strong);
@@ -1519,8 +1543,12 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   white-space: nowrap;
 }
 
-.k-kilau { display: block; color: var(--kilau-naik); }
-.k-kilau--turun { color: var(--kilau-turun); }
+/* Warna lewat token brand, bukan biru tua #1F3045 milik frame: biru itu
+   tidak ada di palet panel mana pun dan tidak punya nilai tema gelap, jadi
+   di sana garisnya tenggelam di kartu gelap. Hijau brand (mint di gelap)
+   untuk tren yang baik, merah bahaya untuk yang buruk. */
+.k-kilau { display: block; color: var(--brand); }
+.k-kilau--turun { color: var(--danger); }
 
 /* Sel tanggal — bulatan 24, angka 12px. */
 .k-tgl {
@@ -2064,6 +2092,11 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   line-height: 1;
 }
 .k-aset__total { font-size: var(--k-t14); color: var(--text-muted); line-height: 1; }
+/* Nominal tidak pernah terlipat: "Rp174 / jt" di kolom Fee per Jenis. Yang
+   mengalah namanya (ber-ellipsis), bukan angkanya. */
+.k-aset__kanan { flex: none; }
+.k-aset__persen,
+.k-aset__total { white-space: nowrap; }
 
 /* --- 10. Item List Watchlist ----------------------------------------------- */
 .k-pantau { display: flex; align-items: center; min-height: 48px; }
@@ -2705,6 +2738,8 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   border: 1px solid var(--border);
   border-radius: 7.5px;
   background: var(--surface);
+  /* Di atas pita dan penanda, yang datang SESUDAHNYA di DOM. */
+  z-index: 1;
 }
 /* Grafik tangga: kartunya dipusatkan pada anak tangganya, dan lebarnya
    memeluk isi — 77 di framenya lawan 114 di grafik halus, karena yang di
@@ -2780,7 +2815,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   background: var(--bg);
   line-height: 1;
 }
-.k-statkecil__kiri { display: flex; flex-direction: column; min-width: 0; }
+.k-statkecil__kiri { display: flex; flex: none; flex-direction: column; max-width: 62%; }
 .k-statkecil__kepala {
   display: flex;
   align-items: center;
@@ -2796,8 +2831,12 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   width: 22px;
   height: 22px;
   border-radius: 8px;
-  background: var(--brand-soft);
-  color: var(--brand);
+  /* Mint, bukan --brand-soft: ubin pucat di atas kartu putih nyaris tidak
+     terbaca sebagai benda, dan ubin ikon di daftar, linimasa, dan pemilih
+     proyek sudah mint. Satu bahasa: ikon di ubin = mint. Tinta hijau tua di
+     kedua tema (--brand di gelap ikut jadi mint — jebakan #37). */
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
 }
 .k-statkecil__judul {
   overflow: hidden;
@@ -2820,27 +2859,33 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 }
 /* Kolom kanan turun 7,5 lebih dalam daripada padding kartunya — lencananya
    mulai di 23 dari puncak kartu, bukan 15,5. */
+/* Kolom kanan yang mengalah, bukan nominalnya. Dulu `flex: none` di sini
+   dan keterangan `nowrap` mengunci lebarnya, jadi di kartu 272px (1440,
+   rel 240) keempat nominal terpotong: "Rp532…", "Rp26…". */
 .k-statkecil__kanan {
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   flex-direction: column;
   align-items: flex-end;
   margin-top: 7.5px;
 }
 .k-statkecil__ket {
-  overflow: hidden;
   /* Tinta di y50,3 dari puncak kartu; lencananya berakhir di 40. */
   margin: 9.5px 0 0;
   font-size: var(--k-t12);
   font-weight: var(--k-reg);
-  line-height: 1;
   /* #242E2C untuk kedua bagiannya — angkanya cuma lebih TEBAL, tidak
      berwarna lain. Terukur dari piksel "+$355" dan "than last week". */
   color: var(--text-strong);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: right;
+  /* Boleh dua baris: "Rp18,7 jt / bulan ini". Angkanya tidak dipotong, dan
+     `balance` membuat kedua baris sama panjang — tanpa itu "ini" tertinggal
+     sendirian di baris kedua. */
+  text-wrap: balance;
+  line-height: 1.25;
 }
-.k-statkecil__ket b { font-weight: var(--k-bold); }
+.k-statkecil__ket b { font-weight: var(--k-bold); white-space: nowrap; }
 /* Pengganti lencana untuk kartu yang tidak punya pembanding (mis. piutang):
    setinggi lencananya, supaya keterangan keempat kartu tetap sebaris. */
 .k-statkecil__tanpatren { display: block; height: 17px; }

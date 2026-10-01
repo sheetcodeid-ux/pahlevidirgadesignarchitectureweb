@@ -278,7 +278,7 @@ export function Kilau({
   const id = `kilau-${turun ? "turun" : "naik"}`;
   return (
     <svg
-      className={["k-kilau", className].filter(Boolean).join(" ")}
+      className={["k-kilau", turun && "k-kilau--turun", className].filter(Boolean).join(" ")}
       width={lebar}
       height={tinggi}
       viewBox={`0 0 ${lebar} ${tinggi}`}
@@ -287,10 +287,11 @@ export function Kilau({
     >
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          {/* 0,48 untuk tren naik dan 0,36 untuk tren turun — beda, dan itu
-              memang begitu di Figma. Satu angka untuk keduanya membuat yang
-              merah terbaca lebih pekat daripada seharusnya. */}
-          <stop offset="0%" stopColor="currentColor" stopOpacity={turun ? 0.36 : 0.48} />
+          {/* 0,30 / 0,28 — lebih tipis daripada 0,48 / 0,36 milik Figma. Di sana
+              garis naiknya biru tua; di panel ini hijau brand, dan bidang hijau
+              tua 48% tergambar sebagai lempeng abu gelap yang lebih berat
+              daripada angka di bawahnya. */}
+          <stop offset="0%" stopColor="currentColor" stopOpacity={turun ? 0.28 : 0.3} />
           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </linearGradient>
       </defs>

@@ -27,9 +27,14 @@ export function formatRupiahRingkas(n: number): string {
   // U+2212, bukan tanda hubung — sama dengan kolom nominal Semua Transaksi.
   const tanda = n < 0 ? "−" : "";
   const koma = (v: number) => v.toFixed(1).replace(/\.0$/, "").replace(".", ",");
-  if (a >= 1e9) return `${tanda}Rp${koma(a / 1e9)} M`;
-  if (a >= 1e8) return `${tanda}Rp${Math.round(a / 1e6)} jt`;
-  if (a >= 1e6) return `${tanda}Rp${koma(a / 1e6)} jt`;
-  if (a >= 1e3) return `${tanda}Rp${Math.round(a / 1e3)} rb`;
+  /* Spasi TAK-TERPUTUS (U+00A0) antara angka dan satuannya. Dengan spasi
+     biasa, kolom sempit memenggalnya jadi "Rp170 / jt" — terukur di tabel
+     Laba per Proyek, Fee per Proyek, dan legenda Fee per Jenis. Angka yang
+     separuhnya di baris lain dibaca sebagai dua angka. */
+  const s = "\u00a0";
+  if (a >= 1e9) return `${tanda}Rp${koma(a / 1e9)}${s}M`;
+  if (a >= 1e8) return `${tanda}Rp${Math.round(a / 1e6)}${s}jt`;
+  if (a >= 1e6) return `${tanda}Rp${koma(a / 1e6)}${s}jt`;
+  if (a >= 1e3) return `${tanda}Rp${Math.round(a / 1e3)}${s}rb`;
   return `${tanda}Rp${a}`;
 }
