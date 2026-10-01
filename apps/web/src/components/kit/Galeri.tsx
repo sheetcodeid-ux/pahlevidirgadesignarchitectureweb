@@ -1,369 +1,348 @@
-import { useState } from "react";
-import { Tombol, TombolIkon, type JenisTombol, type UkuranTombol } from "./Tombol";
-import { Segmen } from "./Segmen";
-import { Ikon } from "./Ikon";
-import { Lencana, Angka, Titik, type BentukLencana, type NadaLencana } from "./Lencana";
+import { useEffect, useMemo, useState } from "react";
+import { Cari } from "./Isian";
 import { Remah } from "./Remah";
-import { Paginasi } from "./Paginasi";
-import { Cari, Isian, Centang, Sakelar } from "./Isian";
-import { GaleriBanding } from "./GaleriBanding";
-import { Cincin, Donat, LencanaTren } from "./Ukuran";
-import { KelompokTab } from "./Segmen";
-import { KartuStatistikRingkas } from "./Kartu";
-import { PemutarSuaraKit, PerekamSuaraKit } from "./Suara";
-import { CalendarBlank, CaretDown, ChatTeardropDots, SmileySticker, Paperclip, CoinIn, CoinVertical, NavCreditCard, VirtualAccount, DotsThree } from "./ikon";
-import { SEMUA_IKON } from "./ikon/semua";
+import { Ikon, type DataIkon } from "./Ikon";
+import { Lencana } from "./Lencana";
+import { Kosong } from "./Tampilan";
+import { ArrowLeft, ArrowRight, MagnifyingGlass } from "./ikon";
+import { KATALOG, JUMLAH_KOMPONEN, IKON_FOLDER_IKON, type Entri, type Folder } from "./galeri/katalog";
+import { halamanRata } from "../../lib/navAdmin";
 
 /* =============================================================================
-   Galeri kit — halaman kerja, bukan hiasan.
+   Halaman UI Component — pustaka kit sebagai FOLDER.
 
-   Bagian ini memperlihatkan komponen dalam pemakaian sehari-hari. Yang
-   MEMBUKTIKAN kemiripannya bukan di sini melainkan di seksi "Banding dengan
-   Figma" di atas, tempat tiap komponen ditempel bersebelahan dengan potongan
-   framenya.
+   Tiga tingkat, masing-masing satu alamat hash supaya tombol Kembali peramban
+   dan tautan yang dibagikan bekerja:
 
-   Dulu di sini ada atribut `data-ukur` berisi angka Figma yang dicocokkan
-   skrip. Itu dibuang: ia daftar KEDUA berisi hal yang sama dengan kit.css,
-   dan begitu padding di CSS diubah, angkanya langsung basi tanpa ada yang
-   tahu — jebakan #32 di CLAUDE.md. Pembanding gambar tidak bisa basi, karena
-   sumbernya berkas Figma itu sendiri.
+     #                       folder-folder
+     #formulir               isi satu folder
+     #formulir/date-picker   satu komponen, dengan demo hidup
+
+   Hash dibaca sesudah dipasang, bukan saat render: server tidak tahu hash,
+   dan nilai awal yang berbeda membuang pohon React saat hidrasi (jebakan #8).
+
+   "Dipakai di" dihitung saat BUILD dari kode sumber (pages/admin/kit.astro),
+   bukan ditulis tangan — daftar tangan pasti basi (jebakan #32).
    ============================================================================= */
 
-const UKURAN: UkuranTombol[] = ["small", "medium", "large"];
+const LABEL_HALAMAN = new Map(halamanRata().map((h) => [h.href.replace(/\/$/, ""), h.label]));
+const labelHalaman = (r: string) => LABEL_HALAMAN.get(r) ?? r.replace(/^\/admin\/?/, "").replace(/\//g, " / ") ?? r;
 
-/* Bujur sangkar. Large radius 19 = setengah sisinya, jadi ia memang lingkaran. */
-const SPEK_IKON: Record<"xsmall" | "small" | "medium" | "large", string> = {
-  xsmall: "w=24;h=24;r=6;ikon=10",
-  small: "w=28;h=28;r=7;ikon=12",
-  medium: "w=32;h=32;r=8;ikon=14",
-  large: "w=38;h=38;r=19;ikon=16",
-};
-const JENIS: JenisTombol[] = ["primary", "secondary", "ghost", "transparent"];
+function bacaHash(): string[] {
+  return decodeURIComponent(location.hash.replace(/^#/, ""))
+    .split("/")
+    .filter(Boolean);
+}
 
-const TINGGI_FIGMA: Record<UkuranTombol, number> = { small: 28, medium: 32, large: 38 };
+export function Galeri({ pakai = {} }: { pakai?: Record<string, string[]> }) {
+  const [jalur, setJalur] = useState<string[]>([]);
+  const [cari, setCari] = useState("");
 
-function Baris({ judul, children }: { judul: string; children: React.ReactNode }) {
+  useEffect(() => {
+    const baca = () => setJalur(bacaHash());
+    baca();
+    /* popstate juga: tombol Kembali di antara entri pushState(null) tidak
+       memicu hashchange. Router Astro mengabaikan entri ber-state null. */
+    window.addEventListener("hashchange", baca);
+    window.addEventListener("popstate", baca);
+    return () => {
+      window.removeEventListener("hashchange", baca);
+      window.removeEventListener("popstate", baca);
+    };
+  }, []);
+
+  const ke = (...j: string[]) => {
+    const h = j.length ? `#${j.join("/")}` : location.pathname;
+    /* state null dengan sengaja: router Astro mengabaikan popstate ber-state
+       null, jadi Kembali di antara folder tidak memicu muat-ulang halaman. */
+    history.pushState(null, "", h);
+    setJalur(j);
+    setCari("");
+    document.getElementById("konten")?.scrollIntoView({ block: "start" });
+  };
+
+  const folder = KATALOG.find((f) => f.id === jalur[0]);
+  const entri = folder?.isi.find((e) => e.id === jalur[1]);
+  const folderIkon = jalur[0] === "ikon";
+
+  const hasilCari = useMemo(() => {
+    const q = cari.trim().toLowerCase();
+    if (!q) return null;
+    return KATALOG.flatMap((f) => f.isi.map((e) => ({ f, e }))).filter(({ f, e }) =>
+      `${e.nama} ${e.kit} ${e.ket} ${f.nama}`.toLowerCase().includes(q),
+    );
+  }, [cari]);
+
+  const dipakai = KATALOG.flatMap((f) => f.isi).filter((e) => (pakai[e.id]?.length ?? 0) > 0).length;
+
+  /* Tautan "#…" di dalam galeri (remah, contoh tautan di demo) ditangani di
+     sini — router sisi klien memindahkan hash lewat pushState TANPA memicu
+     hashchange, dan untuk href="#" bahkan memuat ulang halamannya. */
+  const tangkapTautan = (e: React.MouseEvent) => {
+    const a = (e.target as Element).closest?.("a[href^='#']");
+    if (!a || e.metaKey || e.ctrlKey) return;
+    e.preventDefault();
+    ke(...decodeURIComponent(a.getAttribute("href")!.slice(1)).split("/").filter(Boolean));
+  };
+
   return (
-    <div className="k-galeri__baris">
-      <p className="k-galeri__label">{judul}</p>
-      <div className="k-galeri__isi">{children}</div>
+    <div className="gal" onClickCapture={tangkapTautan}>
+      <div className="gal-atas">
+        <Remah
+          jalur={[
+            { label: "UI Component", href: jalur.length ? "#" : undefined },
+            ...(folder ? [{ label: folder.nama, href: entri ? `#${folder.id}` : undefined }] : []),
+            ...(folderIkon ? [{ label: "Ikon" }] : []),
+            ...(entri ? [{ label: entri.nama }] : []),
+          ]}
+        />
+        {!entri && (
+          <Cari
+            judul="Cari komponen"
+            placeholder="Cari komponen"
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+            ukuran="medium"
+          />
+        )}
+      </div>
+
+      {hasilCari ? (
+        <HasilCari hasil={hasilCari} pakai={pakai} onBuka={(f, e) => ke(f.id, e.id)} />
+      ) : entri && folder ? (
+        <Detail folder={folder} entri={entri} pakai={pakai[entri.id] ?? []} onKe={ke} />
+      ) : folder ? (
+        <IsiFolder folder={folder} pakai={pakai} onBuka={(e) => ke(folder.id, e.id)} />
+      ) : folderIkon ? (
+        <FolderIkon />
+      ) : (
+        <>
+          <p className="gal-ringkas">
+            <b>{JUMLAH_KOMPONEN}</b> komponen dalam <b>{KATALOG.length}</b> folder · <b>{dipakai}</b> sudah dipakai di halaman panel
+          </p>
+          <div className="gal-folderkisi">
+            {KATALOG.map((f) => (
+              <KartuFolder
+                key={f.id}
+                ikon={f.ikon}
+                nama={f.nama}
+                ket={f.ket}
+                jumlah={f.isi.length}
+                dipakai={f.isi.filter((e) => (pakai[e.id]?.length ?? 0) > 0).length}
+                cuplik={f.isi.map((e) => e.nama)}
+                onBuka={() => ke(f.id)}
+              />
+            ))}
+            <KartuFolder ikon={IKON_FOLDER_IKON} nama="Ikon" ket="Bahan semua komponen — 179 bentuk dari Coinest." jumlah={179} cuplik={[]} onBuka={() => ke("ikon")} satuan="bentuk" />
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-/* Bentuk lencana dan spek kotaknya, dari frame Badges. */
-const BENTUK_LENCANA: [BentukLencana, string, string][] = [
-  ["garis", "Badge Status", "h=16;r=3.5;pad=6;font=10"],
-  ["pejalkecil", "Badge Status v2", "h=17;r=4;pad=6;font=10"],
-  ["pejal", "Badge Status Transaction", "h=24;r=6;pad=8;font=12"],
-  ["pil", "Badge Status Invoice", "h=24;r=12;pad=10;font=12"],
-];
-const NADA: [NadaLencana, string][] = [
-  ["selesai", "Selesai"],
-  ["menunggu", "Menunggu"],
-  ["gagal", "Gagal"],
-  ["netral", "Belum bayar"],
-];
-
-export function Galeri() {
-  const [segmen, setSegmen] = useState("bulan");
-  const [halaman, setHalaman] = useState(3);
-  const [tabKit, setTabKit] = useState("transfer");
-
+function KartuFolder({
+  ikon,
+  nama,
+  ket,
+  jumlah,
+  dipakai,
+  cuplik,
+  onBuka,
+  satuan = "komponen",
+}: {
+  ikon: DataIkon;
+  nama: string;
+  ket: string;
+  jumlah: number;
+  dipakai?: number;
+  cuplik: string[];
+  onBuka: () => void;
+  satuan?: string;
+}) {
   return (
-    <div className="k-galeri">
-      <GaleriBanding />
+    <button type="button" className="gal-folder" onClick={onBuka}>
+      <span className="gal-folder__tab" aria-hidden="true" />
+      <span className="gal-folder__badan">
+        <span className="gal-folder__kepala">
+          <span className="gal-folder__ubin" aria-hidden="true">
+            <Ikon ikon={ikon} ukuran={20} />
+          </span>
+          <span className="gal-folder__jumlah">
+            {jumlah} {satuan}
+          </span>
+        </span>
+        <b className="gal-folder__nama">{nama}</b>
+        <span className="gal-folder__ket">{ket}</span>
+        {cuplik.length > 0 && <span className="gal-folder__cuplik">{cuplik.join(" · ")}</span>}
+        {dipakai !== undefined && (
+          <span className="gal-folder__meter" aria-label={`${dipakai} dari ${jumlah} dipakai di halaman`}>
+            <span className="gal-folder__rel">
+              <span style={{ width: `${(dipakai / jumlah) * 100}%` }} />
+            </span>
+            {dipakai}/{jumlah} dipakai
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
 
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Tombol</h2>
-        <p className="k-galeri__ket">
-          Frame <code>Button</code> · 3 ukuran x 4 jenis x 4 susunan ikon. Yang
-          diperiksa KOTAKNYA — tinggi, radius, padding, jarak, ukuran ikon,
-          ukuran dan bobot huruf. Lebarnya tidak: label Figma sudah jadi
-          outline, jadi 49/59/68 adalah lebar kata contoh Coinest, bukan angka
-          yang harus ditiru label berbahasa Indonesia.
-        </p>
+function ChipPakai({ n }: { n: number }) {
+  return n > 0 ? (
+    <Lencana bentuk="pejalkecil" nada="selesai">
+      {n} halaman
+    </Lencana>
+  ) : (
+    <Lencana bentuk="pejalkecil" nada="menunggu">
+      Galeri saja
+    </Lencana>
+  );
+}
 
-        {UKURAN.map((u) => (
-          <Baris key={u} judul={`${u} — tinggi ${TINGGI_FIGMA[u]}`}>
-            {JENIS.map((j) => (
-              <div key={j} className="k-galeri__sel">
-                <Tombol
-                  ukuran={u}
-                  jenis={j}
-                >
-                  Label
-                </Tombol>
-                <Tombol
-                  ukuran={u}
-                  jenis={j}
-                  kiri={CalendarBlank}
-                >
-                  Label
-                </Tombol>
-                <Tombol
-                  ukuran={u}
-                  jenis={j}
-                  kanan={CaretDown}
-                >
-                  Label
-                </Tombol>
-                <Tombol
-                  ukuran={u}
-                  jenis={j}
-                  kiri={CalendarBlank}
-                  kanan={CaretDown}
-                >
-                  Label
-                </Tombol>
-                <span className="k-galeri__tanda">{j}</span>
-              </div>
-            ))}
-          </Baris>
-        ))}
-      </section>
+function KartuKomponen({ e, n, onBuka, folder }: { e: Entri; n: number; onBuka: () => void; folder?: string }) {
+  return (
+    <button type="button" className="gal-komp" onClick={onBuka}>
+      <span className="gal-komp__kepala">
+        <b>{e.nama}</b>
+        <ChipPakai n={n} />
+      </span>
+      <code className="gal-komp__kit">{e.kit}</code>
+      <span className="gal-komp__ket">{e.ket}</span>
+      {folder && <span className="gal-komp__folder">{folder}</span>}
+    </button>
+  );
+}
 
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Tombol ikon</h2>
-        <p className="k-galeri__ket">
-          Frame <code>Button Icon</code> · bujur sangkar 24 / 28 / 32 / 38. Yang
-          Large BULAT (radius 19 = setengah sisinya); tiga lainnya bersudut.
-        </p>
-        <Baris judul="xsmall 24 · small 28 · medium 32 · large 38">
-          {(["xsmall", "small", "medium", "large"] as const).map((u) => (
-            <div key={u} className="k-galeri__sel">
-              {JENIS.map((j) => (
-                <TombolIkon
-                  key={j}
-                  ukuran={u}
-                  jenis={j}
-                  ikon={ChatTeardropDots}
-                  judul={`Pesan ${u} ${j}`}
-                />
-              ))}
-              <span className="k-galeri__tanda">{u}</span>
-            </div>
-          ))}
-        </Baris>
-      </section>
-
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Tombol bersegmen</h2>
-        <p className="k-galeri__ket">
-          Frame <code>Segmented Button</code> · 313x32, radius 8. Lebarnya sama
-          untuk 2, 3, dan 4 segmen — jadi segmennya dibagi rata, bukan mengikuti
-          panjang label.
-        </p>
-        <Baris judul="2 · 3 · 4 segmen">
-          {[2, 3, 4].map((n) => (
-            <Segmen
-              key={n}
-              judul={`Contoh ${n} segmen`}
-              nilai={segmen}
-              onPilih={setSegmen}
-              className="k-galeri__segmen"
-              segmen={[
-                { nilai: "bulan", label: "Bulan" },
-                { nilai: "kuartal", label: "Kuartal" },
-                { nilai: "tahun", label: "Tahun" },
-                { nilai: "semua", label: "Semua" },
-              ].slice(0, n)}
-            />
-          ))}
-        </Baris>
-      </section>
-
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Lencana</h2>
-        <p className="k-galeri__ket">
-          Frame <code>Badges</code> · empat bentuk dan empat nada. Nadanya dinamai
-          maknanya, bukan warnanya — warna boleh berubah, maknanya tidak.
-        </p>
-        {BENTUK_LENCANA.map(([bentuk, asal, spek]) => (
-          <Baris key={bentuk} judul={asal}>
-            {NADA.map(([nada, label]) => (
-              <Lencana key={nada} bentuk={bentuk} nada={nada} data-ukur={spek}>
-                {label}
-              </Lencana>
-            ))}
-          </Baris>
-        ))}
-        <Baris judul="Indicator — angka dan titik">
-          <Angka jumlah={9} judul="Pesan belum dibaca" />
-          <Angka jumlah={128} judul="Pesan belum dibaca" />
-          <Angka jumlah={4} kecil judul="Pesan belum dibaca" />
-          <Titik judul="Ada yang baru" />
-          <Titik kecil judul="Ada yang baru" />
-        </Baris>
-      </section>
-
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Remah &amp; paginasi</h2>
-        <p className="k-galeri__ket">
-          Frame <code>Breadcrumb</code> dan <code>Pagination</code>. Paginasi punya
-          dua versi: 28px untuk desktop, 32px untuk ponsel — tinggi yang sama
-          dengan tombol small dan Medium, jadi keduanya tetap sebaris.
-        </p>
-        <Baris judul="Breadcrumb">
-          <Remah
-            jalur={[
-              { label: "Dashboard", href: "/admin" },
-              { label: "Proyek", href: "/admin/proyek" },
-              { label: "Rumah Kaca" },
-            ]}
-          />
-        </Baris>
-        <Baris judul="Default — 28px">
-          <Paginasi kini={halaman} total={12} onPindah={setHalaman} />
-        </Baris>
-        <Baris judul="Mobile — 32px">
-          <Paginasi kini={halaman} total={12} onPindah={setHalaman} ponsel />
-        </Baris>
-      </section>
-
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Isian</h2>
-        <p className="k-galeri__ket">
-          Frame <code>Forms</code>. Semuanya elemen HTML asli yang digambar ulang —
-          kotak cari <code>input[type=search]</code>, centang dan sakelar{" "}
-          <code>input[type=checkbox]</code> — jadi perilaku bawaannya tidak bisa
-          rusak diam-diam. Ikon cari di KANAN, seperti di framenya.
-        </p>
-        <Baris judul="Input-search — 37 / 31 / 27">
-          {(["large", "medium", "small"] as const).map((u) => (
-            <Cari
-              key={u}
-              ukuran={u}
-              judul={`Cari ${u}`}
-              placeholder="Cari proyek, klien, tagihan…"
-            />
-          ))}
-        </Baris>
-        <Baris judul="Input — kotak 45, radius 7,5">
-          <Isian
-            label="Nama proyek"
-            placeholder="Rumah Kaca"
-            kiri={SmileySticker}
-            bantu="Dipakai sebagai judul di halaman publik."
-            kanan={<Ikon ikon={Paperclip} ukuran={18} />}
-          />
-        </Baris>
-        <Baris judul="Checkbox — 13 / 17 / 23">
-          {(["default", "medium", "big"] as const).map((u) => (
-            <label key={u} className="k-galeri__sel">
-              <Centang ukuran={u} defaultChecked />
-              <span className="k-galeri__tanda">{u}</span>
-            </label>
-          ))}
-        </Baris>
-        <Baris judul="Toggle — 28x16">
-          <Sakelar judul="Tampilkan di beranda" defaultChecked />
-          <Sakelar judul="Kirim notifikasi" />
-        </Baris>
-      </section>
-
-      {/* Tiga bentuk yang lahir di P4, bukan di P2 — dan itu sebabnya ketiganya
-          TIDAK punya entri di seksi "Banding dengan Figma" di atas: acuan di
-          sana dipotong dari lima belas frame Style & Component, sementara
-          keduanya cuma ada di frame Interface. Yang membuktikannya
-          penumpukan halaman utuh di `scripts/banding`, bukan potongan
-          per-komponen. */}
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Bentuk dari frame Interface</h2>
-        <p className="k-galeri__ket">
-          Bentuk yang tidak ada di frame Style &amp; Component, jadi
-          semuanya diukur langsung dari frame halaman yang memakainya.
-        </p>
-        <Baris judul="Cincin sepusat — frame 04, luar 100, tebal 14, lubang 30">
-          <Cincin
-            iris={[
-              { persen: 50, warna: "var(--brand)" },
-              { persen: 30, warna: "var(--brand-mint)" },
-              { persen: 20, warna: "var(--ramp-5)" },
-            ]}
-          />
-        </Baris>
-        <Baris judul="Donat bersegmen — frame 28, luar 74,5, dalam 52,6, celah garis 4">
-          <Donat
-            label="Total Budget"
-            nilai="$3,500"
-            iris={[
-              { nilai: 60, warna: "var(--ramp-1)" },
-              { nilai: 15, warna: "var(--ramp-2)" },
-              { nilai: 12, warna: "var(--ramp-3)" },
-              { nilai: 8, warna: "var(--ramp-4)" },
-              { nilai: 5, warna: "var(--ramp-5)" },
-            ]}
-          />
-        </Baris>
-        <Baris judul="Kelompok tab berikon — jalur 72 r16, ikon 24 di atas label 12">
-          <div style={{ width: 303 }}>
-            <KelompokTab
-              judul="Contoh kelompok tab"
-              nilai={tabKit}
-              onPilih={setTabKit}
-              tab={[
-                { nilai: "tunai", label: "Tunai", ikon: CoinVertical },
-                { nilai: "transfer", label: "Transfer", ikon: NavCreditCard },
-                { nilai: "qris", label: "QRIS", ikon: VirtualAccount },
-                { nilai: "lainnya", label: "Lainnya", ikon: DotsThree },
-              ]}
-            />
-          </div>
-        </Baris>
-        <Baris judul="Kartu statistik ringkas — 284x87, ubin 22, nominal 24/700">
-          <div style={{ width: 284 }}>
-            <KartuStatistikRingkas
-              ikon={CoinIn}
-              judul="Kas masuk"
-              nilai="Rp532 jt"
-              nilaiPenuh="Rp532.000.000"
-              tren={<LencanaTren panah>4,2 %</LencanaTren>}
-              ket={
-                <>
-                  <b>Rp48 jt</b> bulan ini
-                </>
-              }
-            />
-          </div>
-        </Baris>
-      </section>
-
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Pesan suara</h2>
-        <p className="k-galeri__ket">
-          Bukan frame Coinest — Coinest tidak punya komponen audio. Kulit kit di
-          atas logika <code>VoiceNote</code> yang sama dengan panel lama; dipakai
-          di Portal Klien. Ikon putar/jeda/mikrofon milik situs sendiri, diisi
-          penuh supaya sebahasa dengan ikon Coinest.
-        </p>
-        <Baris judul="Pemutar — 44 tinggi, r12, tombol 32 sewarna tombol utama">
-          <div style={{ width: 420 }}>
-            <PemutarSuaraKit url="" durationMs={42000} label="contoh pesan suara" />
-          </div>
-        </Baris>
-        <Baris judul="Perekam — keadaan diam (merekam dan pratinjau muncul setelah Rekam)">
-          <div style={{ width: 520 }}>
-            <PerekamSuaraKit onKirim={() => {}} />
-          </div>
-        </Baris>
-      </section>
-
-      <section className="k-galeri__seksi">
-        <h2 className="k-galeri__judul">Ikon — {SEMUA_IKON.length} bentuk</h2>
-        <p className="k-galeri__ket">
-          Seluruhnya dari frame <code>Element</code>. Bingkai masternya 32; di
-          sini digambar pada 24, ukuran yang dipakai Coinest di halaman.
-        </p>
-        <div className="k-galeri__ikon">
-          {SEMUA_IKON.map(([nama, data]) => (
-            <figure key={nama}>
-              <Ikon ikon={data} ukuran={24} />
-              <figcaption>{nama}</figcaption>
-            </figure>
-          ))}
+function IsiFolder({ folder, pakai, onBuka }: { folder: Folder; pakai: Record<string, string[]>; onBuka: (e: Entri) => void }) {
+  return (
+    <>
+      <div className="gal-judulfolder">
+        <span className="gal-folder__ubin" aria-hidden="true">
+          <Ikon ikon={folder.ikon} ukuran={20} />
+        </span>
+        <div>
+          <h2 className="gal-h2">{folder.nama}</h2>
+          <p className="gal-ket">
+            {folder.ket} {folder.isi.length} komponen.
+          </p>
         </div>
-      </section>
+      </div>
+      <div className="gal-kompkisi">
+        {folder.isi.map((e) => (
+          <KartuKomponen key={e.id} e={e} n={pakai[e.id]?.length ?? 0} onBuka={() => onBuka(e)} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function HasilCari({ hasil, pakai, onBuka }: { hasil: { f: Folder; e: Entri }[]; pakai: Record<string, string[]>; onBuka: (f: Folder, e: Entri) => void }) {
+  if (!hasil.length)
+    return (
+      <Kosong ikon={MagnifyingGlass} judul="Tidak ada komponen yang cocok">
+        Coba nama lain — misalnya “dialog”, “tanggal”, atau “tabel”.
+      </Kosong>
+    );
+  return (
+    <div className="gal-kompkisi">
+      {hasil.map(({ f, e }) => (
+        <KartuKomponen key={e.id} e={e} n={pakai[e.id]?.length ?? 0} folder={f.nama} onBuka={() => onBuka(f, e)} />
+      ))}
     </div>
+  );
+}
+
+function Detail({ folder, entri, pakai, onKe }: { folder: Folder; entri: Entri; pakai: string[]; onKe: (...j: string[]) => void }) {
+  const i = folder.isi.indexOf(entri);
+  const lalu = folder.isi[i - 1];
+  const lanjut = folder.isi[i + 1];
+  const { Demo } = entri;
+  const berkas = entri.modul.replace(/^kit\//, "../kit/").replace(/^admin\//, "./");
+  return (
+    <article className="gal-detail">
+      <header className="gal-detail__kepala">
+        <div>
+          <h2 className="gal-h1">{entri.nama}</h2>
+          <p className="gal-ket gal-detail__ket">{entri.ket}</p>
+        </div>
+        <div className="gal-detail__pindah">
+          <button type="button" className="k-ov__tutup" disabled={!lalu} onClick={() => lalu && onKe(folder.id, lalu.id)} aria-label={lalu ? `Sebelumnya: ${lalu.nama}` : "Tidak ada sebelumnya"}>
+            <Ikon ikon={ArrowLeft} ukuran={14} />
+          </button>
+          <span className="gal-ket">
+            {i + 1} / {folder.isi.length}
+          </span>
+          <button type="button" className="k-ov__tutup" disabled={!lanjut} onClick={() => lanjut && onKe(folder.id, lanjut.id)} aria-label={lanjut ? `Berikutnya: ${lanjut.nama}` : "Tidak ada berikutnya"}>
+            <Ikon ikon={ArrowRight} ukuran={14} />
+          </button>
+        </div>
+      </header>
+
+      <section className="gal-panggung" aria-label={`Contoh ${entri.nama}`}>
+        <Demo />
+      </section>
+
+      <div className="gal-detail__info">
+        <section>
+          <h3 className="gal-h3">Dipakai di</h3>
+          {pakai.length ? (
+            <ul className="gal-chips">
+              {pakai.map((r) => (
+                <li key={r}>
+                  <a className="gal-chip" href={r}>
+                    {labelHalaman(r)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="gal-ket">
+              Belum dipakai halaman panel mana pun — komponen ini tersedia untuk fitur berikutnya.
+            </p>
+          )}
+        </section>
+        <section>
+          <h3 className="gal-h3">Cara pakai</h3>
+          <pre className="gal-kode">
+            <code>{`import { ${entri.ekspor[0]} } from "${berkas}";`}</code>
+          </pre>
+          <p className="gal-ket">
+            Nama di kode: <code>{entri.kit}</code>
+          </p>
+        </section>
+      </div>
+    </article>
+  );
+}
+
+function FolderIkon() {
+  const [ikon, setIkon] = useState<ReadonlyArray<readonly [string, DataIkon]> | null>(null);
+  const [cari, setCari] = useState("");
+  /* Dimuat saat folder dibuka: 179 ikon = ±320 KB, dan tidak ada alasan
+     membawanya ke delapan folder lain. */
+  useEffect(() => {
+    let hidup = true;
+    import("./ikon/semua").then((m) => hidup && setIkon(m.SEMUA_IKON));
+    return () => {
+      hidup = false;
+    };
+  }, []);
+  const tampil = (ikon ?? []).filter(([n]) => n.toLowerCase().includes(cari.toLowerCase()));
+  return (
+    <>
+      <div className="gal-atas gal-atas--dalam">
+        <h2 className="gal-h2">Ikon — {ikon?.length ?? 179} bentuk</h2>
+        <Cari judul="Cari ikon" placeholder="Cari nama ikon" value={cari} onChange={(e) => setCari(e.target.value)} ukuran="small" />
+      </div>
+      <div className="gal-ikonkisi">
+        {tampil.map(([nama, data]) => (
+          <figure key={nama}>
+            <Ikon ikon={data} ukuran={24} />
+            <figcaption>{nama}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </>
   );
 }

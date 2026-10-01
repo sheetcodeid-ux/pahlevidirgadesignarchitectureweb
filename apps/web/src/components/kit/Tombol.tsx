@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
+import { SpinnerGap } from "./ikon";
 
 /* =============================================================================
    Tombol — frame Button di file Figma Coinest.
@@ -20,7 +21,10 @@ import { Ikon, type DataIkon } from "./Ikon";
    ============================================================================= */
 
 export type UkuranTombol = "small" | "medium" | "large";
-export type JenisTombol = "primary" | "secondary" | "ghost" | "transparent";
+/* "bahaya" bukan varian Coinest — Coinest tidak punya tombol merah. Ditambah
+   untuk aksi destruktif (aturan warna #1: merah = destruktif), dipakai
+   dialog konfirmasi hapus. */
+export type JenisTombol = "primary" | "secondary" | "ghost" | "transparent" | "bahaya";
 
 /* Ukuran ikon = tinta instance / tinta MASTER ikon itu sendiri * 32.
    Lebar tinta master BEDA-BEDA per ikon — CalendarBlank 24, ChatTeardropDots
@@ -40,6 +44,12 @@ export interface PropTombol extends Omit<ButtonHTMLAttributes<HTMLButtonElement>
   kanan?: DataIkon;
   /** type HTML-nya; dinamai begini supaya tidak bentrok dengan `jenis`. */
   tipeHtml?: "button" | "submit" | "reset";
+  /**
+   * Sedang menyimpan/mengirim: ikon kiri diganti putaran, tombol mati, dan
+   * `aria-busy` menyala. Labelnya TIDAK diganti — tombol yang tiba-tiba
+   * berganti lebar di tengah klik terbaca sebagai tombol yang meloncat.
+   */
+  memuat?: boolean;
 }
 
 export function Tombol({
@@ -49,7 +59,9 @@ export function Tombol({
   kiri,
   kanan,
   tipeHtml = "button",
+  memuat = false,
   className,
+  disabled,
   ...sisa
 }: PropTombol) {
   const px = IKON_PX[ukuran];
@@ -59,18 +71,23 @@ export function Tombol({
     `k-tombol--${jenis}`,
     // Padding sisi kiri dan kanan berbeda tergantung ada-tidaknya ikon di
     // sisi itu — begitu di Figma, terukur dari letak tinta ikonnya.
-    kiri && "k-tombol--ikonkiri",
+    (kiri || memuat) && "k-tombol--ikonkiri",
     kanan && "k-tombol--ikonkanan",
+    memuat && "is-memuat",
     className,
   ]
     .filter(Boolean)
     .join(" ");
   return (
-    <button type={tipeHtml} className={kelas} {...sisa}>
+    <button type={tipeHtml} className={kelas} disabled={disabled || memuat} aria-busy={memuat || undefined} {...sisa}>
       {/* Kelas per sisi, bukan `svg:first-child`/`:last-child`: pada tombol
           yang cuma punya caret kanan, caret itu SEKALIGUS anak pertama —
           selektor posisi akan memberinya jarak kiri yang bukan miliknya. */}
-      {kiri && <Ikon ikon={kiri} ukuran={px} className="k-tombol__ikonkiri" />}
+      {memuat ? (
+        <Ikon ikon={SpinnerGap} ukuran={px} className="k-tombol__ikonkiri k-tombol__putar" />
+      ) : (
+        kiri && <Ikon ikon={kiri} ukuran={px} className="k-tombol__ikonkiri" />
+      )}
       {children}
       {kanan && <Ikon ikon={kanan} ukuran={CARET_PX[ukuran]} className="k-tombol__ikonkanan" />}
     </button>

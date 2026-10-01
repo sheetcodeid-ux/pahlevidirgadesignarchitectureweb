@@ -2,15 +2,96 @@
 import KitLayout from "../../layouts/KitLayout.astro";
 import { MasterGuard } from "../../components/admin/MasterGuard";
 import { Galeri } from "../../components/kit/Galeri";
+import { KATALOG } from "../../components/kit/galeri/katalog";
 import "../../styles/kit.css";
+import "../../styles/galeri-kit.css";
+/* Demo Data Table memakai kerangka daftar halaman (DaftarKit), yang gayanya
+   tinggal di daftar-kit.css — tanpa ini kaki paginasinya tergambar mentah
+   (jebakan #5). */
+import "../../styles/daftar-kit.css";
 
-/* Pustaka komponen BARU — dibangun dari lembar kosong mengikuti file Figma
-   Coinest, menggantikan /admin/ui secara bertahap.
+/* Halaman UI Component — satu-satunya sumber kebenaran komponen panel.
 
-   Selama dua-duanya hidup, yang berlaku sebagai sumber kebenaran adalah
-   halaman ini: /admin/ui berisi sistem lama yang akan dibuang begitu seluruh
-   halaman pindah. Dua daftar berisi hal yang sama pasti menyimpang
-   (jebakan #32), jadi jangan menambah komponen baru ke /admin/ui. */
+   "Dipakai di" dihitung DI SINI, saat build, dari kode sumbernya sendiri:
+   tiap berkas komponen dibaca mentah, impor dari modul kit dicatat beserta
+   nama yang benar-benar dipakai di badan berkasnya, lalu ditelusuri lewat
+   rantai impor sampai ke halaman di pages/admin. Daftar yang ditulis tangan
+   pasti basi (jebakan #32); yang ini tidak bisa — ia dihitung ulang tiap
+   build. */
+
+const sumber = {
+  ...import.meta.glob("../../components/admin/**/*.{ts,tsx}", { query: "?raw", import: "default", eager: true }),
+  ...import.meta.glob("../../components/kit/*.tsx", { query: "?raw", import: "default", eager: true }),
+  ...import.meta.glob("../../layouts/*.astro", { query: "?raw", import: "default", eager: true }),
+} as Record<string, string>;
+const halaman = import.meta.glob("./**/*.astro", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+
+/** "../../components/admin/X.tsx" → "admin/X"; "../../layouts/K.astro" → "layouts/K". */
+function kunci(p: string) {
+  return p.replace(/^(\.\.\/)+(components\/)?/, "").replace(/\.(tsx?|astro)$/, "");
+}
+/** Impor relatif dari berkas `dari` → kunci berkas tujuan. */
+function tuju(dari: string, spes: string) {
+  if (!spes.startsWith(".")) return null;
+  const bagian = dari.split("/").slice(0, -1);
+  for (const s of spes.split("/")) {
+    if (s === "..") bagian.pop();
+    else if (s !== ".") bagian.push(s);
+  }
+  return bagian.join("/").replace(/^src\//, "").replace(/^components\//, "").replace(/\.(tsx?|astro)$/, "");
+}
+
+const POLA_IMPOR = /import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+"([^"]+)"|import\s+(\w+)\s+from\s+"([^"]+)"/g;
+
+/* Untuk tiap berkas: berkas yang diimpornya, dan entri katalog yang ia pakai LANGSUNG. */
+const graf = new Map<string, { impor: Set<string>; pakai: Set<string> }>();
+function catat(jalurBerkas: string, teks: string, kunciBerkas: string) {
+  const g = { impor: new Set<string>(), pakai: new Set<string>() };
+  const badan = teks.replace(POLA_IMPOR, "");
+  for (const m of teks.matchAll(POLA_IMPOR)) {
+    const spes = m[2] ?? m[4]!;
+    const t = tuju(jalurBerkas, spes);
+    if (!t) continue;
+    g.impor.add(t);
+    if (!m[1]) continue;
+    const nama = m[1].split(",").map((x) => x.trim().split(/\s+as\s+/));
+    for (const f of KATALOG) for (const e of f.isi) {
+      if (t !== e.modul) continue;
+      for (const [asli, lokal] of nama) {
+        if (asli && e.ekspor.includes(asli) && new RegExp(`\\b${lokal ?? asli}\\b`).test(badan)) g.pakai.add(e.id);
+      }
+    }
+  }
+  graf.set(kunciBerkas, g);
+}
+for (const [p, t] of Object.entries(sumber)) {
+  if (/kit\/(Galeri|GaleriBanding|Banding)\.tsx$/.test(p)) continue;
+  catat(p.replace(/^\.\.\/\.\.\//, "src/"), t, kunci(p));
+}
+
+function semuaPakai(k: string, lihat = new Set<string>()): Set<string> {
+  if (lihat.has(k)) return new Set();
+  lihat.add(k);
+  const g = graf.get(k);
+  if (!g) return new Set();
+  const hasil = new Set(g.pakai);
+  for (const i of g.impor) for (const e of semuaPakai(i, lihat)) hasil.add(e);
+  return hasil;
+}
+
+const pakai: Record<string, string[]> = {};
+for (const [p, teks] of Object.entries(halaman)) {
+  if (p === "./kit.astro" || p === "./ui.astro" || p.includes("/masuk")) continue;
+  const rute = ("/admin/" + p.replace(/^\.\//, "").replace(/\.astro$/, "").replace(/(^|\/)index$/, "")).replace(/\/$/, "") || "/admin";
+  const lihat = new Set<string>();
+  const kena = new Set<string>();
+  for (const m of teks.matchAll(POLA_IMPOR)) {
+    const t = tuju(`src/pages/admin/${p.replace(/^\.\//, "")}`, m[2] ?? m[4]!);
+    if (t) for (const e of semuaPakai(t, lihat)) kena.add(e);
+  }
+  for (const e of kena) (pakai[e] ??= []).push(rute);
+}
+for (const k of Object.keys(pakai)) pakai[k]!.sort();
 ---
 
 <!-- Di KitLayout, bukan AdminLayout: baris "UI Component" di rel membawa ke
@@ -19,6 +100,6 @@ import "../../styles/kit.css";
 <KitLayout title="UI Component" judul="UI Component">
   <MasterGuard client:load target="isi-kit" />
   <div id="isi-kit" hidden>
-    <Galeri client:load />
+    <Galeri client:load pakai={pakai} />
   </div>
 </KitLayout>
