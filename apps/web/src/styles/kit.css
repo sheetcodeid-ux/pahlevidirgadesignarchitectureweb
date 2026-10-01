@@ -1104,9 +1104,11 @@
   min-width: 0;
   margin: 0 6px 0 10px;
 }
-/* Berkekhususan (0,3,1) supaya mengalahkan `svg[width][height] { max-width:
-   none }` global (jebakan #7). */
-.k-stat .k-stat__grafik svg.k-kilau { width: 100%; max-width: 76px; height: auto; }
+/* Berkekhususan (0,4,1), bukan sekadar (0,3,1): `.k-stat svg[width][height]
+   { max-width: none }` (jebakan #7) bernilai (0,3,1) dan ditulis LEBIH
+   BELAKANG, jadi dengan (0,3,1) batas 76 kalah diam-diam — di kartu yang
+   selebar layar ponsel grafiknya membengkak jadi 248x108. */
+.k-stat .k-stat__grafik svg.k-kilau[width] { width: 100%; max-width: 76px; height: auto; }
 
 /* Jarak antarbaris diambil dari POSISI tinta di framenya, bukan dari
    `margin-bottom: auto` yang mendorong isinya ke bawah. Terukur pada kartu
