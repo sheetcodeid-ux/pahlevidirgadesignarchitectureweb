@@ -124,6 +124,9 @@
      putih polos terasa mati. Bukan --bg-sunken: nilai itu terlalu dekat ke
      putih untuk memisahkan kartu bergaris 1px. */
   --k-latar: #F1F3F2;
+  /* Garis pohon submenu di rel (#ECF4E9): hijau brand ~25%, cukup terlihat
+     sebagai penghubung tanpa bersaing dengan garis aktif 3px. */
+  --k-garis-pohon: #BACCC5;
   --surface: #FFFFFF;
   --surface-raised: #FFFDFC;
   --surface-hover: #EFF0F0;
@@ -312,6 +315,7 @@
   /* Di gelap kartu (--surface) yang lebih terang; latarnya turun satu anak
      tangga supaya hubungan kartu-di-atas-latar sama dengan tema terang. */
   --k-latar: #171D1C;
+  --k-garis-pohon: #3A5146;
   --surface: #1F2725;
   --surface-raised: #242E2C;
   --surface-hover: #2C3735;

@@ -448,13 +448,70 @@
 /* Submenu: tanpa ikon. Teksnya TIDAK sejajar dengan label menu di atasnya —
    terukur, tinta submenu Figma mulai di 61,28 sementara menu induknya di
    53,28, jadi ia menjorok 8px lagi ke dalam. */
-.k-nav--sub { padding-left: 60.4px; }
+/* 44 dan 13px, bukan 60,4 dan 14 milik frame: dengan garis pohon di x28,
+   label submenu cukup 16px sesudah garisnya — dan label Indonesia butuh
+   ruangnya. Terukur sebelum diubah: "Terima Pembayaran" 156px, "Sebelum &
+   Sesudah" 158px, "Catat Pengeluaran" 147px di dalam slot 132px, jadi
+   kelimanya terpotong. Sekarang slotnya 148 dan label terpanjang 147. */
+.k-nav--sub { padding-left: 44px; font-size: 0.8125rem; }
 
-/* Garis tegak penanda submenu yang sedang dibuka DIBUANG. Ia ada di frame
-   Figma (`Line` 3px), tapi pemilik membacanya sebagai "efek" yang cuma muncul
-   di submenu — menu atas yang aktif hanya pil mint, submenu aktif pil mint
-   PLUS garis gelap. Atas kebebasan yang diberikan pemilik, keduanya kini satu
-   bentuk: yang aktif ditandai pilnya saja. */
+/* GARIS PENANDA — "sidebar ada garis saat dipilih", permintaan pemilik.
+
+   Dua garis, masing-masing dengan satu tugas:
+
+   1. Garis TEPI: 4px di tepi kiri rel, sejajar baris yang sedang dibuka —
+      menu atas maupun submenu. Ia yang membuat letak halaman terbaca
+      sekilas tanpa membaca pil mana yang mint.
+   2. Garis POHON: 1px dari bawah induk menyusuri anak-anaknya, di poros
+      ikon induknya (x28 = padding 16 + setengah ikon 24). Ruasnya menebal
+      jadi 3px di submenu yang aktif — itu garis `Line` 3px milik frame
+      Coinest (y10–y30, x26–29), sekarang menumpang di atas rel pohonnya.
+
+   Sebelumnya garis frame itu sempat dibuang karena pemilik membacanya sebagai
+   "efek" — yang ternyata pudar silang router (jebakan #45), bukan garisnya.
+   Muncul tanpa transisi: penanda yang beranimasi saat pindah halaman membuat
+   dua baris tampak aktif bersamaan (jebakan #45 lagi). */
+.k-sisi .k-nav[aria-current="page"]::before,
+.k-sisi .k-nav.is-aktif::before {
+  content: "";
+  position: absolute;
+  /* -16: padding rel. Garisnya menempel di tepi PANEL, bukan di tepi pil. */
+  left: -16px;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--brand);
+}
+.k-sisi__anak { position: relative; }
+.k-sisi__anak::before {
+  content: "";
+  position: absolute;
+  left: 27.5px;
+  top: -4px;
+  bottom: 12px;
+  width: 1px;
+  background: var(--k-garis-pohon);
+}
+.k-nav--sub[aria-current="page"]::after,
+.k-nav--sub.is-aktif::after {
+  content: "";
+  position: absolute;
+  left: 26.5px;
+  top: 10px;
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+/* Tema gelap: --brand di sana mint, sama dengan pilnya — garis pohon di
+   dalam pil mint tergambar mint-di-atas-mint (jebakan #37). Ruas aktif
+   memakai tinta pilnya; garis tepi tetap mint karena ia di luar pil, di
+   atas bidang rel yang gelap. */
+:root[data-theme="dark"] .k-nav--sub[aria-current="page"]::after,
+:root[data-theme="dark"] .k-nav--sub.is-aktif::after { background: var(--brand-mint-ink); }
+/* Rel sempit: barisnya bujur sangkar di tengah, jadi garis tepi tetap di
+   tepi panel (padding rel sempit juga 16). */
 
 /* -----------------------------------------------------------------------------
    TOMBOL BERSEGMEN — frame Button, keluarga "Segmented Button"
