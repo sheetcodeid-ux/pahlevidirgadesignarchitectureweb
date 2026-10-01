@@ -34,7 +34,17 @@ const BELUM_DIPAKAI: Record<string, string> = {
   questionnaire: "Belum dipakai di panel: tempatnya form kontak situs publik (penyaringan calon klien), yang memakai desain situs, bukan kit panel.",
 };
 
-const LABEL_HALAMAN = new Map(halamanRata().map((h) => [h.href.replace(/\/$/, ""), h.label]));
+/* Halaman di luar rel (dibuka dari dalam halaman lain) diberi nama di sini —
+   tanpa ini chipnya tercetak sebagai alamat mentah "paket / satu". */
+const LABEL_HALAMAN = new Map<string, string>([
+  ...halamanRata().map((h): [string, string] => [h.href.replace(/\/$/, ""), h.label]),
+  ["/admin/proyek/satu", "Proyek — Satu Proyek"],
+  ["/admin/proyek/baru", "Proyek — Proyek Baru"],
+  ["/admin/proyek/edit", "Proyek — Ubah Proyek"],
+  ["/admin/jurnal/satu", "Jurnal — Detail Tulisan"],
+  ["/admin/paket/satu", "Situs Publik — Detail Paket"],
+  ["/admin/notifikasi", "Notifikasi"],
+]);
 const labelHalaman = (r: string) => LABEL_HALAMAN.get(r) ?? r.replace(/^\/admin\/?/, "").replace(/\//g, " / ") ?? r;
 
 function bacaHash(): string[] {

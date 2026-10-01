@@ -5,6 +5,9 @@ import { ArrowLeft, List } from "../kit/ikon";
 import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from "./RelKit";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
+/* Palet dimuat LANGSUNG, bukan malas: versi malasnya terukur kehilangan
+   huruf yang diketik tepat sesudah Ctrl/Cmd+K (paletnya belum terpasang
+   saat huruf itu tiba) — demi hemat ±17 KB. */
 import { PaletPanel } from "./PaletPanel";
 import { ambilBarisNotifikasi, barisNotifikasiTerakhir, type BarisNotifikasi } from "../../lib/notifikasi";
 import { PanelPesan, PanelNotifikasi } from "./panelKabar";

@@ -207,7 +207,11 @@
 .k-menu__butir > svg { color: var(--brand); }
 .k-menu__butir[data-highlighted],
 .k-menu__butir[data-selected="true"] { background: var(--brand-soft); color: var(--text-strong); }
-.k-menu__butir[data-disabled],
+/* Radix menulis data-disabled="" HANYA saat mati; cmdk menulis
+   data-disabled="false" pada SETIAP butir hidup — mencocokkan atributnya
+   saja membuat seluruh isi kombo dan palet tampak mati. */
+.k-menu__butir[data-disabled=""],
+.k-menu__butir[data-disabled="true"],
 .k-menu__butir[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
 .k-menu__butir--bahaya,
 .k-menu__butir--bahaya > svg { color: color-mix(in srgb, var(--danger) 85%, var(--text-strong)); }
@@ -849,3 +853,11 @@
 .dsb-melayang__dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: var(--k-t12); }
 .dsb-melayang__dl dt { color: var(--text-muted); }
 .dsb-melayang__dl dd { margin: 0; color: var(--text-strong); font-weight: var(--k-semi); font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Di atas latar abu (--k-latar) tinta frame untuk remah (#868F9B) dan
+   tautan kaki halaman (#BCBEBD) turun ke 2,9 dan 1,7 — terukur dengan
+   scripts/banding/kontras.mjs. Di latar putih frame keduanya masih bisa
+   dibaca; di abu tidak. Dinaikkan ke --text-muted (≥4,5) di halaman kit. */
+.kl-body { --remah-teks: var(--text-muted); --remah-pisah: var(--border-strong); }
+.kl-body .k-kakihal__tautan a,
+.kl-body .k-kakihal__sosial a { color: var(--text-muted); }

@@ -93,6 +93,10 @@ for (const [p, teks] of Object.entries(halaman)) {
   }
   for (const e of kena) (pakai[e] ??= []).push(rute);
 }
+/* Halaman INI sendiri tidak pernah ikut glob di atas — import.meta.glob
+   melewatkan berkas pemanggilnya — jadi galerinya dihitung langsung dari
+   grafnya. */
+for (const e of semuaPakai("kit/Galeri")) (pakai[e] ??= []).push("/admin/kit");
 /* "Lewat": entri yang selalu dimuat entri lain ikut mewarisi halamannya. */
 for (const f of KATALOG) for (const e of f.isi) {
   for (const l of e.lewat ?? []) for (const r of pakai[l] ?? []) if (!(pakai[e.id] ??= []).includes(r)) pakai[e.id]!.push(r);

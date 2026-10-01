@@ -402,7 +402,7 @@
 .is-zona__b:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 /* --- Akun ------------------------------------------------------------------- */
-.ak-profil { margin: 0 -12px; }
+.ak-profil { margin-left: -12px; }
 .ak-profil .k-butir__judul { font-size: var(--k-t16); white-space: normal; overflow-wrap: anywhere; }
 .ak-profil .k-butir__ket { white-space: normal; }
 /* Info Studio — isian opsional di dalam Lipat. */
