@@ -1,8 +1,10 @@
+import { Rasio } from "../kit/Tampilan";
+import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
-import { AlertDialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast, titipToast } from "../kit/Toast";
+import { AlertDialog } from "../kit/Overlay";
 import { KepalaSeksi, KepingTagar } from "../kit/Item";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { DotsThree, Eye, FacebookLogo, Link as IkonTautan, XLogo } from "../kit/ikon";
@@ -223,7 +225,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
     }
   }
 
-  if (galat) return <p className="pj__kosong">Gagal memuat tulisan: {galat}</p>;
+  if (galat) return <GagalMuat apa="Tulisan" galat={galat} />;
   if (!terisi) return <div className="pjs pjs--rangka" aria-busy="true" />;
 
   const k = awal ? keadaan(awal) : "rencana";
@@ -294,7 +296,8 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
       </header>
 
       {/* ---- Sampul ------------------------------------------------------ */}
-      <div className={`pjs__sampul${sampul.url ? "" : " pjs__sampul--kosong"}`}>
+      {/* Rasio kit 1200:630 — kartu bagikan dan sampul di /jurnal/<slug>. */}
+      <Rasio rasio={1200 / 630} className={`pjs__sampul${sampul.url ? "" : " pjs__sampul--kosong"}`}>
         {sampul.url ? (
           <img src={sampul.url} alt="Sampul tulisan" />
         ) : (
@@ -326,7 +329,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
             </Tombol>
           )}
         </span>
-      </div>
+      </Rasio>
 
       {/* ---- Badan + kolom kanan ----------------------------------------- */}
       <div className="pjs__badan">
@@ -363,7 +366,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
             </div>
             <div className="pjs__aksi">
               {alasanTidakBisa && <small className="pjs__alasan">{alasanTidakBisa}</small>}
-              <Tombol ukuran="large" jenis="primary" disabled={!bisaSimpan || menyimpan} onClick={simpan}>
+              <Tombol memuat={menyimpan} ukuran="large" jenis="primary" disabled={!bisaSimpan || menyimpan} onClick={simpan}>
                 {menyimpan ? "Menyimpan…" : "Simpan"}
               </Tombol>
               {!baru && (

@@ -1,10 +1,11 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Tabel, type KolomTabel } from "../kit/Tabel";
 import { Paginasi } from "../kit/Paginasi";
-import { Tombol } from "../kit/Tombol";
+import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
-import { CaretDown, Trash } from "../kit/ikon";
-import { AlertDialog } from "../ui/overlay/Dialog";
+import { CaretDown, MagnifyingGlass, Trash } from "../kit/ikon";
+import { Avatar, Kosong, RangkaBaris } from "../kit/Tampilan";
+import { AlertDialog } from "../kit/Overlay";
 import { jagaFokusSesudahHapus } from "../../lib/fokus";
 
 /* =============================================================================
@@ -115,6 +116,10 @@ export interface PropDaftarKit {
   memuat: boolean;
   /** Kalimat saat saringannya tidak menyisakan apa pun. */
   kosong: ReactNode;
+  /** Ikon keadaan kosong. Bawaan kaca pembesar: kosong karena saringan. */
+  ikonKosong?: DataIkon;
+  /** Kalimat kedua di bawah judul kosong — mis. langkah berikutnya. */
+  ketKosong?: ReactNode;
   /** Kalimat selama data belum datang. */
   teksMemuat?: string;
   /** Kata benda di kaki: "dari 12 tugas". */
@@ -142,6 +147,8 @@ export function DaftarKit({
   kunci,
   memuat,
   kosong,
+  ikonKosong = MagnifyingGlass,
+  ketKosong,
   teksMemuat = "Memuat…",
   satuan,
   kunciSaring,
@@ -184,7 +191,17 @@ export function DaftarKit({
       <div className="kd__tabel">
         {ganti ??
           (tampil.length === 0 ? (
-            <p className="kd__kosong">{memuat ? teksMemuat : kosong}</p>
+            /* Memuat = rangka seukuran baris, bukan kalimat; kosong =
+               Kosong kit (kenapa kosong + langkah berikutnya). */
+            memuat ? (
+              <div className="kd__memuat">
+                <RangkaBaris jumlah={4} label={teksMemuat} />
+              </div>
+            ) : (
+              <Kosong ikon={ikonKosong} judul={kosong} ringkas>
+                {ketKosong}
+              </Kosong>
+            )
           ) : (
             <Tabel
               kolom={kolom}
@@ -231,8 +248,9 @@ export function DaftarKit({
   );
 }
 
-/** Ubin bulat 30 berisi inisial — pengganti foto untuk orang dan kontak.
- *  Dua huruf pertama dari dua kata pertama; satu kata cukup satu huruf. */
+/** Avatar kit berisi inisial — pengganti foto untuk orang dan kontak.
+ *  Dua huruf pertama dari dua kata pertama, tanpa sapaan (Bu, Pak, CV, PT):
+ *  "Bu Ratna Sari" jadi RS, bukan BR. Warnanya diturunkan dari nama. */
 export function Inisial({ nama, redup }: { nama: string; redup?: boolean }) {
   const huruf = nama
     .replace(/^(bu|pak|ibu|bapak|cv|pt)\.?\s+/i, "")
@@ -241,16 +259,12 @@ export function Inisial({ nama, redup }: { nama: string; redup?: boolean }) {
     .slice(0, 2)
     .map((k) => k[0]!.toUpperCase())
     .join("");
-  return (
-    <span className={redup ? "kd__ubin kd__ubin--redup" : "kd__ubin"} aria-hidden="true">
-      {huruf || "?"}
-    </span>
-  );
+  return <Avatar nama={nama} inisial={huruf || "?"} ukuran="sm" hiasan className={redup ? "kd__ubin--redup" : undefined} />;
 }
 
 /**
- * Tombol hapus baris berkonfirmasi. Tombol asli berkelas kit, bukan
- * TombolIkon: pemicu Radix butuh ref, dan TombolIkon tidak meneruskannya.
+ * Tombol hapus baris berkonfirmasi. TombolIkon kit (meneruskan ref ke
+ * pemicu Radix, dan membawa Petunjuk berisi namanya: "Hapus Bu Ratna").
  */
 export function HapusBaris({
   judul,
@@ -276,11 +290,7 @@ export function HapusBaris({
       description={keterangan}
       confirmLabel="Ya, hapus"
       onConfirm={() => void jagaFokusSesudahHapus(pemicu.current, onHapus)}
-      trigger={
-        <button ref={pemicu} type="button" className="k-tombolikon k-tombolikon--small k-tombol--ghost kd__hapus" aria-label={label}>
-          <Ikon ikon={Trash} ukuran={14} />
-        </button>
-      }
+      trigger={<TombolIkon ref={pemicu} ikon={Trash} judul={label} ukuran="small" jenis="ghost" ikonPx={14} className="kd__hapus" />}
     />
   );
 }

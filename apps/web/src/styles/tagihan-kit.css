@@ -250,4 +250,3 @@
 .tag__konteks { margin: -4px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); font-size: var(--k-t12); line-height: 1.6; color: var(--text-muted); }
 .tag__konteks b { font-weight: var(--k-semi); color: var(--text-strong); }
 .tag__kaki { flex-wrap: wrap; }
-.tag__konteks--awas { margin: 0; color: var(--text-strong); box-shadow: inset 3px 0 0 var(--warn); }

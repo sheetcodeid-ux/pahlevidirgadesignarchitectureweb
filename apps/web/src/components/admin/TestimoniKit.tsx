@@ -1,7 +1,8 @@
+import { SorotTeks } from "../kit/Tampilan";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { Dialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Dialog } from "../kit/Overlay";
 import { Icon } from "../ui/Icon";
 import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Cari, Sakelar } from "../kit/Isian";
@@ -122,7 +123,7 @@ function Isi() {
     <div className="kd__sel">
       <Inisial nama={t.clientName} />
       <span className="kd__klien">
-        <SelDua atas={t.clientName} bawah={t.projectTitle ?? "Tanpa proyek"} />
+        <SelDua atas={<SorotTeks teks={t.clientName} cari={cari} />} bawah={t.projectTitle ?? "Tanpa proyek"} />
         {t.rating ? <Bintang nilai={t.rating} /> : null}
       </span>
     </div>,

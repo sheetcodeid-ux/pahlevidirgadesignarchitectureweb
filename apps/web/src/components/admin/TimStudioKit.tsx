@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { Dialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Dialog } from "../kit/Overlay";
 import { RequireAuth } from "./RequireAuth";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
@@ -292,7 +292,7 @@ function DialogOrang({
       footer={
         <div className="kd-form__kaki">
           {alasan && <small className="kd-form__alasan">{alasan}</small>}
-          <Tombol ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
             {kirim ? "Menyimpan…" : "Simpan"}
           </Tombol>
         </div>

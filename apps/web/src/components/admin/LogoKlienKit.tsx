@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { Dialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Dialog } from "../kit/Overlay";
 import { RequireAuth } from "./RequireAuth";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
@@ -277,7 +277,7 @@ function DialogKlien({ urutan, onSelesai }: { urutan: number; onSelesai: () => v
       }
       footer={
         <div className="kd-form__kaki">
-          <Tombol ukuran="large" jenis="primary" disabled={!nama.trim() || kirim} onClick={simpan}>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={!nama.trim() || kirim} onClick={simpan}>
             {kirim ? "Menyimpan…" : "Tambah"}
           </Tombol>
         </div>

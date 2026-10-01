@@ -1,13 +1,14 @@
+import { KelompokTuas, Kombo, Pilih, Tuas, Bidang } from "../kit/Formulir";
+import { IsianTanggal } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { Dialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Dialog } from "../kit/Overlay";
 import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Cari, Isian } from "../kit/Isian";
 import { Tombol, TombolIkon } from "../kit/Tombol";
-import { Segmen } from "../kit/Segmen";
 import { KartuStatistik } from "../kit/Kartu";
-import { Briefcase, Check, Clock, Hourglass, Plus, SpinnerGap } from "../kit/ikon";
+import { Briefcase, Check, Clock, Hourglass, Plus, SpinnerGap, List, GridFour, SpecialCheckSquare } from "../kit/ikon";
 import { DaftarKit, PilihTombol, PilihStatus, Inisial, HapusBaris, type NadaStatus } from "./daftarKit";
 import {
   daftarTugas,
@@ -64,6 +65,9 @@ function Isi() {
   const [proyek, setProyek] = useState<Proyek[]>([]);
   const [tim, setTim] = useState<AnggotaTim[]>([]);
   const [cari, setCari] = useState("");
+  /* Tuas "lewat tenggat": satu klik untuk pertanyaan yang paling sering —
+     apa yang sudah terlambat — tanpa mengubah saringan lain. */
+  const [hanyaLewat, setHanyaLewat] = useState(false);
   const [status, setStatus] = useState("aktif");
   const [saringProyek, setSaringProyek] = useState("semua");
   const [pic, setPic] = useState("semua");
@@ -80,8 +84,12 @@ function Isi() {
   }
   useEffect(() => {
     muat();
-    daftarProyek().then(setProyek).catch(() => setProyek([]));
-    daftarTim().then(setTim).catch(() => setTim([]));
+    daftarProyek()
+      .then(setProyek)
+      .catch(() => setProyek([]));
+    daftarTim()
+      .then(setTim)
+      .catch(() => setTim([]));
   }, []);
 
   const hariIni = new Date().toISOString().slice(0, 10);
@@ -95,7 +103,11 @@ function Isi() {
       if (baru === "selesai") toast({ judul: "Tugas selesai", keterangan: t.title, nada: "sukses" });
     } catch (e) {
       setTugas((l) => l?.map((x) => (x.id === t.id ? t : x)) ?? l);
-      toast({ judul: "Gagal mengubah status", keterangan: (e as Error).message, nada: "gagal" });
+      toast({
+        judul: "Gagal mengubah status",
+        keterangan: (e as Error).message,
+        nada: "gagal",
+      });
     }
   }
 
@@ -106,7 +118,11 @@ function Isi() {
       toast({ judul: "Tugas dihapus", keterangan: t.title, nada: "sukses" });
     } catch (e) {
       muat();
-      toast({ judul: "Gagal menghapus", keterangan: (e as Error).message, nada: "gagal" });
+      toast({
+        judul: "Gagal menghapus",
+        keterangan: (e as Error).message,
+        nada: "gagal",
+      });
     }
   }
 
@@ -129,6 +145,7 @@ function Isi() {
     const q = cari.trim().toLowerCase();
     return (tugas ?? [])
       .filter((t) => (status === "aktif" ? t.status !== "selesai" : status === "semua" ? true : t.status === status))
+      .filter((t) => !hanyaLewat || lewat(t))
       .filter((t) => saringProyek === "semua" || t.projectId === saringProyek)
       .filter((t) => pic === "semua" || (pic === "tanpa" ? !t.assigneeName : t.assigneeName === pic))
       .filter(
@@ -143,7 +160,7 @@ function Isi() {
         if (!b.dueDate) return -1;
         return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0;
       });
-  }, [tugas, cari, status, saringProyek, pic, urut]);
+  }, [tugas, cari, status, saringProyek, pic, urut, hanyaLewat]);
 
   const kolom: KolomTabel[] = [
     { judul: "Tugas", lebar: 460 },
@@ -257,7 +274,7 @@ function Isi() {
         <KartuStatistik ikon={Hourglass} judul="Menunggu klien" nilai={tugas ? angka.klien : "—"} />
       </div>
       <DaftarKit
-        kunciSaring={`${cari}|${status}|${saringProyek}|${pic}|${urut}`}
+        kunciSaring={`${cari}|${status}|${saringProyek}|${pic}|${urut}|${hanyaLewat}`}
         kiri={
           <>
             <Cari
@@ -271,13 +288,20 @@ function Isi() {
               judul="Saring status"
               nilai={status}
               onPilih={setStatus}
-              opsi={[{ nilai: "aktif", label: "Belum selesai" }, ...OPSI_STATUS, { nilai: "semua", label: "Semua status" }]}
+              opsi={[
+                { nilai: "aktif", label: "Belum selesai" },
+                ...OPSI_STATUS,
+                { nilai: "semua", label: "Semua status" },
+              ]}
             />
             <PilihTombol
               judul="Saring proyek"
               nilai={saringProyek}
               onPilih={setSaringProyek}
-              opsi={[{ nilai: "semua", label: "Semua proyek" }, ...proyek.map((p) => ({ nilai: p.id, label: p.title }))]}
+              opsi={[
+                { nilai: "semua", label: "Semua proyek" },
+                ...proyek.map((p) => ({ nilai: p.id, label: p.title })),
+              ]}
             />
             <PilihTombol
               judul="Saring PIC"
@@ -289,6 +313,9 @@ function Isi() {
                 { nilai: "tanpa", label: "Belum ditentukan" },
               ]}
             />
+            <Tuas tekan={hanyaLewat} onUbah={setHanyaLewat} ikon={Clock} className="tg__lewat">
+              Lewat tenggat{tugas ? ` (${tugas.filter(lewat).length})` : ""}
+            </Tuas>
             <PilihTombol
               judul="Urutkan tugas"
               nilai={urut}
@@ -303,14 +330,16 @@ function Isi() {
         }
         kanan={
           <>
-            <Segmen
-              judul="Tampilan"
-              className="kd__tampilan"
-              nilai={tampilan}
-              onPilih={setTampilan}
-              segmen={[
-                { nilai: "tabel", label: "Tabel" },
-                { nilai: "papan", label: "Papan" },
+            {/* Kelompok Tuas, bukan Segmen: dua tampilan dari isi yang sama,
+                dan ikonnya terbaca sebelum labelnya. Selalu tepat satu yang
+                menyala — klik pada yang sudah menyala tidak mematikannya. */}
+            <KelompokTuas
+              label="Tampilan"
+              nilai={[tampilan]}
+              onUbah={(v) => v[0] && setTampilan(v[0] as typeof tampilan)}
+              opsi={[
+                { nilai: "tabel", label: "Tabel", ikon: List },
+                { nilai: "papan", label: "Papan", ikon: GridFour },
               ]}
             />
             <DialogTugas proyek={proyek} tim={tim} onSelesai={muat} />
@@ -321,11 +350,13 @@ function Isi() {
         kunci={tersaring.map((t) => t.id)}
         memuat={tugas === null}
         teksMemuat="Memuat tugas…"
-        kosong={
+        kosong={tugas && tugas.length > 0 ? "Tidak ada tugas pada saringan ini" : "Belum ada tugas"}
+        ketKosong={
           tugas && tugas.length > 0
-            ? "Tidak ada tugas pada saringan ini."
-            : "Belum ada tugas. Tekan Tambah tugas — proyeknya dipilih di dalam dialog."
+            ? "Ganti saringan proyek atau PIC di atas."
+            : "Tekan Tambah tugas — proyeknya dipilih di dalam dialog."
         }
+        ikonKosong={tugas && tugas.length > 0 ? undefined : SpecialCheckSquare}
         satuan="tugas"
         ganti={tampilan === "papan" ? papan : undefined}
       />
@@ -364,12 +395,24 @@ function DialogTugas({ proyek, tim, onSelesai }: { proyek: Proyek[]; tim: Anggot
     if (alasan) return;
     setKirim(true);
     try {
-      await tambahTugas(idProyek, { title: judul.trim(), assigneeId: orang || null, dueDate: tenggat || null });
+      await tambahTugas(idProyek, {
+        title: judul.trim(),
+        assigneeId: orang || null,
+        dueDate: tenggat || null,
+      });
       setBuka(false);
       onSelesai();
-      toast({ judul: "Tugas ditambahkan", keterangan: judul.trim(), nada: "sukses" });
+      toast({
+        judul: "Tugas ditambahkan",
+        keterangan: judul.trim(),
+        nada: "sukses",
+      });
     } catch (e) {
-      toast({ judul: "Gagal menambah tugas", keterangan: (e as Error).message, nada: "gagal" });
+      toast({
+        judul: "Gagal menambah tugas",
+        keterangan: (e as Error).message,
+        nada: "gagal",
+      });
     } finally {
       setKirim(false);
     }
@@ -389,33 +432,29 @@ function DialogTugas({ proyek, tim, onSelesai }: { proyek: Proyek[]; tim: Anggot
       footer={
         <div className="kd-form__kaki">
           {alasan && <small className="kd-form__alasan">{alasan}</small>}
-          <Tombol ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
             {kirim ? "Menyimpan…" : "Simpan"}
           </Tombol>
         </div>
       }
     >
       <div className="kd-form">
-        <div className="k-isian">
-          <label className="k-isian__label" htmlFor="tg-proyek">
-            Proyek
-          </label>
-          <div className="k-isian__kotak">
-            <select
-              id="tg-proyek"
-              className="k-isian__input"
-              value={idProyek}
-              onChange={(e) => setIdProyek(e.currentTarget.value)}
-            >
-              <option value="">Pilih proyek…</option>
-              {proyek.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <Bidang label="Proyek">
+          {(b) => (
+            <Kombo
+              id={b.id}
+              opsi={proyek.map((p) => ({
+                nilai: p.id,
+                label: p.title,
+                ket: p.client || undefined,
+              }))}
+              nilai={idProyek || undefined}
+              onUbah={setIdProyek}
+              placeholder="Pilih proyek…"
+              cariPlaceholder="Cari proyek atau klien…"
+            />
+          )}
+        </Bidang>
         <Isian
           label="Tugas"
           placeholder="mis. Gambar kerja denah"
@@ -424,33 +463,36 @@ function DialogTugas({ proyek, tim, onSelesai }: { proyek: Proyek[]; tim: Anggot
           onChange={(e) => setJudul(e.currentTarget.value)}
         />
         <div className="kd-form__dua">
-          <div className="k-isian">
-            <label className="k-isian__label" htmlFor="tg-pic">
-              Penanggung jawab
-            </label>
-            <div className="k-isian__kotak">
-              <select id="tg-pic" className="k-isian__input" value={orang} onChange={(e) => setOrang(e.currentTarget.value)}>
-                <option value="">Belum ditentukan</option>
-                {/* Yang nonaktif tidak ditawarkan lagi, tapi namanya tetap
-                    tercetak di tugas lama. */}
-                {tim
-                  .filter((t) => t.active)
-                  .map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.role ? `${t.name} — ${t.role}` : t.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
+          {/* Yang nonaktif tidak ditawarkan lagi, tapi namanya tetap
+              tercetak di tugas lama. Select kit: perannya tampil sebagai
+              keterangan di bawah nama, bukan disambung tanda pisah. */}
+          <Bidang label="Penanggung jawab">
+            {(b) => (
+              <Pilih
+                id={b.id}
+                nilai={orang || "-"}
+                onUbah={(v) => setOrang(v === "-" ? "" : v)}
+                opsi={[
+                  { nilai: "-", label: "Belum ditentukan" },
+                  ...tim
+                    .filter((t) => t.active)
+                    .map((t) => ({
+                      nilai: t.id,
+                      label: t.name,
+                      ket: t.role || undefined,
+                    })),
+                ]}
+              />
+            )}
+          </Bidang>
           {/* TANPA batas maksimum hari ini, beda dari tanggal biaya: biaya
               mencatat yang sudah terjadi, tenggat menunjuk yang belum. */}
-          <Isian
+          <IsianTanggal
             label="Tenggat"
-            type="date"
-            value={tenggat}
-            onChange={(e) => setTenggat(e.currentTarget.value)}
+            nilai={tenggat}
+            onUbah={setTenggat}
             bantu="Boleh dikosongkan."
+            placeholder="Tanpa tenggat"
           />
         </div>
       </div>

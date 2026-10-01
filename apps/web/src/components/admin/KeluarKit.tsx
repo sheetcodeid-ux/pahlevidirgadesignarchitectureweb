@@ -1,7 +1,8 @@
+import { KelompokIsian, PilihTanggal, keIso } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { DialogBiaya } from "./biayaKit";
-import { DropdownMenu } from "../ui/overlay/Menu";
+import { DropdownMenu } from "../kit/Overlay";
 import { navigate } from "astro:transitions/client";
 import { KepalaSeksi, BarisTransfer, BarisPenyedia } from "../kit/Item";
 import { KelompokTab } from "../kit/Segmen";
@@ -9,20 +10,8 @@ import { Cari } from "../kit/Isian";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { TombolBulat } from "../kit/Item";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import {
-  Users,
-  House,
-  Medal,
-  DotsThree,
-  Sliders,
-  NavReceipt,
-  CoinOut,
-  SpecialHandshake,
-  UserCircleCheck,
-  IdentificationBadge,
-  Ruler,
-} from "../kit/ikon";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Users, House, Medal, DotsThree, Sliders, NavReceipt, CoinOut, SpecialHandshake, UserCircleCheck, IdentificationBadge, Ruler, NavArrowsLeftRight, NavCurrencyCircleDollar, Wallet } from "../kit/ikon";
 import {
   daftarProyek,
   daftarTim,
@@ -384,7 +373,7 @@ function Isi() {
                 sections={[
                   {
                     label: "Buka",
-                    items: ([["Semua transaksi", "list", "/admin/keuangan/transaksi"], ["Fee proyek", "cash", "/admin/fee"], ["Gaji", "bank", "/admin/gaji"]] as const).map(([label, icon, ke]) => ({ label, icon, onSelect: () => navigate(ke) })),
+                    items: ([["Semua transaksi", NavArrowsLeftRight, "/admin/keuangan/transaksi"], ["Fee proyek", NavCurrencyCircleDollar, "/admin/fee"], ["Gaji", Wallet, "/admin/gaji"]] as const).map(([label, ikon, ke]) => ({ label, ikon, onSelect: () => navigate(ke) })),
                   },
                 ]}
               />
@@ -496,33 +485,16 @@ function Isi() {
                 <label className="tr__label" htmlFor="kl-nominal">
                   Nominal
                 </label>
-                <div className="k-isian__kotak">
-                  <input
-                    id="kl-nominal"
-                    className="k-isian__input"
-                    /* `inputMode`, bukan `type=number`: type=number menolak
-                       titik pemisah ribuan dan memunculkan panah naik-turun
-                       yang tidak ada gunanya untuk rupiah. */
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={nominal}
-                    onChange={(e) => setNominal(e.currentTarget.value)}
-                  />
-                </div>
+                {/* `inputMode`, bukan `type=number`: type=number menolak titik
+                    pemisah ribuan dan memunculkan panah naik-turun yang tidak
+                    ada gunanya untuk rupiah. */}
+                <KelompokIsian id="kl-nominal" kiri="Rp" inputMode="numeric" placeholder="0" value={nominal} onChange={(e) => setNominal(e.currentTarget.value)} />
               </div>
               <div className="tr__grup">
                 <label className="tr__label" htmlFor="kl-tanggal">
                   Tanggal
                 </label>
-                <div className="k-isian__kotak">
-                  <input
-                    id="kl-tanggal"
-                    className="k-isian__input"
-                    type="date"
-                    value={tanggal}
-                    onChange={(e) => setTanggal(e.currentTarget.value)}
-                  />
-                </div>
+                <PilihTanggal id="kl-tanggal" nilai={tanggal} onUbah={setTanggal} bisaKosong={false} maks={keIso(new Date())} />
               </div>
             </div>
 
@@ -539,7 +511,7 @@ function Isi() {
               >
                 Batal
               </Tombol>
-              <Tombol ukuran="large" disabled={!bisaKirim} onClick={simpan}>
+              <Tombol memuat={kirim} ukuran="large" disabled={!bisaKirim} onClick={simpan}>
                 {kirim ? "Menyimpan…" : "Catat Pengeluaran"}
               </Tombol>
             </div>

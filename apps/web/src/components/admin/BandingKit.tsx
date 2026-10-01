@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast } from "../kit/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { Lencana } from "../kit/Lencana";
 import { Segmen } from "../kit/Segmen";

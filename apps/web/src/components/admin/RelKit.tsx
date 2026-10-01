@@ -235,7 +235,7 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
           </button>
         }
       />
-      {buka && <div className="ov-scrim kl__tirai" data-state="open" aria-hidden="true" onClick={() => setBuka(false)} />}
+      {buka && <div className="k-ov__scrim kl__tirai" data-state="open" aria-hidden="true" onClick={() => setBuka(false)} />}
     </>
   );
 }

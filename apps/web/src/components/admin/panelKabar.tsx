@@ -5,6 +5,7 @@ import { TombolBulat } from "../kit/Item";
 import { Ikon } from "../kit/Ikon";
 import { ArrowRight, Bell, ChatTeardropDots, CheckCircle, NavEnvelope } from "../kit/ikon";
 import { daftarPesan, bacaCache, type Pesan } from "../../lib/admin";
+import { AreaGulir, Avatar, Kosong as KosongKit, RangkaBaris } from "../kit/Tampilan";
 import type { BarisNotifikasi } from "../../lib/notifikasi";
 import { ikonButir, kepalaHari, waktuButir } from "./linimasaNotif";
 
@@ -36,17 +37,6 @@ export function waktuRelatif(iso: string): string {
 
 const JENIS: Record<string, string> = { residential: "Hunian", commercial: "Komersial", interior: "Interior" };
 
-function inisial(nama: string) {
-  return (
-    nama
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((k) => k[0]!.toUpperCase())
-      .join("") || "?"
-  );
-}
-
 /* Kerangka panel: kepala (judul + keterangan), isi yang bergulir sendiri,
    kaki berisi satu tautan. Keduanya memakainya supaya bentuknya satu. */
 function Panel({
@@ -75,7 +65,9 @@ function Panel({
             <p className="kp__judul">{judul}</p>
             <p className="kp__ket">{keterangan}</p>
           </div>
-          <div className="kp__isi">{children}</div>
+          {/* Area Gulir kit: batang tipis yang sama di Windows kantor dan Mac —
+              batang klasik 17px di Windows memotong cuplikan pesan. */}
+          <AreaGulir className="kp__isi">{children}</AreaGulir>
           <button
             type="button"
             className="kp__kaki"
@@ -95,24 +87,17 @@ function Panel({
 
 function Kosong({ ikon, judul, ket }: { ikon: typeof Bell; judul: string; ket: string }) {
   return (
-    <div className="kp__kosong">
-      <span className="kp__kosongikon"><Ikon ikon={ikon} ukuran={20} /></span>
-      <b>{judul}</b>
-      <span>{ket}</span>
-    </div>
+    <KosongKit ikon={ikon} judul={judul} ringkas>
+      {ket}
+    </KosongKit>
   );
 }
 
 function Rangka() {
   return (
-    <ul className="kp__daftar" aria-hidden="true">
-      {[0, 1, 2].map((i) => (
-        <li key={i} className="kp__rangka">
-          <span className="kp__rangkabulat" />
-          <span className="kp__rangkagaris" />
-        </li>
-      ))}
-    </ul>
+    <div className="kp__memuat">
+      <RangkaBaris jumlah={3} />
+    </div>
   );
 }
 
@@ -184,7 +169,7 @@ export function PanelPesan({ belumDibaca }: { belumDibaca: number }) {
                     navigate(`/admin/pesan?id=${encodeURIComponent(p.id)}`);
                   }}
                 >
-                  <span className="kp__avatar" aria-hidden="true">{inisial(p.name)}</span>
+                  <Avatar nama={p.name} hiasan className={baru ? undefined : "kp__avatar--lama"} />
                   <span className="kp__teks">
                     <span className="kp__baris1">
                       <b>{p.name}</b>

@@ -205,8 +205,10 @@ export function Kombo({
 }) {
   const [buka, setBuka] = useState(false);
   const pilih = opsi.find((o) => o.nilai === nilai);
+  /* modal: di dalam Dialog, daftar yang dipotret ke <body> tetap bisa
+     digulir dan difokus — penguncian gulir dialog tidak menahannya. */
   return (
-    <RPopover.Root open={buka} onOpenChange={setBuka}>
+    <RPopover.Root open={buka} onOpenChange={setBuka} modal>
       <RPopover.Trigger asChild>
         <button type="button" id={id} className="k-kotak k-pilih" role="combobox" aria-expanded={buka} aria-label={label}>
           <span className={pilih ? undefined : "k-pilih__kosong"}>{pilih?.label ?? placeholder}</span>
@@ -414,13 +416,19 @@ export function Lampiran({
   onUbah,
   judul = "Tarik berkas ke sini, atau klik untuk memilih",
   ket,
+  mati = false,
+  label = "Pilih berkas",
 }: {
   terima?: string;
   banyak?: boolean;
+  /** Berkas yang sedang dipilih. Kosongkan terus (`[]`) untuk zona yang
+      langsung mengunggah begitu berkas dijatuhkan. */
   berkas: File[];
   onUbah: (f: File[]) => void;
   judul?: string;
   ket?: string;
+  mati?: boolean;
+  label?: string;
 }) {
   const [seret, setSeret] = useState(false);
   const masuk = useRef<HTMLInputElement>(null);
@@ -432,16 +440,16 @@ export function Lampiran({
   return (
     <div className="k-lampiran">
       <label
-        className={kelas("k-lampiran__zona", seret && "is-seret")}
+        className={kelas("k-lampiran__zona", seret && "is-seret", mati && "is-mati")}
         onDragOver={(e) => {
           e.preventDefault();
-          setSeret(true);
+          if (!mati) setSeret(true);
         }}
         onDragLeave={() => setSeret(false)}
         onDrop={(e) => {
           e.preventDefault();
           setSeret(false);
-          tambah(e.dataTransfer.files);
+          if (!mati) tambah(e.dataTransfer.files);
         }}
       >
         <input
@@ -450,6 +458,8 @@ export function Lampiran({
           className="sr-only"
           accept={terima}
           multiple={banyak}
+          disabled={mati}
+          aria-label={label}
           onChange={(e) => {
             tambah(e.target.files);
             e.target.value = "";
@@ -575,11 +585,14 @@ export function Kalender({
   nilai,
   onUbah,
   min,
+  maks,
   label = "Pilih tanggal",
 }: {
   nilai?: Date | null;
   onUbah?: (d: Date) => void;
   min?: Date;
+  /** Hari SESUDAH ini dicoret — mis. biaya yang mencatat hal yang sudah terjadi. */
+  maks?: Date;
   label?: string;
 }) {
   const [tampil, setTampil] = useState(() => {
@@ -614,7 +627,7 @@ export function Kalender({
         ))}
         {sel.map((d) => {
           const luar = d.getMonth() !== tampil.getMonth();
-          const mati = min ? d < min && !samaHari(d, min) : false;
+          const mati = (min ? d < min && !samaHari(d, min) : false) || (maks ? d > maks && !samaHari(d, maks) : false);
           const pilih = nilai ? samaHari(d, nilai) : false;
           const kini = samaHari(d, hariIni);
           return (
@@ -651,6 +664,7 @@ export function PilihTanggal({
   onUbah,
   placeholder = "Pilih tanggal",
   min,
+  maks,
   id,
   label,
   bisaKosong = true,
@@ -660,6 +674,7 @@ export function PilihTanggal({
   onUbah: (iso: string) => void;
   placeholder?: string;
   min?: string;
+  maks?: string;
   id?: string;
   label?: string;
   bisaKosong?: boolean;
@@ -667,7 +682,7 @@ export function PilihTanggal({
   const [buka, setBuka] = useState(false);
   const d = keTanggal(nilai);
   return (
-    <RPopover.Root open={buka} onOpenChange={setBuka}>
+    <RPopover.Root open={buka} onOpenChange={setBuka} modal>
       <RPopover.Trigger asChild>
         <button type="button" id={id} className="k-kotak k-pilih" aria-label={label}>
           <Ikon ikon={CalendarBlank} ukuran={16} className="k-pilih__ikon" />
@@ -682,13 +697,22 @@ export function PilihTanggal({
           <Kalender
             nilai={d}
             min={keTanggal(min) ?? undefined}
+            maks={keTanggal(maks) ?? undefined}
             onUbah={(baru) => {
               onUbah(keIso(baru));
               setBuka(false);
             }}
           />
           <div className="k-pilihtgl__kaki">
-            <button type="button" className="k-tombol k-tombol--small k-tombol--transparent" onClick={() => { onUbah(keIso(new Date())); setBuka(false); }}>
+            <button
+              type="button"
+              className="k-tombol k-tombol--small k-tombol--transparent"
+              disabled={Boolean((min && keIso(new Date()) < min) || (maks && keIso(new Date()) > maks))}
+              onClick={() => {
+                onUbah(keIso(new Date()));
+                setBuka(false);
+              }}
+            >
               Hari ini
             </button>
             {bisaKosong && nilai && (
@@ -700,5 +724,73 @@ export function PilihTanggal({
         </RPopover.Content>
       </RPopover.Portal>
     </RPopover.Root>
+  );
+}
+
+/**
+ * Isian tanggal berlabel — bentuk `Isian` (label di atas, bantuan di bawah)
+ * dengan PilihTanggal sebagai kotaknya. Pengganti langsung
+ * `<Isian type="date">`: nilainya ISO yang sama.
+ */
+export function IsianTanggal({
+  label,
+  nilai,
+  onUbah,
+  bantu,
+  min,
+  maks,
+  className,
+  bisaKosong = true,
+  placeholder,
+}: {
+  label: string;
+  nilai: string;
+  onUbah: (iso: string) => void;
+  bantu?: string;
+  min?: string;
+  maks?: string;
+  className?: string;
+  bisaKosong?: boolean;
+  placeholder?: string;
+}) {
+  const id = useId();
+  return (
+    <div className={kelas("k-isian", className)}>
+      <label className="k-isian__label" htmlFor={id}>
+        {label}
+      </label>
+      <PilihTanggal id={id} nilai={nilai} onUbah={onUbah} min={min} maks={maks} bisaKosong={bisaKosong} placeholder={placeholder} />
+      {bantu && <p className="k-isian__bantu">{bantu}</p>}
+    </div>
+  );
+}
+
+/**
+ * Isian bertempelan berlabel — bentuk `Isian` dengan KelompokIsian sebagai
+ * kotaknya. Untuk nominal ("Rp" di depan) dan satuan (m², %).
+ */
+export function IsianTempel({
+  label,
+  bantu,
+  kiri,
+  kanan,
+  className,
+  id,
+  ...p
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; bantu?: string; kiri?: ReactNode; kanan?: ReactNode }) {
+  const otomatis = useId();
+  const kunci = id ?? otomatis;
+  return (
+    <div className={kelas("k-isian", className)}>
+      <label className="k-isian__label" htmlFor={kunci}>
+        {label}
+      </label>
+      <KelompokIsian id={kunci} kiri={kiri} kanan={kanan} aria-describedby={bantu ? `${kunci}-bantu` : undefined} {...p} />
+      {bantu && (
+        <p id={`${kunci}-bantu`} className="k-isian__bantu">
+          {bantu}
+        </p>
+      )}
+    </div>
   );
 }

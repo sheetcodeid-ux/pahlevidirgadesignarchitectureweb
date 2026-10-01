@@ -12,6 +12,6 @@ import "../../../styles/satu-kit.css";
    dari tombol "Buka" di Semua Proyek dengan `?id=`. */
 ---
 
-<KitLayout title="Satu Proyek" judul="Satu Proyek">
+<KitLayout title="Satu Proyek" judul="Satu Proyek" remah={[{ label: "Proyek" }, { label: "Semua Proyek", href: "/admin/proyek" }, { label: "Satu Proyek" }]}>
   <SatuProyekKit client:load dibangunPada={CAP_BUILD} />
 </KitLayout>

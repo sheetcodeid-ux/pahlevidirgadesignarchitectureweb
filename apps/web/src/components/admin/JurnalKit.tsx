@@ -1,3 +1,4 @@
+import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { RequireAuth } from "./RequireAuth";
@@ -156,7 +157,7 @@ function Isi() {
     [tampak],
   );
 
-  if (galat && tulisan === null) return <p className="pj__kosong">Gagal memuat jurnal: {galat}</p>;
+  if (galat && tulisan === null) return <GagalMuat apa="Jurnal" galat={galat} />;
   if (tulisan === null) return <div className="pj pj--rangka" aria-busy="true" />;
 
   const hitungKeadaan = (k: Keadaan) => semua.filter((t) => keadaan(t) === k).length;

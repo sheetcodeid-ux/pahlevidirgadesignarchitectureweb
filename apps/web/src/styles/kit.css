@@ -3088,7 +3088,8 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .kp__judul { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); }
 .kp__ket { margin: 0; font-size: var(--k-t12); color: var(--text-muted); white-space: nowrap; }
 
-.kp__isi { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px; scrollbar-width: thin; }
+.kp__isi { flex: 1 1 auto; min-height: 0; }
+.kp__isi > .k-gulir__viewport { padding: 6px; overscroll-behavior: contain; }
 .kp__kelompok + .kp__kelompok { margin-top: 4px; }
 .kp__hari {
   margin: 8px 10px 4px;
@@ -3119,7 +3120,6 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .kp__butir:hover { background: var(--surface-hover); }
 .kp__butir:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; box-shadow: none; }
 
-.kp__avatar,
 .kp__ubin {
   flex: none;
   display: grid;
@@ -3133,9 +3133,9 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   font-weight: var(--k-semi);
 }
 .kp__ubin { border-radius: 10px; }
-/* Pesan yang belum dibaca: avatarnya pejal, bukan lembut — terbaca sebelum
-   satu kata pun dibaca, seperti titik di sampingnya. */
-.kp__butir.is-baru .kp__avatar { background: var(--brand); color: var(--brand-ink); }
+/* Avatar kit (warna dari nama). Pesan yang SUDAH dibaca dipudarkan, jadi
+   yang belum dibaca — bertitik merah dan bernama tebal — terbaca lebih dulu. */
+.kp__avatar--lama { opacity: 0.6; }
 
 .kp__teks { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .kp__baris1 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -3189,35 +3189,8 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .kp__kaki:hover { background: var(--brand-soft); }
 .kp__kaki:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; box-shadow: none; }
 
-.kp__kosong {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 28px 20px;
-  text-align: center;
-  font-size: var(--k-t12);
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-.kp__kosong b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
-.kp__kosongikon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 4px;
-  border-radius: 999px;
-  background: var(--brand-soft);
-  color: var(--brand);
-}
+.kp__memuat { padding: 14px 12px; }
 
-.kp__rangka { display: flex; align-items: center; gap: 12px; padding: 10px; }
-.kp__rangkabulat { flex: none; width: 36px; height: 36px; border-radius: 999px; background: var(--surface-hover); }
-.kp__rangkagaris { flex: 1; height: 28px; border-radius: 8px; background: var(--surface-hover); }
-
-/* Tema gelap: --brand di sana mint, dan tinta di atasnya harus gelap. */
-:root[data-theme="dark"] .kp__butir.is-baru .kp__avatar { color: var(--brand-mint-ink); }
 @media (prefers-reduced-motion: reduce) {
   .kp[data-state] { animation: none; }
 }

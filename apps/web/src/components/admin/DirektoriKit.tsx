@@ -1,7 +1,9 @@
+import { SorotTeks } from "../kit/Tampilan";
+import { PilihAsli } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { Dialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Dialog } from "../kit/Overlay";
 import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Cari, Isian } from "../kit/Isian";
 import { Tombol } from "../kit/Tombol";
@@ -99,7 +101,7 @@ function Isi() {
   const baris = tersaring.map((k) => [
     <div className="kd__sel">
       <Inisial nama={k.name} />
-      <SelDua atas={k.name} bawah={k.company ?? "—"} />
+      <SelDua atas={<SorotTeks teks={k.name} cari={cari} />} bawah={k.company ? <SorotTeks teks={k.company} cari={cari} /> : "—"} />
     </div>,
     KATEGORI[k.category] ?? k.category,
     k.phone ? (
@@ -244,7 +246,7 @@ function DialogKontak({ onSelesai }: { onSelesai: () => void }) {
       footer={
         <div className="kd-form__kaki">
           {alasan && <small className="kd-form__alasan">{alasan}</small>}
-          <Tombol ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
             {kirim ? "Menyimpan…" : "Simpan"}
           </Tombol>
         </div>
@@ -257,10 +259,9 @@ function DialogKontak({ onSelesai }: { onSelesai: () => void }) {
             <label className="k-isian__label" htmlFor="dk-kategori">
               Kategori
             </label>
-            <div className="k-isian__kotak">
-              <select
+            <PilihAsli
                 id="dk-kategori"
-                className="k-isian__input"
+                
                 value={kategori}
                 onChange={(e) => setKategori(e.currentTarget.value)}
               >
@@ -269,8 +270,7 @@ function DialogKontak({ onSelesai }: { onSelesai: () => void }) {
                     {l}
                   </option>
                 ))}
-              </select>
-            </div>
+              </PilihAsli>
           </div>
         </div>
         <Isian

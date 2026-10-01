@@ -99,24 +99,12 @@
 .kd__redup { color: var(--text-muted); }
 .kd__tautan { color: var(--brand); text-decoration: none; }
 .kd__tautan:hover { text-decoration: underline; }
-/* Ubin inisial — bentuk ubin bulat frame 13 (.trx__ubin). */
-.kd__ubin {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 15px;
-  background: var(--brand-mint);
-  color: var(--text-strong);
-  font-size: var(--k-t10);
-  font-weight: var(--k-semi);
-  letter-spacing: 0.02em;
-}
-/* Jebakan #37: di tema gelap --text-strong terang di atas mint (1,23). */
-:root[data-theme="dark"] .kd__ubin { color: var(--brand-mint-ink); }
-.kd__ubin--redup { background: var(--brand-soft); color: var(--text-muted); }
-:root[data-theme="dark"] .kd__ubin--redup { color: var(--text-muted); }
+/* Inisial = Avatar kit (warna diturunkan dari nama), dibesarkan ke 30 —
+   ukuran ubin bulat frame 13 (.trx__ubin). Yang nonaktif dipudarkan. */
+.kd .k-avatar--sm { width: 30px; height: 30px; }
+.kd__ubin--redup { opacity: 0.5; }
+/* Rangka selama daftar dimuat, setinggi kira-kira empat baris. */
+.kd__memuat { padding: 20px 16px; }
 /* Isian di dalam sel — catatan kontak yang disunting langsung di barisnya. */
 .kd__isian {
   width: 100%;

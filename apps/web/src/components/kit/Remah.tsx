@@ -22,7 +22,13 @@ export function Remah({ jalur, className }: { jalur: SatuRemah[]; className?: st
                 /
               </span>
             )}
-            {r.href ? <a href={r.href}>{r.label}</a> : <span aria-current="page">{r.label}</span>}
+            {/* Hanya yang TERAKHIR "halaman ini"; butir tanpa alamat di tengah
+                (kelompok menu seperti "Keuangan") cuma teks. */}
+            {r.href && i < jalur.length - 1 ? (
+              <a href={r.href}>{r.label}</a>
+            ) : (
+              <span aria-current={i === jalur.length - 1 ? "page" : undefined}>{r.label}</span>
+            )}
           </li>
         ))}
       </ol>

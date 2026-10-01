@@ -1,7 +1,9 @@
+import { navigate } from "astro:transitions/client";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { DropdownMenu } from "../ui/overlay/Menu";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { DropdownMenu, Menubar as BilahMenu } from "../kit/Overlay";
+import { Pemisah } from "../kit/Tampilan";
 import { unduhRincianBiaya, unduhDaftarTagihan } from "../../lib/pdfProyek";
 import { KepalaSeksi } from "../kit/Item";
 import { KartuStatistikLebar, BarKemajuan, GrafikArea } from "../kit/Ukuran";
@@ -9,23 +11,7 @@ import { Tabel, type KolomTabel } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
-import {
-  CaretDown,
-  CheckCircle,
-  CoinIn,
-  CoinOut,
-  FileText,
-  FilePdf,
-  Globe,
-  NotePencil,
-  Plus,
-  Ruler,
-  SpecialHandshake,
-  SpecialSealCheck,
-  NavReceipt,
-  CurrencyCircleDollar,
-  SpecialCheckSquare,
-} from "../kit/ikon";
+import { CaretDown, CheckCircle, CoinIn, CoinOut, FileText, FilePdf, Globe, NotePencil, Plus, Ruler, SpecialHandshake, SpecialSealCheck, NavReceipt, CurrencyCircleDollar, SpecialCheckSquare, UserCircle } from "../kit/ikon";
 import {
   daftarProyek,
   daftarTugasProyek,
@@ -371,8 +357,59 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
     );
   }
 
+  const idKini = kini ? encodeURIComponent(kini.id) : "";
   return (
     <div className="sat">
+      {/* ---- Bilah menu: semua yang bisa dikerjakan pada proyek ini -------
+          Satu tempat untuk pindah ke halaman milik proyek ini (ubah data,
+          halaman publik, portal klien), mencatat uangnya, dan mengunduh
+          dokumennya — dulu tersebar di ikon-ikon kecil kepala seksi. */}
+      {kini && (
+        <div className="sat__alat">
+          <BilahMenu
+            label="Aksi proyek"
+            menus={[
+              {
+                label: "Proyek",
+                sections: [
+                  {
+                    items: [
+                      { label: "Ubah data proyek", ikon: NotePencil, onSelect: () => navigate(`/admin/proyek/edit?id=${idKini}`) },
+                      { label: "Halaman publik", ikon: Globe, onSelect: () => navigate(`/admin/proyek/publik?id=${idKini}`) },
+                      { label: "Portal klien", ikon: UserCircle, onSelect: () => navigate(`/admin/proyek/klien?id=${idKini}`) },
+                    ],
+                  },
+                ],
+              },
+              {
+                label: "Keuangan",
+                sections: [
+                  {
+                    items: [
+                      { label: "Terima pembayaran", ikon: CoinIn, onSelect: () => navigate(`/admin/keuangan/terima?proyek=${idKini}`) },
+                      { label: "Catat pengeluaran", ikon: CoinOut, onSelect: () => navigate("/admin/keuangan/keluar") },
+                      { label: "Tagihan & termin", ikon: NavReceipt, onSelect: () => navigate("/admin/keuangan/tagihan") },
+                    ],
+                  },
+                ],
+              },
+              {
+                label: "Dokumen",
+                sections: [
+                  {
+                    label: "Unduh PDF",
+                    items: [
+                      { label: "Daftar tagihan — untuk klien", ikon: FilePdf, disabled: membuatPdf, onSelect: () => pdf(unduhDaftarTagihan) },
+                      { label: "Rincian biaya — internal", ikon: FilePdf, disabled: membuatPdf, onSelect: () => pdf(unduhRincianBiaya) },
+                    ],
+                  },
+                ],
+              },
+            ]}
+          />
+        </div>
+      )}
+
       {/* ---- Tiga kartu statistik --------------------------------------- */}
       <div className="sat__stat">
         <KartuStatistikLebar
@@ -406,7 +443,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
         />
       </div>
 
-      <hr className="sat__garis" />
+      <Pemisah className="sat__garis" />
 
       <div className="sat__utama">
         {/* ---- Tahap proyek (slot "Saving Plans") ------------------------- */}
@@ -443,8 +480,8 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                       {
                         label: "Unduh PDF",
                         items: [
-                          { label: "Daftar tagihan — untuk klien", icon: "receipt", onSelect: () => pdf(unduhDaftarTagihan) },
-                          { label: "Rincian biaya — internal", icon: "document", onSelect: () => pdf(unduhRincianBiaya) },
+                          { label: "Daftar tagihan — untuk klien", ikon: NavReceipt, onSelect: () => pdf(unduhDaftarTagihan) },
+                          { label: "Rincian biaya — internal", ikon: FilePdf, onSelect: () => pdf(unduhRincianBiaya) },
                         ],
                       },
                     ]}

@@ -1,9 +1,10 @@
+import { Sembul } from "../kit/Overlay";
+import { Peringatan, Putar } from "../kit/Tampilan";
 import { useEffect, useState } from "react";
-import * as RPopover from "@radix-ui/react-popover";
 import { TombolBulat } from "../kit/Item";
 import { Tombol } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
-import { Globe, NotePencil, CheckCircle, HourglassHigh, Info } from "../kit/ikon";
+import { Globe, NotePencil, CheckCircle, HourglassHigh } from "../kit/ikon";
 import { ambilSettings } from "../../lib/admin";
 import { useTerbit, sejak, jamTanggal } from "./useTerbit";
 
@@ -37,17 +38,18 @@ export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
   }, []);
 
   return (
-    <RPopover.Root>
-      <RPopover.Trigger asChild>
+    <Sembul
+      align="end"
+      className="kterbit"
+      pemicu={
         <TombolBulat
           ikon={Globe}
           judul={t.menyala ? "Terbitkan perubahan yang belum tayang" : "Terbitkan situs"}
           tanda={t.menyala}
           nadaTanda="amber"
         />
-      </RPopover.Trigger>
-      <RPopover.Portal>
-        <RPopover.Content className="kterbit" sideOffset={10} align="end" collisionPadding={16}>
+      }
+    >
           <p className="kterbit__judul">Terbitkan perubahan</p>
           <p className="kterbit__ket">
             Halaman publik dibekukan saat situs dibangun. Apa pun yang Anda ubah di panel baru
@@ -86,19 +88,23 @@ export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
             /* Tak bertentu, bukan persentase: yang berjalan GitHub Actions,
                dan panel ini tidak bisa tahu sudah sampai langkah mana. */
             <div className="kterbit__maju">
+              <Putar ukuran={14} label="Membangun ulang situs" />
               <span className="kterbit__bar" role="progressbar" aria-label="Membangun ulang situs"><span /></span>
               <span className="kterbit__jam">{t.jamMundur}</span>
             </div>
           )}
 
-          {t.galat && <p className="kterbit__galat">{t.galat}</p>}
+          {t.galat && (
+            <Peringatan nada="bahaya" judul="Gagal memicu build">
+              {t.galat}
+            </Peringatan>
+          )}
 
           {aktif === false ? (
-            <p className="kterbit__kunci">
-              <Ikon ikon={Info} ukuran={16} />
-              Tombol ini belum bisa dipakai: Worker API belum punya token GitHub untuk memicu
-              build. Sementara itu situs tetap dibangun ulang otomatis setiap kali kodenya berubah.
-            </p>
+            <Peringatan nada="info" judul="Belum bisa dipakai">
+              Worker API belum punya token GitHub untuk memicu build. Sementara itu situs tetap dibangun ulang
+              otomatis setiap kali kodenya berubah.
+            </Peringatan>
           ) : (
             <Tombol
               ukuran="large"
@@ -110,8 +116,6 @@ export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
               {t.labelTombol}
             </Tombol>
           )}
-        </RPopover.Content>
-      </RPopover.Portal>
-    </RPopover.Root>
+    </Sembul>
   );
 }

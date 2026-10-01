@@ -1,3 +1,5 @@
+import { IsianTempel, PilihAsli } from "../kit/Formulir";
+import { IsianTanggal } from "../kit/Formulir";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { KepalaSeksi, BarisPantau, BarisAset } from "../kit/Item";
@@ -7,8 +9,8 @@ import { Tabel, SelDua, SelIkon, type KolomTabel } from "../kit/Tabel";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
 import { CopySimple, DownloadSimple, Plus } from "../kit/ikon";
-import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { Dialog, AlertDialog } from "../kit/Overlay";
+import { ToastProvider, useToast } from "../kit/Toast";
 import {
   BULAN,
   BULAN_PENDEK,
@@ -785,7 +787,7 @@ function DialogGaji({
             />
           )}
           {alasan && <small className="gaji__alasan">{alasan}</small>}
-          <Tombol ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
             {kirim ? "Menyimpan…" : "Simpan"}
           </Tombol>
         </div>
@@ -798,10 +800,9 @@ function DialogGaji({
           <label className="k-isian__label" htmlFor="gj-orang">
             Orang
           </label>
-          <div className="k-isian__kotak">
-            <select
+          <PilihAsli
               id="gj-orang"
-              className="k-isian__input"
+              
               value={orang}
               /* Saat mengubah, orangnya dikunci: memindahkan baris ke nama
                  lain bisa menabrak baris yang sudah ada di bulan itu. */
@@ -816,8 +817,7 @@ function DialogGaji({
                     {t.role ? `${t.name} — ${t.role}` : t.name}
                   </option>
                 ))}
-            </select>
-          </div>
+            </PilihAsli>
           {perluIngat && !ubah && (
             <p className="k-isian__bantu">
               Orang ini freelancer. Bayaran yang lahir dari proyek dicatat di Keuangan → Catat Pengeluaran dan muncul
@@ -826,8 +826,9 @@ function DialogGaji({
           )}
         </div>
         <div className="gaji__dua">
-          <Isian
-            label="Nominal (Rp)"
+          <IsianTempel
+            label="Nominal"
+            kiri="Rp"
             inputMode="numeric"
             placeholder="0"
             value={nominal === null ? "" : nominal.toLocaleString("id-ID")}
@@ -836,13 +837,7 @@ function DialogGaji({
               setNominal(angka ? Number(angka) : null);
             }}
           />
-          <Isian
-            label="Dibayar pada"
-            type="date"
-            bantu="Kosongkan kalau belum dibayar."
-            value={dibayar}
-            onChange={(e) => setDibayar(e.currentTarget.value)}
-          />
+          <IsianTanggal label="Dibayar pada" bantu="Kosongkan kalau belum dibayar." nilai={dibayar} onUbah={setDibayar} placeholder="Belum dibayar" />
         </div>
         <Isian
           label="Catatan"

@@ -1,5 +1,6 @@
+import { IsianPanjang } from "../kit/Formulir";
 import { useEffect, useState } from "react";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast } from "../kit/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { Tombol } from "../kit/Tombol";
 import { HalamanSitus, PenandaSimpan, KepalaBagian } from "./situsKit";
@@ -239,7 +240,7 @@ function Isi({ isian, catatan, pratinjau, pratinjauJudul, tautan, tautanLabel }:
           <span className={`ih__tanda${kosong ? "" : " ih__tanda--isi"}`}>{kosong ? "belum diisi" : "terisi"}</span>
         </label>
         {i.jenis === "panjang" ? (
-          <textarea className="pas__area" rows={3} {...umum} />
+          <IsianPanjang className="pas__area" rows={3} {...umum} />
         ) : (
           <div className="k-isian__kotak">
             <input
@@ -264,7 +265,7 @@ function Isi({ isian, catatan, pratinjau, pratinjauJudul, tautan, tautanLabel }:
       fakta={[{ label: "Sudah terisi", nilai: `${terisi} dari ${isian.length}` }]}
       aksi={
         <>
-          <Tombol
+          <Tombol memuat={menyimpan}
             ukuran="large"
             jenis="primary"
             disabled={berubah.length === 0 || menyimpan || tahunSalah}

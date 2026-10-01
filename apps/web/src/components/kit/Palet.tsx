@@ -3,6 +3,7 @@ import { Command as Cmdk } from "cmdk";
 import type { ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
 import { MagnifyingGlass } from "./ikon";
+import { Tuts } from "./Tampilan";
 
 /* =============================================================================
    Palet (Command) — daftar perintah yang bisa dicari.
@@ -33,7 +34,7 @@ function Isi({ kelompok, placeholder, kosong }: { kelompok: KelompokPerintah[]; 
       <div className="k-palet__cari">
         <Ikon ikon={MagnifyingGlass} ukuran={16} />
         <Cmdk.Input className="k-palet__input" placeholder={placeholder} autoFocus />
-        <kbd className="k-tuts">Esc</kbd>
+        <Tuts>Esc</Tuts>
       </div>
       <Cmdk.List className="k-palet__daftar">
         <Cmdk.Empty className="k-palet__kosong">{kosong}</Cmdk.Empty>
@@ -46,15 +47,15 @@ function Isi({ kelompok, placeholder, kosong }: { kelompok: KelompokPerintah[]; 
                   {b.ikon && <Ikon ikon={b.ikon} ukuran={16} />}
                   <span className="k-palet__label">{b.label}</span>
                   {b.ket && <span className="k-palet__ket">{b.ket}</span>}
-                  {b.tuts && <kbd className="k-tuts">{b.tuts}</kbd>}
+                  {b.tuts && <Tuts>{b.tuts}</Tuts>}
                 </Cmdk.Item>
               ))}
             </Cmdk.Group>
           ))}
       </Cmdk.List>
       <div className="k-palet__kaki" aria-hidden="true">
-        <span><kbd className="k-tuts">↑</kbd><kbd className="k-tuts">↓</kbd> pilih</span>
-        <span><kbd className="k-tuts">Enter</kbd> buka</span>
+        <span><Tuts>↑</Tuts><Tuts>↓</Tuts> pilih</span>
+        <span><Tuts>Enter</Tuts> buka</span>
       </div>
     </Cmdk>
   );

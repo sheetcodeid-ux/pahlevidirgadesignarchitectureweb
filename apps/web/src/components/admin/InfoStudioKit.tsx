@@ -1,5 +1,8 @@
+import { Lipat } from "../kit/Tampilan";
+import { IsianPanjang } from "../kit/Formulir";
+import { GagalMuat } from "./gagalMuat";
 import { useEffect, useState } from "react";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast } from "../kit/Toast";
 import { RequireAuth } from "./RequireAuth";
 import { Tombol } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
@@ -113,7 +116,7 @@ function Isi() {
     }
   }
 
-  if (galat) return <p className="pf__kosong">Gagal memuat info studio: {galat}</p>;
+  if (galat) return <GagalMuat apa="Info studio" galat={galat} />;
   if (!asli) return <div className="pas pas--rangka" aria-busy="true" />;
 
   const logoDilepas = "logoKey" in draf && draf.logoKey === null;
@@ -132,7 +135,7 @@ function Isi() {
       ]}
       aksi={
         <>
-          <Tombol ukuran="large" jenis="primary" disabled={berubah.length === 0 || kosong.length > 0 || menyimpan} onClick={simpan}>
+          <Tombol memuat={menyimpan} ukuran="large" jenis="primary" disabled={berubah.length === 0 || kosong.length > 0 || menyimpan} onClick={simpan}>
             {menyimpan ? "Menyimpan…" : "Simpan perubahan"}
           </Tombol>
           <PenandaSimpan
@@ -233,17 +236,27 @@ function Isi() {
             bantu="Keterangan singkat, kalau diisi."
           />
         </div>
-        <label className="k-isian pas__lebar">
-          <span className="k-isian__label">Alamat</span>
-          <textarea className="pas__area" rows={3} value={nilai("address")} onChange={(e) => set("address", e.currentTarget.value)} />
-        </label>
-        <Isian
-          label="URL Instagram"
-          type="url"
-          placeholder="https://instagram.com/…"
-          value={nilai("instagramUrl")}
-          onChange={(e) => set("instagramUrl", e.currentTarget.value)}
-        />
+        {/* Dua isian opsional dilipat — terbuka sendiri kalau salah satunya
+            sudah terisi, jadi yang sudah ada tidak pernah tersembunyi. */}
+        <Lipat
+          judul="Alamat & media sosial"
+          ket={nilai("address") || nilai("instagramUrl") ? "Terisi" : "Opsional"}
+          buka={Boolean(nilai("address") || nilai("instagramUrl"))}
+        >
+          <div className="is-opsional">
+            <label className="k-isian">
+              <span className="k-isian__label">Alamat</span>
+              <IsianPanjang className="pas__area" rows={3} value={nilai("address")} onChange={(e) => set("address", e.currentTarget.value)} />
+            </label>
+            <Isian
+              label="URL Instagram"
+              type="url"
+              placeholder="https://instagram.com/…"
+              value={nilai("instagramUrl")}
+              onChange={(e) => set("instagramUrl", e.currentTarget.value)}
+            />
+          </div>
+        </Lipat>
       </section>
 
       <section className="pf__bagian">

@@ -58,7 +58,7 @@ export function Kosong({
   ringkas = false,
 }: {
   ikon: DataIkon;
-  judul: string;
+  judul: ReactNode;
   children?: ReactNode;
   aksi?: ReactNode;
   ringkas?: boolean;
@@ -156,22 +156,33 @@ export function Avatar({
   src,
   ukuran = "md",
   status,
+  inisial,
+  hiasan = false,
+  className,
 }: {
   nama: string;
   src?: string | null;
   ukuran?: "sm" | "md" | "lg";
   /** Titik keadaan di sudut: hijau = aktif (aturan warna #1). */
   status?: "aktif" | "diam";
+  /** Inisial yang sudah dihitung pemanggil (mis. tanpa "Bu"/"Pak"). */
+  inisial?: string;
+  /** Nama sudah tertulis di sebelahnya — avatar tidak perlu dibacakan lagi. */
+  hiasan?: boolean;
+  className?: string;
 }) {
   const [gagal, setGagal] = useState(false);
   return (
-    <span className={`k-avatar k-avatar--${ukuran} k-avatar--w${indeksWarna(nama)}`} title={nama}>
+    <span
+      className={kelas(`k-avatar k-avatar--${ukuran} k-avatar--w${indeksWarna(nama)}`, className)}
+      aria-hidden={hiasan || undefined}
+    >
       {src && !gagal ? (
         <img src={src} alt="" loading="lazy" decoding="async" onError={() => setGagal(true)} />
       ) : (
-        <span aria-hidden="true">{inisialNama(nama)}</span>
+        <span aria-hidden="true">{inisial || inisialNama(nama)}</span>
       )}
-      <span className="sr-only">{nama}</span>
+      {!hiasan && <span className="sr-only">{nama}</span>}
       {status && <span className={`k-avatar__status k-avatar__status--${status}`} aria-label={status === "aktif" ? "Aktif" : "Tidak aktif"} />}
     </span>
   );
@@ -218,14 +229,14 @@ export function SorotTeks({ teks, cari }: { teks: string; cari: string }) {
 
 /* --- Pemisah (Separator) ---------------------------------------------------- */
 
-export function Pemisah({ arah = "datar", label }: { arah?: "datar" | "tegak"; label?: string }) {
+export function Pemisah({ arah = "datar", label, className }: { arah?: "datar" | "tegak"; label?: string; className?: string }) {
   if (label)
     return (
-      <div className="k-pemisah k-pemisah--label" role="separator">
+      <div className={kelas("k-pemisah k-pemisah--label", className)} role="separator">
         <span>{label}</span>
       </div>
     );
-  return <div className={`k-pemisah k-pemisah--${arah}`} role="separator" aria-orientation={arah === "tegak" ? "vertical" : "horizontal"} />;
+  return <div className={kelas(`k-pemisah k-pemisah--${arah}`, className)} role="separator" aria-orientation={arah === "tegak" ? "vertical" : "horizontal"} />;
 }
 
 /* --- Tipografi -----------------------------------------------------------------
@@ -336,9 +347,25 @@ export function Lipat({
    Batang gulir tipis yang sama di semua sistem operasi. Di Windows batang
    klasik 17px memakan lebar isi; di sini ia melayang di atas isi. */
 
-export function AreaGulir({ tinggi, children, className }: { tinggi: number | string; children: ReactNode; className?: string }) {
+export function AreaGulir({
+  tinggi,
+  tinggiMaks,
+  children,
+  className,
+}: {
+  /** Tinggi tetap. */
+  tinggi?: number | string;
+  /** Atau tinggi MAKSIMUM: wadah mengikuti isinya sampai batas ini, baru bergulir. */
+  tinggiMaks?: number | string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <RScroll.Root className={kelas("k-gulir", className)} type="hover" style={{ height: tinggi }}>
+    <RScroll.Root
+      className={kelas("k-gulir", tinggiMaks !== undefined && "k-gulir--maks", className)}
+      type="hover"
+      style={{ height: tinggi, maxHeight: tinggiMaks }}
+    >
       <RScroll.Viewport className="k-gulir__viewport">{children}</RScroll.Viewport>
       <RScroll.Scrollbar className="k-gulir__batang" orientation="vertical">
         <RScroll.Thumb className="k-gulir__jempol" />

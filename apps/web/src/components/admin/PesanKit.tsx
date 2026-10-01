@@ -1,8 +1,11 @@
+import { Bagi } from "../kit/Bagi";
+import { Peringatan } from "../kit/Tampilan";
+import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast } from "../kit/Toast";
 import { BarisInbox, BarisBeban } from "../kit/Item";
-import { Cari } from "../kit/Isian";
+import { Cari, Centang } from "../kit/Isian";
 import { TombolIkon } from "../kit/Tombol";
 import { Donat, BarKemajuan } from "../kit/Ukuran";
 import { Ikon } from "../kit/Ikon";
@@ -317,9 +320,7 @@ function Isi() {
 
   if (galat && pesan === null) {
     return (
-      <div className="pes pes--galat" role="alert">
-        <p className="pes__kosong">Gagal memuat pesan: {galat}</p>
-      </div>
+      <GagalMuat apa="Pesan masuk" galat={galat} />
     );
   }
   if (pesan === null) return <div className="pes pes--rangka" aria-busy="true" />;
@@ -327,13 +328,24 @@ function Isi() {
   return (
     <>
       {notifAktif === false && (
-        <p className="pes__peringatan" role="status">
-          <b>Pemberitahuan email mati.</b> Pesan masuk tetap tersimpan di sini, tapi tidak ada email yang
-          dikirim ke studio. Setel rahasia Worker RESEND_API_KEY dan INQUIRY_NOTIFY_TO untuk menghidupkannya.
-        </p>
+        <div className="pes__peringatan">
+          <Peringatan nada="awas" judul="Pemberitahuan email mati">
+            Pesan masuk tetap tersimpan di sini, tapi tidak ada email yang dikirim ke studio. Setel rahasia Worker
+            RESEND_API_KEY dan INQUIRY_NOTIFY_TO untuk menghidupkannya.
+          </Peringatan>
+        </div>
       )}
       <div className={`pes pes--${tampil}`}>
-        {/* ---- Daftar ------------------------------------------------------ */}
+        {/* Bagi kit: garis di antara daftar dan isi pesan bisa diseret (atau
+            difokus lalu digeser dengan panah) — pesan panjang bisa dibaca
+            lebih lebar. Mulai 338px, lebar daftar di frame Inbox. Di ponsel
+            keduanya bertumpuk dan garisnya disembunyikan (pesan-kit.css). */}
+        <Bagi
+          awalKiri={338}
+          minKiri={280}
+          minKanan="40%"
+          label="Geser untuk mengubah lebar daftar pesan"
+          kiri={
         <section className="pes__kiri" aria-label="Daftar pesan">
           <div className="pes__atas">
             <Cari
@@ -365,9 +377,7 @@ function Isi() {
 
           <div className="pes__kepaladaftar">
             <span className="pes__semua">
-              <input
-                type="checkbox"
-                className="k-centang"
+              <Centang
                 aria-label="Pilih semua pesan yang tampak"
                 checked={semuaTercentang}
                 onChange={() => setCentang(semuaTercentang ? [] : tampak.map((p) => p.id))}
@@ -453,8 +463,8 @@ function Isi() {
             )}
           </div>
         </section>
-
-        {/* ---- Isi pesan --------------------------------------------------- */}
+          }
+          kanan={
         <section className="pes__kanan" aria-label="Isi pesan">
           <div className="pes__alat">
             <span className="pes__alatkiri">
@@ -649,6 +659,8 @@ function Isi() {
             <p className="pes__kosong pes__kosong--isi">Pilih pesan di kiri untuk membacanya.</p>
           )}
         </section>
+          }
+        />
       </div>
     </>
   );

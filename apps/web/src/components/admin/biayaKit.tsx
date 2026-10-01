@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
-import { useToast } from "../ui/overlay/Toast";
+import { Sheet, AlertDialog } from "../kit/Overlay";
+import { useToast } from "../kit/Toast";
 import { Tombol } from "../kit/Tombol";
 import { Trash } from "../kit/ikon";
 import { formatRupiah } from "../../lib/format";
@@ -86,8 +86,10 @@ export function DialogBiaya({
     }
   }
 
+  /* Laci dari kanan, bukan dialog di tengah: ini RINCIAN satu baris, dan
+     daftar asalnya tetap terlihat di sebelahnya. */
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={onOpenChange}
       title="Rincian Biaya"
@@ -101,7 +103,7 @@ export function DialogBiaya({
             confirmLabel="Ya, hapus"
             onConfirm={hapus}
             trigger={
-              <Tombol ukuran="large" jenis="secondary" kiri={Trash} disabled={menghapus}>
+              <Tombol memuat={menghapus} ukuran="large" jenis="secondary" kiri={Trash} disabled={menghapus}>
                 {menghapus ? "Menghapus…" : "Hapus biaya"}
               </Tombol>
             }
@@ -120,6 +122,6 @@ export function DialogBiaya({
           <div><dt>Tanggal</dt><dd>{tanggal(biaya.incurredOn)}</dd></div>
         </dl>
       </div>
-    </Dialog>
+    </Sheet>
   );
 }

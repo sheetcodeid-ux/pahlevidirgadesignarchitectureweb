@@ -1,4 +1,5 @@
 import { forwardRef, type ReactNode } from "react";
+import { Petunjuk } from "./Overlay";
 import { Ikon, type DataIkon } from "./Ikon";
 import { CaretDown } from "./ikon";
 
@@ -153,17 +154,21 @@ export const TombolBulat = forwardRef<
     nadaTanda?: "merah" | "amber";
   } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children">
 >(function TombolBulat({ ikon, ukuran = 14, judul, tanda, nadaTanda = "merah", className, ...sisa }, ref) {
+  /* Petunjuk kit membawa namanya: tombol bulat di kepala halaman ikon saja,
+     dan "bola dunia" atau "gelembung" tidak menjelaskan dirinya sendiri. */
   return (
-    <button
-      ref={ref}
-      type="button"
-      className={className ? `k-bulat ${className}` : "k-bulat"}
-      aria-label={judul}
-      {...sisa}
-    >
-      <Ikon ikon={ikon} ukuran={ukuran} />
-      {tanda && <span className={nadaTanda === "amber" ? "k-bulat__tanda k-bulat__tanda--amber" : "k-bulat__tanda"} />}
-    </button>
+    <Petunjuk isi={judul} sisi="bottom">
+      <button
+        ref={ref}
+        type="button"
+        className={className ? `k-bulat ${className}` : "k-bulat"}
+        aria-label={judul}
+        {...sisa}
+      >
+        <Ikon ikon={ikon} ukuran={ukuran} />
+        {tanda && <span className={nadaTanda === "amber" ? "k-bulat__tanda k-bulat__tanda--amber" : "k-bulat__tanda"} />}
+      </button>
+    </Petunjuk>
   );
 });
 

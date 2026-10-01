@@ -26,6 +26,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 17px;
 }
+.sat__alat { display: flex; justify-content: flex-end; margin: -8px 0 16px; }
 .sat__garis {
   height: 0;
   /* 168 → garis 188 → 208: garisnya sendiri memakan satu piksel. */

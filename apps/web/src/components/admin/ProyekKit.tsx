@@ -1,3 +1,4 @@
+import { navigate } from "astro:transitions/client";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { KartuKas } from "../kit/Kartu";
@@ -15,9 +16,12 @@ import {
   CoinOut,
   DotsThreeVertical,
   Eye,
+  Globe,
   NotePencil,
   Plus,
+  UserCircle,
 } from "../kit/ikon";
+import { ContextMenu } from "../kit/Overlay";
 import {
   daftarProyek,
   ambilBulanan,
@@ -410,9 +414,31 @@ function Isi() {
           {urut.map((p) => {
             const st = STATUS[p.status] ?? { teks: p.status, nada: "netral" as const };
             const aktif = p.id === kini?.id;
+            const id = encodeURIComponent(p.id);
+            /* Klik kanan (tekan lama di layar sentuh) membuka pintasan ke
+               semua halaman milik proyek ini — tanpa harus memilihnya dulu
+               lalu mencari tombolnya di kolom tengah. */
             return (
-              <button
+              <ContextMenu
                 key={p.id}
+                sections={[
+                  {
+                    label: p.title,
+                    items: [
+                      { label: "Buka proyek", ikon: Eye, onSelect: () => navigate(`/admin/proyek/satu?id=${id}`) },
+                      { label: "Ubah data", ikon: NotePencil, onSelect: () => navigate(`/admin/proyek/edit?id=${id}`) },
+                      { label: "Terima pembayaran", ikon: CoinIn, onSelect: () => navigate(`/admin/keuangan/terima?proyek=${id}`) },
+                    ],
+                  },
+                  {
+                    items: [
+                      { label: "Portal klien", ikon: UserCircle, onSelect: () => navigate(`/admin/proyek/klien?id=${id}`) },
+                      { label: "Halaman publik", ikon: Globe, onSelect: () => navigate(`/admin/proyek/publik?id=${id}`) },
+                    ],
+                  },
+                ]}
+              >
+              <button
                 type="button"
                 className="pro__kartub"
                 aria-pressed={aktif}
@@ -435,6 +461,7 @@ function Isi() {
                   ]}
                 />
               </button>
+              </ContextMenu>
             );
           })}
           {proyek !== null && urut.length === 0 && (

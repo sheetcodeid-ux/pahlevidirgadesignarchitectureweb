@@ -526,17 +526,24 @@ export function DemoMelayang() {
 
 export function DemoPetunjuk() {
   return (
-    <div className="gal-baris">
-      {[
-        [NotePencil, "Ubah"],
-        [CopySimple, "Salin tautan"],
-        [Eye, "Lihat di situs"],
-        [Trash, "Hapus"],
-      ].map(([ik, t]) => (
-        <Petunjuk key={t as string} isi={t as string}>
-          <TombolIkon ikon={ik as typeof Trash} judul={t as string} jenis="ghost" />
+    <div className="gal-tumpuk">
+      <div className="gal-baris">
+        {/* Tombol ikon kit membawa Petunjuk-nya sendiri: namanya (`judul`)
+            tampil saat disentuh kursor ATAU difokus papan ketik. */}
+        <TombolIkon ikon={NotePencil} judul="Ubah" jenis="ghost" />
+        <TombolIkon ikon={CopySimple} judul="Salin tautan" jenis="ghost" />
+        <TombolIkon ikon={Eye} judul="Lihat di situs" jenis="ghost" />
+        <TombolIkon ikon={Trash} judul="Hapus" jenis="ghost" />
+      </div>
+      <p className="gal-teks">
+        Atau pada apa pun:{" "}
+        <Petunjuk isi="Dihitung dari kas yang benar-benar masuk, bukan nilai kontrak.">
+          <span className="gal-tautan" tabIndex={0}>
+            laba bersih
+          </span>
         </Petunjuk>
-      ))}
+        .
+      </p>
     </div>
   );
 }

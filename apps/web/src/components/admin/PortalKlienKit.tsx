@@ -1,14 +1,17 @@
+import { GagalMuat } from "./gagalMuat";
+import { IsianTanggal, IsianPanjang, Lampiran } from "../kit/Formulir";
 import { useEffect, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { AlertDialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { AlertDialog } from "../kit/Overlay";
 import { Icon } from "../ui/Icon";
 import { Tombol } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
 import { Segmen } from "../kit/Segmen";
 import { BarisAktivitas, Gelembung } from "../kit/Item";
+import { GulirPesan, Kosong, RangkaBaris } from "../kit/Tampilan";
 import { Ikon } from "../kit/Ikon";
-import { CaretDown, CopySimple, FilePdf, FileText, Globe, Note, Trash } from "../kit/ikon";
+import { CaretDown, CopySimple, FilePdf, FileText, Globe, Note, Trash, ChatTeardropDots } from "../kit/ikon";
 import { PemutarSuaraKit, PerekamSuaraKit } from "../kit/Suara";
 import { formatDurasi } from "../ui/misc/VoiceNote";
 import { usePilihProyek, JudulPilihProyek } from "./pilihProyekKit";
@@ -126,7 +129,7 @@ function judulDariNama(nama: string): string {
 function Isi() {
   const { semua, asli, galat, id, pilih } = usePilihProyek();
 
-  if (galat) return <p className="pf__kosong">Gagal memuat proyek: {galat}</p>;
+  if (galat) return <GagalMuat apa="Proyek" galat={galat} />;
   if (!semua) return <div className="pas pas--rangka" aria-busy="true" />;
   if (!asli) {
     return (
@@ -456,25 +459,19 @@ function PanelBrief({
           value={nilai("stylePreference") ?? ""}
           onChange={(e) => set("stylePreference", e.currentTarget.value)}
         />
-        <Isian
-          label="Tanggal mulai"
-          type="date"
-          value={mulai}
-          onChange={(e) => set("startDate", e.currentTarget.value || null)}
-        />
-        <Isian
+        <IsianTanggal label="Tanggal mulai" nilai={mulai} onUbah={(v) => set("startDate", v || null)} />
+        <IsianTanggal
           label="Tanggal selesai"
-          type="date"
           min={mulai || undefined}
           className={tanggalTerbalik ? "pf__peringatan" : undefined}
           bantu={tanggalTerbalik ? "Mendahului tanggal mulai." : undefined}
-          value={selesai}
-          onChange={(e) => set("endDate", e.currentTarget.value || null)}
+          nilai={selesai}
+          onUbah={(v) => set("endDate", v || null)}
         />
       </div>
       <label className="k-isian pas__lebar">
         <span className="k-isian__label">Kebutuhan ruang dan fungsi</span>
-        <textarea
+        <IsianPanjang
           className="pas__area"
           rows={4}
           placeholder="mis. 3 kamar tidur, ruang kerja, carport 2 mobil"
@@ -486,7 +483,7 @@ function PanelBrief({
 
       <label className="k-isian pas__lebar">
         <span className="k-isian__label">Catatan internal</span>
-        <textarea
+        <IsianPanjang
           className="pas__area"
           rows={3}
           placeholder="mis. sudah ditelepon, minta contoh referensi tambahan"
@@ -497,7 +494,7 @@ function PanelBrief({
       </label>
 
       <div className="pas__aksi">
-        <Tombol ukuran="large" jenis="primary" disabled={n === 0 || tanggalTerbalik || menyimpan} onClick={simpan}>
+        <Tombol memuat={menyimpan} ukuran="large" jenis="primary" disabled={n === 0 || tanggalTerbalik || menyimpan} onClick={simpan}>
           {menyimpan ? "Menyimpan…" : "Simpan brief"}
         </Tombol>
         {n > 0 && (
@@ -530,8 +527,6 @@ function PanelDokumen({
   const toast = useToast();
   const [judul, setJudul] = useState("");
   const [antre, setAntre] = useState<{ selesai: number; total: number } | null>(null);
-  const [diseret, setDiseret] = useState(false);
-  const pilihBerkas = useRef<HTMLInputElement>(null);
   const mengunggah = antre !== null;
 
   /** Satu berkas: minta URL → PUT langsung ke penyimpanan → catat barisnya. */
@@ -650,44 +645,27 @@ function PanelDokumen({
         onChange={(e) => setJudul(e.currentTarget.value)}
         bantu="Dipakai kalau berkasnya satu. Lebih dari satu berkas, atau dikosongkan: nama berkasnya yang jadi judul."
       />
-      <label
-        className="pf__seret"
-        data-diseret={diseret || undefined}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDiseret(true);
-        }}
-        onDragLeave={() => setDiseret(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDiseret(false);
-          void unggahBanyak([...e.dataTransfer.files]);
-        }}
-      >
-        <b>{antre ? `Mengunggah ${antre.selesai}/${antre.total}…` : "Tarik berkas ke sini, atau klik untuk memilih"}</b>
-        <small>PDF, JPG, PNG, WebP, atau rekaman — maks 100 MB per berkas, boleh beberapa sekaligus.</small>
-        <input
-          ref={pilihBerkas}
-          type="file"
-          multiple
-          className="sr-only"
-          accept={TIPE_DOKUMEN}
-          disabled={mengunggah}
-          aria-label="Pilih dokumen untuk diunggah"
-          onChange={(e) => {
-            const l = e.currentTarget.files;
-            if (l && l.length > 0) void unggahBanyak([...l]);
-            e.currentTarget.value = "";
-          }}
-        />
-      </label>
+      {/* Lampiran kit sebagai zona unggah langsung: berkas yang dijatuhkan
+          langsung diunggah, jadi daftar pilihannya selalu kosong. */}
+      <Lampiran
+        banyak
+        berkas={[]}
+        onUbah={(f) => void unggahBanyak(f)}
+        terima={TIPE_DOKUMEN}
+        mati={mengunggah}
+        label="Pilih dokumen untuk diunggah"
+        judul={antre ? `Mengunggah ${antre.selesai}/${antre.total}…` : "Tarik berkas ke sini, atau klik untuk memilih"}
+        ket="PDF, JPG, PNG, WebP, atau rekaman — maks 100 MB per berkas, boleh beberapa sekaligus."
+      />
 
       <PerekamSuaraKit onKirim={kirimSuara} disabled={mengunggah} />
 
       {dokumen === null ? (
-        <p className="pf__fotoket">Memuat dokumen…</p>
+        <RangkaBaris jumlah={3} label="Memuat dokumen…" />
       ) : dokumen.length === 0 ? (
-        <p className="pf__fotoket">Belum ada dokumen. Berkas yang diunggah di sini langsung terlihat di portal klien.</p>
+        <Kosong ikon={FileText} judul="Belum ada dokumen" ringkas>
+          Berkas yang diunggah di sini langsung terlihat di portal klien.
+        </Kosong>
       ) : (
         <ul className="pk__dokdaftar">
           {dokumen.map((d) => {
@@ -819,20 +797,27 @@ function Komentar({ documentId }: { documentId: string }) {
       </summary>
       <div className="pk__komentarisi">
         {komentar === null ? (
-          <p className="pf__fotoket">Memuat…</p>
+          <RangkaBaris jumlah={2} label="Memuat komentar…" />
         ) : komentar.length === 0 ? (
-          <p className="pf__fotoket">Belum ada komentar. Balasan di sini terlihat klien di bawah dokumennya.</p>
+          <Kosong ikon={ChatTeardropDots} judul="Belum ada komentar" ringkas>
+            Balasan di sini terlihat klien di bawah dokumennya.
+          </Kosong>
         ) : (
-          komentar.map((k) => (
-            <Gelembung
-              key={k.id}
-              sendiri={k.author === "staf"}
-              nama={k.author === "staf" ? "Studio" : "Klien"}
-              waktu={tanggalJam(k.createdAt)}
-            >
-              {k.body}
-            </Gelembung>
-          ))
+          /* Menempel di bawah: balasan baru menggeser ke bawah hanya kalau
+             staf memang sedang di bawah — yang sedang membaca komentar lama
+             mendapat tombol "Pesan baru", posisinya tidak direnggut. */
+          <GulirPesan tinggi={komentar.length > 3 ? 320 : "auto"} jumlah={komentar.length}>
+            {komentar.map((k) => (
+              <Gelembung
+                key={k.id}
+                sendiri={k.author === "staf"}
+                nama={k.author === "staf" ? "Studio" : "Klien"}
+                waktu={tanggalJam(k.createdAt)}
+              >
+                {k.body}
+              </Gelembung>
+            ))}
+          </GulirPesan>
         )}
         <form className="pk__balas" onSubmit={kirim}>
           <span className="k-isian__kotak">
@@ -845,7 +830,7 @@ function Komentar({ documentId }: { documentId: string }) {
               onChange={(e) => setIsi(e.currentTarget.value)}
             />
           </span>
-          <Tombol ukuran="large" jenis="secondary" tipeHtml="submit" disabled={!isi.trim() || mengirim}>
+          <Tombol memuat={mengirim} ukuran="large" jenis="secondary" tipeHtml="submit" disabled={!isi.trim() || mengirim}>
             {mengirim ? "Mengirim…" : "Kirim"}
           </Tombol>
         </form>
@@ -910,7 +895,7 @@ function PanelKabar({
         />
         <label className="k-isian">
           <span className="k-isian__label">Catatan (opsional)</span>
-          <textarea
+          <IsianPanjang
             className="pas__area"
             rows={3}
             placeholder="Satu-dua kalimat yang menjelaskan apa artinya bagi klien."

@@ -2,17 +2,16 @@
 import "../styles/global.css";
 import "../styles/kit.css";
 import "../styles/kit-komponen.css";
-/* Toast masih memakai overlay lama — satu-satunya bagian sistem lama yang
-   ikut ke kerangka kit, dan sengaja: membangun ulang toast berarti dua
-   perender pesan yang pasti menyimpang. Kelasnya (.ov-toast) hidup di sini,
-   dan halaman yang tidak memuatnya menggambar pesan itu sebagai teks polos
-   tanpa satu pun galat — jebakan #5. */
-import "../styles/overlay.css";
+/* overlay.css (sistem lama) TIDAK dimuat lagi: seluruh dialog, menu, dan
+   toast halaman kit kini komponen kit (components/kit/Overlay, Toast) yang
+   gayanya di kit-komponen.css. Kalau ada kelas .ov-* yang muncul di halaman
+   kit, itu sisa komponen lama — dan ia akan tergambar tanpa gaya (jebakan #5). */
 import "../styles/terbit-kit.css";
 import { ClientRouter } from "astro:transitions";
 import { RelKit } from "../components/admin/RelKit";
 import { KepalaKit } from "../components/admin/KepalaKit";
 import { KakiHalaman } from "../components/kit/Item";
+import { Remah, type SatuRemah } from "../components/kit/Remah";
 import { CAP_BUILD } from "../lib/capBuild";
 
 /* =============================================================================
@@ -53,9 +52,16 @@ interface Props {
    * jebakan #8).
    */
   relKanan?: boolean;
+  /**
+   * Remah di atas isi — hanya halaman DETAIL (yang punya `kembali`): di sana
+   * rel samping tidak menandai letaknya, dan "Detail Tulisan" sendirian tidak
+   * bilang tulisan itu milik bagian mana. Halaman daftar tidak memakainya;
+   * rel sudah menandai barisnya.
+   */
+  remah?: SatuRemah[];
 }
 
-const { title, judul, kembali, relKanan } = Astro.props;
+const { title, judul, kembali, relKanan, remah } = Astro.props;
 const path = Astro.url.pathname;
 ---
 
@@ -137,7 +143,9 @@ const path = Astro.url.pathname;
             situs publiknya, jadi ia satu-satunya yang tahu umur dirinya. */}
         <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} />
 
-        <main id="konten" class="kl__isi" transition:animate="none">
+        {remah && <Remah jalur={remah} className="kl__remah" />}
+
+        <main id="konten" class={remah ? "kl__isi kl__isi--remah" : "kl__isi"} transition:animate="none">
           <slot />
         </main>
 
@@ -254,6 +262,8 @@ const path = Astro.url.pathname;
     flex: 1;
     margin-top: 20px;
   }
+  .kl__remah { margin-top: 14px; }
+  .kl__isi--remah { margin-top: 12px; }
   .kl__utama > .k-kakihal {
     margin-top: 22.7px;
   }

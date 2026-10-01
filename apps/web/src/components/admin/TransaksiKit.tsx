@@ -1,6 +1,8 @@
+import { SorotTeks } from "../kit/Tampilan";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider } from "../ui/overlay/Toast";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { KelompokTombol } from "../kit/Formulir";
 import { DialogBukti } from "./buktiKit";
 import { DialogBiaya } from "./biayaKit";
 import { SelDua, type KolomTabel } from "../kit/Tabel";
@@ -8,7 +10,7 @@ import { Lencana } from "../kit/Lencana";
 import { Cari } from "../kit/Isian";
 import { Tombol } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
-import { CalendarBlank, DownloadSimple, CoinIn, CoinOut, Ruler } from "../kit/ikon";
+import { CalendarBlank, DownloadSimple, CoinIn, CoinOut, Ruler, CopySimple } from "../kit/ikon";
 import { DaftarKit, PilihTombol } from "./daftarKit";
 import {
   semuaPembayaran,
@@ -136,6 +138,7 @@ function selCsv(v: string | number): string {
 }
 
 function Isi() {
+  const toast = useToast();
   const [bayar, setBayar] = useState<Pembayaran[] | null>(() =>
     bacaCache<Pembayaran[]>("bayar-semua"),
   );
@@ -241,33 +244,41 @@ function Isi() {
     });
   }, [semua, cari, jenis, filterProyek, rentang]);
 
-  function unduh() {
+  /** Baris yang diekspor: yang dicentang, atau semua yang lolos saringan. */
+  function barisEkspor(): (string | number)[][] {
     const set = new Set(terpilih);
     const isi = terpilih.length ? tersaring.filter((t) => set.has(t.kunci)) : tersaring;
-    const kepala = ["Tanggal", "Arah", "Keterangan", "Jenis", "Proyek", "Orang", "Nominal", "Catatan"];
-    const baris = isi.map((t) =>
-      [
-        t.waktu.slice(0, 10),
-        t.masuk ? "Masuk" : "Keluar",
-        t.nama,
-        t.sub,
-        t.proyek,
-        t.orang,
-        t.masuk ? t.nominal : -t.nominal,
-        t.catatan,
-      ]
-        .map(selCsv)
-        .join(";"),
-    );
+    return [
+      ["Tanggal", "Arah", "Keterangan", "Jenis", "Proyek", "Orang", "Nominal", "Catatan"],
+      ...isi.map((t) => [t.waktu.slice(0, 10), t.masuk ? "Masuk" : "Keluar", t.nama, t.sub, t.proyek, t.orang, t.masuk ? t.nominal : -t.nominal, t.catatan]),
+    ];
+  }
+
+  function unduh() {
+    const baris = barisEkspor().map((b) => b.map(selCsv).join(";"));
     /* BOM di depan. Tanpa itu Excel membaca berkasnya sebagai Windows-1252
        dan setiap nama berhuruf non-ASCII tergambar rusak. */
-    const teks = "﻿" + [kepala.join(";"), ...baris].join("\r\n");
+    const teks = "\ufeff" + baris.join("\r\n");
     const url = URL.createObjectURL(new Blob([teks], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
     a.download = `transaksi-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  /* Salin sebagai teks bertab: ditempel di Excel atau Google Sheets, tiap
+     kolom langsung jatuh ke selnya sendiri — tanpa mengunduh berkas. */
+  async function salin() {
+    const teks = barisEkspor()
+      .map((b) => b.map((v) => String(v).replace(/[\t\n]/g, " ")).join("\t"))
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(teks);
+      toast({ judul: "Transaksi disalin", keterangan: `${barisEkspor().length - 1} baris — tempel di Excel atau Google Sheets.`, nada: "sukses" });
+    } catch {
+      toast({ judul: "Tidak bisa menyalin", keterangan: "Peramban menolak akses papan klip. Pakai Unduh CSV.", nada: "gagal" });
+    }
   }
 
   const kolom: KolomTabel[] = [
@@ -296,7 +307,7 @@ function Isi() {
             title={`Bukti pembayaran ${formatRupiah(t.nominal)}`}
             onClick={() => setBukti(t.bayar!)}
           >
-            <SelDua atas={t.nama} bawah={t.sub} />
+            <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
           </button>
         ) : t.biaya ? (
           <button
@@ -305,10 +316,10 @@ function Isi() {
             title={`Rincian biaya ${formatRupiah(t.nominal)}`}
             onClick={() => setRinci(t.biaya!)}
           >
-            <SelDua atas={t.nama} bawah={t.sub} />
+            <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
           </button>
         ) : (
-          <SelDua atas={t.nama} bawah={t.sub} />
+          <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
         )}
       </div>,
       <div className="trx__sel">
@@ -373,9 +384,14 @@ function Isi() {
       kanan={
         <>
           <PilihTombol judul="Rentang waktu" kiri={CalendarBlank} nilai={rentang} onPilih={setRentang} opsi={RENTANG} />
-          <Tombol ukuran="medium" kiri={DownloadSimple} onClick={unduh} disabled={tersaring.length === 0}>
-            Unduh
-          </Tombol>
+          <KelompokTombol label="Ekspor transaksi">
+            <Tombol ukuran="medium" kiri={DownloadSimple} onClick={unduh} disabled={tersaring.length === 0}>
+              Unduh
+            </Tombol>
+            <Tombol ukuran="medium" kiri={CopySimple} onClick={salin} disabled={tersaring.length === 0}>
+              Salin
+            </Tombol>
+          </KelompokTombol>
         </>
       }
       kolom={kolom}

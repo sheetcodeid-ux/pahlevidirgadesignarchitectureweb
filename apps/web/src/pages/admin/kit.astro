@@ -65,7 +65,6 @@ function catat(jalurBerkas: string, teks: string, kunciBerkas: string) {
   graf.set(kunciBerkas, g);
 }
 for (const [p, t] of Object.entries(sumber)) {
-  if (/kit\/(Galeri|GaleriBanding|Banding)\.tsx$/.test(p)) continue;
   catat(p.replace(/^\.\.\/\.\.\//, "src/"), t, kunci(p));
 }
 
@@ -81,7 +80,10 @@ function semuaPakai(k: string, lihat = new Set<string>()): Set<string> {
 
 const pakai: Record<string, string[]> = {};
 for (const [p, teks] of Object.entries(halaman)) {
-  if (p === "./kit.astro" || p === "./ui.astro" || p.includes("/masuk")) continue;
+  /* Galeri ikut dihitung: navigasinya (menu navigasi, cari, remah) memang
+     memakai komponen kit. Demonya TIDAK — katalog dan demo tinggal di
+     kit/galeri/, di luar pindaian. */
+  if (p === "./ui.astro" || p.includes("/masuk")) continue;
   const rute = ("/admin/" + p.replace(/^\.\//, "").replace(/\.astro$/, "").replace(/(^|\/)index$/, "")).replace(/\/$/, "") || "/admin";
   const lihat = new Set<string>();
   const kena = new Set<string>();
@@ -90,6 +92,10 @@ for (const [p, teks] of Object.entries(halaman)) {
     if (t) for (const e of semuaPakai(t, lihat)) kena.add(e);
   }
   for (const e of kena) (pakai[e] ??= []).push(rute);
+}
+/* "Lewat": entri yang selalu dimuat entri lain ikut mewarisi halamannya. */
+for (const f of KATALOG) for (const e of f.isi) {
+  for (const l of e.lewat ?? []) for (const r of pakai[l] ?? []) if (!(pakai[e.id] ??= []).includes(r)) pakai[e.id]!.push(r);
 }
 for (const k of Object.keys(pakai)) pakai[k]!.sort();
 ---

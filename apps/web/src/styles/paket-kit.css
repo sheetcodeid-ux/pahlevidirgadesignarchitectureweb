@@ -270,3 +270,7 @@
   .pas__info > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .pak__bidang--besar .pak__harga b { font-size: var(--k-h2); }
 }
+
+/* Simulasi kenaikan fee — Geser kit + tombol Terapkan. */
+.pks-naik { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px dashed var(--border-strong); border-radius: 12px; }
+.pks-naik .k-geser { align-self: stretch; }

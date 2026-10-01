@@ -221,3 +221,6 @@
 /* Demo yang akarnya satu tombol/tautan tidak boleh melar selebar panggung
    (panggung flex tegak meregangkan anaknya). */
 .gal-panggung > :is(button, a, span, nav) { align-self: flex-start; }
+
+.gal .k-navmenu__daftar { flex-wrap: wrap; }
+.gal-detail__catatan { margin: -6px 0 10px; }

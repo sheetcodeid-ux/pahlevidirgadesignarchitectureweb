@@ -4,6 +4,7 @@ import { Remah } from "./Remah";
 import { Ikon, type DataIkon } from "./Ikon";
 import { Lencana } from "./Lencana";
 import { Kosong } from "./Tampilan";
+import { MenuNavigasi } from "./Overlay";
 import { ArrowLeft, ArrowRight, MagnifyingGlass } from "./ikon";
 import { KATALOG, JUMLAH_KOMPONEN, IKON_FOLDER_IKON, type Entri, type Folder } from "./galeri/katalog";
 import { halamanRata } from "../../lib/navAdmin";
@@ -24,6 +25,14 @@ import { halamanRata } from "../../lib/navAdmin";
    "Dipakai di" dihitung saat BUILD dari kode sumber (pages/admin/kit.astro),
    bukan ditulis tangan — daftar tangan pasti basi (jebakan #32).
    ============================================================================= */
+
+/* Komponen yang SENGAJA belum dipakai panel, dan kenapa — jujur, bukan
+   ditempel paksa ke halaman yang tidak membutuhkannya. */
+const BELUM_DIPAKAI: Record<string, string> = {
+  "input-otp": "Belum dipakai: panel masuk dengan email + kata sandi, tanpa kode sekali pakai. Tempatnya halaman masuk kalau verifikasi dua langkah dinyalakan.",
+  direction: "Belum dipakai: seluruh isi panel berbahasa Indonesia, kiri-ke-kanan. Dipakai kalau suatu saat ada isi berbahasa Arab.",
+  questionnaire: "Belum dipakai di panel: tempatnya form kontak situs publik (penyaringan calon klien), yang memakai desain situs, bukan kit panel.",
+};
 
 const LABEL_HALAMAN = new Map(halamanRata().map((h) => [h.href.replace(/\/$/, ""), h.label]));
 const labelHalaman = (r: string) => LABEL_HALAMAN.get(r) ?? r.replace(/^\/admin\/?/, "").replace(/\//g, " / ") ?? r;
@@ -106,6 +115,18 @@ export function Galeri({ pakai = {} }: { pakai?: Record<string, string[]> }) {
           />
         )}
       </div>
+
+      {/* Menu navigasi: lompat langsung ke komponen mana pun dari folder mana
+          pun — 62 komponen terlalu banyak untuk selalu lewat folder. */}
+      {!entri && !hasilCari && (
+        <MenuNavigasi
+          label="Folder komponen"
+          butir={KATALOG.map((f) => ({
+            label: f.nama,
+            anak: f.isi.map((e) => ({ label: e.nama, href: `#${f.id}/${e.id}`, ket: e.kit })),
+          }))}
+        />
+      )}
 
       {hasilCari ? (
         <HasilCari hasil={hasilCari} pakai={pakai} onBuka={(f, e) => ke(f.id, e.id)} />
@@ -286,6 +307,7 @@ function Detail({ folder, entri, pakai, onKe }: { folder: Folder; entri: Entri; 
       <div className="gal-detail__info">
         <section>
           <h3 className="gal-h3">Dipakai di</h3>
+          <p className="gal-ket gal-detail__catatan">Halaman yang memuat komponen ini — sebagian hanya tampil pada keadaan tertentu (memuat, kosong, galat).</p>
           {pakai.length ? (
             <ul className="gal-chips">
               {pakai.map((r) => (
@@ -297,9 +319,7 @@ function Detail({ folder, entri, pakai, onKe }: { folder: Folder; entri: Entri; 
               ))}
             </ul>
           ) : (
-            <p className="gal-ket">
-              Belum dipakai halaman panel mana pun — komponen ini tersedia untuk fitur berikutnya.
-            </p>
+            <p className="gal-ket">{BELUM_DIPAKAI[entri.id] ?? "Belum dipakai halaman panel mana pun — komponen ini tersedia untuk fitur berikutnya."}</p>
           )}
         </section>
         <section>

@@ -1,8 +1,10 @@
+import { IsianPanjang, Geser } from "../kit/Formulir";
+import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
-import { AlertDialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast, titipToast } from "../kit/Toast";
+import { AlertDialog } from "../kit/Overlay";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian, Sakelar } from "../kit/Isian";
 import { DotsThree, FacebookLogo, Link as IkonTautan, NotePencil, XLogo } from "../kit/ikon";
@@ -132,6 +134,7 @@ function Isi() {
   const [isiTeks, setIsiTeks] = useState("");
   const [sibuk, setSibuk] = useState(false);
   const [slugDisentuh, setSlugDisentuh] = useState(false);
+  const [naik, setNaik] = useState(0);
 
   useEffect(() => {
     daftarPaket()
@@ -229,7 +232,7 @@ function Isi() {
       `Rincian semua paket: ${TAUTAN_TARIF}`
     : "";
 
-  if (galat) return <p className="pak__kosong">Gagal memuat paket: {galat}</p>;
+  if (galat) return <GagalMuat apa="Paket" galat={galat} />;
   if (!baru && !paket) return <div className="pas pas--rangka" aria-busy="true" />;
 
   const pratinjau = ubah
@@ -300,6 +303,36 @@ function Isi() {
                     (form.feeMax ?? 0) < (form.feeMin ?? 0) ? "Tidak boleh lebih kecil dari fee terendah." : undefined
                   }
                 />
+                {/* Kenaikan harga: aturan studio menaikkan fee 10–15% tiap tiga
+                    proyek selesai di satu tier. Geser menunjukkan rentang
+                    barunya dulu; isian di atas baru berubah saat Terapkan. */}
+                <div className="pas__lebar pks-naik">
+                  <Geser
+                    label="Simulasi kenaikan fee"
+                    min={0}
+                    maks={30}
+                    langkah={5}
+                    nilai={naik}
+                    onUbah={setNaik}
+                    format={(n) =>
+                      n === 0
+                        ? "Tanpa kenaikan"
+                        : `+${n}% → ${naikkan(form.feeMin ?? 0, n)}–${naikkan(form.feeMax ?? 0, n)} juta`
+                    }
+                  />
+                  <Tombol
+                    ukuran="small"
+                    jenis="secondary"
+                    disabled={naik === 0}
+                    onClick={() => {
+                      setel("feeMin", naikkan(form.feeMin ?? 0, naik));
+                      setel("feeMax", naikkan(form.feeMax ?? 0, naik));
+                      setNaik(0);
+                    }}
+                  >
+                    Terapkan ke fee
+                  </Tombol>
+                </div>
                 <Isian
                   label="Cocok untuk"
                   maxLength={160}
@@ -311,7 +344,7 @@ function Isi() {
 
               <label className="k-isian pas__lebar">
                 <span className="k-isian__label">Ringkasan</span>
-                <textarea
+                <IsianPanjang
                   className="pas__area"
                   rows={3}
                   maxLength={240}
@@ -332,7 +365,7 @@ function Isi() {
               </div>
               <label className="k-isian pas__lebar">
                 <span className="k-isian__label">Isi paket — satu butir per baris</span>
-                <textarea
+                <IsianPanjang
                   className="pas__area"
                   rows={6}
                   value={isiTeks}
@@ -389,7 +422,7 @@ function Isi() {
               </div>
 
               <div className="pas__aksi">
-                <Tombol ukuran="large" jenis="primary" tipeHtml="submit" disabled={sibuk}>
+                <Tombol memuat={sibuk} ukuran="large" jenis="primary" tipeHtml="submit" disabled={sibuk}>
                   {sibuk ? "Menyimpan…" : baru ? "Tambah paket" : "Simpan"}
                 </Tombol>
                 <Tombol
@@ -537,4 +570,9 @@ export function PaketSatuKit() {
       </ToastProvider>
     </RequireAuth>
   );
+}
+
+/** Fee (juta) dinaikkan n persen, dibulatkan ke juta terdekat. */
+function naikkan(juta: number, persen: number) {
+  return Math.round(juta * (1 + persen / 100));
 }

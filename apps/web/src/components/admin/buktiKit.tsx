@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Dialog } from "../ui/overlay/Dialog";
-import { useToast } from "../ui/overlay/Toast";
+import { Dialog } from "../kit/Overlay";
+import { useToast } from "../kit/Toast";
 import { Tombol } from "../kit/Tombol";
 import { Lencana } from "../kit/Lencana";
 import { CopySimple, PaperPlaneRight, Link } from "../kit/ikon";

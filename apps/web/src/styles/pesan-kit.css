@@ -19,7 +19,7 @@
 
 .pes {
   display: grid;
-  grid-template-columns: 338px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   height: 974px;
   padding: 15px 15px 15px 0;
   border: 1px solid var(--border);
@@ -27,19 +27,19 @@
   background: var(--surface);
 }
 .pes--rangka { border-color: var(--border); }
+/* Bagi kit mengisi seluruh kartu: dua panel setinggi kartu, tanpa bingkai
+   sendiri (bingkainya milik .pes). Garis seretnya transparan di tempat
+   jarak 20px yang dulu dipegang padding .pes__kiri. */
+.pes > .k-bagi { min-height: 0; height: 100%; border: 0; border-radius: 0; background: none; overflow: visible; }
+.pes .k-bagi__panel { display: flex; min-height: 0; flex-direction: column; overflow: visible; }
+.pes .k-bagi__panel > section { flex: 1; min-height: 0; }
+.pes .k-bagi__pegangan { background: transparent; }
+.pes .k-bagi__pegangan:hover,
+.pes .k-bagi__pegangan:focus-visible,
+.pes .k-bagi__pegangan[data-separator="active"] { background: var(--brand); }
 .pes--galat { display: block; height: auto; padding: 16px; }
 
-.pes__peringatan {
-  max-width: none;
-  margin: 0 0 16px;
-  padding: 12px 16px;
-  border: 1px solid var(--warn);
-  border-radius: 12px;
-  background: var(--warn-soft);
-  font-size: var(--k-t12);
-  line-height: 1.5;
-  color: var(--text-strong);
-}
+.pes__peringatan { margin: 0 0 16px; }
 
 /* --- Daftar ---------------------------------------------------------------- */
 .pes__kiri {
@@ -338,6 +338,11 @@
    ditukar lewat tombol panah dan klik baris. */
 @media (max-width: 63rem) {
   .pes { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 640px; padding: 15px; }
+  /* Ponsel: panel bertumpuk, satu yang tampil (pes--daftar / pes--isi);
+     ukuran seret dari pustaka ditimpa, garis seretnya disembunyikan. */
+  .pes > .k-bagi { flex-direction: column !important; height: auto; }
+  .pes .k-bagi__panel { flex: 1 1 auto !important; }
+  .pes .k-bagi__pegangan { display: none; }
   .pes__kiri { padding: 0; }
   .pes__daftar { margin: 0; padding: 0; max-height: 70vh; }
   .pes--daftar .pes__kanan { display: none; }

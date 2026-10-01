@@ -1,7 +1,9 @@
+import { SorotTeks } from "../kit/Tampilan";
+import { KelompokRadio } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { Dialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Dialog } from "../kit/Overlay";
 import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Cari, Isian, Sakelar } from "../kit/Isian";
 import { Tombol, TombolIkon } from "../kit/Tombol";
@@ -41,6 +43,13 @@ import { formatRupiah } from "../../lib/format";
    ============================================================================= */
 
 const JENIS: JenisAnggota[] = ["partner", "inti", "proyek", "staf"];
+/* Akibat tiap jenis, dalam satu baris — tampil di bawah pilihannya. */
+const KET_JENIS: Record<JenisAnggota, string> = {
+  partner: "Ikut memiliki studio",
+  inti: "Freelancer langganan studio",
+  proyek: "Dibayar per proyek lewat fee",
+  staf: "Digaji bulanan",
+};
 
 function Isi() {
   const toast = useToast();
@@ -124,7 +133,7 @@ function Isi() {
   const baris = tersaring.map((t) => [
     <div className="kd__sel">
       <Inisial nama={t.name} redup={!t.active} />
-      <SelDua atas={t.name} bawah={t.role ?? "Peran belum diisi"} />
+      <SelDua atas={<SorotTeks teks={t.name} cari={cari} />} bawah={t.role ?? "Peran belum diisi"} />
     </div>,
     LABEL_JENIS_ANGGOTA[t.kind] ?? t.kind,
     /* "Acuan", bukan "tarif": yang benar-benar dibayar tetap diketik per
@@ -291,7 +300,7 @@ function DialogAnggota({
       footer={
         <div className="kd-form__kaki">
           {alasan && <small className="kd-form__alasan">{alasan}</small>}
-          <Tombol ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
             {kirim ? "Menyimpan…" : "Simpan"}
           </Tombol>
         </div>
@@ -302,29 +311,20 @@ function DialogAnggota({
           <Isian label="Nama" placeholder="mis. Rian Saputra" value={nama} onChange={(e) => setNama(e.currentTarget.value)} />
           <Isian label="Peran" placeholder="mis. Drafter DED" value={peran} onChange={(e) => setPeran(e.currentTarget.value)} />
         </div>
-        <div className="k-isian">
-          <label className="k-isian__label" htmlFor="tm-jenis">
-            Jenis
-          </label>
-          <div className="k-isian__kotak">
-            <select
-              id="tm-jenis"
-              className="k-isian__input"
-              value={jenis}
-              onChange={(e) => setJenis(e.currentTarget.value as JenisAnggota)}
-            >
-              {JENIS.map((j) => (
-                <option key={j} value={j}>
-                  {LABEL_JENIS_ANGGOTA[j]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <p className="k-isian__bantu">
-            Menentukan siapa yang wajar digaji bulanan dan siapa yang dibayar per proyek. Halaman Gaji
-            memperingatkan kalau freelancer diberi gaji bulanan, dan peringatan itu membaca isian ini.
-          </p>
-        </div>
+        {/* Radio kit, bukan pilihan turun: empat jenis dengan akibat yang
+            berbeda (digaji bulanan atau dibayar per proyek) lebih mudah
+            dipilih kalau keempatnya terlihat sekaligus beserta artinya. */}
+        <KelompokRadio
+          nama="tm-jenis"
+          label="Jenis"
+          arah="datar"
+          nilai={jenis}
+          onUbah={(v) => setJenis(v as JenisAnggota)}
+          opsi={JENIS.map((j) => ({ nilai: j, label: LABEL_JENIS_ANGGOTA[j], ket: KET_JENIS[j] }))}
+        />
+        <p className="k-isian__bantu tm-jenisbantu">
+          Halaman Gaji memperingatkan kalau freelancer diberi gaji bulanan, dan peringatan itu membaca isian ini.
+        </p>
         <div className="kd-form__dua">
           <Isian
             label="Tarif acuan (Rp)"

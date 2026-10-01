@@ -1,6 +1,7 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
 import { SpinnerGap } from "./ikon";
+import { Petunjuk } from "./Overlay";
 
 /* =============================================================================
    Tombol — frame Button di file Figma Coinest.
@@ -145,19 +146,27 @@ export interface PropTombolIkon extends Omit<ButtonHTMLAttributes<HTMLButtonElem
   href?: string;
 }
 
-export function TombolIkon({
-  ikon,
-  judul,
-  ukuran = "medium",
-  jenis = "primary",
-  tipeHtml = "button",
-  titik,
-  titikJudul,
-  ikonPx,
-  href,
-  className,
-  ...sisa
-}: PropTombolIkon) {
+/* Nama tombolnya tampil sebagai Petunjuk kit saat disentuh kursor atau
+   difokus papan ketik — bukan `title` bawaan, yang baru muncul sedetik
+   kemudian, bergaya sistem operasi, dan tidak pernah muncul saat fokus.
+   forwardRef: tombol ini sering jadi pemicu Radix (menu, sembul). */
+export const TombolIkon = forwardRef<HTMLButtonElement, PropTombolIkon & { tanpaPetunjuk?: boolean }>(function TombolIkon(
+  {
+    ikon,
+    judul,
+    ukuran = "medium",
+    jenis = "primary",
+    tipeHtml = "button",
+    titik,
+    titikJudul,
+    ikonPx,
+    href,
+    className,
+    tanpaPetunjuk,
+    ...sisa
+  },
+  ref,
+) {
   const kelas = [
     "k-tombolikon",
     `k-tombolikon--${ukuran}`,
@@ -166,19 +175,17 @@ export function TombolIkon({
   ]
     .filter(Boolean)
     .join(" ");
-  if (href) {
-    return (
-      <a href={href} className={kelas} aria-label={judul} title={judul}>
-        <Ikon ikon={ikon} ukuran={ikonPx ?? IKON_PX_KOTAK[ukuran]} />
-      </a>
-    );
-  }
-  return (
-    <button type={tipeHtml} className={kelas} aria-label={judul} title={judul} {...sisa}>
+  const isi = href ? (
+    <a ref={ref as unknown as React.Ref<HTMLAnchorElement>} href={href} className={kelas} aria-label={judul}>
+      <Ikon ikon={ikon} ukuran={ikonPx ?? IKON_PX_KOTAK[ukuran]} />
+    </a>
+  ) : (
+    <button ref={ref} type={tipeHtml} className={kelas} aria-label={judul} {...sisa}>
       <Ikon ikon={ikon} ukuran={ikonPx ?? IKON_PX_KOTAK[ukuran]} />
       {titik && (
         <span className="k-tombolikon__titik" role="img" aria-label={titikJudul ?? "Ada yang baru"} />
       )}
     </button>
   );
-}
+  return tanpaPetunjuk ? isi : <Petunjuk isi={judul}>{isi}</Petunjuk>;
+});

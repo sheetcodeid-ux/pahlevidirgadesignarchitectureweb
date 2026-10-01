@@ -1,7 +1,8 @@
+import { IsianPanjang } from "../kit/Formulir";
 import { useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast, titipToast } from "../kit/Toast";
 import { Tombol } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
 import { Ikon } from "../kit/Ikon";
@@ -302,7 +303,7 @@ function Isi() {
 
             <label className="k-isian pas__lebar">
               <span className="k-isian__label">Ringkasan singkat</span>
-              <textarea
+              <IsianPanjang
                 className="pas__area"
                 rows={4}
                 placeholder="Dua sampai tiga kalimat yang muncul di kartu proyek."

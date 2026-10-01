@@ -1,24 +1,15 @@
+import { KelompokIsian } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { DropdownMenu } from "../ui/overlay/Menu";
+import { DropdownMenu } from "../kit/Overlay";
 import { navigate } from "astro:transitions/client";
 import { KepalaSeksi, BarisTransfer, TombolBulat } from "../kit/Item";
 import { Segmen, KelompokTab } from "../kit/Segmen";
 import { Cari } from "../kit/Isian";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import {
-  CoinVertical,
-  NavCreditCard,
-  VirtualAccount,
-  DotsThree,
-  Sliders,
-  NavReceipt,
-  Hourglass,
-  Plus,
-  CheckCircle,
-} from "../kit/ikon";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { CoinVertical, NavCreditCard, VirtualAccount, DotsThree, Sliders, NavReceipt, Hourglass, Plus, CheckCircle, NavArrowsLeftRight, ChartBar } from "../kit/ikon";
 import {
   daftarProyek,
   daftarPembayaran,
@@ -375,7 +366,7 @@ function Isi() {
                 sections={[
                   {
                     label: "Buka",
-                    items: ([["Semua transaksi", "list", "/admin/keuangan/transaksi"], ["Tagihan & termin", "receipt", "/admin/keuangan/tagihan"], ["Ringkasan keuangan", "finance", "/admin/keuangan"]] as const).map(([label, icon, ke]) => ({ label, icon, onSelect: () => navigate(ke) })),
+                    items: ([["Semua transaksi", NavArrowsLeftRight, "/admin/keuangan/transaksi"], ["Tagihan & termin", NavReceipt, "/admin/keuangan/tagihan"], ["Ringkasan keuangan", ChartBar, "/admin/keuangan"]] as const).map(([label, ikon, ke]) => ({ label, ikon, onSelect: () => navigate(ke) })),
                   },
                 ]}
               />
@@ -449,19 +440,10 @@ function Isi() {
                 <label className="tr__label" htmlFor="tr-nominal">
                   Nominal
                 </label>
-                <div className="k-isian__kotak">
-                  <input
-                    id="tr-nominal"
-                    className="k-isian__input"
-                    /* `inputMode`, bukan `type=number`: type=number menolak
-                       titik pemisah ribuan dan memunculkan panah naik-turun
-                       yang tidak ada gunanya untuk rupiah. */
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={nominal}
-                    onChange={(e) => setNominal(e.currentTarget.value)}
-                  />
-                </div>
+                {/* `inputMode`, bukan `type=number`: type=number menolak titik
+                    pemisah ribuan dan memunculkan panah naik-turun yang tidak
+                    ada gunanya untuk rupiah. */}
+                <KelompokIsian id="tr-nominal" kiri="Rp" inputMode="numeric" placeholder="0" value={nominal} onChange={(e) => setNominal(e.currentTarget.value)} />
               </div>
               <div className="tr__grup">
                 <label className="tr__label" htmlFor="tr-penerima">
@@ -507,7 +489,7 @@ function Isi() {
               >
                 Batal
               </Tombol>
-              <Tombol ukuran="large" disabled={!bisaKirim} onClick={simpan}>
+              <Tombol memuat={kirim} ukuran="large" disabled={!bisaKirim} onClick={simpan}>
                 {kirim ? "Menyimpan…" : "Catat Pembayaran"}
               </Tombol>
             </div>

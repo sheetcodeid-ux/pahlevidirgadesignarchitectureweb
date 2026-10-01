@@ -1,3 +1,4 @@
+import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { Cari } from "../kit/Isian";
@@ -123,7 +124,7 @@ function Isi() {
   }, [paket, cari, saring, urut]);
 
   if (galat && paket === null) {
-    return <p className="pak__kosong">Gagal memuat paket: {galat}</p>;
+    return <GagalMuat apa="Paket layanan" galat={galat} />;
   }
   if (paket === null) return <div className="pak pak--rangka" aria-busy="true" />;
 

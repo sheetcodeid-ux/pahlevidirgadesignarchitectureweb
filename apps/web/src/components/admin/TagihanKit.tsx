@@ -1,3 +1,6 @@
+import { IsianTempel, Kombo, Bidang } from "../kit/Formulir";
+import { Peringatan } from "../kit/Tampilan";
+import { IsianTanggal } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
@@ -7,20 +10,11 @@ import { Cari } from "../kit/Isian";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { LencanaTren } from "../kit/Ukuran";
 import { Ikon } from "../kit/Ikon";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
-import { Dialog, AlertDialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast } from "../kit/Toast";
+import { Dialog, AlertDialog } from "../kit/Overlay";
 import { Isian } from "../kit/Isian";
 import { navigate } from "astro:transitions/client";
-import {
-  CaretDown,
-  Funnel,
-  Plus,
-  NavReceipt,
-  CircleWavyCheck,
-  WarningOctagon,
-  ArrowRight,
-  Trash,
-} from "../kit/ikon";
+import { CaretDown, Funnel, Plus, NavReceipt, CircleWavyCheck, WarningOctagon, ArrowRight, Trash } from "../kit/ikon";
 import {
   semuaTagihan,
   ubahInvoice,
@@ -146,9 +140,7 @@ function bulanLalu(offset: number): string {
 function Isi() {
   const toast = useToast();
 
-  const [tagihan, setTagihan] = useState<Invoice[] | null>(() =>
-    bacaCache<Invoice[]>("tagihan-semua"),
-  );
+  const [tagihan, setTagihan] = useState<Invoice[] | null>(() => bacaCache<Invoice[]>("tagihan-semua"));
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [status, setStatus] = useState("semua");
   const [cari, setCari] = useState("");
@@ -224,9 +216,7 @@ function Isi() {
       if (status !== "semua" && i.status !== status) return false;
       if (filterProyek !== "semua" && i.projectTitle !== filterProyek) return false;
       if (!q) return true;
-      return (
-        i.label.toLowerCase().includes(q) || (i.projectTitle ?? "").toLowerCase().includes(q)
-      );
+      return i.label.toLowerCase().includes(q) || (i.projectTitle ?? "").toLowerCase().includes(q);
     });
   }, [semua, status, filterProyek, cari]);
 
@@ -297,7 +287,11 @@ function Isi() {
     setSibuk(null);
     toast(
       gagal
-        ? { judul: `${ids.length - gagal} dari ${ids.length} termin dihapus`, keterangan: "Sisanya gagal — coba lagi.", nada: "gagal" }
+        ? {
+            judul: `${ids.length - gagal} dari ${ids.length} termin dihapus`,
+            keterangan: "Sisanya gagal — coba lagi.",
+            nada: "gagal",
+          }
         : { judul: `${ids.length} termin dihapus`, nada: "sukses" },
     );
   }
@@ -346,9 +340,7 @@ function Isi() {
         }
       />,
       <label className="tag__pilihstatus">
-        <span className={`tag__status ${kelas}`}>
-          {lewat ? "Lewat tenggat" : (LABEL_STATUS[i.status] ?? i.status)}
-        </span>
+        <span className={`tag__status ${kelas}`}>{lewat ? "Lewat tenggat" : (LABEL_STATUS[i.status] ?? i.status)}</span>
         <select
           aria-label={`Status ${i.label}`}
           value={i.status}
@@ -437,9 +429,7 @@ function Isi() {
 
       <div className="tag__tabel">
         {tampil.length === 0 ? (
-          <p className="tag__kosong">
-            {memuat ? "Memuat tagihan…" : "Tidak ada tagihan pada saringan ini."}
-          </p>
+          <p className="tag__kosong">{memuat ? "Memuat tagihan…" : "Tidak ada tagihan pada saringan ini."}</p>
         ) : (
           <Tabel
             kolom={kolom}
@@ -490,7 +480,14 @@ function Isi() {
             confirmLabel="Ya, hapus"
             onConfirm={hapusTerpilih}
             trigger={
-              <Tombol ukuran="small" jenis="secondary" kiri={Trash} disabled={sibuk === "hapus"} className="tag__hapus">
+              <Tombol
+                memuat={sibuk === "hapus"}
+                ukuran="small"
+                jenis="secondary"
+                kiri={Trash}
+                disabled={sibuk === "hapus"}
+                className="tag__hapus"
+              >
                 {sibuk === "hapus" ? "Menghapus…" : `Hapus ${terpilih.length} termin`}
               </Tombol>
             }
@@ -526,11 +523,7 @@ function Kartu({
         <p className="tag__nilai">{formatRupiah(angka.total)}</p>
       </div>
       <div className="tag__kanan">
-        {bisaBanding && (
-          <LencanaTren naik={beda >= 0}>
-            {Math.abs(beda).toFixed(1).replace(".", ",")} %
-          </LencanaTren>
-        )}
+        {bisaBanding && <LencanaTren naik={beda >= 0}>{Math.abs(beda).toFixed(1).replace(".", ",")} %</LencanaTren>}
         <p className="tag__banding">
           bulan ini
           <br />
@@ -540,7 +533,6 @@ function Kartu({
     </article>
   );
 }
-
 
 /* Termin baru. Proyeknya dipilih DI DALAM dialog — bentuk yang sama dengan
    Tambah tugas dan Catat Pengeluaran. Sisa kontrak yang belum ditagihkan
@@ -595,7 +587,9 @@ function DialogTermin({
     setIdProyek(id);
     /* Nama bawaan mengikuti nomor urut di proyek itu — "Termin 3" untuk
        proyek yang sudah punya dua — selama staf belum mengetik sendiri. */
-    setLabel((l) => (/^Termin \d+$/.test(l) || !l ? `Termin ${tagihan.filter((i) => i.projectId === id).length + 1}` : l));
+    setLabel((l) =>
+      /^Termin \d+$/.test(l) || !l ? `Termin ${tagihan.filter((i) => i.projectId === id).length + 1}` : l,
+    );
   }
 
   async function simpan() {
@@ -612,7 +606,11 @@ function DialogTermin({
         nada: "sukses",
       });
     } catch (e) {
-      toast({ judul: "Gagal menambah termin", keterangan: (e as Error).message, nada: "gagal" });
+      toast({
+        judul: "Gagal menambah termin",
+        keterangan: (e as Error).message,
+        nada: "gagal",
+      });
     } finally {
       setKirim(false);
     }
@@ -632,28 +630,29 @@ function DialogTermin({
       footer={
         <div className="kd-form__kaki">
           {alasan && <small className="kd-form__alasan">{alasan}</small>}
-          <Tombol ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
             {kirim ? "Menyimpan…" : "Simpan"}
           </Tombol>
         </div>
       }
     >
       <div className="kd-form">
-        <div className="k-isian">
-          <label className="k-isian__label" htmlFor="tag-proyek">
-            Proyek
-          </label>
-          <div className="k-isian__kotak">
-            <select id="tag-proyek" className="k-isian__input" value={idProyek} onChange={(e) => gantiProyek(e.currentTarget.value)}>
-              <option value="">Pilih proyek…</option>
-              {proyek.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <Bidang label="Proyek">
+          {(b) => (
+            <Kombo
+              id={b.id}
+              opsi={proyek.map((x) => ({
+                nilai: x.id,
+                label: x.title,
+                ket: x.client || undefined,
+              }))}
+              nilai={idProyek || undefined}
+              onUbah={gantiProyek}
+              placeholder="Pilih proyek…"
+              cariPlaceholder="Cari proyek atau klien…"
+            />
+          )}
+        </Bidang>
         {p && (
           <p className="tag__konteks">
             {kontrak > 0 ? (
@@ -666,25 +665,37 @@ function DialogTermin({
             )}
           </p>
         )}
-        <Isian label="Nama termin" placeholder="mis. Termin 2 — gambar kerja" maxLength={120} value={label} onChange={(e) => setLabel(e.currentTarget.value)} />
+        <Isian
+          label="Nama termin"
+          placeholder="mis. Termin 2 — gambar kerja"
+          maxLength={120}
+          value={label}
+          onChange={(e) => setLabel(e.currentTarget.value)}
+        />
         <div className="kd-form__dua">
-          <Isian
+          <IsianTempel
             label="Nominal"
+            kiri="Rp"
             inputMode="numeric"
             placeholder="0"
             value={angka ? angka.toLocaleString("id-ID") : nominal}
             onChange={(e) => setNominal(e.currentTarget.value)}
           />
-          <Isian label="Tenggat (boleh kosong)" type="date" value={tenggat} onChange={(e) => setTenggat(e.currentTarget.value)} />
+          <IsianTanggal
+            label="Tenggat (boleh kosong)"
+            nilai={tenggat}
+            onUbah={setTenggat}
+            placeholder="Belum dijadwalkan"
+          />
         </div>
         {/* Peringatan, bukan penghalang: adendum kontrak memang ada, dan
             menagih lebih dari kontrak kadang disengaja. Garis amber (terbatas),
             teksnya tetap gelap — amber di atas putih cuma 1,91 (jebakan #37). */}
         {lewatKontrak && (
-          <p className="tag__konteks tag__konteks--awas" role="status">
-            Nominal ini melebihi sisa kontrak <b>{formatRupiah(Math.max(0, sisa))}</b>. Periksa lagi — atau perbarui
-            nilai kontraknya dulu kalau memang ada adendum.
-          </p>
+          <Peringatan nada="awas" judul="Melebihi sisa kontrak">
+            Sisa kontrak <b>{formatRupiah(Math.max(0, sisa))}</b>. Periksa lagi — atau perbarui nilai kontraknya dulu
+            kalau memang ada adendum.
+          </Peringatan>
         )}
       </div>
     </Dialog>

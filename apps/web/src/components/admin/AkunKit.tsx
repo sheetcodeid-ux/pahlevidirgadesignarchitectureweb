@@ -1,5 +1,6 @@
+import { Butir, Teks } from "../kit/Tampilan";
 import { useState } from "react";
-import { ToastProvider, useToast } from "../ui/overlay/Toast";
+import { ToastProvider, useToast } from "../kit/Toast";
 import { RequireAuth, useProfil } from "./RequireAuth";
 import { Tombol } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
@@ -68,13 +69,16 @@ function Isi() {
           <section className="pf__bagian">
             <KepalaBagian judul="Akun yang sedang masuk" />
             <div className="ak-profil">
-              <Inisial nama={profil.email.split("@")[0]!.replace(/[._-]+/g, " ")} />
-              <span>
-                <b>{profil.email}</b>
-                <Lencana bentuk="pejalkecil" nada={profil.isMasterAdmin ? "selesai" : "netral"}>
-                  {profil.isMasterAdmin ? "Master admin" : "Staf"}
-                </Lencana>
-              </span>
+              <Butir
+                media={<Inisial nama={profil.email.split("@")[0]!.replace(/[._-]+/g, " ")} />}
+                judul={profil.email}
+                ket={profil.isMasterAdmin ? "Bisa membuka seluruh panel, termasuk Info Studio dan UI Component" : "Bisa mengelola proyek, keuangan, dan isi situs"}
+                kanan={
+                  <Lencana bentuk="pejalkecil" nada={profil.isMasterAdmin ? "selesai" : "netral"}>
+                    {profil.isMasterAdmin ? "Master admin" : "Staf"}
+                  </Lencana>
+                }
+              />
             </div>
           </section>
 
@@ -108,7 +112,7 @@ function Isi() {
               ))}
             </ul>
             <div className="pas__aksi">
-              <Tombol ukuran="large" jenis="primary" tipeHtml="submit" disabled={!siap || kirim}>
+              <Tombol memuat={kirim} ukuran="large" jenis="primary" tipeHtml="submit" disabled={!siap || kirim}>
                 {kirim ? "Menyimpan…" : "Simpan kata sandi"}
               </Tombol>
               <PenandaSimpan n={siap ? 0 : 1} teks={alasan ?? "Siap disimpan."} />
@@ -118,10 +122,10 @@ function Isi() {
         <aside className="pf__samping" aria-label="Keterangan akun">
           <div className="pf__info">
             <p className="pas__sampingjudul">Keamanan</p>
-            <p className="pf__statusket">
+            <Teks tingkat="kecil">
               Mengganti kata sandi membuat sesi di perangkat lain diminta masuk ulang. Kata sandi tidak pernah dikirim ke
               situs publik — ia langsung ke server panel.
-            </p>
+            </Teks>
           </div>
         </aside>
       </div>

@@ -5,10 +5,10 @@ import { ArrowLeft, List } from "../kit/ikon";
 import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from "./RelKit";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
-import { Perintah } from "./Perintah";
+import { PaletPanel } from "./PaletPanel";
 import { ambilBarisNotifikasi, barisNotifikasiTerakhir, type BarisNotifikasi } from "../../lib/notifikasi";
 import { PanelPesan, PanelNotifikasi } from "./panelKabar";
-import { TitipanToast } from "../ui/overlay/Toast";
+import { TitipanToast } from "../kit/Toast";
 
 /* Kepala halaman panel admin — `KepalaHalaman` kit dengan isi kanan yang
    sama di seluruh halaman.
@@ -115,8 +115,7 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
               }
             }}
           />
-          <Perintah
-            tanpaTombol
+          <PaletPanel
             buka={cariBuka}
             onBuka={(b) => {
               setCariBuka(b);

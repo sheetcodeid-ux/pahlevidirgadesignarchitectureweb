@@ -1,8 +1,10 @@
+import { Korsel, Rasio } from "../kit/Tampilan";
+import { GagalMuat } from "./gagalMuat";
 import { useEffect, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { navigate } from "astro:transitions/client";
-import { ToastProvider, useToast, titipToast } from "../ui/overlay/Toast";
-import { AlertDialog } from "../ui/overlay/Dialog";
+import { ToastProvider, useToast, titipToast } from "../kit/Toast";
+import { AlertDialog } from "../kit/Overlay";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian, Sakelar } from "../kit/Isian";
 import { KelompokTab, Segmen } from "../kit/Segmen";
@@ -187,7 +189,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
     }
   }
 
-  if (galat) return <p className="pf__kosong">Gagal memuat proyek: {galat}</p>;
+  if (galat) return <GagalMuat apa="Proyek" galat={galat} />;
   if (!semua) return <div className="pas pas--rangka" aria-busy="true" />;
   if (!asli) {
     return (
@@ -500,7 +502,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
           </div>
 
           <div className="pf__simpan">
-            <Tombol ukuran="large" jenis="primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
+            <Tombol memuat={menyimpan} ukuran="large" jenis="primary" disabled={!adaPerubahan || menyimpan} onClick={simpan}>
               {menyimpan ? "Menyimpan…" : "Simpan perubahan"}
             </Tombol>
             <p className={`pf__penanda${adaPerubahan ? " pf__penanda--belum" : ""}`}>
@@ -776,7 +778,27 @@ function PanelFoto({
       ) : gambar.length === 0 ? (
         <p className="pf__fotoket">{kata.kosong}</p>
       ) : (
-        <ul className="pf__kisi">
+        <>
+          {/* Korsel kit: foto dalam URUTAN yang dilihat pengunjung di galeri
+              mendatar halaman proyek — kisi di bawah untuk mengaturnya. */}
+          {gambar.length > 1 && (
+            <div className="pf__urutan">
+              <p className="pf__fotoket">Urutan di halaman publik — geser seperti pengunjung menggeser galerinya.</p>
+              <Korsel label="Pratinjau urutan foto" lebarButir={200}>
+                {gambar.map((g, i) => (
+                  <figure key={g.id} className="pf__urutanfoto">
+                    <Rasio rasio={4 / 3}>
+                      <img src={g.thumbUrl ?? g.url} alt={g.altText ?? ""} loading="lazy" decoding="async" />
+                    </Rasio>
+                    <figcaption>
+                      {i + 1}. {g.caption || "Tanpa keterangan"}
+                    </figcaption>
+                  </figure>
+                ))}
+              </Korsel>
+            </div>
+          )}
+          <ul className="pf__kisi">
           {gambar.map((g, i) => (
             <li key={g.id} className="pf__ubin">
               {/* Dibuka besar di penampil yang sama dengan halaman publik —
@@ -843,6 +865,7 @@ function PanelFoto({
             </li>
           ))}
         </ul>
+        </>
       )}
     </section>
   );

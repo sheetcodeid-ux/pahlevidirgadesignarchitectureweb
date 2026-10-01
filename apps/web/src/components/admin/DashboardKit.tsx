@@ -1,3 +1,4 @@
+import { KartuMelayang } from "../kit/Overlay";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { KepalaSeksi, BarisLog, BarisBeban } from "../kit/Item";
@@ -461,7 +462,23 @@ function Isi() {
           ? `sisa ${formatRupiahRingkas(sisa)} belum diterima`
           : "kontrak sudah lunas";
     return [
-      <SelDua atas={r.projectTitle} bawah={`kontrak ${r.contractValue ? formatRupiahRingkas(r.contractValue) : "—"}`} />,
+      <SelDua
+        atas={
+          /* Nama proyek = tautan ke Satu Proyek, dan kursor yang DIAM di
+             atasnya memunculkan ringkasan kas — menjawab "proyek ini sudah
+             dibayar berapa?" tanpa meninggalkan Dashboard. */
+          <KartuMelayang
+            pemicu={
+              <a className="dsb__tautan" href={`/admin/proyek/satu?id=${encodeURIComponent(r.projectId)}`}>
+                {r.projectTitle}
+              </a>
+            }
+          >
+            <RingkasProyek r={r} />
+          </KartuMelayang>
+        }
+        bawah={`kontrak ${r.contractValue ? formatRupiahRingkas(r.contractValue) : "—"}`}
+      />,
       <span title={formatRupiah(r.labaBersih)}>
         <SelDua atas={formatRupiahRingkas(r.labaBersih)} bawah={marjin} />
       </span>,
@@ -905,5 +922,32 @@ export function DashboardKit() {
     <RequireAuth skeleton={<div className="dsb dsb--rangka" />}>
       <Isi />
     </RequireAuth>
+  );
+}
+
+/* Isi kartu melayang di tabel laba: kontrak, kas masuk dan kemajuannya,
+   biaya, laba. Angka penuh — tabelnya sudah memakai angka ringkas. */
+function RingkasProyek({ r }: { r: FinanceOverviewRow }) {
+  const persen = r.contractValue ? Math.round((r.received / r.contractValue) * 100) : 0;
+  return (
+    <div className="dsb-melayang">
+      <b className="dsb-melayang__judul">{r.projectTitle}</b>
+      {r.contractValue ? (
+        <>
+          <BarKemajuan persen={persen} judul={`Diterima ${persen}% dari kontrak`} />
+          <p className="dsb-melayang__ket">
+            Diterima <b>{formatRupiah(r.received)}</b> dari {formatRupiah(r.contractValue)} ({persen}%)
+          </p>
+        </>
+      ) : (
+        <p className="dsb-melayang__ket">Belum berkontrak.</p>
+      )}
+      <dl className="dsb-melayang__dl">
+        <dt>Biaya</dt>
+        <dd>{formatRupiah(r.costsTotal)}</dd>
+        <dt>Laba bersih</dt>
+        <dd>{formatRupiah(r.labaBersih)}</dd>
+      </dl>
+    </div>
   );
 }

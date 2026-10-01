@@ -35,6 +35,12 @@ export interface Entri {
   /** Nama ekspor yang dihitung sebagai pemakaian. */
   ekspor: string[];
   ket: string;
+  /**
+   * Entri lain yang SELALU memuat komponen ini di dalamnya — Pilih Tanggal
+   * berisi Kalender, Field berisi Label. Halaman yang memakai entri itu
+   * ikut dihitung memakai yang ini.
+   */
+  lewat?: string[];
   Demo: ComponentType;
 }
 
@@ -67,9 +73,9 @@ export const KATALOG: Folder[] = [
     ikon: NotePencil,
     isi: [
       { id: "input", nama: "Input", kit: "Isian · Cari", modul: "kit/Isian", ekspor: ["Isian", "Cari"], ket: "Kotak isian berlabel dan kotak cari — diukur dari frame Forms Coinest.", Demo: A.DemoIsian },
-      { id: "input-group", nama: "Input Group", kit: "KelompokIsian", modul: "kit/Formulir", ekspor: ["KelompokIsian"], ket: "Isian dengan tempelan di kiri atau kanan: Rp, m², https://.", Demo: A.DemoKelompokIsian },
+      { id: "input-group", nama: "Input Group", kit: "KelompokIsian · IsianTempel", modul: "kit/Formulir", ekspor: ["KelompokIsian", "IsianTempel"], ket: "Isian dengan tempelan di kiri atau kanan: Rp, m², https://.", Demo: A.DemoKelompokIsian },
       { id: "textarea", nama: "Textarea", kit: "IsianPanjang", modul: "kit/Formulir", ekspor: ["IsianPanjang"], ket: "Isian banyak baris; bisa ditarik lebih tinggi.", Demo: A.DemoTeksarea },
-      { id: "label", nama: "Label", kit: "Label", modul: "kit/Formulir", ekspor: ["Label"], ket: "Nama isian, dengan tanda wajib.", Demo: A.DemoLabel },
+      { id: "label", nama: "Label", kit: "Label", modul: "kit/Formulir", ekspor: ["Label"], lewat: ["field"], ket: "Nama isian, dengan tanda wajib.", Demo: A.DemoLabel },
       { id: "field", nama: "Field", kit: "Bidang", modul: "kit/Formulir", ekspor: ["Bidang"], ket: "Label + kontrol + bantuan + galat, untuk kontrol apa pun. Galat menggantikan bantuan.", Demo: A.DemoBidang },
       { id: "checkbox", nama: "Checkbox", kit: "Centang", modul: "kit/Isian", ekspor: ["Centang"], ket: "Kotak centang asli berkulit kit, tiga ukuran.", Demo: A.DemoCentang },
       { id: "radio-group", nama: "Radio Group", kit: "KelompokRadio", modul: "kit/Formulir", ekspor: ["KelompokRadio"], ket: "Satu dari beberapa pilihan, dengan keterangan per pilihan.", Demo: A.DemoRadio },
@@ -79,8 +85,8 @@ export const KATALOG: Folder[] = [
       { id: "native-select", nama: "Native Select", kit: "PilihAsli · PilihTombol", modul: "kit/Formulir", ekspor: ["PilihAsli"], ket: "<select> asli — di ponsel membuka pemilih sistem.", Demo: A.DemoPilihAsli },
       { id: "combobox", nama: "Combobox", kit: "Kombo", modul: "kit/Formulir", ekspor: ["Kombo"], ket: "Pilihan yang bisa dicari, untuk daftar panjang (proyek, kontak).", Demo: A.DemoKombo },
       { id: "input-otp", nama: "Input OTP", kit: "IsianKode", modul: "kit/Formulir", ekspor: ["IsianKode"], ket: "Kode sekali pakai: tempel penuh, backspace mundur, panah berpindah.", Demo: A.DemoKode },
-      { id: "calendar", nama: "Calendar", kit: "Kalender", modul: "kit/Formulir", ekspor: ["Kalender"], ket: "Kalender bulanan, Senin di depan; hari terlarang dicoret.", Demo: A.DemoKalender },
-      { id: "date-picker", nama: "Date Picker", kit: "PilihTanggal", modul: "kit/Formulir", ekspor: ["PilihTanggal"], ket: "Kalender di dalam sembul; nilainya ISO seperti <input type=date>.", Demo: A.DemoPilihTanggal },
+      { id: "calendar", nama: "Calendar", kit: "Kalender", modul: "kit/Formulir", ekspor: ["Kalender"], lewat: ["date-picker"], ket: "Kalender bulanan, Senin di depan; hari terlarang dicoret.", Demo: A.DemoKalender },
+      { id: "date-picker", nama: "Date Picker", kit: "PilihTanggal · IsianTanggal", modul: "kit/Formulir", ekspor: ["PilihTanggal", "IsianTanggal"], ket: "Kalender di dalam sembul; nilainya ISO seperti <input type=date>.", Demo: A.DemoPilihTanggal },
       { id: "attachment", nama: "Attachment", kit: "Lampiran", modul: "kit/Formulir", ekspor: ["Lampiran"], ket: "Zona seret di atas <input type=file> asli; berkas tampil sebagai keping.", Demo: A.DemoLampiran },
     ],
   },
