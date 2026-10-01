@@ -22,7 +22,7 @@ import type { Pembayaran } from "../../lib/admin";
 
 /** Query, bukan path: situs statis tidak bisa membuatkan /bukti/<token>
     saat build. Pola yang sama dengan portal klien /progres?t=… */
-export function tautanBukti(token: string): string {
+function tautanBukti(token: string): string {
   const asal = typeof window !== "undefined" ? window.location.origin : "";
   return `${asal}/bukti?t=${token}`;
 }

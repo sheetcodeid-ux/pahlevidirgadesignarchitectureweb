@@ -89,7 +89,7 @@ function siapkanAset(doc: Document) {
   for (const m of modul) import(/* @vite-ignore */ m).catch(() => {});
 }
 
-export function hangatkan(href: string) {
+function hangatkan(href: string) {
   let u: URL;
   try {
     u = normalkan(new URL(href, location.href));

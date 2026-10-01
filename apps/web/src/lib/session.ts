@@ -9,27 +9,11 @@
 
 const KUNCI = "pd-access-token";
 
-export function ambilToken(): string | null {
+function ambilToken(): string | null {
   try {
     return localStorage.getItem(KUNCI);
   } catch {
     return null;
-  }
-}
-
-export function simpanToken(token: string) {
-  try {
-    localStorage.setItem(KUNCI, token);
-  } catch {
-    // Penyimpanan diblokir; sesi hanya bertahan selama halaman terbuka.
-  }
-}
-
-export function hapusToken() {
-  try {
-    localStorage.removeItem(KUNCI);
-  } catch {
-    /* tidak apa-apa */
   }
 }
 

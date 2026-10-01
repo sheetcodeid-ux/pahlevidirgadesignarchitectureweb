@@ -314,22 +314,3 @@ export function SelIkon({
     </span>
   );
 }
-
-/* -----------------------------------------------------------------------------
-   Sel berkeping — kotak gelap 23x15 lalu teksnya.
-
-   Di Coinest kepingnya logo jaringan kartu; di panel ini tempatnya dipakai
-   untuk menandai REKENING atau metode pembayaran. Bentuknya kotak membulat
-   yang lebih lebar daripada tinggi, bukan bulatan seperti SelIkon — dan itu
-   memang yang membedakan "ini kartu" dari "ini kategori" di framenya.
-   -------------------------------------------------------------------------- */
-export function SelKeping({ keping, children }: { keping?: ReactNode; children: ReactNode }) {
-  return (
-    <span className="k-selkeping">
-      <span className="k-selkeping__keping" aria-hidden="true">
-        {keping}
-      </span>
-      <span className="k-selkeping__teks">{children}</span>
-    </span>
-  );
-}

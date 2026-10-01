@@ -24,7 +24,7 @@ const bisaFokus = () =>
     (e) => e.getClientRects().length > 0 && !e.closest("[role=dialog], [role=alertdialog]"),
   );
 
-export function kontrolSesudah(el: HTMLElement): HTMLElement | null {
+function kontrolSesudah(el: HTMLElement): HTMLElement | null {
   const semua = bisaFokus().filter((e) => !el.contains(e));
   const sesudah = semua.find((e) => el.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING);
   return sesudah ?? semua.filter((e) => el.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_PRECEDING).pop() ?? null;

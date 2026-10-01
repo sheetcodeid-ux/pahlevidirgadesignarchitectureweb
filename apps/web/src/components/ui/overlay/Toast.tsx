@@ -1,6 +1,5 @@
 import * as RToast from "@radix-ui/react-toast";
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { Icon } from "../Icon";
 
 type Nada = "netral" | "sukses" | "gagal";
@@ -65,73 +64,5 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <RToast.Viewport className="ov-toast-region" />
       </RToast.Provider>
     </Ctx.Provider>
-  );
-}
-
-/* -----------------------------------------------------------------------------
-   Toast TITIPAN — yang harus selamat melewati pindah halaman.
-
-   Toast hidup di dalam island halaman, dan pindah halaman membuang island
-   itu. Jadi "Proyek dihapus" yang dipanggil tepat sebelum navigate() tidak
-   pernah terlihat: halamannya sudah berganti sebelum toastnya sempat
-   tergambar. Terukur di lima alur — hapus proyek, hapus tulisan, hapus
-   paket, tambah tulisan, tambah paket — yang semuanya berakhir di halaman
-   lain tanpa satu kata pun bahwa perbuatannya berhasil.
-
-   Pesannya dititipkan di sessionStorage dan diambil SEKALI oleh
-   <TitipanToast/> di halaman tujuan (dipasang di kepala halaman kit, yang
-   ada di setiap halaman). Berumur 15 detik: titipan yang tidak pernah
-   dijemput tidak boleh muncul belakangan di halaman yang tidak ada
-   hubungannya.
-   -------------------------------------------------------------------------- */
-const KUNCI_TITIPAN = "ov-toast-titipan";
-
-/** Titipkan toast untuk halaman BERIKUTNYA. Panggil tepat sebelum navigate(). */
-export function titipToast(p: Omit<Pesan, "id">) {
-  try {
-    sessionStorage.setItem(KUNCI_TITIPAN, JSON.stringify({ ...p, pada: Date.now() }));
-  } catch {
-    /* Penyimpanan diblokir: konfirmasinya hilang, perbuatannya tetap jadi. */
-  }
-}
-
-function JemputTitipan() {
-  const toast = useToast();
-  useEffect(() => {
-    let isi: string | null = null;
-    try {
-      isi = sessionStorage.getItem(KUNCI_TITIPAN);
-      sessionStorage.removeItem(KUNCI_TITIPAN);
-    } catch {
-      return;
-    }
-    if (!isi) return;
-    try {
-      const p = JSON.parse(isi) as Omit<Pesan, "id"> & { pada: number };
-      if (Date.now() - p.pada < 15_000) toast({ judul: p.judul, keterangan: p.keterangan, nada: p.nada });
-    } catch {
-      /* Isinya rusak — abaikan. */
-    }
-  }, [toast]);
-  return null;
-}
-
-/**
- * Penjemput titipan. Dirender lewat PORTAL ke <body> dan baru sesudah
- * dipasang: region toast milik ToastProvider adalah elemen sungguhan, dan
- * kalau ia jatuh di dalam kepala halaman yang ber-flex ia ikut menjadi
- * anak flex — menggeser tata letak yang sudah diukur piksel demi piksel.
- * Render server dan render pertama klien sama-sama null, jadi hidrasinya
- * tidak bisa menyimpang.
- */
-export function TitipanToast() {
-  const [siap, setSiap] = useState(false);
-  useEffect(() => setSiap(true), []);
-  if (!siap) return null;
-  return createPortal(
-    <ToastProvider>
-      <JemputTitipan />
-    </ToastProvider>,
-    document.body,
   );
 }

@@ -1306,23 +1306,6 @@
   color: var(--brand-mint-ink);
 }
 
-/* Sel berkeping — keping 23x15 radius 4, lalu teks berjarak 7,22. */
-.k-selkeping { display: flex; align-items: center; gap: 7.22px; min-width: 0; }
-.k-selkeping__keping {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 23px;
-  height: 15px;
-  border-radius: 4px;
-  background: var(--brand);
-  color: var(--brand-mint);
-  font-size: 6px;
-  font-weight: var(--k-semi);
-  overflow: hidden;
-}
-.k-selkeping__teks { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 /* -----------------------------------------------------------------------------
    REL SAMPING & BILAH ATAS — frame Nav
 
@@ -1397,40 +1380,8 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .k-sisi--sempit .k-nav { justify-content: center; padding: 0; }
 .k-sisi--sempit .k-sisi__kepala { margin-left: 0; justify-content: center; }
 
-.k-bilahnav {
-  display: flex;
-  align-items: center;
-  width: 390px;
-  height: 70px;
-  padding: 0 24px;
-  background: var(--brand-soft);
-}
-.k-bilahnav__logo { flex: none; display: flex; align-items: center; }
 /* Judul di TENGAH bilah, bukan sekadar sisa ruang: terukur, tintanya
    berpusat di 197,7 pada bilah selebar 390 yang tengahnya 195. */
-.k-bilahnav__judul {
-  flex: 1 1 auto;
-  min-width: 0;
-  text-align: center;
-  font-size: var(--k-t18);
-  font-weight: var(--k-semi);
-  color: var(--text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.k-bilahnav__menu {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--text-strong);
-  cursor: pointer;
-}
 
 /* -----------------------------------------------------------------------------
    GRAFIK — frame Chart
@@ -1661,16 +1612,6 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   .k-kepalahal { flex-wrap: wrap; row-gap: 12px; }
 }
 .k-kepalahal__grup { display: flex; align-items: center; gap: 10px; }
-.k-kepalahal__akun {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-left: 15px;
-  font-size: var(--k-t16);
-  font-weight: var(--k-semi);
-  color: var(--judul-ink);
-  white-space: nowrap;
-}
 
 .k-bulat {
   position: relative;
@@ -1808,17 +1749,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 /* Lencana status milik frame Item: 50x18 r9. BUKAN lencana pil dari frame
    Badges, yang 24 tinggi — dua lencana pil berbeda di satu file, dan memakai
    yang salah menumbuhkan seluruh barisnya enam piksel. */
-.k-pesan__status {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 50px;
-  height: 18px;
-  border-radius: 9px;
-  background: var(--centang-aktif);
-  color: var(--item-ubin-ink);
-  font-size: var(--k-t11);
-}
+
 .k-pesan__nama {
   font-size: var(--k-t14);
   font-weight: var(--k-semi);

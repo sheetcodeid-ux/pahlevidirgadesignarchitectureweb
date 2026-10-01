@@ -141,31 +141,3 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
     </nav>
   );
 }
-
-/* -----------------------------------------------------------------------------
-   Bilah atas ponsel — 390x70, latar mint, lambang di kiri, judul di tengah,
-   tombol menu di kanan.
-   -------------------------------------------------------------------------- */
-export function BilahNav({
-  logo,
-  judul,
-  onMenu,
-  menuIkon,
-  className,
-}: {
-  logo?: ReactNode;
-  judul: ReactNode;
-  onMenu?: () => void;
-  menuIkon: DataIkon;
-  className?: string;
-}) {
-  return (
-    <header className={["k-bilahnav", className].filter(Boolean).join(" ")}>
-      <span className="k-bilahnav__logo">{logo}</span>
-      <span className="k-bilahnav__judul">{judul}</span>
-      <button type="button" className="k-bilahnav__menu" onClick={onMenu} aria-label="Buka menu">
-        <Ikon ikon={menuIkon} ukuran={24} />
-      </button>
-    </header>
-  );
-}

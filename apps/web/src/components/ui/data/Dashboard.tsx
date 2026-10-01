@@ -55,7 +55,7 @@ export function bandingkan(kini: number, lalu: number): Perubahan {
  * tidak punya "bulan sebelumnya", dan menampilkan 0% di situ adalah
  * kebohongan kecil yang terbaca sebagai "tidak berubah".
  */
-export function Delta({
+function Delta({
   ubah, terbalik = false, format,
 }: {
   ubah: Perubahan | null;

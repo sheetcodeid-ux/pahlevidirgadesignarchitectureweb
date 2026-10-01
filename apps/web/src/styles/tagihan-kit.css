@@ -147,11 +147,6 @@
 /* Jebakan #37: di tema gelap `--text-strong` terang, dan ikonnya
    tergambar terang di atas mint (1,23). Tema terang dibiarkan persis. */
 :root[data-theme="dark"] .tag__ikonbaris { color: var(--brand-mint-ink); }
-.tag__nama {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 /* Lencana status berbentuk PIL (r12), bukan kotak r6 seperti frame 13 —
    terukur di keempat statusnya. Keempatnya dirakit di sini dan bukan lewat

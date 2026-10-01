@@ -494,7 +494,7 @@ export function Lampiran({
   );
 }
 
-export function ukuranBerkas(b: number) {
+function ukuranBerkas(b: number) {
   if (b < 1024) return `${b} B`;
   if (b < 1024 * 1024) return `${Math.round(b / 1024)} KB`;
   return `${(b / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
@@ -577,7 +577,7 @@ export function KelompokTombol({ children, label }: { children: ReactNode; label
    tertukar dengan "di luar bulan ini". Minggu dimulai hari Senin, seperti
    kalender dinding di Indonesia. */
 
-export const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const HARI = ["Sn", "Sl", "Rb", "Km", "Jm", "Sb", "Mg"];
 const samaHari = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
@@ -650,7 +650,7 @@ export function Kalender({
 }
 
 /** "2026-10-01" ⇄ Date, tanpa geser zona waktu (Date("2026-10-01") = UTC). */
-export function keTanggal(iso: string | null | undefined): Date | null {
+function keTanggal(iso: string | null | undefined): Date | null {
   if (!iso) return null;
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   return y && m && d ? new Date(y, m - 1, d) : null;

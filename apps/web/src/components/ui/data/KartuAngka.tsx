@@ -63,7 +63,3 @@ export function KartuAngka({
   );
 }
 
-/** Deret empat kartu angka, sesuai baris teratas di referensi. */
-export function DeretAngka({ children }: { children: React.ReactNode }) {
-  return <div className="kangka-deret">{children}</div>;
-}

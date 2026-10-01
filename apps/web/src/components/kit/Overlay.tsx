@@ -143,7 +143,6 @@ export function AlertDialog({
     </RAlert.Root>
   );
 }
-export { AlertDialog as Konfirmasi };
 
 /* --- Laci (Sheet / Drawer) --------------------------------------------------
    Satu komponen, sisinya yang membedakan. Kanan = panel rincian di desktop;
@@ -181,7 +180,6 @@ export function Sheet({ trigger, title, description, side = "right", children, f
     </RDialog.Root>
   );
 }
-export { Sheet as Laci };
 
 /* --- Sembul (Popover) ------------------------------------------------------ */
 
@@ -327,7 +325,6 @@ export function DropdownMenu({
     </RDropdown.Root>
   );
 }
-export { DropdownMenu as MenuTarik };
 
 /** Menu klik-kanan (dan tekan-lama di layar sentuh). Area pemicunya `children`. */
 export function ContextMenu({ children, sections }: { children: ReactNode; sections: MenuSection[] }) {
@@ -342,7 +339,6 @@ export function ContextMenu({ children, sections }: { children: ReactNode; secti
     </RContext.Root>
   );
 }
-export { ContextMenu as MenuKonteks };
 
 export function Menubar({ menus, label = "Menu" }: { menus: { label: string; sections: MenuSection[] }[]; label?: string }) {
   return (
@@ -360,7 +356,6 @@ export function Menubar({ menus, label = "Menu" }: { menus: { label: string; sec
     </RMenubar.Root>
   );
 }
-export { Menubar as BilahMenu };
 
 /* --- Menu Navigasi (Navigation Menu) ----------------------------------------
    Bilah tautan dengan panel turun berisi tautan-tautan anak — untuk situs

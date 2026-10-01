@@ -166,7 +166,7 @@ export const FAQ: Tanya[] = [
 /**
  * Lima yang disorot di beranda. Hanya id — kalimatnya tetap satu, di atas.
  */
-export const SOROTAN_ID = [
+const SOROTAN_ID = [
   "do-you-work-with-clients",
   "how-much-do-you-charge",
   "how-long-does-it-take",

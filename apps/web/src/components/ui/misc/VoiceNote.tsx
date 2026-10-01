@@ -33,7 +33,7 @@ function pilihMime(): string | null {
 }
 
 /** "audio/webm;codecs=opus" → "audio/webm": R2 hanya mengenali tipe dasarnya. */
-export function mimeDasar(mime: string): string {
+function mimeDasar(mime: string): string {
   return mime.split(";")[0].trim();
 }
 

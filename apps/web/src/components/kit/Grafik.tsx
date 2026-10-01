@@ -299,32 +299,3 @@ export function Kilau({
     </svg>
   );
 }
-
-/* -----------------------------------------------------------------------------
-   Sel tanggal & sel hari — frame Calendar.
-
-   Empat keadaan: biasa, mati (tanggal di luar bulan ini), dipilih (bulatan
-   persik), dan hari ini (bulatan mint). Bulatannya 24px; angkanya 12px.
-
-   Warnanya memakai palet KEDUA file Figma — beige/mint yang sama seperti
-   kotak centang dan sakelar, bukan hijau Coinest. Itu memang begitu di
-   file-nya, dan dicatat apa adanya lewat token supaya pemilik bisa
-   menyeragamkannya belakangan kalau mau.
-   -------------------------------------------------------------------------- */
-export type KeadaanTanggal = "biasa" | "mati" | "pilih" | "kini";
-
-export function SelTanggal({
-  children,
-  keadaan = "biasa",
-  ...sisa
-}: { children: ReactNode; keadaan?: KeadaanTanggal } & React.HTMLAttributes<HTMLSpanElement>) {
-  return (
-    <span className={`k-tgl k-tgl--${keadaan}`} {...sisa}>
-      {children}
-    </span>
-  );
-}
-
-export function SelHari({ children }: { children: ReactNode }) {
-  return <span className="k-hari">{children}</span>;
-}

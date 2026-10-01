@@ -28,7 +28,7 @@ interface BalokProps {
   style?: CSSProperties;
 }
 
-export function Balok({ lebar, tinggi, bulat, style }: BalokProps) {
+function Balok({ lebar, tinggi, bulat, style }: BalokProps) {
   return (
     <span
       className={`skeleton${bulat ? " skeleton--circle" : ""}`}
@@ -37,22 +37,11 @@ export function Balok({ lebar, tinggi, bulat, style }: BalokProps) {
   );
 }
 
-/** Beberapa baris teks dengan lebar berbeda — untuk paragraf dan keterangan. */
-export function SkeletonTeks({ baris = 3 }: { baris?: number }) {
-  return (
-    <span className="stack skeleton--tunda" style={{ gap: "var(--space-2)" }}>
-      {Array.from({ length: baris }, (_, i) => (
-        <Balok key={i} lebar={LEBAR[i % LEBAR.length]} />
-      ))}
-    </span>
-  );
-}
-
 /**
  * Satu baris daftar: judul, keterangan, dan kendali di ujung kanan —
  * bentuk .item yang dipakai hampir seluruh panel admin.
  */
-export function SkeletonBaris({ aksi = 1 }: { aksi?: number }) {
+function SkeletonBaris({ aksi = 1 }: { aksi?: number }) {
   return (
     <div className="item item--bordered skeleton--tunda" aria-hidden="true">
       <span className="item__text">
@@ -66,7 +55,7 @@ export function SkeletonBaris({ aksi = 1 }: { aksi?: number }) {
   );
 }
 
-export function SkeletonDaftar({ jumlah = 3, aksi = 1 }: { jumlah?: number; aksi?: number }) {
+function SkeletonDaftar({ jumlah = 3, aksi = 1 }: { jumlah?: number; aksi?: number }) {
   return (
     <div className="stack" style={{ gap: "var(--space-2)" }}>
       {Array.from({ length: jumlah }, (_, i) => <SkeletonBaris key={i} aksi={aksi} />)}
@@ -95,25 +84,6 @@ export function SkeletonKartu({
         )}
       </div>
       <div className="card__body">{anak ?? <SkeletonDaftar />}</div>
-    </div>
-  );
-}
-
-/** Deretan ubin angka — bentuk kepala Dashboard dan halaman Keuangan. */
-export function SkeletonStat({ jumlah = 3 }: { jumlah?: number }) {
-  return (
-    <div className="spec-grid skeleton--tunda" aria-hidden="true">
-      {Array.from({ length: jumlah }, (_, i) => (
-        <div className="card" key={i}>
-          <div className="card__header">
-            <span className="icon-tile" style={{ opacity: 0.4 }}><Icon name="list" size={18} /></span>
-            <span className="card__titles">
-              <Balok lebar="70%" tinggi="0.7rem" />
-              <Balok lebar="2.5rem" tinggi="1.75rem" style={{ marginTop: "0.4rem" }} />
-            </span>
-          </div>
-        </div>
-      ))}
     </div>
   );
 }

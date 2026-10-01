@@ -338,27 +338,6 @@
   border-top: 0;
 }
 
-/* Tombol sempitkan/lebarkan. Bentuknya sengaja sama persis dengan item menu
-   di atasnya — ia memang perintah navigasi, bukan aksi halaman. */
-.sidebar__collapse {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 8px 16px;
-  border: 0;
-  border-radius: 24px;
-  background: transparent;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-
-.sidebar__collapse:hover { background: color-mix(in srgb, var(--brand-mint) 45%, transparent); color: var(--text-strong); }
-
 /* Banner kaki Coinest: bidang Green-Dark #1E4841, radius 16px, padding
    16px samping / 20px tegak, teks Green-BG 12px.
 
@@ -430,10 +409,6 @@
 
 .sidebar__site-btn:hover { background: var(--brand-mint-hover); }
 
-
-.sidebar__site-text { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
-.sidebar__site-name { font-size: var(--text-sm); font-weight: 600; color: var(--brand-mint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 /* --- Layar sedang ke atas ------------------------------------------------ */
 
 @media (min-width: 60rem) {
@@ -450,7 +425,6 @@
   .sidebar-trigger,
   .sidebar-scrim,
   .sidebar__close { display: none; }
-  .sidebar__collapse { display: flex; }
 
   /* Rel sempit: label dan submenu disembunyikan, ikon tetap terbaca. */
   .sidebar-slot[data-collapsed] { width: var(--rel-w); }
@@ -460,8 +434,7 @@
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__sub,
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__group-label,
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__cari-label,
-  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__kbd,
-  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__site-text { display: none; }
+  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__kbd { display: none; }
 
   /* Di rel, kepala kelompok ikut disembunyikan — jadi kelompok yang sedang
      ditutup tidak punya satu pun tombol untuk membukanya lagi, dan ikonnya
@@ -473,7 +446,6 @@
   }
 
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__item,
-  .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__collapse,
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__cari,
   .sidebar-slot[data-collapsed]:not([data-peek]) .sidebar__site { justify-content: center; padding-inline: 0; }
 
@@ -517,7 +489,6 @@
 }
 
 .sidebar__item:hover .geser__isi,
-.sidebar__collapse:hover .geser__isi,
 .sidebar__brand:hover .geser__isi,
 .sidebar__site:hover .geser__isi,
 .sidebar__cari:hover .geser__isi {
@@ -537,7 +508,6 @@
    membuat sidebar terasa gelisah. */
 .sidebar__item svg,
 .sidebar__subitem svg,
-.sidebar__collapse svg,
 .sidebar__cari svg,
 .sidebar__site svg {
   transition: transform var(--dur) var(--ease);
@@ -545,7 +515,6 @@
 
 .sidebar__item:hover > svg,
 .sidebar__subitem:hover > svg,
-.sidebar__collapse:hover > svg,
 .sidebar__cari:hover > svg { transform: scale(1.12); }
 
 /* Panah "buka di tab lain" bergerak ke arah yang dijanjikannya. */
@@ -557,16 +526,13 @@
   .geser__isi { animation: none !important; transition: none; }
   .sidebar__item svg,
   .sidebar__subitem svg,
-  .sidebar__collapse svg,
   .sidebar__cari svg,
   .sidebar__site svg { transition: none; }
   .sidebar__item:hover > svg,
   .sidebar__subitem:hover > svg,
-  .sidebar__collapse:hover > svg,
   .sidebar__cari:hover > svg,
   .sidebar__site:hover svg { transform: none; }
 }
-
 
 /* .geser memotong isinya supaya teks panjang bisa bergeser saat disentuh.
    Wordmark dikecualikan: ia harus boleh turun ke baris kedua, bukan
@@ -578,7 +544,6 @@
   animation: none;
   transform: none;
 }
-
 
 /* --- Lencana angka di baris nav ------------------------------------------- */
 

@@ -140,7 +140,7 @@ function indeksWarna(nama: string) {
   for (const c of nama) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return h % WARNA_AVATAR;
 }
-export function inisialNama(nama: string) {
+function inisialNama(nama: string) {
   return (
     nama
       .split(/\s+/)

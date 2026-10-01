@@ -50,7 +50,7 @@ interface Props<T> {
   onBersihkan?: () => void;
   bersihkanAktif?: boolean;
   kosong: { ikon: NamaIkon; judul: string; keterangan: string };
-  /** Kunci ingatan jumlah baris skeleton, lihat jumlahDiingat di lib/admin. */
+  /** Jumlah baris skeleton saat memuat. */
   barisSkeleton: number;
   /**
    * Bentuk bilah perkakasnya.
@@ -70,7 +70,7 @@ interface Props<T> {
 
 /** Spesifikasi kolom skeleton diturunkan dari kolom tabelnya sendiri, supaya
  *  keduanya tidak bisa hanyut berbeda. Dipakai juga oleh RequireAuth. */
-export function kolomSkeleton<T>(kolom: Kolom<T>[], bentuk: "listbar" | "kartu" = "listbar") {
+function kolomSkeleton<T>(kolom: Kolom<T>[], bentuk: "listbar" | "kartu" = "listbar") {
   const sel = kolom.map((k) => ({ label: k.judul, kelas: k.kelas, lebar: k.lebar, gambar: k.gambar }));
   // Kolom "#" ditambahkan sendiri oleh tabelnya, jadi skeleton harus ikut
   // menambahkannya — kalau tidak, lebar tiap sel bergeser satu kolom saat
