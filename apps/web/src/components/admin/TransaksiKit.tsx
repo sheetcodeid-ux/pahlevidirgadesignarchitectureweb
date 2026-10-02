@@ -286,8 +286,11 @@ function Isi() {
     { judul: "Proyek", lebar: 242, urut: true },
     { judul: "Penerima", lebar: 121, urut: true },
     { judul: "Tanggal", lebar: 113, urut: true },
-    { judul: "Nominal", lebar: 94, urut: true, kanan: true },
-    { judul: "Catatan", lebar: 237, redup: true },
+    /* 124, bukan 94 milik frame: "−Rp15.000.000" tebal butuh ~110 dan dulu
+       meluber ke kolom Catatan — tanda "—"-nya menempel seperti coretan.
+       Diambil dari Catatan, jadi jumlah lebarnya tetap. */
+    { judul: "Nominal", lebar: 124, urut: true, kanan: true },
+    { judul: "Catatan", lebar: 207, redup: true },
     { judul: "Status", lebar: 119, urut: true },
   ];
 

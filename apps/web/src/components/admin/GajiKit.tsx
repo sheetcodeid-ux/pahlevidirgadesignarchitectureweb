@@ -355,10 +355,13 @@ function Isi() {
   /* Lebar kolom dari jangkar tinta framenya — sama dengan tabel Fee. */
   const kolom: KolomTabel[] = [
     { judul: "Nama", lebar: 161.3 },
-    { judul: "Gaji", lebar: 108.8 },
-    { judul: "Fee", lebar: 94.8, redup: true },
+    { judul: "Gaji", lebar: 100.8 },
+    { judul: "Fee", lebar: 85.8, redup: true },
     { judul: "Total", lebar: 89 },
-    { judul: "Status", lebar: 100.1 },
+    /* 117, bukan 100 milik frame: lencana "Tandai dibayar" meluber 10px
+       dan terpotong tepi kartu. Diambil dari dua kolom nominal yang
+       angkanya ringkas ("Rp9,3 jt"); jumlah lebarnya tetap. */
+    { judul: "Status", lebar: 117.1 },
   ];
 
   const barisTabel = (baris ?? []).map((b) => [

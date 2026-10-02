@@ -1067,6 +1067,16 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     mengecualikan keadaan aktifnya sendiri (`:not([aria-checked="true"])`,
     `:not(.is-aktif)`).
 
+63. **Lebar kolom frame dibuat untuk DOLAR, bukan rupiah.** "$1,500"
+    muat di 94px; "−Rp15.000.000" tebal tidak. Di Semua Transaksi nominal
+    meluber ke kolom Catatan dan "—"-nya menempel seperti coretan; di Gaji
+    lencana "Tandai dibayar" terpotong tepi kartu. Keduanya sudah di
+    produksi berbulan-bulan. Lebarnya digeser dari kolom tetangga (jumlahnya
+    tetap). Mengauditnya: bandingkan kotak `Range` isi tiap sel dengan kotak
+    selnya — tapi LEWATI sel yang memotong dengan sengaja (elipsis,
+    line-clamp, anak ber-overflow hidden), karena Range tetap melaporkan
+    teks yang tersembunyi (jebakan #36).
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
