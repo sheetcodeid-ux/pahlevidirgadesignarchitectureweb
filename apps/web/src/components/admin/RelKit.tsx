@@ -7,6 +7,8 @@ import {
   SpecialCube, UserCircle, Users, Wallet,
 } from "../kit/ikon";
 import { Ikon, type DataIkon } from "../kit/Ikon";
+import { Avatar } from "../kit/Tampilan";
+import { TombolIkon } from "../kit/Tombol";
 import { NAV } from "../../lib/navAdmin";
 import { hapusSesi, profilTersimpan } from "../../lib/admin";
 
@@ -107,8 +109,20 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
      berbeda dan React membuang pohonnya (jebakan #8). */
   const [pesan, setPesan] = useState(pesanBelumDibaca);
   const [master, setMaster] = useState(masterProp);
+  /* Kartu akun di kaki rel — nama dan peran akun yang sedang masuk. Dengan
+     dua akun penulis, "siapa yang sedang memegang panel ini" perlu terbaca
+     sekilas. Dari profil tersimpan, dibaca di efek (jebakan #8). */
+  const [akun, setAkun] = useState<{ nama: string; email: string; peran: string } | null>(null);
   useEffect(() => {
-    setMaster(masterProp ?? profilTersimpan()?.isMasterAdmin);
+    const p = profilTersimpan();
+    setMaster(masterProp ?? p?.isMasterAdmin);
+    /* Profil cuma menyimpan email — namanya diturunkan dari bagian depannya
+       ("dirga.pahlevi@…" → "Dirga Pahlevi"); alamat lengkapnya jadi title. */
+    if (p) {
+      const depan = (p.email.split("@")[0] || "Akun").replace(/[._-]+/g, " ").trim();
+      const nama = depan.replace(/\b\p{L}/gu, (h) => h.toUpperCase());
+      setAkun({ nama, email: p.email, peran: p.isMasterAdmin ? "Master admin" : "Staf" });
+    }
     const dengar = (e: Event) => setPesan((e as CustomEvent<number>).detail);
     window.addEventListener(PERISTIWA_PESAN, dengar);
     return () => window.removeEventListener(PERISTIWA_PESAN, dengar);
@@ -129,6 +143,20 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
   useEffect(() => {
     if (grupAktif) setTerbuka((t) => (t.includes(grupAktif) ? t : [...t, grupAktif]));
   }, [grupAktif]);
+  /* Daftar menu bisa bergulir sendiri (submenu Keuangan tujuh baris), jadi
+     baris yang menyala dibawa ke dalam pandangan tiap pindah halaman — hanya
+     sejauh perlu, supaya daftar yang sudah memperlihatkannya tidak bergeser.
+     Bukan scrollIntoView: itu ikut menggulir SETIAP leluhur, termasuk laci
+     ponsel, yang lalu memotong logo di atasnya. */
+  useEffect(() => {
+    const baris = document.querySelector<HTMLElement>(`#${ID_REL} .k-nav[aria-current="page"]`);
+    const daftar = baris?.closest<HTMLElement>(".k-sisi__daftar");
+    if (!baris || !daftar || daftar.scrollHeight <= daftar.clientHeight) return;
+    const b = baris.getBoundingClientRect();
+    const d = daftar.getBoundingClientRect();
+    if (b.top < d.top) daftar.scrollTop -= d.top - b.top + 8;
+    else if (b.bottom > d.bottom) daftar.scrollTop += b.bottom - d.bottom + 8;
+  }, [kini]);
   const lipat = (label: string) =>
     setTerbuka((t) => (t.includes(label) ? t.filter((x) => x !== label) : [...t, label]));
 
@@ -154,6 +182,7 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
          padahal tidak ada. */
       jumlah: n.lencana === "pesan" && pesan ? pesan : undefined,
       jumlahJudul: n.lencana === "pesan" ? "pesan belum dibaca" : undefined,
+      kelompok: n.group || undefined,
     };
   });
 
@@ -222,17 +251,29 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
            dengan tombol lama: sesi DAN cache data dibuang (hapusSesi),
            lalu ganti riwayat supaya tombol Kembali tidak membuka panel. */
         kaki={
-          <button
-            type="button"
-            className="k-nav kl__keluar"
-            onClick={() => {
-              hapusSesi();
-              window.location.replace("/admin/masuk");
-            }}
-          >
-            <Ikon ikon={NavSignOut} ukuran={24} />
-            <span className="k-sisi__label">Keluar</span>
-          </button>
+          <div className="kl__akun">
+            {/* Avatar baru tergambar sesudah profil terbaca; sebelum itu
+                tempatnya dijaga supaya kartunya tidak melompat. */}
+            {akun ? <Avatar nama={akun.nama} ukuran="sm" hiasan /> : <span className="kl__akunkosong" aria-hidden="true" />}
+            <span className="kl__akunteks">
+              <b className="kl__akunnama" title={akun?.email}>{akun?.nama ?? "\u00a0"}</b>
+              <small className="kl__akunperan">{akun?.peran ?? "\u00a0"}</small>
+            </span>
+            {/* Keluar tetap tombol sungguhan di rel — sempat HILANG dari
+                seluruh panel (jebakan #38). Perilakunya sama dengan tombol
+                lama: sesi DAN cache data dibuang (hapusSesi), lalu ganti
+                riwayat supaya tombol Kembali tidak membuka panel. */}
+            <TombolIkon
+              ikon={NavSignOut}
+              judul="Keluar"
+              jenis="ghost"
+              className="kl__keluar"
+              onClick={() => {
+                hapusSesi();
+                window.location.replace("/admin/masuk");
+              }}
+            />
+          </div>
         }
       />
       {buka && <div className="k-ov__scrim kl__tirai" data-state="open" aria-hidden="true" onClick={() => setBuka(false)} />}

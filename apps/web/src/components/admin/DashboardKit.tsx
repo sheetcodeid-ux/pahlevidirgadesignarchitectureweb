@@ -797,7 +797,9 @@ function Isi() {
                   style={
                     {
                       "--tip-f": (iSorot + 0.5) / deret.length,
-                      "--tip-y": `${(Math.min(50, 50 - (bSorot.kasMasuk / maks) * 50) / 100) * 140}px`,
+                      /* Pecahan tinggi plot, bukan piksel: tinggi plotnya --dsb-plot-h,
+                         yang mengecil di layar satu-layar. */
+                      "--tip-p": Math.min(50, 50 - (bSorot.kasMasuk / maks) * 50) / 100,
                     } as React.CSSProperties
                   }
                   aria-hidden="true"

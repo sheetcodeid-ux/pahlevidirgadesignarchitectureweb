@@ -1,7 +1,8 @@
 import { KepalaHalaman, TombolBulat } from "../kit/Item";
 import { Cari } from "../kit/Isian";
 import { useEffect, useLayoutEffect, useState } from "react";
-import { ArrowLeft, List } from "../kit/ikon";
+import { ArrowLeft, List, SpecialMoonStars } from "../kit/ikon";
+import { gantiTema, temaGelap, PERISTIWA_TEMA } from "../../lib/tema";
 import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from "./RelKit";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
@@ -75,9 +76,30 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
     };
   }, []);
 
+  /* Tanggal hari ini di bawah judul. Dihitung SESUDAH dipasang: halaman ini
+     hasil build, dan tanggal build yang dirender server pasti berbeda dari
+     hari ini — nilai awal yang berbeda membuang pohon saat hidrasi
+     (jebakan #8). Sebelum itu barisnya kosong tapi tetap memegang tingginya. */
+  const [tanggal, setTanggal] = useState("\u00a0");
+  const [gelap, setGelap] = useState(false);
+  useEffect(() => {
+    setTanggal(
+      new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()),
+    );
+    setGelap(temaGelap());
+    const dengar = () => setGelap(temaGelap());
+    window.addEventListener(PERISTIWA_TEMA, dengar);
+    return () => window.removeEventListener(PERISTIWA_TEMA, dengar);
+  }, []);
+
   return (
     <KepalaHalaman
+      /* Kelas sendiri, bukan `.kl__utama > .k-kepalahal`: kepala ini island,
+         dan pembungkus <astro-island> membuat selektor anak langsung tidak
+         pernah cocok (jebakan #1). */
+      className="kl__kepala"
       judul={judul}
+      subjudul={tanggal}
       /* Hanya tampil di ponsel (CSS .kl__menu). Bulat, bukan kotak seperti
          tombol kembali: di kit, yang bulat membuka panel. */
       kiri={
@@ -133,6 +155,16 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
           <TitipanToast />
           <span className="k-kepalahal__grup">
             <TerbitKit dibangunPada={dibangunPada} />
+            {/* Tema terang/gelap — dulu cuma bisa lewat palet perintah. Ikon
+                bulan dari pustaka Coinest; pustaka itu tidak punya matahari,
+                jadi keadaannya dibawa aria-pressed dan bidangnya. */}
+            <TombolBulat
+              ikon={SpecialMoonStars}
+              judul={gelap ? "Ganti ke tema terang" : "Ganti ke tema gelap"}
+              aria-pressed={gelap}
+              className="kl__tema"
+              onClick={gantiTema}
+            />
             {/* Panel pratinjau, bukan pindah halaman — lihat panelKabar. */}
             <PanelPesan belumDibaca={pesanBaru} />
             <PanelNotifikasi baris={baris} />

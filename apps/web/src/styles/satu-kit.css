@@ -331,3 +331,27 @@
   .sat__kas .k-area { min-height: 180px; }
 }
 .sat__aksikepala { display: flex; align-items: center; gap: 4px; }
+
+/* --- SATU LAYAR (desktop) ---------------------------------------------------
+   Frame 22 setinggi 1.100px lebih. Kartu statistik dipadatkan (88 → 72),
+   kolom Tahap menggulir daftarnya sendiri seperti sebelumnya, dan kartu
+   rincian di kanan menggulir ISINYA — rincian tahap, Tugas Tahap Ini, Kas
+   Masuk, lalu tabel transaksi — alih-alih menekan keempatnya sampai grafik
+   dan tabelnya tak terbaca. Tinggi baris atasnya sengaja tidak mengisi kartu:
+   kepala tabel transaksi mengintip di bawahnya, tanda bahwa isinya berlanjut. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .sat { height: 100%; }
+  .sat--rangka { min-height: 0; }
+  .sat__alat { flex: none; margin: -8px 0 8px; }
+  .sat__stat { flex: none; }
+  .sat__stat > .k-statlebar { min-height: 72px; padding-top: 8px; padding-bottom: 8px; }
+  .sat > .k-pemisah { flex: none; margin: 14px 0; }
+  .sat__utama { flex: 1 1 0; height: auto; min-height: 0; }
+  .sat__rinci { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .sat__atas { flex: none; height: 400px; }
+  .sat__kanan { grid-template-rows: 128px minmax(0, 1fr); }
+  .sat__tips { overflow-y: auto; scrollbar-width: none; }
+  .sat__infonilai { margin-top: 18px; }
+  .sat__infogaris { margin: 18px 0 16px; }
+  .sat__trx { flex: none; overflow: visible; }
+}

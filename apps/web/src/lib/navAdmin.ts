@@ -58,14 +58,9 @@ export interface NavItem {
   /**
    * Label kelompok kecil di atas item.
    *
-   * SELURUHNYA kosong sekarang, dan itu disengaja: sidebar Coinest tidak
-   * punya satu pun kepala kelompok, dan kepala kelompok itulah yang paling
-   * membuat punggung panel ini terbaca berbeda dari framenya. Yang
-   * menggantikan pengelompokan adalah submenu ber-caret — bentuk yang memang
-   * dipakai Coinest untuk "Payments".
-   *
-   * Bidangnya dipertahankan, bukan dibuang, supaya pengelompokan bisa
-   * dihidupkan lagi tanpa menyentuh Sidebar maupun command palette.
+   * Digambar rel kit sebagai kepala kategori bergaris batas — setiap kali
+   * nilainya berganti dari baris sebelumnya. Baris yang berurutan dengan
+   * kelompok sama harus BERDEKATAN di daftar ini.
    */
   group: string;
 
@@ -94,12 +89,22 @@ export interface NavItem {
 // denah bangunan untuk proyek, amplop untuk pesan masuk, lapisan untuk
 // pustaka komponen.
 export const NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "dashboard", ikonKit: "NavSquaresFour", group: "" },
+  /* KATEGORI — permintaan pemilik: "sidebar dibuat berdasarkan kategori,
+     contoh kategori setting isinya apa, kategori utama apa". Membalik
+     keputusan lama yang membuang kepala kelompok karena sidebar Coinest
+     tidak punya; bentrok dengan frame itu disebutkan terbuka ke pemilik.
+     Urutannya tetap lingkaran bisnis di atas: yang dikerjakan tiap hari di
+     atas, setelan paling bawah. */
+  { label: "Dashboard", href: "/admin", icon: "dashboard", ikonKit: "NavSquaresFour", group: "Utama" },
+  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", ikonKit: "SpecialCheckSquare", group: "Utama" },
+  /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
+     satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */
+  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", ikonKit: "NavEnvelope", group: "Utama", lencana: "pesan" },
   {
     label: "Proyek",
     icon: "project",
     ikonKit: "Ruler",
-    group: "",
+    group: "Pekerjaan",
     children: [
       { label: "Semua Proyek", href: "/admin/proyek", icon: "list", ikonKit: "List" },
       // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
@@ -108,7 +113,6 @@ export const NAV: NavItem[] = [
       { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "globe", ikonKit: "Globe" },
     ],
   },
-  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", ikonKit: "SpecialCheckSquare", group: "" },
   /* Ketiganya satu menu, bukan tiga baris berjajar. Alasan berdampingannya
      tidak berubah — angka fee LAHIR di Keuangan (diketik sekali lewat Catat
      pengeluaran) dan Gaji menjawab pertanyaan yang sama dari sisi bulan —
@@ -118,7 +122,7 @@ export const NAV: NavItem[] = [
     label: "Keuangan",
     icon: "finance",
     ikonKit: "NavCoins",
-    group: "",
+    group: "Pekerjaan",
     children: [
       { label: "Ringkasan", href: "/admin/keuangan", icon: "finance", ikonKit: "ChartBar" },
       { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "CoinIn" },
@@ -129,21 +133,18 @@ export const NAV: NavItem[] = [
       { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "Wallet" },
     ],
   },
-  /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
-     satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */
-  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", ikonKit: "NavEnvelope", group: "", lencana: "pesan" },
-  { label: "Direktori", href: "/admin/direktori", icon: "directory", ikonKit: "IdentificationBadge", group: "" },
-  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", ikonKit: "ChatTeardropDots", group: "" },
-  { label: "Jurnal", href: "/admin/jurnal", icon: "document", ikonKit: "NavNewspaper", group: "" },
-  /* Enam halaman yang isinya dibaca PENGUNJUNG, dikumpulkan jadi satu menu.
-     Sebelumnya tujuh baris datar di kelompok tersendiri — dan kelompoknya
-     yang membuat sidebar ini tidak mungkin mirip Coinest, yang tidak punya
-     satu pun kepala kelompok. */
+  /* Orang di luar dan di dalam studio. "Tim & Freelancer" di sini (orangnya),
+     "Tim Studio" di Konten Situs (halaman yang dibaca pengunjung). */
+  { label: "Direktori", href: "/admin/direktori", icon: "directory", ikonKit: "IdentificationBadge", group: "Relasi" },
+  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", ikonKit: "Users", group: "Relasi" },
+  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", ikonKit: "ChatTeardropDots", group: "Relasi" },
+  { label: "Jurnal", href: "/admin/jurnal", icon: "document", ikonKit: "NavNewspaper", group: "Konten Situs" },
+  /* Halaman yang isinya dibaca PENGUNJUNG, dikumpulkan jadi satu menu. */
   {
     label: "Situs Publik",
     icon: "globe",
     ikonKit: "Globe",
-    group: "",
+    group: "Konten Situs",
     children: [
       { label: "Paket Layanan", href: "/admin/paket", icon: "cash", ikonKit: "NavSealPercent" },
       { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", ikonKit: "ImageSquare" },
@@ -154,21 +155,14 @@ export const NAV: NavItem[] = [
       { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", ikonKit: "House" },
     ],
   },
-  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", ikonKit: "Users", group: "" },
-  {
-    label: "Pengaturan",
-    icon: "settings",
-    ikonKit: "GearSix",
-    group: "",
-    children: [
-      { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "Info" },
-      { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "UserCircle" },
-    ],
-  },
+  /* Kategori Pengaturan: isinya baris DATAR, bukan submenu "Pengaturan" di
+     dalam kategori "Pengaturan" — dua tingkat bernama sama untuk dua baris. */
+  { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "GearSix", group: "Pengaturan" },
+  { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "UserCircle", group: "Pengaturan" },
   /* Ke pustaka komponen KIT, bukan /admin/ui: /admin/ui berisi sistem lama di
      kerangka lama, dan menu yang membawa ke tampilan lain sama sekali terbaca
      sebagai panel yang rusak. /admin/ui masih bisa dibuka lewat alamatnya. */
-  { label: "UI Component", href: "/admin/kit", icon: "component", ikonKit: "SpecialCube", group: "", masterOnly: true },
+  { label: "UI Component", href: "/admin/kit", icon: "component", ikonKit: "SpecialCube", group: "Pengaturan", masterOnly: true },
 ];
 
 /**

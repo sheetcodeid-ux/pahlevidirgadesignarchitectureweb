@@ -111,9 +111,12 @@ export function KepalaHalaman({
   ikonKembali,
   kiri,
   kanan,
+  subjudul,
   className,
 }: {
   judul: ReactNode;
+  /** Baris kecil di bawah judul — mis. tanggal hari ini di navbar panel. */
+  subjudul?: ReactNode;
   onKembali?: () => void;
   ikonKembali?: DataIkon;
   /** Sebelum tombol kembali dan judul — tombol menu geser di ponsel. */
@@ -130,7 +133,14 @@ export function KepalaHalaman({
             <Ikon ikon={ikonKembali} ukuran={12} />
           </button>
         )}
-        <h1 className="k-kepalahal__judul">{judul}</h1>
+        {subjudul !== undefined ? (
+          <div className="k-kepalahal__teks">
+            <h1 className="k-kepalahal__judul">{judul}</h1>
+            <p className="k-kepalahal__sub">{subjudul}</p>
+          </div>
+        ) : (
+          <h1 className="k-kepalahal__judul">{judul}</h1>
+        )}
       </div>
       {kanan && <div className="k-kepalahal__kanan">{kanan}</div>}
     </header>

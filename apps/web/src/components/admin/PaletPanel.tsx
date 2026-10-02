@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { gantiTema } from "../../lib/tema";
 import { navigate } from "astro:transitions/client";
 import { Palet, type KelompokPerintah } from "../kit/Palet";
 import { Bell, Plus, Ruler, Sliders } from "../kit/ikon";
@@ -72,13 +73,7 @@ export function PaletPanel({ buka, onBuka }: { buka: boolean; onBuka: (b: boolea
           ikon: Sliders,
           kata: "gelap terang mode",
           onPilih: () => {
-            const baru = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-            document.documentElement.setAttribute("data-theme", baru);
-            try {
-              localStorage.setItem("tema", baru);
-            } catch {
-              /* penyimpanan diblokir: temanya tetap berganti untuk halaman ini */
-            }
+            gantiTema();
             onBuka(false);
           },
         },

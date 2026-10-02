@@ -253,46 +253,51 @@ function Isi() {
         </section>
       </div>
 
-      <section className="pj__menunggu">
-        <KepalaSeksi judul="Belum Ditulis" />
-        <div className="pj__menunggudaftar">
-          {menunggu.map((t) => (
-            <a key={t.id} className="pj__kartumint" href={tautan(t)}>
-              <Sampul t={t} className="pj__sampul--mint" />
-              <span className="pj__info">
-                <Meta t={t} />
-                <span className="pj__judulsedang">{t.title}</span>
-                <span className="pj__ringkas">{t.excerpt}</span>
-                <Keadaan t={t} />
-              </span>
-            </a>
-          ))}
-          {menunggu.length === 0 && <p className="pj__kosong">Semua tulisan di kategori ini sudah terbit.</p>}
-        </div>
-      </section>
+      {/* Pembungkus ini cuma bekerja di layar laptop yang memuat satu layar:
+          di sana kedua seksi bawah digulir di dalam wadahnya sendiri. Di
+          lebar lain ia display: contents — tata letaknya tidak berubah. */}
+      <div className="pj__bawah">
+        <section className="pj__menunggu">
+          <KepalaSeksi judul="Belum Ditulis" />
+          <div className="pj__menunggudaftar">
+            {menunggu.map((t) => (
+              <a key={t.id} className="pj__kartumint" href={tautan(t)}>
+                <Sampul t={t} className="pj__sampul--mint" />
+                <span className="pj__info">
+                  <Meta t={t} />
+                  <span className="pj__judulsedang">{t.title}</span>
+                  <span className="pj__ringkas">{t.excerpt}</span>
+                  <Keadaan t={t} />
+                </span>
+              </a>
+            ))}
+            {menunggu.length === 0 && <p className="pj__kosong">Semua tulisan di kategori ini sudah terbit.</p>}
+          </div>
+        </section>
 
-      <section className="pj__semua">
-        <KepalaSeksi
-          judul="Semua Tulisan"
-          kanan={
-            <a className="pj__tambah" href="/admin/jurnal/satu?baru=1">
-              + Tulisan baru
-            </a>
-          }
-        />
-        <div className="pj__kisi">
-          {urutSemua.map((t) => (
-            <a key={t.id} className="pj__kartugrid" href={tautan(t)}>
-              <Sampul t={t} className="pj__sampul--grid" />
-              <span className="pj__info">
-                <Meta t={t} />
-                <span className="pj__judulsedang">{t.title}</span>
-              </span>
-            </a>
-          ))}
-          {urutSemua.length === 0 && <p className="pj__kosong">Belum ada tulisan di kategori ini.</p>}
-        </div>
-      </section>
+        <section className="pj__semua">
+          <KepalaSeksi
+            judul="Semua Tulisan"
+            kanan={
+              <a className="pj__tambah" href="/admin/jurnal/satu?baru=1">
+                + Tulisan baru
+              </a>
+            }
+          />
+          <div className="pj__kisi">
+            {urutSemua.map((t) => (
+              <a key={t.id} className="pj__kartugrid" href={tautan(t)}>
+                <Sampul t={t} className="pj__sampul--grid" />
+                <span className="pj__info">
+                  <Meta t={t} />
+                  <span className="pj__judulsedang">{t.title}</span>
+                </span>
+              </a>
+            ))}
+            {urutSemua.length === 0 && <p className="pj__kosong">Belum ada tulisan di kategori ini.</p>}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

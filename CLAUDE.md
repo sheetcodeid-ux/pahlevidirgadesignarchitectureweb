@@ -1039,6 +1039,34 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     tidak ada alat jadi — pindai nama kelas tiap stylesheet terhadap seluruh
     `src`, dengan memperhitungkan kelas yang dirakit (`k-tgl--${…}`).
 
+59. **Elemen absolut tanpa leluhur ber-posisi lolos dari `overflow:
+    hidden`.** Kerangka satu layar mengunci `.kl` setinggi layar dengan
+    `overflow: hidden`, tapi judul `.sr-only` di Detail Tulisan dihitung
+    terhadap DOKUMEN — halamannya tetap bisa digeser 636px di 1280x800.
+    Ditutup dengan `position: relative` di `.kl__isi`. Yang membuktikan
+    `scrollingElement.scrollHeight − innerHeight`, bukan melihat: tidak ada
+    yang tergambar di bagian yang bisa digeser itu.
+
+60. **Tinggi grafik yang dioper sebagai PROP jadi gaya inline.** `GrafikArea`
+    (`--k-area-t`), `KolomGrafik` dan `LabelYGrafik` (`--k-kolom-h`) menulis
+    tingginya di atribut `style`, jadi aturan stylesheet biasa tidak pernah
+    menang — penimpanya wajib `!important`. Dashboard memakai
+    `--dsb-plot-h` (140, satu layar 96) yang juga menggerakkan garis kisi dan
+    posisi kartu keterangannya; jangan kembali ke angka piksel di TSX.
+
+61. **Anak flex kolom ikut MENYUSUT kecuali `flex: none`.** Kepala rel
+    `height: 68px` tergambar 27px di laci ponsel, karena `flex: none`-nya
+    cuma dipasang di blok desktop, dan logonya terpotong. Tinggi tetap di
+    dalam flex kolom selalu butuh `flex: none` di aturan yang sama.
+
+62. **Daftar "DI ATAS LATAR HALAMAN" mengalahkan aturan KEADAAN.** `:is()`
+    mengambil kekhususan argumen tertingginya, jadi `.kl-body :is(…)`
+    bernilai (0,4,0) dan menimpa `.pjs__tagar[aria-checked="true"] .k-keping`
+    (0,3,0): keping kategori yang terpilih di Detail Tulisan tergambar
+    putih-di-atas-putih di produksi. Tiap butir daftar itu harus
+    mengecualikan keadaan aktifnya sendiri (`:not([aria-checked="true"])`,
+    `:not(.is-aktif)`).
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1198,11 +1226,15 @@ Tiap frame punya varian Tablet dan Mobile — responsifnya tidak perlu dikarang.
 
 Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 
-- Sidebar Coinest **tidak punya** kotak cari, kepala kelompok, maupun tombol
+- *(Kepala kelompok sudah DIKEMBALIKAN atas permintaan pemilik — lihat
+  "Rel berkategori" di Riwayat keputusan. Butir ini tetap benar tentang
+  framenya.)* Sidebar Coinest **tidak punya** kotak cari, kepala kelompok, maupun tombol
   sempitkan. Ketiganya sempat ada dan itu yang paling membuat panel terbaca
   berbeda. Command palette tetap hidup lewat Ctrl/Cmd+K, dipasang di topbar
   dengan `tanpaTombol`.
-- Header Coinest isinya **satu baris judul saja** di kiri. Baris
+- *(Tanggal hari ini sudah DITAMBAHKAN di bawah judul atas permintaan
+  pemilik — lihat "Navbar = bilah putih DIAM" di Riwayat keputusan.)*
+  Header Coinest isinya **satu baris judul saja** di kiri. Baris
   tanggal/jam/jumlah proyek di bawahnya tidak ada di framenya.
 - Footer ada di **setiap** frame Coinest.
 - Warna irisan donat itu **tangga hijau→abu berurut besaran**
@@ -1313,3 +1345,6 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Pindah menu dihangatkan saat kursor MENDEKATI tautan (`lib/hangat.ts`)** | Prefetch bawaan Astro cuma mengambil HTML; CSS dan modul island halaman tujuan baru diminta sesudah klik, satu RTT per lapis. `hangat.ts` mengambil ketiganya saat hover (jeda 60 ms, cuma tetikus) dan menyuapkan HTML-nya ke `astro:before-preparation`. Terukur dengan RTT 120 ms, kunjungan pertama: 514–778 → 180–364 ms. Ikon dipecah satu berkas per ikon (Rollup tidak pernah memecah satu modul), jadi JS per halaman 739 → ~660–690 KB. Angka lonceng dan status Terbitkan disimpan di modul selama 20 detik, dihapus tiap penulisan, supaya kepala halaman tidak mengambil ulang tiap pindah menu |
 | **Pustaka 62 komponen kit + halaman UI Component berbentuk FOLDER** | Permintaan pemilik: dirapikan per kategori, klik folder → daftar, klik komponen → demo hidup. Tiap tingkat punya alamat hash (`#overlay/alert-dialog`) supaya tombol Kembali dan tautan berbagi bekerja. Komponen kit yang setara dengan komponen lama (dialog, menu, toast) MENGGANTIKAN pemakaian lama di seluruh halaman kit, bukan hidup berdampingan — dua komponen untuk satu tugas pasti menyimpang (jebakan #32) |
 | **Ubin ikon kartu angka MINT, dan kartu statistik Dashboard bergaris tren** | Permintaan pemilik: "warna menyala, web hidup". Ubin pucat `--brand-soft` di atas kartu putih nyaris tak terbaca sebagai benda, sementara ubin ikon di daftar dan linimasa sudah mint — sekarang satu bahasa: ikon di ubin = mint, tinta hijau tua di kedua tema. Kartu statistik Dashboard memuat `Kilau` (grafik garis mungil enam bulan, dari data arus kas yang sudah dimuat — tanpa permintaan baru); warnanya token brand/bahaya, bukan biru #1F3045 milik frame yang tidak punya nilai tema gelap. Tanpa animasi masuk: "one klik pindah one klik berubah, jangan ada yang melekat" |
+| **Panel kit MUAT SATU LAYAR di laptop; halaman tidak bisa digeser** | Dipilih pemilik ("Muat satu layar"): rel dan navbar diam, `.kl` setinggi layar dan `overflow: hidden`, isi halaman mengisi sisa tingginya, dan yang memanjang menggulir di dalam KARTUNYA sendiri (daftar, tabel, lembar tulisan, galeri). Kerangkanya berlaku dari 56.01rem dan tinggi ≥600px; penyesuaian tiap halaman (grafik lebih pendek, kartu statistik dipadatkan) hanya dari 1288px, karena di bawahnya kolom-kolomnya memang ditumpuk dan area isi menggulir sebagai jaring pengaman. Terukur 32 halaman pada 1440x790 dan 1366x768: dokumen, area isi, dan rel 0px. Ponsel tetap boleh digulir. Yang SENGAJA digulir karena isinya memang lebih panjang dari layar mana pun: lembar Detail Tulisan (kolom kanannya diam), kartu rincian Satu Proyek, dua seksi bawah Jurnal, dan isi galeri UI Component. Kalau menambah halaman kit: ukur dengan `kl__isi.scrollHeight − clientHeight` dan `scrollingElement.scrollHeight − innerHeight`, keduanya harus 0 |
+| **Rel BERKATEGORI (Utama, Pekerjaan, Relasi, Konten Situs, Pengaturan) — membalik "Coinest tidak punya kepala kelompok"** | Permintaan pemilik: "sidebar dibuat berdasarkan kategori … harusnya ada batas". Bentrok dengan frame Coinest, yang tidak punya kepala kelompok — disebutkan terbuka ke pemilik. Kategorinya `group` di `lib/navAdmin.ts` (satu daftar untuk rel DAN palet, jebakan #32); submenu "Pengaturan" lama diratakan jadi kategori. Batasnya garis 1px `--k-garis-pohon` di atas tiap kepala kecuali yang pertama. Kaki rel jadi kartu akun (nama dari bagian lokal email, peran, tombol Keluar). Yang bergulir cuma daftar menunya — kepala dan kartu akun diam — dan itu pun hanya saat submenu besar terbuka (Keuangan, Situs Publik) |
+| **Navbar = bilah putih DIAM setinggi 68, menyambung dengan kepala rel** | Laporan pemilik: navbar ikut tergulir. Sekarang bilah bergaris bawah yang garisnya lurus menembus kepala rel; judul halaman + tanggal hari ini di kiri, cari / bola dunia / tema / pesan / lonceng di kanan. Tombol tema baru (`lib/tema.ts`, peristiwa `kit:tema` supaya palet dan tombolnya sepakat) |

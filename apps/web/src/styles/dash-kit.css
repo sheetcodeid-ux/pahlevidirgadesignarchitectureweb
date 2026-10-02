@@ -283,7 +283,12 @@
    dan dengan 6,5 garisnya jatuh di y403,9 — tergambar di baris piksel 404,
    satu di bawah framenya (403, terukur pada kelima garis). 5,6 membuatnya
    bulat tepat di 403. */
-.dsb__grafik { display: flex; align-items: flex-start; gap: 8px; min-height: 0; padding-top: 5.6px; }
+/* --dsb-plot-h: tinggi bidang plot. 140 di framenya; mode satu layar
+   mengecilkannya. Kolom dan label sumbu menerima tingginya sebagai prop
+   (gaya inline), jadi di sini ditimpa dengan !important. */
+.dsb__grafik { --dsb-plot-h: 140px; display: flex; align-items: flex-start; gap: 8px; min-height: 0; padding-top: 5.6px; }
+.dsb__grafik .k-kolom,
+.dsb__grafik .k-labely { --k-kolom-h: var(--dsb-plot-h) !important; }
 /* Garis kisi menjulur 8px melewati kolom pertama dan terakhir — di
    framenya dua kolom selebar 8 berisi garis saja mengapit kedua belas
    bulan. Di sini garisnya dilukis sebagai latar bidang plot dan kolomnya
@@ -297,10 +302,10 @@
   padding: 0 8px;
   background:
     linear-gradient(var(--border), var(--border)) 0 0 / 100% 1px no-repeat,
-    linear-gradient(var(--border), var(--border)) 0 35px / 100% 1px no-repeat,
-    linear-gradient(var(--border), var(--border)) 0 70px / 100% 1px no-repeat,
-    linear-gradient(var(--border), var(--border)) 0 105px / 100% 1px no-repeat,
-    linear-gradient(var(--border), var(--border)) 0 140px / 100% 1px no-repeat;
+    linear-gradient(var(--border), var(--border)) 0 calc(var(--dsb-plot-h) * 0.25) / 100% 1px no-repeat,
+    linear-gradient(var(--border), var(--border)) 0 calc(var(--dsb-plot-h) * 0.5) / 100% 1px no-repeat,
+    linear-gradient(var(--border), var(--border)) 0 calc(var(--dsb-plot-h) * 0.75) / 100% 1px no-repeat,
+    linear-gradient(var(--border), var(--border)) 0 var(--dsb-plot-h) / 100% 1px no-repeat;
 }
 .dsb__kolom { flex: 1; min-width: 0; border-radius: 6px; outline: none; }
 .dsb__kolom .k-kolom { width: 100%; }
@@ -321,7 +326,7 @@
   position: absolute;
   /* Tengah kolomnya: kolom-kolom duduk di dalam padding 8 bidang plot. */
   left: calc(8px + (100% - 16px) * var(--tip-f));
-  top: var(--tip-y);
+  top: calc(var(--tip-p) * var(--dsb-plot-h));
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -506,4 +511,34 @@
   .dsb__arusinfo { flex-wrap: wrap; }
   .dsb__legenda { padding-right: 0; }
   .dsb__stat > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+
+/* --- SATU LAYAR (desktop) -------------------------------------------------
+   Permintaan pemilik: halaman pas setinggi layar, tanpa gulir. Ketiga kolom
+   setinggi area isi; kartu TERAKHIR tiap kolom (Proyek Berjalan, Laba per
+   Proyek, Perlu Ditangani) mengisi sisanya dan menggulir isinya sendiri.
+   Kartu di atasnya kehilangan tinggi tetap frame 1024 (statistik 174, arus
+   kas 321) dan setinggi isinya — layar laptop 790 tidak punya 888px.
+   Hanya selama tiga kolom berdampingan: di bawah 1288 kolomnya ditumpuk,
+   dan tumpukan itu memang lebih panjang dari layar mana pun. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .dsb { height: 100%; grid-template-rows: minmax(0, 1fr); }
+  .dsb--rangka { min-height: 0; }
+  .dsb__kol { min-height: 0; gap: 16px; }
+  .dsb__kas { min-height: 0; gap: 18px; }
+  .dsb__stat .k-stat { min-height: 0; }
+  .dsb__arus { height: auto; gap: 12px; }
+  .dsb__proyek,
+  .dsb__tabel { flex: 1 1 0; min-height: 0; }
+  .dsb__pdaftar,
+  .dsb__tabelisi { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .dsb__statistik { gap: 14px; }
+  /* Jarak dalam kartu statistik dipadatkan supaya tabel Laba per Proyek
+     memuat dua baris utuh, bukan satu baris terpotong. */
+  .dsb__stat .k-stat { padding-top: 13px; padding-bottom: 13px; }
+  .dsb__stat .k-stat .k-tren { margin-top: 14px; }
+  .dsb__stat .k-stat__nilai { margin-top: 9px; }
+  .dsb__stat .k-stat__judul { margin-top: 11px; }
+  .dsb__kas { gap: 14px; }
+  .dsb__grafik { --dsb-plot-h: 96px; }
 }

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
 import { CaretDown } from "./ikon";
 import { Angka, Titik } from "./Lencana";
@@ -46,6 +46,12 @@ export interface ItemNav {
    * lain. Terukur di audit: 4 baris mati di tiap halaman kit.
    */
   onLipat?: () => void;
+  /**
+   * Kategori baris ini. Setiap kali nilainya BERGANTI dari baris sebelumnya,
+   * rel menggambar kepala kategori bergaris batas di atasnya. Di rel sempit
+   * yang tergambar cuma garisnya — teksnya tidak muat di 72px.
+   */
+  kelompok?: string;
 }
 
 export interface PropSisiNav {
@@ -61,6 +67,10 @@ export interface PropSisiNav {
   id?: string;
 }
 
+/* Kategori pertama tanpa garis di atasnya — garis batas memisahkan dua
+   kategori, bukan memisahkan logo dari kategori pertama. */
+const kelasKepala = (pertama: boolean) => (pertama ? "k-sisi__kelompok k-sisi__kelompok--awal" : "k-sisi__kelompok");
+
 export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav) {
   return (
     <nav
@@ -70,11 +80,18 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
     >
       <div className="k-sisi__kepala">{logo}</div>
       <ul className="k-sisi__daftar">
-        {item.map((it) => {
+        {item.map((it, i) => {
+          const kepala = it.kelompok && it.kelompok !== item[i - 1]?.kelompok ? it.kelompok : null;
           const idAnak = it.anak ? `${id ?? "k-sisi"}-anak-${it.label.replace(/[^A-Za-z0-9]+/g, "-").toLowerCase()}` : undefined;
           const Akar = it.onLipat ? "button" : "a";
           return (
-          <li key={it.label}>
+          <Fragment key={it.label}>
+          {kepala && (
+            <li className={kelasKepala(i === 0)} aria-hidden={sempit || undefined}>
+              <span className="k-sisi__kelompokteks">{kepala}</span>
+            </li>
+          )}
+          <li>
             <Akar
               className={["k-nav", it.aktif && "is-aktif"].filter(Boolean).join(" ")}
               {...(it.onLipat
@@ -134,6 +151,7 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
               </ul>
             )}
           </li>
+          </Fragment>
           );
         })}
       </ul>

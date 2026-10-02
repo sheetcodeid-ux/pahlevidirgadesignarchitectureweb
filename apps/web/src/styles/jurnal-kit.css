@@ -164,6 +164,7 @@
 .pj__kartumint { min-height: 134px; background: var(--brand-soft); }
 
 .pj__semua { margin-top: 24px; }
+.pj__bawah { display: contents; }
 .pj__kisi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 16px; margin-top: 13px; }
 .pj__tambah { font-size: var(--k-t12); font-weight: var(--k-med); color: var(--brand); text-decoration: none; }
 .pj__tambah:hover { text-decoration: underline; }
@@ -204,6 +205,37 @@
 @media (max-width: 40rem) {
   .pj__unggulandaftar,
   .pj__kisi { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- SATU LAYAR (desktop): Jurnal -------------------------------------------
+   Frame 37 setinggi 1.400px lebih. Di layar laptop baris pertama dipadatkan
+   (sampul unggulan 185 → 140, "Baru Diubah" menggulir kartunya sendiri), dan
+   dua seksi bawah — Belum Ditulis lalu Semua Tulisan — berbagi satu wadah
+   gulir yang mengisi sisa tinggi. Garis atasnya menandai batas gulirnya. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .pj { height: 100%; }
+  .pj--rangka { min-height: 0; }
+  .pj__keping { flex: none; }
+  .pj__baris1 { flex: none; margin-top: 20px; }
+  .pj__unggulan, .pj__baru { display: flex; flex-direction: column; min-height: 0; }
+  .pj__unggulan .pj__sampul { height: 140px; }
+  .pj__baru { position: relative; }
+  .pj__barudaftar { position: absolute; top: 24px; bottom: 0; left: 0; right: 0; margin-top: 0; padding-top: 13px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  /* Kartu yang terpotong di tepi bawah memudar, tanda daftarnya berlanjut. */
+  .pj__barudaftar { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
+  .pj__bawah {
+    display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    margin-top: 20px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .pj__bawah > .pj__menunggu { margin-top: 14px; }
+  .pj__bawah > .pj__semua { padding-bottom: 24px; }
 }
 
 /* --- Frame 40 ---------------------------------------------------------------
@@ -394,4 +426,45 @@
   .pjs__sampul, .pjs__terkait { margin-left: 0; margin-right: 0; }
   .pjs__badan { margin: 32px 0 0; }
   .pjs__terkait .pj__kisi { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- SATU LAYAR (desktop): Detail Tulisan -----------------------------------
+   Tulisan memang lebih panjang dari layar, jadi yang digulir LEMBARNYA —
+   seperti dokumen di penyunting — sementara kolom kanan (daftar isi, bagikan,
+   kategori, alamat) diam di tempat sejak baris pertama. Di frame 40 kolom
+   kanan baru mulai di bawah sampul; di sini ia naik ke atas, karena kalau
+   tidak ia ikut tergulir pergi bersama sampulnya. Tanpa pembungkus baru:
+   `.pjs__badan` dilarutkan (display: contents) supaya kolom kanan bisa
+   ditempatkan di grid `.pjs` sendiri. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .pjs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 236px;
+    column-gap: 40px;
+    align-content: start;
+    height: 100%;
+    padding: 0 4px 32px 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .pjs--rangka { min-height: 0; }
+  .pjs > *, .pjs__utama { grid-column: 1; }
+  .pjs__badan { display: contents; }
+  .pjs__kepala { padding-top: 32px; }
+  .pjs__sampul { margin: 32px 0 0; }
+  .pjs__utama { margin-top: 40px; }
+  .pjs__samping {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100%;
+    padding-top: 32px;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .pjs__terkait { margin: 56px 0 0; }
+  .pjs__terkait .pj__kisi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

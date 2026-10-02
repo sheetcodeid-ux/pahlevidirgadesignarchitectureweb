@@ -496,3 +496,34 @@
 @media (max-width: 40rem) {
   .keu__arusinfo { flex-wrap: wrap; }
 }
+
+/* --- SATU LAYAR (desktop) ---------------------------------------------------
+   Dua baris frame (526 + 380) tidak muat di area isi laptop (±645). Baris
+   atas dapat 1,8 bagian dan baris bawah 1: grafik arus kas dan cincin beban
+   mengecil, kartu statistik dirapatkan, dan setiap daftar (piutang,
+   transaksi, proyek berjalan, tenggat tagihan) menggulir isinya sendiri di
+   dalam kartunya. Kartu yang isinya tetap lebih tinggi dari tempatnya
+   (rincian beban) menggulir seluruh kartunya, bukan terpotong. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .keu { height: 100%; grid-template-rows: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; }
+  .keu--rangka { min-height: 0; }
+  .keu > * { min-height: 0; }
+  .keu__kolomkiri,
+  .keu__kolomkanan { grid-template-rows: auto minmax(0, 1fr); gap: 16px; min-height: 0; }
+  .keu__stat { gap: 12px; }
+  .keu__stat > .k-statkecil { height: 72px; padding-top: 10px; padding-bottom: 10px; }
+  .keu__arus { min-height: 0; }
+  .keu__arus .k-area { --k-area-t: 104px !important; margin-top: 8px; }
+  .keu__beban { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  .keu__beban .k-cincin { width: 150px; height: 150px; }
+  .keu__beban .keu__minilabel { margin-top: 12px; }
+  .keu__saldo,
+  .keu__tabel,
+  .keu__rencana,
+  .keu__aktivitas { min-height: 0; }
+  .keu__saldodaftar,
+  .keu__tabelisi,
+  .keu__rencanadaftar { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .keu__tabelisi { margin-top: 12px; }
+  .keu__aktivitasisi { margin-top: 12px; }
+}

@@ -6,6 +6,7 @@
 .gal { display: flex; min-width: 0; flex-direction: column; gap: 20px; }
 .gal-atas { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .gal-atas--dalam { margin-bottom: 4px; }
+.gal-gulir { display: contents; }
 .gal-ringkas { margin: -4px 0 0; color: var(--text-muted); font-size: var(--k-t12); }
 .gal-ringkas b { color: var(--text-strong); font-weight: var(--k-semi); }
 
@@ -223,3 +224,30 @@
 
 .gal .k-navmenu__daftar { flex-wrap: wrap; }
 .gal-detail__catatan { margin: -6px 0 10px; }
+
+/* --- SATU LAYAR (desktop) ---------------------------------------------------
+   Remah, kotak cari, dan menu navigasi diam di atas; folder, daftar komponen,
+   dan demo digulir di bawahnya. Pustaka ini memang lebih panjang dari layar —
+   demo komponen tidak bisa dipadatkan tanpa mengubah komponennya sendiri. */
+@media (min-width: 56.01rem) and (min-height: 600px) {
+  #isi-kit { display: flex; flex-direction: column; }
+  .gal { flex: 1 1 auto; min-height: 0; }
+  .gal-gulir {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 0 -8px;
+    padding: 0 8px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  /* Sembilan folder di empat kolom berarti folder Ikon sendirian di baris
+     ketiga, di bawah tepi layar, tanpa tanda apa pun bahwa ia ada. Lima
+     kolom memuat kesembilannya di dua baris. */
+  .gal-folderkisi { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}

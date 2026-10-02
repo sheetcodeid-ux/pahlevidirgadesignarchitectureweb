@@ -138,36 +138,40 @@ export function Galeri({ pakai = {} }: { pakai?: Record<string, string[]> }) {
         />
       )}
 
-      {hasilCari ? (
-        <HasilCari hasil={hasilCari} pakai={pakai} onBuka={(f, e) => ke(f.id, e.id)} />
-      ) : entri && folder ? (
-        <Detail folder={folder} entri={entri} pakai={pakai[entri.id] ?? []} onKe={ke} />
-      ) : folder ? (
-        <IsiFolder folder={folder} pakai={pakai} onBuka={(e) => ke(folder.id, e.id)} />
-      ) : folderIkon ? (
-        <FolderIkon />
-      ) : (
-        <>
-          <p className="gal-ringkas">
-            <b>{JUMLAH_KOMPONEN}</b> komponen dalam <b>{KATALOG.length}</b> folder · <b>{dipakai}</b> sudah dipakai di halaman panel
-          </p>
-          <div className="gal-folderkisi">
-            {KATALOG.map((f) => (
-              <KartuFolder
-                key={f.id}
-                ikon={f.ikon}
-                nama={f.nama}
-                ket={f.ket}
-                jumlah={f.isi.length}
-                dipakai={f.isi.filter((e) => (pakai[e.id]?.length ?? 0) > 0).length}
-                cuplik={f.isi.map((e) => e.nama)}
-                onBuka={() => ke(f.id)}
-              />
-            ))}
-            <KartuFolder ikon={IKON_FOLDER_IKON} nama="Ikon" ket="Bahan semua komponen — 179 bentuk dari Coinest." jumlah={179} cuplik={[]} onBuka={() => ke("ikon")} satuan="bentuk" />
-          </div>
-        </>
-      )}
+      {/* Di layar laptop yang memuat satu layar, isi di bawah menu navigasi
+          digulir di dalam wadah ini; di lebar lain ia display: contents. */}
+      <div className="gal-gulir">
+        {hasilCari ? (
+          <HasilCari hasil={hasilCari} pakai={pakai} onBuka={(f, e) => ke(f.id, e.id)} />
+        ) : entri && folder ? (
+          <Detail folder={folder} entri={entri} pakai={pakai[entri.id] ?? []} onKe={ke} />
+        ) : folder ? (
+          <IsiFolder folder={folder} pakai={pakai} onBuka={(e) => ke(folder.id, e.id)} />
+        ) : folderIkon ? (
+          <FolderIkon />
+        ) : (
+          <>
+            <p className="gal-ringkas">
+              <b>{JUMLAH_KOMPONEN}</b> komponen dalam <b>{KATALOG.length}</b> folder · <b>{dipakai}</b> sudah dipakai di halaman panel
+            </p>
+            <div className="gal-folderkisi">
+              {KATALOG.map((f) => (
+                <KartuFolder
+                  key={f.id}
+                  ikon={f.ikon}
+                  nama={f.nama}
+                  ket={f.ket}
+                  jumlah={f.isi.length}
+                  dipakai={f.isi.filter((e) => (pakai[e.id]?.length ?? 0) > 0).length}
+                  cuplik={f.isi.map((e) => e.nama)}
+                  onBuka={() => ke(f.id)}
+                />
+              ))}
+              <KartuFolder ikon={IKON_FOLDER_IKON} nama="Ikon" ket="Bahan semua komponen — 179 bentuk dari Coinest." jumlah={179} cuplik={[]} onBuka={() => ke("ikon")} satuan="bentuk" />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -373,3 +373,17 @@
   .pro__arus { overflow-x: auto; }
   .pro__grafik { min-width: 540px; }
 }
+
+/* --- SATU LAYAR (desktop) ---------------------------------------------------
+   Tinggi tetap 878 milik frame diganti tinggi area isi. Daftar proyek di kiri
+   sudah bergulir sendiri; di kanan, baris atas (rincian, pembayaran, arus
+   kas) setinggi isinya dan tabel transaksi mengisi sisanya — barisnya
+   bergulir di dalam kartunya. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .pro { height: 100%; }
+  .pro--rangka { min-height: 0; }
+  .pro__kanan { grid-template-rows: auto minmax(0, 1fr); gap: 16px; }
+  .pro__kolomrinci { grid-template-rows: auto auto; gap: 16px; }
+  .pro__trx { min-height: 0; }
+  .pro__tabel { flex: 1 1 0; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+}

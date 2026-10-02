@@ -268,3 +268,20 @@
   .fee { grid-template-columns: minmax(0, 1fr); }
   .fee__info--legenda { flex-wrap: wrap; }
 }
+
+/* --- SATU LAYAR (desktop): Fee Proyek dan Gaji ------------------------------
+   Dua baris frame (373 + 485) dipadatkan ke tinggi area isi: kedua grafik
+   baris atas mengecil (bidang 174 → 112; batangnya persen, jadi ikut), dan
+   ketiga kartu baris bawah menggulir isinya sendiri — daftar penerima,
+   rincian per jenis, dan tabel. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .fee { height: 100%; grid-template-rows: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; }
+  .fee--rangka { min-height: 0; }
+  .fee__info { margin-top: 12px; }
+  .fee__bulan .k-area { --k-area-t: 112px !important; }
+  .fee__kolomgrafik { --k-kolom-h: 112px !important; }
+  .fee__pantau { flex: 1 1 0; gap: 14px; margin-top: 14px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .fee__jenis { overflow-y: auto; scrollbar-width: thin; }
+  .fee__busur { margin-top: 12px; }
+  .fee__garis { margin-top: 16px; }
+}

@@ -252,20 +252,84 @@ const path = Astro.url.pathname;
     flex: 1;
     min-width: 0;
     flex-direction: column;
-    /* 22 atas / 28 samping / 24 bawah — talang framenya. */
-    padding: 22px 28px 24px;
+    --kl-talang: 28px;
   }
-  /* 20 dari kepala ke badan, 22,7 dari badan ke kaki. Keduanya diukur dari
-     framenya, bukan dipilih: kepala berakhir di y60 dan badan mulai y80;
-     badan berakhir 1005,5 dan tinta kaki mulai 1028,2. */
+  /* --- Navbar: bilah sendiri yang DIAM -----------------------------------
+     Permintaan pemilik: "navbar saat saya scroll ke bawah tidak ketahan".
+     Kepala halaman dulu cuma baris judul di atas isi, ikut tergulir pergi.
+     Sekarang ia bilah selebar kolom konten: bidang permukaan, garis bawah,
+     dan menempel di atas. Di desktop seluruh kerangka setinggi layar (lihat
+     di bawah), jadi ia memang tidak pernah bergerak; di ponsel halamannya
+     masih bisa digulir, dan `sticky` yang menahannya. TANPA backdrop-filter
+     — jebakan #23: bilah lengket yang mengaburkan latarnya adalah pemanas
+     perangkat. Latarnya pejal. */
+  .kl__kepala {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    flex: none;
+    min-height: 68px;
+    padding: 14px var(--kl-talang);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  /* 20 dari kepala ke badan seperti framenya. */
   .kl__isi {
     flex: 1;
-    margin-top: 20px;
+    padding: 20px var(--kl-talang) 0;
   }
-  .kl__remah { margin-top: 14px; }
-  .kl__isi--remah { margin-top: 12px; }
+  .kl__remah { margin: 14px var(--kl-talang) 0; }
+  .kl__isi--remah { padding-top: 12px; }
   .kl__utama > .k-kakihal {
-    margin-top: 22.7px;
+    flex: none;
+    margin: 0;
+    padding: 18px var(--kl-talang) 20px;
+  }
+
+  /* --- SATU LAYAR, tanpa gulir halaman -----------------------------------
+     Permintaan pemilik: "semua tampilan jangan bisa digeser ke atas ke
+     bawah, buat pas" — dipilihnya bentuk frame Coinest: halaman pas setinggi
+     layar, rel dan navbar diam, daftar yang panjang digulir di dalam
+     kartunya sendiri.
+
+     Kerangkanya setinggi viewport dan tidak pernah bergulir. Isi halaman
+     mengisi sisa tingginya: akar halaman jadi butir flex yang tumbuh DAN
+     menyusut (min-height 0), dan tiap halaman menyusun kartunya supaya muat
+     — yang panjang (tabel, daftar, isian) bergulir di dalam kartunya.
+
+     `overflow-y: auto` di .kl__isi adalah JARING PENGAMAN, bukan tujuan:
+     halaman yang belum pas tetap bisa dibaca seluruhnya alih-alih
+     terpotong diam-diam. Targetnya nol gulir di sana pada 1440x790 (MacBook
+     dengan bilah peramban), diukur per halaman.
+
+     Hanya di layar lebar DAN cukup tinggi. Di bawah 56rem rel jadi menu
+     geser dan isinya ditumpuk satu kolom — tumpukan itu memang lebih
+     panjang dari layar ponsel mana pun, jadi di sana halamannya bergulir
+     seperti biasa, dengan navbar menempel. */
+  @media (min-width: 56.01rem) and (min-height: 600px) {
+    .kl { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+    .kl__utama { height: 100%; }
+    /* `position: relative`: elemen absolut tanpa leluhur ber-posisi
+       (`.sr-only` judul tersembunyi) dihitung terhadap DOKUMEN, lolos dari
+       `overflow: hidden` milik .kl, dan memanjangkan halaman — Detail
+       Tulisan sempat bisa digeser 636px di 1280x800 karenanya. */
+    .kl__isi {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    /* Akar halaman — langsung, atau lewat <astro-island> yang
+       `display: contents` (jebakan #1: selektornya harus menyebut
+       pembungkusnya, ia tetap ada bagi CSS). */
+    .kl__isi > :not(astro-island):not(script):not(style),
+    .kl__isi > astro-island > * {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
   }
 
   /* Rel kanan frame 37: 305 lebar, bergaris kiri, isinya 248 di x+29. Ia
@@ -291,7 +355,6 @@ const path = Astro.url.pathname;
       linear-gradient(var(--border), var(--border)) calc(100% - 304px) 0 / 1px 100% no-repeat,
       linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
   }
-  .kl--relkanan .kl__utama { padding-right: 27px; }
   /* Di bawah 1408 (1360 + selisih rel) rel kanan memakan terlalu banyak dari kolom konten — pada
      1280 kartu "Baru Diubah" tinggal 160px teks; isinya ringkasan yang juga
      bisa dicapai dari keping kategori di atas. */
@@ -300,7 +363,6 @@ const path = Astro.url.pathname;
     .kl--relkanan {
       background: linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
     }
-    .kl--relkanan .kl__utama { padding-right: 28px; }
   }
 
   /* --- Ponsel: rel samping jadi menu geser ---------------------------------
@@ -368,8 +430,6 @@ const path = Astro.url.pathname;
      admin ini tidak pernah dibuka dari ponsel oleh staf — tapi dibuka dari
      laptop kecil, dan di situ 192 + 1192 + talang tidak muat. */
   @media (max-width: 1248px) {
-    .kl__utama {
-      padding: 22px 20px 24px;
-    }
+    .kl__utama { --kl-talang: 20px; }
   }
 </style>
