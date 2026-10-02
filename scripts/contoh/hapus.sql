@@ -1,5 +1,7 @@
 -- Membuang SELURUH data contoh (ID berawalan c0de000) dan mengembalikan nilai
 -- proyek yang diubah ke aslinya. Aman dijalankan berulang.
+delete from public.journal_posts where id::text like 'c0de000%';
+delete from public.testimonials where id::text like 'c0de000%';
 delete from public.project_payments where id::text like 'c0de000%';
 delete from public.invoices where id::text like 'c0de000%';
 delete from public.project_costs where id::text like 'c0de000%';

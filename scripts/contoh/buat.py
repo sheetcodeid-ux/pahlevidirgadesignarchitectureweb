@@ -1,4 +1,4 @@
-"""Menyusun scripts/contoh/isi.sql dan hapus.sql — data contoh Jan–Sep 2026.
+"""Menyusun scripts/contoh/isi.sql dan hapus.sql — data contoh Jan–Okt 2026.
 
 Setiap baris contoh ber-ID berawalan `c0de000N-`, jadi SATU perintah
 (hapus.sql) membuang semuanya tanpa menyentuh data asli. Nilai asli proyek
@@ -30,7 +30,7 @@ def q(v):
         return str(v)
     return "'" + str(v).replace("'", "''") + "'"
 
-sql = ["-- Data contoh Jan–Sep 2026. Dibuat scripts/contoh/buat.py — jangan disunting tangan.", ""]
+sql = ["-- Data contoh Jan–Okt 2026. Dibuat scripts/contoh/buat.py — jangan disunting tangan.", ""]
 
 # --- Proyek: nilai kontrak & tahap (asli dikembalikan di hapus.sql) -------
 UBAH = [  # (proyek, kontrak baru, tahap baru, kontrak asli, tahap asli)
@@ -240,12 +240,85 @@ for i, (nama, kat, perus, tlp, email, catatan) in enumerate(KONTAK, 1):
         f"({q(cid(8, i))}, {q(nama)}, '{kat}', {q(perus)}, {q(tlp)}, {q(email)}, {q(catatan)});"
     )
 
+# --- Oktober (bulan berjalan) --------------------------------------------
+# Kartu "bulan ini" di Dashboard dan Keuangan membaca bulan BERJALAN; tanpa
+# baris Oktober semuanya Rp0. ID baru diberi nomor sesudah yang sudah ada
+# supaya baris lama di produksi tidak berubah.
+sql.append("")
+sql.append("-- Oktober: termin 2 Sintang dibayar, dua biaya, satu pesan baru.")
+sql.append(
+    f"update public.invoices set status = 'lunas', paid_at = '2026-10-01 10:30+07' where id = {q(cid(1, 13))};"
+)
+sql.append(
+    "insert into public.project_payments (id, project_id, invoice_id, amount, kind, method, receiver, note, paid_at, created_at) values "
+    f"({q(cid(2, 11))}, {q(P['sintang'])}, {q(cid(1, 13))}, 36000000, 'termin', 'transfer', 'Sari Ningsih', "
+    "'Terlambat enam hari dari tenggat', '2026-10-01 10:30+07', '2026-10-01 10:30+07');"
+)
+OKT_BIAYA = [
+    (33, "nordu", "Render suasana malam 4 frame", "freelancer", 5_200_000, "2026-10-01", "nanda"),
+    (34, "elsana", "Cetak gambar kerja desain 2", "operasional", 1_400_000, "2026-10-01", None),
+]
+for i, k, label, kat, nominal, tgl, orang in OKT_BIAYA:
+    sql.append(
+        "insert into public.project_costs (id, project_id, label, category, amount, incurred_on, team_member_id, created_at) values "
+        f"({q(cid(3, i))}, {q(P[k])}, {q(label)}, '{kat}', {nominal}, '{tgl}', {q(T[orang] if orang else None)}, '{tgl} 15:00+07');"
+    )
+sql.append(
+    "insert into public.inquiries (id, name, email, phone, project_type, budget_range, message, status, source, ip_hash, user_agent, created_at) values "
+    f"({q(cid(7, 15))}, 'Bayu Santoso', 'bayu.santoso@example.com', null, 'interior', 'Rp100 – 250 jt', "
+    "'Kami baru membeli ruko di Jl. Sultan Abdurrahman dan ingin menjadikannya kantor konsultan dengan ruang rapat kecil. Apakah studio bisa membantu sampai pemilihan furnitur?', "
+    f"'new', 'website', encode(sha256(convert_to('bayu.santoso@example.com', 'UTF8')), 'hex'), {q(UA)}, '2026-10-01 09:12+07');"
+)
+
+# --- Testimoni: SEMUANYA "menunggu" --------------------------------------
+# Situs publik hanya menampilkan yang 'disetujui'. Yang menunggu cuma
+# terlihat staf di panel — testimoni karangan yang tampil di situs adalah
+# ulasan palsu, jadi JANGAN setujui baris berawalan c0de0009. Namanya dari
+# pesan masuk karangan di atas, bukan klien asli; tidak ditautkan ke proyek.
+TESTI = [
+    ("Hendra Wijaya", 5, "Tim studio sabar sekali menghadapi revisi kami. Alur bar dan dapur yang mereka usulkan membuat dua barista bisa kerja tanpa saling tabrakan saat ramai.", "2026-04-18 19:20+07"),
+    ("Yuliana Effendi", 5, "Yang paling kami hargai: setiap termin ada laporan yang jelas, jadi kami tahu uang kami dipakai untuk apa. Gambar kerjanya rapi dan kontraktor jarang bertanya ulang.", "2026-06-02 10:05+07"),
+    ("Maria Susanti", 4, "Dapur kami sekarang terang dan tidak lembap lagi. Prosesnya sedikit lebih lama dari jadwal karena kami sendiri yang lama memilih material.", "2026-07-11 16:40+07"),
+    ("Hartono Wijaya", 5, "Untuk tiga outlet sekaligus, koordinasinya tertata. Kami bisa memantau tiap proyek dari tautan progres tanpa harus menelepon.", "2026-09-22 08:30+07"),
+]
+for i, (nama, nilai, kutipan, waktu) in enumerate(TESTI, 1):
+    sql.append(
+        "insert into public.testimonials (id, project_id, client_name, quote, rating, status, is_featured, created_at, updated_at) values "
+        f"({q(cid(9, i))}, null, {q(nama)}, {q(kutipan)}, {nilai}, 'menunggu', false, {q(waktu)}, {q(waktu)});"
+    )
+
+# --- Jurnal: SEMUANYA draf (published_at null) ----------------------------
+# Draf tidak punya halaman publik, TAPI indeks /jurnal menampilkan judulnya
+# sebagai "rencana" begitu situs dibangun ulang (listForIndex). Hapus dulu
+# sebelum menekan Terbitkan kalau judul ini tidak boleh terlihat.
+JURNAL = [
+    ("ventilasi-silang-rumah-tropis", "Ventilasi silang: rumah sejuk tanpa bergantung AC", "site", 6,
+     "Arah angin, letak bukaan, dan tinggi plafon menentukan apakah sebuah rumah di khatulistiwa bisa bernapas sendiri.",
+     "## Mulai dari arah angin\n\nSebelum menggambar denah, kami mencatat dari mana angin datang di tapak pada pagi dan sore hari.\n\n## Bukaan berpasangan\n\nSatu jendela tidak membuat aliran. Udara butuh jalan masuk dan jalan keluar di sisi yang berseberangan.\n\n## Plafon tinggi dan roster\n\nUdara panas naik. Plafon yang lebih tinggi dan roster di bagian atas dinding memberi panas itu tempat untuk pergi.", "2026-08-12 10:00+07"),
+    ("termin-pembayaran-jasa-arsitek", "Membaca termin pembayaran jasa arsitek", "money", 5,
+     "Kenapa uang muka, termin, dan pelunasan dibagi seperti itu — dan apa yang Anda terima di tiap tahap.",
+     "## Uang muka\n\nUang muka menahan jadwal tim untuk proyek Anda dan membiayai survei serta konsep awal.\n\n## Termin desain\n\nSetiap termin terikat pada hasil yang bisa Anda periksa: gambar skematik, desain lanjutan, lalu gambar kerja.\n\n## Pelunasan\n\nPelunasan dibayar saat seluruh gambar kerja diserahkan dan siap dipakai kontraktor.", "2026-09-03 14:00+07"),
+    ("izin-pbg-coffee-shop", "PBG untuk coffee shop: yang perlu disiapkan sejak awal", "permit", 7,
+     "Persetujuan Bangunan Gedung bukan urusan terakhir. Beberapa keputusan desain sebaiknya mengikuti syaratnya sejak sketsa pertama.",
+     None, "2026-09-20 09:00+07"),
+    ("material-tahan-lembap", "Material yang tahan lembap di tepi sungai", "build", 6,
+     "Kayu, cat, dan penutup lantai yang bertahan di udara lembap Kalimantan Barat — dari pengalaman proyek kami.",
+     None, "2026-09-28 11:00+07"),
+]
+for i, (slug, judul, kat, menit, ringkas, isi, waktu) in enumerate(JURNAL, 1):
+    sql.append(
+        "insert into public.journal_posts (id, slug, title, excerpt, body, category, read_minutes, published_at, created_at, updated_at) values "
+        f"({q(cid('a', i))}, {q(slug)}, {q(judul)}, {q(ringkas)}, {q(isi)}, '{kat}', {menit}, null, {q(waktu)}, {q(waktu)});"
+    )
+
 d = Path(__file__).parent
 (d / "isi.sql").write_text("\n".join(sql) + "\n")
 
 hapus = [
     "-- Membuang SELURUH data contoh (ID berawalan c0de000) dan mengembalikan nilai",
     "-- proyek yang diubah ke aslinya. Aman dijalankan berulang.",
+    "delete from public.journal_posts where id::text like 'c0de000%';",
+    "delete from public.testimonials where id::text like 'c0de000%';",
     "delete from public.project_payments where id::text like 'c0de000%';",
     "delete from public.invoices where id::text like 'c0de000%';",
     "delete from public.project_costs where id::text like 'c0de000%';",

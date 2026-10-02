@@ -1,4 +1,4 @@
--- Data contoh Jan–Sep 2026. Dibuat scripts/contoh/buat.py — jangan disunting tangan.
+-- Data contoh Jan–Okt 2026. Dibuat scripts/contoh/buat.py — jangan disunting tangan.
 
 update public.projects set contract_value = 145000000, pipeline_stage = 'desain_1' where id = 'dc6375e1-94d7-4be2-9f5e-d967b6c09f14';
 update public.projects set contract_value = 120000000, pipeline_stage = 'dp_50' where id = 'edb56d6a-ba39-44c1-868c-3bd543ff3daf';
@@ -124,3 +124,38 @@ insert into public.directory_contacts (id, name, category, company, phone, email
 insert into public.directory_contacts (id, name, category, company, phone, email, note) values ('c0de0008-0000-4000-8000-000000000004', 'Rudi Hartono', 'supplier', 'Lumina Lighting Pontianak', null, 'rudi@example.com', 'Lampu dekoratif & track light. Rekomendasi untuk CANO.');
 insert into public.directory_contacts (id, name, category, company, phone, email, note) values ('c0de0008-0000-4000-8000-000000000005', 'Joko Santoso', 'kontraktor', null, null, null, 'Mandor borongan, spesialis finishing kayu & plafon.');
 insert into public.directory_contacts (id, name, category, company, phone, email, note) values ('c0de0008-0000-4000-8000-000000000006', 'Studio Foto Ruang', 'lainnya', 'Ruang Visual', null, 'halo@example.com', 'Fotografer arsitektur untuk dokumentasi proyek selesai.');
+
+-- Oktober: termin 2 Sintang dibayar, dua biaya, satu pesan baru.
+update public.invoices set status = 'lunas', paid_at = '2026-10-01 10:30+07' where id = 'c0de0001-0000-4000-8000-000000000013';
+insert into public.project_payments (id, project_id, invoice_id, amount, kind, method, receiver, note, paid_at, created_at) values ('c0de0002-0000-4000-8000-000000000011', 'edb56d6a-ba39-44c1-868c-3bd543ff3daf', 'c0de0001-0000-4000-8000-000000000013', 36000000, 'termin', 'transfer', 'Sari Ningsih', 'Terlambat enam hari dari tenggat', '2026-10-01 10:30+07', '2026-10-01 10:30+07');
+insert into public.project_costs (id, project_id, label, category, amount, incurred_on, team_member_id, created_at) values ('c0de0003-0000-4000-8000-000000000033', 'dc6375e1-94d7-4be2-9f5e-d967b6c09f14', 'Render suasana malam 4 frame', 'freelancer', 5200000, '2026-10-01', 'c0de0005-0000-4000-8000-000000000005', '2026-10-01 15:00+07');
+insert into public.project_costs (id, project_id, label, category, amount, incurred_on, team_member_id, created_at) values ('c0de0003-0000-4000-8000-000000000034', '028ceac7-03fd-4496-817a-30d336f5f4b5', 'Cetak gambar kerja desain 2', 'operasional', 1400000, '2026-10-01', null, '2026-10-01 15:00+07');
+insert into public.inquiries (id, name, email, phone, project_type, budget_range, message, status, source, ip_hash, user_agent, created_at) values ('c0de0007-0000-4000-8000-000000000015', 'Bayu Santoso', 'bayu.santoso@example.com', null, 'interior', 'Rp100 – 250 jt', 'Kami baru membeli ruko di Jl. Sultan Abdurrahman dan ingin menjadikannya kantor konsultan dengan ruang rapat kecil. Apakah studio bisa membantu sampai pemilihan furnitur?', 'new', 'website', encode(sha256(convert_to('bayu.santoso@example.com', 'UTF8')), 'hex'), 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1', '2026-10-01 09:12+07');
+insert into public.testimonials (id, project_id, client_name, quote, rating, status, is_featured, created_at, updated_at) values ('c0de0009-0000-4000-8000-000000000001', null, 'Hendra Wijaya', 'Tim studio sabar sekali menghadapi revisi kami. Alur bar dan dapur yang mereka usulkan membuat dua barista bisa kerja tanpa saling tabrakan saat ramai.', 5, 'menunggu', false, '2026-04-18 19:20+07', '2026-04-18 19:20+07');
+insert into public.testimonials (id, project_id, client_name, quote, rating, status, is_featured, created_at, updated_at) values ('c0de0009-0000-4000-8000-000000000002', null, 'Yuliana Effendi', 'Yang paling kami hargai: setiap termin ada laporan yang jelas, jadi kami tahu uang kami dipakai untuk apa. Gambar kerjanya rapi dan kontraktor jarang bertanya ulang.', 5, 'menunggu', false, '2026-06-02 10:05+07', '2026-06-02 10:05+07');
+insert into public.testimonials (id, project_id, client_name, quote, rating, status, is_featured, created_at, updated_at) values ('c0de0009-0000-4000-8000-000000000003', null, 'Maria Susanti', 'Dapur kami sekarang terang dan tidak lembap lagi. Prosesnya sedikit lebih lama dari jadwal karena kami sendiri yang lama memilih material.', 4, 'menunggu', false, '2026-07-11 16:40+07', '2026-07-11 16:40+07');
+insert into public.testimonials (id, project_id, client_name, quote, rating, status, is_featured, created_at, updated_at) values ('c0de0009-0000-4000-8000-000000000004', null, 'Hartono Wijaya', 'Untuk tiga outlet sekaligus, koordinasinya tertata. Kami bisa memantau tiap proyek dari tautan progres tanpa harus menelepon.', 5, 'menunggu', false, '2026-09-22 08:30+07', '2026-09-22 08:30+07');
+insert into public.journal_posts (id, slug, title, excerpt, body, category, read_minutes, published_at, created_at, updated_at) values ('c0de000a-0000-4000-8000-000000000001', 'ventilasi-silang-rumah-tropis', 'Ventilasi silang: rumah sejuk tanpa bergantung AC', 'Arah angin, letak bukaan, dan tinggi plafon menentukan apakah sebuah rumah di khatulistiwa bisa bernapas sendiri.', '## Mulai dari arah angin
+
+Sebelum menggambar denah, kami mencatat dari mana angin datang di tapak pada pagi dan sore hari.
+
+## Bukaan berpasangan
+
+Satu jendela tidak membuat aliran. Udara butuh jalan masuk dan jalan keluar di sisi yang berseberangan.
+
+## Plafon tinggi dan roster
+
+Udara panas naik. Plafon yang lebih tinggi dan roster di bagian atas dinding memberi panas itu tempat untuk pergi.', 'site', 6, null, '2026-08-12 10:00+07', '2026-08-12 10:00+07');
+insert into public.journal_posts (id, slug, title, excerpt, body, category, read_minutes, published_at, created_at, updated_at) values ('c0de000a-0000-4000-8000-000000000002', 'termin-pembayaran-jasa-arsitek', 'Membaca termin pembayaran jasa arsitek', 'Kenapa uang muka, termin, dan pelunasan dibagi seperti itu — dan apa yang Anda terima di tiap tahap.', '## Uang muka
+
+Uang muka menahan jadwal tim untuk proyek Anda dan membiayai survei serta konsep awal.
+
+## Termin desain
+
+Setiap termin terikat pada hasil yang bisa Anda periksa: gambar skematik, desain lanjutan, lalu gambar kerja.
+
+## Pelunasan
+
+Pelunasan dibayar saat seluruh gambar kerja diserahkan dan siap dipakai kontraktor.', 'money', 5, null, '2026-09-03 14:00+07', '2026-09-03 14:00+07');
+insert into public.journal_posts (id, slug, title, excerpt, body, category, read_minutes, published_at, created_at, updated_at) values ('c0de000a-0000-4000-8000-000000000003', 'izin-pbg-coffee-shop', 'PBG untuk coffee shop: yang perlu disiapkan sejak awal', 'Persetujuan Bangunan Gedung bukan urusan terakhir. Beberapa keputusan desain sebaiknya mengikuti syaratnya sejak sketsa pertama.', null, 'permit', 7, null, '2026-09-20 09:00+07', '2026-09-20 09:00+07');
+insert into public.journal_posts (id, slug, title, excerpt, body, category, read_minutes, published_at, created_at, updated_at) values ('c0de000a-0000-4000-8000-000000000004', 'material-tahan-lembap', 'Material yang tahan lembap di tepi sungai', 'Kayu, cat, dan penutup lantai yang bertahan di udara lembap Kalimantan Barat — dari pengalaman proyek kami.', null, 'build', 6, null, '2026-09-28 11:00+07', '2026-09-28 11:00+07');

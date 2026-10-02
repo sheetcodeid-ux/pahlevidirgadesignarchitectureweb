@@ -951,14 +951,20 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     bekerja di atas latar apa pun dan di kedua tema.
 
 48. **Data contoh di produksi: ID berawalan `c0de000`.** Atas permintaan
-    pemilik, Jan–Sep 2026 diisi data contoh untuk enam proyek ASLI (tanpa
-    proyek baru): 16 tagihan, 10 pembayaran, 32 biaya, 16 gaji, 19 tugas, 14
-    pesan masuk, 6 kontak, 6 anggota tim; nilai kontrak dan tahap lima proyek
-    ikut diubah. Sumbernya `scripts/contoh/buat.py`; **`scripts/contoh/
+    pemilik, Jan–Okt 2026 diisi data contoh untuk enam proyek ASLI (tanpa
+    proyek baru): 16 tagihan, 11 pembayaran, 34 biaya, 16 gaji, 19 tugas, 15
+    pesan masuk, 6 kontak, 6 anggota tim, 4 testimoni, 4 draf jurnal; nilai
+    kontrak dan tahap lima proyek ikut diubah. Testimoninya SEMUA "menunggu"
+    (jangan disetujui — yang disetujui tampil di situs sebagai ulasan
+    palsu), dan jurnalnya SEMUA draf — tapi indeks `/jurnal` tetap
+    menampilkan judul draf sebagai "rencana" begitu situs dibangun ulang,
+    jadi hapus dulu sebelum menekan Terbitkan kalau judulnya tak boleh
+    terlihat. Sumbernya `scripts/contoh/buat.py`; **`scripts/contoh/
     hapus.sql` membuang semuanya dan mengembalikan nilai asli proyek** —
     jalankan lewat konektor Supabase (`execute_sql`) begitu pemilik selesai
-    melihatnya. Sengaja TIDAK diisi: testimoni (yang disetujui tampil di
-    situs publik — itu ulasan palsu) dan pembaruan portal klien. Email
+    melihatnya. Sengaja TIDAK diisi: pembaruan portal klien dan komentar
+    dokumen — keduanya tampil di `/progres` proyek SUNGGUHAN, yang tautannya
+    bisa dibuka klien asli. Email
     memakai `example.com` dan telepon dikosongkan supaya tombol WhatsApp/
     email tidak pernah sampai ke orang sungguhan; nama klien asli tidak
     dipakai untuk pesan karangan. Selama data ini ada, angka keuangan panel
