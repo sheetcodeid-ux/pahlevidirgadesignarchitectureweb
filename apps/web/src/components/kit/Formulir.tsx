@@ -172,7 +172,7 @@ export function PilihMenu({
     else blok.push({ kelompok: o.kelompok, isi: [o] });
   }
   const butir = (o: OpsiPilih) => (
-    <RSelect.Item key={o.nilai} value={keRadix(o.nilai)} disabled={o.mati} className="k-menu__butir k-pilih__butir">
+    <RSelect.Item key={o.nilai} value={keRadix(o.nilai)} disabled={o.mati} className="k-menu__butir k-pilih__butir" data-nilai={o.nilai}>
       {o.ikon && <Ikon ikon={o.ikon} ukuran={16} />}
       <span className="k-pilih__teks">
         <RSelect.ItemText>{o.label}</RSelect.ItemText>

@@ -553,7 +553,10 @@
   font-size: var(--k-t12);
   font-weight: var(--k-semi);
   color: var(--brand);
-  background: var(--brand-soft);
+  /* Transparan: warna jalurnya yang tampil. Segmen bermint sendiri di atas
+     jalur yang di-PUTIH-kan halaman (lihat "DI ATAS LATAR HALAMAN") membuat
+     celah 2px di antaranya tergambar sebagai garis putih — terbaca rusak. */
+  background: transparent;
   cursor: pointer;
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
@@ -1749,6 +1752,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
    legal 21,74 - 0,9 = 20,85. Angka 18 dan 22 sebelumnya memakai jarak
    tinta apa adanya, jadi baris tautannya 3,9px kelebaran di ponsel —
    satu-satunya tempat lebar baris itu menentukan lebar komponennya. */
+.k-kakihal__tautan a { transition: color 150ms; }
 .k-kakihal__tautan { display: flex; align-items: center; gap: 16.55px; }
 .k-kakihal__tautan a,
 .k-kakihal__sosial a { color: var(--text-faint); text-decoration: none; }
@@ -3483,10 +3487,17 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
     min-height: 0;
     margin-top: 0;
     padding-top: 16px;
-    padding-bottom: 8px;
+    padding-bottom: 16px;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: none;
+    /* Tepi atas dan bawah memudar: daftar yang tergulir dulu terpotong
+       tegak di bawah logo ("UTAMA" setengah huruf), terbaca seperti rusak.
+       Pudarnya hanya selebar padding, jadi saat tidak tergulir tak satu
+       baris pun ikut pudar. Mask aman di sini — isinya tidak beranimasi
+       (jebakan #23). */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
   }
   .kl #kl-rel .k-sisi__daftar::-webkit-scrollbar { display: none; }
 }

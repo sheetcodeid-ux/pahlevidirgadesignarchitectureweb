@@ -303,7 +303,12 @@
 .pjs__sampul {
   position: relative;
   margin: 55px 28px 0;
-  overflow: hidden;
+  /* `clip`, bukan `hidden`: kotak gulir punya ukuran minimum NOL sebagai
+     butir grid, jadi di kerangka satu-layar baris sampulnya mengempis dan
+     kolom isi tulisan naik tertumpuk DI BELAKANG gambar sampul — kotak
+     isinya tidak bisa diklik sama sekali. `clip` memotong sudutnya sama
+     persis tanpa jadi kotak gulir. */
+  overflow: clip;
   /* Rasio kartu bagikan, sama dengan sampul di /jurnal/<slug>: yang tampil di
      sini potongan yang sama persis dengan yang dilihat pembaca. Framenya
      1136x592 — rasio ini memberi 596, 4px lebih tinggi. */
