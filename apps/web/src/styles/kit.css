@@ -1556,7 +1556,11 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
    tidak ada di palet panel mana pun dan tidak punya nilai tema gelap, jadi
    di sana garisnya tenggelam di kartu gelap. Hijau brand (mint di gelap)
    untuk tren yang baik, merah bahaya untuk yang buruk. */
-.k-kilau { display: block; color: var(--brand); }
+/* `overflow: visible`: puncak kurva duduk tepat di tepi atas kotaknya (y0),
+   jadi separuh goresan 2px-nya terpotong dan puncaknya terbaca rata —
+   dilaporkan pemilik sebagai "kepotong". Geometrinya tetap sama dengan
+   Figma; yang berubah cuma goresannya tidak lagi dipangkas kotak SVG. */
+.k-kilau { display: block; overflow: visible; color: var(--brand); }
 .k-kilau--turun { color: var(--danger); }
 
 /* Sel tanggal — bulatan 24, angka 12px. */
