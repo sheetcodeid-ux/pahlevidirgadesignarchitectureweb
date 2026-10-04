@@ -97,6 +97,10 @@ export interface PropKolomGrafik {
   keterangan?: { judul: ReactNode; baris: BarisKartu[] };
   /** Sisi kartu terhadap kolom. Kolom di separuh kanan grafik: "kiri". */
   sisiKartu?: "kanan" | "kiri";
+  /** Jumlah RUANG antar-garis kisi (bawaan 4 = lima garis di 0/25/50/75/100%).
+      Grafik yang sumbunya dihitung dari data mengoper jumlah tick-nya, supaya
+      garisnya sejajar dengan label LabelYGrafik. */
+  garis?: number;
   className?: string;
 }
 
@@ -111,6 +115,7 @@ export function KolomGrafik({
   lebar = 45,
   keterangan,
   sisiKartu = "kanan",
+  garis = 4,
   className,
 }: PropKolomGrafik) {
   return (
@@ -123,8 +128,8 @@ export function KolomGrafik({
         {/* Lima garis kisi, bukan empat: garis pertama duduk DI PUNCAK bidang
             plot dan yang terakhir di dasarnya. Terukur di y 26/64/102/140/178
             pada bidang 26..178. */}
-        {[0, 1, 2, 3, 4].map((i) => (
-          <span key={i} className="k-kolom__garis" style={{ top: `${i * 25}%` }} />
+        {Array.from({ length: garis + 1 }, (_, i) => (
+          <span key={i} className="k-kolom__garis" style={{ top: `${(i * 100) / garis}%` }} />
         ))}
         {rel && <span className="k-kolom__rel" />}
         <div
@@ -186,7 +191,7 @@ export function LabelYGrafik({ nilai, tinggi = 152 }: { nilai: ReactNode[]; ting
         {terpanjang}
       </span>
       {nilai.map((v, i) => (
-        <span key={i} className="k-labely__b" style={{ top: `${i * 25}%` }}>
+        <span key={i} className="k-labely__b" style={{ top: `${(i * 100) / Math.max(1, nilai.length - 1)}%` }}>
           {v}
         </span>
       ))}

@@ -50,7 +50,7 @@ import {
 } from "../../lib/admin";
 import { ambilNotifikasi, type IsiNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
 import { kepalaHari, waktuButir, ikonButir } from "./linimasaNotif";
-import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
+import { formatRupiah } from "../../lib/format";
 
 /* =============================================================================
    Dashboard — frame Figma "01. Dashboard (v1)" (node 3:1069), di kerangka kit.
@@ -232,8 +232,8 @@ function KartuKas({
       <div className="dsb__kaskaki">
         <div className="dsb__kasblok">
           <p className="dsb__kasket">Kas masuk</p>
-          <p className="dsb__kasnilai" title={keu ? formatRupiah(keu.kasMasuk) : undefined}>
-            {keu ? formatRupiahRingkas(keu.kasMasuk) : "—"}
+          <p className="dsb__kasnilai">
+            {keu ? formatRupiah(keu.kasMasuk) : "—"}
           </p>
         </div>
         <div className="dsb__kaskanan">
@@ -243,8 +243,8 @@ function KartuKas({
           </div>
           <div className="dsb__kasblok">
             <p className="dsb__kasket">Piutang</p>
-            <p className="dsb__kasisi" title={keu ? formatRupiah(keu.piutang) : undefined}>
-              {keu ? formatRupiahRingkas(keu.piutang) : "—"}
+            <p className="dsb__kasisi">
+              {keu ? formatRupiah(keu.piutang) : "—"}
             </p>
           </div>
         </div>
@@ -375,7 +375,7 @@ function Isi() {
         tinggi={34}
         keterangan={(i) => {
           const k = kunciBulan(5 - i);
-          return { judul: `${BULAN_PENDEK[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}`, nilai: formatRupiahRingkas(titik[i] ?? 0) };
+          return { judul: `${BULAN_PENDEK[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}`, nilai: formatRupiah(titik[i] ?? 0) };
         }}
       />
     ) : undefined;
@@ -399,12 +399,38 @@ function Isi() {
     });
   }, [perBulan, rentangArus]);
 
-  const maks = useMemo(() => {
-    const t = Math.max(1, ...deret.flatMap((b) => [b.kasMasuk, b.biaya]));
-    /* Dibulatkan ke atas ke kelipatan yang enak dibaca, supaya label sumbu
-       tidak jadi "13.748.211". Sama dengan halaman Keuangan. */
-    const pangkat = 10 ** Math.floor(Math.log10(t));
-    return Math.ceil(t / pangkat) * pangkat;
+  /* Sumbu dihitung dari DATA, tidak simetris. Permintaan pemilik: batang
+     harus panjang, "ambil dari nilai terendah". Dulu sumbunya ±maks yang
+     dibulatkan ke pangkat sepuluh berikutnya — kas tertinggi 110 jt jadi
+     sumbu ±200 jt, dan batangnya cuma seperempat bidang plot. Sekarang:
+     - langkah tick dibulatkan ke 1/2/2,5/3/4/5 × 10^k, kira-kira seperlima
+       rentang (tertinggi kas masuk + tertinggi beban);
+     - bagian atas cuma setinggi kas masuk tertinggi (dibulatkan ke atas ke
+       satu langkah), bagian bawah setinggi beban tertinggi — jadi garis nol
+       duduk sesuai datanya, bukan selalu di tengah;
+     - nol tetap nol: batang tidak pernah dimulai dari angka selain nol,
+       karena batang yang dipotong melebih-lebihkan selisih. */
+  const sumbu = useMemo(() => {
+    const atasMaks = Math.max(0, ...deret.map((b) => b.kasMasuk));
+    const bawahMaks = Math.max(0, ...deret.map((b) => b.biaya));
+    const kasar = Math.max(1, (atasMaks + bawahMaks) / 5);
+    const p = 10 ** Math.floor(Math.log10(kasar));
+    const f = kasar / p;
+    /* 3 dan 4 ikut sebagai langkah: dengan 1/2/2,5/5 saja, kas 110 jt +
+       beban 60 jt melompat ke langkah 50 dan sumbu 150 jt; dengan 4 sumbunya
+       120 jt dan batang tertingginya 88% bagian atas. */
+    const langkah = ([1, 2, 2.5, 3, 4, 5, 10].find((c) => f <= c) ?? 10) * p;
+    const nAtas = Math.max(1, Math.ceil(atasMaks / langkah));
+    const nBawah = bawahMaks > 0 ? Math.ceil(bawahMaks / langkah) : 0;
+    const n = nAtas + nBawah;
+    const total = n * langkah;
+    return {
+      n,
+      total,
+      /** Letak garis nol, persen dari atas bidang plot. */
+      nol: (nAtas / n) * 100,
+      label: Array.from({ length: n + 1 }, (_, i) => (nAtas - i) * langkah),
+    };
   }, [deret]);
 
   const kasBersih = deret.reduce((a, b) => a + b.kasMasuk - b.biaya, 0);
@@ -463,11 +489,13 @@ function Isi() {
      pad 10 di kiri-kanan tiap sel — jadi 166 / 88 / 68 / 150 / 82, tepat
      554 kotak-dalam kartu 586. */
   const kolom: KolomTabel[] = [
-    { judul: "Proyek", lebar: 166, urut: true },
-    { judul: "Laba Bersih", lebar: 88, urut: true },
-    { judul: "Diterima", lebar: 68, urut: true },
+    /* Angka penuh (Rp170.000.000) tidak muat di 68 milik frame — lebarnya
+       digeser dari Proyek dan Status, jumlahnya tetap 554 (jebakan #63). */
+    { judul: "Proyek", lebar: 150, urut: true },
+    { judul: "Laba Bersih", lebar: 92, urut: true },
+    { judul: "Diterima", lebar: 84, urut: true },
     { judul: "Catatan", lebar: 150, urut: true, redup: true },
-    { judul: "Status", lebar: 82, urut: true },
+    { judul: "Status", lebar: 78, urut: true },
   ];
 
   const statusLaba = (r: FinanceOverviewRow): { teks: string; nada: NadaLencana } => {
@@ -489,7 +517,7 @@ function Isi() {
       r.contractValue == null
         ? "belum berkontrak"
         : sisa && sisa > 0
-          ? `sisa ${formatRupiahRingkas(sisa)} belum diterima`
+          ? `sisa ${formatRupiah(sisa)} belum diterima`
           : "kontrak sudah lunas";
     return [
       <SelDua
@@ -507,16 +535,16 @@ function Isi() {
             <RingkasProyek r={r} />
           </KartuMelayang>
         }
-        bawah={`kontrak ${r.contractValue ? formatRupiahRingkas(r.contractValue) : "—"}`}
+        bawah={`kontrak ${r.contractValue ? formatRupiah(r.contractValue) : "—"}`}
       />,
-      <span title={formatRupiah(r.labaBersih)}>
-        <SelDua atas={formatRupiahRingkas(r.labaBersih)} bawah={marjin} />
+      <span>
+        <SelDua atas={formatRupiah(r.labaBersih)} bawah={marjin} />
       </span>,
-      <span className="dsb__nominal" title={formatRupiah(r.received)}>
-        {formatRupiahRingkas(r.received)}
+      <span className="dsb__nominal">
+        {formatRupiah(r.received)}
       </span>,
       <span className="dsb__catatan">
-        Biaya {formatRupiahRingkas(r.costsTotal)}, {catatan}
+        Biaya {formatRupiah(r.costsTotal)}, {catatan}
       </span>,
       <Lencana nada={st.nada}>{st.teks}</Lencana>,
     ];
@@ -675,11 +703,11 @@ function Isi() {
                   <BarKemajuan bentuk="tumpuk" persen={pct} tinggi={8} judul={`Pembayaran ${p.title}`} />
                   <p className="dsb__pkaki">
                     <span>
-                      <b title={formatRupiah(masuk)}>{formatRupiahRingkas(masuk)}</b>{" "}
+                      <b>{formatRupiah(masuk)}</b>{" "}
                       <i>{nilai > 0 ? `${pct.toFixed(pct % 1 ? 1 : 0).replace(".", ",")}%` : "—"}</i>
                     </span>
                     <span>
-                      <i>Kontrak</i> <b title={nilai ? formatRupiah(nilai) : undefined}>{nilai ? formatRupiahRingkas(nilai) : "belum ada"}</b>
+                      <i>Kontrak</i> <b>{nilai ? formatRupiah(nilai) : "belum ada"}</b>
                     </span>
                   </p>
                 </li>
@@ -697,7 +725,7 @@ function Isi() {
             ikon={CoinIn}
             judul="Kas masuk bulan ini"
             grafik={kilau(enam?.kas, Boolean(tKas && !tKas.naik))}
-            nilai={<span title={formatRupiah(kasKini)}>{formatRupiahRingkas(kasKini)}</span>}
+            nilai={<span>{formatRupiah(kasKini)}</span>}
             tren={tKas ? <Tren naik={tKas.naik}>{tKas.teks}</Tren> : <span className="k-tren dsb__trenkosong" />}
             menuHref="/admin/keuangan/transaksi"
             menuJudul="Lihat uang masuk di Semua Transaksi"
@@ -706,7 +734,7 @@ function Isi() {
             ikon={CoinOut}
             judul="Beban bulan ini"
             grafik={kilau(enam?.beban, Boolean(tBeban?.naik))}
-            nilai={<span title={formatRupiah(bebanKini)}>{formatRupiahRingkas(bebanKini)}</span>}
+            nilai={<span>{formatRupiah(bebanKini)}</span>}
             /* Beban yang naik bukan kabar baik — arah dan penilaian dipisah. */
             tren={
               tBeban ? (
@@ -724,7 +752,7 @@ function Isi() {
             ikon={Wallet}
             judul="Laba bersih bulan ini"
             grafik={kilau(enam?.laba, Boolean(tLaba && !tLaba.naik))}
-            nilai={<span title={formatRupiah(labaKini)}>{formatRupiahRingkas(labaKini)}</span>}
+            nilai={<span>{formatRupiah(labaKini)}</span>}
             tren={tLaba ? <Tren naik={tLaba.naik}>{tLaba.teks}</Tren> : <span className="k-tren dsb__trenkosong" />}
             menuHref="/admin/keuangan"
             menuJudul="Buka ringkasan Keuangan"
@@ -757,15 +785,26 @@ function Isi() {
             </ul>
           </div>
           <div className="dsb__grafik">
-            <LabelYGrafik
-              tinggi={140}
-              nilai={[singkat(maks), singkat(maks / 2), "0", singkat(-maks / 2), singkat(-maks)]}
-            />
-            <div className="dsb__plot" ref={plot} onPointerLeave={() => setSorot(null)}>
+            <LabelYGrafik tinggi={140} nilai={sumbu.label.map((v) => (v === 0 ? "0" : singkat(v)))} />
+            <div
+              className="dsb__plot"
+              ref={plot}
+              onPointerLeave={() => setSorot(null)}
+              /* Garis kisi bidang plot (menjulur melewati kolom pertama dan
+                 terakhir) mengikuti jumlah tick sumbu; garis nol lebih tegas. */
+              style={{
+                background: sumbu.label
+                  .map((v, i) => {
+                    const w = v === 0 ? "var(--border-strong)" : "var(--border)";
+                    return `linear-gradient(${w}, ${w}) 0 calc(var(--dsb-plot-h) * ${i / sumbu.n}) / 100% 1px no-repeat`;
+                  })
+                  .join(", "),
+              }}
+            >
               {deret.map((b, i) => {
                 const nyala = i === iSorot && !b.depan;
-                const atas = 50 - (b.kasMasuk / maks) * 50;
-                const bawah = 50 + (b.biaya / maks) * 50;
+                const atas = sumbu.nol - (b.kasMasuk / sumbu.total) * 100;
+                const bawah = sumbu.nol + (b.biaya / sumbu.total) * 100;
                 const bln = BULAN[Number(b.kunci.slice(5, 7)) - 1];
                 return (
                   <div
@@ -782,12 +821,13 @@ function Isi() {
                   >
                     <KolomGrafik
                       tinggi={140}
+                      garis={sumbu.n}
                       lebarBatang={lebarBatang}
                       tumpuk
                       label={BULAN_PENDEK[Number(b.kunci.slice(5, 7)) - 1]}
                       batang={[
-                        ...(b.kasMasuk > 0 ? [{ atas, bawah: 50, nada: "tua" as const, radiusAtas: 4 }] : []),
-                        ...(b.biaya > 0 ? [{ atas: 50, bawah, nada: "mint" as const, radiusBawah: 4 }] : []),
+                        ...(b.kasMasuk > 0 ? [{ atas, bawah: sumbu.nol, nada: "tua" as const, radiusAtas: 4 }] : []),
+                        ...(b.biaya > 0 ? [{ atas: sumbu.nol, bawah, nada: "mint" as const, radiusBawah: 4 }] : []),
                       ]}
                     />
                   </div>
@@ -801,7 +841,7 @@ function Isi() {
                       "--tip-f": (iSorot + 0.5) / deret.length,
                       /* Pecahan tinggi plot, bukan piksel: tinggi plotnya --dsb-plot-h,
                          yang mengecil di layar satu-layar. */
-                      "--tip-p": Math.min(50, 50 - (bSorot.kasMasuk / maks) * 50) / 100,
+                      "--tip-p": (sumbu.nol - (bSorot.kasMasuk / sumbu.total) * 100) / 100,
                     } as React.CSSProperties
                   }
                   aria-hidden="true"
@@ -811,11 +851,11 @@ function Isi() {
                   </p>
                   <p className="dsb__tipbaris">
                     <span>Kas masuk</span>
-                    <b>{formatRupiahRingkas(bSorot.kasMasuk)}</b>
+                    <b>{formatRupiah(bSorot.kasMasuk)}</b>
                   </p>
                   <p className="dsb__tipbaris">
                     <span>Beban</span>
-                    <b>{formatRupiahRingkas(bSorot.biaya)}</b>
+                    <b>{formatRupiah(bSorot.biaya)}</b>
                   </p>
                 </div>
               )}
@@ -866,7 +906,7 @@ function Isi() {
               className="dsb__tabb"
               onClick={() => setTabStat("masuk")}
             >
-              Kas masuk <small>({formatRupiahRingkas(totalMasuk)})</small>
+              <span>Kas masuk</span> <small>{formatRupiah(totalMasuk)}</small>
             </button>
             <button
               type="button"
@@ -875,14 +915,14 @@ function Isi() {
               className="dsb__tabb"
               onClick={() => setTabStat("beban")}
             >
-              Beban <small>({formatRupiahRingkas(totalBeban)})</small>
+              <span>Beban</span> <small>{formatRupiah(totalBeban)}</small>
             </button>
           </div>
           <div className="dsb__donat">
             {totalAktif > 0 ? (
               <Donat
                 label={tabStat === "masuk" ? "Total kas masuk" : "Total beban"}
-                nilai={formatRupiahRingkas(totalAktif)}
+                nilai={formatRupiah(totalAktif)}
                 /* Tangga hijau ke abu berurut besaran — irisan terbesar
                    paling gelap, persis framenya. */
                 iris={irisAktif.map((s, i) => ({ nilai: s.nilai, warna: `var(--ramp-${i + 1})`, label: s.label, ket: formatRupiah(s.nilai) }))}
@@ -905,7 +945,7 @@ function Isi() {
                 tinta={`var(--ramp-${i + 1}-ink)`}
                 persen={`${Math.round((s.nilai / (totalAktif || 1)) * 100)}%`}
                 kategori={s.label}
-                nominal={<span title={formatRupiah(s.nilai)}>{formatRupiahRingkas(s.nilai)}</span>}
+                nominal={<span>{formatRupiah(s.nilai)}</span>}
               />
             ))}
           </div>

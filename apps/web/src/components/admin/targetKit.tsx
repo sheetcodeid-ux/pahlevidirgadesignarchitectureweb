@@ -57,11 +57,11 @@ export function persenTarget(k: KemajuanTarget): number | null {
 /** Kalimat sisa: "kurang Rp461 jt · Rp154 jt/bln · 89 hari" — satu baris di Dashboard. */
 export function kalimatSisa(k: KemajuanTarget): string {
   if (k.target === null) return "Belum ada target. Tetapkan di Kas Studio.";
-  if (k.kurang === 0) return `Tercapai — lewat ${formatRupiahRingkas(k.tercapai - k.target)} dari target.`;
-  if (k.sisaHari === 0) return `Semester selesai, kurang ${formatRupiahRingkas(k.kurang ?? 0)}.`;
+  if (k.kurang === 0) return `Tercapai — lewat ${formatRupiah(k.tercapai - k.target)} dari target.`;
+  if (k.sisaHari === 0) return `Semester selesai, kurang ${formatRupiah(k.kurang ?? 0)}.`;
   return [
-    `kurang ${formatRupiahRingkas(k.kurang ?? 0)}`,
-    k.perBulanDibutuhkan ? `${formatRupiahRingkas(k.perBulanDibutuhkan)}/bln` : null,
+    `kurang ${formatRupiah(k.kurang ?? 0)}`,
+    k.perBulanDibutuhkan ? `${formatRupiah(k.perBulanDibutuhkan)}/bln` : null,
     `${k.sisaHari} hari`,
   ]
     .filter(Boolean)
@@ -75,13 +75,13 @@ export function RingkasTarget({ k }: { k: KemajuanTarget | null }) {
     <div className="tgt">
       <p className="tgt__baris">
         <span>
-          <b>{k ? formatRupiahRingkas(k.tercapai) : "—"}</b>{" "}
-          <small>dari {k?.target ? formatRupiahRingkas(k.target) : "—"}</small>
+          <b>{k ? formatRupiah(k.tercapai) : "—"}</b>{" "}
+          <small>dari {k?.target ? formatRupiah(k.target) : "—"}</small>
         </span>
         <b>{p === null ? "—" : `${p.toFixed(1).replace(".", ",")}%`}</b>
       </p>
       <BarKemajuan bentuk="tumpuk" persen={Math.min(100, p ?? 0)} tinggi={8} judul="Pemasukan terhadap target semester" />
-      <p className="tgt__sisa" title={k ? kalimatSisa(k) : undefined}>
+      <p className="tgt__sisa">
         {k ? kalimatSisa(k) : "Memuat…"}
       </p>
     </div>

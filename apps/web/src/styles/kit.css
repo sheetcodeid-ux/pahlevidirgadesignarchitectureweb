@@ -1325,6 +1325,21 @@
   border-top-color: transparent;
   background: var(--brand-soft);
 }
+/* Kepala bermint bersudut 8 di kiri-atas dan kanan-atas (permintaan
+   pemilik). Sudut sel tabel cuma tergambar dalam model `separate`; dengan
+   jarak sel 0 garis atas tiap sel tetap menyambung jadi satu garis. */
+.k-tabel--kepala-mint { border-collapse: separate; border-spacing: 0; }
+.k-tabel--kepala-mint thead th:first-child { border-top-left-radius: 8px; }
+.k-tabel--kepala-mint thead th:last-child { border-top-right-radius: 8px; }
+/* Kepala tabel MENEMPEL saat isi tabel digulir di dalam kartunya
+   (permintaan pemilik: "header harusnya ketahan agar tidak tertutup").
+   Bidangnya pejal supaya baris yang lewat di bawahnya tidak tembus. */
+.k-tabel thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.k-tabel:not(.k-tabel--kepala-mint) thead th { background: var(--surface); }
 .k-tabel--kepala-polos thead th { border-top-color: transparent; }
 
 .k-tabel th {

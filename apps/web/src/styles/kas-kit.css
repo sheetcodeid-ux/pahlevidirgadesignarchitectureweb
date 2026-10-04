@@ -19,12 +19,14 @@
   color: var(--text-strong);
   white-space: nowrap;
 }
-.tgt__baris > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Angka penuh: "dari Rp1.000.000.000" turun ke barisnya sendiri di bawah
+   nominal, alih-alih dipotong elipsis. */
+.tgt__baris > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .tgt__baris b { font-size: var(--k-t14); font-weight: var(--k-semi); }
 .tgt__baris small { font-size: var(--k-t11); color: var(--text-muted); }
-/* Satu baris: di Dashboard kartunya berbagi tinggi layar dengan Proyek
-   Berjalan, dan baris kedua memotong kartu itu. Kalimat utuhnya di title. */
-.tgt__sisa { margin: 0; overflow: hidden; font-size: var(--k-t11); line-height: 1.4; color: var(--text-muted); text-overflow: ellipsis; white-space: nowrap; }
+/* Angka penuh (Rp461.000.000, bukan "Rp461 jt" — permintaan pemilik), jadi
+   kalimatnya boleh terlipat; kartunya setinggi isinya. */
+.tgt__sisa { margin: 0; font-size: var(--k-t11); line-height: 1.4; color: var(--text-muted); }
 /* Di Dashboard jarak kepala-isi kartu ini dirapatkan, sebanding dengan
    tinggi kartu Laba Bersih yang digantikannya. */
 .dsb__laba:has(.tgt) { gap: 10px; }

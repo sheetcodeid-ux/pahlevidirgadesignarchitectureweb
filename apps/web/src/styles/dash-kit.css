@@ -532,12 +532,29 @@
   .kl__isi .dsb { flex-shrink: 0; min-height: 888px; grid-template-rows: minmax(0, 1fr); }
   .dsb--rangka { min-height: 888px; }
   .dsb__kol { min-height: 0; }
-  /* Statistik 460 seperti framenya walau rinciannya cuma dua kategori —
-     setinggi isinya ia 349, dan Perlu Ditangani di bawahnya jadi 519,
-     bukan 408. */
-  .dsb__statistik { min-height: 460px; }
+  /* Statistik SETINGGI ISINYA (auto layout, permintaan pemilik): dengan
+     dua kategori beban, tinggi tetap 460 milik frame menyisakan bidang
+     kosong di bawah "Operasional". Perlu Ditangani yang naik mengisinya. */
   .dsb__proyek,
   .dsb__tabel { flex: 1 1 0; min-height: 0; }
   .dsb__pdaftar,
   .dsb__tabelisi { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 }
+
+/* --- Angka penuh (Rp35.000.000, bukan "Rp35 jt") ---------------------------
+   Permintaan pemilik. Kotak frame dirancang untuk "$562,000"; rupiah penuh
+   tiga sampai lima karakter lebih panjang, jadi bagian yang sempit ditata
+   ulang di sini — tidak ada angka yang diringkas atau dipotong. */
+/* Kartu kas: nominal kas masuk selebar kartu, Proyek dan Piutang di baris
+   bawahnya (dulu ketiganya sebaris dan "Rp532.000.000" menimpa Proyek). */
+.dsb__kas { gap: 14px; }
+.dsb__kaskaki { flex-wrap: wrap; align-items: flex-start; justify-content: flex-start; row-gap: 10px; column-gap: 24px; }
+.dsb__kaskaki > .dsb__kasblok:first-child { flex-basis: 100%; }
+.dsb__kaskanan { gap: 24px; }
+/* Tab Statistik: total di bawah labelnya. */
+.dsb__tabb { flex-direction: column; align-items: center; gap: 2px; }
+/* Tengah donat: nominal penuh di lubang 101px. */
+.dsb__donat .k-donat__nilai { font-size: var(--k-t16); }
+/* Catatan tabel: tiga baris, bukan dua — "Biaya Rp98.750.000, sisa
+   Rp170.000.000 belum diterima" terpotong di baris kedua. */
+.dsb__catatan { -webkit-line-clamp: 3; }
