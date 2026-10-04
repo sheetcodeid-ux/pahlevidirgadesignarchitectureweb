@@ -478,6 +478,7 @@ function Isi() {
           labelY={[1, 0.75, 0.5, 0.25, 0].map((f) => (f === 0 ? "0" : sumbu(bulanan.maks * f)))}
           labelX={bulanan.kini.map((b) => BULAN_PENDEK[Number(b.bulan.slice(5, 7)) - 1]!)}
           deret={[{ titik: bulanan.kini.map((b) => b.nilai) }]}
+          keterangan={(i) => ({ judul: labelBulan(bulanan.kini[i]!.bulan), nilai: formatRupiah(bulanan.kini[i]!.nilai) })}
           sorot={
             puncak
               ? {
@@ -525,13 +526,8 @@ function Isi() {
           </ul>
         </div>
         <div className="fee__batang" style={{ "--fee-kolom": batangTahun.length } as React.CSSProperties}>
-          {batangTahun.map((k) => (
+          {batangTahun.map((k, i) => (
             <div className="fee__kolom" key={k.tahun}>
-              {k.total > 0 && (
-                <span className="fee__nilaibatang" style={{ top: `${k.puncak}px` }} title={formatRupiah(k.total)}>
-                  {formatRupiahRingkas(k.total)}
-                </span>
-              )}
               <KolomGrafik
                 batang={k.potong}
                 tumpuk
@@ -540,6 +536,19 @@ function Isi() {
                 tinggi={TINGGI_BIDANG}
                 label={k.tahun}
                 className="fee__kolomgrafik"
+                sisiKartu={i >= batangTahun.length / 2 ? "kiri" : "kanan"}
+                keterangan={
+                  k.total > 0
+                    ? {
+                        judul: `${k.tahun} · ${formatRupiah(k.total)}`,
+                        baris: TUMPUK.filter((x) => (k.nilai[x.nilai] ?? 0) > 0).map((x) => ({
+                          warna: x.warna,
+                          label: x.label,
+                          nilai: formatRupiahRingkas(k.nilai[x.nilai] ?? 0),
+                        })),
+                      }
+                    : undefined
+                }
               />
             </div>
           ))}
@@ -610,7 +619,7 @@ function Isi() {
           <>
             <Busur
               className="fee__busur"
-              iris={jenis.iris.map((x) => ({ nilai: x.nilai, warna: x.warna, label: x.label }))}
+              iris={jenis.iris.map((x) => ({ nilai: x.nilai, warna: x.warna, label: x.label, ket: formatRupiah(x.nilai) }))}
               label="Keluar untuk orang"
               nilai={formatRupiahRingkas(jenis.total)}
               tanda={String((baris ?? []).length)}

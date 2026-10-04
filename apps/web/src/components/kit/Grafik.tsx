@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { KartuGrafik, usePenunjuk, type BarisKartu } from "./kartuGrafik";
 
 /* =============================================================================
    Grafik — frame Chart di file Figma Coinest.
@@ -89,6 +90,13 @@ export interface PropKolomGrafik {
   tinggi?: number;
   /** Lebar kolom. Figma 45. */
   lebar?: number;
+  /**
+   * Isi kartu saat kursor ada di kolom ini — angka penuh tiap potongan.
+   * Kolomnya lalu juga bisa difokus papan ketik.
+   */
+  keterangan?: { judul: ReactNode; baris: BarisKartu[] };
+  /** Sisi kartu terhadap kolom. Kolom di separuh kanan grafik: "kiri". */
+  sisiKartu?: "kanan" | "kiri";
   className?: string;
 }
 
@@ -101,12 +109,15 @@ export function KolomGrafik({
   tumpuk,
   tinggi = 152,
   lebar = 45,
+  keterangan,
+  sisiKartu = "kanan",
   className,
 }: PropKolomGrafik) {
   return (
     <div
-      className={["k-kolom", className].filter(Boolean).join(" ")}
+      className={["k-kolom", keterangan && "k-kolom--sentuh", className].filter(Boolean).join(" ")}
       style={{ "--k-kolom-w": `${lebar}px`, "--k-kolom-h": `${tinggi}px` } as React.CSSProperties}
+      tabIndex={keterangan ? 0 : undefined}
     >
       <div className="k-kolom__bidang">
         {/* Lima garis kisi, bukan empat: garis pertama duduk DI PUNCAK bidang
@@ -139,6 +150,18 @@ export function KolomGrafik({
         </div>
       </div>
       {label !== undefined && <span className="k-kolom__label">{label}</span>}
+      {keterangan && (
+        <div className={`k-grafikkartu k-kolom__kartu k-kolom__kartu--${sisiKartu}`} role="tooltip">
+          <p className="k-grafikkartu__judul">{keterangan.judul}</p>
+          {keterangan.baris.map((b, i) => (
+            <p className="k-grafikkartu__baris" key={i}>
+              {b.warna && <span className="k-grafikkartu__warna" style={{ background: b.warna }} />}
+              <span className="k-grafikkartu__label">{b.label}</span>
+              <b>{b.nilai}</b>
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -186,6 +209,7 @@ export function Kilau({
   turun,
   lebar = 89.26,
   tinggi = 61.68,
+  keterangan,
   className,
 }: {
   titik: number[];
@@ -202,8 +226,12 @@ export function Kilau({
   turun?: boolean;
   lebar?: number;
   tinggi?: number;
+  /** Isi kartu untuk titik yang disentuh kursor, mis. bulan dan nominalnya. */
+  keterangan?: (indeks: number) => { judul: ReactNode; nilai: ReactNode };
   className?: string;
 }) {
+  const pen = usePenunjuk();
+  const [arah, setArah] = useState<number | null>(null);
   const n = titik.length;
   const min = Math.min(...titik);
   const max = Math.max(...titik);
@@ -276,9 +304,9 @@ export function Kilau({
     })
     .join(" ");
   const id = `kilau-${turun ? "turun" : "naik"}`;
-  return (
+  const svg = (
     <svg
-      className={["k-kilau", turun && "k-kilau--turun", className].filter(Boolean).join(" ")}
+      className={["k-kilau", turun && "k-kilau--turun", !keterangan && className].filter(Boolean).join(" ")}
       width={lebar}
       height={tinggi}
       viewBox={`0 0 ${lebar} ${tinggi}`}
@@ -297,6 +325,34 @@ export function Kilau({
       </defs>
       <path d={`${d} L${lebar} ${tinggi} L0 ${tinggi} Z`} fill={`url(#${id})`} />
       <path d={d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {arah !== null && (
+        <circle className="k-kilau__titik" cx={xs[arah]} cy={Math.max(2, ys[arah])} r="3.5" />
+      )}
     </svg>
+  );
+  if (!keterangan) return svg;
+  const ket = arah !== null ? keterangan(arah) : null;
+  return (
+    <span
+      ref={pen.ref as unknown as React.Ref<HTMLSpanElement>}
+      className={["k-kilau__wadah", className].filter(Boolean).join(" ")}
+      onPointerMove={(e) => {
+        pen.gerak(e);
+        const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+        let i = 0;
+        for (let j = 1; j < n; j++) if (Math.abs(xs[j] / lebar - f) < Math.abs(xs[i] / lebar - f)) i = j;
+        setArah(i);
+      }}
+      onPointerLeave={() => {
+        pen.lepas();
+        setArah(null);
+      }}
+    >
+      {svg}
+      {ket && pen.pos && (
+        <KartuGrafik x={pen.pos.x} y={pen.pos.y} baris={[{ label: ket.judul, nilai: ket.nilai }]} />
+      )}
+    </span>
   );
 }

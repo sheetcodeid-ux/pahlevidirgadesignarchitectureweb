@@ -312,6 +312,7 @@ function Isi() {
          bukan tangga `--ramp-1..5` yang dipakai donat di frame Investments.
          Yang kelima dan seterusnya jatuh ke tangga itu. */
       warna: WARNA_CINCIN[i] ?? `var(--ramp-${Math.min(5, i + 1)})`,
+      ket: formatRupiah(b.nilai),
     }));
   }, [ringkas]);
 
@@ -568,13 +569,20 @@ function Isi() {
             labelY={[singkat(maks), singkat(maks * 0.75), singkat(maks * 0.5), singkat(maks * 0.25), "0"]}
             maks={maks}
             tinggi={141}
-            /* 6, bukan 29,5 seperti di galeri kit. Ruang atas itu jatah
-               kartu keterangan yang muncul saat kursor menunjuk sebuah
-               bulan; grafik ini tidak memakai `sorot`, jadi 29,5px itu
-               ruang kosong — dan justru itu yang mendorong label bulannya
-               keluar dari kartu 314. */
+            /* 6, bukan 29,5 seperti di galeri kit: tanpa `sorot` diam, ruang
+               atas itu kosong dan mendorong label bulannya keluar dari kartu
+               314. Kartu keterangan saat kursor menunjuk sebuah bulan pindah
+               ke bawah penanda sendiri kalau ruang atasnya kurang. */
             ruangAtas={6}
             jarakLabelX={16}
+            keterangan={(i) => {
+              const b = deret[i]!;
+              return {
+                judul: `${BULAN_PENDEK[Number(b.bulan.slice(5, 7)) - 1]} ${b.bulan.slice(0, 4)}`,
+                nilai: `Masuk ${formatRupiahRingkas(b.kasMasuk)}`,
+                ket: `Beban ${formatRupiahRingkas(b.biaya)}`,
+              };
+            }}
           />
         </article>
       </section>

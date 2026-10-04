@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
+import { KartuGrafik, usePenunjuk } from "./kartuGrafik";
 import { TrendUp, TrendDown, ArrowUp, ArrowDown } from "./ikon";
 
 /* =============================================================================
@@ -79,8 +80,10 @@ export function BarKemajuan({
       aria-valuemax={100}
       aria-label={judul}
     >
-      <span className="k-bar__isi" />
-      <span className="k-bar__sisa" />
+      {/* 0%: tanpa isian sama sekali — kalau tidak, celahnya tetap tergambar
+          dan rel tampak bergeser 4px dari tepi kiri. */}
+      {p > 0 && <span className="k-bar__isi" />}
+      {p < 100 && <span className="k-bar__sisa" />}
     </div>
   );
 }
@@ -150,6 +153,12 @@ export interface PropGrafikArea {
    * cuma bercerita tentang bentuk, tidak pernah tentang angka.
    */
   sorot?: { indeks: number; deret?: number; judul: ReactNode; nilai: ReactNode; ket?: ReactNode };
+  /**
+   * Isi kartu untuk titik yang sedang disentuh kursor. Dengan ini grafiknya
+   * menjawab "berapa" di SETIAP titik, bukan cuma di titik `sorot` — yang
+   * tetap tampil sebagai keadaan diam saat kursor di luar plot.
+   */
+  keterangan?: (indeks: number) => { judul: ReactNode; nilai: ReactNode; ket?: ReactNode };
   /** Nilai terbesar sumbu Y. Tanpa ini diambil dari datanya. */
   maks?: number;
   className?: string;
@@ -249,10 +258,31 @@ export function GrafikArea({
   jarakLabelX = 17.8,
   bentuk = "halus",
   posisi,
-  sorot,
+  sorot: sorotDiam,
+  keterangan,
   maks,
   className,
 }: PropGrafikArea) {
+  const plotRef = useRef<HTMLDivElement>(null);
+  const [arah, setArah] = useState<number | null>(null);
+  const nTitik = deret[0]?.titik.length ?? 0;
+  const sorot =
+    arah !== null && keterangan && arah < nTitik ? { indeks: arah, deret: 0, ...keterangan(arah) } : sorotDiam;
+  /* Titik terdekat dari kursor. Satu pembacaan geometri per gerakan — bukan
+     di handler gulir, jadi tidak menagih layout tiap frame (jebakan #21). */
+  const gerak = (e: React.PointerEvent) => {
+    if (!keterangan || nTitik === 0) return;
+    const r = plotRef.current?.getBoundingClientRect();
+    if (!r || r.width === 0) return;
+    const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    let i: number;
+    if (bentuk === "tangga") i = Math.min(nTitik - 1, Math.floor(f * nTitik));
+    else if (posisi) {
+      i = 0;
+      for (let j = 1; j < nTitik; j++) if (Math.abs(posisi[j] - f) < Math.abs(posisi[i] - f)) i = j;
+    } else i = nTitik < 2 ? 0 : Math.round(f * (nTitik - 1));
+    setArah(i);
+  };
   const semua = deret.flatMap((d) => d.titik);
   const atas = maks ?? Math.max(1, ...semua);
   const LEBAR = 1000; // viewBox; lebar tampilnya dari CSS
@@ -293,7 +323,13 @@ export function GrafikArea({
           ))}
         </div>
       )}
-      <div className="k-area__plot">
+      <div
+        className={kelas("k-area__plot", keterangan && "k-area__plot--sentuh")}
+        ref={plotRef}
+        onPointerMove={gerak}
+        onPointerDown={gerak}
+        onPointerLeave={() => setArah(null)}
+      >
         {/* Kisi digambar CSS, bukan SVG: satu garis per label Y, dan
             keduanya lalu tidak mungkin menyimpang karena sumbernya sama. */}
         {labelY && labelY.length > 0 && (
@@ -434,7 +470,11 @@ export interface IrisBusur {
   /** Warna irisan. Di halaman dipakai `--ramp-1`..`--ramp-5`. */
   warna: string;
   label?: string;
+  /** Nilai yang ditulis di kartu keterangan saat irisan disentuh kursor. */
+  ket?: ReactNode;
 }
+
+const teksPorsi = (p: number) => `${(Math.round(p * 10) / 10).toLocaleString("id-ID")}%`;
 
 export function Busur({
   iris,
@@ -519,13 +559,38 @@ export function Busur({
       `A${rc} ${rc} 0 0 1 ${P(a1 - dLuar, luar)} Z`;
     return { ...s, d };
   });
+  const p = usePenunjuk();
+  const [aktif, setAktif] = useState<number | null>(null);
+  const a = aktif !== null ? potong[aktif] : null;
   return (
-    <div className={kelas("k-busur", className)}>
+    <div
+      ref={p.ref}
+      className={kelas("k-busur", aktif !== null && "is-sorot", className)}
+      onPointerMove={p.gerak}
+      onPointerLeave={() => {
+        p.lepas();
+        setAktif(null);
+      }}
+    >
       <svg viewBox={`0 0 ${luar * 2} ${luar}`} aria-hidden="true">
         {potong.map((s, i) => (
-          <path key={i} d={s.d} fill={s.warna} />
+          <path
+            key={i}
+            d={s.d}
+            fill={s.warna}
+            className={kelas("k-grafik__iris", aktif === i && "is-aktif")}
+            onPointerEnter={() => setAktif(i)}
+          />
         ))}
       </svg>
+      {a && p.pos && (
+        <KartuGrafik
+          x={p.pos.x}
+          y={p.pos.y}
+          baris={[{ warna: a.warna, label: a.label ?? "Bagian", nilai: a.ket ?? teksPorsi((a.nilai / total) * 100) }]}
+          judul={a.ket ? teksPorsi((a.nilai / total) * 100) : undefined}
+        />
+      )}
       {(label || nilai || ket) && (
         <div className="k-busur__tengah">
           {label && <p className="k-busur__label">{label}</p>}
@@ -567,6 +632,8 @@ export interface IrisDonat {
   nilai: number;
   warna: string;
   label?: string;
+  /** Nilai yang ditulis di kartu keterangan saat irisan disentuh kursor. */
+  ket?: ReactNode;
 }
 
 export function Donat({
@@ -616,8 +683,19 @@ export function Donat({
       `L${titik(akhir, dalam)} A${dalam} ${dalam} 0 ${besar} 0 ${titik(0, dalam)} Z`
     );
   };
+  const p = usePenunjuk();
+  const [aktif, setAktif] = useState<number | null>(null);
+  const a = aktif !== null ? lapis[aktif] : null;
   return (
-    <div className={kelas("k-donat", className)}>
+    <div
+      ref={p.ref}
+      className={kelas("k-donat", aktif !== null && "is-sorot", className)}
+      onPointerMove={p.gerak}
+      onPointerLeave={() => {
+        p.lepas();
+        setAktif(null);
+      }}
+    >
       <svg viewBox={`0 0 ${luar * 2} ${luar * 2}`} aria-hidden="true">
         {lapis.map((s, i) => (
           <path
@@ -627,9 +705,21 @@ export function Donat({
             fillRule="evenodd"
             stroke="var(--k-donat-latar, var(--surface))"
             strokeWidth={garis}
+            className={kelas("k-grafik__iris", aktif === i && "is-aktif")}
+            /* Lapisan bertumpuk: yang tersentuh adalah lapisan TERATAS di
+               titik itu — persis irisan yang terlihat di sana. */
+            onPointerEnter={() => setAktif(i)}
           />
         ))}
       </svg>
+      {a && p.pos && total > 0 && (
+        <KartuGrafik
+          x={p.pos.x}
+          y={p.pos.y}
+          judul={teksPorsi((a.nilai / total) * 100)}
+          baris={[{ warna: a.warna, label: a.label ?? "Bagian", nilai: a.ket ?? a.nilai.toLocaleString("id-ID") }]}
+        />
+      )}
       {(label || nilai) && (
         <div className="k-donat__tengah">
           {label && <p className="k-donat__label">{label}</p>}
@@ -668,6 +758,8 @@ export interface IrisCincin {
   persen: number;
   warna: string;
   label?: string;
+  /** Nilai yang ditulis di kartu keterangan saat cincin disentuh kursor. */
+  ket?: ReactNode;
 }
 
 export function Cincin({
@@ -693,15 +785,26 @@ export function Cincin({
     return `${(c - r * Math.sin(rad)).toFixed(3)} ${(c + r * Math.cos(rad)).toFixed(3)}`;
   };
 
+  const pen = usePenunjuk();
+  const [aktif, setAktif] = useState<number | null>(null);
+  const a = aktif !== null ? iris[aktif] : null;
   return (
-    <div className={kelas("k-cincin", className)}>
+    <div
+      ref={pen.ref}
+      className={kelas("k-cincin", aktif !== null && "is-sorot", className)}
+      onPointerMove={pen.gerak}
+      onPointerLeave={() => {
+        pen.lepas();
+        setAktif(null);
+      }}
+    >
       <svg viewBox={`0 0 ${luar * 2} ${luar * 2}`} aria-hidden="true">
         {iris.map((s, i) => {
           const r = luar - tebal * (2 * i) - tebal / 2;
           const p = Math.max(0, Math.min(100, s.persen));
           const sudut = (p / 100) * 360;
           return (
-            <g key={i}>
+            <g key={i} className={kelas("k-grafik__iris", aktif === i && "is-aktif")} onPointerEnter={() => setAktif(i)}>
               <circle
                 cx={c}
                 cy={c}
@@ -725,6 +828,14 @@ export function Cincin({
           );
         })}
       </svg>
+      {a && pen.pos && (
+        <KartuGrafik
+          x={pen.pos.x}
+          y={pen.pos.y}
+          judul={teksPorsi(a.persen)}
+          baris={[{ warna: a.warna, label: a.label ?? "Bagian", nilai: a.ket ?? teksPorsi(a.persen) }]}
+        />
+      )}
     </div>
   );
 }

@@ -641,14 +641,16 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                 <KepalaSeksi
                   judul="Kas Masuk"
                   kanan={
-                    <Tombol
-                      ukuran="medium"
+                    <PilihTombol
+                      judul="Rentang kas masuk"
                       jenis="ghost"
-                      kanan={CaretDown}
-                      onClick={() => setRentangKas((r) => (r === 12 ? 24 : 12))}
-                    >
-                      {rentangKas} bulan
-                    </Tombol>
+                      nilai={String(rentangKas)}
+                      opsi={[
+                        { nilai: "12", label: "12 bulan" },
+                        { nilai: "24", label: "24 bulan" },
+                      ]}
+                      onPilih={(v) => setRentangKas(Number(v))}
+                    />
                   }
                 />
                 <GrafikArea
@@ -658,6 +660,11 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                   maks={maks}
                   tinggi={132}
                   jarakLabelX={11.8}
+                  keterangan={(i) => ({
+                    judul: `${BULAN_PANJANG[Number(deret[i]!.bulan.slice(5, 7)) - 1]} ${deret[i]!.bulan.slice(0, 4)}`,
+                    nilai: formatRupiahRingkas(kumulatif[i]!),
+                    ket: `bulan itu +${formatRupiahRingkas(deret[i]!.kasMasuk)}`,
+                  })}
                   sorot={
                     iSorot >= 0
                       ? {

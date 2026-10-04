@@ -2447,8 +2447,11 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 /* `terpisah`: DUA kotak bersebelahan dengan celah — bukan rel dengan isian
    di atasnya. Terukur: gelap 188,2 + celah 4 + mint 131,8 = 324. */
 .k-bar--terpisah { gap: var(--k-bar-celah, 4px); }
+/* Ujung bulat penuh — permintaan pemilik: ujung siku terbaca kaku. */
 .k-bar--terpisah .k-bar__isi,
-.k-bar--terpisah .k-bar__sisa { border-radius: 4px; }
+.k-bar--terpisah .k-bar__sisa { border-radius: 999px; }
+.k-bar__isi { transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { .k-bar__isi { transition: none; } }
 .k-bar--terpisah .k-bar__isi { flex: 0 0 auto; width: var(--k-bar-isi); background: var(--brand); }
 .k-bar--terpisah .k-bar__sisa { flex: 1; background: var(--brand-mint); }
 /* Tema gelap: `--brand` dan `--brand-mint` sama-sama #BBF49C (jebakan #37),
@@ -2456,16 +2459,16 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
    sebagai bar penuh yang terpotong celah. Sisanya diturunkan ke hijau
    redup; yang terisi tetap mint, warna aksi di tema itu. */
 :root[data-theme="dark"] .k-bar--terpisah .k-bar__sisa { background: var(--brand-line); }
-/* `tumpuk`: rel mint ber-radius 8, isian gelap DI ATASNYA tanpa celah.
-   Isiannya tidak ber-radius sendiri — yang membulatkan ujungnya relnya,
-   lewat overflow. Di framenya rect isiannya memang tanpa rx. */
+/* `tumpuk`: rel mint berbentuk pil, isian gelap DI ATASNYA tanpa celah.
+   Isiannya ikut berujung bulat, jadi ujung kanannya melengkung juga —
+   bukan terpotong tegak di tengah rel. */
 .k-bar--tumpuk {
   position: relative;
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--brand-mint);
   overflow: hidden;
 }
-.k-bar--tumpuk .k-bar__isi { width: var(--k-bar-isi); background: var(--brand); }
+.k-bar--tumpuk .k-bar__isi { width: var(--k-bar-isi); border-radius: 999px; background: var(--brand); }
 .k-bar--tumpuk .k-bar__sisa { display: none; }
 /* Sama dengan `.k-bar--terpisah` di atas: di gelap jalurnya (mint) dan isinya
    (`--brand`, yang di sana juga mint) jadi satu warna, dan bar 40% terbaca
@@ -2605,7 +2608,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   color: var(--brand);
   white-space: nowrap;
 }
-.k-cincin { display: block; width: 200px; max-width: 100%; }
+.k-cincin { position: relative; display: block; width: 200px; max-width: 100%; }
 .k-cincin > svg { display: block; width: 100%; height: auto; }
 
 /* --- Pemilih bertopeng tombol ----------------------------------------------
@@ -3486,4 +3489,66 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
     scrollbar-width: none;
   }
   .kl #kl-rel .k-sisi__daftar::-webkit-scrollbar { display: none; }
+}
+
+/* =============================================================================
+   Keterangan grafik saat disentuh kursor (kartuGrafik.tsx)
+   Satu bentuk kartu untuk Busur, Donat, Cincin, Kilau, dan KolomGrafik.
+   ============================================================================= */
+.k-grafikkartu {
+  position: fixed;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  max-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--text-strong) 28%, transparent);
+  color: var(--text-strong);
+  font-size: var(--k-t12);
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  /* Kartu berdiri di KANAN-ATAS kursor; di separuh kanan, di kiri-atasnya. */
+  transform: translate(12px, calc(-100% - 10px));
+  animation: k-muncul 90ms ease-out;
+}
+.k-grafikkartu--kiri { transform: translate(calc(-100% - 12px), calc(-100% - 10px)); }
+.k-grafikkartu--bawah { transform: translate(12px, 16px); }
+.k-grafikkartu--kiri.k-grafikkartu--bawah { transform: translate(calc(-100% - 12px), 16px); }
+.k-grafikkartu__judul { margin: 0; color: var(--text-muted); font-size: var(--k-t11); font-weight: var(--k-med); }
+.k-grafikkartu__baris { display: flex; align-items: center; gap: 8px; margin: 0; }
+.k-grafikkartu__baris > b { margin-left: auto; padding-left: 12px; font-weight: var(--k-semi); font-variant-numeric: tabular-nums; }
+.k-grafikkartu__warna { flex: none; width: 8px; height: 8px; border-radius: 3px; }
+.k-grafikkartu__label { color: var(--text-body); }
+
+/* Irisan yang disentuh tetap penuh; sisanya meredup supaya terbaca yang mana. */
+.k-grafik__iris { transition: opacity 150ms; cursor: default; }
+.is-sorot .k-grafik__iris:not(.is-aktif) { opacity: 0.35; }
+
+/* Grafik area: kursor silang di atas plot yang bisa dibaca per titik. */
+.k-area__plot--sentuh { cursor: crosshair; touch-action: pan-y; }
+
+/* Garis mungil di kartu statistik. */
+.k-kilau__wadah { position: relative; display: inline-flex; cursor: crosshair; }
+.k-kilau__titik { fill: var(--surface); stroke: currentColor; stroke-width: 2; }
+
+/* Kolom grafik: kartu muncul di SAMPING kolom, di atas bidang plotnya,
+   tanpa JavaScript — :hover dan :focus-visible saja. */
+.k-kolom--sentuh { position: relative; outline: none; cursor: default; }
+.k-kolom--sentuh .k-kolom__b { transition: opacity 150ms, filter 150ms; }
+.k-kolom__kartu { position: absolute; z-index: 5; top: 4px; display: none; transform: none; animation: k-muncul 90ms ease-out; }
+.k-kolom__kartu--kanan { left: calc(50% + 14px); }
+.k-kolom__kartu--kiri { right: calc(50% + 14px); }
+.k-kolom--sentuh:hover .k-kolom__kartu,
+.k-kolom--sentuh:focus-visible .k-kolom__kartu { display: flex; }
+.k-kolom--sentuh:hover .k-kolom__b,
+.k-kolom--sentuh:focus-visible .k-kolom__b { filter: brightness(1.06) saturate(1.1); }
+.k-kolom--sentuh:focus-visible .k-kolom__bidang { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  .k-grafikkartu, .k-kolom__kartu { animation: none; }
 }

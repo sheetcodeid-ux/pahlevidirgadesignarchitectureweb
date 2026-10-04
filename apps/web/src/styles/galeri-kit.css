@@ -94,8 +94,8 @@
   -webkit-line-clamp: 2;
 }
 .gal-folder__meter { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; color: var(--text-muted); font-size: var(--k-t11); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.gal-folder__rel { flex: 1; height: 4px; overflow: hidden; border-radius: 2px; background: var(--border); }
-.gal-folder__rel > span { display: block; height: 100%; border-radius: 2px; background: var(--brand); }
+.gal-folder__rel { flex: 1; height: 6px; overflow: hidden; border-radius: 999px; background: var(--border); }
+.gal-folder__rel > span { display: block; height: 100%; border-radius: 999px; background: var(--brand); }
 
 /* --- Isi folder ------------------------------------------------------------- */
 

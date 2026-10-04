@@ -541,7 +541,7 @@ function Isi() {
                         className="pes__donat"
                         label="Total pesan"
                         nilai={statJenis.total}
-                        iris={statJenis.baris.map((b) => ({ nilai: b.n, warna: `var(--ramp-${b.ramp})` }))}
+                        iris={statJenis.baris.map((b) => ({ nilai: b.n, warna: `var(--ramp-${b.ramp})`, label: b.label, ket: `${b.n} pesan` }))}
                       />
                     </div>
                     <div className="pes__jeniskanan">

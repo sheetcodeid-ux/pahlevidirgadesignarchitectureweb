@@ -286,6 +286,13 @@ export function DemoGrafik() {
           ]}
           labelX={["Mei", "Jun", "Jul", "Agu", "Sep", "Okt"]}
           labelY={["40 jt", "20 jt", "0"]}
+          maks={40}
+          ruangAtas={8}
+          keterangan={(i) => ({
+            judul: `${["Mei", "Jun", "Jul", "Agu", "Sep", "Okt"][i]} 2026`,
+            nilai: `Masuk Rp${[18, 22, 26, 21, 30, 34][i]} jt`,
+            ket: `Keluar Rp${[12, 15, 13, 17, 16, 19][i]} jt`,
+          })}
         />
       </Kartu>
       <Kartu>
@@ -294,9 +301,9 @@ export function DemoGrafik() {
           label="Total beban"
           nilai="Rp12,7 jt"
           iris={[
-            { nilai: 67, warna: "var(--ramp-1)", label: "Freelancer" },
-            { nilai: 20, warna: "var(--ramp-2)", label: "Operasional" },
-            { nilai: 13, warna: "var(--ramp-4)", label: "Cetak" },
+            { nilai: 67, warna: "var(--ramp-1)", label: "Freelancer", ket: "Rp8,5 jt" },
+            { nilai: 20, warna: "var(--ramp-2)", label: "Operasional", ket: "Rp2,5 jt" },
+            { nilai: 13, warna: "var(--ramp-4)", label: "Cetak", ket: "Rp1,7 jt" },
           ]}
         />
       </Kartu>

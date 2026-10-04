@@ -367,7 +367,18 @@ function Isi() {
     };
   }, [bulanan, perBulan]);
   const kilau = (titik: number[] | undefined, buruk: boolean) =>
-    titik ? <Kilau titik={titik} turun={buruk} lebar={76} tinggi={34} /> : undefined;
+    titik ? (
+      <Kilau
+        titik={titik}
+        turun={buruk}
+        lebar={76}
+        tinggi={34}
+        keterangan={(i) => {
+          const k = kunciBulan(5 - i);
+          return { judul: `${BULAN_PENDEK[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}`, nilai: formatRupiahRingkas(titik[i] ?? 0) };
+        }}
+      />
+    ) : undefined;
 
   /* Dua belas kolom di kedua rentang. "Tahun ini" = Januari sampai Desember
      tahun berjalan, persis framenya ("This Year", Jan..Dec) — bulan yang
@@ -874,7 +885,7 @@ function Isi() {
                 nilai={formatRupiahRingkas(totalAktif)}
                 /* Tangga hijau ke abu berurut besaran — irisan terbesar
                    paling gelap, persis framenya. */
-                iris={irisAktif.map((s, i) => ({ nilai: s.nilai, warna: `var(--ramp-${i + 1})` }))}
+                iris={irisAktif.map((s, i) => ({ nilai: s.nilai, warna: `var(--ramp-${i + 1})`, label: s.label, ket: formatRupiah(s.nilai) }))}
               />
             ) : (
               <p className="dsb__kosong">
