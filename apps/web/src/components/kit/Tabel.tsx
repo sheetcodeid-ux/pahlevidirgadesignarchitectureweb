@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
 import { Sort } from "./ikon";
 
@@ -42,8 +42,26 @@ export interface KolomTabel {
   redup?: boolean;
 }
 
+/** Kolom yang sedang mengurutkan tabel, dan arahnya. */
+export interface Urutan {
+  kolom: number;
+  arah: "naik" | "turun";
+}
+
 export interface PropTabel {
   kolom: KolomTabel[];
+  /**
+   * Urutan yang sedang berlaku. Bersama `onUrut`, judul kolom ber-`urut`
+   * jadi TOMBOL: klik pertama naik, kedua turun, ketiga kembali ke urutan
+   * asal. Tanpa `onUrut` ikon Sort cuma hiasan seperti di frame — dan itu
+   * yang dilaporkan pemilik ("pastikan klik atas bawah itu berfungsi"),
+   * jadi setiap tabel yang menampilkan ikonnya wajib mengirim keduanya.
+   * Yang MENGURUTKAN pemanggil, lewat `useUrutTabel` — tabel berpaginasi
+   * harus diurutkan sebelum dipotong per halaman, dan tabel ini cuma
+   * melihat potongannya.
+   */
+  urutan?: Urutan | null;
+  onUrut?: (u: Urutan | null) => void;
   baris: ReactNode[][];
   /** Kolom kotak centang di paling kiri, seperti Transaction dan Invoice. */
   pilih?: boolean;
@@ -110,6 +128,8 @@ export function Tabel({
   fontBaris = 12,
   kepala = "garis",
   tanpaKepala,
+  urutan,
+  onUrut,
   className,
 }: PropTabel) {
   /* Set, bukan `includes`: tabel ini bisa memuat ratusan baris dan
@@ -177,17 +197,40 @@ export function Tabel({
               />
             </th>
           )}
-          {kolom.map((k, i) => (
-            <th key={i} scope="col" className={k.kanan ? "is-kanan" : undefined}>
-              {/* Ikon Sort tidak pernah berdiri sendiri: ia menempel pada
-                  judulnya lewat span, supaya ia tidak terpisah saat kolomnya
-                  terlalu sempit. */}
-              <span className="k-tabel__judul">
-                {k.judul}
-                {k.urut && <Ikon ikon={Sort} ukuran={12} />}
-              </span>
-            </th>
-          ))}
+          {kolom.map((k, i) => {
+            const aktif = urutan?.kolom === i ? urutan.arah : null;
+            return (
+              <th
+                key={i}
+                scope="col"
+                className={k.kanan ? "is-kanan" : undefined}
+                aria-sort={k.urut && onUrut ? (aktif === "naik" ? "ascending" : aktif === "turun" ? "descending" : "none") : undefined}
+              >
+                {/* Ikon Sort tidak pernah berdiri sendiri: ia menempel pada
+                    judulnya, supaya ia tidak terpisah saat kolomnya terlalu
+                    sempit. Panah yang sedang berlaku menyala, lawannya pudar. */}
+                {k.urut && onUrut ? (
+                  <button
+                    type="button"
+                    className={["k-tabel__judul", "k-tabel__urut", aktif && `is-${aktif}`].filter(Boolean).join(" ")}
+                    onClick={() =>
+                      onUrut(
+                        aktif === null ? { kolom: i, arah: "naik" } : aktif === "naik" ? { kolom: i, arah: "turun" } : null,
+                      )
+                    }
+                  >
+                    {k.judul}
+                    <Ikon ikon={Sort} ukuran={12} />
+                  </button>
+                ) : (
+                  <span className="k-tabel__judul">
+                    {k.judul}
+                    {k.urut && <Ikon ikon={Sort} ukuran={12} />}
+                  </span>
+                )}
+              </th>
+            );
+          })}
         </tr>
       </thead>
       )}
@@ -232,6 +275,44 @@ export function Tabel({
       </tbody>
     </table>
   );
+}
+
+/* -----------------------------------------------------------------------------
+   Mengurutkan data tabel. Dipakai PEMANGGIL, sebelum datanya dipotong per
+   halaman dan sebelum dirakit jadi sel — tabel cuma menerima ReactNode, dan
+   angka "Rp170.000.000" tidak bisa diurutkan dengan benar dari teksnya.
+
+   `nilai[i]` = kunci urut kolom ke-i (null untuk kolom yang tidak bisa
+   diurutkan). Angka diurutkan sebagai angka, teks dengan aturan bahasa
+   Indonesia (angka di dalam teks dibaca sebagai angka: "Termin 10" sesudah
+   "Termin 9"). Yang kosong selalu di bawah, ke arah mana pun. Urutan stabil:
+   baris yang kuncinya sama tetap pada urutan asalnya.
+   -------------------------------------------------------------------------- */
+export type NilaiUrut = string | number | null | undefined;
+
+export function urutkan<T>(data: T[], urutan: Urutan | null | undefined, nilai: (((t: T) => NilaiUrut) | null)[]): T[] {
+  const ambil = urutan ? nilai[urutan.kolom] : null;
+  if (!urutan || !ambil) return data;
+  const kali = urutan.arah === "naik" ? 1 : -1;
+  return data
+    .map((t, i) => ({ t, i, v: ambil(t) }))
+    .sort((a, b) => {
+      const kosongA = a.v === null || a.v === undefined || a.v === "";
+      const kosongB = b.v === null || b.v === undefined || b.v === "";
+      if (kosongA || kosongB) return kosongA === kosongB ? a.i - b.i : kosongA ? 1 : -1;
+      const beda =
+        typeof a.v === "number" && typeof b.v === "number"
+          ? a.v - b.v
+          : String(a.v).localeCompare(String(b.v), "id", { numeric: true, sensitivity: "base" });
+      return beda !== 0 ? beda * kali : a.i - b.i;
+    })
+    .map((x) => x.t);
+}
+
+/** Keadaan urutan + data yang sudah diurutkan, siap dioper ke `Tabel`. */
+export function useUrutTabel<T>(data: T[], nilai: (((t: T) => NilaiUrut) | null)[]) {
+  const [urutan, setUrutan] = useState<Urutan | null>(null);
+  return { terurut: urutkan(data, urutan, nilai), urutan, onUrut: setUrutan };
 }
 
 /* -----------------------------------------------------------------------------

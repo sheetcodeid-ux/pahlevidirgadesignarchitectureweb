@@ -7,7 +7,7 @@ import { KartuStatistik, Tren } from "../kit/Kartu";
 import { Kilau } from "../kit/Grafik";
 import { KolomGrafik, LabelYGrafik } from "../kit/Grafik";
 import { BarKemajuan, Donat } from "../kit/Ukuran";
-import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
+import { Tabel, SelDua, useUrutTabel, type KolomTabel } from "../kit/Tabel";
 import { TombolIkon } from "../kit/Tombol";
 import { KelompokTab } from "../kit/Segmen";
 import { Lencana, type NadaLencana } from "../kit/Lencana";
@@ -509,7 +509,16 @@ function Isi() {
     return { teks: "Berjalan", nada: "menunggu" };
   };
 
-  const baris = barisLaba.map((r) => {
+  /* Klik judul kolom mengurutkan kelima baris yang tampil; pemilih
+     "Laba terbesar/terkecil/Piutang" tetap memilih LIMA yang mana. */
+  const laba = useUrutTabel(barisLaba, [
+    (r) => r.projectTitle,
+    (r) => r.labaBersih,
+    (r) => r.received,
+    (r) => r.belumDiterima ?? null,
+    (r) => statusLaba(r).teks,
+  ]);
+  const baris = laba.terurut.map((r) => {
     const st = statusLaba(r);
     const marjin = r.received > 0 ? `marjin ${Math.round((r.labaBersih / r.received) * 100)}%` : "belum ada kas";
     const sisa = r.belumDiterima ?? null;
@@ -878,6 +887,8 @@ function Isi() {
               <Tabel
                 kolom={kolom}
                 baris={baris}
+                urutan={laba.urutan}
+                onUrut={laba.onUrut}
                 kepala="mint"
                 pad={10}
                 tinggiKepala={33}

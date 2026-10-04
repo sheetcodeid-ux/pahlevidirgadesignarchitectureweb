@@ -7,7 +7,7 @@ import { Pemisah } from "../kit/Tampilan";
 import { unduhRincianBiaya, unduhDaftarTagihan } from "../../lib/pdfProyek";
 import { KepalaSeksi } from "../kit/Item";
 import { KartuStatistikLebar, BarKemajuan, GrafikArea } from "../kit/Ukuran";
-import { Tabel, type KolomTabel } from "../kit/Tabel";
+import { Tabel, useUrutTabel, type KolomTabel } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
@@ -343,7 +343,13 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
     { judul: "Nominal", lebar: 113.2, urut: true },
     { judul: "Catatan", lebar: 197.8, urut: true },
   ];
-  const baris = transaksi.map((t) => {
+  const urutTrx = useUrutTabel(transaksi, [
+    (t) => (t.masuk ? "Masuk" : "Keluar"),
+    (t) => waktuKe(t.waktu),
+    (t) => (t.masuk ? t.nominal : -t.nominal),
+    (t) => (t.catatan === "—" ? null : t.catatan),
+  ]);
+  const baris = urutTrx.terurut.map((t) => {
     const d = new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu);
     return [
       <span className="sat__jenis">
@@ -699,6 +705,8 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                 <Tabel
                   kolom={kolom}
                   baris={baris}
+                  urutan={urutTrx.urutan}
+                  onUrut={urutTrx.onUrut}
                   kepala="mint"
                   pad={16}
                   tinggiKepala={37}

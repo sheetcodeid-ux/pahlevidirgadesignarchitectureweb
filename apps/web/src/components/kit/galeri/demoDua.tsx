@@ -5,7 +5,7 @@ import { Menubar, MenuNavigasi } from "../Overlay";
 import { Remah } from "../Remah";
 import { Paginasi } from "../Paginasi";
 import { Segmen, KelompokTab } from "../Segmen";
-import { Tabel, SelDua, SelIkon } from "../Tabel";
+import { Tabel, SelDua, SelIkon, useUrutTabel } from "../Tabel";
 import { GrafikArea, Donat, BarKemajuan } from "../Ukuran";
 import { Kartu, KartuStatistik, KartuKas, Tren } from "../Kartu";
 import { Lencana, Angka, Titik } from "../Lencana";
@@ -233,7 +233,9 @@ export function DemoTabel() {
 export function DemoDaftarKit() {
   const [cari, setCari] = useState("");
   const [status, setStatus] = useState("semua");
-  const lolos = TERMIN.filter(([t, p, , , , s]) => (status === "semua" || s === status) && `${t} ${p}`.toLowerCase().includes(cari.toLowerCase()));
+  const saring = TERMIN.filter(([t, p, , , , s]) => (status === "semua" || s === status) && `${t} ${p}`.toLowerCase().includes(cari.toLowerCase()));
+  const urut = useUrutTabel(saring, [(r) => r[0], (r) => Number(String(r[2]).replace(/\D/g, "")), null]);
+  const lolos = urut.terurut;
   return (
     <DaftarKit
       kiri={
@@ -268,7 +270,9 @@ export function DemoDaftarKit() {
       memuat={false}
       kosong="Tidak ada termin yang cocok."
       satuan="termin"
-      kunciSaring={`${cari}|${status}`}
+      kunciSaring={`${cari}|${status}|${urut.urutan ? `${urut.urutan.kolom}${urut.urutan.arah}` : ""}`}
+      urutan={urut.urutan}
+      onUrut={urut.onUrut}
       tinggiBaris={56}
     />
   );

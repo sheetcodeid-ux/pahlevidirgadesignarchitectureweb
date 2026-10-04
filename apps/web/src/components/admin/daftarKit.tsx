@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Tabel, type KolomTabel } from "../kit/Tabel";
+import { Tabel, type KolomTabel, type Urutan } from "../kit/Tabel";
 import { Paginasi } from "../kit/Paginasi";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
@@ -105,6 +105,11 @@ export interface PropDaftarKit {
   ganti?: ReactNode;
   pad?: number;
   tinggiBaris?: number;
+  /** Urutan klik-judul-kolom (lihat `useUrutTabel`). `baris` sudah harus
+      terurut; pemanggil memasukkan urutannya ke `kunciSaring` supaya
+      halamannya kembali ke 1. */
+  urutan?: Urutan | null;
+  onUrut?: (u: Urutan | null) => void;
 }
 
 export function DaftarKit({
@@ -125,6 +130,8 @@ export function DaftarKit({
   ganti,
   pad = 10.5,
   tinggiBaris = 64,
+  urutan,
+  onUrut,
 }: PropDaftarKit) {
   const [halaman, setHalaman] = useState(1);
   const [perHalaman, setPerHalaman] = useState(12);
@@ -179,6 +186,8 @@ export function DaftarKit({
               kunci={kunciTampil}
               terpilih={pilih?.terpilih}
               onPilih={pilih?.onPilih}
+              urutan={urutan}
+              onUrut={onUrut}
               kepala="polos"
               pad={pad}
               tinggiKepala={32}

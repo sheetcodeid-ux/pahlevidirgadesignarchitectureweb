@@ -349,7 +349,9 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  width: 100px;
+  /* Lantai, bukan lebar tetap: 100px milik frame dibuat untuk "$6,000",
+     dan "Rp106.000.000" meluber keluar kartunya. */
+  min-width: 100px;
   margin: 0;
 }
 .dsb__tipbaris + .dsb__tipbaris { margin-top: -2px; }

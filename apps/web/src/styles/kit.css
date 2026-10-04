@@ -1370,6 +1370,33 @@
    itulah yang dipasang di sini. */
 .k-tabel__judul { display: inline-flex; align-items: center; gap: 0.35px; white-space: nowrap; }
 .k-tabel__judul svg { color: var(--text-muted); }
+/* Judul yang bisa diurutkan = tombol. Mewarisi huruf satu per satu, bukan
+   `font: inherit` (jebakan #43), dan tanpa bidang — tampilannya sama
+   persis dengan judul biasa sampai disentuh. */
+.k-tabel__urut {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.k-tabel__urut:hover,
+.k-tabel__urut.is-naik,
+.k-tabel__urut.is-turun { color: var(--text-strong); }
+.k-tabel__urut:hover svg,
+.k-tabel__urut.is-naik svg,
+.k-tabel__urut.is-turun svg { color: var(--text-strong); }
+.k-tabel__urut:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; box-shadow: none; }
+/* Ikon Sort = dua panah: path pertama panah BAWAH, kedua panah ATAS. Arah
+   yang berlaku menyala, lawannya pudar. */
+.k-tabel__urut.is-naik svg path:first-of-type,
+.k-tabel__urut.is-turun svg path:last-of-type { opacity: 0.25; }
 
 /* Ukuran huruf baris isi BEDA per jenis tabel: Dashboard 10px, sisanya 12px.
    Dipastikan dari tinggi tinta kolom nominal, yang stringnya memuat "$" dan

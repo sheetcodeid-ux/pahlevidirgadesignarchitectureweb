@@ -7,7 +7,7 @@ import { KepalaSeksi } from "../kit/Item";
 import { KelompokTab } from "../kit/Segmen";
 import { BarKemajuan } from "../kit/Ukuran";
 import { KolomGrafik, LabelYGrafik } from "../kit/Grafik";
-import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
+import { Tabel, SelDua, useUrutTabel, type KolomTabel } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
@@ -371,7 +371,18 @@ function Isi() {
     { judul: "Catatan", lebar: 224.3, urut: true },
     { judul: "Status", lebar: 109.5, urut: true },
   ];
-  const baris = transaksi.map((t) => {
+  const tglTrx = (w: string) => new Date(w.length === 10 ? w + "T00:00:00" : w).getTime();
+  /* Nominal diurutkan BERTANDA: uang keluar di bawah nol, seperti yang
+     terbaca di selnya ("−Rp4,2 jt"). */
+  const urutTrx = useUrutTabel(transaksi, [
+    (t) => t.nama,
+    (t) => (t.orang === "—" ? null : t.orang),
+    (t) => tglTrx(t.waktu),
+    (t) => (t.masuk ? t.nominal : -t.nominal),
+    (t) => (t.catatan === "—" ? null : t.catatan),
+    (t) => (t.masuk ? "Masuk" : "Keluar"),
+  ]);
+  const baris = urutTrx.terurut.map((t) => {
     const d = new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu);
     return [
       <div className="trx__sel">
@@ -669,6 +680,8 @@ function Isi() {
               <Tabel
                 kolom={kolom}
                 baris={baris}
+                urutan={urutTrx.urutan}
+                onUrut={urutTrx.onUrut}
                 kepala="mint"
                 pad={15.5}
                 tinggiKepala={37}

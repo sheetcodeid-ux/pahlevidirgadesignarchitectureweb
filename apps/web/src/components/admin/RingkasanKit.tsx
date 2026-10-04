@@ -4,7 +4,7 @@ import { RequireAuth } from "./RequireAuth";
 import { KepalaSeksi, BarisLog } from "../kit/Item";
 import { KartuStatistikRingkas } from "../kit/Kartu";
 import { GrafikArea, BarKemajuan, Cincin, LencanaTren } from "../kit/Ukuran";
-import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
+import { Tabel, SelDua, useUrutTabel, type KolomTabel } from "../kit/Tabel";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Lencana } from "../kit/Lencana";
 import { Ikon } from "../kit/Ikon";
@@ -423,7 +423,14 @@ function Isi() {
     { judul: "Status", lebar: 74, urut: true },
   ];
 
-  const baris = transaksi.map((t) => {
+  const urutTrx = useUrutTabel(transaksi, [
+    (t) => t.nama,
+    (t) => (t.proyek === "—" ? null : t.proyek),
+    (t) => new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu).getTime(),
+    (t) => (t.masuk ? t.nominal : -t.nominal),
+    (t) => (t.masuk ? "Masuk" : "Keluar"),
+  ]);
+  const baris = urutTrx.terurut.map((t) => {
     const d = new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu);
     return [
       <SelDua atas={t.nama} bawah={t.sub} />,
@@ -688,6 +695,8 @@ function Isi() {
             <Tabel
               kolom={kolom}
               baris={baris}
+              urutan={urutTrx.urutan}
+              onUrut={urutTrx.onUrut}
               kepala="polos"
               pad={6}
               tinggiKepala={35}

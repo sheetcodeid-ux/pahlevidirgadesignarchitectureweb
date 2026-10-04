@@ -5,7 +5,7 @@ import { ToastProvider, useToast } from "../kit/Toast";
 import { KelompokTombol } from "../kit/Formulir";
 import { DialogBukti } from "./buktiKit";
 import { DialogBiaya } from "./biayaKit";
-import { SelDua, type KolomTabel } from "../kit/Tabel";
+import { SelDua, useUrutTabel, type KolomTabel } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Cari } from "../kit/Isian";
 import { Tombol } from "../kit/Tombol";
@@ -321,7 +321,18 @@ function Isi() {
     { judul: "Status", lebar: 119, urut: true },
   ];
 
-  const baris = tersaring.map((t) => {
+  /* Urutan klik-judul-kolom berlaku pada SELURUH hasil saringan sebelum
+     DaftarKit memotongnya per halaman. Kunci baris ikut urutan yang sama. */
+  const urut = useUrutTabel(tersaring, [
+    (t) => t.nama,
+    (t) => (t.proyek === "—" ? null : t.proyek),
+    (t) => (t.orang === "—" ? null : t.orang),
+    (t) => new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu).getTime(),
+    (t) => (t.masuk ? t.nominal : -t.nominal),
+    null,
+    (t) => (t.masuk ? "Masuk" : "Keluar"),
+  ]);
+  const baris = urut.terurut.map((t) => {
     const tgl = tanggalBaris(t.waktu);
     return [
       <div className="trx__sel">
@@ -387,7 +398,9 @@ function Isi() {
     <>
     <DaftarKit
       className="trx"
-      kunciSaring={`${cari}|${jenis}|${filterProyek}|${rentang}`}
+      kunciSaring={`${cari}|${jenis}|${filterProyek}|${rentang}|${urut.urutan ? `${urut.urutan.kolom}${urut.urutan.arah}` : ""}`}
+      urutan={urut.urutan}
+      onUrut={urut.onUrut}
       kiri={
         <>
           <Cari
@@ -430,7 +443,7 @@ function Isi() {
       }
       kolom={kolom}
       baris={baris}
-      kunci={tersaring.map((t) => t.kunci)}
+      kunci={urut.terurut.map((t) => t.kunci)}
       pilih={{ terpilih, onPilih: setTerpilih }}
       memuat={memuat}
       teksMemuat="Memuat transaksi…"

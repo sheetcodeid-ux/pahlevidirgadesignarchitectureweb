@@ -3,7 +3,7 @@ import { Peringatan } from "../kit/Tampilan";
 import { IsianTanggal } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { Tabel, SelDua, type KolomTabel } from "../kit/Tabel";
+import { Tabel, SelDua, useUrutTabel, type KolomTabel } from "../kit/Tabel";
 import { Segmen } from "../kit/Segmen";
 import { Paginasi } from "../kit/Paginasi";
 import { Cari } from "../kit/Isian";
@@ -220,10 +220,20 @@ function Isi() {
     });
   }, [semua, status, filterProyek, cari]);
 
-  const totalHalaman = Math.max(1, Math.ceil(tersaring.length / perHalaman));
+  /* Klik judul kolom mengurutkan SELURUH hasil saringan, lalu baru dipotong
+     per halaman — mengurutkan potongannya saja membuat "Nominal terbesar"
+     di halaman 2 lebih besar daripada di halaman 1. */
+  const urut = useUrutTabel(tersaring, [
+    (i) => i.label,
+    (i) => nomor.get(i.id)?.ke ?? null,
+    (i) => i.amount,
+    (i) => i.dueDate ?? null,
+    (i) => LABEL_STATUS[i.status] ?? i.status,
+  ]);
+  const totalHalaman = Math.max(1, Math.ceil(urut.terurut.length / perHalaman));
   const halamanKini = Math.min(halaman, totalHalaman);
   const mulai = (halamanKini - 1) * perHalaman;
-  const tampil = tersaring.slice(mulai, mulai + perHalaman);
+  const tampil = urut.terurut.slice(mulai, mulai + perHalaman);
 
   async function ubahStatus(i: Invoice, baru: string) {
     if (baru === i.status) return;
@@ -426,6 +436,11 @@ function Isi() {
             kunci={tampil.map((i) => i.id)}
             terpilih={terpilih}
             onPilih={setTerpilih}
+            urutan={urut.urutan}
+            onUrut={(u) => {
+              urut.onUrut(u);
+              setHalaman(1);
+            }}
             kepala="mint"
             pad={10.5}
             tinggiKepala={45}

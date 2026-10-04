@@ -3,7 +3,7 @@ import { RequireAuth } from "./RequireAuth";
 import { KepalaSeksi, BarisPantau, BarisAset } from "../kit/Item";
 import { GrafikArea, Busur, LencanaTren } from "../kit/Ukuran";
 import { KolomGrafik, type BatangGrafik } from "../kit/Grafik";
-import { Tabel, SelDua, SelIkon, type KolomTabel } from "../kit/Tabel";
+import { Tabel, SelDua, SelIkon, useUrutTabel, type KolomTabel } from "../kit/Tabel";
 import { TombolIkon } from "../kit/Tombol";
 import { DownloadSimple, Ruler } from "../kit/ikon";
 import {
@@ -344,7 +344,23 @@ function Isi() {
     { judul: "Total", lebar: 100.1, urut: true, redup: true },
   ];
 
-  const barisProyek = (dataProyek ?? []).map((p) => [
+  /* Urutan klik-judul-kolom, satu per mode — berganti mode tidak membawa
+     urutan kolom yang namanya lain. */
+  const urutProyek = useUrutTabel(dataProyek ?? [], [
+    (p) => p.projectTitle,
+    (p) => p.contractValue,
+    (p) => p.feeTotal,
+    (p) => p.feeTanpaNama || null,
+    (p) => p.feeShare,
+  ]);
+  const urutOrang = useUrutTabel(dataOrang ?? [], [
+    (o) => o.name,
+    (o) => LABEL_JENIS_ANGGOTA[o.kind],
+    (o) => o.projectCount,
+    (o) => o.lastOn ?? null,
+    (o) => o.total,
+  ]);
+  const barisProyek = urutProyek.terurut.map((p) => [
     <SelIkon ikon={Ruler} ukuran={30} ikonPx={14}>
       {/* Nama-namanya ikut tercetak di bawah judul proyek. Tanpa ini,
           satu-satunya cara tahu siapa yang dibayar di sebuah proyek adalah
@@ -385,7 +401,7 @@ function Isi() {
     ),
   ]);
 
-  const barisOrang = (dataOrang ?? []).map((o) => [
+  const barisOrang = urutOrang.terurut.map((o) => [
     <SelIkon ikon={IKON_JENIS[o.kind]} ukuran={30} ikonPx={14}>
       <span className="fee__sel">
         <SelDua besar atas={o.name} bawah={o.role ?? LABEL_JENIS_ANGGOTA[o.kind]} />
@@ -685,6 +701,8 @@ function Isi() {
             <Tabel
               kolom={mode === "proyek" ? kolomProyek : kolomOrang}
               baris={baris}
+              urutan={mode === "proyek" ? urutProyek.urutan : urutOrang.urutan}
+              onUrut={mode === "proyek" ? urutProyek.onUrut : urutOrang.onUrut}
               pad={12.5}
               tinggiKepala={39}
               tinggiBaris={61}
