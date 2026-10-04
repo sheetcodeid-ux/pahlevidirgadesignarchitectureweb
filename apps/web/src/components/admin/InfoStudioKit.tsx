@@ -161,7 +161,7 @@ function Isi() {
       }
     >
       <section className="pf__bagian">
-        <KepalaBagian judul="Logo studio" kanan="Tampil di rel samping panel dan di situs" />
+        <KepalaBagian judul="Logo studio" />
         <div className="is-logo">
           <span className="is-logo__kotak">
             {logo ? <img src={logo} alt="Logo studio" /> : <Ikon ikon={ImageSquare} ukuran={32} />}
@@ -233,7 +233,6 @@ function Isi() {
             className="pas__lebar"
             value={nilai("tagline")}
             onChange={(e) => set("tagline", e.currentTarget.value)}
-            bantu="Keterangan singkat, kalau diisi."
           />
         </div>
         {/* Dua isian opsional dilipat — terbuka sendiri kalau salah satunya
@@ -260,7 +259,7 @@ function Isi() {
       </section>
 
       <section className="pf__bagian">
-        <KepalaBagian judul="Zona waktu" kanan="Jam dan tanggal di panel admin" />
+        <KepalaBagian judul="Zona waktu" />
         <div className="is-zona" role="radiogroup" aria-label="Zona waktu">
           {ZONA_WAKTU.map((z) => (
             <button

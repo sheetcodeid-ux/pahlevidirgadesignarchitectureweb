@@ -122,7 +122,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.pj__kartumint .pj__judulsedang { margin-top: 9px; -webkit-line-clamp: 1; }
+.pj__kartumint .pj__judulsedang { margin-top: 9px; -webkit-line-clamp: 2; }
 .pj__kartugrid .pj__judulsedang { margin-top: 14px; font-weight: var(--k-med); }
 .pj__ringkas {
   display: -webkit-box;
@@ -134,7 +134,7 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.pj__kartumint .pj__ringkas { margin-top: 2px; font-size: var(--k-t11); line-height: 18px; }
+.pj__kartumint .pj__ringkas { margin-top: 2px; font-size: var(--k-t11); line-height: 18px; -webkit-line-clamp: 1; }
 .pj__keadaan {
   display: flex;
   align-items: center;

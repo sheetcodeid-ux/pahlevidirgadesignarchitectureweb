@@ -143,7 +143,7 @@ function Isi() {
       }
     >
       <section className="pf__bagian">
-        <KepalaBagian judul="Seperti yang tampil di halaman Studio" kanan="Urutan di sini = urutan di sana" />
+        <KepalaBagian judul="Pratinjau halaman Studio" />
         {total === 0 ? (
           <p className="pf__fotoket">Belum ada yang bisa ditampilkan.</p>
         ) : (
@@ -159,9 +159,6 @@ function Isi() {
             ))}
           </div>
         )}
-        <p className="pf__statusket">
-          Di situs, fotonya tampil bertitik warna teal dan baru jadi foto asli saat kursor diarahkan.
-        </p>
       </section>
 
       <section className="pf__bagian">
@@ -287,7 +284,6 @@ function DialogOrang({
         }
       }}
       title={awal ? `Ubah ${awal.name ?? awal.role}` : "Tambah anggota tim"}
-      description="Peran dulu; nama dan fotonya boleh menyusul."
       trigger={pemicu}
       footer={
         <div className="kd-form__kaki">
@@ -304,20 +300,17 @@ function DialogOrang({
           placeholder="mis. Project coordinator"
           value={peran}
           onChange={(e) => setPeran(e.currentTarget.value)}
-          bantu="Baris abu di bawah nama, di halaman Studio."
         />
         <Isian
           label="Nama"
           placeholder="Boleh dikosongkan dulu"
           value={nama}
           onChange={(e) => setNama(e.currentTarget.value)}
-          bantu="Kosong = kartunya tampil bertanda menunggu."
         />
         <Isian
           label="Label slot foto"
           value={slot}
           onChange={(e) => setSlot(e.currentTarget.value)}
-          bantu="Tulisan di kotak foto selama fotonya belum ada."
         />
       </div>
     </Dialog>

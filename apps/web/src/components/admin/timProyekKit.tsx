@@ -162,7 +162,6 @@ export function LingkupTenggat({ proyek, onBerubah }: { proyek: Proyek; onBeruba
         open={buka}
         onOpenChange={setBuka}
         title="Lingkup & tenggat"
-        description="Lingkup kerja dan tenggat ini milik studio — tidak tampil di situs maupun di portal klien."
         footer={
           <>
             <Tombol ukuran="medium" jenis="ghost" onClick={() => setBuka(false)} disabled={menyimpan}>
@@ -389,7 +388,6 @@ export function TimDanBayaran({
         open={ubah !== null}
         onOpenChange={(o) => !o && setUbah(null)}
         title={ubah?.mode === "ubah" ? `${LABEL_PERAN[ubah.p.role]} — ${ubah.p.teamMemberName}` : "Tugaskan anggota tim"}
-        description="Persen dihitung dari fee design. Kosong = ikut Aturan Fee Tim."
         footer={
           <>
             {ubah?.mode === "ubah" && (
@@ -449,8 +447,7 @@ export function TimDanBayaran({
           </label>
           {ubah?.mode === "ubah" && ubah.p.dibayar > 0 && (
             <p className="tim__catatan">
-              Sudah dibayar {formatRupiah(ubah.p.dibayar)}. Mengubah persen tidak mengubah yang sudah dibayar — hanya sisa
-              yang terutang.
+              Sudah dibayar {formatRupiah(ubah.p.dibayar)}.
             </p>
           )}
         </div>
@@ -555,7 +552,7 @@ export function DialogBayar({
       title={bayar ? `Bayar tahap ${bayar.t.tahap === "awal" ? "awal" : "akhir"} — ${bayar.p.teamMemberName}` : "Bayar"}
       description={
         bayar
-          ? `${LABEL_PERAN[bayar.p.role]} ${bayar.p.projectTitle}. Dicatat sebagai biaya proyek itu, jadi laba, Fee, dan Gaji ikut berubah.`
+          ? `${LABEL_PERAN[bayar.p.role]} · ${bayar.p.projectTitle}`
           : undefined
       }
       footer={
@@ -573,8 +570,8 @@ export function DialogBayar({
         {bayar?.t.keadaan === "menunggu" && (
           <p className="tim__catatan">
             {bayar.t.tahap === "awal"
-              ? "DP klien belum tercatat masuk. Tetap bisa dibayar lebih awal kalau memang disepakati."
-              : "Desain proyek ini belum sampai tahap Finish. Tetap bisa dibayar lebih awal kalau memang disepakati."}
+              ? "DP klien belum masuk — dibayar lebih awal."
+              : "Desain belum Finish — dibayar lebih awal."}
           </p>
         )}
         <div className="sat__dialogdua">

@@ -462,8 +462,8 @@ function Isi() {
             title={`Hapus ${terpilih.length} termin?`}
             description={
               semua.some((i) => terpilih.includes(i.id) && i.status === "lunas")
-                ? "Ada termin LUNAS di antaranya — riwayat pembayarannya di Semua Transaksi tidak ikut terhapus, tapi termin ini hilang permanen dari daftar tagihan."
-                : "Termin yang dicentang hilang permanen dari daftar tagihan."
+                ? "Ada termin lunas di antaranya. Riwayat pembayarannya tetap ada."
+                : "Tidak bisa dikembalikan."
             }
             confirmLabel="Ya, hapus"
             onConfirm={hapusTerpilih}
@@ -609,7 +609,6 @@ function DialogTermin({
       open={buka}
       onOpenChange={saatBuka}
       title="Termin baru"
-      description="Satu termin milik satu kontrak — pilih proyeknya di sini."
       trigger={
         <Tombol ukuran="medium" kiri={Plus}>
           Tagihan Baru

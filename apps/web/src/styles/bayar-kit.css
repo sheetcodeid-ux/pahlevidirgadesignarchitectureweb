@@ -146,7 +146,7 @@
   scrollbar-width: none;
 }
 .tr__strip::-webkit-scrollbar { display: none; }
-.tr__strip > * { flex: none; width: 279px; }
+.tr__strip > * { flex: none; width: 292px; }
 /* Butir strip lebarnya TETAP 279, jadi isinya yang harus mengalah. Tanpa
    ini keterangan dan nama orang membungkus jadi dua baris dan kartunya
    terbaca berantakan di sebelah kartu yang isinya kebetulan pendek. */
@@ -283,4 +283,10 @@
    ("Nilai kontra…", "Beban sejauh" terlipat per kata). Ditumpuk. */
 @media (max-width: 40rem) {
   .tr__akun { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Ponsel: dua kartu akun berdampingan masing-masing ±150px — nominal 18px
+   "Rp185.000.000" terpotong elipsis. Angka uang tidak boleh terpotong. */
+@media (max-width: 40rem) {
+  .tr__akunnilai { font-size: 15px; }
 }

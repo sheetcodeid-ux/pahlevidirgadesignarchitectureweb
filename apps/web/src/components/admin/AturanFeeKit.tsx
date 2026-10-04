@@ -238,10 +238,6 @@ function Halaman() {
                   );
                 })}
               </div>
-              <p className="pjb__ket">
-                Kosongkan kalau belum diputuskan — bayaran peran itu tampil "Persen belum ditentukan", bukan Rp0. Rupiah di
-                tabel adalah contoh untuk proyek ber-fee {formatRupiah(fee)}.
-              </p>
             </section>
 
             <section className="pjb__bagian" aria-labelledby="afee-tahap">
@@ -255,7 +251,7 @@ function Halaman() {
                   inputMode="decimal"
                   value={isi.awal}
                   onChange={(e) => set("awal", e.currentTarget.value)}
-                  bantu={`Sisanya, ${pctTampil(Math.max(0, 100 - awalAman))}%, dibayar saat tahap proyek mencapai Finish.`}
+                  bantu={`Sisa ${pctTampil(Math.max(0, 100 - awalAman))}% saat Finish.`}
                 />
                 <IsianTempel
                   label="Jatah bonus tim per proyek"
@@ -263,7 +259,6 @@ function Halaman() {
                   inputMode="decimal"
                   value={isi.pool}
                   onChange={(e) => set("pool", e.currentTarget.value)}
-                  bantu="Pembanding saja — tidak membatasi persen peran."
                 />
               </div>
               {lewat > 0 && (
@@ -303,19 +298,7 @@ function Halaman() {
                 const d = e.currentTarget.value.replace(/\D/g, "");
                 setContoh(d ? Number(d).toLocaleString("id-ID") : "");
               }}
-              bantu="Hanya untuk hitungan di tabel — tidak disimpan."
             />
-            <p className="pas__sampingjudul">Yang ikut berubah</p>
-            <dl className="pf__fakta">
-              <div>
-                <dt>Persen peran</dt>
-                <dd>Penugasan baru, dan penugasan lama yang persennya kosong. Yang sudah berpersen tidak berubah.</dd>
-              </div>
-              <div>
-                <dt>Tahap awal</dt>
-                <dd>Semua tahap yang belum dibayar, di semua proyek.</dd>
-              </div>
-            </dl>
           </div>
         </aside>
       </div>

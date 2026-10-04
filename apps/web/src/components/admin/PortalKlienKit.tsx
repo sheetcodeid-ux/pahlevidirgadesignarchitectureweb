@@ -348,7 +348,7 @@ function Portal({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; o
             <AlertDialog
               destructive
               title="Buat tautan baru?"
-              description="Tautan lama langsung berhenti bekerja. Klien yang masih memegangnya harus dikirimi tautan yang baru."
+              description="Tautan lama langsung berhenti bekerja."
               confirmLabel="Ya, buat baru"
               onConfirm={buatUlang}
               trigger={
@@ -648,7 +648,6 @@ function PanelDokumen({
         value={judul}
         disabled={mengunggah}
         onChange={(e) => setJudul(e.currentTarget.value)}
-        bantu="Dipakai kalau berkasnya satu. Lebih dari satu berkas, atau dikosongkan: nama berkasnya yang jadi judul."
       />
       {/* Lampiran kit sebagai zona unggah langsung: berkas yang dijatuhkan
           langsung diunggah, jadi daftar pilihannya selalu kosong. */}
@@ -669,7 +668,7 @@ function PanelDokumen({
         <RangkaBaris jumlah={3} label="Memuat dokumen…" />
       ) : dokumen.length === 0 ? (
         <Kosong ikon={FileText} judul="Belum ada dokumen" ringkas>
-          Berkas yang diunggah di sini langsung terlihat di portal klien.
+          Langsung terlihat oleh klien.
         </Kosong>
       ) : (
         <ul className="pk__dokdaftar">
@@ -725,7 +724,7 @@ function PanelDokumen({
                   <AlertDialog
                     destructive
                     title={`Hapus ${d.title}?`}
-                    description="Dokumen ini hilang dari portal klien beserta seluruh komentarnya."
+                    description="Beserta seluruh komentarnya."
                     confirmLabel="Ya, hapus"
                     onConfirm={() => hapus(d)}
                     trigger={
@@ -936,7 +935,7 @@ function PanelKabar({
                 <AlertDialog
                   destructive
                   title={`Hapus “${u.title}”?`}
-                  description="Kabar ini hilang dari linimasa yang dilihat klien."
+                  description="Hilang dari linimasa klien."
                   confirmLabel="Ya, hapus"
                   onConfirm={() => hapus(u.id)}
                   trigger={

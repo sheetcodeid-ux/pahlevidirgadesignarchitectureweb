@@ -202,7 +202,10 @@
 .fee__tabel .k-tabel td { padding-top: 0; }
 .fee__tabel .k-tabel th { padding-top: 2px; }
 .fee__sel { display: block; min-width: 0; overflow: hidden; }
-.fee__sel .k-sel2__atas,
+/* Nama proyek boleh DUA baris (dulu satu baris berelipsis: "Guest Hou…"
+   di kolom 88px); daftar tim di bawahnya tetap satu baris — nama lengkap
+   tiap orang ada di keterangan saat kursor diarahkan. */
+.fee__sel .k-sel2__atas { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .fee__sel .k-sel2__bawah { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fee__redup { color: var(--text-faint); }
 /* Amber (terbatas: fee yang belum bernama) dibawa TITIK, bukan warna teks —

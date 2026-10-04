@@ -3053,7 +3053,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .bk__rinci { display: grid; gap: 10px; margin: 0; padding: 14px 0; border-block: 1px solid var(--border); }
 .bk__rinci > div { display: flex; justify-content: space-between; gap: 16px; }
 .bk__rinci dt { font-size: var(--k-t12); color: var(--text-muted); }
-.bk__rinci dd { margin: 0; font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); text-align: right; overflow-wrap: anywhere; }
+.bk__rinci dd { margin: 0; font-size: var(--k-t14); font-weight: var(--k-med); color: var(--text-strong); text-align: right; }
 .bk__tautan {
   margin: 0;
   padding: 10px 12px;

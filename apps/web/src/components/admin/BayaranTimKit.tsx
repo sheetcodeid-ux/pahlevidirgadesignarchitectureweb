@@ -408,8 +408,7 @@ function Isi() {
                 </dl>
                 {!wa && (
                   <p className="byt__catatan">
-                    Nomor WhatsApp {slip.name} belum diisi. Isi di <a href="/admin/tim">Tim &amp; Freelancer</a> supaya
-                    slip bisa dikirim langsung.
+                    WhatsApp belum diisi — <a href="/admin/tim">isi di Tim &amp; Freelancer</a>.
                   </p>
                 )}
               </>

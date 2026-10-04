@@ -272,10 +272,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                 { nilai: "archived", label: "Arsip", ikon: ArchiveTray },
               ]}
             />
-            <p className="pf__statusket">
-              {STATUS[status]?.ket}
-              {!adaSampul && status !== "published" && " Unggah sampul dulu sebelum menerbitkan."}
-            </p>
+            {!adaSampul && status !== "published" && <p className="pf__statusket">Unggah sampul dulu sebelum menerbitkan.</p>}
             <div className="pas__sakelar">
               <label>
                 <Sakelar
@@ -317,7 +314,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                 className="pas__lebar"
                 value={teks("slug")}
                 onChange={(e) => set("slug", e.currentTarget.value)}
-                bantu={`Muncul di URL: /proyek/${teks("slug") || "…"}. Mengubahnya memutus tautan lama yang sudah dibagikan.`}
+                bantu={`/proyek/${teks("slug") || "…"}`}
               />
               <Isian
                 label="Subjudul"
@@ -328,11 +325,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                 /* Peringatan, bukan larangan: situs sengaja melewatkan
                    subjudul yang sama dengan judulnya, dan melewatkannya
                    diam-diam membuat pemilik menyangka ada yang rusak. */
-                bantu={
-                  subjudulSama
-                    ? "Sama dengan judul, jadi tidak akan ditampilkan di situs. Isi dengan kalimat pelengkap."
-                    : "Satu baris penjelas di bawah judul. Boleh dikosongkan."
-                }
+                bantu={subjudulSama ? "Sama dengan judul — tidak akan ditampilkan." : undefined}
               />
             </div>
             <label className="k-isian pas__lebar">
@@ -458,7 +451,6 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
               placeholder={`${asli.title} — ${KATEGORI[String(asli.category)] ?? "proyek"} di ${asli.city ?? "Pontianak"}`}
               value={teks("seoTitle")}
               onChange={(e) => set("seoTitle", e.currentTarget.value)}
-              bantu="Kosongkan untuk memakai judul proyek."
             />
             <label className="k-isian pas__lebar">
               <span className="k-isian__label">Deskripsi di hasil pencarian</span>
@@ -495,7 +487,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
             </div>
           </dl>
           {asli.status === "published" && !sudahDibangun(asli.publishedAt, dibangunPada) && (
-            <p className="pf__statusket">Belum ada di situs — tekan Terbitkan (bola dunia di kanan atas).</p>
+            <p className="pf__statusket">Belum tayang — tekan Terbitkan.</p>
           )}
           {asli.status === "published" && sudahDibangun(asli.publishedAt, dibangunPada) && (
             <a className="pf__tautan" href={`/proyek/${asli.slug}`} target="_blank" rel="noreferrer">
@@ -518,7 +510,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
           <AlertDialog
             destructive
             title={`Hapus ${asli.title}?`}
-            description="Gambar, tagihan, pembayaran, dan biaya proyek ini ikut terhapus dan tidak bisa dikembalikan."
+            description="Gambar, tagihan, pembayaran, dan biayanya ikut terhapus."
             confirmLabel="Ya, hapus"
             onConfirm={async () => {
               try {
@@ -848,7 +840,7 @@ function PanelFoto({
                 <AlertDialog
                   destructive
                   title="Hapus foto ini?"
-                  description="Foto hilang dari halaman proyek dan tidak bisa dikembalikan."
+                  description="Tidak bisa dikembalikan."
                   confirmLabel="Ya, hapus"
                   onConfirm={() => hapus(g)}
                   /* Tombol asli, bukan TombolIkon: pemicu Radix butuh ref

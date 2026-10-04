@@ -91,10 +91,29 @@ function jadwalkan(el: Element) {
   }, JEDA);
 }
 
+/** Pindahkan `title` di elemen ini dan seluruh keturunannya ke `data-judul`. */
+function sapu(akar: ParentNode) {
+  if (akar instanceof Element && akar.hasAttribute("title")) judulDari(akar);
+  akar.querySelectorAll?.("[title]").forEach((el) => judulDari(el));
+}
+
 export function pasangJudulMelayang() {
   const w = window as unknown as { __judulMelayang?: boolean };
   if (w.__judulMelayang) return;
   w.__judulMelayang = true;
+
+  /* `title` dipindah BEGITU muncul, bukan baru saat disentuh: peramban
+     menjadwalkan kotaknya sendiri pada gerakan tetikus pertama, dan
+     memindahkannya di peristiwa yang sama tidak selalu menang. Pengamat ini
+     juga menangkap `title` yang dipasang React belakangan (isi yang dimuat
+     dari API, baris tabel baru). */
+  sapu(document);
+  new MutationObserver((daftar) => {
+    for (const m of daftar) {
+      if (m.type === "attributes" && m.target instanceof Element) judulDari(m.target);
+      else m.addedNodes.forEach((n) => n instanceof Element && sapu(n));
+    }
+  }).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["title"] });
 
   document.addEventListener(
     "pointerover",

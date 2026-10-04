@@ -237,7 +237,6 @@ function DialogKontak({ onSelesai }: { onSelesai: () => void }) {
       open={buka}
       onOpenChange={saatBuka}
       title="Tambah kontak"
-      description="Klien, kontraktor, atau supplier yang dipakai berulang."
       trigger={
         <Tombol ukuran="medium" jenis="primary" kiri={Plus}>
           Tambah kontak

@@ -95,10 +95,6 @@ function Isi() {
 
   return (
     <div className="kpi">
-      <p className="kpi__periode">
-        Tahun {k.tahun} · kuartal {k.kuartal}. Target dari dokumen strategi §8.
-      </p>
-
       <div className="kpi__angka">
         <KartuStatistikRingkas
           ikon={CurrencyCircleDollar}
@@ -169,7 +165,7 @@ function Isi() {
 
       <div className="kpi__bawah">
         <article className="kpi__kartu">
-          <KepalaSeksi judul="Margin di Bawah 35%" kanan={<span className="kpi__ket">proyek tahun ini</span>} />
+          <KepalaSeksi judul="Margin di Bawah 35%" kanan={<span className="kpi__ket">{k.tahun}</span>} />
           {barisMargin.length ? (
             <div className="kpi__tabel">
               <Tabel kolom={kolomMargin} baris={barisMargin} kepala="mint" pad={12} tinggiKepala={37} tinggiBaris={48} fontBaris={12} />
@@ -181,14 +177,10 @@ function Isi() {
                 : "Belum ada proyek berkontrak tahun ini."}
             </p>
           )}
-          <p className="kpi__catatan">
-            Margin kontrak = (nilai kontrak − biaya tercatat) ÷ nilai kontrak. Berbeda dari laba kas di Keuangan: yang
-            dinilai di sini apakah harga yang dijual menutup biayanya.
-          </p>
         </article>
 
         <article className="kpi__kartu">
-          <KepalaSeksi judul="Laba per Segmen" kanan={<span className="kpi__ket">kas tahun {k.tahun}</span>} />
+          <KepalaSeksi judul="Laba per Segmen" kanan={<span className="kpi__ket">{k.tahun}</span>} />
           {barisSegmen.length ? (
             <div className="kpi__tabel">
               <Tabel kolom={kolomSegmen} baris={barisSegmen} kepala="mint" pad={12} tinggiKepala={37} tinggiBaris={48} fontBaris={12} />
@@ -209,10 +201,6 @@ function Isi() {
               </dd>
             </div>
           </dl>
-          <p className="kpi__catatan">
-            Saldo = semua uang masuk dikurangi semua uang keluar yang tercatat di panel (termasuk gaji yang sudah
-            dibayar). Saldo kas sebelum panel dipakai tidak ikut.
-          </p>
         </article>
       </div>
     </div>

@@ -788,7 +788,7 @@ function DialogGaji({
       open={buka}
       onOpenChange={saatBuka}
       title={awal ? (ubah ? `Ubah gaji ${awal.name}` : `Catat gaji ${awal.name}`) : "Catat gaji"}
-      description={`Gaji operasional ${labelBulan(period)}. Bayaran per proyek dicatat di Keuangan.`}
+      description={labelBulan(period)}
       trigger={pemicu}
       footer={
         <div className="gaji__kaki">
@@ -796,7 +796,7 @@ function DialogGaji({
             <AlertDialog
               destructive
               title="Hapus baris gaji ini?"
-              description={`${awal!.name} — ${labelBulan(period)}. Fee proyeknya tidak ikut terhapus; yang hilang cuma gaji bulan ini.`}
+              description={`${awal!.name} — ${labelBulan(period)}`}
               confirmLabel="Ya, hapus"
               onConfirm={hapus}
               trigger={
@@ -832,8 +832,7 @@ function DialogGaji({
           />
           {perluIngat && !ubah && (
             <p className="k-isian__bantu">
-              Orang ini freelancer. Bayaran yang lahir dari proyek dicatat di Keuangan → Catat Pengeluaran dan muncul
-              sendiri di kolom Fee. Isi di sini hanya kalau ia memang digaji bulanan di luar proyek.
+              Freelancer — fee proyeknya sudah otomatis masuk kolom Fee.
             </p>
           )}
         </div>
@@ -849,7 +848,7 @@ function DialogGaji({
               setNominal(angka ? Number(angka) : null);
             }}
           />
-          <IsianTanggal label="Dibayar pada" bantu="Kosongkan kalau belum dibayar." nilai={dibayar} onUbah={setDibayar} placeholder="Belum dibayar" />
+          <IsianTanggal label="Dibayar pada" nilai={dibayar} onUbah={setDibayar} placeholder="Belum dibayar" />
         </div>
         <Isian
           label="Catatan"

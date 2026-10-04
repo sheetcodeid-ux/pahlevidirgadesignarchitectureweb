@@ -102,6 +102,9 @@ export const NAV: NavItem[] = [
   /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
      satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */
   { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", ikonKit: "NavEnvelope", group: "Utama", lencana: "pesan" },
+  /* Cara memakai panel, langkah demi langkah — permintaan pemilik. Di Utama
+     supaya terlihat tanpa menggulir rel. */
+  { label: "Panduan", href: "/admin/panduan", icon: "info", ikonKit: "Question", group: "Utama" },
   {
     label: "Proyek",
     icon: "project",

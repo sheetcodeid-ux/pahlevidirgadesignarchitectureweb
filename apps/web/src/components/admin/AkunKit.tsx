@@ -122,10 +122,7 @@ function Isi() {
         <aside className="pf__samping" aria-label="Keterangan akun">
           <div className="pf__info">
             <p className="pas__sampingjudul">Keamanan</p>
-            <Teks tingkat="kecil">
-              Mengganti kata sandi membuat sesi di perangkat lain diminta masuk ulang. Kata sandi tidak pernah dikirim ke
-              situs publik — ia langsung ke server panel.
-            </Teks>
+            <Teks tingkat="kecil">Sesi di perangkat lain diminta masuk ulang.</Teks>
           </div>
         </aside>
       </div>

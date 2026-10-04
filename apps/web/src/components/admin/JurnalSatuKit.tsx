@@ -345,8 +345,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
             onChange={(e) => setIsi(e.currentTarget.value)}
           />
           <p className="pjs__bantu">
-            Markdown: <code>## Judul bagian</code>, <code>**tebal**</code>, <code>- butir daftar</code>,{" "}
-            <code>[teks](https://tautan)</code>. {isi.trim().length} karakter
+            {isi.trim().length} karakter
             {terbit && !isiCukup && ` — kurang ${ISI_MINIMAL - isi.trim().length} lagi untuk bisa terbit`}.
           </p>
 
@@ -373,7 +372,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                 <AlertDialog
                   destructive
                   title="Hapus tulisan ini?"
-                  description="Tulisan ini dihapus permanen. Kalau sudah pernah terbit, alamatnya jadi 404 untuk siapa pun yang menyimpan tautannya."
+                  description="Tidak bisa dikembalikan. Tautan lamanya akan mati."
                   confirmLabel="Ya, hapus"
                   onConfirm={hapus}
                   trigger={

@@ -371,7 +371,6 @@ function Isi() {
                   placeholder={f.client.trim() || "Kosong = memakai nama klien"}
                   value={f.title}
                   onChange={(e) => set("title", e.currentTarget.value)}
-                  bantu="Boleh kosong — di Excel kolom ini sering kosong, dan nama klien sudah cukup."
                 />
                 <Isian
                   label="Kota"

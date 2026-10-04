@@ -311,8 +311,7 @@ function Isi() {
       {notifAktif === false && (
         <div className="pes__peringatan">
           <Peringatan nada="awas" judul="Pemberitahuan email mati">
-            Pesan masuk tetap tersimpan di sini, tapi tidak ada email yang dikirim ke studio. Setel rahasia Worker
-            RESEND_API_KEY dan INQUIRY_NOTIFY_TO untuk menghidupkannya.
+            Pesan tetap tersimpan, tapi email ke studio tidak terkirim.
           </Peringatan>
         </div>
       )}

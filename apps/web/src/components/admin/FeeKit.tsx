@@ -608,8 +608,7 @@ function Isi() {
           ))}
           {penerima.length === 0 && (
             <p className="fee__kosong">
-              Fee muncul di sini setelah pengeluaran berkategori Freelancer atau Prinsipal dicatat dengan
-              nama penerimanya, di Keuangan → Catat Pengeluaran.
+              Belum ada fee bernama.
             </p>
           )}
         </div>

@@ -423,7 +423,6 @@ function DialogTugas({ proyek, tim, onSelesai }: { proyek: Proyek[]; tim: Anggot
       open={buka}
       onOpenChange={saatBuka}
       title="Tambah tugas"
-      description="Pilih proyeknya di sini — tidak perlu membuka halaman proyeknya dulu."
       trigger={
         <Tombol ukuran="medium" jenis="primary" kiri={Plus}>
           Tambah tugas
@@ -491,7 +490,6 @@ function DialogTugas({ proyek, tim, onSelesai }: { proyek: Proyek[]; tim: Anggot
             label="Tenggat"
             nilai={tenggat}
             onUbah={setTenggat}
-            bantu="Boleh dikosongkan."
             placeholder="Tanpa tenggat"
           />
         </div>

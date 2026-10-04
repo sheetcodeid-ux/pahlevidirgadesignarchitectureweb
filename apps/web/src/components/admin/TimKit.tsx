@@ -295,7 +295,6 @@ function DialogAnggota({
       open={buka}
       onOpenChange={saatBuka}
       title={awal ? `Ubah ${awal.name}` : "Tambah anggota"}
-      description="Staf tetap maupun freelancer — bukan akun login."
       trigger={pemicu}
       footer={
         <div className="kd-form__kaki">
@@ -322,9 +321,6 @@ function DialogAnggota({
           onUbah={(v) => setJenis(v as JenisAnggota)}
           opsi={JENIS.map((j) => ({ nilai: j, label: LABEL_JENIS_ANGGOTA[j], ket: KET_JENIS[j] }))}
         />
-        <p className="k-isian__bantu tm-jenisbantu">
-          Halaman Gaji memperingatkan kalau freelancer diberi gaji bulanan, dan peringatan itu membaca isian ini.
-        </p>
         <div className="kd-form__dua">
           <Isian
             label="Tarif acuan (Rp)"
@@ -335,7 +331,6 @@ function DialogAnggota({
               const angka = e.currentTarget.value.replace(/\D/g, "");
               setTarif(angka ? Number(angka) : null);
             }}
-            bantu="Pengingat saja, bukan nominal yang mengikat."
           />
           <Isian
             label="Telepon"
@@ -344,17 +339,13 @@ function DialogAnggota({
             placeholder="08…"
             value={telepon}
             onChange={(e) => setTelepon(e.currentTarget.value)}
-            bantu="Jadi tautan WhatsApp di tabel."
           />
         </div>
         <label className="kd-form__centang">
           <Sakelar judul="Aktif" checked={aktif} onChange={(e) => setAktif(e.currentTarget.checked)} />
           <span>
             <b>Aktif</b>
-            <small>
-              Yang nonaktif disembunyikan dari pilihan PIC, fee, dan gaji — tapi namanya tetap tercetak di
-              catatan lama.
-            </small>
+            <small>Nonaktif = tidak muncul di pilihan.</small>
           </span>
         </label>
       </div>

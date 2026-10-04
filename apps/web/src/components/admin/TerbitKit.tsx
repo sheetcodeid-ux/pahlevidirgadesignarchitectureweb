@@ -51,10 +51,6 @@ export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
       }
     >
           <p className="kterbit__judul">Terbitkan perubahan</p>
-          <p className="kterbit__ket">
-            Halaman publik dibekukan saat situs dibangun. Apa pun yang Anda ubah di panel baru
-            tampil di situs setelah dibangun ulang.
-          </p>
 
           <dl className="kterbit__waktu">
             <div>
@@ -102,8 +98,7 @@ export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
 
           {aktif === false ? (
             <Peringatan nada="info" judul="Belum bisa dipakai">
-              Worker API belum punya token GitHub untuk memicu build. Sementara itu situs tetap dibangun ulang
-              otomatis setiap kali kodenya berubah.
+              Token build belum dipasang di server.
             </Peringatan>
           ) : (
             <Tombol

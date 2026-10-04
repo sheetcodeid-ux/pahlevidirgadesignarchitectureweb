@@ -1,0 +1,361 @@
+---
+import KitLayout from "../../layouts/KitLayout.astro";
+import { Ikon } from "../../components/kit/Ikon";
+import {
+  ArrowRight,
+  CoinIn,
+  CoinOut,
+  GearSix,
+  Globe,
+  MagnifyingGlass,
+  Medal,
+  NavEnvelope,
+  NavSquaresFour,
+  Ruler,
+  UserCircle,
+  Users,
+  Question,
+} from "../../components/kit/ikon";
+import "../../styles/panduan-kit.css";
+
+/* =============================================================================
+   Panduan — cara memakai panel, langkah demi langkah. Permintaan pemilik.
+
+   Ditulis untuk dua akun yang memakai panel: superadmin dan staf penginput.
+   Isinya ALUR KERJA (apa yang dikerjakan, urut), bukan daftar halaman —
+   daftar halaman sudah ada di rel samping. Tiap alur diakhiri tombol menuju
+   halaman tempat mengerjakannya.
+
+   Statis: dirender saat build, tanpa island. Cari dan penanda daftar isi
+   memakai skrip kecil di bawah — tidak ada yang perlu diambil dari API.
+   Kalau satu halaman panel pindah alamat atau ganti nama menu, ubah juga di
+   sini: tautan di bawah diperiksa audit tautan internal (jebakan #42).
+   ============================================================================= */
+
+interface Alur {
+  id: string;
+  judul: string;
+  ikon: typeof Ruler;
+  ringkas: string;
+  langkah: string[];
+  buka: { label: string; href: string }[];
+}
+
+const ALUR: Alur[] = [
+  {
+    id: "mengenal",
+    judul: "Mengenal panel",
+    ikon: NavSquaresFour,
+    ringkas: "Di mana semuanya, dan tombol-tombol di bilah atas.",
+    langkah: [
+      "Menu di kiri dikelompokkan per pekerjaan: Utama, Pekerjaan, Relasi, Konten Situs, Pengaturan. Menu berpanah membuka submenu.",
+      "Kotak “Cari di panel” (atau Ctrl/⌘ + K) melompat ke halaman mana pun — ketik sebagian namanya lalu Enter.",
+      "Ikon bola dunia = Terbitkan: membangun ulang situs publik dengan isi terbaru.",
+      "Ikon bulan/matahari mengganti tema gelap–terang. Ikon pesan dan lonceng menampilkan pesan baru dan pekerjaan yang menunggu.",
+      "Kartu akun di kiri bawah menunjukkan siapa yang masuk; tombol di sebelahnya untuk keluar.",
+    ],
+    buka: [{ label: "Dashboard", href: "/admin" }],
+  },
+  {
+    id: "proyek-baru",
+    judul: "Mencatat proyek baru",
+    ikon: Ruler,
+    ringkas: "Dari kesepakatan dengan klien sampai tim yang mengerjakan.",
+    langkah: [
+      "Buka Proyek → Semua Proyek, lalu tekan Proyek Baru.",
+      "Isi klien, jenis proyek, kota, dan lingkup kerja. Nama proyek boleh kosong — nama klien yang dipakai.",
+      "Isi fee design (nilai kontrak) dan tenggat preview serta final.",
+      "Tambahkan tim per peran (Leader, Drafter, Render, Estimator). Persen dan rupiahnya terisi otomatis dari Aturan Fee Tim.",
+      "Tekan Buat proyek. Proyek terbuka di Satu Proyek — di sana tahapnya digeser seiring pekerjaan berjalan.",
+    ],
+    buka: [
+      { label: "Proyek Baru", href: "/admin/proyek/baru" },
+      { label: "Semua Proyek", href: "/admin/proyek" },
+    ],
+  },
+  {
+    id: "menagih",
+    judul: "Menagih dan menerima pembayaran",
+    ikon: CoinIn,
+    ringkas: "Termin, uang masuk, dan bukti untuk klien.",
+    langkah: [
+      "Di Tagihan & Termin, tekan Tagihan Baru untuk membuat termin (DP, termin, pelunasan) — pilih proyeknya di dialog.",
+      "Saat uang klien masuk, buka Terima Pembayaran: pilih proyek, jenis pembayaran, nominal, dan tanggal, lalu Catat.",
+      "Bukti pembayaran muncul sendiri sesudah dicatat — unduh atau salin tautannya untuk dikirim ke klien.",
+      "Semua uang masuk dan keluar bisa dilihat dan disaring di Semua Transaksi.",
+    ],
+    buka: [
+      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan" },
+      { label: "Terima Pembayaran", href: "/admin/keuangan/terima" },
+    ],
+  },
+  {
+    id: "pengeluaran",
+    judul: "Mencatat pengeluaran",
+    ikon: CoinOut,
+    ringkas: "Biaya proyek di satu tempat, uang di luar proyek di tempat lain.",
+    langkah: [
+      "Biaya yang milik satu proyek (freelancer, cetak, material proyek): Catat Pengeluaran — pilih proyek, kategori, dan dibayar ke siapa.",
+      "Uang di luar proyek (penjualan PVC, bagi hasil, sewa, konsumsi): Kas Studio — pilih masuk atau keluar.",
+      "Salah mencatat? Buka transaksinya di Semua Transaksi, hapus, lalu catat ulang dengan angka yang benar.",
+    ],
+    buka: [
+      { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar" },
+      { label: "Kas Studio", href: "/admin/keuangan/kas" },
+      { label: "Semua Transaksi", href: "/admin/keuangan/transaksi" },
+    ],
+  },
+  {
+    id: "bayar-tim",
+    judul: "Membayar tim",
+    ikon: Users,
+    ringkas: "Fee per proyek yang bertahap, slip, dan gaji bulanan.",
+    langkah: [
+      "Fee proyek dibayar bertahap: tahap awal saat DP klien masuk, sisanya saat desain mencapai Finish.",
+      "Buka Satu Proyek → bagian Tim & Bayaran. Tahap yang sudah jatuh tempo punya tombol “Bayar Rp…”. Tekan, periksa nominalnya, lalu simpan.",
+      "Bayaran Tim menunjukkan hak, yang sudah dibayar, dan sisa per orang — dari sana slip bulanan bisa diunduh PDF atau dikirim ke WhatsApp.",
+      "Gaji bulanan staf tetap dicatat di Gaji. Fee proyek tidak perlu diketik ulang di sana — sudah ikut otomatis.",
+    ],
+    buka: [
+      { label: "Bayaran Tim", href: "/admin/gaji/tim" },
+      { label: "Gaji", href: "/admin/gaji" },
+    ],
+  },
+  {
+    id: "portal",
+    judul: "Berbagi kemajuan dengan klien",
+    ikon: UserCircle,
+    ringkas: "Portal klien: dokumen, kabar, dan persetujuan.",
+    langkah: [
+      "Buka Proyek → Portal Klien dan pilih proyeknya di judul halaman.",
+      "Salin tautan portal lalu kirim ke klien lewat WhatsApp. Klien membukanya tanpa akun.",
+      "Unggah gambar kerja (denah, tampak, potongan). Klien bisa memberi komentar atau menyetujuinya.",
+      "Tulis kabar singkat tiap ada kemajuan — tampil di linimasa klien.",
+    ],
+    buka: [{ label: "Portal Klien", href: "/admin/proyek/klien" }],
+  },
+  {
+    id: "pesan",
+    judul: "Pesan, kontak, dan tugas",
+    ikon: NavEnvelope,
+    ringkas: "Calon klien dari situs, kontak tetap, dan pembagian kerja.",
+    langkah: [
+      "Pesan dari form kontak situs masuk ke Pesan Masuk. Ubah statusnya (Dihubungi, Prospek, Selesai) supaya angka merahnya turun.",
+      "Kontak yang dipakai berulang — klien, kontraktor, supplier — simpan di Direktori.",
+      "Di Tugas, tambahkan pekerjaan per proyek, tentukan PIC dan tenggatnya, lalu ubah statusnya sampai selesai.",
+    ],
+    buka: [
+      { label: "Pesan Masuk", href: "/admin/pesan" },
+      { label: "Tugas", href: "/admin/list-kerjaan" },
+      { label: "Direktori", href: "/admin/direktori" },
+    ],
+  },
+  {
+    id: "situs",
+    judul: "Memperbarui situs publik",
+    ikon: Globe,
+    ringkas: "Isi diubah di panel, lalu diterbitkan sekali.",
+    langkah: [
+      "Ubah yang perlu: Halaman Publik proyek (foto, ringkasan, status Terbit), Jurnal, Paket Layanan, Logo Klien, Tim Studio, atau Sebelum & Sesudah.",
+      "Simpan di tiap halaman.",
+      "Tekan Terbitkan (ikon bola dunia di bilah atas). Situs dibangun ulang dan perubahan tampil beberapa menit kemudian.",
+      "Pesan masuk, keuangan, dan data panel lain tidak perlu diterbitkan — langsung tersimpan.",
+    ],
+    buka: [
+      { label: "Halaman Publik", href: "/admin/proyek/publik" },
+      { label: "Jurnal", href: "/admin/jurnal" },
+      { label: "Paket Layanan", href: "/admin/paket" },
+    ],
+  },
+  {
+    id: "target",
+    judul: "Target dan KPI",
+    ikon: Medal,
+    ringkas: "Seberapa dekat studio dengan targetnya.",
+    langkah: [
+      "Tetapkan target pemasukan semester di Kas Studio.",
+      "Kemajuannya tampil di Dashboard — pembayaran klien ditambah kas studio yang masuk.",
+      "KPI Strategi merangkum lima angka: rata-rata kontrak, margin, lead per kuartal, proyek Signature ke atas, dan cadangan kas.",
+    ],
+    buka: [
+      { label: "KPI Strategi", href: "/admin/kpi" },
+      { label: "Kas Studio", href: "/admin/keuangan/kas" },
+    ],
+  },
+  {
+    id: "pengaturan",
+    judul: "Pengaturan",
+    ikon: GearSix,
+    ringkas: "Data studio, aturan fee, dan akun.",
+    langkah: [
+      "Info Studio: nama, kontak, alamat, logo, dan zona waktu.",
+      "Aturan Fee Tim: persen tiap peran dan bagian tahap awal. Berlaku untuk penugasan baru dan yang persennya masih kosong.",
+      "Akun: ganti kata sandi — minimal 12 karakter dengan huruf besar, huruf kecil, angka, dan simbol.",
+    ],
+    buka: [
+      { label: "Info Studio", href: "/admin/pengaturan" },
+      { label: "Aturan Fee Tim", href: "/admin/pengaturan/fee" },
+      { label: "Akun", href: "/admin/pengaturan/akun" },
+    ],
+  },
+];
+
+const TANYA = [
+  {
+    t: "Sudah saya ubah, kenapa situsnya belum berubah?",
+    j: "Halaman publik dibangun ulang hanya saat Terbitkan ditekan. Tekan ikon bola dunia di bilah atas, lalu tunggu beberapa menit.",
+  },
+  {
+    t: "Salah memasukkan nominal pembayaran atau biaya.",
+    j: "Buka Semua Transaksi, klik transaksinya, hapus, lalu catat ulang. Laba, fee, dan gaji ikut menyesuaikan sendiri.",
+  },
+  {
+    t: "Kenapa tombol Bayar di Tim & Bayaran belum muncul?",
+    j: "Tahap awal menunggu DP klien tercatat, tahap akhir menunggu proyek mencapai Finish. Tombolnya tetap bisa ditekan lebih awal kalau memang disepakati.",
+  },
+  {
+    t: "Angka merah di lonceng tidak mau hilang.",
+    j: "Angkanya turun sendiri begitu pekerjaannya ditangani — pesan dibaca, tugas lewat tenggat diselesaikan, testimoni disetujui atau ditolak.",
+  },
+  {
+    t: "Lupa kata sandi.",
+    j: "Minta superadmin mengatur ulangnya. Sesudah masuk, ganti di Pengaturan → Akun.",
+  },
+];
+---
+
+<KitLayout title="Panduan" judul="Panduan">
+  <div class="pd">
+    <nav class="pd__isi" aria-label="Daftar isi panduan">
+      <label class="pd__cari">
+        <input type="search" id="pd-cari" placeholder="Cari di panduan" aria-label="Cari di panduan" autocomplete="off" />
+        <Ikon ikon={MagnifyingGlass} ukuran={16} />
+      </label>
+      <ol class="pd__daftar">
+        {
+          ALUR.map((a) => (
+            <li>
+              <a href={`#${a.id}`} data-ke={a.id}>
+                <span class="pd__daftarikon">
+                  <Ikon ikon={a.ikon} ukuran={16} />
+                </span>
+                {a.judul}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a href="#tanya" data-ke="tanya">
+            <span class="pd__daftarikon">
+              <Ikon ikon={Question} ukuran={16} />
+            </span>
+            Tanya jawab
+          </a>
+        </li>
+      </ol>
+    </nav>
+
+    <div class="pd__badan" id="pd-badan">
+      <p class="pd__kosong" id="pd-kosong" hidden>Tidak ada yang cocok. Coba kata lain, mis. “bayar” atau “terbit”.</p>
+      {
+        ALUR.map((a) => (
+          <section class="pd__alur" id={a.id} data-cari={`${a.judul} ${a.ringkas} ${a.langkah.join(" ")}`.toLowerCase()}>
+            <header class="pd__kepala">
+              <span class="pd__ubin">
+                <Ikon ikon={a.ikon} ukuran={20} />
+              </span>
+              <div>
+                <h2 class="pd__judul">{a.judul}</h2>
+                <p class="pd__ringkas">{a.ringkas}</p>
+              </div>
+            </header>
+            <ol class="pd__langkah">
+              {a.langkah.map((l) => (
+                <li>{l}</li>
+              ))}
+            </ol>
+            <div class="pd__buka">
+              {a.buka.map((b) => (
+                <a class="pd__tombol" href={b.href}>
+                  {b.label}
+                  <Ikon ikon={ArrowRight} ukuran={14} />
+                </a>
+              ))}
+            </div>
+          </section>
+        ))
+      }
+
+      <section class="pd__alur" id="tanya" data-cari={TANYA.map((x) => `${x.t} ${x.j}`).join(" ").toLowerCase()}>
+        <header class="pd__kepala">
+          <span class="pd__ubin">
+            <Ikon ikon={Question} ukuran={20} />
+          </span>
+          <div>
+            <h2 class="pd__judul">Tanya jawab</h2>
+            <p class="pd__ringkas">Yang paling sering ditanyakan.</p>
+          </div>
+        </header>
+        <div class="pd__tanya">
+          {
+            TANYA.map((x) => (
+              <details class="pd__butirtanya">
+                <summary>{x.t}</summary>
+                <p>{x.j}</p>
+              </details>
+            ))
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+</KitLayout>
+
+<script>
+  /* Cari + penanda daftar isi. Penanda memakai IntersectionObserver, bukan
+     handler gulir yang membaca geometri (jebakan #21). Dipasang ulang tiap
+     halaman dimuat router sisi klien. */
+  function pasang() {
+    const badan = document.getElementById("pd-badan");
+    const cari = document.getElementById("pd-cari") as HTMLInputElement | null;
+    if (!badan || !cari) return;
+    const seksi = [...badan.querySelectorAll<HTMLElement>(".pd__alur")];
+    const tautan = [...document.querySelectorAll<HTMLAnchorElement>(".pd__daftar a")];
+    const kosong = document.getElementById("pd-kosong")!;
+
+    cari.addEventListener("input", () => {
+      const q = cari.value.trim().toLowerCase();
+      let ada = 0;
+      for (const s of seksi) {
+        const cocok = !q || (s.dataset.cari ?? "").includes(q);
+        s.hidden = !cocok;
+        if (cocok) ada++;
+        const t = tautan.find((a) => a.dataset.ke === s.id);
+        if (t) t.parentElement!.hidden = !cocok;
+      }
+      kosong.hidden = ada > 0;
+    });
+
+    for (const a of tautan) {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById(a.dataset.ke!)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        history.replaceState(null, "", `#${a.dataset.ke}`);
+      });
+    }
+
+    const pengamat = new IntersectionObserver(
+      (masuk) => {
+        for (const m of masuk) {
+          if (!m.isIntersecting) continue;
+          for (const a of tautan) a.toggleAttribute("aria-current", a.dataset.ke === m.target.id);
+        }
+      },
+      // Di desktop badan panduan yang menggulir (kerangka satu-layar); di
+      // ponsel halamannya sendiri.
+      { root: getComputedStyle(badan).overflowY === "auto" ? badan : null, rootMargin: "0px 0px -70% 0px" },
+    );
+    seksi.forEach((s) => pengamat.observe(s));
+  }
+  document.addEventListener("astro:page-load", pasang);
+</script>

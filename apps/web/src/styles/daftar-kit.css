@@ -134,8 +134,13 @@
   font-size: var(--k-t12);
   color: var(--text-strong);
   text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.45;
+  /* Dua baris, bukan satu baris berelipsis — kalimat testimoni yang
+     terpotong di tengah kata terbaca rusak. Yang lebih panjang lagi
+     dibuka utuh dengan mengekliknya. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   cursor: pointer;
 }
 .kd__kutipan:hover { text-decoration: underline; }
@@ -229,11 +234,28 @@
   .kd-angka { gap: 12px; }
   .kd-angka > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
-.kd-angka .k-stat { width: auto; min-height: 0; }
-/* Tanpa lencana tren, angkanya naik tepat di bawah ubinnya — tinggi 174
-   frame 01 dirancang untuk memuat lencana itu, dan tanpanya kartu
-   terbaca setengah kosong. */
-.kd-angka .k-stat__nilai { margin-top: 18px; }
+/* Kartu angka di atas daftar: MENDATAR dan ringkas — ubin di kiri, angka
+   dan judul di kanan. Bentuk tegak 174px milik Dashboard memakan seperempat
+   layar di atas tabel; di kerangka satu-layar ia malah ikut menyusut jadi
+   76px (anak flex kolom menyusut, jebakan #61) dan angkanya jatuh keluar
+   kartu, judulnya menimpa bilah alat. `flex: none` + bentuk mendatar. */
+.kd-angka { flex: none; }
+.kd-angka .k-stat {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  column-gap: 14px;
+  row-gap: 6px;
+  width: auto;
+  min-height: 0;
+  padding: 16px 18px;
+  transition: border-color 150ms;
+}
+.kd-angka .k-stat:hover { border-color: var(--border-strong); }
+.kd-angka .k-stat__kepala { grid-row: 1 / span 2; align-self: center; }
+.kd-angka .k-stat__nilai { grid-column: 2; align-self: end; margin: 0; font-size: 22px; }
+.kd-angka .k-stat__judul { grid-column: 2; align-self: start; margin: 0; color: var(--text-muted); }
 
 /* --- Dialog tambah/ubah ----------------------------------------------------
    Isiannya kit; bingkai dialognya overlay lama — satu perilaku focus-trap
@@ -258,4 +280,13 @@
 /* Ponsel: hitungan dan paginasi tidak muat sebaris. */
 @media (max-width: 40rem) {
   .kd__kaki { flex-wrap: wrap; row-gap: 12px; }
+}
+
+/* Tablet dan laptop kecil (1024–1288): kolom isi 700–950px, sementara lebar
+   frame tabel daftar 1160. Dengan lantai penuh, kolom paling kanan — aksi
+   (selesai, arsip, hapus) — tergeser keluar kartu dan baru terlihat kalau
+   tabelnya digeser. Lantainya diturunkan ke 80%: pada 1280 seluruh kolom
+   muat; kolom teks yang lebar (Tugas, Kutipan, Catatan) yang mengalah. */
+@media (min-width: 56.01rem) and (max-width: 1288px) {
+  .kd .k-tabel { min-width: calc(var(--k-tabel-lebar, 0px) * 0.8); }
 }

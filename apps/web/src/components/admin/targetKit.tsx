@@ -131,7 +131,6 @@ export function DialogTarget({
         open={buka}
         onOpenChange={setBuka}
         title={`Target ${labelSemester(semester)}`}
-        description="Target pemasukan: pembayaran klien ditambah kas studio yang masuk (penjualan material, bagi hasil). Semester berikutnya memakai angka ini juga sampai diganti."
         footer={
           <>
             <Tombol ukuran="medium" jenis="ghost" onClick={() => setBuka(false)} disabled={sibuk}>

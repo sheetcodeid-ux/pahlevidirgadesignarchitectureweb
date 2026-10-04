@@ -259,10 +259,6 @@ function Isi() {
               <dd>{formatRupiahRingkas(masukBulan - keluarBulan)}</dd>
             </div>
           </dl>
-          <p className="kas__catatan">
-            Hanya kas di luar proyek. Pembayaran klien dan biaya proyek ada di{" "}
-            <a href="/admin/keuangan/transaksi">Semua Transaksi</a>.
-          </p>
         </article>
       </aside>
 
@@ -385,7 +381,6 @@ function DialogKas({
       open={entri !== null}
       onOpenChange={(o) => !o && onTutup()}
       title={lama ? "Ubah catatan kas" : "Catat kas studio"}
-      description="Uang di luar proyek desain. Pembayaran klien dicatat di Terima Pembayaran, biaya proyek di Catat Pengeluaran."
       footer={
         <>
           {lama && (
@@ -460,9 +455,9 @@ function DialogKas({
           />
         </div>
         {f.direction === "masuk" && (
-          <p className="kas__info">Uang masuk di sini ikut dihitung ke target pemasukan semester.</p>
+          <p className="kas__info">Ikut dihitung ke target semester.</p>
         )}
-        {yakinHapus && <p className="kas__info kas__info--bahaya">Tekan "Ya, hapus" sekali lagi untuk menghapus catatan ini.</p>}
+        {yakinHapus && <p className="kas__info kas__info--bahaya">Tekan "Ya, hapus" sekali lagi.</p>}
       </div>
     </Dialog>
   );

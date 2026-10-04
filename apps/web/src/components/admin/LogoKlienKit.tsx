@@ -140,7 +140,7 @@ function Isi() {
       aksi={<DialogKlien urutan={(klien ?? []).reduce((m, k) => Math.max(m, k.sortOrder), 0) + 1} onSelesai={muat} />}
     >
       <section className="pf__bagian">
-        <KepalaBagian judul="Seperti yang tampil di beranda" kanan="Arahkan kursor untuk melihat warnanya" />
+        <KepalaBagian judul="Pratinjau beranda" />
         {total === 0 ? (
           <p className="pf__fotoket">Belum ada yang bisa ditampilkan.</p>
         ) : (
@@ -152,14 +152,10 @@ function Isi() {
             ))}
           </div>
         )}
-        <p className="pf__statusket">
-          Abu-abu seperti di beranda; warnanya baru muncul saat pengunjung mengarahkan kursor. Klien tanpa logo tampil
-          sebagai teks nama.
-        </p>
       </section>
 
       <section className="pf__bagian">
-        <KepalaBagian judul="Daftar klien" kanan={`${total} klien · urut seperti di beranda`} />
+        <KepalaBagian judul="Daftar klien" kanan={`${total} klien`} />
         {klien === null ? (
           <p className="pf__fotoket">Memuat klien…</p>
         ) : klien.length === 0 ? (
@@ -269,7 +265,6 @@ function DialogKlien({ urutan, onSelesai }: { urutan: number; onSelesai: () => v
         if (b) setNama("");
       }}
       title="Tambah klien"
-      description="Nama dulu; logonya bisa diunggah setelah kartunya ada."
       trigger={
         <Tombol ukuran="large" jenis="primary" kiri={Plus}>
           Tambah klien

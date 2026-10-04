@@ -354,7 +354,6 @@ function Isi() {
                   className="pas__lebar"
                   value={form.includesHeading ?? ""}
                   onChange={(e) => setel("includesHeading", e.currentTarget.value)}
-                  bantu='Mis. "Semua di Starter, ditambah" untuk paket di atas paket dasar.'
                 />
               </div>
               <label className="k-isian pas__lebar">
@@ -378,7 +377,6 @@ function Isi() {
                     setSlugDisentuh(true);
                     setel("slug", e.currentTarget.value);
                   }}
-                  bantu="Huruf kecil, angka, dan tanda hubung. Dipakai sebagai penanda kartunya di beranda."
                 />
                 <Isian
                   label="Urutan di kelompoknya"
@@ -386,7 +384,6 @@ function Isi() {
                   step={1}
                   value={String(form.sortOrder ?? 0)}
                   onChange={(e) => setel("sortOrder", Number(e.currentTarget.value))}
-                  bantu="Kecil di kiri. Paket dasar 1, berikutnya 2, dan seterusnya."
                 />
               </div>
 
@@ -431,7 +428,7 @@ function Isi() {
                   <AlertDialog
                     destructive
                     title={`Hapus paket ${paket!.name}?`}
-                    description="Paket ini hilang dari panel dan, setelah diterbitkan, dari beranda. Kalau cuma ingin berhenti menawarkannya, matikan “Tampil di beranda” — harganya tetap tersimpan sebagai arsip."
+                    description="Hilang dari beranda setelah diterbitkan."
                     confirmLabel="Ya, hapus"
                     onConfirm={hapus}
                     trigger={
@@ -490,8 +487,7 @@ function Isi() {
                   {paket!.active
                     ? `Tampil di tab “${kelompok?.tab}”, kartu ke-${posisi + 1} dari ${aktifSekelompok.length}` +
                       (paket!.highlighted ? ", dengan bingkai dan lencana “PALING DIPILIH”." : ".")
-                    : "Tidak tampil. Paket ini disimpan sebagai arsip harga."}{" "}
-                  Perubahan di sini baru terlihat di beranda setelah Anda menekan Terbitkan di bilah atas.
+                    : "Tidak tampil — disimpan sebagai arsip harga."}
                 </p>
               </section>
 

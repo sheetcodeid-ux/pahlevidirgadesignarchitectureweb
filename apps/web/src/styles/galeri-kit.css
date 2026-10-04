@@ -85,13 +85,11 @@
 .gal-folder__nama { margin-top: 6px; color: var(--text-strong); font-size: var(--k-t16); font-weight: var(--k-bold); }
 .gal-folder__ket { color: var(--text-muted); font-size: var(--k-t12); line-height: 1.45; }
 .gal-folder__cuplik {
-  display: -webkit-box;
-  overflow: hidden;
+  display: block;
   color: var(--text-muted);
   font-size: var(--k-t11);
   line-height: 1.5;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 .gal-folder__meter { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; color: var(--text-muted); font-size: var(--k-t11); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .gal-folder__rel { flex: 1; height: 6px; overflow: hidden; border-radius: 999px; background: var(--border); }

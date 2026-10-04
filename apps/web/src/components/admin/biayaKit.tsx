@@ -99,7 +99,7 @@ export function DialogBiaya({
           <AlertDialog
             destructive
             title="Hapus biaya ini?"
-            description={`${biaya.label} — ${formatRupiah(biaya.amount)}. Laba bersih proyeknya dan angka Fee/Gaji orangnya ikut berubah. Kalau nominalnya yang salah, hapus lalu catat ulang.`}
+            description={`${biaya.label} — ${formatRupiah(biaya.amount)}`}
             confirmLabel="Ya, hapus"
             onConfirm={hapus}
             trigger={

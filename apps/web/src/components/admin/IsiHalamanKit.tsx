@@ -25,7 +25,9 @@ import { ambilSettings, simpanSettings, bacaCache, tulisCache, type StudioSettin
 export interface Isian {
   kunci: KunciTeks;
   label: string;
-  /** Kalimat di bawah isian — DI MANA ia tampil di situs. */
+  /** Di mana ia tampil di situs. Tidak lagi ditampilkan di bawah isian
+   *  (pemilik: teks keterangan mengganggu) — pratinjau di atas sudah
+   *  menunjukkannya. Dipertahankan sebagai catatan bagi yang menyunting. */
   bantuan: string;
   contoh?: string;
   jenis?: "teks" | "tahun" | "panjang";
@@ -251,7 +253,6 @@ function Isi({ isian, catatan, pratinjau, pratinjauJudul, tautan, tautanLabel }:
             />
           </div>
         )}
-        <p className="k-isian__bantu">{i.bantuan}</p>
       </div>
     );
   };
@@ -283,11 +284,8 @@ function Isi({ isian, catatan, pratinjau, pratinjauJudul, tautan, tautanLabel }:
       }
     >
       <section className="pf__bagian">
-        <KepalaBagian judul={pratinjauJudul} kanan="Berubah tiap ketikan" />
+        <KepalaBagian judul={pratinjauJudul} />
         <div className={`ih ih--${pratinjau}`}>{isiPratinjau}</div>
-        <p className="pf__statusket">
-          Yang terbaca di sini persis yang akan terbaca pengunjung. Baris yang sedang Anda isi ikut menyala.
-        </p>
       </section>
 
       {catatan && <p className="situs__catatan">{catatan}</p>}

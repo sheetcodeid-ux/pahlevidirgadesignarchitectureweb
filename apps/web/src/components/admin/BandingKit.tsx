@@ -173,21 +173,12 @@ function Isi() {
                 { nilai: "100", label: "Sebelum penuh" },
               ]}
             />
-            <p className="pf__statusket">
-              Geser gagangnya. Kalau garis atap, tepi jalan, atau tiang tidak bertemu saat gagangnya lewat, kedua foto
-              diambil dari titik yang berbeda — dan pembandingnya tidak membuktikan apa pun.
-            </p>
           </>
-        ) : (
-          <p className="situs__catatan">
-            Pembanding baru bisa digambar setelah kedua foto ada. Selama salah satu kosong, halaman Studio menampilkan dua
-            slot berpola — itu keputusan rancangan, bukan kegagalan memuat.
-          </p>
-        )}
+        ) : null}
       </section>
 
       <section className="pf__bagian">
-        <KepalaBagian judul="Kedua foto" kanan="Dari titik dan sudut yang sama" />
+        <KepalaBagian judul="Kedua foto" />
         <ul className="pf__kisi bd-kisi">
           {kartu("before", "01", "Sebelum", "Lokasi apa adanya sebelum pekerjaan dimulai.")}
           {kartu("after", "02", "Sesudah", "Bangunan yang sudah jadi, dari titik yang sama — idealnya pada jam yang sama.")}
