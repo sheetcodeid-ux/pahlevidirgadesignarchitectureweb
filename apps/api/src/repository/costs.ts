@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import type { ProjectCost, ProjectCostInput } from "../types";
+import type { PayoutStage, ProjectCost, ProjectCostInput } from "../types";
 import { NotFoundError } from "./projects";
 
 interface Row {
@@ -11,6 +11,8 @@ interface Row {
   incurred_on: string;
   team_member_id: string | null;
   team_member_name: string | null;
+  project_team_id: string | null;
+  payout_stage: PayoutStage | null;
 }
 
 function rowToCost(row: Row): ProjectCost {
@@ -23,13 +25,15 @@ function rowToCost(row: Row): ProjectCost {
     incurredOn: row.incurred_on,
     teamMemberId: row.team_member_id,
     teamMemberName: row.team_member_name,
+    projectTeamId: row.project_team_id,
+    payoutStage: row.payout_stage,
   };
 }
 
 export async function listForProject(sql: Sql, projectID: string): Promise<ProjectCost[]> {
   const rows = await sql<Row[]>`
     select b.id, b.project_id, b.label, b.category, b.amount, b.incurred_on,
-           b.team_member_id, t.name as team_member_name
+           b.team_member_id, t.name as team_member_name, b.project_team_id, b.payout_stage
       from public.project_costs b
       left join public.team_members t on t.id = b.team_member_id
      where b.project_id = ${projectID}::uuid
@@ -48,7 +52,7 @@ export async function listForProject(sql: Sql, projectID: string): Promise<Proje
 export async function listAll(sql: Sql, limit = 200): Promise<ProjectCost[]> {
   const rows = await sql<(Row & { project_title: string })[]>`
     select b.id, b.project_id, b.label, b.category, b.amount, b.incurred_on,
-           b.team_member_id, t.name as team_member_name, p.title as project_title
+           b.team_member_id, t.name as team_member_name, b.project_team_id, b.payout_stage, p.title as project_title
       from public.project_costs b
       join public.projects p on p.id = b.project_id
       left join public.team_members t on t.id = b.team_member_id

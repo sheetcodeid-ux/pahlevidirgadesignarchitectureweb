@@ -25,6 +25,10 @@ import * as revisiRepo from "../repository/contentRevision";
 import * as studioTeamRepo from "../repository/studioTeam";
 import * as payrollRepo from "../repository/payroll";
 import * as feeRepo from "../repository/fee";
+import * as feeRulesRepo from "../repository/feeRules";
+import * as projectTeamRepo from "../repository/projectTeam";
+import * as ledgerRepo from "../repository/ledger";
+import * as targetsRepo from "../repository/targets";
 import { NotFoundError } from "../repository/projects";
 import { presignUpload, sanitizeSlug } from "../lib/r2";
 import { checkProjectInput, checkJournalInput, checkTierInput, ValidationError } from "../lib/validate";
@@ -32,7 +36,8 @@ import type {
   ProjectInput, ImageInput, StudioSettingsInput, TeamMemberInput, ProjectTaskInput,
   InvoiceInput, ProjectCostInput, ProjectDocumentInput, DirectoryContactInput, PaymentInput,
   ProjectBriefInput, TestimonialInput, JournalPostInput, ClientLogoInput, ServiceTierInput,
-  StudioPersonInput, PayrollInput,
+  StudioPersonInput, PayrollInput, FeeRulesInput, ProjectTeamInput, PayoutInput, LedgerInput,
+  RevenueTargetInput,
 } from "../types";
 import {
   VALID_INQUIRY_STATUS, VALID_PROJECT_PHASE, VALID_TASK_STATUS, VALID_PIPELINE_STAGE,
@@ -581,6 +586,190 @@ admin.delete("/payroll/:id", async (c) => {
   } catch (err) {
     if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "gaji tidak ditemukan" } }, 404);
     throw err;
+  }
+});
+
+/* ── Tim per peran, bayaran bertahap, kas studio, target ───────────────────
+ * Fase 1 alur Excel pemilik. Bayaran tim tetap tercatat di project_costs
+ * (aturan "satu nominal, satu tempat"); yang baru di sini cuma persen per
+ * peran dan tautan tahapnya. */
+
+/** Galat Postgres yang berarti "id yang dirujuk tidak ada" → kalimat staf. */
+function pesanRujukan(err: unknown): string {
+  const m = (err as Error).message;
+  if (/project_team_project_id_fkey/.test(m)) return "proyek tidak ditemukan";
+  if (/team_member_id_fkey/.test(m)) return "anggota tim tidak ditemukan";
+  if (/studio_ledger_project_id_fkey/.test(m)) return "proyek tidak ditemukan";
+  if (/invalid input syntax for type uuid/.test(m)) return "id tidak sah";
+  return m;
+}
+
+admin.get("/fee-rules", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => feeRulesRepo.get(sql));
+  return c.json({ data });
+});
+
+admin.patch("/fee-rules", async (c) => {
+  const input = await c.req.json<FeeRulesInput>().catch(() => ({}) as FeeRulesInput);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => feeRulesRepo.update(sql, input));
+    const data = await withDb(c.env, c.executionCtx, (sql) => feeRulesRepo.get(sql));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.get("/projects/:id/team", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      projectTeamRepo.list(sql, { projectId: c.req.param("id") }));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: pesanRujukan(err) } }, 422);
+  }
+});
+
+admin.post("/projects/:id/team", async (c) => {
+  const input = await c.req.json<ProjectTeamInput>().catch(() => ({}) as ProjectTeamInput);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => projectTeamRepo.add(sql, c.req.param("id"), input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: pesanRujukan(err) } }, 422);
+  }
+});
+
+admin.patch("/project-team/:id", async (c) => {
+  const input = await c.req.json<ProjectTeamInput>().catch(() => ({}) as ProjectTeamInput);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => projectTeamRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "penugasan tidak ditemukan" } }, 404);
+    return c.json({ error: { status: 422, message: pesanRujukan(err) } }, 422);
+  }
+});
+
+admin.delete("/project-team/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => projectTeamRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "penugasan tidak ditemukan" } }, 404);
+    if (err instanceof projectTeamRepo.SudahDibayarError) {
+      return c.json({ error: { status: 409, message: err.message } }, 409);
+    }
+    throw err;
+  }
+});
+
+/** Seluruh penugasan lintas proyek, bisa disaring per orang. */
+admin.get("/team-payouts", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      projectTeamRepo.list(sql, { teamMemberId: c.req.query("teamMemberId") || null }));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: pesanRujukan(err) } }, 422);
+  }
+});
+
+admin.get("/team-payouts/people", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => projectTeamRepo.perOrang(sql));
+  return c.json({ data });
+});
+
+admin.post("/team-payouts", async (c) => {
+  const input = await c.req.json<PayoutInput>().catch(() => ({}) as PayoutInput);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => projectTeamRepo.bayar(sql, input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "penugasan tidak ditemukan" } }, 404);
+    const pesan = pesanRujukan(err);
+    // Tahap yang sudah dibayar adalah bentrok keadaan (409), bukan isian salah.
+    const status = pesan === "tahap ini sudah dibayar" ? 409 : 422;
+    return c.json({ error: { status, message: pesan } }, status);
+  }
+});
+
+admin.get("/ledger", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      ledgerRepo.list(sql, {
+        dari: c.req.query("dari"), sampai: c.req.query("sampai"),
+        limit: Number(c.req.query("limit")) || undefined,
+      }));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.post("/ledger", async (c) => {
+  const input = await c.req.json<LedgerInput>().catch(() => ({}) as LedgerInput);
+  try {
+    const id = await withDb(c.env, c.executionCtx, (sql) => ledgerRepo.create(sql, input));
+    return c.json({ data: { id } }, 201);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: pesanRujukan(err) } }, 422);
+  }
+});
+
+admin.patch("/ledger/:id", async (c) => {
+  const input = await c.req.json<LedgerInput>().catch(() => ({}) as LedgerInput);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => ledgerRepo.update(sql, c.req.param("id"), input));
+    return c.json({ data: { updated: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "catatan kas tidak ditemukan" } }, 404);
+    return c.json({ error: { status: 422, message: pesanRujukan(err) } }, 422);
+  }
+});
+
+admin.delete("/ledger/:id", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => ledgerRepo.remove(sql, c.req.param("id")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "catatan kas tidak ditemukan" } }, 404);
+    throw err;
+  }
+});
+
+admin.get("/targets", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => targetsRepo.list(sql));
+  return c.json({ data });
+});
+
+admin.get("/targets/progress", async (c) => {
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) =>
+      targetsRepo.kemajuan(sql, c.req.query("semester") || null));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.put("/targets", async (c) => {
+  const input = await c.req.json<RevenueTargetInput>().catch(() => ({}) as RevenueTargetInput);
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => targetsRepo.simpan(sql, input));
+    return c.json({ data: { saved: true } });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
+admin.delete("/targets/:semester", async (c) => {
+  try {
+    await withDb(c.env, c.executionCtx, (sql) => targetsRepo.remove(sql, c.req.param("semester")));
+    return c.json({ data: { deleted: true } });
+  } catch (err) {
+    if (err instanceof NotFoundError) return c.json({ error: { status: 404, message: "target tidak ditemukan" } }, 404);
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
   }
 });
 

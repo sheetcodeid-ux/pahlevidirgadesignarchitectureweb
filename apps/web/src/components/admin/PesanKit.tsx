@@ -70,6 +70,7 @@ const STATUS: Record<string, string> = {
 const JENIS: Record<string, string> = {
   residential: "Hunian",
   commercial: "Komersial",
+  coffeeshop: "Coffee shop",
   interior: "Interior",
   landscape: "Lanskap",
   masterplan: "Masterplan",

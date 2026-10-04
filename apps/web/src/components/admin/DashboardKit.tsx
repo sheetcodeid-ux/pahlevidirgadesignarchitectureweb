@@ -120,7 +120,7 @@ function labelBeban(kategori: string): string {
 const IKON_KATEGORI: Record<string, DataIkon> = {
   residential: SpecialHouseLine,
   commercial: SpecialWarehouse,
-  hospitality: SpecialPintGlass,
+  coffeeshop: SpecialPintGlass,
   interior: SpecialArmchair,
   landscape: SpecialLeaf,
   masterplan: SpecialPath,

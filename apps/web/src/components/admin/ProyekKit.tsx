@@ -71,6 +71,7 @@ import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 const KATEGORI: Record<string, string> = {
   residential: "Hunian",
   commercial: "Komersial",
+  coffeeshop: "Coffee shop",
   hospitality: "Hospitality",
   interior: "Interior",
   landscape: "Lanskap",

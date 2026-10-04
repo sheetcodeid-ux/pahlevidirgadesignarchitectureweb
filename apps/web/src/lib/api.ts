@@ -11,6 +11,7 @@ const API_BASE_URL = (
 export type ProjectCategory =
   | "residential"
   | "commercial"
+  | "coffeeshop"
   | "interior"
   | "landscape"
   | "masterplan"
@@ -19,6 +20,7 @@ export type ProjectCategory =
 export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
   residential: "Hunian",
   commercial: "Komersial",
+  coffeeshop: "Coffee shop",
   interior: "Interior",
   landscape: "Lanskap",
   masterplan: "Masterplan",
@@ -32,6 +34,7 @@ export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
 export const KATEGORI_LABEL: Record<ProjectCategory, string> = {
   residential: "Hunian",
   commercial: "Komersial",
+  coffeeshop: "Coffee shop",
   interior: "Interior",
   landscape: "Lanskap",
   masterplan: "Masterplan",
@@ -43,6 +46,7 @@ export const KATEGORI_LABEL: Record<ProjectCategory, string> = {
 export const KATEGORI_KET: Record<ProjectCategory, string> = {
   residential: "Rumah, dan cara orang benar-benar tinggal di dalamnya.",
   commercial: "Tempat yang harus tetap bekerja setelah minggu pembukaan lewat.",
+  coffeeshop: "Ruang yang bekerja untuk barista dan tetap mengundang setelah minggu pembukaan lewat.",
   interior: "Pekerjaan di dalam bangunan yang sudah berdiri.",
   landscape: "Tanah di sekeliling bangunan, diperlakukan sebagai bagian darinya.",
   masterplan: "Bagaimana beberapa bangunan bersepakat duduk di satu tapak.",

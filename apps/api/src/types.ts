@@ -683,6 +683,9 @@ export interface ProjectCost {
    */
   teamMemberId?: string | null;
   teamMemberName?: string | null;
+  /** Kalau biaya ini bayaran satu tahap dari penugasan tim — lihat `TeamPayout`. */
+  projectTeamId?: string | null;
+  payoutStage?: PayoutStage | null;
   /** Ikut dibawa oleh daftar lintas proyek supaya tabelnya tidak perlu join kedua. */
   projectTitle?: string;
 }
@@ -855,6 +858,7 @@ export interface InquiryRecord {
 export const VALID_CATEGORIES = new Set([
   "residential",
   "commercial",
+  "coffeeshop",
   "interior",
   "landscape",
   "masterplan",
@@ -920,3 +924,175 @@ export const VALID_TESTIMONIAL_STATUS = new Set([
   "disetujui",
   "ditolak",
 ]);
+
+/* ── Tim per peran, bayaran bertahap, kas studio, target ─────────────────
+ *
+ * Fase 1 dari alur Excel pemilik. Satu aturan lama tetap berlaku: bayaran ke
+ * orang hanya tercatat di SATU tempat — project_costs. Penugasan tim menyimpan
+ * PERSEN, bukan nominal; nominalnya dihitung dari fee design proyek, dan yang
+ * sudah dibayar adalah biaya proyek yang tertaut ke penugasannya. */
+
+export type TeamRole = "leader" | "drafter" | "render" | "estimator";
+export const VALID_TEAM_ROLE: ReadonlySet<string> = new Set(["leader", "drafter", "render", "estimator"]);
+
+export type PayoutStage = "awal" | "akhir";
+export const VALID_PAYOUT_STAGE: ReadonlySet<string> = new Set(["awal", "akhir"]);
+
+/** Aturan persen studio. `null` = belum ditentukan (bukan nol). */
+export interface FeeRules {
+  pctLeader: number | null;
+  pctDrafter: number | null;
+  pctRender: number | null;
+  pctEstimator: number | null;
+  /** Jatah bonus tim satu proyek ("FEE BONUS 10%"), sebagai acuan pembanding. */
+  poolPct: number;
+  /** Bagian hak yang dibayar saat DP klien masuk; sisanya saat desain selesai. */
+  firstTranchePct: number;
+}
+
+export type FeeRulesInput = Partial<FeeRules>;
+
+/** Keadaan satu tahap bayaran. */
+export type TahapKeadaan =
+  /** Sudah tercatat sebagai biaya proyek. */
+  | "dibayar"
+  /** Syaratnya sudah terpenuhi (DP masuk / desain selesai), belum dibayar. */
+  | "jatuh_tempo"
+  /** Syaratnya belum terpenuhi. */
+  | "menunggu"
+  /** Persen atau fee design-nya belum ada, jadi nominalnya belum bisa dihitung. */
+  | "belum_ditentukan";
+
+export interface TahapBayaran {
+  tahap: PayoutStage;
+  /** Nominal yang seharusnya; null kalau belum bisa dihitung. */
+  nominal: number | null;
+  keadaan: TahapKeadaan;
+  /** Biaya proyek yang mencatat pembayarannya, kalau sudah dibayar. */
+  costId: string | null;
+  dibayar: number | null;
+  dibayarPada: string | null;
+}
+
+export interface ProjectTeamMember {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  teamMemberId: string;
+  teamMemberName: string;
+  teamMemberKind: MemberKind;
+  role: TeamRole;
+  /** Persen yang tersimpan di penugasan; null = ikut aturan studio. */
+  pct: number | null;
+  /** Persen yang benar-benar dipakai menghitung (tersimpan, atau aturan studio). */
+  pctBerlaku: number | null;
+  note: string | null;
+  /** Fee design proyek (nilai kontrak). */
+  feeDesign: number | null;
+  /** Hak = fee design × persen berlaku. null kalau salah satunya belum ada. */
+  hak: number | null;
+  dibayar: number;
+  /** hak − dibayar; null kalau hak belum bisa dihitung. */
+  terutang: number | null;
+  tahap: TahapBayaran[];
+}
+
+export interface ProjectTeamInput {
+  teamMemberId?: string;
+  role?: string;
+  /** Kosong = ambil dari aturan studio saat ditambahkan. `null` eksplisit = ikut aturan studio selamanya. */
+  pct?: number | null;
+  note?: string | null;
+}
+
+/** Ringkasan per orang: total hak, dibayar, terutang, dan yang sudah jatuh tempo. */
+export interface TeamPayoutPerson {
+  teamMemberId: string;
+  teamMemberName: string;
+  teamMemberKind: MemberKind;
+  proyek: number;
+  hak: number;
+  dibayar: number;
+  terutang: number;
+  jatuhTempo: number;
+  /** Penugasan yang persennya belum ditentukan, jadi belum terhitung. */
+  belumDitentukan: number;
+}
+
+export interface PayoutInput {
+  projectTeamId?: string;
+  tahap?: string;
+  /** Kosong = nominal yang dihitung. Diisi kalau dibulatkan atau disepakati lain. */
+  amount?: number | null;
+  /** Kosong = hari ini. */
+  paidOn?: string | null;
+}
+
+export type LedgerDirection = "masuk" | "keluar";
+export type LedgerCategory =
+  | "penjualan_material" | "bagi_hasil" | "pembelian_material" | "operasional" | "konsumsi" | "lainnya";
+
+/** Kategori yang sah per arus — cermin constraint studio_ledger_kategori_searah. */
+export const LEDGER_KATEGORI: Record<LedgerDirection, readonly LedgerCategory[]> = {
+  masuk: ["penjualan_material", "bagi_hasil", "lainnya"],
+  keluar: ["pembelian_material", "operasional", "konsumsi", "lainnya"],
+};
+
+export interface LedgerEntry {
+  id: string;
+  direction: LedgerDirection;
+  category: LedgerCategory;
+  label: string;
+  counterparty: string | null;
+  amount: number;
+  occurredOn: string;
+  projectId: string | null;
+  projectTitle: string | null;
+  note: string | null;
+}
+
+export interface LedgerInput {
+  direction?: string;
+  category?: string;
+  label?: string;
+  counterparty?: string | null;
+  amount?: number;
+  occurredOn?: string | null;
+  projectId?: string | null;
+  note?: string | null;
+}
+
+export interface RevenueTarget {
+  /** 'YYYY-01-01' atau 'YYYY-07-01'. */
+  semesterStart: string;
+  amount: number;
+  note: string | null;
+}
+
+export interface RevenueTargetInput {
+  semesterStart?: string;
+  amount?: number;
+  note?: string | null;
+}
+
+/** Kemajuan target satu semester. */
+export interface TargetProgress {
+  semesterStart: string;
+  /** Hari terakhir semester (30 Juni / 31 Desember). */
+  semesterEnd: string;
+  /** null kalau belum pernah ada target sama sekali. */
+  target: number | null;
+  /** "ditetapkan" = ada baris untuk semester ini; "diteruskan" = memakai target semester sebelumnya. */
+  asal: "ditetapkan" | "diteruskan" | null;
+  /** Uang masuk dari pembayaran klien di semester ini. */
+  pembayaranKlien: number;
+  /** Uang masuk dari kas studio (penjualan material, bagi hasil, lainnya). */
+  kasLain: number;
+  tercapai: number;
+  /** target − tercapai, tidak pernah negatif; null kalau tidak ada target. */
+  kurang: number | null;
+  /** Hari kalender yang tersisa termasuk hari ini; 0 kalau semesternya sudah lewat. */
+  sisaHari: number;
+  /** Kekurangan dibagi sisa bulan (dibulatkan ke atas); null kalau tidak ada target atau sudah tercapai. */
+  perBulanDibutuhkan: number | null;
+}

@@ -25,7 +25,12 @@ const proyek = [...semua].sort((a, b) => tahunDari(b) - tahunDari(a) || a.title.
 // rel tidak mengiklankan bidang yang belum pernah dikerjakan sama sekali.
 const INTI: ProjectCategory[] = ["commercial", "residential", "interior", "renovation"];
 const terpakai = [...new Set(proyek.map((p) => p.category))] as ProjectCategory[];
+// Coffee shop — vertikal utama dokumen strategi (§2.2) — berdiri paling depan,
+// tapi seperti dua kategori terakhir baru muncul kalau sudah ada proyeknya:
+// proyek kafe lama tercatat sebagai "Komersial", dan tab kosong di depan
+// rel akan mengiklankan bidang yang belum diisi siapa pun.
 const urutKat: ProjectCategory[] = [
+  ...(["coffeeshop"] as ProjectCategory[]).filter((k) => terpakai.includes(k)),
   ...INTI,
   ...(["landscape", "masterplan"] as ProjectCategory[]).filter((k) => terpakai.includes(k)),
 ];

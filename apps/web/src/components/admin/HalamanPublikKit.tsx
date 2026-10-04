@@ -72,6 +72,7 @@ import { bukaLightbox } from "../../lib/lightbox";
 const KATEGORI: Record<string, string> = {
   residential: "Hunian",
   commercial: "Komersial",
+  coffeeshop: "Coffee shop",
   interior: "Interior",
   landscape: "Lanskap",
   masterplan: "Masterplan",

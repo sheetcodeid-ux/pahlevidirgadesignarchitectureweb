@@ -1658,4 +1658,164 @@ begin
 end;
 $$;
 
+-- Tim per peran, bayaran bertahap, kas studio, target semester ------------
+--
+-- Fase 1 alur Excel pemilik. Empat tabel uang yang tidak boleh terbaca siapa
+-- pun di luar staf, dan empat penjaga yang membuat angka gandanya mustahil.
+
+do $$
+declare t text;
+begin
+  perform pg_temp.jadi_anon();
+  foreach t in array array['studio_fee_settings', 'project_team', 'studio_ledger', 'revenue_targets'] loop
+    begin
+      execute format('select count(*) from public.%I', t);
+      raise exception 'GAGAL: anon berhasil membaca %', t;
+    exception when insufficient_privilege then
+      raise notice 'ok: anon ditolak membaca %', t;
+    end;
+  end loop;
+
+  begin
+    insert into public.studio_ledger (direction, category, label, amount)
+    values ('masuk', 'lainnya', 'Uji anon', 1000);
+    raise exception 'GAGAL: anon berhasil menulis kas studio';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak menulis kas studio';
+  end;
+  reset role;
+end;
+$$;
+
+do $$
+declare t text; terlihat int;
+begin
+  perform pg_temp.jadi_user('bbbb0000-0000-4000-8000-000000000002');
+  foreach t in array array['studio_fee_settings', 'project_team', 'studio_ledger', 'revenue_targets'] loop
+    execute format('select count(*) from public.%I', t) into terlihat;
+    perform pg_temp.tolak(terlihat <> 0, format('non-staf tidak melihat satu pun baris %s', t));
+  end loop;
+
+  begin
+    insert into public.studio_ledger (direction, category, label, amount)
+    values ('masuk', 'lainnya', 'Uji non-staf', 1000);
+    raise exception 'GAGAL: non-staf berhasil menulis kas studio';
+  exception when insufficient_privilege then
+    raise notice 'ok: non-staf ditolak menulis kas studio (RLS)';
+  end;
+  reset role;
+end;
+$$;
+
+do $$
+declare
+  pid uuid; tid uuid; aid uuid; terlihat int; pct numeric;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+
+  -- Aturan persen: satu baris, terbaca dan bisa diubah staf, tapi tidak bisa
+  -- ditambah — dua baris aturan berarti dua jawaban untuk "berapa persen
+  -- Drafter".
+  select pct_drafter into pct from public.studio_fee_settings;
+  perform pg_temp.tolak(pct is distinct from 10, 'staf membaca persen Drafter bawaan 10');
+  update public.studio_fee_settings set pct_leader = 3;
+  select pct_leader into pct from public.studio_fee_settings;
+  perform pg_temp.tolak(pct is distinct from 3, 'staf bisa menetapkan persen Leader');
+  begin
+    insert into public.studio_fee_settings (id) values (true);
+    raise exception 'GAGAL: baris aturan fee kedua diterima';
+  exception when insufficient_privilege then
+    raise notice 'ok: aturan fee tidak bisa ditambah barisnya';
+  end;
+
+  -- Jenis proyek coffee shop ada.
+  insert into public.projects (slug, title, category, contract_value)
+  values ('tes-kopi', 'Kopi Uji', 'coffeeshop', 12000000) returning id into pid;
+  select count(*) into terlihat from public.projects where id = pid and category = 'coffeeshop';
+  perform pg_temp.tolak(terlihat <> 1, 'proyek berjenis coffee shop bisa dicatat');
+
+  -- Tim per peran.
+  select id into tid from public.team_members where name = 'Rian Saputra';
+  insert into public.project_team (project_id, team_member_id, role, pct)
+  values (pid, tid, 'drafter', 10) returning id into aid;
+  select count(*) into terlihat from public.project_team where project_id = pid;
+  perform pg_temp.tolak(terlihat <> 1, 'staf bisa menugaskan Drafter ke proyek');
+
+  begin
+    insert into public.project_team (project_id, team_member_id, role, pct)
+    values (pid, tid, 'drafter', 10);
+    raise exception 'GAGAL: orang yang sama dua kali di peran yang sama diterima';
+  exception when unique_violation then
+    raise notice 'ok: satu orang hanya sekali per peran per proyek';
+  end;
+
+  begin
+    insert into public.project_team (project_id, team_member_id, role, pct)
+    values (pid, tid, 'render', 120);
+    raise exception 'GAGAL: persen di atas 100 diterima';
+  exception when check_violation then
+    raise notice 'ok: persen peran dibatasi 0–100';
+  end;
+
+  -- Bayaran tahap awal tercatat sebagai biaya proyek bertaut penugasan.
+  insert into public.project_costs (project_id, label, category, amount, team_member_id, project_team_id, payout_stage)
+  values (pid, 'Drafter tahap awal', 'freelancer', 600000, tid, aid, 'awal');
+
+  begin
+    insert into public.project_costs (project_id, label, category, amount, team_member_id, project_team_id, payout_stage)
+    values (pid, 'Drafter tahap awal lagi', 'freelancer', 600000, tid, aid, 'awal');
+    raise exception 'GAGAL: tahap yang sama dibayar dua kali';
+  exception when unique_violation then
+    raise notice 'ok: satu tahap bayaran hanya bisa dibayar sekali';
+  end;
+
+  begin
+    insert into public.project_costs (project_id, label, category, amount, project_team_id)
+    values (pid, 'Tahap tanpa nama', 'freelancer', 1000, aid);
+    raise exception 'GAGAL: biaya bertaut penugasan tanpa tahap diterima';
+  exception when check_violation then
+    raise notice 'ok: tautan penugasan dan tahap selalu berpasangan';
+  end;
+
+  -- Penugasan yang sudah dibayar tidak bisa dihapus sendirian.
+  begin
+    delete from public.project_team where id = aid;
+    raise exception 'GAGAL: penugasan yang sudah dibayar terhapus';
+  exception when foreign_key_violation then
+    raise notice 'ok: penugasan yang sudah dibayar tidak bisa dihapus';
+  end;
+
+  -- Kas studio: kategori harus searah arusnya.
+  insert into public.studio_ledger (direction, category, label, counterparty, amount, occurred_on)
+  values ('masuk', 'penjualan_material', 'PVC 120 batang', 'Ko Fendy', 1440000, '2026-06-11');
+  select count(*) into terlihat from public.studio_ledger where label = 'PVC 120 batang';
+  perform pg_temp.tolak(terlihat <> 1, 'staf bisa mencatat pemasukan di luar proyek');
+
+  begin
+    insert into public.studio_ledger (direction, category, label, amount)
+    values ('keluar', 'penjualan_material', 'Salah arah', 1000);
+    raise exception 'GAGAL: penjualan material sebagai uang keluar diterima';
+  exception when check_violation then
+    raise notice 'ok: kategori kas harus searah arusnya';
+  end;
+
+  -- Target semester: hanya 1 Januari atau 1 Juli.
+  insert into public.revenue_targets (semester_start, amount) values ('2027-01-01', 1000000000);
+  begin
+    insert into public.revenue_targets (semester_start, amount) values ('2027-03-01', 1000000000);
+    raise exception 'GAGAL: target semester mulai Maret diterima';
+  exception when check_violation then
+    raise notice 'ok: semester target hanya mulai 1 Januari atau 1 Juli';
+  end;
+
+  -- Menghapus proyek tetap bisa: penugasan dan bayarannya ikut terhapus
+  -- dalam statement yang sama.
+  delete from public.projects where id = pid;
+  select count(*) into terlihat from public.project_team where id = aid;
+  perform pg_temp.tolak(terlihat <> 0, 'menghapus proyek ikut menghapus tim dan bayarannya');
+
+  reset role;
+end;
+$$;
+
 rollback;
