@@ -1334,12 +1334,24 @@
 /* Kepala tabel MENEMPEL saat isi tabel digulir di dalam kartunya
    (permintaan pemilik: "header harusnya ketahan agar tidak tertutup").
    Bidangnya pejal supaya baris yang lewat di bawahnya tidak tembus. */
+/* `top: -1px`, bukan 0: tabel `collapse` menaruh garis atas sel kepala di
+   luar kotak selnya, jadi pada 0 kepala menempel 1px di bawah tepi wadah
+   dan baris yang tergulir terlihat lewat di sela itu (terukur di enam
+   tabel). Garisnya sendiri tidak ikut menempel di model collapse, jadi
+   yang menutup sela itu bidang kepalanya. */
 .k-tabel thead th {
   position: sticky;
-  top: 0;
+  top: -1px;
   z-index: 2;
 }
-.k-tabel:not(.k-tabel--kepala-mint) thead th { background: var(--surface); }
+/* Kepala polos/bergaris: bidang pejal + garis bawah MILIKNYA SENDIRI.
+   Garis baris pertama (border-top sel isi) tidak ikut menempel, jadi tanpa
+   bayangan 1px ini baris yang lewat di bawahnya terbaca menempel pada
+   judul kolom. Inset, jadi tidak menambah tinggi kepala. */
+.k-tabel:not(.k-tabel--kepala-mint) thead th {
+  background: var(--surface);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
 .k-tabel--kepala-polos thead th { border-top-color: transparent; }
 
 .k-tabel th {
