@@ -84,6 +84,8 @@ export interface Project {
   deadlinePreview?: string | null;
   /** Tenggat desain final (YYYY-MM-DD). */
   deadlineFinal?: string | null;
+  /** Paket layanan proyek ini (service_tiers.id) — boleh kosong. */
+  tierId?: string | null;
   /** Jumlah uang yang BENAR-BENAR sudah diterima proyek ini. Dipakai tabel
    *  untuk memutuskan antara "Belum Bayar", DP berjalan, dan "Lunas". */
   paidTotal?: number;
@@ -141,6 +143,8 @@ export interface ProjectInput {
   deadlinePreview?: string | null;
   /** Tenggat desain final (YYYY-MM-DD). */
   deadlineFinal?: string | null;
+  /** Paket layanan; null/"" = lepaskan tautan. */
+  tierId?: string | null;
 }
 
 /** Satu uang masuk yang benar-benar diterima — bukan tagihan. */
@@ -587,6 +591,23 @@ export interface ServiceTier {
   active: boolean;
   sortOrder: number;
   updatedAt: string;
+}
+
+/**
+ * Pemakaian satu paket — HANYA untuk panel (tidak pernah ke beranda).
+ * §3.3 dokumen strategi: tiap 3 proyek selesai pada satu tier, harga naik
+ * 10–15% untuk klien baru. "Sejak harga" = proyek berpaket ini yang dibuat
+ * sesudah fee paketnya terakhir diubah, yaitu yang dijual dengan harga
+ * sekarang.
+ */
+export interface TierUsage {
+  tierId: string;
+  priceChangedAt: string;
+  proyek: number;
+  selesai: number;
+  selesaiSejakHarga: number;
+  /** selesaiSejakHarga >= 3. */
+  saatnyaNaik: boolean;
 }
 
 /** undefined = jangan diubah. */
@@ -1140,4 +1161,36 @@ export interface TargetProgress {
   sisaHari: number;
   /** Kekurangan dibagi sisa bulan (dibulatkan ke atas); null kalau tidak ada target atau sudah tercapai. */
   perBulanDibutuhkan: number | null;
+}
+
+/** KPI dokumen strategi §8 (fase 4, H8). Dihitung, tidak pernah diketik. */
+export interface KpiStrategi {
+  hariIni: string;
+  tahun: number;
+  kuartal: number;
+  target: {
+    rataKontrakMin: number;
+    rataKontrakMaks: number;
+    marginMin: number;
+    leadKuartalMin: number;
+    leadKuartalMaks: number;
+    signatureMin: number;
+    cadanganBulan: number;
+  };
+  /** Rata-rata nilai kontrak proyek yang dibuat tahun ini. */
+  rataKontrak: { nilai: number | null; proyek: number };
+  /** Margin kontrak = (kontrak − biaya tercatat) / kontrak, tertimbang. */
+  margin: {
+    rata: number | null;
+    proyek: number;
+    dibawah: { projectId: string; title: string; kontrak: number; biaya: number; margin: number }[];
+  };
+  /** Pesan masuk kuartal ini; `ditindaklanjuti` = berstatus dihubungi/berpotensi. */
+  lead: { kuartalIni: number; ditindaklanjuti: number };
+  /** Proyek tahun ini berpaket urutan 2 ke atas (Signature, Flagship, Standar, Premium). */
+  signature: { jumlah: number; proyek: { projectId: string; title: string; tier: string }[] };
+  /** Saldo dari catatan panel ÷ rata-rata uang keluar per bulan (enam bulan penuh terakhir). */
+  cadangan: { saldo: number; keluarPerBulan: number | null; bulanBerdata: number; bulan: number | null };
+  /** Laba kas per kategori proyek, tahun ini. */
+  segmen: { kategori: string; proyek: number; diterima: number; biaya: number; laba: number }[];
 }

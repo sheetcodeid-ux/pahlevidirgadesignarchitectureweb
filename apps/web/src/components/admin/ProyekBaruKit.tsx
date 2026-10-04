@@ -9,9 +9,10 @@ import { Isian } from "../kit/Isian";
 import { Ikon } from "../kit/Ikon";
 import { ImageSquare, Plus, X } from "../kit/ikon";
 import {
-  buatProyek, simpanProyek, mintaUrlUnggah, daftarTim, ambilAturanFee, tambahTimProyek, pctBawaan,
-  LABEL_PERAN, URUTAN_PERAN, type Proyek, type AnggotaTim, type AturanFee, type PeranTim,
+  buatProyek, simpanProyek, mintaUrlUnggah, daftarTim, ambilAturanFee, tambahTimProyek, pctBawaan, daftarPaket,
+  LABEL_PERAN, URUTAN_PERAN, type Proyek, type AnggotaTim, type AturanFee, type PeranTim, type Paket,
 } from "../../lib/admin";
+import { PilihPaket } from "./pilihPaket";
 import { formatRupiah } from "../../lib/format";
 import { useCegahPindah } from "../../lib/cegahPindah";
 import { setProyekAktif } from "../../lib/proyekAktif";
@@ -88,6 +89,7 @@ const KOSONG = {
   city: "",
   location: "",
   scopeOfWork: "",
+  tierId: "",
   fee: "",
   deadlinePreview: "",
   deadlineFinal: "",
@@ -124,12 +126,14 @@ function Isi() {
   const [tim, setTim] = useState<BarisTim[]>(barisDasar);
   const [orangTim, setOrangTim] = useState<AnggotaTim[]>([]);
   const [aturan, setAturan] = useState<AturanFee | null>(null);
+  const [paket, setPaket] = useState<Paket[]>([]);
   const [sampul, setSampul] = useState<{ key: string; url: string } | null>(null);
   const [mengunggah, setMengunggah] = useState(false);
   const [menyimpan, setMenyimpan] = useState(false);
 
   useEffect(() => {
     daftarTim().then((d) => setOrangTim(d.filter((o) => o.active))).catch(() => setOrangTim([]));
+    daftarPaket().then(setPaket).catch(() => setPaket([]));
     ambilAturanFee()
       .then((a) => {
         setAturan(a);
@@ -235,6 +239,7 @@ function Isi() {
       if (f.city.trim()) patch.city = f.city.trim();
       if (f.location.trim()) patch.location = f.location.trim();
       if (f.scopeOfWork.trim()) patch.scopeOfWork = f.scopeOfWork.trim();
+      if (f.tierId) patch.tierId = f.tierId;
       if (fee > 0) patch.contractValue = fee;
       if (f.deadlinePreview) patch.deadlinePreview = f.deadlinePreview;
       if (f.deadlineFinal) patch.deadlineFinal = f.deadlineFinal;
@@ -294,6 +299,14 @@ function Isi() {
     }
   }
 
+  const paketDipilih = paket.find((p) => p.id === f.tierId) ?? null;
+  /* Peringatan, bukan penolakan: harga di luar rentang paket memang terjadi
+     (diskon klien lama, lingkup tambahan). */
+  const bantuFee = paketDipilih
+    ? fee > 0 && (fee < paketDipilih.feeMin * 1e6 || fee > paketDipilih.feeMax * 1e6)
+      ? `Di luar rentang ${paketDipilih.name} (Rp${paketDipilih.feeMin}–${paketDipilih.feeMax} jt).`
+      : `Rentang ${paketDipilih.name}: Rp${paketDipilih.feeMin}–${paketDipilih.feeMax} jt.`
+    : undefined;
   const kategoriLabel = KATEGORI[f.category] ?? f.category;
   const pctTampil = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
   const ringkasTim = useMemo(
@@ -395,14 +408,19 @@ function Isi() {
               <h3 id="pjb-fee" className="pjb__judul">
                 Fee &amp; tenggat
               </h3>
-              <div className="pas__kisi pjb__kisi3">
+              <div className="pas__kisi">
+                {/* Paket dipilih di sini supaya panel bisa menghitung proyek
+                    selesai per paket (§3.3 dokumen strategi: tiap 3 selesai,
+                    harga naik) dan KPI "Signature ke atas". */}
+                <PilihPaket paket={paket} nilai={f.tierId} onUbah={(v) => set("tierId", v)} />
                 <IsianTempel
                   label="Fee design"
                   kiri="Rp"
                   inputMode="numeric"
-                  placeholder="12.000.000"
+                  placeholder={paketDipilih ? `${paketDipilih.feeMin}.000.000` : "12.000.000"}
                   value={f.fee}
                   onChange={(e) => set("fee", titikRibuan(e.currentTarget.value))}
+                  bantu={bantuFee}
                 />
                 <IsianTanggal
                   label="Tenggat preview"

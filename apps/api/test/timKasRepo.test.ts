@@ -17,6 +17,8 @@ import * as fee from "../src/repository/fee";
 import * as team from "../src/repository/team";
 import * as adminRepo from "../src/repository/admin";
 import * as payroll from "../src/repository/payroll";
+import * as tiers from "../src/repository/tiers";
+import * as kpi from "../src/repository/kpi";
 
 const DIR_PG = "/var/lib/postgresql/uji";
 const adaPostgres = existsSync(`${DIR_PG}/sock/.s.PGSQL.55432`);
@@ -209,6 +211,81 @@ it.skipIf(!adaPostgres)("tim, bayaran, kas, dan target jalan dengan setelan kone
   wengRow = (await adminRepo.listAll(sql, "")).find((p) => p.id === weng.id);
   cek("tenggat dan lingkup bisa DIKOSONGKAN lagi (null / string kosong)",
     wengRow?.deadlinePreview === null && wengRow?.scopeOfWork === null && wengRow?.deadlineFinal === "2026-08-26", wengRow);
+
+  console.log("\n── proyek tertaut paket + pengingat naik harga (§3.3) ──");
+  const [starter] = await sql<{ id: string }[]>`select id from public.service_tiers where slug = 'starter'`;
+  const [sig] = await sql<{ id: string }[]>`select id from public.service_tiers where slug = 'signature'`;
+  await adminRepo.update(sql, weng.id, { tierId: starter.id });
+  let wengP = (await adminRepo.listAll(sql, "")).find((p) => p.id === weng.id);
+  cek("proyek bisa ditautkan ke paket", wengP?.tierId === starter.id, wengP?.tierId);
+  await adminRepo.update(sql, weng.id, { tierId: "" });
+  wengP = (await adminRepo.listAll(sql, "")).find((p) => p.id === weng.id);
+  cek("tautan paket bisa dilepas (string kosong → null)", wengP?.tierId === null, wengP?.tierId);
+
+  const sigIds: string[] = [];
+  for (const [i, nilai] of [60_000_000, 70_000_000, 10_000_000].entries()) {
+    const [x] = await sql<{ id: string }[]>`
+      insert into public.projects (slug, title, category, contract_value, tier_id, pipeline_stage)
+      values (${`sig-${i}`}, ${`Kafe Sig ${i}`}, 'coffeeshop', ${nilai}, ${sig.id}::uuid, 'finish') returning id`;
+    sigIds.push(x.id);
+  }
+  let pakai = (await tiers.pemakaian(sql)).find((t) => t.tierId === sig.id);
+  cek("3 proyek Signature selesai sejak harga → saatnya naik",
+    pakai?.selesaiSejakHarga === 3 && pakai?.saatnyaNaik === true, pakai);
+  cek("paket tanpa proyek tetap punya angka (nol)",
+    (await tiers.pemakaian(sql)).find((t) => t.tierId === starter.id)?.proyek === 0);
+  await tiers.update(sql, sig.id, { feeMax: 90 });
+  pakai = (await tiers.pemakaian(sql)).find((t) => t.tierId === sig.id);
+  cek("harga dinaikkan → hitungan sejak harga mulai dari nol, total tetap",
+    pakai?.selesaiSejakHarga === 0 && pakai?.selesai === 3 && pakai?.saatnyaNaik === false, pakai);
+
+  console.log("\n── KPI strategi (§8) ──");
+  await sql`update public.projects set status = 'archived' where id = ${sigIds[2]}::uuid`;
+  let k = await kpi.hitung(sql);
+  const [harap] = await sql<{ avg: string }[]>`
+    select avg(contract_value) as avg from public.projects where status <> 'archived' and contract_value > 0`;
+  cek("rata-rata kontrak = rata-rata proyek berkontrak yang tidak diarsip",
+    k.rataKontrak.nilai === Math.round(Number(harap.avg)), { k: k.rataKontrak, harap: harap.avg });
+  cek("Signature ke atas: 2 (yang diarsip tidak dihitung)", k.signature.jumlah === 2, k.signature);
+
+  const [rugi] = await sql<{ id: string }[]>`
+    insert into public.projects (slug, title, category, contract_value)
+    values ('kecil', 'Renovasi Kecil', 'renovation', 10000000) returning id`;
+  await costs.create(sql, rugi.id, { label: "Bahan presentasi", category: "operasional", amount: 8_000_000, incurredOn: "2026-09-02" });
+  k = await kpi.hitung(sql);
+  const rk = k.margin.dibawah.find((m) => m.projectId === rugi.id);
+  cek("proyek bermargin 20% masuk daftar di bawah 35%", rk !== undefined && Math.round(rk.margin) === 20, rk);
+  cek("Kafe Sig 0 (tanpa biaya, 100%) TIDAK masuk daftar", !k.margin.dibawah.some((m) => m.projectId === sigIds[0]));
+
+  await sql`insert into public.inquiries (name, email, message, status) values
+    ('Lead Satu', 'a@example.com', 'Mau desain coffee shop', 'contacted'),
+    ('Lead Dua', 'b@example.com', 'Mau desain rumah tinggal', 'new')`;
+  await sql`insert into public.inquiries (name, email, message, created_at)
+    values ('Lead Lama', 'c@example.com', 'Pesan dari tahun lalu', '2020-01-01')`;
+  k = await kpi.hitung(sql);
+  cek("lead kuartal ini 2 (yang 2020 tidak), ditindaklanjuti 1",
+    k.lead.kuartalIni === 2 && k.lead.ditindaklanjuti === 1, k.lead);
+
+  const saldo0 = k.cadangan.saldo;
+  await ledger.create(sql, { direction: "keluar", category: "operasional", label: "Sewa uji", amount: 1_000_000 });
+  k = await kpi.hitung(sql);
+  cek("kas keluar mengurangi saldo", k.cadangan.saldo === saldo0 - 1_000_000, { saldo0, k: k.cadangan.saldo });
+  const gUji = await payroll.create(sql, { teamMemberId: dirga, period: "2026-05", amount: 5_000_000 });
+  k = await kpi.hitung(sql);
+  cek("gaji BELUM dibayar tidak mengurangi saldo", k.cadangan.saldo === saldo0 - 1_000_000, k.cadangan.saldo);
+  await payroll.update(sql, gUji, { paidOn: "2026-05-25" });
+  k = await kpi.hitung(sql);
+  cek("gaji yang dibayar mengurangi saldo", k.cadangan.saldo === saldo0 - 6_000_000, k.cadangan.saldo);
+  cek("bulan cadangan = saldo / keluar per bulan",
+    k.cadangan.keluarPerBulan !== null && k.cadangan.bulanBerdata > 0 &&
+    Math.abs((k.cadangan.bulan ?? 0) - k.cadangan.saldo / k.cadangan.keluarPerBulan) < 1e-9, k.cadangan);
+
+  const segAde0 = k.segmen.find((g) => g.kategori === "residential")?.diterima ?? 0;
+  await sql`insert into public.project_payments (project_id, amount, kind, paid_at)
+            values (${ade.id}::uuid, 1000000, 'termin', now())`;
+  k = await kpi.hitung(sql);
+  cek("pembayaran rumah menaikkan segmen residential 1 jt",
+    (k.segmen.find((g) => g.kategori === "residential")?.diterima ?? 0) === segAde0 + 1_000_000, k.segmen);
 
   await sql.end();
   expect(gagal, `gagal: ${gagal.join("; ")}`).toEqual([]);

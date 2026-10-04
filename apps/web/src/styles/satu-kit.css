@@ -365,11 +365,16 @@
    tempo — itu satu-satunya hal di kartu ini yang menunggu tindakan. */
 .sat__lingkup,
 .sat__timbayar { flex: none; gap: 12px; }
+/* Empat fakta (Klien, Paket, Preview, Final) sebaris di laptop, dua-dua di
+   bawahnya — sejak paket ikut tampil (fase 4). */
 .sat__lingkupfakta {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px 16px;
   margin: 0;
+}
+@media (min-width: 1248px) {
+  .sat__lingkupfakta { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .sat__lingkupfakta > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .sat__lingkupfakta dt { font-size: var(--k-t12); color: var(--text-muted); }

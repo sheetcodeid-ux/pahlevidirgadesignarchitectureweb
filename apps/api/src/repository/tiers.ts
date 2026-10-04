@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import type { ServiceTier, ServiceTierInput, TierGroup } from "../types";
+import type { ServiceTier, ServiceTierInput, TierGroup, TierUsage } from "../types";
 import { NotFoundError } from "./projects";
 
 interface Row {
@@ -120,4 +120,31 @@ export async function update(sql: Sql, id: string, input: ServiceTierInput): Pro
 export async function remove(sql: Sql, id: string): Promise<void> {
   const r = await sql`delete from public.service_tiers where id = ${id}::uuid`;
   if (r.count === 0) throw new NotFoundError();
+}
+
+/**
+ * Pemakaian tiap paket — dasar pengingat "saatnya naik harga" (§3.3).
+ *
+ * "Selesai" = tahap pipeline sudah Finish atau sesudahnya, ukuran yang sama
+ * dengan "desain selesai" di bayaran tim. Satu query bergrup per paket,
+ * termasuk paket tanpa proyek (left join) supaya tiap kartu di panel punya
+ * angka, nol sekalipun.
+ */
+export async function pemakaian(sql: Sql): Promise<TierUsage[]> {
+  const rows = await sql<{ id: string; price_changed_at: Date | string; proyek: string; selesai: string; sejak: string }[]>`
+    select t.id, t.price_changed_at,
+           count(p.id) as proyek,
+           count(p.id) filter (where p.pipeline_stage >= 'finish') as selesai,
+           count(p.id) filter (where p.pipeline_stage >= 'finish' and p.created_at >= t.price_changed_at) as sejak
+      from public.service_tiers t
+      left join public.projects p on p.tier_id = t.id and p.status <> 'archived'
+     group by t.id, t.price_changed_at`;
+  return rows.map((r) => ({
+    tierId: r.id,
+    priceChangedAt: new Date(r.price_changed_at).toISOString(),
+    proyek: Number(r.proyek),
+    selesai: Number(r.selesai),
+    selesaiSejakHarga: Number(r.sejak),
+    saatnyaNaik: Number(r.sejak) >= 3,
+  }));
 }

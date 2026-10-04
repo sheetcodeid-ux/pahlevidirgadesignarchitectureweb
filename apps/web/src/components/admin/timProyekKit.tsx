@@ -8,12 +8,13 @@ import { useToast } from "../kit/Toast";
 import { IsianPanjang, IsianTanggal, IsianTempel, KelompokIsian, PilihAsli } from "../kit/Formulir";
 import { NotePencil, Plus } from "../kit/ikon";
 import {
-  daftarTimProyek, daftarTim, tambahTimProyek, ubahTimProyek, hapusTimProyek, bayarTahap, simpanProyek,
+  daftarTimProyek, daftarTim, tambahTimProyek, ubahTimProyek, hapusTimProyek, bayarTahap, simpanProyek, daftarPaket,
   bacaCache, tulisCache, LABEL_PERAN, URUTAN_PERAN,
-  type Proyek, type PenugasanTim, type AnggotaTim, type PeranTim, type TahapBayaran,
+  type Proyek, type PenugasanTim, type AnggotaTim, type PeranTim, type TahapBayaran, type Paket,
 } from "../../lib/admin";
 import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 import { jagaFokusSesudahHapus } from "../../lib/fokus";
+import { PilihPaket } from "./pilihPaket";
 
 /* =============================================================================
    Tim & Bayaran di Satu Proyek — kolom "TEAM DESIGN" dan "TEAM DESIGN FEE"
@@ -54,11 +55,17 @@ const SYARAT: Record<TahapBayaran["tahap"], string> = {
 export function LingkupTenggat({ proyek, onBerubah }: { proyek: Proyek; onBerubah: () => void }) {
   const toast = useToast();
   const [buka, setBuka] = useState(false);
-  const [f, setF] = useState({ client: "", scope: "", preview: "", final: "" });
+  const [f, setF] = useState({ client: "", scope: "", preview: "", final: "", tierId: "" });
   const [menyimpan, setMenyimpan] = useState(false);
+  const [paket, setPaket] = useState<Paket[]>([]);
+  useEffect(() => {
+    daftarPaket().then(setPaket).catch(() => setPaket([]));
+  }, []);
+  const paketIni = paket.find((p) => p.id === proyek.tierId) ?? null;
 
   function bukaDialog() {
     setF({
+      tierId: proyek.tierId ?? "",
       client: proyek.client ?? "",
       scope: proyek.scopeOfWork ?? "",
       preview: proyek.deadlinePreview ?? "",
@@ -76,6 +83,7 @@ export function LingkupTenggat({ proyek, onBerubah }: { proyek: Proyek; onBeruba
         scopeOfWork: f.scope.trim() || null,
         deadlinePreview: f.preview || null,
         deadlineFinal: f.final || null,
+        tierId: f.tierId || null,
       });
       toast({ judul: "Lingkup dan tenggat disimpan", nada: "sukses" });
       setBuka(false);
@@ -107,6 +115,18 @@ export function LingkupTenggat({ proyek, onBerubah }: { proyek: Proyek; onBeruba
         <div>
           <dt>Klien</dt>
           <dd>{proyek.client || <span className="sat__redup">Belum diisi</span>}</dd>
+        </div>
+        <div>
+          <dt>Paket</dt>
+          <dd>
+            {paketIni ? (
+              <>
+                {paketIni.name} <span className="sat__redup">· Rp{paketIni.feeMin}–{paketIni.feeMax} jt</span>
+              </>
+            ) : (
+              <span className="sat__redup">Tanpa paket</span>
+            )}
+          </dd>
         </div>
         <div>
           <dt>Preview</dt>
@@ -159,6 +179,7 @@ export function LingkupTenggat({ proyek, onBerubah }: { proyek: Proyek; onBeruba
             <span className="k-isian__label">Klien</span>
             <KelompokIsian value={f.client} maxLength={120} onChange={(e) => setF({ ...f, client: e.currentTarget.value })} />
           </label>
+          <PilihPaket paket={paket} nilai={f.tierId} onUbah={(v) => setF({ ...f, tierId: v })} />
           <label className="k-isian">
             <span className="k-isian__label">Lingkup kerja</span>
             <IsianPanjang

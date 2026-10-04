@@ -4,7 +4,7 @@ import { RequireAuth } from "./RequireAuth";
 import { Cari } from "../kit/Isian";
 import { Tombol } from "../kit/Tombol";
 import { CaretDown, Funnel, Sliders } from "../kit/ikon";
-import { daftarPaket, bacaCache, tulisCache, type Paket } from "../../lib/admin";
+import { daftarPaket, pemakaianPaket, bacaCache, tulisCache, type Paket, type PemakaianPaket } from "../../lib/admin";
 import { KELOMPOK, rentangFee } from "../../lib/tier";
 
 /* =============================================================================
@@ -20,9 +20,10 @@ import { KELOMPOK, rentangFee } from "../../lib/tier";
                              beranda bidangnya hijau tua; yang dihentikan abu
                              tua, seperti kartu terakhir framenya
      judul + deskripsi       nama paket + ringkasannya
-     "Valid from: tanggal"   "Diperbarui: tanggal" — aturan harganya naik tiap
-                             tiga proyek selesai, jadi kapan terakhir diubah
-                             memang yang ditanyakan
+     "Valid from: tanggal"   "Selesai di harga ini: N dari 3 proyek" — aturan
+                             §3.3: tiap tiga proyek selesai, harga naik. Begitu
+                             tiga, labelnya jadi amber "saatnya naik 10–15%".
+                             Tanggal harga terakhir diubah ada di title-nya
      Filter / Sort By        kelompok (coffee shop / rumah / dihentikan) dan
                              urutan (beranda / fee / terakhir diubah)
      Add Promo               Tambah Paket
@@ -88,8 +89,14 @@ function Isi() {
   const [cari, setCari] = useState("");
   const [saring, setSaring] = useState("semua");
   const [urut, setUrut] = useState("beranda");
+  /* Pemakaian tiap paket — pengingat §3.3 dokumen strategi. Gagal memuatnya
+     tidak boleh menahan daftar paket, jadi galatnya ditelan. */
+  const [pakai, setPakai] = useState<Map<string, PemakaianPaket>>(new Map());
 
   useEffect(() => {
+    pemakaianPaket()
+      .then((d) => setPakai(new Map(d.map((u) => [u.tierId, u]))))
+      .catch(() => {});
     daftarPaket()
       .then((d) => {
         tulisCache("paket", d);
@@ -192,10 +199,23 @@ function Isi() {
             <span className="pak__info">
               <span className="pak__nama">{p.name}</span>
               <span className="pak__ringkas">{p.summary || "Belum ada ringkasan."}</span>
-              <span className="pak__label">
-                <span>Diperbarui:</span>
-                <b>{tanggal(p.updatedAt)}</b>
-              </span>
+              {/* "Valid until" milik frame 31 jadi pengingat §3.3: tiap 3
+                  proyek selesai di harga ini, harga naik 10–15% untuk klien
+                  baru. "Di harga ini" = proyek yang dibuat sesudah fee
+                  paketnya terakhir diubah. */}
+              {pakai.get(p.id)?.saatnyaNaik ? (
+                <span className="pak__label pak__label--naik" title={`Harga terakhir diubah ${tanggal(pakai.get(p.id)!.priceChangedAt)}`}>
+                  <b>{pakai.get(p.id)!.selesaiSejakHarga} selesai — saatnya naik 10–15%</b>
+                </span>
+              ) : (
+                <span
+                  className="pak__label"
+                  title={pakai.get(p.id) ? `Harga terakhir diubah ${tanggal(pakai.get(p.id)!.priceChangedAt)}` : undefined}
+                >
+                  <span>Selesai di harga ini:</span>
+                  <b>{pakai.get(p.id)?.selesaiSejakHarga ?? 0} dari 3 proyek</b>
+                </span>
+              )}
             </span>
           </a>
         ))}

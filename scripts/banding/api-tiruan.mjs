@@ -354,6 +354,10 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
     : null,
   deadlinePreview: i < 2 ? ["2026-10-08", "2026-09-28"][i] : null,
   deadlineFinal: i < 2 ? ["2026-10-15", "2026-10-02"][i] : null,
+  /* Paket (fase 4): t…02 Signature, t…05 Standar — sebagian proyek saja,
+     supaya "Tanpa paket" ikut tergambar. */
+  tierId: i === 0 ? "t0000000-0000-4000-8000-000000000002" : i === 1 ? "t0000000-0000-4000-8000-000000000005"
+    : i === 3 ? "t0000000-0000-4000-8000-000000000002" : null,
 }));
 
 /* Tim per peran (fase 1-2 alur Excel pemilik). Hitungannya disalin dari
@@ -763,6 +767,53 @@ function kemajuanTiruan(semester) {
     pembayaranKlien, kasLain, tercapai, kurang, sisaHari,
     perBulanDibutuhkan: kurang === null || kurang === 0 || sisaHari === 0 ? null : Math.ceil(kurang / sisaBulan) };
 }
+/* Pemakaian paket (§3.3) dan KPI (§8) — fase 4. Starter diberi tiga proyek
+   selesai "lama" (tidak ada di daftar proyek tiruan) supaya keadaan amber
+   "saatnya naik harga" ikut tergambar. */
+const SELESAI_LAMA = { "t0000000-0000-4000-8000-000000000001": 3 };
+function pemakaianTiruan() {
+  return paketAdmin.map((t) => {
+    const milik = proyekAdmin.filter((p) => p.tierId === t.id);
+    const selesai = milik.filter((p) => ["finish", "pelunasan"].includes(p.pipelineStage)).length + (SELESAI_LAMA[t.id] ?? 0);
+    return { tierId: t.id, priceChangedAt: "2026-01-15T00:00:00.000Z", proyek: milik.length + (SELESAI_LAMA[t.id] ?? 0),
+      selesai, selesaiSejakHarga: selesai, saatnyaNaik: selesai >= 3 };
+  });
+}
+function kpiTiruan() {
+  const semuaBiaya = [...biayaKeu, ...biayaRiwayat];
+  const berkontrak = proyekAdmin.filter((p) => p.contractValue > 0);
+  const margins = berkontrak.map((p) => {
+    const biaya = semuaBiaya.filter((b) => b.projectId === p.id).reduce((n, b) => n + b.amount, 0);
+    return { projectId: p.id, title: p.title, kontrak: p.contractValue, biaya, margin: ((p.contractValue - biaya) / p.contractValue) * 100 };
+  });
+  const tk = margins.reduce((n, m) => n + m.kontrak, 0);
+  const tb = margins.reduce((n, m) => n + m.biaya, 0);
+  const bayar = Object.values(bayarAdmin).flat();
+  const masuk = bayar.reduce((n, b) => n + b.amount, 0) + kasAdmin.filter((k) => k.direction === "masuk").reduce((n, k) => n + k.amount, 0);
+  const keluar = semuaBiaya.reduce((n, b) => n + b.amount, 0) + kasAdmin.filter((k) => k.direction === "keluar").reduce((n, k) => n + k.amount, 0)
+    + gajiAdmin.filter((g) => g.paidOn).reduce((n, g) => n + g.amount, 0);
+  const keluarPerBulan = Math.round(keluar / 6);
+  const saldo = masuk - keluar + 1_250_000_000; // saldo awal tiruan supaya angkanya masuk akal
+  const kategori = [...new Set(proyekAdmin.map((p) => p.category))];
+  const sig = proyekAdmin.filter((p) => (paketAdmin.find((t) => t.id === p.tierId)?.sortOrder ?? 0) >= 2);
+  return {
+    hariIni: kasHariLalu(0), tahun: new Date().getFullYear(), kuartal: Math.floor(new Date().getMonth() / 3) + 1,
+    target: { rataKontrakMin: 50_000_000, rataKontrakMaks: 70_000_000, marginMin: 35, leadKuartalMin: 10, leadKuartalMaks: 15, signatureMin: 3, cadanganBulan: 6 },
+    rataKontrak: { nilai: Math.round(tk / Math.max(1, berkontrak.length)), proyek: berkontrak.length },
+    margin: { rata: tk ? ((tk - tb) / tk) * 100 : null, proyek: margins.length,
+      dibawah: [...margins, { projectId: "k6", title: "Renovasi Dapur Bu Ratna", kontrak: 18_000_000, biaya: 13_500_000, margin: 25 }]
+        .filter((m) => m.margin < 35).sort((a, b) => a.margin - b.margin) },
+    lead: { kuartalIni: pesanAdmin.length, ditindaklanjuti: pesanAdmin.filter((x) => ["contacted", "qualified"].includes(x.status)).length },
+    signature: { jumlah: sig.length, proyek: sig.map((p) => ({ projectId: p.id, title: p.title, tier: paketAdmin.find((t) => t.id === p.tierId).name })) },
+    cadangan: { saldo, keluarPerBulan, bulanBerdata: 6, bulan: saldo / keluarPerBulan },
+    segmen: kategori.map((kat) => {
+      const ids = proyekAdmin.filter((p) => p.category === kat).map((p) => p.id);
+      const diterima = bayar.filter((b) => ids.includes(b.projectId)).reduce((n, b) => n + b.amount, 0);
+      const biaya = semuaBiaya.filter((b) => ids.includes(b.projectId)).reduce((n, b) => n + b.amount, 0);
+      return { kategori: kat, proyek: ids.length, diterima, biaya, laba: diterima - biaya };
+    }),
+  };
+}
 let capBerubah = "2026-01-01T00:00:00.000Z";
 const jawab = (path) => {
   {
@@ -797,6 +848,8 @@ const jawab = (path) => {
     if (j) return jurnalAdmin.find((x) => x.id === j[1]) ?? null;
   }
   if (path.startsWith("/api/v1/admin/journal")) return jurnalAdmin;
+  if (path.startsWith("/api/v1/admin/tiers/usage")) return pemakaianTiruan();
+  if (path.startsWith("/api/v1/admin/kpi")) return kpiTiruan();
   {
     const t = path.match(/^\/api\/v1\/admin\/tiers\/([^/?]+)/);
     if (t) return paketAdmin.find((x) => x.id === t[1]) ?? null;

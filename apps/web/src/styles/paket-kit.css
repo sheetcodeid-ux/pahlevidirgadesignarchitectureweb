@@ -105,6 +105,8 @@
   color: var(--text-muted);
 }
 .pak__label b { font-weight: var(--k-reg); color: var(--text-strong); }
+/* Pengingat §3.3 — amber = perlu keputusan, bukan galat. */
+.pak__label--naik b { font-weight: var(--k-semi); color: var(--warn-ink); }
 .pak__kartu.is-mati .pak__nama { color: var(--text-muted); }
 .pak__kosong { grid-column: 1 / -1; margin: 8px 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
 

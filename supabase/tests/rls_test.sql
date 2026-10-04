@@ -1841,4 +1841,35 @@ begin
 end;
 $$;
 
+-- Proyek tertaut paket (fase 4) ------------------------------------------
+
+do $$
+declare pid uuid; tid uuid; tersisa uuid; terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  insert into public.service_tiers (group_key, slug, name, fee_min, fee_max)
+  values ('kafe', 'tes-paket-proyek', 'Paket Uji', 10, 20) returning id into tid;
+  insert into public.projects (slug, title, tier_id)
+  values ('tes-paket', 'Paket Uji Proyek', tid) returning id into pid;
+  select count(*) into terlihat from public.projects where id = pid and tier_id = tid;
+  perform pg_temp.tolak(terlihat <> 1, 'staf bisa menautkan proyek ke paket');
+
+  -- Stempel harga hanya bergeser saat FEE berubah, bukan saat teks disunting.
+  update public.service_tiers set price_changed_at = '2020-01-01' where id = tid;
+  update public.service_tiers set summary = 'teks baru' where id = tid;
+  select count(*) into terlihat from public.service_tiers where id = tid and price_changed_at = '2020-01-01';
+  perform pg_temp.tolak(terlihat <> 1, 'menyunting teks paket tidak menggeser stempel harga');
+  update public.service_tiers set fee_max = 25 where id = tid;
+  select count(*) into terlihat from public.service_tiers where id = tid and price_changed_at > '2020-01-01';
+  perform pg_temp.tolak(terlihat <> 1, 'mengubah fee paket menggeser stempel harga');
+
+  delete from public.service_tiers where id = tid;
+  select tier_id into tersisa from public.projects where id = pid;
+  select count(*) into terlihat from public.projects where id = pid;
+  perform pg_temp.tolak(terlihat <> 1 or tersisa is not null,
+    'menghapus paket mengosongkan tautan, proyeknya tetap ada');
+  reset role;
+end;
+$$;
+
 rollback;

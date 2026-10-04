@@ -96,6 +96,8 @@ export const NAV: NavItem[] = [
      Urutannya tetap lingkaran bisnis di atas: yang dikerjakan tiap hari di
      atas, setelan paling bawah. */
   { label: "Dashboard", href: "/admin", icon: "dashboard", ikonKit: "NavSquaresFour", group: "Utama" },
+  /* Lima angka target dokumen strategi §8 — fase 4. */
+  { label: "KPI Strategi", href: "/admin/kpi", icon: "finance", ikonKit: "Medal", group: "Utama" },
   { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", ikonKit: "SpecialCheckSquare", group: "Utama" },
   /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
      satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */

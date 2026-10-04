@@ -36,6 +36,7 @@ interface AdminRow {
   scope_of_work: string | null;
   deadline_preview: string | null;
   deadline_final: string | null;
+  tier_id: string | null;
   phase: string | null;
   paid_total: string | null;
 }
@@ -71,6 +72,7 @@ function rowToProject(row: AdminRow, assetBase: string): Project {
     scopeOfWork: row.scope_of_work,
     deadlinePreview: row.deadline_preview,
     deadlineFinal: row.deadline_final,
+    tierId: row.tier_id,
     paidTotal: row.paid_total !== null ? Number(row.paid_total) : 0,
   };
 }
@@ -83,7 +85,7 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
            p.lead_architect, p.contractor, p.lighting_designer, p.photographer,
            p.cover_image_key, p.is_featured, p.seo_title,
            p.seo_description, p.published_at, p.pipeline_stage, p.contract_value,
-           p.client_whatsapp, p.scope_of_work, p.deadline_preview::text, p.deadline_final::text,
+           p.client_whatsapp, p.scope_of_work, p.deadline_preview::text, p.deadline_final::text, p.tier_id,
            -- LEFT join: proyek yang belum pernah dibuatkan portal klien belum
            -- punya baris project_progress, dan itu sah. Tanpa LEFT, proyek
            -- seperti itu hilang dari daftar admin tanpa satu pun galat.
@@ -235,6 +237,9 @@ export async function update(sql: Sql, id: string, input: ProjectInput): Promise
   }
   if (input.deadlineFinal !== undefined) {
     fragments.push(sql`deadline_final = ${input.deadlineFinal || null}::date`);
+  }
+  if (input.tierId !== undefined) {
+    fragments.push(sql`tier_id = ${input.tierId || null}::uuid`);
   }
   if (input.status === "published") {
     fragments.push(sql`published_at = coalesce(published_at, now())`);

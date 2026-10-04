@@ -64,6 +64,10 @@ export function checkProjectInput(input: ProjectInput, isNew: boolean): void {
   if (input.scopeOfWork !== undefined && input.scopeOfWork !== null && input.scopeOfWork.length > 2000) {
     throw new ValidationError("lingkup kerja paling panjang 2000 karakter");
   }
+  if (input.tierId !== undefined && input.tierId !== null && input.tierId !== "" &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.tierId)) {
+    throw new ValidationError("paket tidak sah");
+  }
 }
 
 export interface InquiryRequest {

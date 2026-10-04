@@ -24,6 +24,7 @@ import * as tiersRepo from "../repository/tiers";
 import * as revisiRepo from "../repository/contentRevision";
 import * as studioTeamRepo from "../repository/studioTeam";
 import * as payrollRepo from "../repository/payroll";
+import * as kpiRepo from "../repository/kpi";
 import * as feeRepo from "../repository/fee";
 import * as feeRulesRepo from "../repository/feeRules";
 import * as projectTeamRepo from "../repository/projectTeam";
@@ -754,6 +755,12 @@ admin.delete("/ledger/:id", async (c) => {
   }
 });
 
+/** KPI dokumen strategi §8 — fase 4 (H8). */
+admin.get("/kpi", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => kpiRepo.hitung(sql));
+  return c.json({ data });
+});
+
 admin.get("/targets", async (c) => {
   const data = await withDb(c.env, c.executionCtx, (sql) => targetsRepo.list(sql));
   return c.json({ data });
@@ -1403,6 +1410,13 @@ admin.delete("/clients/:id", async (c) => {
 
 admin.get("/tiers", async (c) => {
   const data = await withDb(c.env, c.executionCtx, (sql) => tiersRepo.list(sql, true));
+  return c.json({ data });
+});
+
+/** Pemakaian tiap paket — dipasang SEBELUM /tiers/:id supaya "usage" tidak
+ *  terbaca sebagai id. */
+admin.get("/tiers/usage", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => tiersRepo.pemakaian(sql));
   return c.json({ data });
 });
 

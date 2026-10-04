@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { SisiNav, type ItemNav } from "../kit/Nav";
 import {
   ArrowsLeftRight, ChartBar, ChatTeardropDots, CircleDashed, CoinIn, CoinOut, CoinVertical, FileText, GearSix, Globe, House,
-  IdentificationBadge, ImageSquare, Info, List, NavArrowsLeftRight, NavCoins, NavCurrencyCircleDollar, NavEnvelope,
+  IdentificationBadge, ImageSquare, Info, List, Medal, NavArrowsLeftRight, NavCoins, NavCurrencyCircleDollar, NavEnvelope,
   NavNewspaper, NavReceipt, NavSealPercent, NavSignOut, NavSquaresFour, Question, Ruler, SpecialCheckSquare,
   SpecialCube, UserCircle, Users, Wallet,
 } from "../kit/ikon";
@@ -35,7 +35,7 @@ import { hapusSesi, profilTersimpan } from "../../lib/admin";
    putus-putus yang baru ketahuan dari tangkapan layar. */
 export const IKON_NAV = {
   ArrowsLeftRight, ChartBar, ChatTeardropDots, CoinIn, CoinOut, CoinVertical, FileText, GearSix, Globe, House,
-  IdentificationBadge, ImageSquare, Info, List, NavArrowsLeftRight, NavCoins, NavCurrencyCircleDollar, NavEnvelope,
+  IdentificationBadge, ImageSquare, Info, List, Medal, NavArrowsLeftRight, NavCoins, NavCurrencyCircleDollar, NavEnvelope,
   NavNewspaper, NavReceipt, NavSealPercent, NavSquaresFour, Question, Ruler, SpecialCheckSquare, SpecialCube,
   UserCircle, Users, Wallet,
 } satisfies Record<string, DataIkon>;

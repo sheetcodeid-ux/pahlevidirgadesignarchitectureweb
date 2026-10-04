@@ -348,6 +348,8 @@ export interface Proyek {
   /** Tenggat preview untuk klien dan desain final (YYYY-MM-DD). */
   deadlinePreview?: string | null;
   deadlineFinal?: string | null;
+  /** Paket layanan yang dijual untuk proyek ini — boleh kosong. */
+  tierId?: string | null;
   /** Uang yang BENAR-BENAR sudah diterima. Nol berarti belum dibayar sama
    *  sekali — itulah yang memunculkan tombol Bayar Pertama di tabel. */
   paidTotal?: number;
@@ -449,6 +451,48 @@ export const ubahPaket = (id: string, p: PaketInput) =>
   });
 export const hapusPaket = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/tiers/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+/**
+ * Pemakaian tiap paket — dasar pengingat §3.3 ("tiap 3 proyek selesai pada
+ * satu tier, harga naik 10–15% untuk klien baru"). Panel saja, tidak pernah
+ * ke beranda.
+ */
+export interface PemakaianPaket {
+  tierId: string;
+  priceChangedAt: string;
+  proyek: number;
+  selesai: number;
+  selesaiSejakHarga: number;
+  saatnyaNaik: boolean;
+}
+export const pemakaianPaket = () => panggil<PemakaianPaket[]>("/admin/tiers/usage");
+
+/** KPI dokumen strategi §8 — dihitung API, tidak pernah diketik. */
+export interface KpiStrategi {
+  hariIni: string;
+  tahun: number;
+  kuartal: number;
+  target: {
+    rataKontrakMin: number;
+    rataKontrakMaks: number;
+    marginMin: number;
+    leadKuartalMin: number;
+    leadKuartalMaks: number;
+    signatureMin: number;
+    cadanganBulan: number;
+  };
+  rataKontrak: { nilai: number | null; proyek: number };
+  margin: {
+    rata: number | null;
+    proyek: number;
+    dibawah: { projectId: string; title: string; kontrak: number; biaya: number; margin: number }[];
+  };
+  lead: { kuartalIni: number; ditindaklanjuti: number };
+  signature: { jumlah: number; proyek: { projectId: string; title: string; tier: string }[] };
+  cadangan: { saldo: number; keluarPerBulan: number | null; bulanBerdata: number; bulan: number | null };
+  segmen: { kategori: string; proyek: number; diterima: number; biaya: number; laba: number }[];
+}
+export const ambilKpi = () => panggil<KpiStrategi>("/admin/kpi");
 
 // --- Unggahan -------------------------------------------------------------
 
