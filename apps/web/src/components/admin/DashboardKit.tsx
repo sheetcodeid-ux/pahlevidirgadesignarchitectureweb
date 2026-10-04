@@ -1,6 +1,7 @@
 import { KartuMelayang } from "../kit/Overlay";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
+import { RingkasTarget, useKemajuanTarget } from "./targetKit";
 import { KepalaSeksi, BarisLog, BarisBeban } from "../kit/Item";
 import { KartuStatistik, Tren } from "../kit/Kartu";
 import { Kilau } from "../kit/Grafik";
@@ -283,6 +284,7 @@ function Isi() {
      data, jadi menulisnya tidak bisa merusak hidrasi island lain
      (jebakan #8). */
   const [keu, setKeu] = useState<FinanceOverview | null>(() => bacaCache<FinanceOverview>("keuangan:semua"));
+  const [target] = useKemajuanTarget();
   const [bulanan, setBulanan] = useState<BarisBulanan[] | null>(() =>
     bacaCache<BarisBulanan[]>("keuangan-bulan:semua"),
   );
@@ -586,10 +588,6 @@ function Isi() {
 
   /* ---- Halaman -------------------------------------------------------------- */
 
-  const kasTotal = keu?.kasMasuk ?? 0;
-  const labaTotal = keu?.labaBersih ?? 0;
-  const pLaba = kasTotal > 0 ? (labaTotal / kasTotal) * 100 : null;
-
   /* 18x18, bukan 24 milik TombolIkon xsmall: "Button Icon" di frame ini
      cuma ikonnya sendiri tanpa ruang di sekelilingnya (lihat .dsb__titik). */
   const titikTiga = (href: string, judul: string) => (
@@ -621,20 +619,13 @@ function Isi() {
           ]}
         />
 
-        {/* Slot "Daily Limit": laba bersih terhadap kas yang BENAR-BENAR
-            masuk, bukan terhadap nilai kontrak — nilai kontrak itu janji. */}
+        {/* Slot "Daily Limit": target pemasukan semester — "TARGET 1 MILIAR
+            DALAM 6 BULAN" di sheet KELUAR MASUK pemilik. Dulu laba bersih
+            kumulatif; angka itu tetap ada di Keuangan → Ringkasan, sementara
+            target tidak punya tempat lain yang terlihat setiap buka panel. */}
         <article className="dsb__kartu dsb__laba">
-          <KepalaSeksi judul="Laba Bersih" kanan={titikTiga("/admin/keuangan", "Buka Keuangan")} />
-          <div className="dsb__labaisi">
-            <p className="dsb__labaket">
-              <span>
-                <b className={labaTotal < 0 ? "dsb__minus" : undefined}>{keu ? formatRupiah(labaTotal) : "—"}</b>{" "}
-                <small>dari {keu ? formatRupiahRingkas(kasTotal) : "—"} kas masuk</small>
-              </span>
-              <b>{pLaba === null ? "—" : `${pLaba.toFixed(1).replace(".", ",")}%`}</b>
-            </p>
-            <BarKemajuan bentuk="tumpuk" persen={pLaba ?? 0} tinggi={8} judul="Laba bersih terhadap kas masuk" />
-          </div>
+          <KepalaSeksi judul="Target Semester" kanan={titikTiga("/admin/keuangan/kas", "Buka Kas Studio")} />
+          <RingkasTarget k={target} />
         </article>
 
         {/* Slot "Saving Plans": target = nilai kontrak, capaian = termin

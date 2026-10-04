@@ -720,6 +720,49 @@ function gajiSebulan(period) {
    dengan trigger content_revision di database — dan mulai dari jauh di masa
    lalu, jadi halaman yang baru dimuat bertanda "sudah sama" sampai sesuatu
    disimpan. */
+/* Kas studio (sheet KELUAR MASUK) dan target semester — fase 4. Tanggalnya
+   relatif terhadap hari ini supaya selalu jatuh di semester berjalan. */
+const kasHariLalu = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const kasAdmin = [
+  ["masuk", "penjualan_material", "Penjualan PVC", "Ko Fendy", 1_440_000, 2, null],
+  ["keluar", "konsumsi", "Konsumsi rapat klien", "Nisa", 85_000, 3, null],
+  ["keluar", "operasional", "Sewa kantor Oktober", null, 4_200_000, 4, null],
+  ["masuk", "bagi_hasil", "Cashbon bagi hasil", "Reza", 2_000_000, 19, null],
+  ["keluar", "pembelian_material", "Sampel keramik untuk presentasi", "Toko Sinar", 650_000, 23, "k1"],
+  ["keluar", "operasional", "Sewa kantor September", null, 4_200_000, 34, null],
+  ["masuk", "penjualan_material", "Penjualan PVC", "Pak Hendra", 3_150_000, 48, null],
+].map(([direction, category, label, counterparty, amount, lalu, projectId], i) => ({
+  id: `kas${i + 1}`, direction, category, label, counterparty, amount, occurredOn: kasHariLalu(lalu),
+  projectId, projectTitle: projectId ? proyekAdmin.find((p) => p.id === projectId)?.title ?? null : null, note: null,
+}));
+const targetAdmin = [{ semesterStart: "2026-07-01", amount: 1_000_000_000, note: null }];
+function awalSemester(iso) {
+  const [y, m] = iso.split("-").map(Number);
+  return `${y}-${m <= 6 ? "01" : "07"}-01`;
+}
+function kemajuanTiruan(semester) {
+  const kini = kasHariLalu(0);
+  const mulai = semester || awalSemester(kini);
+  const [y, m] = mulai.split("-").map(Number);
+  const akhir = m === 1 ? `${y}-06-30` : `${y}-12-31`;
+  const sendiri = targetAdmin.find((t) => t.semesterStart === mulai);
+  const lama = targetAdmin.filter((t) => t.semesterStart < mulai).sort((a, b) => b.semesterStart.localeCompare(a.semesterStart))[0];
+  const target = sendiri?.amount ?? lama?.amount ?? null;
+  const dalam = (t) => t >= mulai && t <= akhir;
+  const pembayaranKlien = Object.values(bayarAdmin).flat().filter((b) => dalam(b.paidAt.slice(0, 10))).reduce((n, b) => n + b.amount, 0);
+  const kasLain = kasAdmin.filter((k) => k.direction === "masuk" && dalam(k.occurredOn)).reduce((n, k) => n + k.amount, 0);
+  const tercapai = pembayaranKlien + kasLain;
+  const sisaHari = kini > akhir ? 0 : Math.round((new Date(`${akhir}T00:00:00`) - new Date(`${kini < mulai ? mulai : kini}T00:00:00`)) / 864e5) + 1;
+  const kurang = target === null ? null : Math.max(0, target - tercapai);
+  const sisaBulan = Math.max(1, Math.ceil(sisaHari / 30.44));
+  return { semesterStart: mulai, semesterEnd: akhir, target, asal: sendiri ? "ditetapkan" : lama ? "diteruskan" : null,
+    pembayaranKlien, kasLain, tercapai, kurang, sisaHari,
+    perBulanDibutuhkan: kurang === null || kurang === 0 || sisaHari === 0 ? null : Math.ceil(kurang / sisaBulan) };
+}
 let capBerubah = "2026-01-01T00:00:00.000Z";
 const jawab = (path) => {
   {
@@ -731,6 +774,17 @@ const jawab = (path) => {
     if (sl) return slipTiruan(decodeURIComponent(sl[1]), sl[2]);
   }
   if (path.startsWith("/api/v1/admin/payroll")) return gajiAdmin;
+  if (path.startsWith("/api/v1/admin/ledger")) {
+    const dari = path.match(/dari=([0-9-]+)/)?.[1];
+    const sampai = path.match(/sampai=([0-9-]+)/)?.[1];
+    return kasAdmin.filter((k) => (!dari || k.occurredOn >= dari) && (!sampai || k.occurredOn <= sampai))
+      .sort((a, b) => b.occurredOn.localeCompare(a.occurredOn));
+  }
+  {
+    const tp = path.match(/^\/api\/v1\/admin\/targets\/progress(?:\?semester=([0-9-]+))?/);
+    if (tp) return kemajuanTiruan(tp[1]);
+  }
+  if (path.startsWith("/api/v1/admin/targets")) return targetAdmin;
   if (path.startsWith("/api/v1/admin/publish-status")) return { terakhirBerubah: capBerubah };
   if (path.startsWith("/api/v1/admin/settings")) return { ...setelan, terbitSitusAktif: true };
   if (path.startsWith("/api/v1/admin/me")) return profil;
@@ -869,6 +923,35 @@ function tulis(metode, path, badan) {
       Object.assign(x, badan);
       return { updated: true };
     }
+  }
+  if (path === "/api/v1/admin/ledger" && metode === "POST") {
+    if (!badan.label || !(badan.amount > 0)) return { galat: 422 };
+    const id = `kas${Date.now()}`;
+    kasAdmin.unshift({ id, direction: badan.direction, category: badan.category ?? "lainnya", label: badan.label,
+      counterparty: badan.counterparty ?? null, amount: badan.amount, occurredOn: badan.occurredOn || kasHariLalu(0),
+      projectId: badan.projectId ?? null, projectTitle: proyekAdmin.find((p) => p.id === badan.projectId)?.title ?? null,
+      note: badan.note ?? null });
+    return { id };
+  }
+  {
+    const lk = path.match(/^\/api\/v1\/admin\/ledger\/([^/?]+)$/);
+    if (lk) {
+      const i = kasAdmin.findIndex((k) => k.id === lk[1]);
+      if (i < 0) return { galat: 404 };
+      if (metode === "DELETE") { kasAdmin.splice(i, 1); return { deleted: true }; }
+      if (metode === "PATCH") {
+        Object.assign(kasAdmin[i], badan);
+        if ("projectId" in badan) kasAdmin[i].projectTitle = proyekAdmin.find((p) => p.id === badan.projectId)?.title ?? null;
+        return { updated: true };
+      }
+    }
+  }
+  if (path === "/api/v1/admin/targets" && metode === "PUT") {
+    if (!/^\d{4}-(01|07)-01$/.test(badan.semesterStart ?? "") || !(badan.amount > 0)) return { galat: 422 };
+    const t = targetAdmin.find((x) => x.semesterStart === badan.semesterStart);
+    if (t) Object.assign(t, { amount: badan.amount, note: badan.note ?? null });
+    else targetAdmin.push({ semesterStart: badan.semesterStart, amount: badan.amount, note: badan.note ?? null });
+    return { saved: true };
   }
   if (path === "/api/v1/admin/fee-rules" && metode === "PATCH") {
     for (const [k, v] of Object.entries(badan)) if (k in aturanFee) aturanFee[k] = v;

@@ -128,6 +128,9 @@ export const NAV: NavItem[] = [
       { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "CoinIn" },
       { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar", icon: "cash", ikonKit: "CoinOut" },
       { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", icon: "list", ikonKit: "NavArrowsLeftRight" },
+      /* Uang di luar proyek (PVC, bagi hasil, konsumsi, sewa) + target semester
+         — sheet "KELUAR MASUK". */
+      { label: "Kas Studio", href: "/admin/keuangan/kas", icon: "bank", ikonKit: "CoinVertical" },
       { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "NavReceipt" },
       { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "NavCurrencyCircleDollar" },
       { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "Wallet" },

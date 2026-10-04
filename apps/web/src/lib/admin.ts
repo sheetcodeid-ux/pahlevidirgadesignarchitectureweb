@@ -1049,6 +1049,80 @@ export interface SlipGaji {
 export const ambilSlip = (teamMemberId: string, period: string) =>
   panggil<SlipGaji>(`/admin/payroll/slip?teamMemberId=${encodeURIComponent(teamMemberId)}&period=${period}`);
 
+/* --- Kas studio & target semester (sheet "KELUAR MASUK") -------------------
+   Uang di luar proyek: penjualan material, bagi hasil, konsumsi, operasional.
+   Pembayaran klien, bayaran tim, dan gaji TIDAK dicatat di sini. */
+
+export type ArusKas = "masuk" | "keluar";
+export type KategoriKas =
+  | "penjualan_material" | "bagi_hasil" | "pembelian_material" | "operasional" | "konsumsi" | "lainnya";
+/** Kategori yang sah per arus — cermin constraint studio_ledger_kategori_searah. */
+export const KATEGORI_KAS: Record<ArusKas, KategoriKas[]> = {
+  masuk: ["penjualan_material", "bagi_hasil", "lainnya"],
+  keluar: ["pembelian_material", "operasional", "konsumsi", "lainnya"],
+};
+export const LABEL_KATEGORI_KAS: Record<KategoriKas, string> = {
+  penjualan_material: "Penjualan material",
+  bagi_hasil: "Bagi hasil",
+  pembelian_material: "Pembelian material",
+  operasional: "Operasional",
+  konsumsi: "Konsumsi",
+  lainnya: "Lainnya",
+};
+export interface EntriKas {
+  id: string;
+  direction: ArusKas;
+  category: KategoriKas;
+  label: string;
+  counterparty: string | null;
+  amount: number;
+  occurredOn: string;
+  projectId: string | null;
+  projectTitle: string | null;
+  note: string | null;
+}
+export interface IsianKas {
+  direction?: ArusKas;
+  category?: KategoriKas;
+  label?: string;
+  counterparty?: string | null;
+  amount?: number;
+  occurredOn?: string | null;
+  projectId?: string | null;
+  note?: string | null;
+}
+export const daftarKas = (r: { dari?: string; sampai?: string } = {}) =>
+  panggil<EntriKas[]>(`/admin/ledger${kueri({ dari: r.dari, sampai: r.sampai, limit: "500" })}`);
+export const catatKas = (k: IsianKas) =>
+  panggil<{ id: string }>("/admin/ledger", { method: "POST", body: JSON.stringify(k) });
+export const ubahKas = (id: string, k: IsianKas) =>
+  panggil<{ updated: boolean }>(`/admin/ledger/${id}`, { method: "PATCH", body: JSON.stringify(k) });
+export const hapusKas = (id: string) => panggil<{ deleted: boolean }>(`/admin/ledger/${id}`, { method: "DELETE" });
+
+export interface KemajuanTarget {
+  semesterStart: string;
+  semesterEnd: string;
+  target: number | null;
+  asal: "ditetapkan" | "diteruskan" | null;
+  pembayaranKlien: number;
+  kasLain: number;
+  tercapai: number;
+  kurang: number | null;
+  sisaHari: number;
+  perBulanDibutuhkan: number | null;
+}
+export interface TargetSemester {
+  semesterStart: string;
+  amount: number;
+  note: string | null;
+}
+/** Tanpa argumen: semester yang sedang berjalan. */
+export const kemajuanTarget = (semester?: string) =>
+  panggil<KemajuanTarget>(`/admin/targets/progress${kueri({ semester })}`);
+export const daftarTarget = () => panggil<TargetSemester[]>("/admin/targets");
+export const simpanTarget = (t: { semesterStart: string; amount: number; note?: string | null }) =>
+  panggil<{ saved: boolean }>("/admin/targets", { method: "PUT", body: JSON.stringify(t) });
+
 /** Rentang opsional jadi query string; yang kosong tidak ikut dikirim. */
 function kueri(r: Record<string, string | undefined>): string {
   const q = Object.entries(r).filter(([, v]) => v).map(

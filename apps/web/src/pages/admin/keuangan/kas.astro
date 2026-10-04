@@ -1,0 +1,13 @@
+---
+import KitLayout from "../../../layouts/KitLayout.astro";
+import { KasKit } from "../../../components/admin/KasKit";
+import "../../../styles/daftar-kit.css";
+import "../../../styles/kas-kit.css";
+
+/* Fase 4 alur Excel pemilik — sheet "KELUAR MASUK" untuk uang di luar
+   proyek, dan target pemasukan semester. */
+---
+
+<KitLayout title="Kas Studio" judul="Kas Studio">
+  <KasKit client:load />
+</KitLayout>

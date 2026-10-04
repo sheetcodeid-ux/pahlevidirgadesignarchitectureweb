@@ -16,6 +16,9 @@ import {
   semuaPembayaran,
   semuaBiaya,
   daftarProyek,
+  daftarKas,
+  LABEL_KATEGORI_KAS,
+  type EntriKas,
   bacaCache,
   tulisCache,
   type Pembayaran,
@@ -27,8 +30,9 @@ import { formatRupiah } from "../../lib/format";
 /* =============================================================================
    Semua Transaksi — frame Figma "13. Transactions".
 
-   Halaman ini menggabungkan DUA tabel database jadi satu daftar berurut
-   waktu: `project_payments` (uang masuk) dan `project_costs` (uang keluar).
+   Halaman ini menggabungkan TIGA tabel database jadi satu daftar berurut
+   waktu: `project_payments` (uang masuk), `project_costs` (uang keluar),
+   dan `studio_ledger` (kas studio di luar proyek, dua arah — fase 4).
    Itu persis yang digambar framenya — kolom Amount di sana memuat angka
    bertanda plus DAN minus dalam satu tabel.
 
@@ -74,6 +78,8 @@ interface Transaksi {
   bayar?: Pembayaran;
   /** Baris biaya aslinya — namanya membuka rinciannya (dan hapus). */
   biaya?: BiayaProyek;
+  /** Catatan kas studio di luar proyek — diubah di halaman Kas Studio. */
+  kas?: EntriKas;
 }
 
 const LABEL_JENIS: Record<string, string> = {
@@ -146,6 +152,9 @@ function Isi() {
     bacaCache<BiayaProyek[]>("biaya-semua"),
   );
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
+  /* Kas studio cuma DIBACA di sini: kunci cache-nya milik halaman Kas Studio
+     (jebakan #8 — yang menulis cache satu kunci hanya pemilik daftarnya). */
+  const [kas, setKas] = useState<EntriKas[] | null>(() => bacaCache<EntriKas[]>("kas-studio"));
 
   const [cari, setCari] = useState("");
   const [jenis, setJenis] = useState<"semua" | "masuk" | "keluar">("semua");
@@ -183,6 +192,9 @@ function Isi() {
         setProyek(d);
       })
       .catch(() => setProyek((l) => l ?? []));
+    daftarKas()
+      .then(setKas)
+      .catch(() => setKas((l) => l ?? []));
   }, []);
 
   const semua = useMemo<Transaksi[]>(() => {
@@ -220,8 +232,23 @@ function Isi() {
        lawan tanpa-Z membuat urutannya tidak berarti lintas tahun. */
     const waktuKe = (t: Transaksi) =>
       new Date(t.waktu.length === 10 ? t.waktu + "T23:59:59" : t.waktu).getTime();
-    return [...masuk, ...keluar].sort((a, b) => waktuKe(b) - waktuKe(a));
-  }, [bayar, biaya]);
+    /* Kas studio (sheet KELUAR MASUK): uang di luar proyek desain. Yang
+       tidak terkait proyek dikelompokkan sebagai "Kas studio" di kolom
+       Proyek, supaya saringan proyek bisa memisahkannya. */
+    const studio = (kas ?? []).map<Transaksi>((k) => ({
+      kunci: `k:${k.id}`,
+      masuk: k.direction === "masuk",
+      nama: k.label,
+      sub: LABEL_KATEGORI_KAS[k.category],
+      proyek: k.projectTitle ?? "Kas studio",
+      orang: k.counterparty || "—",
+      waktu: k.occurredOn,
+      nominal: k.amount,
+      catatan: k.note || "—",
+      kas: k,
+    }));
+    return [...masuk, ...keluar, ...studio].sort((a, b) => waktuKe(b) - waktuKe(a));
+  }, [bayar, biaya, kas]);
 
   const tersaring = useMemo(() => {
     const q = cari.trim().toLowerCase();
@@ -321,6 +348,10 @@ function Isi() {
           >
             <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
           </button>
+        ) : t.kas ? (
+          <a className="trx__bukti" href="/admin/keuangan/kas" title="Ubah di Kas Studio">
+            <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
+          </a>
         ) : (
           <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
         )}
