@@ -240,67 +240,72 @@ export function Kilau({
      bidang gradien di bawahnya. Terukur: garis 42,20 dari kotak 61,68. */
   const tinggiGaris = tinggi * 0.684;
   const xs = titik.map((_, i) => (posisi ? posisi[i] : i / (n - 1)) * lebar);
-  /* TANPA geseran +1. Sempat saya tambahkan supaya goresan setebal 2 tidak
-     terpotong di tepi atas — dan itu menggeser SELURUH kurva satu piksel ke
-     bawah, setengah tebal goresannya sendiri. Figma pun membiarkan
-     separuhnya terpotong di sana; yang penting kurvanya berimpit. */
-  const ys = titik.map((v) => tinggiGaris - ((v - min) / rentang) * tinggiGaris);
-  /* Interpolasi kubik MONOTON (Fritsch-Carlson), bukan Catmull-Rom.
-     Bedanya bukan soal kehalusan: Catmull-Rom MELAMPAUI titik datanya di
-     tiap belokan, jadi grafik yang datanya tidak pernah turun tetap
-     tergambar turun sedikit — kurva yang berbohong tentang angkanya.
-     Monoton menahan lerengnya di tiap titik balik, dan justru itu yang
-     membuat dataran-dataran panjang seperti di Figma. */
-  const dx = xs.slice(1).map((x, i) => x - xs[i]);
-  const lereng = ys.slice(1).map((y, i) => (y - ys[i]) / (dx[i] || 1));
-  const m: number[] = [];
-  for (let i = 0; i < n; i++) {
-    if (i === 0) m.push(lereng[0]);
-    else if (i === n - 1) m.push(lereng[n - 2]);
-    else if (lereng[i - 1] * lereng[i] <= 0) m.push(0);
-    else m.push((lereng[i - 1] + lereng[i]) / 2);
-  }
-  for (let i = 0; i < n - 1; i++) {
-    if (lereng[i] === 0) {
-      m[i] = 0;
-      m[i + 1] = 0;
-      continue;
-    }
-    const a = m[i] / lereng[i];
-    const b = m[i + 1] / lereng[i];
-    const h = Math.hypot(a, b);
-    if (h > 3) {
-      m[i] = ((3 / h) * a) * lereng[i];
-      m[i + 1] = ((3 / h) * b) * lereng[i];
-    }
-  }
-  /* Titik kendali di 48% panjang ruas, BUKAN 33% yang jadi bawaan rumus
-     Hermite.
+  /* Kurva SPLINE ALAMI (natural cubic spline), lalu diskalakan supaya
+     seluruh lengkungnya — termasuk puncak yang melampaui titik data — muat
+     di [1, tinggiGaris].
 
-     Ini yang membuat kurvanya terbaca halus, dan angkanya dibaca langsung
-     dari path Figma: pada ruas (19,5;35,7)->(33;22,7) kendalinya di x26 dan
-     x26,5 — keduanya 48% dari ujungnya. Sama di ruas lain: 44%, 48%, 53%.
-     Pada 33% kurvanya menahan sebentar lalu membelok tajam, persis yang
-     dilihat pemilik sebagai "terlalu tajam, tidak smooth".
-
-     Angka 0,45 bukan tebakan dari melihat: kedua kurva dicuplik pada 400
-     titik lalu jarak tegaknya diukur. Tangen monoton dengan kendali 0,45
-     meleset rata-rata 0,33px dari kurva Figma; Catmull-Rom meleset 0,70px
-     pada panjang kendali mana pun. */
-  const F = 0.45;
+     Dulu interpolasi kubik MONOTON (Fritsch-Carlson). Ia jujur pada data,
+     tapi justru itu yang ditolak pemilik: dua bulan yang hampir sama tinggi
+     dipaksa jadi DATARAN lurus dengan dua siku di ujungnya, dan puncaknya
+     terbaca terpotong ("lengkungannya ga ada"). Spline alami lewat persis
+     di tiap titik data dan menyambungkannya dengan lengkung yang menerus
+     (turunan kedua kontinu), jadi dataran itu jadi kubah. Melampaui sedikit
+     di puncak adalah harga yang diterima di garis mungil tanpa sumbu —
+     angka sebenarnya dibaca dari kartu keterangan saat disentuh, dan
+     titiknya tetap duduk persis di kurva karena kurvanya melewati titik
+     datanya. */
+  const ys0 = titik.map((v) => tinggiGaris - ((v - min) / rentang) * tinggiGaris);
+  const dx = xs.slice(1).map((x, i) => x - xs[i] || 1);
+  /* Turunan kedua M_i: M_0 = M_n-1 = 0, sistem tridiagonal untuk yang di
+     tengah (algoritma Thomas). */
+  const M = new Array<number>(n).fill(0);
+  if (n > 2) {
+    const k = n - 2;
+    const sub: number[] = [], diag: number[] = [], sup: number[] = [], rhs: number[] = [];
+    for (let i = 1; i <= k; i++) {
+      sub.push(dx[i - 1]);
+      diag.push(2 * (dx[i - 1] + dx[i]));
+      sup.push(dx[i]);
+      rhs.push(6 * ((ys0[i + 1] - ys0[i]) / dx[i] - (ys0[i] - ys0[i - 1]) / dx[i - 1]));
+    }
+    for (let i = 1; i < k; i++) {
+      const w = sub[i] / diag[i - 1];
+      diag[i] -= w * sup[i - 1];
+      rhs[i] -= w * rhs[i - 1];
+    }
+    for (let i = k - 1; i >= 0; i--) M[i + 1] = (rhs[i] - (i < k - 1 ? sup[i] * M[i + 2] : 0)) / diag[i];
+  }
+  /* Kemiringan di tiap titik, lalu tiap ruas jadi Bézier kubik yang SAMA
+     PERSIS dengan ruas splinenya (kendali di sepertiga ruas). */
+  const m0 = xs.map((_, i) =>
+    i < n - 1
+      ? (ys0[i + 1] - ys0[i]) / dx[i] - (dx[i] * (2 * M[i] + M[i + 1])) / 6
+      : (ys0[i] - ys0[i - 1]) / dx[i - 1] + (dx[i - 1] * (M[i - 1] + 2 * M[i])) / 6,
+  );
+  const ruas = dx.map((_, j) => {
+    const h = dx[j];
+    return [ys0[j], ys0[j] + (m0[j] * h) / 3, ys0[j + 1] - (m0[j + 1] * h) / 3, ys0[j + 1]];
+  });
+  /* Batas tegak kurva yang SEBENARNYA (dicuplik), lalu skala afin ke
+     [1, tinggiGaris] — 1, bukan 0, supaya goresan 2px-nya utuh. */
+  let atas = Infinity, bawah = -Infinity;
+  for (const [p0, p1, p2, p3] of ruas)
+    for (let t = 0; t <= 1; t += 0.05) {
+      const u = 1 - t;
+      const y = u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3;
+      if (y < atas) atas = y;
+      if (y > bawah) bawah = y;
+    }
+  if (!Number.isFinite(atas)) { atas = 0; bawah = tinggiGaris; }
+  const skala = bawah - atas > 0.01 ? (tinggiGaris - 1) / (bawah - atas) : 1;
+  const ty = (y: number) => 1 + (y - atas) * skala;
+  const ys = ys0.map(ty);
   const d = xs
     .map((x, i) => {
       if (i === 0) return `M${x.toFixed(2)} ${ys[0].toFixed(2)}`;
       const h = dx[i - 1];
-      /* Gagang di titik PERTAMA dan TERAKHIR dikuncupkan jadi nol — sama
-         seperti di Figma, yang menulis titik kendali pertamanya tepat di
-         atas titik awalnya. Efeknya kurva berangkat lurus dan tidak
-         mengarang lengkung di ujung yang tidak punya tetangga. */
-      const f1 = i === 1 ? 0 : F;
-      const f2 = i === n - 1 ? 0 : F;
-      const c1x = xs[i - 1] + f1 * h, c1y = ys[i - 1] + m[i - 1] * f1 * h;
-      const c2x = x - f2 * h, c2y = ys[i] - m[i] * f2 * h;
-      return `C${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${x.toFixed(2)} ${ys[i].toFixed(2)}`;
+      const [, c1, c2] = ruas[i - 1];
+      return `C${(xs[i - 1] + h / 3).toFixed(2)} ${ty(c1).toFixed(2)} ${(x - h / 3).toFixed(2)} ${ty(c2).toFixed(2)} ${x.toFixed(2)} ${ys[i].toFixed(2)}`;
     })
     .join(" ");
   const id = `kilau-${turun ? "turun" : "naik"}`;
@@ -326,7 +331,7 @@ export function Kilau({
       <path d={`${d} L${lebar} ${tinggi} L0 ${tinggi} Z`} fill={`url(#${id})`} />
       <path d={d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       {arah !== null && (
-        <circle className="k-kilau__titik" cx={xs[arah]} cy={Math.max(2, ys[arah])} r="3.5" />
+        <circle className="k-kilau__titik" cx={xs[arah]} cy={ys[arah]} r="3.5" />
       )}
     </svg>
   );
