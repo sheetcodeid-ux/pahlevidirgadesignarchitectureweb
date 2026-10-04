@@ -1,0 +1,127 @@
+/* =============================================================================
+   Bayaran Tim (/admin/gaji/tim) — daftar orang di kiri, slip dan hak per
+   proyek orang terpilih di kanan. Kartunya kartu frame 25 (`.fee__w`, dari
+   fee-kit.css); sel tahap dan dialog bayar milik Tim & Bayaran (satu-kit.css).
+   ============================================================================= */
+
+.byt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 17px;
+}
+.byt--rangka { min-height: 520px; }
+
+/* ---- Kiri ------------------------------------------------------------------ */
+.byt__kiri { gap: 0; }
+.byt__total {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 0;
+}
+.byt__total div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.byt__total dt { font-size: var(--k-t12); color: var(--text-muted); }
+.byt__total dd { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); white-space: nowrap; }
+.byt__tempo { margin: 10px 0 0; }
+.byt__daftar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 14px -8px 0;
+  padding: 0;
+  list-style: none;
+}
+.byt__orang {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.byt__orang:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
+.byt__orang[aria-current="true"] { background: var(--brand-soft); }
+.byt__orang .k-pantau { width: 100%; }
+
+/* ---- Kanan ----------------------------------------------------------------- */
+.byt__kanan { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; }
+.byt__kepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+.byt__judul { min-width: 0; }
+.byt__judul h2 { margin: 0; font-size: var(--k-h6); font-weight: var(--k-semi); line-height: 1.2; color: var(--text-strong); }
+.byt__judul p { margin: 4px 0 0; font-size: var(--k-t14); color: var(--text-muted); }
+.byt__judul p b { color: var(--text-strong); font-weight: var(--k-semi); }
+.byt__aksi { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.byt__isi { display: grid; grid-template-columns: minmax(0, 1fr); gap: 17px; min-height: 0; }
+
+.byt__rincian { display: flex; flex-direction: column; margin: 12px 0 0; padding: 0; list-style: none; }
+.byt__rincian li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.byt__rincian li > span:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.byt__rincian b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.byt__rincian small { font-size: var(--k-t12); color: var(--text-muted); }
+.byt__rp { flex: none; font-size: var(--k-t14); color: var(--text-strong); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.byt__jumlah { display: flex; flex-direction: column; gap: 6px; margin: 14px 0 0; }
+.byt__jumlah div { display: flex; justify-content: space-between; gap: 12px; }
+.byt__jumlah dt { font-size: var(--k-t14); color: var(--text-muted); }
+.byt__jumlah dd { margin: 0; font-size: var(--k-t14); color: var(--text-strong); white-space: nowrap; }
+.byt__jumlah .byt__grand { padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--border); }
+.byt__grand dt,
+.byt__grand dd { font-size: var(--k-t18); font-weight: var(--k-semi); color: var(--text-strong); }
+.byt__catatan { margin: 14px 0 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
+.byt__catatan a { color: var(--brand); }
+
+.byt__tabel { margin-top: 12px; min-width: 0; overflow-x: auto; }
+.byt__proyek { color: var(--text-strong); font-weight: var(--k-semi); text-decoration: none; }
+.byt__proyek:hover { text-decoration: underline; }
+.byt__proyeksel { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.byt__proyeksel small { font-size: var(--k-t12); color: var(--text-muted); }
+.byt__tahap { display: flex; flex-direction: column; gap: 6px; }
+.byt__tahap > span { display: flex; align-items: center; gap: 8px; }
+.byt__tahap > span > small { flex: none; width: 34px; font-size: var(--k-t11); color: var(--text-muted); }
+
+/* ---- Tata letak lebar ------------------------------------------------------ */
+@media (min-width: 63rem) {
+  .byt { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+}
+@media (min-width: 1248px) {
+  .byt__isi { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+}
+
+/* Satu layar (lihat "Panel kit MUAT SATU LAYAR" di CLAUDE.md): tinggi halaman
+   dikunci, daftar orang dan kedua kartu menggulir di dalam dirinya sendiri. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .byt { height: 100%; align-items: stretch; }
+  .byt__kiri { min-height: 0; }
+  .byt__daftar { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .byt__isi { flex: 1 1 0; align-items: stretch; }
+  .byt__slip,
+  .byt__hak { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+
+/* Baris pantau di dalam tombol: nama memendek, nominal tetap utuh. */
+.byt__orang .k-pantau__info { flex: 1; min-width: 0; }
+.byt__orang .k-pantau__simbol,
+.byt__orang .k-pantau__nama { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.byt__orang .k-pantau__kanan { flex: none; padding-left: 10px; }
+/* Di sel bertumpuk, "Dibayar" dan nominalnya sebaris supaya tinggi baris tetap. */
+.byt__tahap .tim__tahap { flex-direction: row; align-items: center; gap: 6px; }

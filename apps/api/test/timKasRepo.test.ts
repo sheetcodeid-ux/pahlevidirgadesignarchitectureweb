@@ -16,6 +16,7 @@ import * as costs from "../src/repository/costs";
 import * as fee from "../src/repository/fee";
 import * as team from "../src/repository/team";
 import * as adminRepo from "../src/repository/admin";
+import * as payroll from "../src/repository/payroll";
 
 const DIR_PG = "/var/lib/postgresql/uji";
 const adaPostgres = existsSync(`${DIR_PG}/sock/.s.PGSQL.55432`);
@@ -148,6 +149,26 @@ it.skipIf(!adaPostgres)("tim, bayaran, kas, dan target jalan dengan setelan kone
     oAdji?.proyek === 2 && oAdji?.hak === 925_000 && oAdji?.dibayar === 300_000, oAdji);
   const feeAdji = (await fee.perOrang(sql)).find((o) => o.teamMemberId === adji);
   cek("halaman Fee menghitung bayaran tahap yang sama (300 rb)", feeAdji?.total === 300_000, feeAdji);
+
+  console.log("\n── slip gaji satu orang satu bulan (pengganti sheet GAJI) ──");
+  const aDanyAde = (await tim.list(sql, { projectId: ade.id })).find((x) => x.teamMemberId === dany)!;
+  await tim.bayar(sql, { projectTeamId: aDanyAde.id, tahap: "awal", paidOn: "2026-08-20" });
+  await costs.create(sql, ade.id, { label: "Revisi render", category: "freelancer", amount: 250_000, incurredOn: "2026-08-25", teamMemberId: dany });
+  await costs.create(sql, ade.id, { label: "Bulan lain", category: "freelancer", amount: 999_000, incurredOn: "2026-09-01", teamMemberId: dany });
+  await payroll.create(sql, { teamMemberId: dany, period: "2026-08", amount: 3_000_000 });
+  const slip = (await payroll.slip(sql, dany, "2026-08"))!;
+  cek("slip Agustus: gaji 3 jt + tahap awal 162,5 rb + revisi 250 rb = 3.412.500",
+    slip.salaryAmount === 3_000_000 && slip.feeAmount === 412_500 && slip.total === 3_412_500, slip);
+  cek("biaya bulan lain TIDAK ikut", slip.fees.length === 2, slip.fees.map((f) => f.label));
+  const fTahap = slip.fees.find((f) => f.payoutStage === "awal");
+  cek("baris tahap membawa peran, persen, dan proyeknya",
+    fTahap?.role === "render" && fTahap?.pct === 2.5 && fTahap?.projectTitle === "Rumah Ade", fTahap);
+  cek("fee ketik tangan ikut, tanpa peran", slip.fees.some((f) => f.label === "Revisi render" && f.role === null));
+  const barisBulan = (await payroll.bulan(sql, "2026-08")).find((r) => r.teamMemberId === dany);
+  cek("total slip = kolom Total halaman Gaji", barisBulan?.total === slip.total, barisBulan);
+  cek("bulan tanpa apa pun: slip kosong, total 0",
+    (await payroll.slip(sql, dany, "2025-01"))?.total === 0);
+  cek("orang tak dikenal: null", (await payroll.slip(sql, "00000000-0000-4000-8000-000000000000", "2026-08")) === null);
 
   console.log("\n── kas studio ──");
   const pvc = await ledger.create(sql, {

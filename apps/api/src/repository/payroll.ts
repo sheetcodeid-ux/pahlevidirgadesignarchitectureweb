@@ -1,5 +1,7 @@
 import type { Sql } from "postgres";
-import type { PayrollEntry, PayrollInput, PayrollMonthRow, MemberKind } from "../types";
+import type {
+  MemberKind, PayoutStage, PaySlip, PayrollEntry, PayrollInput, PayrollMonthRow, TeamRole,
+} from "../types";
 import { NotFoundError } from "./projects";
 
 /**
@@ -124,6 +126,81 @@ export async function bulan(sql: Sql, period: string): Promise<PayrollMonthRow[]
       total: (gaji ?? 0) + fee,
     };
   });
+}
+
+/**
+ * Slip satu orang satu bulan: gaji bulan itu + setiap biaya proyek atas
+ * namanya yang TERJADI bulan itu — saringan yang sama persis dengan `bulan()`,
+ * supaya total slip selalu sama dengan kolom Total di halaman Gaji.
+ *
+ * Fee yang dibayar lewat Tim & Bayaran membawa peran, persen, dan tahapnya;
+ * fee yang diketik tangan di Catat Pengeluaran tetap ikut, cuma tanpa itu.
+ */
+export async function slip(sql: Sql, teamMemberId: string, period: string): Promise<PaySlip | null> {
+  const awal = awalBulan(period);
+  const id = teamMemberId.trim();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("orang tidak sah");
+
+  interface O { name: string; kind: MemberKind; role: string | null; phone: string | null }
+  interface G { id: string; amount: string; paid_on: string | null; note: string | null }
+  interface F {
+    id: string; project_id: string; title: string; label: string; amount: string; incurred_on: string;
+    role: TeamRole | null; pct: string | null; payout_stage: PayoutStage | null;
+  }
+
+  const [[orang], [gaji], fee, [aturan]] = await Promise.all([
+    sql<O[]>`select name, kind, role, phone from public.team_members where id = ${id}::uuid`,
+    sql<G[]>`
+      select id, amount, paid_on::text, note from public.payroll
+       where team_member_id = ${id}::uuid and period = ${awal}::date`,
+    sql<F[]>`
+      select b.id, b.project_id, p.title, b.label, b.amount, b.incurred_on::text,
+             pt.role, pt.pct, b.payout_stage
+        from public.project_costs b
+        join public.projects p on p.id = b.project_id
+        left join public.project_team pt on pt.id = b.project_team_id
+       where b.team_member_id = ${id}::uuid
+         and b.incurred_on >= ${awal}::date
+         and b.incurred_on <  (${awal}::date + interval '1 month')
+       order by b.incurred_on, b.created_at`,
+    // Persen penugasan yang KOSONG ikut aturan studio — sama dengan Tim & Bayaran.
+    sql<{ pct_leader: string | null; pct_drafter: string | null; pct_render: string | null; pct_estimator: string | null }[]>`
+      select pct_leader, pct_drafter, pct_render, pct_estimator from public.studio_fee_settings`,
+  ]);
+  if (!orang) return null;
+
+  const bawaan = (r: TeamRole | null): number | null => {
+    if (!r || !aturan) return null;
+    const v = { leader: aturan.pct_leader, drafter: aturan.pct_drafter, render: aturan.pct_render, estimator: aturan.pct_estimator }[r];
+    return v === null ? null : Number(v);
+  };
+
+  const fees = fee.map((f) => ({
+    costId: f.id,
+    projectId: f.project_id,
+    projectTitle: f.title,
+    label: f.label,
+    amount: Number(f.amount),
+    incurredOn: f.incurred_on,
+    role: f.role,
+    pct: f.role === null ? null : f.pct !== null ? Number(f.pct) : bawaan(f.role),
+    payoutStage: f.payout_stage,
+  }));
+  const salaryAmount = gaji ? Number(gaji.amount) : 0;
+  const feeAmount = fees.reduce((n, f) => n + f.amount, 0);
+  return {
+    teamMemberId: id,
+    name: orang.name,
+    kind: orang.kind,
+    role: orang.role,
+    phone: orang.phone,
+    period: awal,
+    salary: gaji ? { id: gaji.id, amount: salaryAmount, paidOn: gaji.paid_on, note: gaji.note } : null,
+    fees,
+    salaryAmount,
+    feeAmount,
+    total: salaryAmount + feeAmount,
+  };
 }
 
 export async function create(sql: Sql, input: PayrollInput): Promise<string> {

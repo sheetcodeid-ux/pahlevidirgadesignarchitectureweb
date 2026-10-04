@@ -565,8 +565,15 @@ function Isi() {
             <p className="fee__kosong">Memuat…</p>
           ) : (
             penerima.map((o) => (
-              <BarisPantau
+              /* Tiap penerima membuka slipnya di Bayaran Tim — sheet "GAJI
+                 <nama>" yang dulu disalin tangan. */
+              <a
                 key={o.teamMemberId}
+                className="gaji__slip"
+                href={`/admin/gaji/tim?orang=${encodeURIComponent(o.teamMemberId)}&bulan=${period}`}
+                title={`Slip ${o.name} — ${namaBulan}`}
+              >
+              <BarisPantau
                 ikon={IKON_JENIS[o.kind]}
                 simbol={o.name}
                 nama={o.role ?? LABEL_JENIS_ANGGOTA[o.kind]}
@@ -581,6 +588,7 @@ function Isi() {
                   )
                 }
               />
+              </a>
             ))
           )}
           {baris !== null && penerima.length === 0 && (

@@ -204,9 +204,9 @@ export function TimDanBayaran({
   const kunci = `tim-proyek:${proyek.id}`;
   const [daftar, setDaftar] = useState<PenugasanTim[] | null>(() => bacaCache<PenugasanTim[]>(kunci));
   const [anggota, setAnggota] = useState<AnggotaTim[]>([]);
-  const [bayar, setBayar] = useState<{ p: PenugasanTim; t: TahapBayaran } | null>(null);
+  const [bayar, setBayar] = useState<PilihanBayar | null>(null);
   const [ubah, setUbah] = useState<Ubah | null>(null);
-  const [form, setForm] = useState({ nominal: "", tanggal: hariIni(), role: "drafter" as PeranTim, orang: "", pct: "" });
+  const [form, setForm] = useState({ role: "drafter" as PeranTim, orang: "", pct: "" });
   const [sibuk, setSibuk] = useState(false);
   const pembuka = useRef<HTMLElement | null>(null);
 
@@ -238,35 +238,6 @@ export function TimDanBayaran({
   useEffect(() => {
     onJatuhTempo?.(jatuhTempo.length);
   }, [jatuhTempo.length]);
-
-  function bukaBayar(p: PenugasanTim, t: TahapBayaran) {
-    setForm((f) => ({ ...f, nominal: t.nominal ? t.nominal.toLocaleString("id-ID") : "", tanggal: hariIni() }));
-    setBayar({ p, t });
-  }
-  async function catatBayar() {
-    if (!bayar) return;
-    setSibuk(true);
-    try {
-      const nominal = angkaDari(form.nominal);
-      await bayarTahap({
-        projectTeamId: bayar.p.id,
-        tahap: bayar.t.tahap,
-        ...(nominal && nominal !== bayar.t.nominal ? { amount: nominal } : {}),
-        paidOn: form.tanggal || null,
-      });
-      toast({
-        judul: `Bayaran ${bayar.p.teamMemberName} dicatat`,
-        keterangan: `${formatRupiah(nominal || bayar.t.nominal || 0)} masuk sebagai biaya proyek ini.`,
-        nada: "sukses",
-      });
-      setBayar(null);
-      segar();
-    } catch (e) {
-      toast({ judul: "Gagal mencatat bayaran", keterangan: (e as Error).message, nada: "gagal" });
-    } finally {
-      setSibuk(false);
-    }
-  }
 
   function bukaUbah(u: Ubah) {
     pembuka.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -336,34 +307,6 @@ export function TimDanBayaran({
     }
   }
 
-  function selTahap(p: PenugasanTim, jenis: TahapBayaran["tahap"]) {
-    const t = p.tahap.find((x) => x.tahap === jenis);
-    if (!t) return <span className="sat__redup">—</span>;
-    if (t.keadaan === "dibayar") {
-      return (
-        <span className="tim__tahap">
-          <Lencana nada="selesai">Dibayar</Lencana>
-          <small>
-            {formatRupiahRingkas(t.dibayar ?? 0)} · {t.dibayarPada ? tanggalPendek(t.dibayarPada) : ""}
-          </small>
-        </span>
-      );
-    }
-    if (t.keadaan === "jatuh_tempo") {
-      return (
-        <Tombol ukuran="small" jenis="primary" onClick={() => bukaBayar(p, t)}>
-          Bayar {formatRupiahRingkas(t.nominal ?? 0)}
-        </Tombol>
-      );
-    }
-    if (t.keadaan === "belum_ditentukan") return <Lencana nada="menunggu">Persen belum ditentukan</Lencana>;
-    return (
-      <button type="button" className="tim__tunggu" onClick={() => bukaBayar(p, t)} title="Bayar lebih awal">
-        <Lencana nada="netral">{SYARAT[jenis]}</Lencana>
-      </button>
-    );
-  }
-
   const kolom: KolomTabel[] = [
     { judul: "Peran", lebar: 84 },
     { judul: "Orang", lebar: 150 },
@@ -379,8 +322,8 @@ export function TimDanBayaran({
     </button>,
     p.pctBerlaku === null ? <span className="sat__redup">—</span> : `${pctTeks(p.pctBerlaku)}%`,
     p.hak === null ? <span className="sat__redup" title="Persen peran ini belum ditentukan">—</span> : <b>{formatRupiah(p.hak)}</b>,
-    selTahap(p, "awal"),
-    selTahap(p, "akhir"),
+    <SelTahap p={p} jenis="awal" onBayar={(t) => setBayar({ p, t })} />,
+    <SelTahap p={p} jenis="akhir" onBayar={(t) => setBayar({ p, t })} />,
   ]);
 
   const orangDipakai = (o: AnggotaTim) =>
@@ -419,47 +362,7 @@ export function TimDanBayaran({
         </div>
       )}
 
-      <Dialog
-        open={bayar !== null}
-        onOpenChange={(o) => !o && setBayar(null)}
-        title={bayar ? `Bayar tahap ${bayar.t.tahap === "awal" ? "awal" : "akhir"} — ${bayar.p.teamMemberName}` : "Bayar"}
-        description={
-          bayar
-            ? `${LABEL_PERAN[bayar.p.role]} ${proyek.title}. Dicatat sebagai biaya proyek ini, jadi laba, Fee, dan Gaji ikut berubah.`
-            : undefined
-        }
-        footer={
-          <>
-            <Tombol ukuran="medium" jenis="ghost" onClick={() => setBayar(null)} disabled={sibuk}>
-              Batal
-            </Tombol>
-            <Tombol ukuran="medium" jenis="primary" onClick={catatBayar} disabled={sibuk || !angkaDari(form.nominal)} memuat={sibuk}>
-              Catat bayaran
-            </Tombol>
-          </>
-        }
-      >
-        <div className="sat__dialogisi">
-          {bayar?.t.keadaan === "menunggu" && (
-            <p className="tim__catatan">
-              {bayar.t.tahap === "awal"
-                ? "DP klien belum tercatat masuk. Tetap bisa dibayar lebih awal kalau memang disepakati."
-                : "Desain proyek ini belum sampai tahap Finish. Tetap bisa dibayar lebih awal kalau memang disepakati."}
-            </p>
-          )}
-          <div className="sat__dialogdua">
-            <IsianTempel
-              label="Nominal"
-              kiri="Rp"
-              inputMode="numeric"
-              value={form.nominal}
-              onChange={(e) => setForm({ ...form, nominal: titikRibuan(e.currentTarget.value) })}
-              bantu={bayar?.t.nominal ? `Sesuai hitungan: ${formatRupiah(bayar.t.nominal)}` : undefined}
-            />
-            <IsianTanggal label="Tanggal bayar" nilai={form.tanggal} onUbah={(v) => setForm({ ...form, tanggal: v })} bisaKosong={false} />
-          </div>
-        </div>
-      </Dialog>
+      <DialogBayar bayar={bayar} onTutup={() => setBayar(null)} onSelesai={segar} />
 
       <Dialog
         open={ubah !== null}
@@ -537,5 +440,139 @@ export function TimDanBayaran({
         </div>
       </Dialog>
     </article>
+  );
+}
+
+/* --- Bagian bersama: sel tahap dan dialog bayar -------------------------------
+   Dipakai Tim & Bayaran di Satu Proyek DAN halaman Bayaran Tim. Satu
+   komponen, bukan salinan: keadaan tahap dan aturan "boleh bayar lebih awal"
+   harus terbaca sama di kedua tempat (jebakan #32). */
+
+export type PilihanBayar = { p: PenugasanTim; t: TahapBayaran };
+
+export function SelTahap({
+  p,
+  jenis,
+  onBayar,
+}: {
+  p: PenugasanTim;
+  jenis: TahapBayaran["tahap"];
+  onBayar: (t: TahapBayaran) => void;
+}) {
+  const t = p.tahap.find((x) => x.tahap === jenis);
+  if (!t) return <span className="sat__redup">—</span>;
+  if (t.keadaan === "dibayar") {
+    return (
+      <span className="tim__tahap">
+        <Lencana nada="selesai">Dibayar</Lencana>
+        <small>
+          {formatRupiahRingkas(t.dibayar ?? 0)} · {t.dibayarPada ? tanggalPendek(t.dibayarPada) : ""}
+        </small>
+      </span>
+    );
+  }
+  if (t.keadaan === "jatuh_tempo") {
+    return (
+      <Tombol ukuran="small" jenis="primary" onClick={() => onBayar(t)}>
+        Bayar {formatRupiahRingkas(t.nominal ?? 0)}
+      </Tombol>
+    );
+  }
+  if (t.keadaan === "belum_ditentukan") return <Lencana nada="menunggu">Persen belum ditentukan</Lencana>;
+  return (
+    <button type="button" className="tim__tunggu" onClick={() => onBayar(t)} title="Bayar lebih awal">
+      <Lencana nada="netral">{SYARAT[jenis]}</Lencana>
+    </button>
+  );
+}
+
+export function DialogBayar({
+  bayar,
+  onTutup,
+  onSelesai,
+}: {
+  bayar: PilihanBayar | null;
+  onTutup: () => void;
+  onSelesai: () => void;
+}) {
+  const toast = useToast();
+  const [nominal, setNominal] = useState("");
+  const [tanggal, setTanggal] = useState(hariIni());
+  const [sibuk, setSibuk] = useState(false);
+
+  /* Diisi ulang tiap kali dialog dibuka untuk tahap lain. */
+  useEffect(() => {
+    if (!bayar) return;
+    setNominal(bayar.t.nominal ? bayar.t.nominal.toLocaleString("id-ID") : "");
+    setTanggal(hariIni());
+  }, [bayar?.p.id, bayar?.t.tahap]);
+
+  async function catat() {
+    if (!bayar) return;
+    setSibuk(true);
+    try {
+      const n = angkaDari(nominal);
+      await bayarTahap({
+        projectTeamId: bayar.p.id,
+        tahap: bayar.t.tahap,
+        ...(n && n !== bayar.t.nominal ? { amount: n } : {}),
+        paidOn: tanggal || null,
+      });
+      toast({
+        judul: `Bayaran ${bayar.p.teamMemberName} dicatat`,
+        keterangan: `${formatRupiah(n || bayar.t.nominal || 0)} masuk sebagai biaya proyek ${bayar.p.projectTitle}.`,
+        nada: "sukses",
+      });
+      onTutup();
+      onSelesai();
+    } catch (e) {
+      toast({ judul: "Gagal mencatat bayaran", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={bayar !== null}
+      onOpenChange={(o) => !o && onTutup()}
+      title={bayar ? `Bayar tahap ${bayar.t.tahap === "awal" ? "awal" : "akhir"} — ${bayar.p.teamMemberName}` : "Bayar"}
+      description={
+        bayar
+          ? `${LABEL_PERAN[bayar.p.role]} ${bayar.p.projectTitle}. Dicatat sebagai biaya proyek itu, jadi laba, Fee, dan Gaji ikut berubah.`
+          : undefined
+      }
+      footer={
+        <>
+          <Tombol ukuran="medium" jenis="ghost" onClick={onTutup} disabled={sibuk}>
+            Batal
+          </Tombol>
+          <Tombol ukuran="medium" jenis="primary" onClick={catat} disabled={sibuk || !angkaDari(nominal)} memuat={sibuk}>
+            Catat bayaran
+          </Tombol>
+        </>
+      }
+    >
+      <div className="sat__dialogisi">
+        {bayar?.t.keadaan === "menunggu" && (
+          <p className="tim__catatan">
+            {bayar.t.tahap === "awal"
+              ? "DP klien belum tercatat masuk. Tetap bisa dibayar lebih awal kalau memang disepakati."
+              : "Desain proyek ini belum sampai tahap Finish. Tetap bisa dibayar lebih awal kalau memang disepakati."}
+          </p>
+        )}
+        <div className="sat__dialogdua">
+          <IsianTempel
+            label="Nominal"
+            kiri="Rp"
+            inputMode="numeric"
+            value={nominal}
+            onChange={(e) => setNominal(titikRibuan(e.currentTarget.value))}
+            bantu={bayar?.t.nominal ? `Sesuai hitungan: ${formatRupiah(bayar.t.nominal)}` : undefined}
+          />
+          <IsianTanggal label="Tanggal bayar" nilai={tanggal} onUbah={setTanggal} bisaKosong={false} />
+        </div>
+      </div>
+    </Dialog>
   );
 }

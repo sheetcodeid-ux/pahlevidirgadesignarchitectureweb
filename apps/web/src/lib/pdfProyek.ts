@@ -13,7 +13,7 @@
  * tidak boleh memuat angka basi dari cache.
  */
 import { unduhPdf } from "./pdf";
-import { ambilSettings, daftarBiaya, daftarInvoice, type Proyek } from "./admin";
+import { ambilSettings, daftarBiaya, daftarInvoice, type Proyek, type SlipGaji } from "./admin";
 import { formatRupiah } from "./format";
 
 /* Label enum database. Sama dengan kamus di halaman kit Keluar dan Tagihan;
@@ -77,6 +77,55 @@ export async function unduhDaftarTagihan(proyek: Proyek): Promise<string> {
         { label: "Sisa", nilai: formatRupiah(total - lunas) },
       ],
       catatan: studio.phone ? `Pembayaran dan pertanyaan tagihan: ${studio.phone}` : undefined,
+    },
+    studio,
+  );
+}
+
+/* --- Slip gaji ---------------------------------------------------------------
+   Pengganti sheet "GAJI <nama>" di Excel. Dibuat dari data yang sama dengan
+   halaman Gaji, jadi labelnya tidak bisa lagi tertinggal nama orang lain
+   ("TOTAL BONUS DANY" di sheet Raffi). */
+
+const PERAN_PDF: Record<string, string> = { leader: "Leader", drafter: "Drafter", render: "Render", estimator: "Estimator" };
+const TAHAP_PDF: Record<string, string> = { awal: "tahap awal", akhir: "tahap akhir" };
+
+/** Keterangan satu baris fee: "Drafter 10% · tahap awal" atau label aslinya. */
+export function keteranganFee(f: SlipGaji["fees"][number]): string {
+  if (!f.role) return f.label;
+  const pct = f.pct === null ? "" : ` ${f.pct.toLocaleString("id-ID", { maximumFractionDigits: 2 })}%`;
+  return `${PERAN_PDF[f.role]}${pct}${f.payoutStage ? ` · ${TAHAP_PDF[f.payoutStage]}` : ""}`;
+}
+
+export async function unduhSlipGaji(slip: SlipGaji, namaBulan: string): Promise<string> {
+  const studio = await ambilSettings();
+  const tgl = (iso: string) =>
+    new Date(`${iso.slice(0, 10)}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return unduhPdf(
+    {
+      judul: "Slip Gaji",
+      namaProyek: `${slip.name} · ${namaBulan}`,
+      kolomTengah: "Keterangan",
+      baris: [
+        ...(slip.salary
+          ? [{
+              label: "Gaji pokok",
+              keterangan: slip.salary.paidOn ? `Dibayar ${tgl(slip.salary.paidOn)}` : "Belum dibayar",
+              nominal: slip.salary.amount,
+            }]
+          : []),
+        ...slip.fees.map((f) => ({
+          label: `Fee ${f.projectTitle}`,
+          keterangan: `${keteranganFee(f)} · ${tgl(f.incurredOn)}`,
+          nominal: f.amount,
+        })),
+      ],
+      ringkasan: [
+        { label: "Gaji pokok", nilai: formatRupiah(slip.salaryAmount) },
+        { label: "Fee proyek", nilai: formatRupiah(slip.feeAmount) },
+        { label: "Total", nilai: formatRupiah(slip.total), tebal: true },
+      ],
+      catatan: "Fee proyek dihitung dari fee design proyek dikali persen peran, dibayar per tahap.",
     },
     studio,
   );

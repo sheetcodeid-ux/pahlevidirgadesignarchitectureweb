@@ -1001,6 +1001,54 @@ export const hapusTimProyek = (id: string) =>
 export const bayarTahap = (b: { projectTeamId: string; tahap: TahapBayar; amount?: number | null; paidOn?: string | null }) =>
   panggil<{ id: string }>("/admin/team-payouts", { method: "POST", body: JSON.stringify(b) });
 
+/** Ringkasan hak per orang lintas proyek — kolom "TOTAL BONUS" sheet GAJI. */
+export interface RingkasanBayaranOrang {
+  teamMemberId: string;
+  teamMemberName: string;
+  teamMemberKind: JenisAnggota;
+  proyek: number;
+  hak: number;
+  dibayar: number;
+  /** Hak yang belum dibayar, termasuk yang belum jatuh tempo. */
+  terutang: number;
+  /** Bagian terutang yang SUDAH jatuh tempo — yang perlu dibayar sekarang. */
+  jatuhTempo: number;
+  /** Penugasan yang persennya belum ditentukan (tidak ikut dijumlah). */
+  belumDitentukan: number;
+}
+export const ringkasanBayaranTim = () => panggil<RingkasanBayaranOrang[]>("/admin/team-payouts/people");
+export const penugasanOrang = (teamMemberId: string) =>
+  panggil<PenugasanTim[]>(`/admin/team-payouts?teamMemberId=${encodeURIComponent(teamMemberId)}`);
+
+/** Slip satu orang satu bulan — pengganti sheet "GAJI <nama>". */
+export interface BarisSlip {
+  costId: string;
+  projectId: string;
+  projectTitle: string;
+  label: string;
+  amount: number;
+  incurredOn: string;
+  role: PeranTim | null;
+  pct: number | null;
+  payoutStage: TahapBayar | null;
+}
+export interface SlipGaji {
+  teamMemberId: string;
+  name: string;
+  kind: JenisAnggota;
+  role: string | null;
+  phone: string | null;
+  period: string;
+  salary: { id: string; amount: number; paidOn: string | null; note: string | null } | null;
+  fees: BarisSlip[];
+  salaryAmount: number;
+  feeAmount: number;
+  total: number;
+}
+/** `period` = 'YYYY-MM'. */
+export const ambilSlip = (teamMemberId: string, period: string) =>
+  panggil<SlipGaji>(`/admin/payroll/slip?teamMemberId=${encodeURIComponent(teamMemberId)}&period=${period}`);
+
 /** Rentang opsional jadi query string; yang kosong tidak ikut dikirim. */
 function kueri(r: Record<string, string | undefined>): string {
   const q = Object.entries(r).filter(([, v]) => v).map(

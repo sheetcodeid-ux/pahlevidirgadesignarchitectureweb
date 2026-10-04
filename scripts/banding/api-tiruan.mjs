@@ -174,7 +174,8 @@ const timAdmin = [
   role,
   kind,
   rate: null,
-  phone: null,
+  /* Dua bernomor, supaya tombol WhatsApp slip gaji punya keadaan hidup dan mati. */
+  phone: i === 1 ? "0812-3456-7890" : i === 2 ? "+62 813 1111 2222" : null,
   active: true,
 }));
 
@@ -661,6 +662,41 @@ const gajiAdmin = [];
     });
   }
 }
+/* Slip satu orang satu bulan — sama dengan payroll.slip() di API. */
+function slipTiruan(orang, period) {
+  const t = timAdmin.find((x) => x.id === orang);
+  if (!t) return null;
+  const awal = `${period.slice(0, 7)}-01`;
+  const g = gajiAdmin.find((x) => x.teamMemberId === orang && x.period === awal);
+  const fees = [...biayaKeu, ...biayaRiwayat]
+    .filter((b) => b.teamMemberId === orang && b.incurredOn.slice(0, 7) === period.slice(0, 7))
+    .sort((a, b) => a.incurredOn.localeCompare(b.incurredOn))
+    .map((b) => {
+      const a = timProyek.find((x) => x.id === b.projectTeamId);
+      return { costId: b.id, projectId: b.projectId, projectTitle: b.projectTitle, label: b.label, amount: b.amount,
+        incurredOn: b.incurredOn, role: a?.role ?? null, pct: a ? a.pct ?? pctPeran(a.role) : null, payoutStage: b.payoutStage ?? null };
+    });
+  const salaryAmount = g ? g.amount : 0;
+  const feeAmount = fees.reduce((n, f) => n + f.amount, 0);
+  return { teamMemberId: t.id, name: t.name, kind: t.kind, role: t.role, phone: t.phone, period: awal,
+    salary: g ? { id: g.id, amount: g.amount, paidOn: g.paidOn, note: g.note } : null,
+    fees, salaryAmount, feeAmount, total: salaryAmount + feeAmount };
+}
+/* Ringkasan hak per orang — sama dengan projectTeam.perOrang() di API. */
+function orangTiruan() {
+  const peta = new Map();
+  for (const p of daftarTimProyek(null)) {
+    const o = peta.get(p.teamMemberId) ?? { teamMemberId: p.teamMemberId, teamMemberName: p.teamMemberName,
+      teamMemberKind: p.teamMemberKind, proyek: 0, hak: 0, dibayar: 0, terutang: 0, jatuhTempo: 0, belumDitentukan: 0 };
+    o.proyek += 1;
+    o.dibayar += p.dibayar;
+    if (p.hak === null) o.belumDitentukan += 1;
+    else { o.hak += p.hak; o.terutang += p.hak - p.dibayar; }
+    for (const t of p.tahap) if (t.keadaan === "jatuh_tempo" && t.nominal) o.jatuhTempo += t.nominal;
+    peta.set(p.teamMemberId, o);
+  }
+  return [...peta.values()].sort((a, b) => b.terutang - a.terutang || a.teamMemberName.localeCompare(b.teamMemberName));
+}
 function gajiSebulan(period) {
   const awal = `${period.slice(0, 7)}-01`;
   const semuaBiayaTiruan = [...biayaKeu, ...biayaRiwayat];
@@ -690,6 +726,10 @@ const jawab = (path) => {
     const gb = path.match(/^\/api\/v1\/admin\/payroll\/month\?period=([0-9-]+)/);
     if (gb) return gajiSebulan(gb[1]);
   }
+  {
+    const sl = path.match(/^\/api\/v1\/admin\/payroll\/slip\?teamMemberId=([^&]+)&period=([0-9-]+)/);
+    if (sl) return slipTiruan(decodeURIComponent(sl[1]), sl[2]);
+  }
   if (path.startsWith("/api/v1/admin/payroll")) return gajiAdmin;
   if (path.startsWith("/api/v1/admin/publish-status")) return { terakhirBerubah: capBerubah };
   if (path.startsWith("/api/v1/admin/settings")) return { ...setelan, terbitSitusAktif: true };
@@ -714,6 +754,7 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/clients")) return urutKlien();
   if (path.startsWith("/api/v1/admin/studio-team")) return orangStudio;
   if (path.startsWith("/api/v1/admin/fee-rules")) return aturanFee;
+  if (path.startsWith("/api/v1/admin/team-payouts/people")) return orangTiruan();
   if (path.startsWith("/api/v1/admin/team-payouts")) {
     const o = path.match(/teamMemberId=([^&]+)/);
     return daftarTimProyek(null).filter((a) => !o || a.teamMemberId === o[1]);

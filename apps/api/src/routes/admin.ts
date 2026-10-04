@@ -537,6 +537,22 @@ admin.get("/payroll", async (c) => {
   }
 });
 
+/** Slip satu orang satu bulan — `?teamMemberId=&period=YYYY-MM`. */
+admin.get("/payroll/slip", async (c) => {
+  const orang = c.req.query("teamMemberId");
+  const period = c.req.query("period");
+  if (!orang || !period) {
+    return c.json({ error: { status: 422, message: "orang dan periode wajib diisi" } }, 422);
+  }
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) => payrollRepo.slip(sql, orang, period));
+    if (!data) return c.json({ error: { status: 404, message: "orang tidak ditemukan" } }, 404);
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
 admin.get("/payroll/month", async (c) => {
   const period = c.req.query("period");
   if (!period) return c.json({ error: { status: 422, message: "periode wajib diisi" } }, 422);

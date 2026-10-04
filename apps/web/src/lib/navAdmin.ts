@@ -131,6 +131,8 @@ export const NAV: NavItem[] = [
       { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "NavReceipt" },
       { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "NavCurrencyCircleDollar" },
       { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "Wallet" },
+      /* Hak, dibayar, terutang, dan slip per orang — sheet "GAJI <nama>". */
+      { label: "Bayaran Tim", href: "/admin/gaji/tim", icon: "team", ikonKit: "Users" },
     ],
   },
   /* Orang di luar dan di dalam studio. "Tim & Freelancer" di sini (orangnya),

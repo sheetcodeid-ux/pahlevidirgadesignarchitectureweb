@@ -285,3 +285,8 @@
   .fee__busur { margin-top: 12px; }
   .fee__garis { margin-top: 16px; }
 }
+
+/* Penerima di Gaji membuka slip di Bayaran Tim. Tautan pembungkus tidak boleh
+   mengubah tata letak baris pantaunya — cuma menambah hover. */
+.gaji__slip { display: block; margin: -4px -6px; padding: 4px 6px; border-radius: 12px; color: inherit; text-decoration: none; }
+.gaji__slip:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }

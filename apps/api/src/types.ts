@@ -757,6 +757,39 @@ export interface PayrollMonthRow {
   total: number;
 }
 
+/**
+ * Slip satu orang untuk satu bulan — pengganti sheet "GAJI <nama>" di Excel.
+ * Isinya diturunkan dari data yang sama dengan halaman Gaji (`bulan()`), jadi
+ * total slip dan kolom Total di sana tidak bisa berbeda.
+ */
+export interface PaySlipFee {
+  costId: string;
+  projectId: string;
+  projectTitle: string;
+  label: string;
+  amount: number;
+  incurredOn: string;
+  /** Terisi kalau biaya ini satu tahap bayaran tim (dibayar dari Tim & Bayaran). */
+  role: TeamRole | null;
+  pct: number | null;
+  payoutStage: PayoutStage | null;
+}
+
+export interface PaySlip {
+  teamMemberId: string;
+  name: string;
+  kind: MemberKind;
+  role: string | null;
+  phone: string | null;
+  /** 'YYYY-MM-01' */
+  period: string;
+  salary: { id: string; amount: number; paidOn: string | null; note: string | null } | null;
+  fees: PaySlipFee[];
+  salaryAmount: number;
+  feeAmount: number;
+  total: number;
+}
+
 /** Fee satu proyek, dipecah per orang. */
 export interface FeeProject {
   projectId: string;
