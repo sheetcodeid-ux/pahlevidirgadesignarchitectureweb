@@ -1110,6 +1110,21 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     kartu bertumpuk ber-`overflow: hidden` mengempis sampai 32px (Keuangan
     pada 1280/1024). `flex-shrink: 0` di `KitLayout` untuk rentang itu.
 
+68. **Animasi yang menyebut keyframes yang TIDAK dimuat membuat panel Radix
+    tidak pernah tertutup.** Radix Presence menunggu `animationend` sebelum
+    melepas isi popover. Panel lonceng dan Pesan (`.kp`) memakai
+    `ov-pop-in`/`ov-fade-out` milik `overlay.css` — yang tidak dimuat halaman
+    kit (jebakan #54) — jadi animasinya tidak pernah berakhir: menekan
+    pemicunya lagi membalik `aria-expanded` ke false, tapi panelnya tetap
+    tergambar. Dilaporkan pemilik: "saya tekan notifikasi, mau tekan lagi
+    dia ga nutup". Sekarang `k-timbul`/`k-pergi` dari `kit.css`. Alat
+    ujinya `toggle.mjs` di sesi: klik tiap pemicu ber-`aria-expanded` /
+    `aria-haspopup` dengan TETIKUS sungguhan, lalu klik lagi dan hitung isi
+    yang masih terpasang — dialog modal (yang menutup pemicunya) diuji
+    dengan Escape. Terukur 382 pemicu di 38 halaman, 0 tidak menutup. Kalau
+    menambah animasi pada isi Radix, pastikan nama keyframes-nya hidup di
+    stylesheet yang halaman itu muat.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1275,8 +1290,9 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
   sempitkan. Ketiganya sempat ada dan itu yang paling membuat panel terbaca
   berbeda. Command palette tetap hidup lewat Ctrl/Cmd+K, dipasang di topbar
   dengan `tanpaTombol`.
-- *(Tanggal hari ini sudah DITAMBAHKAN di bawah judul atas permintaan
-  pemilik — lihat "Navbar = bilah putih DIAM" di Riwayat keputusan.)*
+- *(Tanggal hari ini sempat ditambahkan di bawah judul, lalu DIBUANG lagi
+  atas permintaan pemilik — lihat "Navbar = kartu HIJAU melengkung" di
+  Riwayat keputusan. Navbar kini satu baris lagi, seperti framenya.)*
   Header Coinest isinya **satu baris judul saja** di kiri. Baris
   tanggal/jam/jumlah proyek di bawahnya tidak ada di framenya.
 - Footer ada di **setiap** frame Coinest.
@@ -1390,7 +1406,8 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | **Ubin ikon kartu angka MINT, dan kartu statistik Dashboard bergaris tren** | Permintaan pemilik: "warna menyala, web hidup". Ubin pucat `--brand-soft` di atas kartu putih nyaris tak terbaca sebagai benda, sementara ubin ikon di daftar dan linimasa sudah mint — sekarang satu bahasa: ikon di ubin = mint, tinta hijau tua di kedua tema. Kartu statistik Dashboard memuat `Kilau` (grafik garis mungil enam bulan, dari data arus kas yang sudah dimuat — tanpa permintaan baru); warnanya token brand/bahaya, bukan biru #1F3045 milik frame yang tidak punya nilai tema gelap. Tanpa animasi masuk: "one klik pindah one klik berubah, jangan ada yang melekat" |
 | **Panel kit MUAT SATU LAYAR di laptop; halaman tidak bisa digeser** | Dipilih pemilik ("Muat satu layar"): rel dan navbar diam, `.kl` setinggi layar dan `overflow: hidden`, isi halaman mengisi sisa tingginya, dan yang memanjang menggulir di dalam KARTUNYA sendiri (daftar, tabel, lembar tulisan, galeri). Kerangkanya berlaku dari 56.01rem dan tinggi ≥600px; penyesuaian tiap halaman (grafik lebih pendek, kartu statistik dipadatkan) hanya dari 1288px, karena di bawahnya kolom-kolomnya memang ditumpuk dan area isi menggulir sebagai jaring pengaman. Terukur 32 halaman pada 1440x790 dan 1366x768: dokumen, area isi, dan rel 0px. Ponsel tetap boleh digulir. Yang SENGAJA digulir karena isinya memang lebih panjang dari layar mana pun: lembar Detail Tulisan (kolom kanannya diam), kartu rincian Satu Proyek, dua seksi bawah Jurnal, dan isi galeri UI Component. Kalau menambah halaman kit: ukur dengan `kl__isi.scrollHeight − clientHeight` dan `scrollingElement.scrollHeight − innerHeight`, keduanya harus 0 |
 | **Rel BERKATEGORI (Utama, Pekerjaan, Relasi, Konten Situs, Pengaturan) — membalik "Coinest tidak punya kepala kelompok"** | Permintaan pemilik: "sidebar dibuat berdasarkan kategori … harusnya ada batas". Bentrok dengan frame Coinest, yang tidak punya kepala kelompok — disebutkan terbuka ke pemilik. Kategorinya `group` di `lib/navAdmin.ts` (satu daftar untuk rel DAN palet, jebakan #32); submenu "Pengaturan" lama diratakan jadi kategori. Batasnya garis 1px `--k-garis-pohon` di atas tiap kepala kecuali yang pertama. Kaki rel jadi kartu akun (nama dari bagian lokal email, peran, tombol Keluar). Yang bergulir cuma daftar menunya — kepala dan kartu akun diam — dan itu pun hanya saat submenu besar terbuka (Keuangan, Situs Publik) |
-| **Navbar = bilah putih DIAM setinggi 68, menyambung dengan kepala rel** | Laporan pemilik: navbar ikut tergulir. Sekarang bilah bergaris bawah yang garisnya lurus menembus kepala rel; judul halaman + tanggal hari ini di kiri, cari / bola dunia / tema / pesan / lonceng di kanan. Tombol tema baru (`lib/tema.ts`, peristiwa `kit:tema` supaya palet dan tombolnya sepakat) |
+| **Navbar = kartu HIJAU melengkung yang melayang, terpisah dari rel** — membalik "bilah putih menyambung dengan kepala rel" | Permintaan pemilik: "navbar dibuat berwarna dan jangan menyatu dengan sidebar, dibuat melengkung", dan tanggal di bawah judul dibuang. Kartu bersudut 20 berjarak 14 dari atas, gradien hijau brand dari token `--k-nav-*` — hijau tua di KEDUA tema seperti kartu kas (identitas, dan mint selebar layar menyilaukan di gelap), dengan warna dasar pejal di bawah gradiennya supaya alat kontras membacanya benar. Kontrolnya kaca putih tipis; yang mint cuma ubin ikon halaman (ikon baris rel yang menyala, `ikonHalaman()` di RelKit), tombol tema saat gelap, dan garis fokus. Kotak cari membawa keping tuts pintas (`Ctrl K`/`⌘K`, prop `pintasan` di `Cari`) dan mengalah ke 200 di bawah 1288 supaya judul tidak terpotong. Kepala rel kini 92 tanpa garis bawah, logonya sejajar tengah navbar. Tinggi yang dimakan bertambah 10px; ke-38 halaman tetap pas satu layar pada 1440x790 dan 1366x768 (terukur) |
+| **Dashboard dirancang ulang bebas — tidak lagi mengikuti frame 01** | Pemilik memberi kebebasan ("pokoknya harus bagus"). Dua lapis: SOROTAN (nama studio, sapaan menurut jam, keping keadaan berwarna makna, tiga aksi cepat \| cincin target semester \| tiga angka bulan ini dengan tren dan garis mungil) di atas kertas milimeter diam, lalu tiga kartu KERJA yang mengisi sisa tinggi: Arus Kas (dengan tampilan Komposisi = donat lama), Proyek, Perlu Ditangani. Tidak ada fitur yang hilang (jebakan #38) — pemetaannya di kepala `DashboardKit.tsx`: Proyek Berjalan dan Laba per Proyek jadi SATU daftar dengan pemilih urutan (berjalan per tahap, laba, rugi, piutang); kartu kas pindah jadi ringkasan kontrak/piutang/kas masuk di kepala kartu Proyek; "Proyek baru" pindah ke tombol + kartu Proyek. Grafik arus kas mengukur tinggi bidangnya sendiri (ResizeObserver), dan bulan yang disorot meredupkan bulan lainnya. `KartuKas`, `KartuStatistik`, dan tabel laba tidak lagi dipakai halaman ini |
 | **Tanpa tampilan bawaan peramban di panel kit** | Permintaan pemilik: "dropdown tidak default google … pastikan tidak ada yang berkaitan dengan default". Seluruh `<select>` asli diganti `PilihMenu` (Radix Select berkulit kit, `kit/Formulir`) — pemicunya bebas (tombol, teks, titik status, kotak isian); menu AKSI memakai `DropdownMenu`. Ini membalik alasan lama "select asli tidak bisa rusak diam-diam": papan ketik dan ketik-untuk-melompat tetap milik Radix. `title` digambar sebagai keterangan kit oleh `lib/judulMelayang.ts` (dipindah ke `data-judul` begitu muncul), `confirm()` diganti `lib/tanya.tsx`. Yang TIDAK bisa diganti: kotak "tinggalkan situs?" saat menutup tab (`beforeunload`) — peramban selalu memakai miliknya |
 | **Setiap grafik menjawab "berapa" saat kursor di atasnya** | Permintaan pemilik. Satu kartu (`kit/kartuGrafik.tsx`, portal + `fixed` supaya tidak terpotong kartu induk) untuk Busur, Donat, Cincin, Kilau; `GrafikArea` menerima `keterangan(i)`, `KolomGrafik` menerima `keterangan` + `sisiKartu`. Label angka di atas batang Beban per Tahun dibuang — ia menimpa batangnya sendiri begitu tinggi plot mengecil |
 | **Teks keterangan dipangkas** | Pemilik: "text keterangan itu tidak perlu". Paragraf penjelasan, bantuan isian, dan deskripsi dialog yang cuma menjelaskan dibuang; peringatan hapus diringkas jadi satu kalimat akibat. Yang TETAP: galat validasi, alasan tombol mati, dan peringatan yang mengubah keputusan (bentrok jatah bonus di Aturan Fee). Penjelasan panjang pindah ke `/admin/panduan` |

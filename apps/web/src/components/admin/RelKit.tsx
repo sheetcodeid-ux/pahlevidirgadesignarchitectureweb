@@ -99,6 +99,25 @@ function rapi(p: string): string {
   return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
 }
 
+/** Ikon menu milik halaman di `path` — dipakai ubin ikon di navbar, supaya
+    kepala halaman dan baris rel yang menyala selalu bergambar sama. Cocok
+    persis (atau "<daftar>/satu") lebih dulu; halaman tanpa baris sendiri
+    (mis. /admin/proyek/baru) memakai ikon baris terpanjang yang jadi
+    awalannya. "/admin" tidak ikut sebagai awalan — ia awalan semuanya. */
+export function ikonHalaman(path: string): DataIkon | undefined {
+  const kini = rapi(path);
+  const semua = NAV.flatMap((n) => [
+    ...(n.href ? [{ href: rapi(n.href), ikonKit: n.ikonKit as string }] : []),
+    ...(n.children ?? []).map((c) => ({ href: rapi(c.href), ikonKit: c.ikonKit as string })),
+  ]);
+  const persis = semua.find((b) => b.href === kini || `${b.href}/satu` === kini);
+  const awalan = semua
+    .filter((b) => b.href !== "/admin" && kini.startsWith(`${b.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  const pilih = persis ?? awalan;
+  return pilih ? PETA.get(pilih.ikonKit) : undefined;
+}
+
 export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio }: PropRelKit) {
   const kini = rapi(path);
   /* Angka pesan dan peran akun datang SESUDAH hidrasi: rel ini dirender

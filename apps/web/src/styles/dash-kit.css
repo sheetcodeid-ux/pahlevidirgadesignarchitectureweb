@@ -1,409 +1,375 @@
 /* =============================================================================
-   Dashboard — tata letak frame "01. Dashboard (v1)".
+   Dashboard — "meja kerja" studio (DashboardKit). Dirancang ulang atas
+   permintaan pemilik; tidak lagi mengikuti tata letak frame 01 Coinest.
 
-   Kotak pentingnya, dari metadata framenya (koordinat badan, mulai y80):
+   Dua lapis:
+     SOROTAN   satu kartu selebar halaman: sapaan + keadaan + aksi cepat |
+               cincin target semester | tiga angka bulan ini
+     KERJA     tiga kartu berdampingan: Arus Kas (atau Komposisi) | Proyek |
+               Perlu Ditangani — mengisi sisa tinggi layar dan menggulir
+               isinya sendiri
 
-     tiga kolom   283 / 586 / 283, celah 20 — total 1192
-     kiri         kartu kas 174 · aksi 72 · laba 107 · proyek 475
-     tengah       statistik 174 · arus kas 321 · tabel 353
-     kanan        statistik 460 · aktivitas 408
-     ketiganya berakhir di y968 (tinggi 888)
-
-   Kartu bergaris berpadding 15, bukan 16: garis Figma tidak ikut tata letak,
-   jadi isinya duduk 16 dari tepi LUAR bingkai — dan border CSS 1px memakan
-   satu di antaranya. Alasan yang sama dengan halaman Keuangan.
+   Kisi titik-garis di latar sorotan adalah kertas milimeter gambar kerja —
+   satu-satunya hiasan di halaman ini, dan ia diam (jebakan #22).
    ============================================================================= */
 
-/* Warna deret "tua" grafik dan legendanya. Di tema gelap `--brand` bernilai
-   mint — sama persis dengan deret beban — jadi keduanya dipindah ke token
-   deret kit yang di tema gelap jatuh ke abu (jebakan #37). */
-.dsb { --dsb-tua: var(--k-deret-tua, var(--brand)); }
-
+/* Warna deret "tua" grafik, legendanya, dan cincin target. Di tema gelap
+   `--brand` bernilai mint — sama persis dengan deret beban — jadi deretnya
+   pindah ke token deret kit yang di tema gelap jatuh ke abu (jebakan #37).
+   Cincinnya tetap mint di gelap: ia satu-satunya busur di sana. */
 .dsb {
-  display: grid;
-  grid-template-columns: minmax(0, 283fr) minmax(0, 586fr) minmax(0, 283fr);
-  gap: 20px;
-  align-items: stretch;
-}
-.dsb--rangka { min-height: 888px; }
-
-.dsb__kol {
+  --dsb-tua: var(--k-deret-tua, var(--brand));
+  --dsb-cincin: var(--brand);
+  --dsb-kertas: color-mix(in srgb, var(--brand) 7%, transparent);
   display: flex;
   flex-direction: column;
   gap: 20px;
   min-width: 0;
 }
+.dsb--rangka { min-height: 640px; }
 
 .dsb__kartu {
   display: flex;
   flex-direction: column;
+  gap: 14px;
   min-width: 0;
-  padding: 15px;
+  padding: 17px 17px 15px;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--surface);
 }
-
-/* Judul seksi di frame ini 16/700 — Urbanist Bold, dibaca dari gaya layer
-   teksnya — dan kepalanya cuma setinggi barisnya. `KepalaSeksi` kit
-   dibangun dari Header-Section 32 tinggi dengan judul 600. */
-.dsb .k-kepalaseksi { min-height: 0; }
+.dsb .k-kepalaseksi { min-height: 32px; }
 .dsb .k-kepalaseksi__judul { font-weight: var(--k-bold); line-height: 1.2; }
+.dsb .k-kepalaseksi__kanan { gap: 8px; }
 
-/* Titik tiga kepala kartu: 18x18 radius 5, tanpa ruang di sekeliling
-   ikonnya ("Button Icon" framenya). */
-.dsb .dsb__titik { width: 18px; height: 18px; padding: 0; border-radius: 5px; color: var(--text-muted); }
-
-.dsb__kosong {
-  margin: 0;
-  font-size: var(--k-t12);
-  color: var(--text-muted);
-}
+.dsb__kosong { margin: 0; font-size: var(--k-t12); color: var(--text-muted); }
 .dsb__minus { color: var(--danger); }
-
-/* Label kecil + nominal besar, dipakai kartu proyek dan arus kas:
-   10/400 lalu 24/700 hijau tua, jarak 4. */
-.dsb__totalket { margin: 0; font-size: var(--k-t10); line-height: 1.3; color: var(--text-strong); }
-.dsb__totalnilai {
-  margin: 4px 0 0;
-  font-size: var(--k-h4);
-  font-weight: var(--k-bold);
-  line-height: 1.1;
-  color: var(--brand);
-  white-space: nowrap;
-}
-
-/* --- Kartu kas (Widget Card) ---------------------------------------------
-   Bidang hijau tua pejal, padding 16, jarak antarblok 27. Bidangnya SENGAJA
-   tetap hijau tua di tema gelap (--kas-bidang), sama dengan kartu kas kit. */
-.dsb__kas {
-  display: flex;
-  flex-direction: column;
-  gap: 27px;
-  min-height: 174px;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--kas-bidang);
-  color: var(--kas-ink);
-}
-.dsb__kasatas { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 23px; }
-.dsb__kastanda { color: var(--brand-mint); }
-.dsb__kasperan { font-size: var(--k-t10); line-height: 1.3; }
-.dsb__kasnama {
-  margin: 0;
-  font-size: var(--k-h6);
-  font-weight: var(--k-bold);
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-.dsb__kaskaki { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.dsb__kaskanan { display: flex; gap: 18px; }
-.dsb__kasblok { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.dsb__kasket { margin: 0; font-size: var(--k-t10); line-height: 1.3; }
-.dsb__kasnilai {
-  margin: 0;
-  font-size: var(--k-h5);
-  font-weight: var(--k-bold);
-  line-height: 1.2;
-  color: var(--kas-nilai);
-  white-space: nowrap;
-}
-.dsb__kasisi {
-  margin: 0;
-  font-size: var(--k-t12);
-  font-weight: var(--k-semi);
-  line-height: 1.3;
-  color: var(--kas-nilai);
-  white-space: nowrap;
-}
-
-/* --- Aksi cepat (Button Group) --------------------------------------------
-   `KelompokTab` kit (frame 07) dengan setelan frame ini: label 10/600 hijau
-   tua, bukan 12/400 abu, dan GARIS TEGAK di antara tombolnya. Padding 12/8
-   dan celah 16 = dua celah 8 mengapit garis 0-lebar di framenya, jadi
-   lebar tiap tombol 54,75 persis. */
-.dsb__aksi {
-  flex: none;
-  column-gap: 16px;
-  padding: 12px 8px;
-}
-.dsb__aksi .k-jalurtab__b {
-  position: relative;
-  gap: 6px;
-  padding: 4px 0;
-  border-radius: 8px;
+.dsb__eyebrow {
   font-size: var(--k-t10);
   font-weight: var(--k-semi);
-  line-height: 1;
-  color: var(--brand);
-}
-.dsb__aksi .k-jalurtab__b + .k-jalurtab__b::before {
-  content: "";
-  position: absolute;
-  left: -8.5px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: color-mix(in srgb, var(--brand) 12%, transparent);
-}
-
-/* --- Laba bersih (Daily Limit) -------------------------------------------- */
-.dsb__laba { flex: none; gap: 20px; }
-.dsb__labaisi { display: flex; flex-direction: column; gap: 12px; }
-.dsb__labaket {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0;
-  font-size: var(--k-t12);
+  letter-spacing: 0.08em;
   line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.dsb__totalket { margin: 0; font-size: var(--k-t11); line-height: 1.3; color: var(--text-muted); }
+.dsb__totalnilai {
+  margin: 3px 0 0;
+  font-size: var(--k-h5);
+  font-weight: var(--k-bold);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
   color: var(--text-strong);
   white-space: nowrap;
 }
-.dsb__labaket > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.dsb__labaket b { font-size: var(--k-t12); font-weight: var(--k-semi); }
-.dsb__labaket small { font-size: var(--k-t10); }
 
-/* --- Proyek berjalan (Saving Plans) --------------------------------------- */
-.dsb__proyek { flex: 1 1 auto; gap: 20px; }
-.dsb__tambah {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 2px 3px 0;
-  border-radius: 7px;
-  font-size: var(--k-t10);
-  font-weight: var(--k-med);
-  line-height: 1;
-  color: var(--brand);
-  text-decoration: none;
+/* =============================================================================
+   SOROTAN
+   ============================================================================= */
+.dsb__sorot {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 1.05fr);
+  flex: none;
+  min-width: 0;
+  overflow: clip;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
 }
-.dsb__tambah:hover { text-decoration: underline; }
-.dsb__pdaftar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* Kertas milimeter: garis 24px, memudar ke kiri supaya sapaannya duduk di
+   bidang bersih. Diam — dilukis sekali. */
+.dsb__sorot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(var(--dsb-kertas) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, var(--dsb-kertas) 1px, transparent 1px) 0 0 / 24px 24px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 8%, #000 70%);
+  mask-image: linear-gradient(90deg, transparent 8%, #000 70%);
+  pointer-events: none;
+}
+.dsb__sorot > * { position: relative; z-index: 1; min-width: 0; }
+.dsb__sapa,
+.dsb__target,
+.dsb__kpis { padding: 20px 24px; }
+.dsb__target,
+.dsb__kpis { border-left: 1px solid var(--border); }
+
+/* --- Sapaan ------------------------------------------------------------- */
+.dsb__sapa { display: flex; flex-direction: column; justify-content: center; }
+.dsb__studio {
   margin: 0;
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dsb__salam {
+  margin: 6px 0 0;
+  font-size: var(--k-h2);
+  font-weight: var(--k-bold);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--judul-ink);
+}
+.dsb__keping {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 24px;
+  margin: 12px 0 0;
   padding: 0;
   list-style: none;
 }
-.dsb__pkartu {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 13px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+.dsb__kep {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  font-size: var(--k-t11);
+  line-height: 1;
+  color: var(--text-strong);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: filter var(--dur) var(--ease);
 }
-.dsb__pkepala { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.dsb__pjudul { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.dsb__pubin {
+.dsb__kep::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+.dsb__kep b { font-weight: var(--k-bold); }
+.dsb__kep:hover { filter: brightness(0.96); }
+.dsb__kep:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+/* Warna = makna (aturan desain #1): hijau hidup, merah perlu tindakan,
+   amber tertahan. Tinta tetap teks kuat; warnanya dibawa titik + bidang. */
+.dsb__kep--hijau { background: var(--brand-soft); }
+.dsb__kep--hijau::before { background: var(--brand); }
+.dsb__kep--merah { background: var(--danger-soft); }
+.dsb__kep--merah::before { background: var(--danger); }
+.dsb__kep--amber { background: var(--warn-soft); }
+.dsb__kep--amber::before { background: var(--warn); }
+.dsb__kepberes {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--k-t11);
+  color: var(--text-muted);
+}
+.dsb__kepberes svg { color: var(--brand); }
+
+.dsb__aksi { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.dsb__aksib { text-decoration: none; }
+
+/* --- Target semester ---------------------------------------------------- */
+.dsb__target {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--dur) var(--ease);
+}
+.dsb__target:hover { background-color: color-mix(in srgb, var(--brand-soft) 55%, transparent); }
+.dsb__target:focus-visible { outline: 2px solid var(--brand); outline-offset: -4px; border-radius: 16px; }
+.dsb__cincin { position: relative; flex: none; width: 112px; height: 112px; }
+.dsb__cincin .k-cincin { width: 112px; height: 112px; }
+.dsb__cincin .k-cincin svg { display: block; width: 100%; height: 100%; }
+.dsb__cincintengah {
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  /* Mint, sama dengan ubin kartu statistik di atasnya (lihat .k-stat__ubin). */
+  font-size: var(--k-h5);
+  font-weight: var(--k-bold);
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  pointer-events: none;
+}
+.dsb__targetteks { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dsb__targetnilai {
+  margin-top: 4px;
+  font-size: var(--k-h5);
+  font-weight: var(--k-bold);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+.dsb__targetdari { font-size: var(--k-t12); font-weight: var(--k-med); color: var(--text-muted); }
+.dsb__target .dsb__eyebrow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dsb__targetsisa {
+  font-size: var(--k-t11);
+  line-height: 1.4;
+  color: var(--text-muted);
+  text-wrap: balance;
+}
+
+/* --- Tiga angka bulan ini ----------------------------------------------- */
+.dsb__kpis { display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.dsb__kpis > .dsb__eyebrow { margin-bottom: 4px; }
+.dsb__kpi {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto 72px;
+  align-items: center;
+  gap: 12px;
+  margin: 0 -8px;
+  padding: 5px 8px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--dur) var(--ease);
+}
+.dsb__kpi:hover { background-color: var(--k-latar); }
+.dsb__kpi:focus-visible { outline: 2px solid var(--brand); outline-offset: 0; }
+.dsb__kpiubin {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   background: var(--brand-mint);
   color: var(--brand-mint-ink);
 }
-.dsb__pnama {
-  min-width: 0;
-  overflow: hidden;
-  font-size: var(--k-t12);
-  font-weight: var(--k-med);
-  line-height: 1.3;
+.dsb__kpiteks { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+.dsb__kpilabel { font-size: var(--k-t12); color: var(--text-muted); white-space: nowrap; }
+.dsb__kpinilai {
+  font-size: var(--k-t16);
+  font-weight: var(--k-bold);
   color: var(--text-strong);
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Kepala → batang 16 (celah kartunya), batang → keterangan 10: celahnya
-   dirapatkan 6 di baris keterangan saja. */
-.dsb__pkaki {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin: -6px 0 0;
-  font-size: var(--k-t10);
-  line-height: 1.3;
-  white-space: nowrap;
-}
-.dsb__pkaki b { font-weight: var(--k-semi); color: var(--text-strong); }
-.dsb__pkaki i { font-style: normal; color: var(--text-muted); }
-.dsb__pkaki > span:first-child i { font-weight: var(--k-semi); }
+.dsb__kpitren { display: flex; justify-content: flex-end; min-width: 58px; }
+.dsb__kpikosong { font-size: var(--k-t11); color: var(--text-faint); }
+.dsb__kpikilau { display: flex; align-items: center; min-width: 0; height: 30px; }
+/* Garis mungil mengikuti lebar kolomnya (72, atau 56 pada 1366) — ia
+   ber-viewBox, jadi menyempit tanpa terpotong. */
+.dsb__kpikilau svg[width][height] { width: 100%; max-width: 100%; height: 30px; }
 
-/* --- Kartu statistik ------------------------------------------------------
-   Tiga kartu kit 183x174, celah 18 — bukan 20 seperti celah kolomnya. */
-.dsb__stat {
+/* =============================================================================
+   BARIS KERJA
+   ============================================================================= */
+.dsb__kerja {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 0.85fr);
+  gap: 20px;
+  min-height: 0;
 }
-.dsb__stat .k-stat { width: auto; }
-.dsb__stat .k-stat__menu { color: var(--text-muted); }
-/* Kartu tanpa pembanding tetap memakai ruang lencananya, supaya nominalnya
-   sebaris dengan kartu tetangganya. */
-.dsb__trenkosong { visibility: hidden; }
 
-/* --- Arus kas (Cashflow) -------------------------------------------------- */
-.dsb__arus { flex: none; gap: 16px; height: 321px; }
-/* Legenda sejajar TENGAH dengan blok nominal ("Div Info" items-center). */
+/* --- Arus kas ----------------------------------------------------------- */
+.dsb .dsb__mode { width: auto; height: 30px; }
+.dsb .dsb__mode .k-segmen__b { padding: 0 12px; font-size: var(--k-t12); }
 .dsb__arusinfo {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
 }
 .dsb__legenda {
   display: flex;
-  gap: 24px;
-  margin: 0;
-  padding: 0 8px 0 0;
+  gap: 16px;
+  margin: 0 0 3px;
+  padding: 0;
   list-style: none;
 }
 .dsb__legenda li {
   display: flex;
-  align-items: baseline;
-  gap: 5px;
-  font-size: var(--k-t12);
+  align-items: center;
+  gap: 6px;
+  font-size: var(--k-t11);
   font-weight: var(--k-semi);
   line-height: 1.3;
   color: var(--text-strong);
   white-space: nowrap;
 }
-.dsb__kotak { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.dsb__kotak { flex: none; width: 8px; height: 8px; border-radius: 3px; }
 .dsb__kotak--tua { background: var(--dsb-tua); }
 .dsb__kotak--mint { background: var(--brand-mint); }
 
-/* Garis kisi framenya duduk di TENGAH baris setinggi 13 ("Lines" = lima
-   baris 13px, justify-between), jadi garis teratasnya ~6,5 di bawah puncak
-   wadah grafik. 5,6 dan bukan 6,5: blok nominal di atasnya 43,4 tinggi,
-   dan dengan 6,5 garisnya jatuh di y403,9 — tergambar di baris piksel 404,
-   satu di bawah framenya (403, terukur pada kelima garis). 5,6 membuatnya
-   bulat tepat di 403. */
-/* --dsb-plot-h: tinggi bidang plot. 140 di framenya; mode satu layar
-   mengecilkannya. Kolom dan label sumbu menerima tingginya sebagai prop
-   (gaya inline), jadi di sini ditimpa dengan !important. */
-.dsb__grafik { --dsb-plot-h: 140px; display: flex; align-items: flex-start; gap: 8px; min-height: 0; padding-top: 5.6px; }
+/* Tinggi bidang plot datang dari DashboardKit (diukur), lewat
+   --dsb-plot-h di atribut style wadahnya. Kolom dan label sumbu menerima
+   tingginya sebagai prop inline juga, jadi angkanya selalu sama. */
+.dsb__grafik {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 200px;
+  padding-top: 6px;
+}
 .dsb__grafik .k-kolom,
 .dsb__grafik .k-labely { --k-kolom-h: var(--dsb-plot-h) !important; }
-/* Garis kisi menjulur 8px melewati kolom pertama dan terakhir — di
-   framenya dua kolom selebar 8 berisi garis saja mengapit kedua belas
-   bulan. Di sini garisnya dilukis sebagai latar bidang plot dan kolomnya
-   diberi padding yang sama; garis milik tiap KolomGrafik jatuh tepat di
-   atasnya. Terukur: garis 563..1092, kolom 571..1085. */
 .dsb__plot {
   position: relative;
   display: flex;
   flex: 1;
+  align-self: stretch;
   min-width: 0;
-  padding: 0 8px;
+  padding: 0 4px;
   background:
     linear-gradient(var(--border), var(--border)) 0 0 / 100% 1px no-repeat,
     linear-gradient(var(--border), var(--border)) 0 calc(var(--dsb-plot-h) * 0.25) / 100% 1px no-repeat,
-    linear-gradient(var(--border), var(--border)) 0 calc(var(--dsb-plot-h) * 0.5) / 100% 1px no-repeat,
+    linear-gradient(var(--border-strong), var(--border-strong)) 0 calc(var(--dsb-plot-h) * 0.5) / 100% 1px no-repeat,
     linear-gradient(var(--border), var(--border)) 0 calc(var(--dsb-plot-h) * 0.75) / 100% 1px no-repeat,
     linear-gradient(var(--border), var(--border)) 0 var(--dsb-plot-h) / 100% 1px no-repeat;
 }
-.dsb__kolom { flex: 1; min-width: 0; border-radius: 6px; outline: none; }
+.dsb__kolom { flex: 1; min-width: 0; border-radius: 6px; outline: none; cursor: default; }
 .dsb__kolom .k-kolom { width: 100%; }
 .dsb__kolom:focus-visible { box-shadow: 0 0 0 2px var(--brand); }
 .dsb .k-kolom__b--tua { background: var(--dsb-tua); }
-/* Kolom yang disorot: cincin mint 24% selebar 4px di sekeliling batangnya
-   (garis rgba(187,244,156,.24) di framenya). Dua potongan batangnya
-   bersinggungan di garis nol, jadi bayangan tiap potongan DIPOTONG di sisi
-   yang menghadap potongan lainnya — tanpa itu bayangan yang atas melapisi
-   ujung yang bawah dan garis nolnya tergambar pucat. */
-.dsb__kolom.is-sorot .k-kolom__b { box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-mint) 24%, transparent); }
-.dsb__kolom.is-sorot .k-kolom__b--tua { clip-path: inset(-4px -4px 0 -4px round 8px 8px 0 0); }
-.dsb__kolom.is-sorot .k-kolom__b--mint { clip-path: inset(0 -4px -4px -4px round 0 0 8px 8px); }
+/* Bulan yang disorot: batang lain meredup, yang ini tetap penuh. */
+.dsb__plot:has(.is-sorot) .dsb__kolom:not(.is-sorot) .k-kolom__b { opacity: 0.45; }
+.dsb .k-kolom__b { transition: opacity var(--dur) var(--ease); }
 
-/* Kartu keterangan — di atas batang kolom yang disorot, 11 di atas
-   puncaknya, dan boleh menjulur ke atas bidang plot seperti di framenya. */
 .dsb__tip {
   position: absolute;
-  /* Tengah kolomnya: kolom-kolom duduk di dalam padding 8 bidang plot. */
-  left: calc(8px + (100% - 16px) * var(--tip-f));
+  left: calc(4px + (100% - 8px) * var(--tip-f));
   top: calc(var(--tip-p) * var(--dsb-plot-h));
   z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 7px 9px;
+  padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
-  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   line-height: 1.3;
   white-space: nowrap;
-  transform: translate(-50%, calc(-100% - 11px));
+  transform: translate(-50%, calc(-100% - 10px));
   pointer-events: none;
 }
-.dsb__tip--kiri { left: 0; transform: translate(0, calc(-100% - 11px)); }
-.dsb__tip--kanan { left: auto; right: 0; transform: translate(0, calc(-100% - 11px)); }
+.dsb__tip--kiri { transform: translate(-16px, calc(-100% - 10px)); }
+.dsb__tip--kanan { transform: translate(calc(-100% + 16px), calc(-100% - 10px)); }
 .dsb__tipjudul { margin: 0; font-size: var(--k-t10); font-weight: var(--k-semi); color: var(--text-muted); }
 .dsb__tipbaris {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  width: 100px;
+  gap: 14px;
+  min-width: 112px;
   margin: 0;
 }
-.dsb__tipbaris + .dsb__tipbaris { margin-top: -2px; }
 .dsb__tipbaris span { font-size: var(--k-t10); color: var(--text-muted); }
 .dsb__tipbaris b { font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--text-strong); }
 
-/* --- Tabel laba per proyek ------------------------------------------------ */
-.dsb__tabel { flex: 1 1 auto; gap: 16px; }
-.dsb__tabel .k-kepalaseksi__kanan { gap: 10px; }
-.dsb__tabelisi { min-width: 0; overflow-x: auto; }
-.dsb__tabelisi .k-tabel { width: 100%; }
-/* Sel dua baris tabel frame ini: 13 + celah 2 + 13 (leading 1,3), bukan
-   15,37 per baris milik tabel frame 04 yang jadi bawaan kit. Terukur:
-   baris atas ke bawah 15 di frame, 16 dengan bawaan kit. */
-.dsb__tabel .k-sel2 { gap: 2px; }
-.dsb__tabel .k-sel2__atas,
-.dsb__tabel .k-sel2__bawah { line-height: 1.3; }
-/* Isi baris 2px lebih tinggi daripada tengah persis: garis baris Figma
-   tidak ikut tata letak, jadi isinya mulai 10 dari garis atas, bukan 11,
-   dan tinta seluruh baris jatuh 2px di atas milik kita. Terukur: garis
-   antarbaris berimpit di 145/193/241/289, tinta tiap sel 2px lebih rendah
-   sebelum ini. */
-.dsb__tabel tbody td { padding-bottom: 2px; }
-/* Kolom nominal framenya SemiBold abu ("Cell-Amount" #6B7271). */
-.dsb__nominal { font-weight: var(--k-semi); color: var(--text-muted); }
-.dsb__catatan {
-  line-height: 1.3;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-/* --- Statistik (donat) ---------------------------------------------------- */
-.dsb__statistik { flex: none; gap: 20px; }
-/* Pemilih teks framenya 12/600 dengan caret 14. */
-.dsb__pilihteks { gap: 2px; margin-right: 0; font-weight: var(--k-semi); }
-.dsb__pilihteks > svg { width: 14px; height: 14px; margin: 1px; }
-
-/* "Segmented" framenya items-start: tab aktif 2px lebih tinggi karena
-   garisnya 3 lawan 1, jadi garis mint mulai di baris yang SAMA dengan
-   garis abu tab sebelahnya lalu menjulur 2px lebih ke bawah. */
+/* --- Komposisi ---------------------------------------------------------- */
+.dsb__komposisi { display: flex; flex: 1 1 auto; flex-direction: column; gap: 16px; min-height: 0; }
 .dsb__tab { display: flex; align-items: flex-start; }
 .dsb__tabb {
   display: flex;
   flex: 1 1 0;
   align-items: baseline;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
-  /* 7 di bawah, bukan 10 seperti tertulis di gaya layernya: dengan 10
-     teks tabnya tepat di barisnya tapi garisnya 3px di bawah garis di
-     gambar framenya. Yang diikuti gambarnya. */
-  padding: 2px 0 7px;
+  padding: 2px 0 8px;
   border: 0;
   border-bottom: 1px solid var(--border);
   background: none;
@@ -416,64 +382,135 @@
   cursor: pointer;
 }
 .dsb__tabb small { font-size: var(--k-t10); font-weight: var(--k-reg); }
-.dsb__tabb[aria-selected="true"] {
-  border-bottom: 3px solid var(--brand-mint);
-  color: var(--brand);
-}
+.dsb__tabb[aria-selected="true"] { border-bottom: 3px solid var(--brand-mint); color: var(--text-strong); }
 .dsb__tabb:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
-
-.dsb__donat {
+.dsb__komposisiisi {
   display: grid;
-  place-items: center;
-  height: 148px;
-  text-align: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
-/* Tengah donat framenya 8/500 lalu 20/700, berjarak 6. */
-/* Cincin framenya 1px lebih tinggi daripada kotak 149 yang dipusatkan di
-   bidang 148 — terukur dari tinta cincinnya (184 lawan 185). */
-.dsb__donat .k-donat { top: -1px; }
+.dsb__donat { display: grid; place-items: center; }
 .dsb__donat .k-donat__label { font-size: var(--k-t8); font-weight: var(--k-med); line-height: 1.3; }
 .dsb__donat .k-donat__nilai { margin-top: 6px; line-height: 1.2; }
-.dsb__rincian { display: flex; flex-direction: column; gap: 12px; }
+.dsb__rincian { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .dsb__rincian .k-beban__persen { font-weight: var(--k-semi); }
 .dsb__rincian .k-beban__kategori { font-weight: var(--k-med); }
 .dsb__rincian .k-beban__nominal { font-weight: var(--k-semi); }
 
-/* --- Perlu ditangani (Recent Activity) ------------------------------------
-   Kartunya mengisi sisa tinggi kolom (flex dasar 0, jadi isinya tidak ikut
-   menentukan tinggi baris grid), dan butir yang tidak muat dipangkas oleh
-   DashboardKit — bukan digulir di dalam kartu. */
-.dsb__aktivitas { flex: 1 1 0; min-height: 0; gap: 16px; }
-.dsb__log {
-  position: relative;
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
+/* --- Proyek ------------------------------------------------------------- */
+.dsb__tambah {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--action-ink);
+  transition: background-color var(--dur) var(--ease);
 }
-/* Jarak dari "Div Logs" framenya: kelompok hari berjarak 4, judul hari →
-   daftar 12, butir → butir 2. Teks tiap butir berpadding 2 di atas dan 10
-   di bawah — termasuk butir TERAKHIR sebuah kelompok, yang di kit
-   kehilangan padding bawahnya bersama garis penyambungnya. */
-.dsb__log > div + div { margin-top: 2px; }
-.dsb__log > div.dsb__logbaru { margin-top: 4px; }
-.dsb__loghari {
-  margin: 0 0 12px;
+.dsb__tambah:hover { background: var(--action-hover); }
+.dsb__tambah:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.dsb__ringkasproyek {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border-radius: 12px;
+  background: var(--k-latar);
+}
+.dsb__ringkasproyek > div { padding: 9px 12px; min-width: 0; }
+.dsb__ringkasproyek > div + div { border-left: 1px solid var(--border); }
+.dsb__ringkasproyek dt { font-size: var(--k-t10); line-height: 1.3; color: var(--text-muted); white-space: nowrap; }
+.dsb__ringkasproyek dd {
+  margin: 2px 0 0;
   font-size: var(--k-t14);
-  font-weight: var(--k-med);
-  line-height: 1.2;
+  font-weight: var(--k-bold);
   color: var(--text-strong);
+  white-space: nowrap;
 }
-.dsb__logbutir {
+.dsb__pdaftar {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -6px;
+  padding: 0;
+  list-style: none;
+}
+.dsb__pbaris {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 6px;
+  border-radius: 12px;
+  transition: background-color var(--dur) var(--ease);
+}
+.dsb__pbaris + .dsb__pbaris { box-shadow: 0 -1px 0 var(--border); }
+.dsb__pbaris:hover { background: var(--k-latar); box-shadow: none; }
+.dsb__pbaris:hover + .dsb__pbaris { box-shadow: none; }
+.dsb__pubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+}
+.dsb__pisi { display: flex; flex: 1; flex-direction: column; gap: 7px; min-width: 0; }
+.dsb__patas { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.dsb__pnama {
   display: block;
-  color: inherit;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  line-height: 1.3;
+  color: var(--text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dsb__patas .k-lencana { flex: none; }
+.dsb__pkaki {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--k-t11);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.dsb__pkaki b { font-weight: var(--k-semi); color: var(--text-strong); }
+.dsb__pkaki i { font-style: normal; color: var(--text-muted); }
+.dsb__plaba { font-weight: var(--k-semi); color: var(--text-strong); }
+.dsb__plaba.dsb__minus { color: var(--danger); }
+
+/* --- Perlu ditangani ---------------------------------------------------- */
+.dsb__lihat {
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  color: var(--brand);
   text-decoration: none;
 }
+.dsb__lihat:hover { text-decoration: underline; text-underline-offset: 2px; }
+.dsb__log { position: relative; min-height: 0; }
+.dsb__log > div + div { margin-top: 2px; }
+.dsb__log > div.dsb__logbaru { margin-top: 6px; }
+.dsb__loghari {
+  margin: 0 0 10px;
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+.dsb__logbutir { display: block; color: inherit; text-decoration: none; }
 .dsb__logbutir:hover .k-log__teks { text-decoration: underline; }
 .dsb__logbutir:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 8px; }
 .dsb__log .k-log,
-.dsb__log .k-log--akhir { gap: 14px; padding-bottom: 10px; }
+.dsb__log .k-log--akhir { gap: 12px; padding-bottom: 10px; }
 .dsb__log .k-log__isi { padding-top: 2px; }
-.dsb__log .k-log__teks { line-height: 1.3; }
+.dsb__log .k-log__teks { line-height: 1.35; }
 .dsb__log .k-log__teks b { font-weight: var(--k-semi); }
 .dsb__log .k-log__teks + .k-log__waktu { margin-top: 4px; line-height: 1.3; }
 .dsb__beres {
@@ -486,59 +523,79 @@
 }
 .dsb__beres svg { color: var(--brand); }
 
-/* --- Lebar lain -----------------------------------------------------------
-   Tablet: kolom TENGAH naik selebar penuh — di sana angka uang dan tabel
-   laba, dan tabel selebar 554 tidak muat di kolom tengah yang menyempit
-   (ia jadi digulir mendatar di dalam kartunya, jebakan #18). Kolom kiri
-   dan kanan berdampingan di bawahnya, dan kartu aktivitas tetap mengisi
-   sisa tinggi kolomnya seperti di desktop. */
+/* =============================================================================
+   TEMA GELAP
+   Cincin target mint (busur satu-satunya), kertas milimeter sedikit lebih
+   terang supaya tetap terbaca di atas permukaan gelap.
+   ============================================================================= */
+:root[data-theme="dark"] .dsb {
+  --dsb-cincin: var(--brand-mint);
+  --dsb-kertas: color-mix(in srgb, var(--brand-mint) 6%, transparent);
+}
+
+/* =============================================================================
+   LEBAR LAIN
+   ============================================================================= */
+/* Laptop kecil sampai tablet: sorotan jadi dua baris (sapaan selebar penuh,
+   lalu target dan angka bulan ini berdampingan); baris kerja dua kolom
+   dengan Perlu Ditangani di bawah selebar penuh. */
 @media (max-width: 1288px) {
-  .dsb { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .dsb__kol--tengah { grid-column: 1 / -1; order: -1; }
+  .dsb__sorot { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+  .dsb__sapa { grid-column: 1 / -1; border-bottom: 1px solid var(--border); }
+  .dsb__target { border-left: 0; }
+  .dsb__kerja { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .dsb__aktivitas { grid-column: 1 / -1; }
+  .dsb__arus { min-height: 340px; }
 }
-/* Satu kolom: kartu aktivitas kehilangan pasangan tingginya, jadi ia
-   kembali setinggi isinya. */
-@media (max-width: 1048px) {
-  .dsb { grid-template-columns: minmax(0, 1fr); }
-  .dsb__aktivitas,
-  .dsb__log { flex: none; }
+@media (max-width: 48rem) {
+  .dsb__sorot { grid-template-columns: minmax(0, 1fr); }
+  .dsb__kpis { border-left: 0; border-top: 1px solid var(--border); }
+  .dsb__kerja { grid-template-columns: minmax(0, 1fr); }
+  .dsb__komposisiisi { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .dsb__rincian { width: 100%; }
 }
-/* Ponsel: nominal arus kas dan legendanya boleh terlipat, dan kartu
-   statistik ketiga yang tertinggal sendirian di barisnya dibuat selebar
-   penuh alih-alih menyisakan lubang di sebelahnya. */
 @media (max-width: 40rem) {
-  .dsb__arus { height: auto; }
+  .dsb__sapa,
+  .dsb__target,
+  .dsb__kpis { padding: 16px; }
+  .dsb__salam { font-size: var(--k-h4); }
   .dsb__arusinfo { flex-wrap: wrap; }
-  .dsb__legenda { padding-right: 0; }
-  .dsb__stat > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .dsb .k-kepalaseksi { flex-wrap: wrap; row-gap: 8px; }
+  .dsb__kpi { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  .dsb__kpikilau { display: none; }
 }
 
 /* --- SATU LAYAR (desktop) -------------------------------------------------
-   Permintaan pemilik: halaman pas setinggi layar, tanpa gulir. Ketiga kolom
-   setinggi area isi; kartu TERAKHIR tiap kolom (Proyek Berjalan, Laba per
-   Proyek, Perlu Ditangani) mengisi sisanya dan menggulir isinya sendiri.
-   Kartu di atasnya kehilangan tinggi tetap frame 1024 (statistik 174, arus
-   kas 321) dan setinggi isinya — layar laptop 790 tidak punya 888px.
-   Hanya selama tiga kolom berdampingan: di bawah 1288 kolomnya ditumpuk,
-   dan tumpukan itu memang lebih panjang dari layar mana pun. */
+   Sorotan setinggi isinya; baris kerja mengisi sisa tinggi, dan daftar di
+   tiap kartunya menggulir sendiri. Hanya selama kartunya berdampingan. */
 @media (min-width: 1288.02px) and (min-height: 600px) {
-  .dsb { height: 100%; grid-template-rows: minmax(0, 1fr); }
+  .dsb { height: 100%; }
   .dsb--rangka { min-height: 0; }
-  .dsb__kol { min-height: 0; gap: 16px; }
-  .dsb__kas { min-height: 0; gap: 18px; }
-  .dsb__stat .k-stat { min-height: 0; }
-  .dsb__arus { height: auto; gap: 12px; }
-  .dsb__proyek,
-  .dsb__tabel { flex: 1 1 0; min-height: 0; }
+  .dsb__kerja { flex: 1 1 0; grid-template-rows: minmax(0, 1fr); }
+  .dsb__kartu { min-height: 0; }
+  .dsb__grafik { min-height: 0; }
   .dsb__pdaftar,
-  .dsb__tabelisi { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-  .dsb__statistik { gap: 14px; }
-  /* Jarak dalam kartu statistik dipadatkan supaya tabel Laba per Proyek
-     memuat dua baris utuh, bukan satu baris terpotong. */
-  .dsb__stat .k-stat { padding-top: 13px; padding-bottom: 13px; }
-  .dsb__stat .k-stat .k-tren { margin-top: 14px; }
-  .dsb__stat .k-stat__nilai { margin-top: 9px; }
-  .dsb__stat .k-stat__judul { margin-top: 11px; }
-  .dsb__kas { gap: 14px; }
-  .dsb__grafik { --dsb-plot-h: 96px; }
+  .dsb__log {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}
+/* Laptop 1366: kolom angka bulan ini menyempit — garis mungilnya ikut. */
+@media (min-width: 1288.02px) and (max-width: 1408px) {
+  .dsb__kpi { grid-template-columns: 32px minmax(0, 1fr) auto 56px; gap: 10px; }
+  .dsb__sapa,
+  .dsb__target,
+  .dsb__kpis { padding-left: 20px; padding-right: 20px; }
+}
+/* Layar pendek (1366x768): sorotan dipadatkan. */
+@media (min-width: 1288.02px) and (max-height: 800px) {
+  .dsb__sapa,
+  .dsb__target,
+  .dsb__kpis { padding-top: 16px; padding-bottom: 16px; }
+  .dsb__salam { font-size: var(--k-h3); }
+  .dsb__cincin,
+  .dsb__cincin .k-cincin { width: 100px; height: 100px; }
 }

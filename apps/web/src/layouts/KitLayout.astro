@@ -144,7 +144,7 @@ const path = Astro.url.pathname;
             (status build, polling). Stempel build dipanggang ke HTML di sini,
             sama seperti AdminLayout — panel ini hasil build yang sama dengan
             situs publiknya, jadi ia satu-satunya yang tahu umur dirinya. */}
-        <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} />
+        <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} path={path} />
 
         {remah && <Remah jalur={remah} className="kl__remah" />}
 
@@ -257,24 +257,35 @@ const path = Astro.url.pathname;
     flex-direction: column;
     --kl-talang: 28px;
   }
-  /* --- Navbar: bilah sendiri yang DIAM -----------------------------------
-     Permintaan pemilik: "navbar saat saya scroll ke bawah tidak ketahan".
-     Kepala halaman dulu cuma baris judul di atas isi, ikut tergulir pergi.
-     Sekarang ia bilah selebar kolom konten: bidang permukaan, garis bawah,
-     dan menempel di atas. Di desktop seluruh kerangka setinggi layar (lihat
-     di bawah), jadi ia memang tidak pernah bergerak; di ponsel halamannya
-     masih bisa digulir, dan `sticky` yang menahannya. TANPA backdrop-filter
-     — jebakan #23: bilah lengket yang mengaburkan latarnya adalah pemanas
-     perangkat. Latarnya pejal. */
+  /* --- Navbar: kartu HIJAU melengkung yang melayang ----------------------
+     Permintaan pemilik: "navbar dibuat berwarna dan jangan menyatu dengan
+     sidebar, dibuat tampilan melengkung". Dulu bilah putih selebar kolom
+     yang garis bawahnya menyambung menembus kepala rel — terbaca sebagai
+     satu bingkai dengan rel. Sekarang ia kartu sendiri: berjarak dari rel
+     dan dari tepi atas, bersudut 20, berbidang gradien hijau brand (token
+     --k-nav-*, sama di kedua tema). Isinya ditata di kit.css "NAVBAR".
+
+     Tetap diam: di desktop kerangkanya setinggi layar sehingga ia memang
+     tidak pernah bergerak; di ponsel `sticky` yang menahannya. TANPA
+     backdrop-filter — jebakan #23. Bayangannya lunak dan cuma di bawah. */
   .kl__kepala {
     position: sticky;
     top: 0;
     z-index: 30;
     flex: none;
-    min-height: 68px;
-    padding: 14px var(--kl-talang);
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
+    min-height: 64px;
+    margin: 14px var(--kl-talang) 0;
+    padding: 12px 14px;
+    border-radius: 20px;
+    /* Warna dasar pejal di bawah gradien: kalau gradiennya gagal dilukis
+       (atau alat kontras yang cuma membaca background-color), tinta putih
+       tetap duduk di atas hijau tua, bukan di atas abu halaman. */
+    background-color: var(--k-nav-a);
+    background-image:
+      radial-gradient(70% 180% at 100% 0%, var(--k-nav-sinar), transparent 60%),
+      linear-gradient(105deg, var(--k-nav-a), var(--k-nav-b));
+    box-shadow: var(--k-nav-bayang);
+    color: var(--k-nav-ink);
   }
   /* 20 dari kepala ke badan seperti framenya. */
   .kl__isi {
@@ -422,6 +433,11 @@ const path = Astro.url.pathname;
       transition: transform 0.2s ease;
     }
     .k-kepalahal .kl__menu { display: grid; }
+    /* Halaman ponsel bergulir: kartu navbar menempel sedikit di bawah tepi
+       atas, bukan tergencet ke sana. Kepala laci kembali 68 — tidak ada
+       navbar di sebelahnya untuk disejajarkan. */
+    .kl__kepala { top: 10px; margin-top: 10px; }
+    .kl #kl-rel .k-sisi__kepala { height: 68px; }
   }
   @media (max-width: 40rem) {
     /* Padding ponsel SENGAJA tidak disetel di sini. Dulu ada

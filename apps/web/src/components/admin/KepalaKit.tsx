@@ -3,7 +3,8 @@ import { Cari } from "../kit/Isian";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { ArrowLeft, List, SpecialMoonStars } from "../kit/ikon";
 import { gantiTema, temaGelap, PERISTIWA_TEMA } from "../../lib/tema";
-import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from "./RelKit";
+import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL, ikonHalaman } from "./RelKit";
+import { Ikon } from "../kit/Ikon";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 /* Palet dimuat LANGSUNG, bukan malas: versi malasnya terukur kehilangan
@@ -21,8 +22,11 @@ import { TitipanToast } from "../kit/Toast";
    karena JSX di dalam .astro menghasilkan fragmen ASTRO — bukan elemen
    React — jadi ia tidak bisa dioper sebagai prop ke komponen React. Yang
    dioper dari .astro cuma string. */
-export function KepalaKit({ judul, kembali, dibangunPada }: {
+export function KepalaKit({ judul, kembali, dibangunPada, path }: {
   judul: string;
+  /** Alamat halaman — menentukan ikon di ubin kiri judul (sama dengan baris
+      rel yang menyala). */
+  path: string;
   kembali?: string;
   /** Stempel build yang dipanggang ke HTML — lihat useTerbit. */
   dibangunPada: string;
@@ -76,21 +80,21 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
     };
   }, []);
 
-  /* Tanggal hari ini di bawah judul. Dihitung SESUDAH dipasang: halaman ini
-     hasil build, dan tanggal build yang dirender server pasti berbeda dari
-     hari ini — nilai awal yang berbeda membuang pohon saat hidrasi
-     (jebakan #8). Sebelum itu barisnya kosong tapi tetap memegang tingginya. */
-  const [tanggal, setTanggal] = useState("\u00a0");
+  /* Tanggal di bawah judul SUDAH DIBUANG atas permintaan pemilik
+     ("tanggal … hilangkan aja"); navbar kini satu baris. */
   const [gelap, setGelap] = useState(false);
+  /* Tuts pintas palet: ⌘K di Mac, Ctrl K di tempat lain. Disetel sesudah
+     dipasang — server tidak tahu mesinnya, dan nilai awal yang berbeda
+     membuang pohon saat hidrasi (jebakan #8). */
+  const [pintasan, setPintasan] = useState("Ctrl K");
   useEffect(() => {
-    setTanggal(
-      new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()),
-    );
     setGelap(temaGelap());
+    if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) setPintasan("⌘K");
     const dengar = () => setGelap(temaGelap());
     window.addEventListener(PERISTIWA_TEMA, dengar);
     return () => window.removeEventListener(PERISTIWA_TEMA, dengar);
   }, []);
+  const ikonHal = kembali ? undefined : ikonHalaman(path);
 
   return (
     <KepalaHalaman
@@ -99,7 +103,6 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
          pernah cocok (jebakan #1). */
       className="kl__kepala"
       judul={judul}
-      subjudul={tanggal}
       /* Hanya tampil di ponsel (CSS .kl__menu). Bulat, bukan kotak seperti
          tombol kembali: di kit, yang bulat membuka panel. */
       kiri={
@@ -112,6 +115,16 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
           data-kl-rel-tombol=""
           onClick={() => window.dispatchEvent(new CustomEvent(PERISTIWA_REL))}
         />
+      }
+      /* Ubin ikon halaman di kiri judul — gambar yang sama dengan baris rel
+         yang menyala. Halaman detail berpanah kembali tidak memakainya:
+         satu benda di kiri judul cukup. */
+      awalJudul={
+        ikonHal && (
+          <span className="kl__ikonhal" aria-hidden="true">
+            <Ikon ikon={ikonHal} ukuran={18} />
+          </span>
+        )
       }
       /* `kembali` berupa ALAMAT, bukan history.back(): halaman detail bisa
          dibuka langsung dari tautan, dan "kembali" ke halaman sebelumnya
@@ -130,6 +143,8 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
             ukuran="medium"
             judul="Cari halaman atau proyek"
             placeholder="Cari di panel"
+            pintasan={pintasan}
+            className="kl__cari"
             readOnly
             aria-haspopup="dialog"
             onClick={() => setCariBuka(true)}

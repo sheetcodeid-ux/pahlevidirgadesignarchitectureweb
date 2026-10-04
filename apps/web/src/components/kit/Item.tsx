@@ -110,6 +110,7 @@ export function KepalaHalaman({
   onKembali,
   ikonKembali,
   kiri,
+  awalJudul,
   kanan,
   subjudul,
   className,
@@ -121,6 +122,8 @@ export function KepalaHalaman({
   ikonKembali?: DataIkon;
   /** Sebelum tombol kembali dan judul — tombol menu geser di ponsel. */
   kiri?: ReactNode;
+  /** Tepat sebelum judul, sesudah tombol kembali — mis. ubin ikon halaman. */
+  awalJudul?: ReactNode;
   kanan?: ReactNode;
   className?: string;
 }) {
@@ -133,6 +136,7 @@ export function KepalaHalaman({
             <Ikon ikon={ikonKembali} ukuran={12} />
           </button>
         )}
+        {awalJudul}
         {subjudul !== undefined ? (
           <div className="k-kepalahal__teks">
             <h1 className="k-kepalahal__judul">{judul}</h1>

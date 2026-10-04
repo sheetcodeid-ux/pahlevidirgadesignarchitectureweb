@@ -19,6 +19,9 @@ export interface PropCari extends Omit<InputHTMLAttributes<HTMLInputElement>, "s
   ukuran?: UkuranCari;
   /** Wajib: kotak cari tanpa nama tidak bisa dibacakan pembaca layar. */
   judul: string;
+  /** Tuts pintas yang membuka hal yang sama, mis. "Ctrl K" — digambar sebagai
+      keping kecil di kanan kotak. Hiasan bagi pembaca layar. */
+  pintasan?: string;
 }
 
 /**
@@ -40,11 +43,16 @@ function pisahData<T extends Record<string, unknown>>(prop: T) {
 }
 
 /** Ikonnya di KANAN, seperti di Figma — bukan di kiri seperti kebiasaan umum. */
-export function Cari({ ukuran = "medium", judul, className, ...prop }: PropCari) {
+export function Cari({ ukuran = "medium", judul, pintasan, className, ...prop }: PropCari) {
   const { data, sisa } = pisahData(prop);
   return (
     <div className={["k-cari", `k-cari--${ukuran}`, className].filter(Boolean).join(" ")} {...data}>
       <input type="search" className="k-cari__input" aria-label={judul} {...sisa} />
+      {pintasan && (
+        <kbd className="k-cari__pintas" aria-hidden="true">
+          {pintasan}
+        </kbd>
+      )}
       <Ikon ikon={MagnifyingGlass} ukuran={IKON_CARI[ukuran]} />
     </div>
   );

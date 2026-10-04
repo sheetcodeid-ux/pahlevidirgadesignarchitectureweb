@@ -176,6 +176,21 @@
   --kas-bidang: #1E4841;
   --kas-ink: #ECF4E9;
 
+  /* Navbar panel kit — bilah hijau brand yang melayang terpisah dari rel.
+     Permintaan pemilik: "navbar dibuat berwarna dan jangan menyatu dengan
+     sidebar … melengkung". Seperti --kas-bidang, ia identitas, jadi tetap
+     hijau tua di KEDUA tema (mint pejal di tema gelap menyilaukan pada
+     bidang selebar layar). Kontrolnya putih tembus pandang di atasnya. */
+  --k-nav-a: #1E4841;
+  --k-nav-b: #2A6355;
+  --k-nav-sinar: rgba(187, 244, 156, 0.22);
+  --k-nav-ink: #FFFFFF;
+  --k-nav-ink-lembut: rgba(255, 255, 255, 0.72);
+  --k-nav-kontrol: rgba(255, 255, 255, 0.1);
+  --k-nav-kontrol-hover: rgba(255, 255, 255, 0.18);
+  --k-nav-garis: rgba(255, 255, 255, 0.14);
+  --k-nav-bayang: 0 10px 28px -18px rgba(30, 72, 65, 0.65);
+
   /* Tangga irisan donat — hijau ke abu, berurut besaran. Coinest tidak
      memakai lima rona berbeda untuk memecah satu besaran; ia memakai satu
      tangga, dan itu yang membuat irisan terbesar menonjol tanpa satu angka
@@ -364,6 +379,11 @@
   /* Sama persis dengan tema terang — lihat alasannya di blok terang. */
   --kas-bidang: #1E4841;
   --kas-ink: #ECF4E9;
+
+  --k-nav-a: #173A34;
+  --k-nav-b: #22524A;
+  --k-nav-sinar: rgba(187, 244, 156, 0.16);
+  --k-nav-bayang: 0 10px 28px -18px rgba(0, 0, 0, 0.8);
 
   /* Tangga yang sama, dibalik arah terangnya: di atas bidang gelap yang
      paling menonjol adalah yang paling TERANG. Yang dijaga hubungannya —
