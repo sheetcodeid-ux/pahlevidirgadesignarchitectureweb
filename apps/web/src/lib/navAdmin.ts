@@ -111,7 +111,7 @@ export const NAV: NavItem[] = [
     ikonKit: "Ruler",
     group: "Pekerjaan",
     children: [
-      { label: "Semua Proyek", href: "/admin/proyek", icon: "list", ikonKit: "Ruler" },
+      { label: "Semua Proyek", href: "/admin/proyek", icon: "list", ikonKit: "List" },
       // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
       // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
       { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document", ikonKit: "UserCircle" },

@@ -144,7 +144,7 @@ const path = Astro.url.pathname;
             (status build, polling). Stempel build dipanggang ke HTML di sini,
             sama seperti AdminLayout — panel ini hasil build yang sama dengan
             situs publiknya, jadi ia satu-satunya yang tahu umur dirinya. */}
-        <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} path={path} />
+        <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} />
 
         {remah && <Remah jalur={remah} className="kl__remah" />}
 
@@ -170,9 +170,13 @@ const path = Astro.url.pathname;
   /* Latar halaman abu tipis (--k-latar), kartu putih di atasnya. Frame
      Coinest berlatar putih; diganti atas permintaan pemilik ("latar putih
      terasa mati"). Yang mint tetap cuma rel sampingnya. */
+  /* Latar MINT di seluruh halaman, sama dengan rel samping; isinya duduk di
+     panel melengkung (.kl__utama). Bentuk frame 01 Coinest — dan jawaban
+     atas "navbar jangan menyatu dengan sidebar, dibuat melengkung": kepala
+     halaman ada DI DALAM panel itu, terpisah dari rel oleh lengkungnya. */
   .kl-body {
     margin: 0;
-    background: var(--k-latar);
+    background: var(--brand-soft);
     font-family: var(--font-sans);
   }
 
@@ -199,16 +203,8 @@ const path = Astro.url.pathname;
     --kl-rel: 240px;
     display: flex;
     min-height: 100vh;
-    /* Mint rel sampingnya dilukis DI SINI juga, bukan cuma di .k-sisi.
-       Sebabnya: .k-sisi menempel (`sticky`) dan karena itu setinggi viewport,
-       sementara halamannya lebih panjang — jadi mintnya berhenti di tengah
-       jalan dan sisanya putih. Terlihat jelas di tangkapan layar halaman
-       penuh. Gradien ini setinggi .kl, yang memang ikut isi halaman. */
-    background: linear-gradient(
-      to right,
-      var(--brand-soft) 0 var(--kl-rel, 192px),
-      transparent var(--kl-rel, 192px)
-    );
+    /* Mint rel samping datang dari latar <body> (seluruh halaman mint,
+       panel isi di atasnya), jadi .kl tidak melukis apa pun sendiri. */
   }
   /* Rel samping menempel; isinya yang bergulir. Tanpa ini menu ikut hilang ke
      atas di halaman yang panjang — dan di frame Coinest rel itu setinggi
@@ -255,37 +251,33 @@ const path = Astro.url.pathname;
     flex: 1;
     min-width: 0;
     flex-direction: column;
+    border-radius: 24px 0 0 24px;
+    background: var(--k-panel);
     --kl-talang: 28px;
   }
-  /* --- Navbar: kartu HIJAU melengkung yang melayang ----------------------
-     Permintaan pemilik: "navbar dibuat berwarna dan jangan menyatu dengan
-     sidebar, dibuat tampilan melengkung". Dulu bilah putih selebar kolom
-     yang garis bawahnya menyambung menembus kepala rel — terbaca sebagai
-     satu bingkai dengan rel. Sekarang ia kartu sendiri: berjarak dari rel
-     dan dari tepi atas, bersudut 20, berbidang gradien hijau brand (token
-     --k-nav-*, sama di kedua tema). Isinya ditata di kit.css "NAVBAR".
-
-     Tetap diam: di desktop kerangkanya setinggi layar sehingga ia memang
-     tidak pernah bergerak; di ponsel `sticky` yang menahannya. TANPA
-     backdrop-filter — jebakan #23. Bayangannya lunak dan cuma di bawah. */
+  /* --- Navbar: bilah sendiri yang DIAM -----------------------------------
+     Permintaan pemilik: "navbar saat saya scroll ke bawah tidak ketahan".
+     Kepala halaman dulu cuma baris judul di atas isi, ikut tergulir pergi.
+     Sekarang ia baris kepala di dalam panel isi (bentuk frame 01) yang
+     menempel di atas. Di desktop seluruh kerangka setinggi layar (lihat
+     di bawah), jadi ia memang tidak pernah bergerak; di ponsel halamannya
+     masih bisa digulir, dan `sticky` yang menahannya. TANPA backdrop-filter
+     — jebakan #23: bilah lengket yang mengaburkan latarnya adalah pemanas
+     perangkat. Latarnya pejal. */
   .kl__kepala {
     position: sticky;
     top: 0;
     z-index: 30;
     flex: none;
-    min-height: 64px;
-    margin: 14px var(--kl-talang) 0;
-    padding: 12px 14px;
-    border-radius: 20px;
-    /* Warna dasar pejal di bawah gradien: kalau gradiennya gagal dilukis
-       (atau alat kontras yang cuma membaca background-color), tinta putih
-       tetap duduk di atas hijau tua, bukan di atas abu halaman. */
-    background-color: var(--k-nav-a);
-    background-image:
-      radial-gradient(70% 180% at 100% 0%, var(--k-nav-sinar), transparent 60%),
-      linear-gradient(105deg, var(--k-nav-a), var(--k-nav-b));
-    box-shadow: var(--k-nav-bayang);
-    color: var(--k-nav-ink);
+    /* Frame 01: kepala 38 tinggi di y22, judul di x+28 panel, badan mulai
+       y80 (20 di bawahnya). Tanpa garis bawah dan tanpa bidang sendiri —
+       ia bagian dari panel. Bidang panel dipasang juga di sini supaya isi
+       yang tergulir di ponsel tidak tampak di belakangnya. */
+    min-height: 60px;
+    padding: 22px var(--kl-talang) 0;
+    /* Sudut kiri-atas ikut melengkung: bidangnya menimpa sudut panel. */
+    border-top-left-radius: 24px;
+    background: var(--k-panel);
   }
   /* 20 dari kepala ke badan seperti framenya. */
   .kl__isi {
@@ -375,20 +367,15 @@ const path = Astro.url.pathname;
   /* Garis kiri rel kanan dilukis di .kl, bukan di rel-nya — alasan yang sama
      dengan mint rel kiri: rel yang menempel setinggi viewport, halamannya
      lebih panjang, dan garisnya berhenti di tengah jalan. */
-  .kl--relkanan {
-    background:
-      /* 100% - 304: persentase posisi dihitung dari (lebar - 1px), jadi garis 1px ini jatuh tepat di x tepi kiri rel (lebar - 305). */
-      linear-gradient(var(--border), var(--border)) calc(100% - 304px) 0 / 1px 100% no-repeat,
-      linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
-  }
+  /* Rel kanan ikut bidang panel — ia bagian dari isi, bukan latar mint —
+     dan dipisah dari kolom konten oleh garis kirinya sendiri. Satu layar,
+     jadi garisnya setinggi layar penuh. */
+  .kl__relkanan { border-left: 1px solid var(--border); background: var(--k-panel); }
   /* Di bawah 1408 (1360 + selisih rel) rel kanan memakan terlalu banyak dari kolom konten — pada
      1280 kartu "Baru Diubah" tinggal 160px teks; isinya ringkasan yang juga
      bisa dicapai dari keping kategori di atas. */
   @media (max-width: 1408px) {
     .kl__relkanan { display: none; }
-    .kl--relkanan {
-      background: linear-gradient(to right, var(--brand-soft) 0 var(--kl-rel, 192px), transparent var(--kl-rel, 192px));
-    }
   }
 
   /* --- Ponsel: rel samping jadi menu geser ---------------------------------
@@ -410,7 +397,10 @@ const path = Astro.url.pathname;
      tablet masih punya ruang untuk kepala sebaris. Angka ini harus sama
      dengan PONSEL di RelKit. */
   @media (max-width: 56rem) {
-    .kl { background: none; }
+    /* Rel jadi menu geser: panel isi selebar layar, tanpa lengkung — sudut
+       24 di tepi kiri layar ponsel cuma memotong isinya. */
+    .kl__utama,
+    .kl__kepala { border-radius: 0; }
     .kl #kl-rel {
       position: fixed;
       top: 0;
@@ -433,11 +423,6 @@ const path = Astro.url.pathname;
       transition: transform 0.2s ease;
     }
     .k-kepalahal .kl__menu { display: grid; }
-    /* Halaman ponsel bergulir: kartu navbar menempel sedikit di bawah tepi
-       atas, bukan tergencet ke sana. Kepala laci kembali 68 — tidak ada
-       navbar di sebelahnya untuk disejajarkan. */
-    .kl__kepala { top: 10px; margin-top: 10px; }
-    .kl #kl-rel .k-sisi__kepala { height: 68px; }
   }
   @media (max-width: 40rem) {
     /* Padding ponsel SENGAJA tidak disetel di sini. Dulu ada

@@ -3338,6 +3338,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
    ----------------------------------------------------------------------------- */
 .kl-body :is(
   .gal-atas .k-cari,
+  .dsb__kol > .k-jalurtab,
   .tr__kiri > .k-jalurtab,
   .tr__cari > .k-cari,
   .tr__cari > .k-bulat,
@@ -3444,15 +3445,11 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .kl__keluar:hover { color: var(--danger); }
 
 /* =============================================================================
-   NAVBAR — bilah HIJAU melengkung yang melayang terpisah dari rel.
-
-   Permintaan pemilik: "navbar dibuat berwarna dan jangan menyatu dengan
-   sidebar, dibuat tampilan melengkung", dan tanggal di bawah judul dibuang.
-   Bidangnya (KitLayout `.kl__kepala`) hijau brand di KEDUA tema — seperti
-   kartu kas, ia identitas — jadi seluruh kontrol di atasnya ditulis ulang
-   untuk bidang gelap: putih tembus pandang, tinta putih. Yang tetap mint
-   cuma yang memang menandai keadaan: ubin ikon halaman, tombol tema yang
-   sedang gelap, dan garis fokus.
+   NAVBAR — bilah diam (permintaan pemilik: "navbar tidak ketahan … minta
+   upgrade"). Bidangnya permukaan putih bergaris bawah (KitLayout), jadi
+   kontrolnya kembali ke bentuk kit-nya sendiri: kotak cari abu, tombol bulat
+   mint pucat — bukan perlakuan "di atas latar abu" yang dulu mereka butuhkan.
+   Judul membawa tanggal hari ini di bawahnya.
    ============================================================================= */
 .k-kepalahal__teks { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .k-kepalahal__sub {
@@ -3465,112 +3462,21 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Keping tuts pintas di kotak cari (mis. "Ctrl K"). Monospace sungguhan:
-   tuts pintasan termasuk permukaan "kode" yang boleh memakai --font-kode. */
-.k-cari__pintas {
-  flex: none;
-  padding: 3px 6px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-family: var(--font-kode);
-  font-size: var(--k-t10);
-  line-height: 1;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-/* Hover kit (`--k-hover-tint`, lapisan tinta di atas latar) di bidang hijau
-   jadi lapisan PUTIH — tinta gelap di atas hijau tua tidak terlihat. */
-.kl__kepala { --k-hover-tint: var(--k-nav-kontrol); }
-.kl__kepala .k-kepalahal__kiri { gap: 12px; }
-.kl__kepala .k-kepalahal__judul { color: var(--k-nav-ink); letter-spacing: -0.01em; }
-
-/* Ubin ikon halaman — gambar yang sama dengan baris rel yang menyala. Mint
-   pejal bertinta hijau tua di kedua tema (--brand-mint/-ink memang tidak
-   berbalik), jadi ia satu-satunya bidang terang di bilah. */
-.kl__ikonhal {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--brand-mint);
-  color: var(--brand-mint-ink);
-}
-
-/* Tombol kembali dan tombol bulat: kaca putih tipis. */
-.kl__kepala .k-kepalahal__kembali,
-.kl__kepala .k-bulat {
-  width: 38px;
-  height: 38px;
-  border: 1px solid var(--k-nav-garis);
-  background-color: var(--k-nav-kontrol);
-  color: var(--k-nav-ink);
-  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.kl__kepala .k-kepalahal__kembali { border-radius: 12px; }
-.kl__kepala .k-bulat[data-state="open"],
-.kl__kepala .k-bulat[aria-expanded="true"] {
-  border-color: var(--k-nav-ink-lembut);
-  background-color: var(--k-nav-kontrol-hover);
-}
-/* Fokus: hijau tua di atas hijau tua tidak terlihat — mint. */
-.kl__kepala .k-bulat:focus-visible,
-.kl__kepala .k-kepalahal__kembali:focus-visible { outline: 2px solid var(--brand-mint); outline-offset: 2px; }
-/* Titik merah/amber diberi cincin warna bilah, supaya terbaca terpisah dari
-   tepi tombol kaca di bawahnya. */
-.kl__kepala .k-bulat__tanda { box-shadow: 0 0 0 2px var(--k-nav-a); }
-.kl__kepala .kl__tema[aria-pressed="true"] {
-  border-color: var(--brand-mint);
-  background-color: var(--brand-mint);
-  color: var(--brand-mint-ink);
-}
-
-/* Kotak cari: pil kaca setinggi tombolnya, dengan tuts pintas di kanan. */
-.kl__kepala .kl__cari {
-  --k-cari-h: 38px;
-  flex: 0 1 300px;
-  width: 300px;
-  min-width: 150px;
-  border-color: var(--k-nav-garis);
-  background: var(--k-nav-kontrol);
-  color: var(--k-nav-ink-lembut);
-  cursor: pointer;
-  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.kl__kepala .kl__cari:hover { background: var(--k-nav-kontrol-hover); }
-.kl__kepala .kl__cari:focus-within { border-color: var(--brand-mint); }
-.kl__kepala .kl__cari .k-cari__input { color: var(--k-nav-ink); cursor: pointer; }
-.kl__kepala .kl__cari .k-cari__input::placeholder { color: var(--k-nav-ink-lembut); opacity: 1; }
-.kl__kepala .kl__cari > svg { order: -1; color: var(--k-nav-ink); }
-.kl__kepala .kl__cari .k-cari__pintas {
-  border-color: var(--k-nav-garis);
-  background: var(--k-nav-kontrol);
-  color: var(--k-nav-ink-lembut);
-}
-/* Di ponsel tuts pintas tidak ada artinya. */
-@media (hover: none), (max-width: 40rem) {
-  .kl__kepala .kl__cari .k-cari__pintas { display: none; }
-}
-/* Laptop kecil: judul halaman yang didahulukan. Pada 1024 kotak cari 300
-   memotong "Semua Transaksi" jadi "Semua Transa…" — kotak cari mengalah
-   dan keping tuts pintasnya dilepas. */
-@media (max-width: 1288px) {
-  .kl__kepala .kl__cari { flex-basis: 200px; width: 200px; }
-  .kl__kepala .kl__cari .k-cari__pintas { display: none; }
-}
-
-/* Kepala rel TIDAK lagi segaris dengan navbar (dulu garis bawahnya
-   menyambung menembus rel — "jangan menyatu"). Tingginya 92 supaya logo
-   duduk di garis tengah navbar yang melayang (14 + 64/2 = 46). */
+.kl__kepala .k-cari { width: 282px; }
+.kl__tema[aria-pressed="true"] { background: var(--brand-mint); color: var(--brand-mint-ink); }
+/* Kepala rel TANPA garis bawah. Dulu garisnya segaris dengan garis bawah
+   navbar dan menyambung menembus rel — rel dan navbar terbaca satu bingkai,
+   yang ditolak pemilik ("jangan menyatu dengan sidebar"). Sekarang kepala
+   halaman ada di panel melengkung, seperti frame 01. */
 /* `flex: none` di sini, bukan cuma di desktop: di laci ponsel rel juga flex
    kolom setinggi layar, dan kepalanya menyusut sampai 27px — logonya
    terpotong. */
 .kl #kl-rel .k-sisi__kepala,
 .kl #kl-rel .k-sisi__kaki { flex: none; }
+/* 82: logo duduk di garis tengah judul halaman (22 + 38/2 = 41), seperti
+   logo dan judul "Dashboard" di frame 01. */
 .kl #kl-rel .k-sisi__kepala {
-  height: 92px;
+  height: 82px;
   margin: 0 -16px;
   padding-left: 32px;
 }
