@@ -370,6 +370,10 @@
   color: var(--brand);
 }
 .k-tombol--secondary:hover:not(:disabled) { background: var(--brand-mint); }
+/* Di tema gelap --brand DAN --brand-mint sama-sama #BBF49C, jadi hover di
+   atas tinta --brand menggambar mint di atas mint — teksnya hilang (jebakan
+   #37, rasio 1,00). Tinta hover-nya hijau tua seperti tombol utama. */
+:root[data-theme="dark"] .k-tombol--secondary:hover:not(:disabled) { color: var(--brand-mint-ink); }
 
 .k-tombol--ghost {
   background: transparent;

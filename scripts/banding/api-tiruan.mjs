@@ -336,7 +336,7 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
   /* Enum project_category di database tidak punya "hospitality" — proyek
      kafe masuk "commercial". Data tiruan mengikuti databasenya, bukan peta
      label di panel. */
-  category: i % 2 ? "residential" : "commercial",
+  category: i === 0 ? "coffeeshop" : i % 2 ? "residential" : "commercial",
   coverImageUrl: i < 3 ? `http://127.0.0.1:${PORT}/media/projects/uji/contoh-${i + 1}.svg` : null,
   status: i === 3 ? "draft" : "published",
   city: ["Pontianak", "Singkawang", "Pontianak", "Kubu Raya", "Pontianak"][i],
@@ -348,7 +348,49 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
   phase: ["konsep", "ded", "perizinan", "konstruksi", "selesai"][i],
   year: 2026 - (i % 3),
   publishedAt: `2026-0${9 - i}-01T00:00:00Z`,
+  scopeOfWork: i === 0
+    ? "Desain interior coffee shop dua lantai: alur bar dan dapur, area duduk 48 kursi, fasad, dan pencahayaan."
+    : null,
+  deadlinePreview: i < 2 ? ["2026-10-08", "2026-09-28"][i] : null,
+  deadlineFinal: i < 2 ? ["2026-10-15", "2026-10-02"][i] : null,
 }));
+
+/* Tim per peran (fase 1-2 alur Excel pemilik). Hitungannya disalin dari
+   repository/projectTeam.ts — persen × fee design, tahap awal saat DP
+   masuk, tahap akhir saat pipeline ≥ finish — supaya panel lokal
+   menggambar angka yang sama dengan produksi. */
+const aturanFee = { pctLeader: null, pctDrafter: 10, pctRender: 5, pctEstimator: null, poolPct: 10, firstTranchePct: 50 };
+const URUT_TAHAP = ["proposal", "deal_kontrak", "dp_50", "desain_1", "desain_2", "finish", "pelunasan"];
+const timProyek = [
+  ["k1", "t1", "leader", null], ["k1", "t3", "drafter", 10], ["k1", "t4", "render", 5],
+  ["k2", "t1", "leader", null], ["k2", "t5", "drafter", 10], ["k2", "t4", "render", 2.5], ["k2", "t2", "render", 2.5],
+  ["k4", "t3", "drafter", 10], ["k4", "t6", "estimator", null],
+].map(([projectId, teamMemberId, role, pct], i) => ({ id: `pt${i + 1}`, projectId, teamMemberId, role, pct, note: null }));
+const pctPeran = (r) => ({ leader: aturanFee.pctLeader, drafter: aturanFee.pctDrafter, render: aturanFee.pctRender, estimator: aturanFee.pctEstimator })[r];
+function hitungTim(a) {
+  const p = proyekAdmin.find((x) => x.id === a.projectId);
+  const o = timAdmin.find((x) => x.id === a.teamMemberId);
+  const pctBerlaku = a.pct ?? pctPeran(a.role);
+  const fee = p?.contractValue ?? null;
+  const hak = fee !== null && pctBerlaku !== null ? Math.round((fee * pctBerlaku) / 100) : null;
+  const awal = hak === null ? null : Math.round((hak * aturanFee.firstTranchePct) / 100);
+  const nominal = { awal, akhir: hak === null ? null : hak - awal };
+  const iTahap = URUT_TAHAP.indexOf(p?.pipelineStage ?? "proposal");
+  const syarat = { awal: iTahap >= 2 || (bayarAdmin[a.projectId] ?? []).some((b) => b.kind === "dp"), akhir: iTahap >= 5 };
+  const bayar = [...biayaKeu, ...biayaRiwayat].filter((b) => b.projectTeamId === a.id);
+  const tahap = ["awal", "akhir"].filter((t) => nominal[t] !== 0 || bayar.some((b) => b.payoutStage === t)).map((t) => {
+    const b = bayar.find((x) => x.payoutStage === t);
+    if (b) return { tahap: t, nominal: nominal[t], keadaan: "dibayar", costId: b.id, dibayar: b.amount, dibayarPada: b.incurredOn };
+    return { tahap: t, nominal: nominal[t], keadaan: nominal[t] === null ? "belum_ditentukan" : syarat[t] ? "jatuh_tempo" : "menunggu",
+      costId: null, dibayar: null, dibayarPada: null };
+  });
+  const dibayar = bayar.reduce((n, b) => n + b.amount, 0);
+  return { ...a, projectTitle: p?.title, teamMemberName: o?.name, teamMemberKind: o?.kind, pctBerlaku, feeDesign: fee,
+    hak, dibayar, terutang: hak === null ? null : hak - dibayar, tahap };
+}
+const URUT_PERAN = ["leader", "drafter", "render", "estimator"];
+const daftarTimProyek = (pid) => timProyek.filter((a) => !pid || a.projectId === pid)
+  .sort((a, b) => URUT_PERAN.indexOf(a.role) - URUT_PERAN.indexOf(b.role)).map(hitungTim);
 
 /* Foto galeri dan material per proyek. Proyek pertama penuh (enam galeri,
    tiga material), yang lain berkurang — supaya kisi foto, batas sepuluh,
@@ -671,6 +713,15 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/fee/projects")) return feeProyek(path);
   if (path.startsWith("/api/v1/admin/clients")) return urutKlien();
   if (path.startsWith("/api/v1/admin/studio-team")) return orangStudio;
+  if (path.startsWith("/api/v1/admin/fee-rules")) return aturanFee;
+  if (path.startsWith("/api/v1/admin/team-payouts")) {
+    const o = path.match(/teamMemberId=([^&]+)/);
+    return daftarTimProyek(null).filter((a) => !o || a.teamMemberId === o[1]);
+  }
+  {
+    const m = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/team$/);
+    if (m) return daftarTimProyek(m[1]);
+  }
   if (path.startsWith("/api/v1/admin/team")) return timAdmin;
   if (path.startsWith("/api/v1/admin/directory")) return kontakAdmin;
   if (path.startsWith("/api/v1/admin/testimonials")) return testimoniAdmin;
@@ -761,6 +812,67 @@ const jawab = (path) => {
 function tulis(metode, path, badan) {
   if (path === "/api/v1/admin/publish" && metode === "POST") return { dimulai: true };
   if (path.startsWith("/api/v1/admin/")) capBerubah = new Date().toISOString();
+  /* Proyek baru dan ubah proyek — sebelumnya jatuh ke balasan umum, jadi
+     form Proyek Baru "berhasil" tanpa proyek apa pun muncul. */
+  if (path === "/api/v1/admin/projects" && metode === "POST") {
+    const id = `pbaru${proyekAdmin.length + 1}`;
+    proyekAdmin.unshift({ id, slug: badan.slug, title: badan.title, category: badan.category ?? "residential",
+      status: "draft", isFeatured: false, contractValue: null, paidTotal: 0, pipelineStage: "proposal", phase: null });
+    return { id };
+  }
+  {
+    const up = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)$/);
+    if (up && metode === "PATCH") {
+      const x = proyekAdmin.find((y) => y.id === up[1]);
+      if (!x) return { galat: 404 };
+      Object.assign(x, badan);
+      return { updated: true };
+    }
+  }
+  if (path === "/api/v1/admin/fee-rules" && metode === "PATCH") {
+    for (const [k, v] of Object.entries(badan)) if (k in aturanFee) aturanFee[k] = v;
+    return aturanFee;
+  }
+  {
+    const tb = path.match(/^\/api\/v1\/admin\/projects\/([^/?]+)\/team$/);
+    if (tb && metode === "POST") {
+      if (timProyek.some((a) => a.projectId === tb[1] && a.role === badan.role && a.teamMemberId === badan.teamMemberId)) {
+        return { galat: 422 };
+      }
+      const id = `pt${Date.now()}`;
+      timProyek.push({ id, projectId: tb[1], teamMemberId: badan.teamMemberId, role: badan.role,
+        pct: "pct" in badan ? badan.pct : pctPeran(badan.role), note: badan.note ?? null });
+      return { id };
+    }
+    const tu = path.match(/^\/api\/v1\/admin\/project-team\/([^/?]+)$/);
+    if (tu) {
+      const i = timProyek.findIndex((a) => a.id === tu[1]);
+      if (i < 0) return { galat: 404 };
+      if (metode === "DELETE") {
+        if ([...biayaKeu, ...biayaRiwayat].some((b) => b.projectTeamId === tu[1])) return { galat: 409 };
+        timProyek.splice(i, 1);
+        return { deleted: true };
+      }
+      Object.assign(timProyek[i], badan);
+      return { updated: true };
+    }
+    if (path === "/api/v1/admin/team-payouts" && metode === "POST") {
+      const a = timProyek.find((x) => x.id === badan.projectTeamId);
+      if (!a) return { galat: 404 };
+      const h = hitungTim(a);
+      const t = h.tahap.find((x) => x.tahap === badan.tahap);
+      if (t?.keadaan === "dibayar") return { galat: 409 };
+      const amount = badan.amount ?? t?.nominal;
+      if (!amount) return { galat: 422 };
+      const id = `byr${Date.now()}`;
+      biayaRiwayat.unshift({ id, projectId: a.projectId, projectTitle: h.projectTitle,
+        label: `${a.role[0].toUpperCase()}${a.role.slice(1)} ${h.projectTitle} — tahap ${badan.tahap === "awal" ? "awal (DP masuk)" : "akhir (desain selesai)"}`,
+        category: h.teamMemberKind === "partner" ? "prinsipal" : "freelancer", amount,
+        incurredOn: badan.paidOn || new Date().toISOString().slice(0, 10),
+        teamMemberId: a.teamMemberId, teamMemberName: h.teamMemberName, projectTeamId: a.id, payoutStage: badan.tahap });
+      return { id };
+    }
+  }
   /* Tugas, tim, direktori, testimoni — halaman Tugas & daftar menulis lalu
      mengambil ulang, jadi tanpa penyimpanan di sini jalur suksesnya tidak
      pernah benar-benar terlihat. */

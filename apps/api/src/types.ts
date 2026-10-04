@@ -78,6 +78,12 @@ export interface Project {
   contractValue?: number | null;
   /** Nomor WhatsApp klien, angka saja (mis. 628123456789). */
   clientWhatsapp?: string | null;
+  /** Lingkup kerja yang disepakati studio — internal, tidak pernah ke situs publik. */
+  scopeOfWork?: string | null;
+  /** Tenggat preview untuk klien (YYYY-MM-DD). */
+  deadlinePreview?: string | null;
+  /** Tenggat desain final (YYYY-MM-DD). */
+  deadlineFinal?: string | null;
   /** Jumlah uang yang BENAR-BENAR sudah diterima proyek ini. Dipakai tabel
    *  untuk memutuskan antara "Belum Bayar", DP berjalan, dan "Lunas". */
   paidTotal?: number;
@@ -129,6 +135,12 @@ export interface ProjectInput {
   pipelineStage?: string;
   contractValue?: number | null;
   clientWhatsapp?: string | null;
+  /** Lingkup kerja yang disepakati studio — internal, tidak pernah ke situs publik. */
+  scopeOfWork?: string | null;
+  /** Tenggat preview untuk klien (YYYY-MM-DD). */
+  deadlinePreview?: string | null;
+  /** Tenggat desain final (YYYY-MM-DD). */
+  deadlineFinal?: string | null;
 }
 
 /** Satu uang masuk yang benar-benar diterima — bukan tagihan. */

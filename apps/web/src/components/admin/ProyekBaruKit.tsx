@@ -1,28 +1,45 @@
-import { IsianPanjang } from "../kit/Formulir";
-import { useState } from "react";
+import { IsianPanjang, IsianTanggal, IsianTempel, KelompokIsian, PilihAsli } from "../kit/Formulir";
+import { Lipat } from "../kit/Tampilan";
+import { useEffect, useMemo, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider, useToast, titipToast } from "../kit/Toast";
-import { Tombol } from "../kit/Tombol";
+import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
 import { Ikon } from "../kit/Ikon";
-import { ImageSquare } from "../kit/ikon";
-import { buatProyek, simpanProyek, mintaUrlUnggah, type Proyek } from "../../lib/admin";
+import { ImageSquare, Plus, X } from "../kit/ikon";
+import {
+  buatProyek, simpanProyek, mintaUrlUnggah, daftarTim, ambilAturanFee, tambahTimProyek, pctBawaan,
+  LABEL_PERAN, URUTAN_PERAN, type Proyek, type AnggotaTim, type AturanFee, type PeranTim,
+} from "../../lib/admin";
+import { formatRupiah } from "../../lib/format";
 import { useCegahPindah } from "../../lib/cegahPindah";
-import { setProyekAktif, HALAMAN_PROYEK } from "../../lib/proyekAktif";
+import { setProyekAktif } from "../../lib/proyekAktif";
 
-/* Langsung ke Halaman Publik proyeknya, BUKAN lewat /admin/proyek/edit.
-   Alamat lama itu halaman kit sungguhan yang lalu mengalihkan sendiri — jadi
-   ia yang menjemput toast titipan "Proyek dibuat", lalu membuangnya bersama
-   dirinya saat mengalihkan. Hasilnya sama: proyek aktif ditetapkan, lalu
-   halaman pertama proyek dibuka. */
-async function bukaHalamanProyek(id: string) {
+/* Sesudah dibuat, yang dibuka SATU PROYEK — bukan Halaman Publik seperti
+   dulu. Proyek kini lahir sebagai PEKERJAAN (baris LIST PROJECT di Excel
+   pemilik): yang dikerjakan sesudahnya tim, tagihan, dan tahapnya; halaman
+   publik datang belakangan, kalau hasilnya layak dipotret. Langsung ke
+   alamatnya, bukan lewat /admin/proyek/edit yang mengalihkan sendiri dan
+   ikut membuang toast titipan. */
+async function bukaSatuProyek(id: string) {
   setProyekAktif(id);
-  await navigate(HALAMAN_PROYEK[0]!);
+  await navigate(`/admin/proyek/satu?id=${encodeURIComponent(id)}`);
 }
 
 /* =============================================================================
-   Proyek Baru di kerangka kit.
+   Proyek Baru di kerangka kit — sebagai FORM PEKERJAAN.
+
+   Urutan isiannya mengikuti sheet "LIST PROJECT" di Excel pemilik, bukan
+   halaman portofolio: klien, jenis, nama, kota, lingkup kerja, tim desain per
+   peran, fee design, tenggat. Halaman publik (sampul, subjudul, ringkasan)
+   turun jadi bagian lipat "bisa nanti" — dulu justru itu yang di atas, dan
+   proyek yang baru deal dipaksa mulai dari foto yang belum ada.
+
+   Bidang besar di atas tidak lagi kotak sampul melainkan HITUNGANNYA: fee
+   design, bagian tim, dan sisa untuk studio, dihitung langsung saat diketik.
+   Persen tiap peran diambil dari Aturan Fee Tim; Leader dan Estimator kosong
+   sampai pemilik menentukannya.
 
    Tidak punya frame sendiri di Coinest. Bentuknya dipinjam dari frame
    "34. Promo Details" dalam mode ubah — pola yang sudah di-ACC untuk "Paket
@@ -65,43 +82,120 @@ function keSlug(judul: string) {
 }
 
 const KOSONG = {
+  client: "",
   title: "",
-  slug: "",
-  category: "residential",
+  category: "coffeeshop",
+  city: "",
+  location: "",
+  scopeOfWork: "",
+  fee: "",
+  deadlinePreview: "",
+  deadlineFinal: "",
   subtitle: "",
   summary: "",
-  city: "",
   year: "",
-  client: "",
   areaSqm: "",
+};
+
+interface BarisTim {
+  kunci: string;
+  role: PeranTim;
+  orang: string;
+  pct: string;
+  /** Baris tambahan (peran dibagi dua orang) bisa dibuang; empat baris dasar tidak. */
+  tambahan: boolean;
+  /** Persen sudah disentuh staf — jangan ditimpa saat aturan studio tiba. */
+  disentuh: boolean;
+}
+
+const barisDasar = (): BarisTim[] =>
+  URUTAN_PERAN.map((role) => ({ kunci: role, role, orang: "", pct: "", tambahan: false, disentuh: false }));
+
+/** "12.000.000" ↔ 12000000. Titik ribuan ditulis saat mengetik, seperti di Excel pemilik. */
+const angkaDari = (v: string) => Number(v.replace(/\D/g, "")) || 0;
+const titikRibuan = (v: string) => {
+  const n = v.replace(/\D/g, "");
+  return n ? Number(n).toLocaleString("id-ID") : "";
 };
 
 function Isi() {
   const toast = useToast();
   const [f, setF] = useState({ ...KOSONG });
+  const [tim, setTim] = useState<BarisTim[]>(barisDasar);
+  const [orangTim, setOrangTim] = useState<AnggotaTim[]>([]);
+  const [aturan, setAturan] = useState<AturanFee | null>(null);
   const [sampul, setSampul] = useState<{ key: string; url: string } | null>(null);
   const [mengunggah, setMengunggah] = useState(false);
   const [menyimpan, setMenyimpan] = useState(false);
 
-  /* Apa pun yang sudah diketik — termasuk sampul yang sudah terunggah —
-     berarti ada yang bisa hilang kalau halaman ditinggalkan. */
+  useEffect(() => {
+    daftarTim().then((d) => setOrangTim(d.filter((o) => o.active))).catch(() => setOrangTim([]));
+    ambilAturanFee()
+      .then((a) => {
+        setAturan(a);
+        /* Persen bawaan baru diketahui sekarang. Baris yang sudah disentuh
+           staf dibiarkan — mengetik lebih cepat dari jaringan bukan salah. */
+        setTim((t) =>
+          t.map((b) => (b.disentuh ? b : { ...b, pct: pctBawaan(a, b.role)?.toString().replace(".", ",") ?? "" })),
+        );
+      })
+      .catch(() => setAturan(null));
+  }, []);
+
   const adaIsian =
     sampul !== null ||
+    tim.some((b) => b.orang) ||
     (Object.keys(KOSONG) as (keyof typeof KOSONG)[]).some((k) => f[k] !== KOSONG[k]);
   useCegahPindah(adaIsian && !menyimpan);
 
   const set = (k: keyof typeof KOSONG, v: string) => setF((x) => ({ ...x, [k]: v }));
-  const judulSah = f.title.trim().length >= 2;
-  const bisaSimpan = judulSah && f.slug.length >= 2 && !menyimpan && !mengunggah;
+  const setBaris = (kunci: string, patch: Partial<BarisTim>) =>
+    setTim((t) => t.map((b) => (b.kunci === kunci ? { ...b, ...patch } : b)));
+
+  const fee = angkaDari(f.fee);
+  const persen = (b: BarisTim) => {
+    const v = b.pct.replace(",", ".").trim();
+    return v === "" ? null : Number(v);
+  };
+  const rupiahBaris = (b: BarisTim) => {
+    const p = persen(b);
+    return b.orang && fee > 0 && p !== null && Number.isFinite(p) ? Math.round((fee * p) / 100) : null;
+  };
+  const terisi = tim.filter((b) => b.orang);
+  const bagianTim = terisi.reduce((n, b) => n + (rupiahBaris(b) ?? 0), 0);
+  const pctTim = terisi.reduce((n, b) => n + (persen(b) ?? 0), 0);
+  const belumDitentukan = terisi.filter((b) => persen(b) === null);
+
+  const judul = (f.title.trim() || f.client.trim()).slice(0, 120);
+  const slug = keSlug(judul);
+  const pctSalah = tim.some((b) => {
+    const p = persen(b);
+    return p !== null && (!Number.isFinite(p) || p < 0 || p > 100);
+  });
+  const urutanSalah = !!(f.deadlinePreview && f.deadlineFinal && f.deadlineFinal < f.deadlinePreview);
   /* Tombol yang mati selalu menyebut sebabnya — sama dengan editor Jurnal. */
-  const alasan = !judulSah
-    ? "Isi judul dulu, minimal 2 huruf."
-    : mengunggah
-      ? "Tunggu sampulnya selesai terunggah."
-      : null;
+  const alasan =
+    f.client.trim().length < 2
+      ? "Isi nama klien dulu, minimal 2 huruf."
+      : slug.length < 2
+        ? "Nama proyek butuh minimal 2 huruf atau angka."
+        : pctSalah
+          ? "Persen peran harus angka 0–100."
+          : urutanSalah
+            ? "Tenggat final tidak boleh sebelum tenggat preview."
+            : mengunggah
+              ? "Tunggu sampulnya selesai terunggah."
+              : null;
+  const bisaSimpan = !alasan && !menyimpan;
+
+  /* Orang yang sudah dipilih di peran yang sama tidak ditawarkan lagi di
+     baris tambahan peran itu — database menolak pasangan yang sama dua kali. */
+  const pilihanOrang = (b: BarisTim) =>
+    orangTim.filter((o) => o.id === b.orang || !tim.some((x) => x !== b && x.role === b.role && x.orang === o.id));
 
   function kosongkan() {
     setF({ ...KOSONG });
+    setTim(barisDasar().map((b) => ({ ...b, pct: aturan ? pctBawaan(aturan, b.role)?.toString().replace(".", ",") ?? "" : "" })));
     setSampul((s) => {
       if (s) URL.revokeObjectURL(s.url);
       return null;
@@ -110,11 +204,10 @@ function Isi() {
 
   async function unggah(berkas: File) {
     /* Kunci penyimpanannya dikelompokkan per proyek, jadi sampul butuh slug
-       — yang belum ada kalau judulnya belum diketik. */
-    const slug = f.slug || keSlug(f.title) || "tanpa-slug";
+       — yang belum ada kalau nama dan kliennya belum diketik. */
     setMengunggah(true);
     try {
-      const target = await mintaUrlUnggah(slug, berkas.type);
+      const target = await mintaUrlUnggah(slug || "tanpa-slug", berkas.type);
       const res = await fetch(target.uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": berkas.type },
@@ -137,206 +230,445 @@ function Isi() {
     if (!bisaSimpan) return;
     setMenyimpan(true);
     try {
-      const { id } = await buatProyek(f.slug, f.title.trim(), f.category);
-      const patch: Partial<Proyek> & { coverImageKey?: string } = {};
+      const { id } = await buatProyek(slug, judul, f.category);
+      const patch: Partial<Proyek> & { coverImageKey?: string } = { client: f.client.trim() };
+      if (f.city.trim()) patch.city = f.city.trim();
+      if (f.location.trim()) patch.location = f.location.trim();
+      if (f.scopeOfWork.trim()) patch.scopeOfWork = f.scopeOfWork.trim();
+      if (fee > 0) patch.contractValue = fee;
+      if (f.deadlinePreview) patch.deadlinePreview = f.deadlinePreview;
+      if (f.deadlineFinal) patch.deadlineFinal = f.deadlineFinal;
       if (f.subtitle.trim()) patch.subtitle = f.subtitle.trim();
       if (f.summary.trim()) patch.summary = f.summary.trim();
-      if (f.city.trim()) patch.city = f.city.trim();
-      if (f.client.trim()) patch.client = f.client.trim();
       if (f.year.trim()) patch.year = Number(f.year);
       if (f.areaSqm.trim()) patch.areaSqm = Number(f.areaSqm);
       if (sampul) patch.coverImageKey = sampul.key;
-      if (Object.keys(patch).length > 0) {
-        /* Proyeknya SUDAH terbuat. Kalau patch gagal, jangan buang yang sudah
-           jadi — cukup beri tahu dan tetap lanjut ke editornya. */
+
+      /* Proyeknya SUDAH terbuat. Yang gagal sesudahnya tidak membatalkan
+         apa pun — dikumpulkan, disebut di toast, dan bisa dilengkapi di
+         Satu Proyek. */
+      const gagal: string[] = [];
+      try {
+        await simpanProyek(id, patch);
+      } catch (err) {
+        gagal.push(`detail proyek (${(err as Error).message})`);
+      }
+      for (const b of terisi) {
+        const p = persen(b);
+        const bawaan = aturan ? pctBawaan(aturan, b.role) : null;
         try {
-          await simpanProyek(id, patch);
-        } catch (err) {
-          /* Dititipkan: toast() di sini lenyap bersama halamannya, dan
-             pemilik tidak pernah tahu ada detail yang tidak tersimpan. */
-          titipToast({
-            judul: "Proyek dibuat, sebagian detail gagal disimpan",
-            keterangan: `${(err as Error).message} Isi ulang di halaman ini.`,
-            nada: "gagal",
+          /* Persen yang sama dengan bawaan TIDAK dikirim: API mengambilnya
+             sendiri dari aturan studio, dan peran yang belum ditentukan
+             tersimpan kosong supaya ikut aturan begitu pemilik mengisinya. */
+          await tambahTimProyek(id, {
+            teamMemberId: b.orang,
+            role: b.role,
+            ...(p !== null && p !== bawaan ? { pct: p } : {}),
           });
-          await bukaHalamanProyek(id);
-          return;
+        } catch (err) {
+          const nama = orangTim.find((o) => o.id === b.orang)?.name ?? "anggota";
+          gagal.push(`${LABEL_PERAN[b.role]} ${nama} (${(err as Error).message})`);
         }
       }
-      titipToast({ judul: "Proyek dibuat", keterangan: "Lengkapi foto dan ceritanya di sini, lalu tekan Terbitkan.", nada: "sukses" });
-      await bukaHalamanProyek(id);
+
+      /* Dititipkan: toast() di sini lenyap bersama halamannya (jebakan #40). */
+      titipToast(
+        gagal.length
+          ? {
+              judul: "Proyek dibuat, sebagian belum tersimpan",
+              keterangan: `Gagal: ${gagal.join("; ")}. Lengkapi di halaman ini.`,
+              nada: "gagal",
+            }
+          : {
+              judul: "Proyek dibuat",
+              keterangan: terisi.length
+                ? `${terisi.length} orang ditugaskan. Bayaran tahap awal jatuh tempo begitu DP klien masuk.`
+                : "Tugaskan tim desainnya di bagian Tim & Bayaran.",
+              nada: "sukses",
+            },
+      );
+      await bukaSatuProyek(id);
     } catch (err) {
       toast({ judul: "Gagal membuat proyek", keterangan: (err as Error).message, nada: "gagal" });
       setMenyimpan(false);
     }
   }
 
+  const kategoriLabel = KATEGORI[f.category] ?? f.category;
+  const pctTampil = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
+  const ringkasTim = useMemo(
+    () => terisi.map((b) => `${LABEL_PERAN[b.role]}: ${orangTim.find((o) => o.id === b.orang)?.name ?? "—"}`),
+    [terisi, orangTim],
+  );
+
   return (
-    <div className="pas">
-      <div className={`pf__sampul${sampul ? "" : " pf__sampul--kosong"}`}>
-        {sampul ? (
-          <img src={sampul.url} alt="Sampul proyek" />
-        ) : (
-          <span className="pf__sampulkosong">
-            <Ikon ikon={ImageSquare} ukuran={32} />
-            <b>Gambar sampul (opsional)</b>
-            <small>
-              JPG, PNG, WebP, atau AVIF. Tampil sebagai gambar pertama di halaman proyek dan kartunya. Bisa diganti
-              kapan saja setelah proyek dibuat.
-            </small>
-          </span>
-        )}
-        <span className="pf__sampulaksi">
-          {/* Utama selagi kosong — secondary sewarna dengan bidang kosongnya. */}
-          <label className={`k-tombol k-tombol--medium ${sampul ? "k-tombol--secondary" : "k-tombol--primary"} pf__unggah`}>
-            {mengunggah ? "Mengunggah…" : sampul ? "Ganti sampul" : "Pilih gambar"}
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/avif"
-              aria-label="Pilih gambar sampul proyek"
-              disabled={mengunggah}
-              onChange={(e) => {
-                const b = e.currentTarget.files?.[0];
-                if (b) unggah(b);
-                e.currentTarget.value = "";
-              }}
-            />
-          </label>
-          {sampul && (
-            <Tombol
-              ukuran="medium"
-              jenis="secondary"
-              onClick={() =>
-                setSampul((s) => {
-                  if (s) URL.revokeObjectURL(s.url);
-                  return null;
-                })
-              }
-            >
-              Buang sampul
-            </Tombol>
-          )}
+    <div className="pas pjb">
+      {/* Bidang besar frame 34 — di Detail Paket berisi rentang fee; di sini
+          fee design proyek ini dan pembagiannya, dihitung saat diketik. */}
+      <div className="pak__bidang pak__bidang--besar pjb__bidang" aria-live="polite">
+        <span className="pak__kelompok">
+          Fee design · {kategoriLabel}
+          {f.client.trim() ? ` · ${f.client.trim()}` : ""}
+        </span>
+        <span className="pak__harga">
+          <small>Rp</small>
+          <b>{fee > 0 ? fee.toLocaleString("id-ID") : "0"}</b>
+        </span>
+        <span className="pak__per">
+          {fee <= 0
+            ? "Isi fee design — bagian tiap orang di tim dihitung dari angka ini."
+            : terisi.length === 0
+              ? "Pilih tim desainnya untuk melihat bagian tiap orang."
+              : `Bagian tim ${formatRupiah(bagianTim)} (${pctTampil(pctTim)}%) · untuk studio ${formatRupiah(fee - bagianTim)}`}
         </span>
       </div>
 
       <div className="pas__badan">
         <div className="pas__utama">
-          <form className="pas__form" onSubmit={simpan}>
+          <form className="pas__form" id="form-proyek-baru" onSubmit={simpan}>
             <div className="pas__judulbaris">
               <h2 className="pas__judul">Proyek baru</h2>
             </div>
-            <div className="pas__kisi">
-              <Isian
-                label="Judul proyek"
-                required
-                maxLength={120}
-                placeholder="mis. Rumah Kaca"
-                value={f.title}
-                onChange={(e) => {
-                  const v = e.currentTarget.value;
-                  /* Slug selalu ikut judul dan tidak bisa disunting sendiri:
-                     begitu proyeknya terbit ia sudah jadi URL publik, dan
-                     slug yang boleh menyimpang cuma menambah satu hal yang
-                     bisa keliru. */
-                  setF((x) => ({ ...x, title: v, slug: keSlug(v) }));
-                }}
-              />
-              <label className="k-isian">
-                <span className="k-isian__label">Kategori</span>
-                <span className="k-isian__kotak pas__pilih">
-                  <select value={f.category} onChange={(e) => set("category", e.currentTarget.value)}>
-                    {Object.entries(KATEGORI).map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
-                </span>
+
+            <section className="pjb__bagian" aria-labelledby="pjb-pekerjaan">
+              <h3 id="pjb-pekerjaan" className="pjb__judul">
+                Pekerjaan
+              </h3>
+              <div className="pas__kisi">
+                <Isian
+                  label="Klien"
+                  required
+                  maxLength={120}
+                  placeholder="mis. Weng Coffee"
+                  value={f.client}
+                  onChange={(e) => set("client", e.currentTarget.value)}
+                />
+                <label className="k-isian">
+                  <span className="k-isian__label">Jenis proyek</span>
+                  <span className="k-isian__kotak pas__pilih">
+                    <select value={f.category} onChange={(e) => set("category", e.currentTarget.value)}>
+                      {Object.entries(KATEGORI).map(([v, l]) => (
+                        <option key={v} value={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                  </span>
+                </label>
+                <Isian
+                  label="Nama proyek"
+                  maxLength={120}
+                  placeholder={f.client.trim() || "Kosong = memakai nama klien"}
+                  value={f.title}
+                  onChange={(e) => set("title", e.currentTarget.value)}
+                  bantu="Boleh kosong — di Excel kolom ini sering kosong, dan nama klien sudah cukup."
+                />
+                <Isian
+                  label="Kota"
+                  placeholder="mis. Pontianak"
+                  value={f.city}
+                  onChange={(e) => set("city", e.currentTarget.value)}
+                />
+                <Isian
+                  label="Alamat lokasi"
+                  className="pas__lebar"
+                  maxLength={200}
+                  placeholder="Jalan dan nomor — untuk kunjungan lokasi"
+                  value={f.location}
+                  onChange={(e) => set("location", e.currentTarget.value)}
+                />
+              </div>
+              <label className="k-isian pas__lebar">
+                <span className="k-isian__label">Lingkup kerja</span>
+                <IsianPanjang
+                  className="pas__area"
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="mis. Desain interior berkonsep pop art; studio berisi layanan nail art dan eyelash."
+                  value={f.scopeOfWork}
+                  onChange={(e) => set("scopeOfWork", e.currentTarget.value)}
+                />
               </label>
-              <Isian
-                label="Alamat halaman"
-                className="pas__lebar"
-                readOnly
-                value={f.slug}
-                placeholder="terisi otomatis dari judul"
-                bantu={`Dibuat otomatis dari judul. Muncul di URL: /proyek/${f.slug || "…"}`}
-              />
-              <Isian
-                label="Kota"
-                placeholder="mis. Pontianak"
-                value={f.city}
-                onChange={(e) => set("city", e.currentTarget.value)}
-              />
-              <Isian
-                label="Tahun"
-                type="number"
-                inputMode="numeric"
-                min={1900}
-                max={2200}
-                placeholder="2026"
-                value={f.year}
-                onChange={(e) => set("year", e.currentTarget.value)}
-              />
-              <Isian
-                label="Klien"
-                placeholder="mis. Keluarga Wijaya"
-                value={f.client}
-                onChange={(e) => set("client", e.currentTarget.value)}
-              />
-              <Isian
-                label="Luas (m²)"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                placeholder="240"
-                value={f.areaSqm}
-                onChange={(e) => set("areaSqm", e.currentTarget.value)}
-              />
-              <Isian
-                label="Subjudul"
-                className="pas__lebar"
-                maxLength={160}
-                placeholder="Satu baris penjelas di bawah judul"
-                value={f.subtitle}
-                onChange={(e) => set("subtitle", e.currentTarget.value)}
-              />
-            </div>
+            </section>
 
-            <label className="k-isian pas__lebar">
-              <span className="k-isian__label">Ringkasan singkat</span>
-              <IsianPanjang
-                className="pas__area"
-                rows={4}
-                placeholder="Dua sampai tiga kalimat yang muncul di kartu proyek."
-                value={f.summary}
-                onChange={(e) => set("summary", e.currentTarget.value)}
-              />
-            </label>
+            <section className="pjb__bagian" aria-labelledby="pjb-fee">
+              <h3 id="pjb-fee" className="pjb__judul">
+                Fee &amp; tenggat
+              </h3>
+              <div className="pas__kisi pjb__kisi3">
+                <IsianTempel
+                  label="Fee design"
+                  kiri="Rp"
+                  inputMode="numeric"
+                  placeholder="12.000.000"
+                  value={f.fee}
+                  onChange={(e) => set("fee", titikRibuan(e.currentTarget.value))}
+                />
+                <IsianTanggal
+                  label="Tenggat preview"
+                  nilai={f.deadlinePreview}
+                  onUbah={(v) => set("deadlinePreview", v)}
+                  placeholder="Pilih tanggal"
+                />
+                <IsianTanggal
+                  label="Tenggat desain final"
+                  nilai={f.deadlineFinal}
+                  onUbah={(v) => set("deadlineFinal", v)}
+                  min={f.deadlinePreview || undefined}
+                  placeholder="Pilih tanggal"
+                />
+              </div>
+            </section>
 
-            <p className="pf__catatan">
-              Selain judul, semuanya boleh dikosongkan dan diisi belakangan. Proyek baru tersimpan sebagai draf —
-              belum tampil di situs sampai diterbitkan dari Halaman Publik.
-            </p>
+            <section className="pjb__bagian" aria-labelledby="pjb-tim">
+              <div className="pjb__kepala">
+                <h3 id="pjb-tim" className="pjb__judul">
+                  Tim desain
+                </h3>
+                <a className="pjb__aturan" href="/admin/pengaturan/fee">
+                  Atur persen peran
+                </a>
+              </div>
+              <div className="pjb__tim" role="table" aria-label="Tim desain dan bagiannya">
+                <div className="pjb__baris pjb__baris--kepala" role="row">
+                  <span role="columnheader">Peran</span>
+                  <span role="columnheader">Orang</span>
+                  <span role="columnheader">Bagian</span>
+                  <span role="columnheader" className="pjb__kanan">
+                    Rupiah
+                  </span>
+                  <span aria-hidden="true" />
+                </div>
+                {tim.map((b) => {
+                  const rp = rupiahBaris(b);
+                  const p = persen(b);
+                  return (
+                    <div className="pjb__baris" role="row" key={b.kunci}>
+                      <span role="cell" className="pjb__peran">
+                        {b.tambahan ? (
+                          <PilihAsli
+                            aria-label="Peran"
+                            value={b.role}
+                            onChange={(e) => {
+                              const role = e.currentTarget.value as PeranTim;
+                              setBaris(b.kunci, {
+                                role,
+                                pct: aturan ? pctBawaan(aturan, role)?.toString().replace(".", ",") ?? "" : "",
+                                disentuh: false,
+                              });
+                            }}
+                          >
+                            {URUTAN_PERAN.map((r) => (
+                              <option key={r} value={r}>
+                                {LABEL_PERAN[r]}
+                              </option>
+                            ))}
+                          </PilihAsli>
+                        ) : (
+                          LABEL_PERAN[b.role]
+                        )}
+                      </span>
+                      <span role="cell">
+                        <PilihAsli
+                          aria-label={`Orang untuk peran ${LABEL_PERAN[b.role]}`}
+                          value={b.orang}
+                          onChange={(e) => setBaris(b.kunci, { orang: e.currentTarget.value })}
+                        >
+                          <option value="">— Belum ada —</option>
+                          {pilihanOrang(b).map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.name}
+                            </option>
+                          ))}
+                        </PilihAsli>
+                      </span>
+                      <span role="cell">
+                        <KelompokIsian
+                          aria-label={`Persen ${LABEL_PERAN[b.role]}`}
+                          inputMode="decimal"
+                          placeholder="—"
+                          value={b.pct}
+                          kanan="%"
+                          className="pjb__pct"
+                          onChange={(e) => setBaris(b.kunci, { pct: e.currentTarget.value.replace(/[^\d.,]/g, ""), disentuh: true })}
+                        />
+                      </span>
+                      <span role="cell" className="pjb__kanan pjb__rp">
+                        {rp !== null ? formatRupiah(rp) : b.orang && p === null ? "belum ditentukan" : "—"}
+                      </span>
+                      <span role="cell">
+                        {b.tambahan && (
+                          <TombolIkon
+                            ikon={X}
+                            judul={`Buang baris ${LABEL_PERAN[b.role]}`}
+                            jenis="ghost"
+                            ukuran="small"
+                            onClick={() => setTim((t) => t.filter((x) => x.kunci !== b.kunci))}
+                          />
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="pjb__timkaki">
+                <Tombol
+                  ukuran="small"
+                  jenis="secondary"
+                  kiri={Plus}
+                  onClick={() =>
+                    setTim((t) => [
+                      ...t,
+                      {
+                        kunci: `tambah-${Date.now()}`,
+                        role: "render",
+                        orang: "",
+                        pct: aturan ? pctBawaan(aturan, "render")?.toString().replace(".", ",") ?? "" : "",
+                        tambahan: true,
+                        disentuh: false,
+                      },
+                    ])
+                  }
+                >
+                  Bagi peran ke orang kedua
+                </Tombol>
+                <p className="pjb__ket">
+                  {orangTim.length === 0
+                    ? "Belum ada anggota tim. Tambahkan dulu di Tim & Freelancer."
+                    : `Persen bawaan dari Aturan Fee Tim. Bayaran tiap orang dibayar dua tahap: ${aturan?.firstTranchePct ?? 50}% saat DP klien masuk, sisanya saat desain selesai.`}
+                </p>
+              </div>
+            </section>
 
-            <div className="pas__aksi">
-              <Tombol ukuran="large" jenis="primary" tipeHtml="submit" disabled={!bisaSimpan}>
-                {menyimpan ? "Membuat…" : "Buat proyek"}
-              </Tombol>
-              <Tombol ukuran="large" jenis="ghost" disabled={menyimpan} onClick={() => navigate("/admin/proyek")}>
-                Batal
-              </Tombol>
-              {alasan && <span className="pf__alasan">{alasan}</span>}
-              {adaIsian && (
-                <button type="button" className="pf__kosongkan" onClick={kosongkan} disabled={menyimpan}>
-                  Kosongkan isian
-                </button>
-              )}
-            </div>
+            <Lipat judul="Untuk halaman publik" ket="Bisa nanti">
+              <div className="pjb__publik">
+                <div className={`pf__sampul pjb__sampul${sampul ? "" : " pf__sampul--kosong"}`}>
+                  {sampul ? (
+                    <img src={sampul.url} alt="Sampul proyek" />
+                  ) : (
+                    <span className="pf__sampulkosong">
+                      <Ikon ikon={ImageSquare} ukuran={28} />
+                      <b>Gambar sampul (opsional)</b>
+                      <small>JPG, PNG, WebP, atau AVIF. Bisa diganti kapan saja di Halaman Publik.</small>
+                    </span>
+                  )}
+                  <span className="pf__sampulaksi">
+                    <label className={`k-tombol k-tombol--small ${sampul ? "k-tombol--secondary" : "k-tombol--primary"} pf__unggah`}>
+                      {mengunggah ? "Mengunggah…" : sampul ? "Ganti sampul" : "Pilih gambar"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        aria-label="Pilih gambar sampul proyek"
+                        disabled={mengunggah}
+                        onChange={(e) => {
+                          const berkas = e.currentTarget.files?.[0];
+                          if (berkas) unggah(berkas);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                  </span>
+                </div>
+                <div className="pas__kisi">
+                  <Isian
+                    label="Subjudul"
+                    className="pas__lebar"
+                    maxLength={160}
+                    placeholder="Satu baris penjelas di bawah judul"
+                    value={f.subtitle}
+                    onChange={(e) => set("subtitle", e.currentTarget.value)}
+                  />
+                  <Isian
+                    label="Tahun"
+                    type="number"
+                    inputMode="numeric"
+                    min={1900}
+                    max={2200}
+                    placeholder="2026"
+                    value={f.year}
+                    onChange={(e) => set("year", e.currentTarget.value)}
+                  />
+                  <Isian
+                    label="Luas (m²)"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    placeholder="240"
+                    value={f.areaSqm}
+                    onChange={(e) => set("areaSqm", e.currentTarget.value)}
+                  />
+                </div>
+                <label className="k-isian">
+                  <span className="k-isian__label">Ringkasan singkat</span>
+                  <IsianPanjang
+                    className="pas__area"
+                    rows={3}
+                    placeholder="Dua sampai tiga kalimat yang muncul di kartu proyek."
+                    value={f.summary}
+                    onChange={(e) => set("summary", e.currentTarget.value)}
+                  />
+                </label>
+              </div>
+            </Lipat>
           </form>
         </div>
+
+        <aside className="pf__samping" aria-label="Ringkasan proyek baru">
+          {/* Tombol simpan DI ATAS: kolom ini setinggi layar di laptop dan
+              daftar timnya bisa panjang — aksi utama tidak boleh jatuh di
+              bawah lipatan. Fee dan nama proyek sudah ada di bidang besar,
+              jadi tidak diulang di sini. */}
+          <div className="pf__simpan pjb__simpan">
+            <Tombol ukuran="large" jenis="primary" tipeHtml="submit" form="form-proyek-baru" disabled={!bisaSimpan}>
+              {menyimpan ? "Membuat…" : "Buat proyek"}
+            </Tombol>
+            <Tombol ukuran="large" jenis="ghost" disabled={menyimpan} onClick={() => navigate("/admin/proyek")}>
+              Batal
+            </Tombol>
+            <span className="pf__alasan">
+              {alasan ?? "Tersimpan sebagai draf — belum tampil di situs sampai diterbitkan."}
+            </span>
+            {adaIsian && (
+              <button type="button" className="pf__kosongkan" onClick={kosongkan} disabled={menyimpan}>
+                Kosongkan isian
+              </button>
+            )}
+          </div>
+          <div className="pf__info">
+            <p className="pas__sampingjudul">Ringkasan</p>
+            <dl className="pf__fakta">
+              <div>
+                <dt>Tim</dt>
+                <dd className="pjb__daftar">
+                  {ringkasTim.length ? ringkasTim.map((t) => <span key={t}>{t}</span>) : "Belum ada yang ditugaskan"}
+                </dd>
+              </div>
+              <div>
+                <dt>Tenggat</dt>
+                <dd>
+                  {f.deadlinePreview || f.deadlineFinal
+                    ? [f.deadlinePreview && `Preview ${tanggalPendek(f.deadlinePreview)}`, f.deadlineFinal && `Final ${tanggalPendek(f.deadlineFinal)}`]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : "Belum diisi"}
+                </dd>
+              </div>
+            </dl>
+            {belumDitentukan.length > 0 && (
+              <p className="pjb__peringatan">
+                Persen {belumDitentukan.map((b) => LABEL_PERAN[b.role]).join(" dan ")} belum ditentukan — bayarannya
+                terhitung otomatis begitu persennya diisi di Aturan Fee Tim.
+              </p>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   );
+}
+
+function tanggalPendek(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export function ProyekBaruKit() {

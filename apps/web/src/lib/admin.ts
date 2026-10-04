@@ -343,6 +343,11 @@ export interface Proyek {
   phase?: string | null;
   contractValue?: number | null;
   clientWhatsapp?: string | null;
+  /** Lingkup kerja yang disepakati — internal, tidak tampil di situs. */
+  scopeOfWork?: string | null;
+  /** Tenggat preview untuk klien dan desain final (YYYY-MM-DD). */
+  deadlinePreview?: string | null;
+  deadlineFinal?: string | null;
   /** Uang yang BENAR-BENAR sudah diterima. Nol berarti belum dibayar sama
    *  sekali — itulah yang memunculkan tombol Bayar Pertama di tabel. */
   paidTotal?: number;
@@ -917,6 +922,84 @@ export const ubahGaji = (
 
 export const hapusGaji = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/payroll/${id}`, { method: "DELETE" });
+
+/* ── Tim per peran & bayaran bertahap (fase 1 alur Excel pemilik) ───────
+ *
+ * Penugasan menyimpan PERSEN; rupiahnya dihitung API dari fee design. Yang
+ * sudah dibayar adalah biaya proyek bertaut tahapnya — jadi Fee, Gaji, dan
+ * laba proyek membaca angka yang sama. */
+
+export type PeranTim = "leader" | "drafter" | "render" | "estimator";
+export type TahapBayar = "awal" | "akhir";
+
+export const LABEL_PERAN: Record<PeranTim, string> = {
+  leader: "Leader",
+  drafter: "Drafter",
+  render: "Render",
+  estimator: "Estimator",
+};
+export const URUTAN_PERAN: PeranTim[] = ["leader", "drafter", "render", "estimator"];
+
+/** Aturan persen studio. null = belum ditentukan (bukan nol). */
+export interface AturanFee {
+  pctLeader: number | null;
+  pctDrafter: number | null;
+  pctRender: number | null;
+  pctEstimator: number | null;
+  poolPct: number;
+  firstTranchePct: number;
+}
+
+export function pctBawaan(a: AturanFee, p: PeranTim): number | null {
+  return { leader: a.pctLeader, drafter: a.pctDrafter, render: a.pctRender, estimator: a.pctEstimator }[p];
+}
+
+export interface TahapBayaran {
+  tahap: TahapBayar;
+  nominal: number | null;
+  keadaan: "dibayar" | "jatuh_tempo" | "menunggu" | "belum_ditentukan";
+  costId: string | null;
+  dibayar: number | null;
+  dibayarPada: string | null;
+}
+
+export interface PenugasanTim {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  teamMemberId: string;
+  teamMemberName: string;
+  teamMemberKind: string;
+  role: PeranTim;
+  pct: number | null;
+  pctBerlaku: number | null;
+  note: string | null;
+  feeDesign: number | null;
+  hak: number | null;
+  dibayar: number;
+  terutang: number | null;
+  tahap: TahapBayaran[];
+}
+
+export const ambilAturanFee = () => panggil<AturanFee>("/admin/fee-rules");
+export const simpanAturanFee = (a: Partial<AturanFee>) =>
+  panggil<AturanFee>("/admin/fee-rules", { method: "PATCH", body: JSON.stringify(a) });
+
+export const daftarTimProyek = (projectId: string) =>
+  panggil<PenugasanTim[]>(`/admin/projects/${projectId}/team`);
+/** `pct` tidak dikirim = ambil dari aturan studio dan dibekukan. */
+export const tambahTimProyek = (
+  projectId: string,
+  t: { teamMemberId: string; role: PeranTim; pct?: number | null; note?: string | null },
+) => panggil<{ id: string }>(`/admin/projects/${projectId}/team`, { method: "POST", body: JSON.stringify(t) });
+export const ubahTimProyek = (id: string, t: { pct?: number | null; note?: string | null; teamMemberId?: string }) =>
+  panggil<{ updated: boolean }>(`/admin/project-team/${id}`, { method: "PATCH", body: JSON.stringify(t) });
+export const hapusTimProyek = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/project-team/${id}`, { method: "DELETE" });
+
+/** Mencatat satu tahap sebagai biaya proyek. Nominal kosong = yang dihitung. */
+export const bayarTahap = (b: { projectTeamId: string; tahap: TahapBayar; amount?: number | null; paidOn?: string | null }) =>
+  panggil<{ id: string }>("/admin/team-payouts", { method: "POST", body: JSON.stringify(b) });
 
 /** Rentang opsional jadi query string; yang kosong tidak ikut dikirim. */
 function kueri(r: Record<string, string | undefined>): string {

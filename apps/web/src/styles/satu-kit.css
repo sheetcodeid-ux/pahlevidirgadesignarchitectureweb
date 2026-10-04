@@ -26,7 +26,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 17px;
 }
-.sat__alat { display: flex; justify-content: flex-end; margin: -8px 0 16px; }
+.sat__alat { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; margin: -8px 0 16px; }
+/* Penanda utang tim di kiri bilah; menu aksi tetap di kanan. */
+.sat__tempo { margin-right: auto; }
+.sat__timbayar { scroll-margin-top: 12px; }
 .sat__garis {
   height: 0;
   /* 168 → garis 188 → 208: garisnya sendiri memakan satu piksel. */
@@ -354,4 +357,72 @@
   .sat__infonilai { margin-top: 18px; }
   .sat__infogaris { margin: 18px 0 16px; }
   .sat__trx { flex: none; overflow: visible; }
+}
+
+/* --- Lingkup & Tenggat, Tim & Bayaran (fase 2 alur Excel pemilik) -----------
+   Dua kartu di antara rincian tahap dan Transaksi, dengan kulit .sat__w yang
+   sama. Bayaran tim: tombol mint "Bayar" hanya untuk tahap yang SUDAH jatuh
+   tempo — itu satu-satunya hal di kartu ini yang menunggu tindakan. */
+.sat__lingkup,
+.sat__timbayar { flex: none; gap: 12px; }
+.sat__lingkupfakta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+.sat__lingkupfakta > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sat__lingkupfakta dt { font-size: var(--k-t12); color: var(--text-muted); }
+.sat__lingkupfakta dd { margin: 0; font-size: var(--k-t14); line-height: 1.45; color: var(--text-strong); }
+.sat__lingkuplebar { grid-column: 1 / -1; }
+
+.tim__ringkas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  max-width: none;
+  margin: 0;
+  font-size: var(--k-t12);
+  color: var(--text-muted);
+}
+.tim__ringkas b { font-weight: var(--k-semi); color: var(--text-strong); }
+.tim__tabel { margin-top: 0; }
+.tim__nama {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--k-semi);
+  line-height: inherit;
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+}
+.tim__nama:hover { text-decoration: underline; text-underline-offset: 3px; }
+.tim__nama:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+.tim__tahap { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.tim__tahap small { font-size: var(--k-t11); color: var(--text-muted); white-space: nowrap; }
+.tim__tunggu { padding: 0; border: 0; background: none; cursor: pointer; }
+.tim__tunggu:hover .k-lencana { border-color: var(--border-strong); }
+.tim__tunggu:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+.tim__catatan {
+  max-width: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--warn-soft);
+  font-size: var(--k-t12);
+  line-height: 1.5;
+  color: var(--warn-ink);
+}
+.tim__hapus { margin-right: auto; }
+
+.sat__dialogisi { display: flex; flex-direction: column; gap: 16px; }
+.sat__dialogdua { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+@media (max-width: 40rem) {
+  .sat__lingkupfakta,
+  .sat__dialogdua { grid-template-columns: minmax(0, 1fr); }
 }

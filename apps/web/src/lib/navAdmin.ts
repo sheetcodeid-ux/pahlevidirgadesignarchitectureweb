@@ -158,6 +158,8 @@ export const NAV: NavItem[] = [
   /* Kategori Pengaturan: isinya baris DATAR, bukan submenu "Pengaturan" di
      dalam kategori "Pengaturan" — dua tingkat bernama sama untuk dua baris. */
   { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "GearSix", group: "Pengaturan" },
+  /* Persen tiap peran tim desain — dibaca Proyek Baru dan Tim & Bayaran. */
+  { label: "Aturan Fee Tim", href: "/admin/pengaturan/fee", icon: "cash", ikonKit: "NavSealPercent", group: "Pengaturan" },
   { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "UserCircle", group: "Pengaturan" },
   /* Ke pustaka komponen KIT, bukan /admin/ui: /admin/ui berisi sistem lama di
      kerangka lama, dan menu yang membawa ke tampilan lain sama sekali terbaca

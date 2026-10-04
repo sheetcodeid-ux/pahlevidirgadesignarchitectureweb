@@ -28,6 +28,7 @@ import {
 } from "../../lib/admin";
 import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 import { TAHAP, PilihTeks } from "./ProyekKit";
+import { LingkupTenggat, TimDanBayaran } from "./timProyekKit";
 
 /* =============================================================================
    Satu Proyek — frame Figma "22. Saving Plans".
@@ -165,8 +166,24 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
   }, []);
 
   const kini = (proyek ?? []).find((p) => p.id === id) ?? proyek?.[0] ?? null;
+  const segarkanProyek = () =>
+    daftarProyek()
+      .then((d) => {
+        tulisCache("proyek", d);
+        setProyek(d);
+      })
+      .catch(() => {});
+  const segarkanUang = () => {
+    semuaBiaya()
+      .then((d) => {
+        tulisCache("biaya-semua", d);
+        setBiaya(d);
+      })
+      .catch(() => {});
+  };
   const toast = useToast();
   const [membuatPdf, setMembuatPdf] = useState(false);
+  const [timJatuhTempo, setTimJatuhTempo] = useState(0);
   async function pdf(buat: (p: Proyek) => Promise<string>) {
     if (!kini || membuatPdf) return;
     setMembuatPdf(true);
@@ -366,6 +383,19 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
           dokumennya — dulu tersebar di ikon-ikon kecil kepala seksi. */}
       {kini && (
         <div className="sat__alat">
+          {/* Seksi Tim & Bayaran duduk di bawah lipatan kartu rincian, jadi
+              utang ke tim yang sudah jatuh tempo diberi pintu di sini. */}
+          {timJatuhTempo > 0 && (
+            <Tombol
+              ukuran="small"
+              jenis="secondary"
+              kiri={CoinOut}
+              className="sat__tempo"
+              onClick={() => document.getElementById("tim-bayaran")?.scrollIntoView({ block: "start", behavior: "smooth" })}
+            >
+              {timJatuhTempo} bayaran tim jatuh tempo
+            </Tombol>
+          )}
           <BilahMenu
             label="Aksi proyek"
             menus={[
@@ -640,6 +670,13 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
               </article>
             </div>
           </div>
+
+          {/* ---- Pekerjaan: lingkup, tenggat, tim per peran ------------------
+              Kolom LIST PROJECT dan TEAM DESIGN di Excel pemilik. Membayar satu
+              tahap mencatat biaya proyek, jadi Transaksi di bawahnya ikut
+              diambil ulang. */}
+          {kini && <LingkupTenggat proyek={kini} onBerubah={segarkanProyek} />}
+          {kini && <TimDanBayaran proyek={kini} onBerubah={segarkanUang} onJatuhTempo={setTimJatuhTempo} />}
 
           {/* ---- Transaksi proyek ------------------------------------------ */}
           <article className="sat__w sat__trx">

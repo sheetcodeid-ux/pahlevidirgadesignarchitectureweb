@@ -15,6 +15,7 @@ import * as targets from "../src/repository/targets";
 import * as costs from "../src/repository/costs";
 import * as fee from "../src/repository/fee";
 import * as team from "../src/repository/team";
+import * as adminRepo from "../src/repository/admin";
 
 const DIR_PG = "/var/lib/postgresql/uji";
 const adaPostgres = existsSync(`${DIR_PG}/sock/.s.PGSQL.55432`);
@@ -174,6 +175,19 @@ it.skipIf(!adaPostgres)("tim, bayaran, kas, dan target jalan dengan setelan kone
   cek("semester yang tidak mulai 1 Jan / 1 Jul ditolak", (await galat(() => targets.kemajuan(sql, "2026-03-01"))) !== null);
   await targets.simpan(sql, { semesterStart: "2027-01-01", amount: 1_200_000_000 });
   cek("target semester baru tersimpan", (await targets.kemajuan(sql, "2027-01-01")).target === 1_200_000_000);
+
+  console.log("\n── lingkup kerja dan tenggat (fase 2) ──");
+  await adminRepo.update(sql, weng.id, {
+    scopeOfWork: "  Interior coffee shop, bar dan dapur  ", deadlinePreview: "2026-08-24", deadlineFinal: "2026-08-26",
+  });
+  let wengRow = (await adminRepo.listAll(sql, "")).find((p) => p.id === weng.id);
+  cek("lingkup tersimpan dipangkas, tenggat terbaca sebagai YYYY-MM-DD",
+    wengRow?.scopeOfWork === "Interior coffee shop, bar dan dapur" &&
+      wengRow?.deadlinePreview === "2026-08-24" && wengRow?.deadlineFinal === "2026-08-26", wengRow);
+  await adminRepo.update(sql, weng.id, { deadlinePreview: null, scopeOfWork: "" });
+  wengRow = (await adminRepo.listAll(sql, "")).find((p) => p.id === weng.id);
+  cek("tenggat dan lingkup bisa DIKOSONGKAN lagi (null / string kosong)",
+    wengRow?.deadlinePreview === null && wengRow?.scopeOfWork === null && wengRow?.deadlineFinal === "2026-08-26", wengRow);
 
   await sql.end();
   expect(gagal, `gagal: ${gagal.join("; ")}`).toEqual([]);

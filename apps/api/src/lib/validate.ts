@@ -53,6 +53,17 @@ export function checkProjectInput(input: ProjectInput, isNew: boolean): void {
       throw new ValidationError("nomor WhatsApp harus 8-15 angka");
     }
   }
+  for (const [nama, v] of [["tenggat preview", input.deadlinePreview], ["tenggat final", input.deadlineFinal]] as const) {
+    if (v !== undefined && v !== null && v !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      throw new ValidationError(`${nama} harus berformat YYYY-MM-DD`);
+    }
+  }
+  if (input.deadlinePreview && input.deadlineFinal && input.deadlineFinal < input.deadlinePreview) {
+    throw new ValidationError("tenggat final tidak boleh sebelum tenggat preview");
+  }
+  if (input.scopeOfWork !== undefined && input.scopeOfWork !== null && input.scopeOfWork.length > 2000) {
+    throw new ValidationError("lingkup kerja paling panjang 2000 karakter");
+  }
 }
 
 export interface InquiryRequest {

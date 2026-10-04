@@ -1818,4 +1818,27 @@ begin
 end;
 $$;
 
+-- Lingkup kerja dan tenggat (fase 2) ---------------------------------------
+
+do $$
+declare pid uuid; terlihat int;
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  insert into public.projects (slug, title, scope_of_work, deadline_preview, deadline_final)
+  values ('tes-tenggat', 'Tenggat Uji', 'Interior pop art, nail art dan eyelash', '2025-05-24', '2025-05-26')
+  returning id into pid;
+  select count(*) into terlihat from public.projects
+   where id = pid and deadline_final = '2025-05-26' and scope_of_work like 'Interior%';
+  perform pg_temp.tolak(terlihat <> 1, 'staf bisa mencatat lingkup kerja dan dua tenggat');
+
+  begin
+    update public.projects set deadline_final = '2025-05-20' where id = pid;
+    raise exception 'GAGAL: tenggat final sebelum preview diterima';
+  exception when check_violation then
+    raise notice 'ok: tenggat final tidak boleh sebelum preview';
+  end;
+  reset role;
+end;
+$$;
+
 rollback;

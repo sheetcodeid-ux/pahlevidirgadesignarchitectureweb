@@ -33,6 +33,9 @@ interface AdminRow {
   pipeline_stage: string;
   contract_value: string | null;
   client_whatsapp: string | null;
+  scope_of_work: string | null;
+  deadline_preview: string | null;
+  deadline_final: string | null;
   phase: string | null;
   paid_total: string | null;
 }
@@ -65,6 +68,9 @@ function rowToProject(row: AdminRow, assetBase: string): Project {
     phase: row.phase,
     contractValue: row.contract_value !== null ? Number(row.contract_value) : null,
     clientWhatsapp: row.client_whatsapp,
+    scopeOfWork: row.scope_of_work,
+    deadlinePreview: row.deadline_preview,
+    deadlineFinal: row.deadline_final,
     paidTotal: row.paid_total !== null ? Number(row.paid_total) : 0,
   };
 }
@@ -77,7 +83,7 @@ export async function listAll(sql: Sql, assetBase: string): Promise<Project[]> {
            p.lead_architect, p.contractor, p.lighting_designer, p.photographer,
            p.cover_image_key, p.is_featured, p.seo_title,
            p.seo_description, p.published_at, p.pipeline_stage, p.contract_value,
-           p.client_whatsapp,
+           p.client_whatsapp, p.scope_of_work, p.deadline_preview::text, p.deadline_final::text,
            -- LEFT join: proyek yang belum pernah dibuatkan portal klien belum
            -- punya baris project_progress, dan itu sah. Tanpa LEFT, proyek
            -- seperti itu hilang dari daftar admin tanpa satu pun galat.
@@ -217,6 +223,18 @@ export async function update(sql: Sql, id: string, input: ProjectInput): Promise
   if (input.clientWhatsapp !== undefined) {
     const angka = (input.clientWhatsapp ?? "").replace(/\D/g, "");
     fragments.push(sql`client_whatsapp = ${angka.length >= 8 ? angka : null}`);
+  }
+  /* Tiga kolom pekerjaan BOLEH dikosongkan lagi — beda dengan PLAIN_COLUMNS
+     yang melewati null. Tenggat yang salah ketik harus bisa dihapus, bukan
+     cuma diganti tanggal lain. String kosong disamakan dengan null. */
+  if (input.scopeOfWork !== undefined) {
+    fragments.push(sql`scope_of_work = ${(input.scopeOfWork ?? "").trim() || null}`);
+  }
+  if (input.deadlinePreview !== undefined) {
+    fragments.push(sql`deadline_preview = ${input.deadlinePreview || null}::date`);
+  }
+  if (input.deadlineFinal !== undefined) {
+    fragments.push(sql`deadline_final = ${input.deadlineFinal || null}::date`);
   }
   if (input.status === "published") {
     fragments.push(sql`published_at = coalesce(published_at, now())`);
