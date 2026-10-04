@@ -2610,37 +2610,12 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 
 /* --- Pemilih bertopeng tombol ----------------------------------------------
    Frame Interface memakai "Button Picker": tombol ber-caret yang kalau
-   disentuh membuka daftar. Di sini yang tergambar tombol kit dan yang
-   membuka daftar <select> ASLI, ditumpangkan transparan di atasnya.
-
-   Kenapa bukan daftar buatan sendiri: papan ketik, ketik-untuk-melompat,
-   dan pemilih layar penuh di ponsel semuanya sudah benar pada <select> dan
-   tidak bisa rusak diam-diam — alasan yang sama dengan <details> untuk
-   akordeon di situs publik.
-
-   Tombolnya diberi `tabIndex={-1}` oleh pemanggil supaya Tab mendarat di
-   <select>-nya, bukan singgah dua kali di satu kontrol. */
-.k-pilihtombol {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-}
-.k-pilihtombol > select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  padding: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-/* Fokus papan ketik tetap terlihat — yang menerima fokus <select> yang
-   tembus pandang, jadi cincinnya digambar di tombol yang tampak. */
-.k-pilihtombol:focus-within > .k-tombol {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
+   disentuh membuka daftar. Tombol kit ini pemicu `PilihMenu` (Radix
+   Select) — daftar yang terbuka juga milik kit, bukan milik peramban. */
+.k-pilihtombol { flex: none; }
+.k-pilihtombol .k-tombol__ikonkanan { transition: transform 150ms; }
+.k-pilihtombol[data-state="open"] .k-tombol__ikonkanan { transform: rotate(180deg); }
+.k-pilihtombol[data-state="open"] { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
 
 /* --- Kelompok tab berikon (Button Group, frame Interface) ------------------
    Jalur 72 tinggi radius 16 berlatar mint, tab dibagi rata, ikon 24 di atas
@@ -3325,7 +3300,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 /* <select> asli di dalam pembungkus: pembungkusnya yang menanggapi kursor.
    `:not(:focus-within)` — garis fokus (--brand) tidak boleh ditimpa garis
    hover saat kursor kebetulan melintas di kotak yang sedang diisi. */
-.k-pilihtombol:hover > .k-tombol { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
+.k-pilihtombol:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
 :is(.k-isian__kotak, .kd-status, .tr__pilih):hover:not(:focus-within) { border-color: var(--border-strong); }
 /* Pemilih berbentuk teks ("Bulan ini ⌄") di kepala kartu: <select> tak
    tampak di atas teksnya, jadi teksnya yang bergaris bawah. */
@@ -3357,9 +3332,9 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   .tr__cari > .k-bulat,
   .tag__bar > .k-segmen,
   .tag__bar > .k-cari,
-  .tag__bar .k-pilihtombol > .k-tombol,
+  .tag__bar .k-tombol.k-pilihtombol,
   .tag__kaki .k-paginasi__b:not([aria-current="page"]),
-  .tag__hitung > select,
+  .tag__hitung > .kd__perhal,
   .pas__utama > .k-segmen,
   .pf__bagian > .k-jalurtab,
   .pk__tautan,
@@ -3368,7 +3343,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   .pjs__ikon .k-tombolikon,
   .pjs__tagar:not([aria-checked="true"]) .k-keping,
   .pak__alatkiri > .k-cari,
-  .pak__alatkiri .k-pilihtombol > .k-tombol
+  .pak__alatkiri .k-tombol.k-pilihtombol
 ) {
   background-color: var(--surface);
   box-shadow: inset 0 0 0 1px var(--border);

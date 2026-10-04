@@ -5,7 +5,7 @@ import { Lencana } from "../kit/Lencana";
 import { Tombol } from "../kit/Tombol";
 import { Dialog } from "../kit/Overlay";
 import { useToast } from "../kit/Toast";
-import { IsianPanjang, IsianTanggal, IsianTempel, KelompokIsian, PilihAsli } from "../kit/Formulir";
+import { IsianPanjang, IsianTanggal, IsianTempel, KelompokIsian, PilihMenu } from "../kit/Formulir";
 import { NotePencil, Plus } from "../kit/ikon";
 import {
   daftarTimProyek, daftarTim, tambahTimProyek, ubahTimProyek, hapusTimProyek, bayarTahap, simpanProyek, daftarPaket,
@@ -408,33 +408,28 @@ export function TimDanBayaran({
       >
         <div className="sat__dialogisi">
           <div className="sat__dialogdua">
-            <label className="k-isian">
+            <div className="k-isian">
               <span className="k-isian__label">Peran</span>
-              <PilihAsli
-                value={form.role}
+              <PilihMenu
+                label="Peran"
+                nilai={form.role}
                 disabled={ubah?.mode === "ubah"}
-                onChange={(e) => setForm({ ...form, role: e.currentTarget.value as PeranTim })}
-              >
-                {URUTAN_PERAN.map((r) => (
-                  <option key={r} value={r}>
-                    {LABEL_PERAN[r]}
-                  </option>
-                ))}
-              </PilihAsli>
-            </label>
-            <label className="k-isian">
+                onUbah={(v) => setForm({ ...form, role: v as PeranTim })}
+                opsi={URUTAN_PERAN.map((r) => ({ nilai: r, label: LABEL_PERAN[r] }))}
+              />
+            </div>
+            <div className="k-isian">
               <span className="k-isian__label">Orang</span>
-              <PilihAsli value={form.orang} onChange={(e) => setForm({ ...form, orang: e.currentTarget.value })}>
-                <option value="">— Pilih —</option>
-                {anggota
+              <PilihMenu
+                label="Orang"
+                nilai={form.orang}
+                placeholder="— Pilih —"
+                onUbah={(v) => setForm({ ...form, orang: v })}
+                opsi={anggota
                   .filter((o) => (o.active || o.id === form.orang) && !orangDipakai(o))
-                  .map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.name}
-                    </option>
-                  ))}
-              </PilihAsli>
-            </label>
+                  .map((o) => ({ nilai: o.id, label: o.name }))}
+              />
+            </div>
           </div>
           <label className="k-isian">
             <span className="k-isian__label">Bagian dari fee design</span>

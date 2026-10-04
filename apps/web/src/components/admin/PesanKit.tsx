@@ -7,6 +7,8 @@ import { ToastProvider, useToast } from "../kit/Toast";
 import { BarisInbox, BarisBeban } from "../kit/Item";
 import { Cari, Centang } from "../kit/Isian";
 import { TombolIkon } from "../kit/Tombol";
+import { PilihMenu } from "../kit/Formulir";
+import { DropdownMenu } from "../kit/Overlay";
 import { Donat, BarKemajuan } from "../kit/Ukuran";
 import { Ikon } from "../kit/Ikon";
 import {
@@ -103,7 +105,7 @@ function waktuPenuh(iso: string): string {
   return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}, ${jam(d)}`;
 }
 
-/** Pemilih bertopeng tombol ikon — `.k-pilihtombol`, dengan <select> asli. */
+/** Tombol ikon yang membuka menu aksi — mengubah status, bukan memilih nilai. */
 function PilihIkon({
   ikon,
   judul,
@@ -123,37 +125,13 @@ function PilihIkon({
   jenis?: "ghost" | "transparent";
   ikonPx?: number;
 }) {
+  const tombol = <TombolIkon ikon={ikon} jenis={jenis} ukuran={ukuran} ikonPx={ikonPx} judul={judul} disabled={disabled} />;
+  if (disabled) return tombol;
   return (
-    <label className="k-pilihtombol" title={judul}>
-      <TombolIkon
-        ikon={ikon}
-        jenis={jenis}
-        ukuran={ukuran}
-        ikonPx={ikonPx}
-        judul={judul}
-        tabIndex={-1}
-        disabled={disabled}
-      />
-      <select
-        aria-label={judul}
-        value=""
-        disabled={disabled}
-        onChange={(e) => {
-          const v = e.currentTarget.value;
-          e.currentTarget.value = "";
-          if (v) onPilih(v);
-        }}
-      >
-        <option value="" disabled>
-          {judul}
-        </option>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <DropdownMenu
+      trigger={tombol}
+      sections={[{ label: judul, items: opsi.map((o) => ({ label: o.label, onSelect: () => onPilih(o.nilai) })) }]}
+    />
   );
 }
 
@@ -169,17 +147,19 @@ function PilihTeks({
   onUbah: (v: string) => void;
 }) {
   return (
-    <label className="pes__pilihteks">
-      <span>{opsi.find((o) => o.nilai === nilai)?.label ?? judul}</span>
-      <Ikon ikon={CaretDown} ukuran={12} />
-      <select aria-label={judul} value={nilai} onChange={(e) => onUbah(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <PilihMenu
+      label={judul}
+      nilai={nilai}
+      opsi={opsi}
+      onUbah={onUbah}
+      align="end"
+      pemicu={
+        <button type="button" className="pes__pilihteks">
+          <span>{opsi.find((o) => o.nilai === nilai)?.label ?? judul}</span>
+          <Ikon ikon={CaretDown} ukuran={12} />
+        </button>
+      }
+    />
   );
 }
 
@@ -357,23 +337,22 @@ function Isi() {
               value={cari}
               onChange={(e) => setCari(e.currentTarget.value)}
             />
-            <label className="k-pilihtombol pes__saring" title="Saring status">
-              <TombolIkon
-                ikon={Sliders}
-                jenis={saring === "semua" ? "ghost" : "secondary"}
-                ukuran="large"
-                judul="Saring status"
-                tabIndex={-1}
-              />
-              <select aria-label="Saring status" value={saring} onChange={(e) => setSaring(e.currentTarget.value)}>
-                <option value="semua">Semua status</option>
-                {Object.entries(STATUS).map(([v, l]) => (
-                  <option key={v} value={v}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <PilihMenu
+              label="Saring status"
+              nilai={saring}
+              onUbah={setSaring}
+              align="end"
+              opsi={[{ nilai: "semua", label: "Semua status" }, ...Object.entries(STATUS).map(([v, l]) => ({ nilai: v, label: l }))]}
+              pemicu={
+                <TombolIkon
+                  ikon={Sliders}
+                  jenis={saring === "semua" ? "ghost" : "secondary"}
+                  ukuran="large"
+                  judul="Saring status"
+                  className="pes__saring"
+                />
+              }
+            />
           </div>
 
           <div className="pes__kepaladaftar">
@@ -383,31 +362,27 @@ function Isi() {
                 checked={semuaTercentang}
                 onChange={() => setCentang(semuaTercentang ? [] : tampak.map((p) => p.id))}
               />
-              <label className="pes__caret" title="Pilih berdasarkan status">
-                <Ikon ikon={CaretDown} ukuran={10} />
-                <select
-                  aria-label="Pilih berdasarkan status"
-                  value=""
-                  onChange={(e) => {
-                    const v = e.currentTarget.value;
-                    e.currentTarget.value = "";
-                    if (v === "tidak") setCentang([]);
-                    else if (v === "semua") setCentang(tampak.map((p) => p.id));
-                    else setCentang(tampak.filter((p) => p.status === v).map((p) => p.id));
-                  }}
-                >
-                  <option value="" disabled>
-                    Pilih
-                  </option>
-                  <option value="semua">Semua</option>
-                  <option value="tidak">Tidak ada</option>
-                  {Object.entries(STATUS).map(([v, l]) => (
-                    <option key={v} value={v}>
-                      Yang {l.toLowerCase()}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <DropdownMenu
+                align="start"
+                trigger={
+                  <button type="button" className="pes__caret" aria-label="Pilih berdasarkan status">
+                    <Ikon ikon={CaretDown} ukuran={10} />
+                  </button>
+                }
+                sections={[
+                  {
+                    label: "Pilih",
+                    items: [
+                      { label: "Semua", onSelect: () => setCentang(tampak.map((p) => p.id)) },
+                      { label: "Tidak ada", onSelect: () => setCentang([]) },
+                      ...Object.entries(STATUS).map(([v, l]) => ({
+                        label: `Yang ${l.toLowerCase()}`,
+                        onSelect: () => setCentang(tampak.filter((p) => p.status === v).map((p) => p.id)),
+                      })),
+                    ],
+                  },
+                ]}
+              />
               {centang.length > 0 && <span className="pes__jumlahpilih">{centang.length} dipilih</span>}
             </span>
             <span className="pes__aksidaftar">

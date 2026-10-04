@@ -1,4 +1,4 @@
-import { PilihAsli } from "../kit/Formulir";
+import { PilihMenu } from "../kit/Formulir";
 import type { Paket } from "../../lib/admin";
 
 /* =============================================================================
@@ -29,25 +29,22 @@ export function PilihPaket({
 }) {
   const tampil = paket.filter((p) => p.active || p.id === nilai);
   return (
-    <label className="k-isian">
+    <div className="k-isian">
       <span className="k-isian__label">{label}</span>
-      <PilihAsli value={nilai} onChange={(e) => onUbah(e.currentTarget.value)}>
-        <option value="">Tanpa paket</option>
-        {(Object.keys(KELOMPOK) as Paket["group"][]).map((g) => {
-          const isi = tampil.filter((p) => p.group === g);
-          return isi.length ? (
-            <optgroup key={g} label={KELOMPOK[g]}>
-              {isi.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {labelPaket(p)}
-                  {p.active ? "" : " (dihentikan)"}
-                </option>
-              ))}
-            </optgroup>
-          ) : null;
-        })}
-      </PilihAsli>
+      <PilihMenu
+        label={label}
+        nilai={nilai}
+        onUbah={onUbah}
+        opsi={[
+          { nilai: "", label: "Tanpa paket" },
+          ...(Object.keys(KELOMPOK) as Paket["group"][]).flatMap((g) =>
+            tampil
+              .filter((p) => p.group === g)
+              .map((p) => ({ nilai: p.id, label: `${labelPaket(p)}${p.active ? "" : " (dihentikan)"}`, kelompok: KELOMPOK[g] })),
+          ),
+        ]}
+      />
       {bantu && <span className="k-isian__bantu">{bantu}</span>}
-    </label>
+    </div>
   );
 }

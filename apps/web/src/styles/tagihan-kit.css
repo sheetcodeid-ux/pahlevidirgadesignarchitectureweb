@@ -170,21 +170,12 @@
 
 /* Pemilih status yang ditumpangkan di atas lencananya — bentuknya lencana,
    perilakunya <select> asli. Pola yang sama dengan `.k-pilihtombol`. */
-.tag__pilihstatus { position: relative; display: inline-flex; }
-.tag__pilihstatus > select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  padding: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.tag__pilihstatus:focus-within > .tag__status {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
+.tag__pilihstatus { display: inline-flex; padding: 0; border: 0; border-radius: 999px; background: none; font-family: var(--font-sans); line-height: 1; cursor: pointer; }
+.tag__pilihstatus:hover > .tag__status { filter: brightness(0.96); box-shadow: 0 0 0 3px var(--k-hover-tint); }
+.tag__pilihstatus:focus-visible { outline: none; box-shadow: none; }
+.tag__pilihstatus:focus-visible > .tag__status,
+.tag__pilihstatus[data-state="open"] > .tag__status { outline: 2px solid var(--brand); outline-offset: 2px; }
+.tag__pilihstatus:disabled { cursor: progress; opacity: 0.6; }
 
 /* --- Kaki ----------------------------------------------------------------- */
 .tag__kaki {

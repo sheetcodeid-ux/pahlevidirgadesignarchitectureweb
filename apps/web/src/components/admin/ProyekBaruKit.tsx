@@ -1,4 +1,4 @@
-import { IsianPanjang, IsianTanggal, IsianTempel, KelompokIsian, PilihAsli } from "../kit/Formulir";
+import { IsianPanjang, IsianTanggal, IsianTempel, KelompokIsian, PilihMenu } from "../kit/Formulir";
 import { Lipat } from "../kit/Tampilan";
 import { useEffect, useMemo, useState } from "react";
 import { navigate } from "astro:transitions/client";
@@ -356,18 +356,15 @@ function Isi() {
                   value={f.client}
                   onChange={(e) => set("client", e.currentTarget.value)}
                 />
-                <label className="k-isian">
+                <div className="k-isian">
                   <span className="k-isian__label">Jenis proyek</span>
-                  <span className="k-isian__kotak pas__pilih">
-                    <select value={f.category} onChange={(e) => set("category", e.currentTarget.value)}>
-                      {Object.entries(KATEGORI).map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
-                  </span>
-                </label>
+                  <PilihMenu
+                    label="Jenis proyek"
+                    nilai={f.category}
+                    onUbah={(v) => set("category", v)}
+                    opsi={Object.entries(KATEGORI).map(([v, l]) => ({ nilai: v, label: l }))}
+                  />
+                </div>
                 <Isian
                   label="Nama proyek"
                   maxLength={120}
@@ -464,41 +461,31 @@ function Isi() {
                     <div className="pjb__baris" role="row" key={b.kunci}>
                       <span role="cell" className="pjb__peran">
                         {b.tambahan ? (
-                          <PilihAsli
-                            aria-label="Peran"
-                            value={b.role}
-                            onChange={(e) => {
-                              const role = e.currentTarget.value as PeranTim;
+                          <PilihMenu
+                            label="Peran"
+                            nilai={b.role}
+                            onUbah={(v) => {
+                              const role = v as PeranTim;
                               setBaris(b.kunci, {
                                 role,
                                 pct: aturan ? pctBawaan(aturan, role)?.toString().replace(".", ",") ?? "" : "",
                                 disentuh: false,
                               });
                             }}
-                          >
-                            {URUTAN_PERAN.map((r) => (
-                              <option key={r} value={r}>
-                                {LABEL_PERAN[r]}
-                              </option>
-                            ))}
-                          </PilihAsli>
+                            opsi={URUTAN_PERAN.map((r) => ({ nilai: r, label: LABEL_PERAN[r] }))}
+                          />
                         ) : (
                           LABEL_PERAN[b.role]
                         )}
                       </span>
                       <span role="cell">
-                        <PilihAsli
-                          aria-label={`Orang untuk peran ${LABEL_PERAN[b.role]}`}
-                          value={b.orang}
-                          onChange={(e) => setBaris(b.kunci, { orang: e.currentTarget.value })}
-                        >
-                          <option value="">— Belum ada —</option>
-                          {pilihanOrang(b).map((o) => (
-                            <option key={o.id} value={o.id}>
-                              {o.name}
-                            </option>
-                          ))}
-                        </PilihAsli>
+                        <PilihMenu
+                          label={`Orang untuk peran ${LABEL_PERAN[b.role]}`}
+                          nilai={b.orang}
+                          onUbah={(v) => setBaris(b.kunci, { orang: v })}
+                          placeholder="— Belum ada —"
+                          opsi={[{ nilai: "", label: "— Belum ada —" }, ...pilihanOrang(b).map((o) => ({ nilai: o.id, label: o.name }))]}
+                        />
                       </span>
                       <span role="cell">
                         <KelompokIsian

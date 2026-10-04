@@ -161,20 +161,19 @@
   gap: 7px;
   min-width: 0;
   margin-right: 3.5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
   font-size: var(--k-t12);
   line-height: 1;
   color: var(--brand);
   cursor: pointer;
 }
 .fee__pilihteks > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fee__pilihteks > select {
-  position: absolute;
-  inset: -4px;
-  width: calc(100% + 8px);
-  opacity: 0;
-  cursor: pointer;
-}
-.fee__pilihteks:focus-within { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 3px; }
+.fee__pilihteks > svg { flex: none; transition: transform 150ms; }
+.fee__pilihteks[data-state="open"] > svg { transform: rotate(180deg); }
+.fee__pilihteks:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 3px; box-shadow: none; }
 /* Judul tabel yang sekaligus pemilih — ukurannya judul seksi. */
 .fee__pilihjudul { margin-right: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); }
 .fee__pilihjudul > svg { color: var(--text-muted); }

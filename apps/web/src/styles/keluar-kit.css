@@ -95,13 +95,20 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   height: 54px;
-  padding: 0 13px;
+  padding: 0 14px 0 13px;
   border: 1px solid var(--border);
   border-radius: 7.5px;
   background: var(--surface);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms;
 }
-.tr__pilih:focus-within { border-color: var(--brand); }
+.tr__pilih:hover { border-color: var(--border-strong); }
+.tr__pilih:focus-visible,
+.tr__pilih[data-state="open"] { border-color: var(--brand); outline: none; box-shadow: none; }
 .tr__pilihubin {
   display: grid;
   place-items: center;
@@ -113,20 +120,11 @@
   color: var(--text-strong);
 }
 /* Jebakan #37: di tema gelap `--text-strong` terang, dan ikonnya
-   tergambar terang di atas mint (1,23). Tema terang dibiarkan persis. */
+   hilang di atas mint. */
 :root[data-theme="dark"] .tr__pilihubin { color: var(--brand-mint-ink); }
-.tr__pilih select {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  padding: 0;
-  font-family: var(--font-sans);
-  font-size: var(--k-t14);
-  color: var(--text-strong);
-  background: transparent;
-  cursor: pointer;
-}
-.tr__pilih select:focus { outline: none; box-shadow: none; }
+.tr__pilihteks { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--k-t14); color: var(--text-strong); }
+.tr__pilihcaret { flex: none; color: var(--brand); transition: transform 150ms; }
+.tr__pilih[data-state="open"] .tr__pilihcaret { transform: rotate(180deg); }
 
 @media (max-width: 1288px) {
   .tr__duaan { grid-template-columns: minmax(0, 1fr); }

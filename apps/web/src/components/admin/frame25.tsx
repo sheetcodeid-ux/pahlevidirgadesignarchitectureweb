@@ -1,4 +1,4 @@
-import { Tombol } from "../kit/Tombol";
+import { PilihMenu, PilihTombol as PilihTombolKit } from "../kit/Formulir";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import {
   CaretDown,
@@ -74,8 +74,7 @@ export function teksPersen(p: number): string {
   return `${p.toFixed(p >= 10 ? 0 : 1).replace(".", ",")}%`;
 }
 
-/** Pemilih bertombol berbingkai dengan <select> asli ditumpangkan — pola
- *  `.k-pilihtombol` yang sama dengan halaman Ringkasan. */
+/** Pemilih bertombol berbingkai — pola `.k-pilihtombol` yang sama dengan halaman Ringkasan. */
 export function PilihTombol({
   judul,
   nilai,
@@ -87,20 +86,7 @@ export function PilihTombol({
   opsi: { nilai: string; label: string }[];
   onUbah: (v: string) => void;
 }) {
-  return (
-    <label className="k-pilihtombol">
-      <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown} tabIndex={-1}>
-        {opsi.find((o) => o.nilai === nilai)?.label ?? judul}
-      </Tombol>
-      <select aria-label={judul} value={nilai} onChange={(e) => onUbah(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
+  return <PilihTombolKit judul={judul} nilai={nilai} opsi={opsi} onPilih={onUbah} jenis="ghost" />;
 }
 
 /** Pemilih TEKS tanpa bingkai — "Today ▾" di kepala widget Assets. */
@@ -118,17 +104,19 @@ export function PilihTeks({
   className?: string;
 }) {
   return (
-    <label className={["fee__pilihteks", className].filter(Boolean).join(" ")}>
-      <span>{opsi.find((o) => o.nilai === nilai)?.label ?? judul}</span>
-      <Ikon ikon={CaretDown} ukuran={12} />
-      <select aria-label={judul} value={nilai} onChange={(e) => onUbah(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <PilihMenu
+      label={judul}
+      nilai={nilai}
+      opsi={opsi}
+      onUbah={onUbah}
+      align="end"
+      pemicu={
+        <button type="button" className={["fee__pilihteks", className].filter(Boolean).join(" ")}>
+          <span>{opsi.find((o) => o.nilai === nilai)?.label ?? judul}</span>
+          <Ikon ikon={CaretDown} ukuran={12} />
+        </button>
+      }
+    />
   );
 }
 

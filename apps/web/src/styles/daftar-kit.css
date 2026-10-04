@@ -68,17 +68,27 @@
   font-size: var(--k-t12);
   color: var(--text-muted);
 }
-.kd__hitung select {
+.kd__perhal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   height: 28px;
-  padding: 0 6px;
+  padding: 0 8px 0 10px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   font-family: var(--font-sans);
   font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  line-height: 1;
   color: var(--brand);
   background: var(--brand-soft);
   cursor: pointer;
+  transition: background-color var(--k-dur, 150ms);
 }
+.kd__perhal:hover,
+.kd__perhal[data-state="open"] { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
+.kd__perhal[data-state="open"] > svg { transform: rotate(180deg); }
+.kd__perhal > svg { transition: transform 150ms; }
 
 /* --- Sel yang dipakai beberapa daftar -------------------------------------- */
 /* Ubin bulat 30 di kolom pertama + dua baris teks. */
@@ -159,24 +169,25 @@
   border-radius: 8px;
   background: var(--surface);
   color: var(--text-muted);
+  font-family: var(--font-sans);
+  line-height: 1;
   cursor: pointer;
+  transition: border-color 150ms;
 }
-.kd-status:focus-within { border-color: var(--brand); }
-.kd-status select {
+.kd-status:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--border)); }
+.kd-status[data-state="open"],
+.kd-status:focus-visible { border-color: var(--brand); outline: none; box-shadow: none; }
+.kd-status__teks {
   min-width: 0;
-  padding: 0 18px 0 0;
-  margin-right: -18px;
-  border: 0;
-  background: none;
-  font: inherit;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-size: var(--k-t12);
   font-weight: var(--k-med);
   color: var(--text-strong);
-  appearance: none;
-  cursor: pointer;
 }
-.kd-status select:focus { outline: none; box-shadow: none; }
-.kd-status > svg { pointer-events: none; }
+.kd-status > svg { flex: none; transition: transform 150ms; }
+.kd-status[data-state="open"] > svg { transform: rotate(180deg); }
 .kd-status__titik { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
 .kd-status[data-nada="tunggu"] .kd-status__titik,
 .kd-status__titik[data-nada="tunggu"] { background: var(--warn); }

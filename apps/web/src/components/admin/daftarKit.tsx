@@ -6,6 +6,7 @@ import { Ikon, type DataIkon } from "../kit/Ikon";
 import { CaretDown, MagnifyingGlass, Trash } from "../kit/ikon";
 import { Avatar, Kosong, RangkaBaris } from "../kit/Tampilan";
 import { AlertDialog } from "../kit/Overlay";
+import { PilihMenu } from "../kit/Formulir";
 import { jagaFokusSesudahHapus } from "../../lib/fokus";
 
 /* =============================================================================
@@ -27,41 +28,7 @@ import { jagaFokusSesudahHapus } from "../../lib/fokus";
    piksel setelah halaman itu pindah ke kerangka ini.
    ============================================================================= */
 
-/**
- * Pemilih berbentuk tombol ber-caret, dengan <select> asli ditumpangkan
- * transparan di atasnya. Yang tergambar tombol kit; yang dibuka daftar
- * bawaan peramban — papan ketik, ketik-untuk-melompat, dan pemilih layar
- * penuh di ponsel ikut, dan tidak bisa rusak diam-diam.
- */
-export function PilihTombol({
-  judul,
-  nilai,
-  opsi,
-  onPilih,
-  kiri,
-}: {
-  /** Dibacakan pembaca layar — tombolnya sendiri cuma menampilkan pilihan. */
-  judul: string;
-  nilai: string;
-  opsi: { nilai: string; label: string }[];
-  onPilih: (nilai: string) => void;
-  kiri?: DataIkon;
-}) {
-  return (
-    <label className="k-pilihtombol">
-      <Tombol ukuran="medium" jenis="secondary" kiri={kiri} kanan={CaretDown} tabIndex={-1}>
-        {opsi.find((o) => o.nilai === nilai)?.label ?? judul}
-      </Tombol>
-      <select aria-label={judul} value={nilai} onChange={(e) => onPilih(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
+export { PilihTombol } from "../kit/Formulir";
 
 /**
  * Status yang sekaligus pemilih: titik warna di depan <select> asli. Satu
@@ -85,19 +52,21 @@ export function PilihStatus({
   opsi: { nilai: string; label: string }[];
   onPilih: (nilai: string) => void;
 }) {
+  const daftar = opsi.some((o) => o.nilai === nilai) ? opsi : [...opsi, { nilai, label: nilai }];
   return (
-    <label className="kd-status" data-nada={nada}>
-      <span className="kd-status__titik" aria-hidden="true" />
-      <select aria-label={judul} value={nilai} onChange={(e) => onPilih(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-        {!opsi.some((o) => o.nilai === nilai) && <option value={nilai}>{nilai}</option>}
-      </select>
-      <Ikon ikon={CaretDown} ukuran={12} />
-    </label>
+    <PilihMenu
+      label={judul}
+      nilai={nilai}
+      opsi={daftar}
+      onUbah={onPilih}
+      pemicu={
+        <button type="button" className="kd-status" data-nada={nada}>
+          <span className="kd-status__titik" aria-hidden="true" />
+          <span className="kd-status__teks">{daftar.find((o) => o.nilai === nilai)?.label}</span>
+          <Ikon ikon={CaretDown} ukuran={12} />
+        </button>
+      }
+    />
   );
 }
 
@@ -223,20 +192,21 @@ export function DaftarKit({
         <div className="kd__kaki">
           <p className="kd__hitung">
             Menampilkan
-            <select
-              aria-label="Baris per halaman"
-              value={perHalaman}
-              onChange={(e) => {
-                setPerHalaman(Number(e.currentTarget.value));
+            <PilihMenu
+              label="Baris per halaman"
+              nilai={String(perHalaman)}
+              opsi={[12, 25, 50].map((n) => ({ nilai: String(n), label: String(n) }))}
+              onUbah={(v) => {
+                setPerHalaman(Number(v));
                 setHalaman(1);
               }}
-            >
-              {[12, 25, 50].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+              pemicu={
+                <button type="button" className="kd__perhal">
+                  {perHalaman}
+                  <Ikon ikon={CaretDown} ukuran={12} />
+                </button>
+              }
+            />
             dari {baris.length}
             {satuan ? ` ${satuan}` : ""}
             {pilih && pilih.terpilih.length > 0 && ` · ${pilih.terpilih.length} dipilih`}

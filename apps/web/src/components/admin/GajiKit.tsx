@@ -1,4 +1,4 @@
-import { IsianTempel, PilihAsli } from "../kit/Formulir";
+import { IsianTempel, PilihMenu } from "../kit/Formulir";
 import { IsianTanggal } from "../kit/Formulir";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
@@ -805,30 +805,22 @@ function DialogGaji({
       }
     >
       <div className="gaji__form">
-        {/* Bentuk .k-isian kit, dengan <select> asli di dalam kotaknya —
-            perilaku pilihan bawaan tidak bisa rusak diam-diam. */}
         <div className="k-isian">
           <label className="k-isian__label" htmlFor="gj-orang">
             Orang
           </label>
-          <PilihAsli
-              id="gj-orang"
-              
-              value={orang}
-              /* Saat mengubah, orangnya dikunci: memindahkan baris ke nama
-                 lain bisa menabrak baris yang sudah ada di bulan itu. */
-              disabled={Boolean(awal)}
-              onChange={(e) => setOrang(e.currentTarget.value)}
-            >
-              <option value="">Pilih orang…</option>
-              {tim
-                .filter((t) => t.active || t.id === orang)
-                .map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.role ? `${t.name} — ${t.role}` : t.name}
-                  </option>
-                ))}
-            </PilihAsli>
+          <PilihMenu
+            id="gj-orang"
+            nilai={orang}
+            placeholder="Pilih orang…"
+            /* Saat mengubah, orangnya dikunci: memindahkan baris ke nama
+               lain bisa menabrak baris yang sudah ada di bulan itu. */
+            disabled={Boolean(awal)}
+            onUbah={setOrang}
+            opsi={tim
+              .filter((t) => t.active || t.id === orang)
+              .map((t) => ({ nilai: t.id, label: t.role ? `${t.name} — ${t.role}` : t.name }))}
+          />
           {perluIngat && !ubah && (
             <p className="k-isian__bantu">
               Orang ini freelancer. Bayaran yang lahir dari proyek dicatat di Keuangan → Catat Pengeluaran dan muncul

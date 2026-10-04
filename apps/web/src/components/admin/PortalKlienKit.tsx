@@ -41,6 +41,7 @@ import {
   type ProjectProgress,
 } from "../../lib/admin";
 import { useCegahPindah } from "../../lib/cegahPindah";
+import { tanya } from "../../lib/tanya";
 import { bukaLightbox } from "../../lib/lightbox";
 
 /* =============================================================================
@@ -185,9 +186,13 @@ function Portal({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; o
       .catch(() => setDokumen((l) => l ?? []));
   }
 
-  function gantiProyek(baru: string) {
+  async function gantiProyek(baru: string) {
     if (baru === proyek.id) return;
-    if (briefBerubah > 0 && !confirm(`Ada ${briefBerubah} perubahan brief yang belum disimpan. Tinggalkan?`)) return;
+    if (
+      briefBerubah > 0 &&
+      !(await tanya({ judul: "Pindah proyek?", isi: `Ada ${briefBerubah} perubahan brief yang belum disimpan.`, ya: "Tinggalkan", bahaya: true }))
+    )
+      return;
     onPilih(baru);
   }
 

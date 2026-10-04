@@ -9,10 +9,11 @@ import {
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
-  type SelectHTMLAttributes,
+  type ReactElement,
   type TextareaHTMLAttributes,
 } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
+import { Tombol } from "./Tombol";
 import { CalendarBlank, CaretDown, CaretLeft, CaretRight, Check, FileText, ImageSquare, MagnifyingGlass, Paperclip, X } from "./ikon";
 
 /* =============================================================================
@@ -106,25 +107,22 @@ export function KelompokIsian({
   );
 }
 
-/* --- Native select ------------------------------------------------------------
-   Elemen <select> asli berkulit kit. Di ponsel ia membuka pemilih sistem —
-   persis yang diharapkan orang — dan itu alasan memakainya untuk daftar
-   pendek. */
+/* --- Pilih: dropdown kit -------------------------------------------------------
+   SATU dropdown untuk seluruh panel. Dulu ada dua jalur — <select> asli
+   (bentuknya kit, tapi daftar yang terbuka milik peramban: abu-abu, huruf
+   sistem, beda di tiap OS) dan Select Radix. Pemilik menolak yang pertama
+   ("dropdown jangan default"), jadi semuanya lewat sini.
 
-export function PilihAsli({ className, children, ...p }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <span className={kelas("k-pilihasli", className)}>
-      <select className="k-kotak k-pilihasli__select" {...p}>
-        {children}
-      </select>
-      <Ikon ikon={CaretDown} ukuran={14} className="k-pilihasli__caret" />
-    </span>
-  );
-}
+   Papan ketik, ketik-untuk-melompat, dan fokus tetap milik Radix Select —
+   bukan dikarang sendiri.
 
-/* --- Select bergaya (Radix) ---------------------------------------------------
-   Untuk pilihan yang butuh keterangan per butir atau ikon — hal yang tidak
-   bisa digambar <option>. */
+   `pemicu`: elemen yang tampil (tombol kit, teks berpanah, titik status).
+   Ia dipasang sebagai pemicu lewat `asChild`, jadi harus meneruskan ref —
+   elemen DOM biasa atau `Tombol`. Tanpa `pemicu`, yang tergambar kotak
+   isian kit (46 r8) berisi label pilihan dan caret.
+
+   Radix menolak nilai "" pada butir, padahal "Semua"/"Tanpa proyek" di
+   panel ini memang "". Ditukar diam-diam dengan penanda di bawah. */
 
 export interface OpsiPilih {
   nilai: string;
@@ -132,8 +130,128 @@ export interface OpsiPilih {
   ket?: string;
   ikon?: DataIkon;
   mati?: boolean;
+  /** Kepala kelompok — butir berurutan dengan kelompok sama dikumpulkan. */
+  kelompok?: string;
 }
 
+const KOSONG = "__kosong__";
+const keRadix = (v: string) => (v === "" ? KOSONG : v);
+const dariRadix = (v: string) => (v === KOSONG ? "" : v);
+
+export function PilihMenu({
+  opsi,
+  nilai,
+  onUbah,
+  label,
+  placeholder = "Pilih…",
+  pemicu,
+  id,
+  disabled,
+  className,
+  align = "start",
+}: {
+  opsi: OpsiPilih[];
+  nilai: string | undefined;
+  onUbah: (v: string) => void;
+  /** Nama untuk pembaca layar; pemicunya sendiri cuma menampilkan pilihan. */
+  label?: string;
+  placeholder?: string;
+  pemicu?: ReactElement;
+  id?: string;
+  disabled?: boolean;
+  /** Kelas tambahan pada kotak bawaan (tanpa `pemicu`). */
+  className?: string;
+  align?: "start" | "center" | "end";
+}) {
+  const pilih = opsi.find((o) => o.nilai === nilai);
+  // Kelompokkan butir yang berurutan dengan `kelompok` sama.
+  const blok: { kelompok?: string; isi: OpsiPilih[] }[] = [];
+  for (const o of opsi) {
+    const akhir = blok[blok.length - 1];
+    if (akhir && akhir.kelompok === o.kelompok) akhir.isi.push(o);
+    else blok.push({ kelompok: o.kelompok, isi: [o] });
+  }
+  const butir = (o: OpsiPilih) => (
+    <RSelect.Item key={o.nilai} value={keRadix(o.nilai)} disabled={o.mati} className="k-menu__butir k-pilih__butir">
+      {o.ikon && <Ikon ikon={o.ikon} ukuran={16} />}
+      <span className="k-pilih__teks">
+        <RSelect.ItemText>{o.label}</RSelect.ItemText>
+        {o.ket && <small>{o.ket}</small>}
+      </span>
+      <RSelect.ItemIndicator className="k-pilih__tanda">
+        <Ikon ikon={Check} ukuran={14} />
+      </RSelect.ItemIndicator>
+    </RSelect.Item>
+  );
+  return (
+    <RSelect.Root value={nilai === undefined ? undefined : keRadix(nilai)} onValueChange={(v) => onUbah(dariRadix(v))} disabled={disabled}>
+      {pemicu ? (
+        <RSelect.Trigger asChild aria-label={label} id={id}>
+          {pemicu}
+        </RSelect.Trigger>
+      ) : (
+        <RSelect.Trigger id={id} className={kelas("k-kotak k-pilih", className)} aria-label={label}>
+          <span className={pilih ? undefined : "k-pilih__kosong"}>{pilih?.label ?? placeholder}</span>
+          <Ikon ikon={CaretDown} ukuran={14} className="k-pilih__caret" />
+        </RSelect.Trigger>
+      )}
+      <RSelect.Portal>
+        <RSelect.Content className="k-ov k-menu k-pilih__isi" position="popper" align={align} sideOffset={6} collisionPadding={12}>
+          <RSelect.Viewport>
+            {blok.map((g, i) =>
+              g.kelompok ? (
+                <RSelect.Group key={`${g.kelompok}-${i}`} className="k-pilih__kelompok">
+                  <RSelect.Label className="k-pilih__kepala">{g.kelompok}</RSelect.Label>
+                  {g.isi.map(butir)}
+                </RSelect.Group>
+              ) : (
+                g.isi.map(butir)
+              ),
+            )}
+          </RSelect.Viewport>
+        </RSelect.Content>
+      </RSelect.Portal>
+    </RSelect.Root>
+  );
+}
+
+/** Pemilih berbentuk tombol sekunder ber-caret (bilah alat daftar). */
+export function PilihTombol({
+  judul,
+  nilai,
+  opsi,
+  onPilih,
+  kiri,
+  ukuran = "medium",
+  jenis = "secondary",
+  className,
+}: {
+  /** Dibacakan pembaca layar — tombolnya sendiri cuma menampilkan pilihan. */
+  judul: string;
+  nilai: string;
+  opsi: OpsiPilih[];
+  onPilih: (nilai: string) => void;
+  kiri?: DataIkon;
+  ukuran?: "small" | "medium";
+  jenis?: "secondary" | "ghost";
+  className?: string;
+}) {
+  return (
+    <PilihMenu
+      label={judul}
+      nilai={nilai}
+      opsi={opsi}
+      onUbah={onPilih}
+      pemicu={
+        <Tombol ukuran={ukuran} jenis={jenis} kiri={kiri} kanan={CaretDown} className={kelas("k-pilihtombol", className)}>
+          {opsi.find((o) => o.nilai === nilai)?.label ?? judul}
+        </Tombol>
+      }
+    />
+  );
+}
+
+/** Kotak pilih kit bawaan — nama lama, dipertahankan untuk galeri. */
 export function Pilih({
   opsi,
   nilai,
@@ -146,38 +264,10 @@ export function Pilih({
   nilai?: string;
   onUbah?: (v: string) => void;
   placeholder?: string;
-  /** Nama untuk pembaca layar kalau tidak ada <label for>. */
   label?: string;
   id?: string;
 }) {
-  return (
-    <RSelect.Root value={nilai} onValueChange={onUbah}>
-      <RSelect.Trigger id={id} className="k-kotak k-pilih" aria-label={label}>
-        <RSelect.Value placeholder={placeholder} />
-        <RSelect.Icon asChild>
-          <Ikon ikon={CaretDown} ukuran={14} className="k-pilih__caret" />
-        </RSelect.Icon>
-      </RSelect.Trigger>
-      <RSelect.Portal>
-        <RSelect.Content className="k-ov k-menu k-pilih__isi" position="popper" sideOffset={6} collisionPadding={12}>
-          <RSelect.Viewport>
-            {opsi.map((o) => (
-              <RSelect.Item key={o.nilai} value={o.nilai} disabled={o.mati} className="k-menu__butir k-pilih__butir">
-                {o.ikon && <Ikon ikon={o.ikon} ukuran={16} />}
-                <span className="k-pilih__teks">
-                  <RSelect.ItemText>{o.label}</RSelect.ItemText>
-                  {o.ket && <small>{o.ket}</small>}
-                </span>
-                <RSelect.ItemIndicator className="k-pilih__tanda">
-                  <Ikon ikon={Check} ukuran={14} />
-                </RSelect.ItemIndicator>
-              </RSelect.Item>
-            ))}
-          </RSelect.Viewport>
-        </RSelect.Content>
-      </RSelect.Portal>
-    </RSelect.Root>
-  );
+  return <PilihMenu opsi={opsi} nilai={nilai} onUbah={(v) => onUbah?.(v)} placeholder={placeholder} label={label} id={id} />;
 }
 
 /* --- Combobox: pilih yang bisa dicari ------------------------------------------

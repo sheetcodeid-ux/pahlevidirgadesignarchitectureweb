@@ -1,5 +1,5 @@
 import { SorotTeks } from "../kit/Tampilan";
-import { PilihAsli } from "../kit/Formulir";
+import { PilihMenu } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider, useToast } from "../kit/Toast";
@@ -259,18 +259,12 @@ function DialogKontak({ onSelesai }: { onSelesai: () => void }) {
             <label className="k-isian__label" htmlFor="dk-kategori">
               Kategori
             </label>
-            <PilihAsli
-                id="dk-kategori"
-                
-                value={kategori}
-                onChange={(e) => setKategori(e.currentTarget.value)}
-              >
-                {Object.entries(KATEGORI).map(([v, l]) => (
-                  <option key={v} value={v}>
-                    {l}
-                  </option>
-                ))}
-              </PilihAsli>
+            <PilihMenu
+              id="dk-kategori"
+              nilai={kategori}
+              onUbah={setKategori}
+              opsi={Object.entries(KATEGORI).map(([v, l]) => ({ nilai: v, label: l }))}
+            />
           </div>
         </div>
         <Isian

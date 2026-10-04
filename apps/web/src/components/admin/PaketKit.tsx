@@ -1,3 +1,4 @@
+import { PilihMenu } from "../kit/Formulir";
 import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
@@ -51,7 +52,7 @@ const URUT = [
   { nilai: "baru", label: "Terakhir diubah" },
 ];
 
-/** Tombol bertopeng dengan <select> asli — `.k-pilihtombol`. */
+/** Tombol kit yang membuka dropdown kit — `.k-pilihtombol`. */
 function Pilih({
   judul,
   label,
@@ -68,18 +69,17 @@ function Pilih({
   onUbah: (v: string) => void;
 }) {
   return (
-    <label className="k-pilihtombol" title={judul}>
-      <Tombol ukuran="medium" jenis="ghost" kiri={ikon} kanan={CaretDown} tabIndex={-1}>
-        {label}
-      </Tombol>
-      <select aria-label={judul} value={nilai} onChange={(e) => onUbah(e.currentTarget.value)}>
-        {opsi.map((o) => (
-          <option key={o.nilai} value={o.nilai}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <PilihMenu
+      label={judul}
+      nilai={nilai}
+      opsi={opsi}
+      onUbah={onUbah}
+      pemicu={
+        <Tombol ukuran="medium" jenis="ghost" kiri={ikon} kanan={CaretDown} className="k-pilihtombol">
+          {label}
+        </Tombol>
+      }
+    />
   );
 }
 

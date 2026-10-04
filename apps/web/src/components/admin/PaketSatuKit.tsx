@@ -1,4 +1,4 @@
-import { IsianPanjang, Geser } from "../kit/Formulir";
+import { IsianPanjang, Geser, PilihMenu } from "../kit/Formulir";
 import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useState } from "react";
 import { navigate } from "astro:transitions/client";
@@ -267,21 +267,15 @@ function Isi() {
                     setForm((f) => ({ ...f, name: v, slug: slugDisentuh ? f.slug : jadiSlug(v) }));
                   }}
                 />
-                <label className="k-isian">
+                <div className="k-isian">
                   <span className="k-isian__label">Kelompok</span>
-                  <span className="k-isian__kotak pas__pilih">
-                    <select
-                      value={form.group}
-                      onChange={(e) => setel("group", e.currentTarget.value as "kafe" | "rumah")}
-                    >
-                      {KELOMPOK.map((k) => (
-                        <option key={k.kunci} value={k.kunci}>
-                          {k.tab}
-                        </option>
-                      ))}
-                    </select>
-                  </span>
-                </label>
+                  <PilihMenu
+                    label="Kelompok"
+                    nilai={form.group}
+                    onUbah={(v) => setel("group", v as "kafe" | "rumah")}
+                    opsi={KELOMPOK.map((k) => ({ nilai: k.kunci, label: k.tab }))}
+                  />
+                </div>
                 <Isian
                   label="Fee terendah (juta)"
                   type="number"

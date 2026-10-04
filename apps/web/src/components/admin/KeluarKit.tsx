@@ -1,4 +1,4 @@
-import { KelompokIsian, PilihTanggal, keIso } from "../kit/Formulir";
+import { KelompokIsian, PilihTanggal, keIso, PilihMenu } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { DialogBiaya } from "./biayaKit";
@@ -11,7 +11,7 @@ import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { TombolBulat } from "../kit/Item";
 import { ToastProvider, useToast } from "../kit/Toast";
-import { Users, House, Medal, DotsThree, Sliders, NavReceipt, CoinOut, SpecialHandshake, UserCircleCheck, IdentificationBadge, Ruler, NavArrowsLeftRight, NavCurrencyCircleDollar, Wallet } from "../kit/ikon";
+import { Users, House, Medal, DotsThree, Sliders, NavReceipt, CoinOut, SpecialHandshake, UserCircleCheck, IdentificationBadge, Ruler, NavArrowsLeftRight, NavCurrencyCircleDollar, Wallet, CaretDown } from "../kit/ikon";
 import {
   daftarProyek,
   daftarTim,
@@ -416,52 +416,50 @@ function Isi() {
                 <label className="tr__label" htmlFor="kl-proyek">
                   Proyek
                 </label>
-                <div className="tr__pilih">
-                  <span className="tr__pilihubin">
-                    <Ikon ikon={Ruler} ukuran={14} />
-                  </span>
-                  <select
-                    id="kl-proyek"
-                    value={aktif?.id ?? ""}
-                    onChange={(e) => {
-                      setProyekAktif(e.currentTarget.value);
-                      setPilihProyekId(e.currentTarget.value);
-                    }}
-                  >
-                    {(proyek ?? []).map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <PilihMenu
+                  id="kl-proyek"
+                  nilai={aktif?.id ?? ""}
+                  onUbah={(v) => {
+                    setProyekAktif(v);
+                    setPilihProyekId(v);
+                  }}
+                  opsi={(proyek ?? []).map((p) => ({ nilai: p.id, label: p.title }))}
+                  pemicu={
+                    <button type="button" className="tr__pilih">
+                      <span className="tr__pilihubin">
+                        <Ikon ikon={Ruler} ukuran={14} />
+                      </span>
+                      <span className="tr__pilihteks">{aktif?.title ?? "Pilih proyek"}</span>
+                      <Ikon ikon={CaretDown} ukuran={14} className="tr__pilihcaret" />
+                    </button>
+                  }
+                />
               </div>
               <div className="tr__grup">
                 <label className="tr__label" htmlFor="kl-orang">
                   Dibayar ke
                 </label>
-                <div className="tr__pilih">
-                  <span className="tr__pilihubin">
-                    <Ikon ikon={Users} ukuran={14} />
-                  </span>
-                  {/* Boleh KOSONG, dan itu disengaja: biaya operasional memang
-                      bukan milik siapa pun. Kolomnya `on delete set null`
-                      dengan alasan yang sama. */}
-                  <select
-                    id="kl-orang"
-                    value={orangId}
-                    onChange={(e) => setOrangId(e.currentTarget.value)}
-                  >
-                    <option value="">Tanpa orang</option>
-                    {(tim ?? [])
-                      .filter((a) => a.active)
-                      .map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
+                {/* Boleh KOSONG, dan itu disengaja: biaya operasional memang
+                    bukan milik siapa pun. Kolomnya `on delete set null`
+                    dengan alasan yang sama. */}
+                <PilihMenu
+                  id="kl-orang"
+                  nilai={orangId}
+                  onUbah={setOrangId}
+                  opsi={[
+                    { nilai: "", label: "Tanpa orang" },
+                    ...(tim ?? []).filter((a) => a.active).map((a) => ({ nilai: a.id, label: a.name })),
+                  ]}
+                  pemicu={
+                    <button type="button" className="tr__pilih">
+                      <span className="tr__pilihubin">
+                        <Ikon ikon={Users} ukuran={14} />
+                      </span>
+                      <span className="tr__pilihteks">{(tim ?? []).find((a) => a.id === orangId)?.name ?? "Tanpa orang"}</span>
+                      <Ikon ikon={CaretDown} ukuran={14} className="tr__pilihcaret" />
+                    </button>
+                  }
+                />
               </div>
             </div>
 

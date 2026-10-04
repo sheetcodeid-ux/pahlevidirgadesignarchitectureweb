@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { navigate } from "astro:transitions/client";
+import { tanya } from "./tanya";
 
 /**
  * Menahan perpindahan halaman selama masih ada isian yang belum disimpan.
@@ -10,19 +12,29 @@ import { useEffect } from "react";
  *
  * Dua jalur ditahan, karena keduanya jalur yang berbeda:
  *
- * - `astro:before-preparation` menahan klik menu di dalam panel.
+ * - `astro:before-preparation` menahan klik menu di dalam panel — ditanyakan
+ *   lewat dialog kit (`lib/tanya`), lalu dijalankan ulang kalau disetujui.
  * - `beforeunload` menahan tutup tab, muat ulang, dan tautan keluar. Router
- *   sisi klien tidak pernah melihat ketiganya.
+ *   sisi klien tidak pernah melihat ketiganya, dan di sini peramban SELALU
+ *   memakai kotaknya sendiri — tidak ada cara mengganti tampilannya.
  */
 export function useCegahPindah(adaPerubahan: boolean, pesan = "Ada isian yang belum disimpan. Tinggalkan halaman ini?") {
   useEffect(() => {
     if (!adaPerubahan) return;
 
+    let lolos = false;
     const cegahNavigasi = (e: Event) => {
-      // confirm() bawaan, bukan dialog sendiri: pertanyaan ini harus
-      // menghentikan perpindahan SEBELUM halaman berganti, dan dialog React
-      // yang dirender setelahnya sudah terlambat.
-      if (!window.confirm(pesan)) e.preventDefault();
+      if (lolos) return;
+      // Perpindahannya dihentikan dulu, lalu ditanyakan lewat dialog kit
+      // (bukan confirm() bawaan peramban). Kalau dijawab "Tinggalkan",
+      // perpindahan yang sama dijalankan ulang.
+      e.preventDefault();
+      const ke = (e as Event & { to?: URL }).to;
+      tanya({ judul: "Tinggalkan halaman ini?", isi: pesan, ya: "Tinggalkan", tidak: "Tetap di sini", bahaya: true }).then((ya) => {
+        if (!ya || !ke) return;
+        lolos = true;
+        navigate(ke.href);
+      });
     };
 
     const cegahTutup = (e: BeforeUnloadEvent) => {

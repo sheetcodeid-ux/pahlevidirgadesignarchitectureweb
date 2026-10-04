@@ -37,7 +37,7 @@
 
 @keyframes k-muncul { from { opacity: 0; } }
 @keyframes k-pergi { to { opacity: 0; } }
-@keyframes k-timbul { from { opacity: 0; transform: translateY(4px) scale(0.985); } }
+@keyframes k-timbul { from { opacity: 0; transform: translateY(4px); } }
 @keyframes k-putar { to { transform: rotate(360deg); } }
 
 /* Tombol tutup / navigasi kecil di dalam overlay: kotak 32 r8 tanpa bingkai,
@@ -74,7 +74,7 @@
   overflow: hidden;
 }
 .k-dialog[data-state="open"] { animation-name: k-timbul-tengah; }
-@keyframes k-timbul-tengah { from { opacity: 0; transform: translate(-50%, calc(-50% + 6px)) scale(0.985); } }
+@keyframes k-timbul-tengah { from { opacity: 0; transform: translate(-50%, calc(-50% + 6px)); } }
 .k-dialog--kecil { width: min(420px, calc(100vw - 32px)); }
 .k-dialog--lebar { width: min(640px, calc(100vw - 32px)); }
 .k-dialog--palet {
@@ -84,7 +84,7 @@
   transform: translateX(-50%);
 }
 .k-dialog--palet[data-state="open"] { animation-name: k-timbul-atas; }
-@keyframes k-timbul-atas { from { opacity: 0; transform: translate(-50%, -6px) scale(0.985); } }
+@keyframes k-timbul-atas { from { opacity: 0; transform: translate(-50%, -6px); } }
 
 .k-dialog__kepala {
   display: flex;
@@ -186,6 +186,9 @@
 }
 .k-petunjuk[data-state="delayed-open"],
 .k-petunjuk[data-state="instant-open"] { animation: k-muncul 100ms ease-out; }
+/* Pengganti tooltip bawaan untuk atribut `title` (lib/judulMelayang.ts). */
+.k-petunjuk--melayang { position: fixed; top: 0; left: 0; z-index: 200; pointer-events: none; overflow-wrap: anywhere; box-shadow: var(--shadow-lg); animation: k-muncul 100ms ease-out; }
+.k-petunjuk--melayang[hidden] { display: none; }
 
 /* --- Menu (dropdown, konteks, bilah, pilih, kombo, palet) ------------------------ */
 
@@ -204,6 +207,7 @@
   outline: none;
   user-select: none;
 }
+.k-menu__butir { transition: background-color 120ms, color 120ms; }
 .k-menu__butir > svg { color: var(--brand); }
 .k-menu__butir[data-highlighted],
 .k-menu__butir[data-selected="true"] { background: var(--brand-soft); color: var(--text-strong); }
@@ -424,6 +428,14 @@
 .k-pilih__teks { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 1px; }
 .k-pilih__teks small { color: var(--text-muted); font-size: var(--k-t11); }
 .k-pilih__tanda { margin-left: auto; color: var(--brand); }
+.k-pilih__butir[data-state="checked"] { color: var(--text-strong); font-weight: var(--k-semi); }
+.k-pilih__kepala { padding: 8px 10px 4px; color: var(--text-muted); font-size: var(--k-t11); font-weight: var(--k-semi); letter-spacing: 0.02em; text-transform: uppercase; }
+.k-pilih__kelompok + .k-pilih__kelompok,
+.k-pilih__butir + .k-pilih__kelompok { margin-top: 6px; padding-top: 4px; border-top: 1px solid var(--border); }
+/* Pemicu yang sedang membuka daftarnya. */
+.k-pilih[data-state="open"] .k-pilih__caret { transform: rotate(180deg); }
+.k-pilih__caret { transition: transform 150ms; }
+.k-pilih:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .k-kombo { width: max(var(--radix-popover-trigger-width), 240px); }
 .k-kombo__cari { display: flex; align-items: center; gap: 8px; margin: -6px -6px 6px; padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--brand); }
@@ -861,3 +873,29 @@
 .kl-body { --remah-teks: var(--text-muted); --remah-pisah: var(--border-strong); }
 .kl-body .k-kakihal__tautan a,
 .kl-body .k-kakihal__sosial a { color: var(--text-muted); }
+
+/* =============================================================================
+   Tanpa tampilan bawaan peramban di panel kit
+   ============================================================================= */
+/* Panah naik-turun isian angka: tidak berguna untuk rupiah/persen, dan
+   bentuknya milik OS. */
+.kl-body input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+.kl-body input[type="number"]::-webkit-inner-spin-button,
+.kl-body input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* Batang gulir tipis berwarna kit, bukan batang abu tebal OS. */
+.kl-body,
+.kl-body *,
+.k-ov,
+.k-ov * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text-muted) 38%, transparent) transparent; }
+/* Sorotan teks dan kursor ketik ikut warna brand. */
+.kl-body ::selection { background: var(--brand-mint); color: var(--brand-mint-ink); }
+.kl-body input,
+.kl-body textarea { caret-color: var(--brand); }
+/* Isian yang diisi otomatis peramban: tanpa latar kuning/biru bawaan. */
+.kl-body input:-webkit-autofill,
+.kl-body input:-webkit-autofill:hover,
+.kl-body input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-strong);
+  box-shadow: inset 0 0 0 1000px var(--surface);
+  transition: background-color 9999s;
+}

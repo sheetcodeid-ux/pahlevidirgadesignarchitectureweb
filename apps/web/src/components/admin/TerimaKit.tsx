@@ -1,4 +1,4 @@
-import { KelompokIsian } from "../kit/Formulir";
+import { KelompokIsian, PilihMenu } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { DropdownMenu } from "../kit/Overlay";
@@ -411,28 +411,15 @@ function Isi() {
               <label className="tr__label" htmlFor="tr-proyek">
                 Proyek
               </label>
-              {/* <select> ASLI, bukan div ber-role. Membuka daftar dengan
-                  papan ketik, menggulir ke huruf yang diketik, dan tampil
-                  sebagai pemilih bawaan di ponsel — tiga perilaku yang tidak
-                  bisa rusak diam-diam. Alasan yang sama dengan <details>
-                  untuk akordeon di situs publik. */}
-              <div className="k-isian__kotak">
-                <select
-                  id="tr-proyek"
-                  className="k-isian__input"
-                  value={aktif?.id ?? ""}
-                  onChange={(e) => {
-                    const p = (proyek ?? []).find((x) => x.id === e.currentTarget.value);
-                    if (p) pilihProyek(p);
-                  }}
-                >
-                  {(proyek ?? []).map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <PilihMenu
+                id="tr-proyek"
+                nilai={aktif?.id ?? ""}
+                onUbah={(v) => {
+                  const p = (proyek ?? []).find((x) => x.id === v);
+                  if (p) pilihProyek(p);
+                }}
+                opsi={(proyek ?? []).map((p) => ({ nilai: p.id, label: p.title }))}
+              />
             </div>
 
             <div className="tr__baris">

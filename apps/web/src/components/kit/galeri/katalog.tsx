@@ -82,7 +82,7 @@ export const KATALOG: Folder[] = [
       { id: "switch", nama: "Switch", kit: "Sakelar", modul: "kit/Isian", ekspor: ["Sakelar"], ket: "Nyala/mati yang langsung berlaku.", Demo: A.DemoSakelar },
       { id: "slider", nama: "Slider", kit: "Geser", modul: "kit/Formulir", ekspor: ["Geser"], ket: "Nilai dalam rentang — persen uang muka, fee desain.", Demo: A.DemoGeser },
       { id: "select", nama: "Select", kit: "Pilih", modul: "kit/Formulir", ekspor: ["Pilih"], ket: "Pilihan bergaya dengan keterangan per butir.", Demo: A.DemoPilih },
-      { id: "native-select", nama: "Native Select", kit: "PilihAsli · PilihTombol", modul: "kit/Formulir", ekspor: ["PilihAsli"], ket: "<select> asli — di ponsel membuka pemilih sistem.", Demo: A.DemoPilihAsli },
+      { id: "native-select", nama: "Select Menu", kit: "PilihMenu · PilihTombol", modul: "kit/Formulir", ekspor: ["PilihMenu"], ket: "Pemicu bebas — kotak, tombol, teks, atau titik status — dengan daftar kit.", Demo: A.DemoPilihAsli },
       { id: "combobox", nama: "Combobox", kit: "Kombo", modul: "kit/Formulir", ekspor: ["Kombo"], ket: "Pilihan yang bisa dicari, untuk daftar panjang (proyek, kontak).", Demo: A.DemoKombo },
       { id: "input-otp", nama: "Input OTP", kit: "IsianKode", modul: "kit/Formulir", ekspor: ["IsianKode"], ket: "Kode sekali pakai: tempel penuh, backspace mundur, panah berpindah.", Demo: A.DemoKode },
       { id: "calendar", nama: "Calendar", kit: "Kalender", modul: "kit/Formulir", ekspor: ["Kalender"], lewat: ["date-picker"], ket: "Kalender bulanan, Senin di depan; hari terlarang dicoret.", Demo: A.DemoKalender },

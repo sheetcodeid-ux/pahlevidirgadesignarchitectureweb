@@ -1,3 +1,4 @@
+import { PilihMenu, PilihTombol } from "../kit/Formulir";
 import { navigate } from "astro:transitions/client";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
@@ -173,11 +174,7 @@ interface Transaksi {
   catatan: string;
 }
 
-/**
- * Pilihan yang TERLIHAT sebagai teks biasa berpanah, dengan <select> asli
- * ditumpangkan transparan — pola `.k-pilihtombol` dalam ukuran teks. Yang
- * tergambar nilainya; yang dibuka daftar bawaan peramban.
- */
+/** Pilihan yang TERLIHAT sebagai teks biasa berpanah; daftarnya dropdown kit. */
 export function PilihTeks({
   judul,
   nilai,
@@ -192,38 +189,34 @@ export function PilihTeks({
   const [tampil, setTampil] = useState(nilai);
   const [sibuk, setSibuk] = useState(false);
   useEffect(() => setTampil(nilai), [nilai]);
+  const daftar = opsi.map((o) => ({ nilai: o.value, label: o.label }));
   return (
-    <label className="pro__pilih" data-sibuk={sibuk || undefined}>
-      <span>{opsi.find((o) => o.value === tampil)?.label ?? "Belum diisi"}</span>
-      <Ikon ikon={CaretDown} ukuran={12} />
-      <select
-        aria-label={judul}
-        value={tampil}
-        disabled={sibuk}
-        onChange={async (e) => {
-          const baru = e.currentTarget.value;
-          const lama = tampil;
-          setTampil(baru);
-          setSibuk(true);
-          try {
-            await onUbah(baru);
-          } catch {
-            // Gagal menyimpan: kembalikan tampilannya. Galatnya tidak
-            // ditelan diam-diam — nilai yang melompat balik adalah tandanya.
-            setTampil(lama);
-          } finally {
-            setSibuk(false);
-          }
-        }}
-      >
-        {!opsi.some((o) => o.value === tampil) && <option value={tampil}>Belum diisi</option>}
-        {opsi.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <PilihMenu
+      label={judul}
+      nilai={tampil}
+      disabled={sibuk}
+      opsi={daftar.some((o) => o.nilai === tampil) ? daftar : [{ nilai: tampil, label: "Belum diisi", mati: true }, ...daftar]}
+      onUbah={async (baru) => {
+        const lama = tampil;
+        setTampil(baru);
+        setSibuk(true);
+        try {
+          await onUbah(baru);
+        } catch {
+          // Gagal menyimpan: kembalikan tampilannya. Galatnya tidak
+          // ditelan diam-diam — nilai yang melompat balik adalah tandanya.
+          setTampil(lama);
+        } finally {
+          setSibuk(false);
+        }
+      }}
+      pemicu={
+        <button type="button" className="pro__pilih" data-sibuk={sibuk || undefined}>
+          <span>{opsi.find((o) => o.value === tampil)?.label ?? "Belum diisi"}</span>
+          <Ikon ikon={CaretDown} ukuran={12} />
+        </button>
+      }
+    />
   );
 }
 
@@ -668,22 +661,7 @@ function Isi() {
           <KepalaSeksi
             judul="Transaksi"
             kanan={
-              <label className="k-pilihtombol">
-                <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown} tabIndex={-1}>
-                  {RENTANG.find((r) => r.nilai === rentangTrx)?.label ?? "Rentang"}
-                </Tombol>
-                <select
-                  aria-label="Rentang transaksi"
-                  value={rentangTrx}
-                  onChange={(e) => setRentangTrx(e.currentTarget.value)}
-                >
-                  {RENTANG.map((r) => (
-                    <option key={r.nilai} value={r.nilai}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <PilihTombol judul="Rentang transaksi" jenis="ghost" nilai={rentangTrx} opsi={RENTANG} onPilih={setRentangTrx} />
             }
           />
           {baris.length > 0 ? (

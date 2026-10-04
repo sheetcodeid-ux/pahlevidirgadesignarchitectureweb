@@ -1,3 +1,4 @@
+import { PilihTombol } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { KepalaSeksi, BarisLog } from "../kit/Item";
@@ -664,24 +665,7 @@ function Isi() {
           judul="Transaksi Terbaru"
           kanan={
             <>
-              {/* Pemilih ber-caret dengan <select> asli ditumpangkan
-                  transparan — pola yang sama dengan halaman Semua Transaksi. */}
-              <label className="k-pilihtombol keu__rentang">
-                <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown} tabIndex={-1}>
-                  {RENTANG.find((r) => r.nilai === rentangTrx)?.label ?? "Rentang"}
-                </Tombol>
-                <select
-                  aria-label="Rentang transaksi"
-                  value={rentangTrx}
-                  onChange={(e) => setRentangTrx(e.currentTarget.value)}
-                >
-                  {RENTANG.map((r) => (
-                    <option key={r.nilai} value={r.nilai}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <PilihTombol judul="Rentang transaksi" jenis="ghost" className="keu__rentang" nilai={rentangTrx} opsi={RENTANG} onPilih={setRentangTrx} />
               <TombolIkon
                 ikon={Sliders}
                 jenis="ghost"

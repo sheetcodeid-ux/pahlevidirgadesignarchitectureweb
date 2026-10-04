@@ -1,3 +1,4 @@
+import { PilihMenu } from "../kit/Formulir";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { Ikon } from "../kit/Ikon";
 import { CaretDown } from "../kit/ikon";
@@ -59,8 +60,7 @@ export function usePilihProyek() {
   return { semua, setSemua, id, asli, galat, pilih };
 }
 
-/** Judul halaman yang sekaligus pemilih proyek: <select> asli ditumpangkan
- *  transparan di atas judulnya. */
+/** Judul halaman yang sekaligus pemilih proyek — pemicu dropdown kit. */
 export function JudulPilihProyek({
   semua,
   asli,
@@ -71,16 +71,17 @@ export function JudulPilihProyek({
   onPilih: (id: string) => void;
 }) {
   return (
-    <label className="pf__pilihjudul">
-      <span className="pas__judul">{asli.title}</span>
-      <Ikon ikon={CaretDown} ukuran={20} />
-      <select aria-label="Pilih proyek" value={asli.id} onChange={(e) => onPilih(e.currentTarget.value)}>
-        {semua.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.title}
-          </option>
-        ))}
-      </select>
-    </label>
+    <PilihMenu
+      label="Pilih proyek"
+      nilai={asli.id}
+      opsi={semua.map((p) => ({ nilai: p.id, label: p.title }))}
+      onUbah={onPilih}
+      pemicu={
+        <button type="button" className="pf__pilihjudul">
+          <span className="pas__judul">{asli.title}</span>
+          <Ikon ikon={CaretDown} ukuran={20} />
+        </button>
+      }
+    />
   );
 }

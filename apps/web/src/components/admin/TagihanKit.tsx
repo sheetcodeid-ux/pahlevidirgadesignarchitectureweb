@@ -1,4 +1,4 @@
-import { IsianTempel, Kombo, Bidang } from "../kit/Formulir";
+import { IsianTempel, Kombo, Bidang, PilihMenu, PilihTombol } from "../kit/Formulir";
 import { Peringatan } from "../kit/Tampilan";
 import { IsianTanggal } from "../kit/Formulir";
 import { useEffect, useMemo, useState } from "react";
@@ -339,21 +339,18 @@ function Isi() {
                   : `${sisa} hari lagi`
         }
       />,
-      <label className="tag__pilihstatus">
-        <span className={`tag__status ${kelas}`}>{lewat ? "Lewat tenggat" : (LABEL_STATUS[i.status] ?? i.status)}</span>
-        <select
-          aria-label={`Status ${i.label}`}
-          value={i.status}
-          disabled={sibuk === i.id}
-          onChange={(e) => ubahStatus(i, e.currentTarget.value)}
-        >
-          {Object.entries(LABEL_STATUS).map(([n2, l]) => (
-            <option key={n2} value={n2}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </label>,
+      <PilihMenu
+        label={`Status ${i.label}`}
+        nilai={i.status}
+        disabled={sibuk === i.id}
+        opsi={Object.entries(LABEL_STATUS).map(([n2, l]) => ({ nilai: n2, label: l }))}
+        onUbah={(v) => ubahStatus(i, v)}
+        pemicu={
+          <button type="button" className="tag__pilihstatus">
+            <span className={`tag__status ${kelas}`}>{lewat ? "Lewat tenggat" : (LABEL_STATUS[i.status] ?? i.status)}</span>
+          </button>
+        }
+      />,
       <TombolIkon
         ikon={ArrowRight}
         jenis="transparent"
@@ -398,26 +395,16 @@ function Isi() {
           }}
         />
 
-        <label className="k-pilihtombol">
-          <Tombol ukuran="medium" jenis="secondary" kiri={Funnel} kanan={CaretDown} tabIndex={-1}>
-            {filterProyek === "semua" ? "Semua proyek" : filterProyek}
-          </Tombol>
-          <select
-            aria-label="Saring proyek"
-            value={filterProyek}
-            onChange={(e) => {
-              setFilterProyek(e.currentTarget.value);
-              setHalaman(1);
-            }}
-          >
-            <option value="semua">Semua proyek</option>
-            {judulProyek.map((j) => (
-              <option key={j} value={j}>
-                {j}
-              </option>
-            ))}
-          </select>
-        </label>
+        <PilihTombol
+          judul="Saring proyek"
+          kiri={Funnel}
+          nilai={filterProyek}
+          opsi={[{ nilai: "semua", label: "Semua proyek" }, ...judulProyek.map((j) => ({ nilai: j, label: j }))]}
+          onPilih={(v) => {
+            setFilterProyek(v);
+            setHalaman(1);
+          }}
+        />
 
         <DialogTermin
           proyek={proyek ?? []}
@@ -451,20 +438,21 @@ function Isi() {
       <div className="tag__kaki">
         <p className="tag__hitung">
           Menampilkan
-          <select
-            aria-label="Baris per halaman"
-            value={perHalaman}
-            onChange={(e) => {
-              setPerHalaman(Number(e.currentTarget.value));
+          <PilihMenu
+            label="Baris per halaman"
+            nilai={String(perHalaman)}
+            opsi={[11, 25, 50].map((n) => ({ nilai: String(n), label: String(n) }))}
+            onUbah={(v) => {
+              setPerHalaman(Number(v));
               setHalaman(1);
             }}
-          >
-            {[11, 25, 50].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+            pemicu={
+              <button type="button" className="kd__perhal">
+                {perHalaman}
+                <Ikon ikon={CaretDown} ukuran={12} />
+              </button>
+            }
+          />
           dari {tersaring.length}
           {terpilih.length > 0 && ` · ${terpilih.length} dipilih`}
         </p>

@@ -8,7 +8,7 @@ import { Cari } from "../kit/Isian";
 import { Isian } from "../kit/Isian";
 import { Segmen } from "../kit/Segmen";
 import { Dialog } from "../kit/Overlay";
-import { IsianTanggal, IsianTempel, PilihAsli } from "../kit/Formulir";
+import { IsianTanggal, IsianTempel, PilihMenu } from "../kit/Formulir";
 import { CoinIn, CoinOut, Plus } from "../kit/ikon";
 import { DaftarKit, PilihTombol } from "./daftarKit";
 import { DialogTarget, RingkasTarget, labelSemester, semesterBerikut, useKemajuanTarget } from "./targetKit";
@@ -413,16 +413,15 @@ function DialogKas({
           ]}
         />
         <div className="kas__dua">
-          <label className="k-isian">
+          <div className="k-isian">
             <span className="k-isian__label">Kategori</span>
-            <PilihAsli value={f.category} onChange={(e) => setF({ ...f, category: e.currentTarget.value as KategoriKas })}>
-              {KATEGORI_KAS[f.direction].map((k) => (
-                <option key={k} value={k}>
-                  {LABEL_KATEGORI_KAS[k]}
-                </option>
-              ))}
-            </PilihAsli>
-          </label>
+            <PilihMenu
+              label="Kategori"
+              nilai={f.category}
+              onUbah={(v) => setF({ ...f, category: v as KategoriKas })}
+              opsi={KATEGORI_KAS[f.direction].map((k) => ({ nilai: k, label: LABEL_KATEGORI_KAS[k] }))}
+            />
+          </div>
           <IsianTanggal label="Tanggal" nilai={f.occurredOn} onUbah={(v) => setF({ ...f, occurredOn: v })} bisaKosong={false} />
         </div>
         <Isian
@@ -451,17 +450,15 @@ function DialogKas({
             }}
           />
         </div>
-        <label className="k-isian">
+        <div className="k-isian">
           <span className="k-isian__label">Proyek terkait (boleh kosong)</span>
-          <PilihAsli value={f.projectId} onChange={(e) => setF({ ...f, projectId: e.currentTarget.value })}>
-            <option value="">Tidak terkait proyek</option>
-            {proyek.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </PilihAsli>
-        </label>
+          <PilihMenu
+            label="Proyek terkait"
+            nilai={f.projectId}
+            onUbah={(v) => setF({ ...f, projectId: v })}
+            opsi={[{ nilai: "", label: "Tidak terkait proyek" }, ...proyek.map((p) => ({ nilai: p.id, label: p.title }))]}
+          />
+        </div>
         {f.direction === "masuk" && (
           <p className="kas__info">Uang masuk di sini ikut dihitung ke target pemasukan semester.</p>
         )}

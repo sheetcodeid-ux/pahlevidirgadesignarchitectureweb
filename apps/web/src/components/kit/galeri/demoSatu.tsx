@@ -9,7 +9,8 @@ import {
   KelompokRadio,
   Geser,
   IsianKode,
-  PilihAsli,
+  PilihMenu,
+  PilihTombol,
   Pilih,
   Kombo,
   Lampiran,
@@ -335,19 +336,37 @@ export function DemoPilih() {
 }
 
 export function DemoPilihAsli() {
+  const [kat, setKat] = useState("klien");
+  const [urut, setUrut] = useState("baru");
   return (
     <div className="gal-kisi2">
       <Bidang label="Kategori kontak">
         {(p) => (
-          <PilihAsli id={p.id} defaultValue="klien">
-            <option value="klien">Klien</option>
-            <option value="kontraktor">Kontraktor</option>
-            <option value="supplier">Supplier</option>
-            <option value="konsultan">Konsultan</option>
-          </PilihAsli>
+          <PilihMenu
+            id={p.id}
+            nilai={kat}
+            onUbah={setKat}
+            opsi={[
+              { nilai: "klien", label: "Klien" },
+              { nilai: "kontraktor", label: "Kontraktor" },
+              { nilai: "supplier", label: "Supplier" },
+              { nilai: "konsultan", label: "Konsultan" },
+            ]}
+          />
         )}
       </Bidang>
-      <p className="gal-ket">Di ponsel membuka pemilih bawaan sistem — itu sebabnya dipakai untuk daftar pendek.</p>
+      <div>
+        <PilihTombol
+          judul="Urutkan"
+          nilai={urut}
+          onPilih={setUrut}
+          opsi={[
+            { nilai: "baru", label: "Terbaru" },
+            { nilai: "lama", label: "Terlama" },
+            { nilai: "nama", label: "Nama A–Z" },
+          ]}
+        />
+      </div>
     </div>
   );
 }
@@ -423,12 +442,7 @@ export function DemoDialog() {
     >
       <Isian label="Nama" placeholder="mis. Bu Ratna" autoFocus />
       <Bidang label="Kategori">
-        {(p) => (
-          <PilihAsli id={p.id}>
-            <option>Klien</option>
-            <option>Kontraktor</option>
-          </PilihAsli>
-        )}
+        {(p) => <PilihMenu id={p.id} nilai={undefined} onUbah={() => {}} opsi={[{ nilai: "klien", label: "Klien" }, { nilai: "kontraktor", label: "Kontraktor" }]} />}
       </Bidang>
     </Dialog>
   );

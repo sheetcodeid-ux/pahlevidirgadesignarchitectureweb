@@ -122,7 +122,10 @@ const path = Astro.url.pathname;
         HTML, CSS, dan modul island-nya. Lihat lib/hangat.ts. */}
     <script>
       import { pasangHangat } from "../lib/hangat";
+      import { pasangJudulMelayang } from "../lib/judulMelayang";
       pasangHangat();
+      // `title` digambar sebagai keterangan kit, bukan kotak bawaan peramban.
+      pasangJudulMelayang();
     </script>
   </head>
 

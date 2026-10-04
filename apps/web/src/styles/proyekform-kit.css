@@ -71,12 +71,21 @@
   gap: 10px;
   min-width: 0;
   max-width: 100%;
+  margin: 0;
+  padding: 2px 6px 2px 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--font-sans);
+  text-align: left;
   cursor: pointer;
 }
-.pf__pilihjudul .pas__judul { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pf__pilihjudul > svg { color: var(--text-muted); }
-.pf__pilihjudul > select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
-.pf__pilihjudul:focus-within { outline: 2px solid var(--brand); outline-offset: 4px; border-radius: 6px; }
+.pf__pilihjudul .pas__judul { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-bottom: 0.08em; }
+.pf__pilihjudul > svg { flex: none; color: var(--text-muted); transition: transform 150ms, color 150ms; }
+.pf__pilihjudul:hover > svg,
+.pf__pilihjudul[data-state="open"] > svg { color: var(--brand); }
+.pf__pilihjudul[data-state="open"] > svg { transform: rotate(180deg); }
+.pf__pilihjudul:focus-visible { outline: 2px solid var(--brand); outline-offset: 4px; box-shadow: none; }
 
 .pf__bagian { display: flex; flex-direction: column; gap: 14px; }
 /* Tiga pilihan status di kelompok tab berikon kit. Yang terpilih ditandai

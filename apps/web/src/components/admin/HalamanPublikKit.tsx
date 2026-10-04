@@ -1,3 +1,4 @@
+import { PilihMenu } from "../kit/Formulir";
 import { Korsel, Rasio } from "../kit/Tampilan";
 import { GagalMuat } from "./gagalMuat";
 import { useEffect, useRef, useState } from "react";
@@ -37,6 +38,7 @@ import { usePilihProyek, JudulPilihProyek } from "./pilihProyekKit";
 import { TAHAP_PROYEK } from "../../lib/notifikasi";
 import { subjudulBerguna } from "../../lib/api";
 import { useCegahPindah } from "../../lib/cegahPindah";
+import { tanya } from "../../lib/tanya";
 import { kecilkanFoto, buatThumb, formatByte } from "../../lib/kecilkanFoto";
 import { bukaLightbox } from "../../lib/lightbox";
 
@@ -127,9 +129,13 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
   const adaSampul = Boolean(pratinjauSampul || nilai("coverImageUrl") || nilai("coverImageKey"));
   const status = String(nilai("status") ?? "draft");
 
-  function gantiProyek(baru: string) {
+  async function gantiProyek(baru: string) {
     if (baru === asli?.id) return;
-    if (adaPerubahan && !confirm(`Ada ${berubah.length} perubahan yang belum disimpan. Tinggalkan?`)) return;
+    if (
+      adaPerubahan &&
+      !(await tanya({ judul: "Pindah proyek?", isi: `Ada ${berubah.length} perubahan yang belum disimpan.`, ya: "Tinggalkan", bahaya: true }))
+    )
+      return;
     pilih(baru);
     setDraf({});
     setPratinjauSampul((l) => {
@@ -387,21 +393,18 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
 
             <h3 className="pf__subjudul">Kredit</h3>
             <div className="pas__kisi">
-              <label className="k-isian">
+              <div className="k-isian">
                 <span className="k-isian__label">Kategori</span>
-                <span className="k-isian__kotak pas__pilih">
-                  <select value={teks("category") || "residential"} onChange={(e) => set("category", e.currentTarget.value)}>
-                    {Object.entries(KATEGORI).map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
-                    {!KATEGORI[teks("category")] && teks("category") && (
-                      <option value={teks("category")}>{teks("category")}</option>
-                    )}
-                  </select>
-                </span>
-              </label>
+                <PilihMenu
+                  label="Kategori"
+                  nilai={teks("category") || "residential"}
+                  onUbah={(v) => set("category", v)}
+                  opsi={[
+                    ...Object.entries(KATEGORI).map(([v, l]) => ({ nilai: v, label: l })),
+                    ...(!KATEGORI[teks("category")] && teks("category") ? [{ nilai: teks("category"), label: teks("category") }] : []),
+                  ]}
+                />
+              </div>
               <Isian
                 label="Arsitek"
                 placeholder="Pahlevi Dirga"

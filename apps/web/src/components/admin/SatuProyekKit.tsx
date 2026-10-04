@@ -12,6 +12,7 @@ import { Lencana } from "../kit/Lencana";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { CaretDown, CheckCircle, CoinIn, CoinOut, FileText, FilePdf, Globe, NotePencil, Plus, Ruler, SpecialHandshake, SpecialSealCheck, NavReceipt, CurrencyCircleDollar, SpecialCheckSquare, UserCircle } from "../kit/ikon";
+import { PilihTombol } from "../kit/Formulir";
 import {
   daftarProyek,
   daftarTugasProyek,
@@ -683,22 +684,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
             <KepalaSeksi
               judul="Transaksi"
               kanan={
-                <label className="k-pilihtombol">
-                  <Tombol ukuran="medium" jenis="ghost" kanan={CaretDown} tabIndex={-1}>
-                    {RENTANG.find((r) => r.nilai === rentangTrx)?.label ?? "Rentang"}
-                  </Tombol>
-                  <select
-                    aria-label="Rentang transaksi"
-                    value={rentangTrx}
-                    onChange={(e) => setRentangTrx(e.currentTarget.value)}
-                  >
-                    {RENTANG.map((r) => (
-                      <option key={r.nilai} value={r.nilai}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <PilihTombol judul="Rentang transaksi" jenis="ghost" nilai={rentangTrx} opsi={RENTANG} onPilih={setRentangTrx} />
               }
             />
             {baris.length > 0 ? (

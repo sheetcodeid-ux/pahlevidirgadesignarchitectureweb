@@ -212,8 +212,7 @@
 .pro__baris .pro__label { margin-bottom: 3.5px; }
 .pro__baris .k-lencana { margin-top: -7.5px; }
 
-/* Teks berpanah dengan <select> asli di atasnya — tampilannya nilai, yang
-   dibuka daftar bawaan peramban (papan ketik, ponsel, pembaca layar ikut). */
+/* Teks berpanah — pemicu dropdown kit (PilihMenu). */
 .pro__pilih {
   position: relative;
   display: inline-flex;
@@ -224,18 +223,18 @@
   font-weight: var(--k-med);
   line-height: 1;
   color: var(--text-strong);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
   cursor: pointer;
 }
 .pro__pilih > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pro__pilih > svg { color: var(--text-muted); }
-.pro__pilih > select {
-  position: absolute;
-  inset: -4px;
-  width: calc(100% + 8px);
-  opacity: 0;
-  cursor: pointer;
-}
-.pro__pilih:focus-within { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 3px; }
+.pro__pilih > svg { flex: none; transition: transform 150ms; }
+.pro__pilih[data-state="open"] > svg { transform: rotate(180deg); }
+.pro__pilih:hover > span { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--text-muted); }
+.pro__pilih:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 3px; box-shadow: none; }
 .pro__pilih[data-sibuk] { opacity: 0.55; }
 
 /* --- Pembayaran ----------------------------------------------------------- */

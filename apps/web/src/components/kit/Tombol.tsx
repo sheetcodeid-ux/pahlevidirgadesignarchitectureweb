@@ -53,7 +53,8 @@ export interface PropTombol extends Omit<ButtonHTMLAttributes<HTMLButtonElement>
   memuat?: boolean;
 }
 
-export function Tombol({
+/* forwardRef: Tombol juga dipakai sebagai pemicu Radix (PilihMenu, menu). */
+export const Tombol = forwardRef<HTMLButtonElement, PropTombol>(function Tombol({
   children,
   ukuran = "medium",
   jenis = "primary",
@@ -64,7 +65,7 @@ export function Tombol({
   className,
   disabled,
   ...sisa
-}: PropTombol) {
+}, ref) {
   const px = IKON_PX[ukuran];
   const kelas = [
     "k-tombol",
@@ -80,7 +81,7 @@ export function Tombol({
     .filter(Boolean)
     .join(" ");
   return (
-    <button type={tipeHtml} className={kelas} disabled={disabled || memuat} aria-busy={memuat || undefined} {...sisa}>
+    <button ref={ref} type={tipeHtml} className={kelas} disabled={disabled || memuat} aria-busy={memuat || undefined} {...sisa}>
       {/* Kelas per sisi, bukan `svg:first-child`/`:last-child`: pada tombol
           yang cuma punya caret kanan, caret itu SEKALIGUS anak pertama —
           selektor posisi akan memberinya jarak kiri yang bukan miliknya. */}
@@ -93,7 +94,7 @@ export function Tombol({
       {kanan && <Ikon ikon={kanan} ukuran={CARET_PX[ukuran]} className="k-tombol__ikonkanan" />}
     </button>
   );
-}
+});
 
 /* -----------------------------------------------------------------------------
    Tombol Ikon — keluarga "Button Icon". Bujur sangkar, tanpa label.
