@@ -4,20 +4,19 @@ import { RequireAuth, useProfil } from "./RequireAuth";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
 import { Lencana } from "../kit/Lencana";
-import { Segmen } from "../kit/Segmen";
 import { AlertDialog } from "../kit/Overlay";
 import { Peringatan, Rangka } from "../kit/Tampilan";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import {
-  ArrowClockwise, Briefcase, CheckCircle, CircleDashed, Eye, GearSix, Globe, IdentificationBadge, NavSignOut,
-  NavSquaresFour, NotePencil, Question, SpecialAppleLogo, SpecialGoogleLogo, SpecialMoonStars, SpecialSealCheck,
-  SpecialWindowsLogo, Users,
+  ArrowClockwise, Briefcase, CheckCircle, CircleDashed, Eye, GearSix, Globe, IdentificationBadge, NavEnvelope,
+  NavSignOut, NavSquaresFour, NotePencil, Question, SpecialAppleLogo, SpecialGoogleLogo, SpecialMoonStars,
+  SpecialSealCheck, SpecialWindowsLogo, Users,
 } from "../kit/ikon";
 import { PenandaSimpan } from "./situsKit";
 import { waktuRelatif } from "./panelKabar";
 import {
   ambilAkun, keluar, keluarkanPerangkatLain, namaTampilan, sesiTetap, ubahNamaAkun, ubahPassword, waktuMasukSesi,
-  type InfoAkun, type SesiAkun,
+  type InfoAkun,
 } from "../../lib/admin";
 import { NAV } from "../../lib/navAdmin";
 import { jagaFokusSesudahHapus } from "../../lib/fokus";
@@ -27,12 +26,14 @@ import { PERISTIWA_TEMA, pilihanTema, pilihTema, type PilihanTema } from "../../
 /* =============================================================================
    Akun — halaman akun, bukan dashboard.
 
-   Bentuknya halaman profil: kepala bersampul (bidang hijau tua berpola
-   kertas kalkir, avatar besar yang menumpang di tepinya) lalu empat tab —
-   Profil, Keamanan, Perangkat, Tampilan. Satu tab satu pekerjaan, jadi
-   tiap tab muat satu layar tanpa menjejalkan semuanya berdampingan. Tab
-   yang terbuka disimpan di alamat (#keamanan), supaya tautan dan tombol
-   Kembali membawa ke tempat yang sama.
+   Tema rupanya LEMBAR GAMBAR KERJA, karena ini panel studio arsitektur:
+   sampulnya kertas kalkir dengan denah garis, sumbu grid berbulatan
+   (A–D / 1–2), garis ukur, dan panah utara; di pojoknya kop lembar yang
+   memuat data akun sungguhan. Di bawahnya avatar besar, nama, lalu empat tab
+   bergaris bawah — Profil, Keamanan, Perangkat, Tampilan. Satu tab satu
+   pekerjaan, jadi tiap tab muat satu layar. Tab yang terbuka disimpan di
+   alamat (#keamanan), supaya tautan dan tombol Kembali membawa ke tempat
+   yang sama.
 
    Aturan kata sandinya aturan SUPABASE proyek ini, bukan karangan panel:
    minimal 12 karakter, dengan huruf besar, huruf kecil, angka, dan simbol
@@ -98,39 +99,122 @@ function inisial(nama: string) {
   return nama.split(/\s+/).filter(Boolean).slice(0, 2).map((k) => k[0]!.toUpperCase()).join("") || "?";
 }
 
-/* ─── Kepala profil ──────────────────────────────────────────────────────────
-   Sampulnya kertas kalkir: kisi 12px dengan garis tebal tiap 48px, seperti
-   lembar gambar kerja — studio ini studio arsitektur. Lambang D studio
-   tergambar samar di kanannya. */
-
-function KepalaProfil({ nama, email, master, tab, setTab }: {
-  nama: string; email: string; master: boolean; tab: Tab; setTab: (t: Tab) => void;
-}) {
+/** Lambang D studio — garis yang sama dengan tanda di kartu kas Dashboard. */
+function LambangStudio({ className, tebal = 3 }: { className?: string; tebal?: number }) {
   return (
-    <header className="akn__kepala">
-      <div className="akn__sampul" aria-hidden="true">
-        <svg className="akn__lambang" viewBox="14 14 36 36" fill="none">
-          <path d="M21 17 V47 M21 17 H28 A15 15 0 0 1 28 47 H21" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-      <div className="akn__identitas">
-        <span className="akn__avatar" aria-hidden="true">{inisial(nama)}</span>
-        <div className="akn__siapa">
-          <h2 className="akn__nama">
-            {nama}
-            <Lencana bentuk="pejalkecil" nada={master ? "selesai" : "netral"}>{master ? "Master admin" : "Staf"}</Lencana>
-          </h2>
-          <p className="akn__email">{email}</p>
-        </div>
-        <Segmen
-          className="akn__tab"
-          judul="Bagian akun"
-          nilai={tab}
-          onPilih={(v) => setTab(v as Tab)}
-          segmen={TAB.map((t) => ({ nilai: t.nilai, label: t.label, ikon: t.ikon }))}
-        />
-      </div>
-    </header>
+    <svg className={className} viewBox="14 14 36 36" fill="none" aria-hidden="true">
+      <path d="M21 17 V47 M21 17 H28 A15 15 0 0 1 28 47 H21" stroke="currentColor" strokeWidth={tebal} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ─── Sampul: lembar gambar kerja ───────────────────────────────────────────
+   Denahnya hiasan (tidak menggambar bangunan mana pun) — tapi kop lembarnya
+   berisi data akun yang benar: peran, sesi aktif, dan terakhir masuk. */
+
+function DenahSampul() {
+  const sumbuX = [40, 180, 300, 420];
+  return (
+    <svg className="akn__denah" viewBox="0 0 460 116" fill="none" aria-hidden="true">
+      {/* Sumbu grid putus-putus dengan bulatan berhuruf, seperti gambar kerja. */}
+      <g className="akn__denahsumbu">
+        {sumbuX.map((x) => <line key={x} x1={x} y1={22} x2={x} y2={116} />)}
+        <line x1={22} y1={60} x2={460} y2={60} />
+        <line x1={22} y1={104} x2={460} y2={104} />
+      </g>
+      <g className="akn__denahbulat">
+        {sumbuX.map((x, i) => (
+          <g key={x}>
+            <circle cx={x} cy={11} r={8.5} />
+            <text x={x} y={14.2}>{"ABCD"[i]}</text>
+          </g>
+        ))}
+        {[60, 104].map((y, i) => (
+          <g key={y}>
+            <circle cx={11} cy={y} r={8.5} />
+            <text x={11} y={y + 3.2}>{i + 1}</text>
+          </g>
+        ))}
+      </g>
+      {/* Dinding: tebal; jendela di dinding atas; dua bukaan pintu. */}
+      <g className="akn__denahdinding">
+        <path d="M40 116 V40 H205 M265 40 H420 V116" />
+        <path d="M180 40 V74 M180 100 V116" />
+        <path d="M300 40 V66 M300 92 V116" />
+        <path d="M300 92 H352" />
+      </g>
+      <g className="akn__denahtipis">
+        <path d="M205 37.5 H265 M205 42.5 H265" />
+        <path d="M180 100 L154 100 M154 100 A26 26 0 0 1 180 74" />
+        <path d="M300 92 L326 92 M326 92 A26 26 0 0 0 300 66" />
+        {/* Garis ukur dengan tanda miring dan angkanya. */}
+        <path d="M40 28 H420 M36 32 L44 24 M176 32 L184 24 M296 32 L304 24 M416 32 L424 24" />
+      </g>
+      <g className="akn__denahangka">
+        <text x={110} y={24}>3.500</text>
+        <text x={240} y={24}>3.000</text>
+        <text x={360} y={24}>3.000</text>
+      </g>
+    </svg>
+  );
+}
+
+function Sampul({ akun, master }: { akun: InfoAkun | null; master: boolean }) {
+  return (
+    <div className="akn__sampul">
+      <DenahSampul />
+      {/* Panah utara. */}
+      <svg className="akn__utara" viewBox="0 0 32 40" fill="none" aria-hidden="true">
+        <circle cx={16} cy={24} r={13} />
+        <path d="M16 9 L22 30 L16 26 L10 30 Z" />
+        <text x={16} y={7}>U</text>
+      </svg>
+      {/* Kop lembar — data akun sungguhan, bukan hiasan. */}
+      <dl className="akn__kop">
+        <div><dt>Peran</dt><dd>{master ? "Master admin" : "Staf"}</dd></div>
+        <div><dt>Sesi aktif</dt><dd>{akun ? akun.sesi.jumlah : "—"}</dd></div>
+        <div><dt>Terakhir masuk</dt><dd>{akun ? tanggalJam(akun.terakhirMasuk) : "—"}</dd></div>
+      </dl>
+    </div>
+  );
+}
+
+/* ─── Tab bergaris bawah ─────────────────────────────────────────────────────
+   Pola tab ARIA lengkap: panah kiri/kanan, Home, End; hanya tab terpilih
+   yang ada di urutan Tab. */
+
+function TabAkun({ tab, setTab, jumlahSesi }: { tab: Tab; setTab: (t: Tab) => void; jumlahSesi: number | null }) {
+  const ref = useRef<(HTMLButtonElement | null)[]>([]);
+  function tombol(e: React.KeyboardEvent, i: number) {
+    const ke = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: TAB.length - 1 }[e.key];
+    if (ke === undefined) return;
+    e.preventDefault();
+    const j = (ke + TAB.length) % TAB.length;
+    setTab(TAB[j]!.nilai);
+    ref.current[j]?.focus();
+  }
+  return (
+    <div className="akn__tabs" role="tablist" aria-label="Bagian akun">
+      {TAB.map((t, i) => (
+        <button
+          key={t.nilai}
+          ref={(el) => { ref.current[i] = el; }}
+          type="button"
+          role="tab"
+          id={`akn-tab-${t.nilai}`}
+          aria-controls="akn-panel"
+          aria-selected={tab === t.nilai}
+          tabIndex={tab === t.nilai ? 0 : -1}
+          className="akn__tabb"
+          onClick={() => setTab(t.nilai)}
+          onKeyDown={(e) => tombol(e, i)}
+        >
+          <Ikon ikon={t.ikon} ukuran={16} />
+          <span>{t.label}</span>
+          {t.nilai === "perangkat" && jumlahSesi !== null && <span className="akn__tabangka">{jumlahSesi}</span>}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -144,6 +228,53 @@ const IKON_KELOMPOK: Record<string, DataIkon> = {
   Pengaturan: GearSix,
 };
 
+/** Kartu staf: badge tegak berlubang tali, miring mengikuti kursor. Hanya
+ *  tetikus (jebakan #9: peristiwa tiruan sentuh tidak pernah "pergi"), dan
+ *  diam kalau pemakai meminta gerak dikurangi (CSS). */
+function KartuStaf({ nama, email, master, stafSejak }: { nama: string; email: string; master: boolean; stafSejak: string | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const kotak = useRef<DOMRect | null>(null);
+  const atur = (rx: number, ry: number, mx = 50, my = 50) => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty("--rx", `${rx}deg`);
+    el.style.setProperty("--ry", `${ry}deg`);
+    el.style.setProperty("--mx", `${mx}%`);
+    el.style.setProperty("--my", `${my}%`);
+  };
+  return (
+    <div
+      ref={ref}
+      className="akn__staf"
+      // Kotaknya dibaca SEKALI saat kursor masuk, bukan di tiap gerakan.
+      onPointerEnter={(e) => { if (e.pointerType === "mouse") kotak.current = e.currentTarget.getBoundingClientRect(); }}
+      onPointerMove={(e) => {
+        const r = kotak.current;
+        if (e.pointerType !== "mouse" || !r) return;
+        const x = (e.clientX - r.left) / r.width;
+        const y = (e.clientY - r.top) / r.height;
+        atur((0.5 - y) * 10, (x - 0.5) * 14, x * 100, y * 100);
+      }}
+      onPointerLeave={() => { kotak.current = null; atur(0, 0); }}
+    >
+      <div className="akn__stafatas">
+        <span className="akn__staflubang" aria-hidden="true" />
+        <span className="akn__staflabel"><LambangStudio className="akn__staflambang" tebal={4} />Kartu staf</span>
+      </div>
+      <span className="akn__staffoto" aria-hidden="true">{inisial(nama)}</span>
+      <div className="akn__stafbadan">
+        <b className="akn__stafnama">{nama}</b>
+        <span className="akn__stafperan">{master ? "Master admin" : "Staf"}</span>
+        <dl className="akn__stafdata">
+          <div><dt>Email</dt><dd>{email}</dd></div>
+          <div><dt>Staf sejak</dt><dd>{stafSejak ? tanggal(stafSejak) : "—"}</dd></div>
+        </dl>
+      </div>
+      <span className="akn__stafkilau" aria-hidden="true" />
+    </div>
+  );
+}
+
 /** Satu baris setelan: nama di kiri, nilai di tengah, aksi di kanan. */
 function Baris({ label, children, aksi }: { label: string; children: ReactNode; aksi?: ReactNode }) {
   return (
@@ -155,22 +286,23 @@ function Baris({ label, children, aksi }: { label: string; children: ReactNode; 
   );
 }
 
-function PanelProfil({ akun, nama, namaTersimpan, email, master, onNama }: {
+function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, onNama }: {
   akun: InfoAkun | null; nama: string; namaTersimpan: string; email: string; master: boolean;
-  onNama: (n: string | null) => void;
+  ubah: boolean; setUbah: (b: boolean) => void; onNama: (n: string | null) => void;
 }) {
   const toast = useToast();
-  const [ubah, setUbah] = useState(false);
   const [isi, setIsi] = useState("");
   const [kirim, setKirim] = useState(false);
   const isianRef = useRef<HTMLDivElement>(null);
   const terlalu = isi.trim().length > 60;
 
-  function mulai() {
+  useEffect(() => {
+    if (!ubah) return;
     setIsi(namaTersimpan);
-    setUbah(true);
     requestAnimationFrame(() => isianRef.current?.querySelector("input")?.focus());
-  }
+    // namaTersimpan sengaja tidak ikut: isian tidak boleh ditimpa saat diketik.
+  }, [ubah]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function simpan(e: React.FormEvent) {
     e.preventDefault();
     if (terlalu) return;
@@ -204,6 +336,14 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, onNama }: {
 
   return (
     <div className="akn__panel akn__panel--profil">
+      {/* Kartu ikut nama yang SEDANG diketik — pratinjau tanpa perender kedua. */}
+      <KartuStaf
+        nama={ubah ? namaTampilan({ email, nama: isi }) : nama}
+        email={email}
+        master={master}
+        stafSejak={akun?.stafSejak ?? null}
+      />
+
       <section className="akn__bagian" aria-labelledby="akn-info">
         <h3 id="akn-info" className="akn__judul">Informasi akun</h3>
         <dl className="akn__daftar">
@@ -229,7 +369,7 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, onNama }: {
           ) : (
             <Baris
               label="Nama tampilan"
-              aksi={<Tombol jenis="ghost" ukuran="small" kiri={NotePencil} onClick={mulai}>Ubah</Tombol>}
+              aksi={<Tombol jenis="ghost" ukuran="small" kiri={NotePencil} onClick={() => setUbah(true)}>Ubah</Tombol>}
             >
               <b>{nama}</b>
               {!namaTersimpan && <small>Diturunkan dari email</small>}
@@ -241,7 +381,6 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, onNama }: {
             <small>{master ? "Seluruh panel" : `Kecuali ${hak.khusus.join(" dan ")}`}</small>
           </Baris>
           <Baris label="Staf sejak"><b>{akun ? tanggal(akun.stafSejak) : "—"}</b></Baris>
-          <Baris label="Terakhir masuk"><b>{akun ? tanggalJam(akun.terakhirMasuk) : "—"}</b></Baris>
         </dl>
       </section>
 
@@ -283,7 +422,7 @@ function TombolMata({ lihat, setLihat, apa }: { lihat: boolean; setLihat: (b: bo
   );
 }
 
-function PanelKeamanan({ email, onBerhasil }: { email: string; onBerhasil: () => void }) {
+function PanelKeamanan({ email, fokusAwal, onBerhasil }: { email: string; fokusAwal: boolean; onBerhasil: () => void }) {
   const toast = useToast();
   const [lama, setLama] = useState("");
   const [baru, setBaru] = useState("");
@@ -292,6 +431,10 @@ function PanelKeamanan({ email, onBerhasil }: { email: string; onBerhasil: () =>
   const [kirim, setKirim] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
   const meterId = useId();
+  const awalRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (fokusAwal) awalRef.current?.querySelector("input")?.focus();
+  }, [fokusAwal]);
 
   const terpenuhi = SYARAT.filter(([, uji]) => uji(baru)).length;
   const cocok = baru.length > 0 && baru === ulang;
@@ -353,16 +496,12 @@ function PanelKeamanan({ email, onBerhasil }: { email: string; onBerhasil: () =>
   }
 
   return (
-    <form className="akn__panel akn__panel--keamanan" onSubmit={simpan} aria-labelledby="akn-sandi">
-      <div className="akn__panelkepala">
-        <h3 id="akn-sandi" className="akn__judul">Ganti kata sandi</h3>
-        <Tombol jenis="secondary" ukuran="small" kiri={ArrowClockwise} onClick={buatAcak}>Buat sandi acak</Tombol>
-      </div>
+    <form className="akn__panel akn__panel--keamanan" onSubmit={simpan} aria-label="Ganti kata sandi">
       {/* Nama pengguna tersembunyi: pengelola kata sandi peramban perlu tahu
           akun mana yang sandinya sedang diganti. */}
       <input type="text" name="username" autoComplete="username" value={email} readOnly hidden />
       <div className="akn__sandikisi">
-        <div className="akn__isian">
+        <div className="akn__isian" ref={awalRef}>
           <Isian
             label="Kata sandi saat ini"
             type={lihat.lama ? "text" : "password"}
@@ -393,8 +532,11 @@ function PanelKeamanan({ email, onBerhasil }: { email: string; onBerhasil: () =>
             daripada satu kalimat galat sesudah menekan Simpan. */}
         <div className={`akn__kekuatan akn__kekuatan--${tingkat}`}>
           <div className="akn__meter" id={meterId}>
-            <span className="akn__meterlabel">Kekuatan</span>
-            <b className="akn__metertingkat">{labelTingkat}</b>
+            <span className="akn__meterperisai" aria-hidden="true"><Ikon ikon={SpecialSealCheck} ukuran={22} /></span>
+            <span className="akn__metertulis">
+              <span className="akn__meterlabel">Kekuatan kata sandi</span>
+              <b className="akn__metertingkat">{labelTingkat}</b>
+            </span>
             <span className="akn__meterbar" aria-hidden="true">
               {SYARAT.map(([l], i) => <i key={l} data-isi={i < terpenuhi || undefined} />)}
             </span>
@@ -416,9 +558,12 @@ function PanelKeamanan({ email, onBerhasil }: { email: string; onBerhasil: () =>
       {galat && <Peringatan nada="bahaya">{galat}</Peringatan>}
       <div className="akn__kaki">
         <PenandaSimpan n={siap ? 0 : 1} teks={alasan ?? "Siap disimpan. Perangkat lain akan dikeluarkan."} />
-        <Tombol memuat={kirim} ukuran="large" jenis="primary" tipeHtml="submit" disabled={!siap || kirim}>
-          Simpan kata sandi
-        </Tombol>
+        <div className="akn__kakiaksi">
+          <Tombol jenis="secondary" ukuran="large" kiri={ArrowClockwise} onClick={buatAcak}>Buat sandi acak</Tombol>
+          <Tombol memuat={kirim} ukuran="large" jenis="primary" tipeHtml="submit" disabled={!siap || kirim}>
+            Simpan kata sandi
+          </Tombol>
+        </div>
       </div>
     </form>
   );
@@ -435,28 +580,37 @@ const IKON_SISTEM: Partial<Record<SistemPerangkat, DataIkon>> = {
   ChromeOS: SpecialGoogleLogo,
 };
 
-function UbinPerangkat({ ua, pucat }: { ua: string | null; pucat?: boolean }) {
+/** Gambar garis perangkatnya — laptop, ponsel, tablet, atau tanda tanya
+ *  kalau agennya tidak dikenali — dengan lambang sistemnya di layar. */
+function GambarAlat({ ua, angka }: { ua: string | null; angka?: number }) {
   const p = bacaPerangkat(ua);
+  const jenis = angka !== undefined ? "banyak" : p ? p.jenis : "tak";
   return (
-    <span className={`akn__ubin${pucat ? " akn__ubin--pucat" : ""}`} aria-hidden="true">
-      <Ikon ikon={p ? (IKON_SISTEM[p.sistem] ?? Globe) : Question} ukuran={18} />
+    <span className={`akn__alat akn__alat--${jenis}`} aria-hidden="true">
+      <span className="akn__alatlayar">
+        {angka !== undefined ? <b>{angka}</b> : <Ikon ikon={p ? (IKON_SISTEM[p.sistem] ?? Globe) : Question} ukuran={20} />}
+      </span>
+      {jenis === "komputer" && <span className="akn__alatalas" />}
     </span>
   );
 }
 
-function BarisPerangkat({ ubin, judul, lencana, masuk, aktif, simpan, ini }: {
-  ubin: ReactNode; judul: string; lencana?: ReactNode; masuk: string; aktif: string; simpan?: string; ini?: boolean;
+function KartuAlat({ ua, angka, judul, ket, masuk, aktif, ini, children }: {
+  ua: string | null; angka?: number; judul: string; ket?: string; masuk: string; aktif: string; ini?: boolean; children?: ReactNode;
 }) {
   return (
-    <li className={`akn__perangkat${ini ? " is-ini" : ""}`}>
-      {ubin}
-      <span className="akn__perangkatnama">
-        <b>{judul}</b>
-        {lencana}
+    <li className={`akn__alatkartu${ini ? " is-ini" : ""}${angka !== undefined || !bacaPerangkat(ua) ? " is-pudar" : ""}`}>
+      {ini && <span className="akn__alathidup"><i aria-hidden="true" />Sekarang</span>}
+      <GambarAlat ua={ua} angka={angka} />
+      <span className="akn__alatjudul">
+        <b className="akn__alatnama">{judul}</b>
+        {ket && <small>{ket}</small>}
       </span>
-      <span className="akn__perangkatsel"><small>Masuk</small>{masuk}</span>
-      <span className="akn__perangkatsel"><small>Terakhir aktif</small>{aktif}</span>
-      <span className="akn__perangkatsel"><small>Disimpan</small>{simpan ?? "—"}</span>
+      <dl className="akn__alatdata">
+        <div><dt>Masuk</dt><dd>{masuk}</dd></div>
+        <div><dt>Terakhir aktif</dt><dd>{aktif}</dd></div>
+      </dl>
+      {children}
     </li>
   );
 }
@@ -482,6 +636,10 @@ function PanelPerangkat({ akun, galat, muat }: { akun: InfoAkun | null; galat: s
   const jumlahLain = s ? s.jumlah - (s.ini ? 1 : 0) : 0;
   const p = bacaPerangkat(ua);
   const masukSejak = masuk ?? (s?.ini ? new Date(s.ini.dibuat) : null);
+  const nama = (x: string | null) => {
+    const q = bacaPerangkat(x);
+    return q ? `${q.peramban} · ${q.sistem}` : "Perangkat tak dikenal";
+  };
 
   async function keluarkanLain() {
     try {
@@ -498,11 +656,11 @@ function PanelPerangkat({ akun, galat, muat }: { akun: InfoAkun | null; galat: s
       <div className="akn__panelkepala">
         <h3 className="akn__judul">
           Perangkat yang masuk
-          {s && <span className="akn__jumlah">{s.jumlah} sesi</span>}
+          {s && <span className="akn__jumlah">{s.jumlah} sesi · {s.aktif24j} aktif hari ini</span>}
         </h3>
         <AlertDialog
           trigger={
-            <Tombol ref={pemicuKeluarkan} jenis="secondary" ukuran="small" disabled={!s || jumlahLain === 0}>
+            <Tombol ref={pemicuKeluarkan} jenis="secondary" ukuran="medium" disabled={!s || jumlahLain === 0}>
               Keluarkan perangkat lain
             </Tombol>
           }
@@ -516,73 +674,49 @@ function PanelPerangkat({ akun, galat, muat }: { akun: InfoAkun | null; galat: s
         />
       </div>
 
-      <ul className="akn__perangkatlist">
-        <BarisPerangkat
+      {galat && (
+        <Peringatan nada="bahaya" aksi={<Tombol jenis="ghost" ukuran="small" onClick={() => void muat()}>Coba lagi</Tombol>}>{galat}</Peringatan>
+      )}
+      <ul className="akn__alatkisi">
+        <KartuAlat
           ini
-          ubin={<UbinPerangkat ua={ua} />}
+          ua={ua}
           judul={p ? `${p.peramban} · ${p.sistem}` : "Perangkat ini"}
-          lencana={<Lencana bentuk="pejalkecil" nada="selesai">Perangkat ini</Lencana>}
+          ket={tetap === null ? undefined : tetap ? "Tetap masuk di perangkat ini" : "Masuk selama tab terbuka"}
           masuk={masukSejak ? tanggalJam(masukSejak) : "—"}
           aktif="Sekarang"
-          simpan={tetap === null ? "—" : tetap ? "Tetap masuk" : "Selama tab terbuka"}
-        />
-        {galat ? (
-          <li><Peringatan nada="bahaya" aksi={<Tombol jenis="ghost" ukuran="small" onClick={() => void muat()}>Coba lagi</Tombol>}>{galat}</Peringatan></li>
-        ) : !s ? (
-          <li><Rangka tinggi={56} /></li>
-        ) : (
-          <>
-            {s.lain.map((x: SesiAkun) => {
-              const q = bacaPerangkat(x.userAgent);
-              return (
-                <BarisPerangkat
-                  key={x.id}
-                  ubin={<UbinPerangkat ua={x.userAgent} />}
-                  judul={q ? `${q.peramban} · ${q.sistem}` : "Perangkat tak dikenal"}
-                  masuk={tanggalJam(x.dibuat)}
-                  aktif={waktuRelatif(x.terakhirAktif)}
-                />
-              );
-            })}
-            {sisaBernama > 0 && (
-              <BarisPerangkat
-                ubin={<span className="akn__ubin akn__ubin--pucat" aria-hidden="true">+{sisaBernama}</span>}
-                judul={`${sisaBernama} perangkat lain`}
-                masuk="—"
-                aktif="—"
-              />
-            )}
-            {s.tanpaNama > 0 && (
-              <BarisPerangkat
-                ubin={<UbinPerangkat ua={null} pucat />}
-                judul={`${s.tanpaNama} sesi tanpa nama perangkat`}
-                masuk="Sesi lama"
-                aktif={s.tanpaNamaTerakhir ? waktuRelatif(s.tanpaNamaTerakhir) : "—"}
-              />
-            )}
-          </>
+        >
+          <Tombol
+            jenis="ghost"
+            ukuran="small"
+            kiri={NavSignOut}
+            memuat={keluarJalan}
+            onClick={async () => {
+              setKeluarJalan(true);
+              await keluar();
+              window.location.replace("/admin/masuk");
+            }}
+          >
+            Keluar dari sini
+          </Tombol>
+        </KartuAlat>
+        {!s && !galat && <li className="akn__alatkartu"><Rangka tinggi={180} /></li>}
+        {s?.lain.map((x) => (
+          <KartuAlat key={x.id} ua={x.userAgent} judul={nama(x.userAgent)} masuk={tanggalJam(x.dibuat)} aktif={waktuRelatif(x.terakhirAktif)} />
+        ))}
+        {sisaBernama > 0 && <KartuAlat ua={null} angka={sisaBernama} judul={`${sisaBernama} perangkat lain`} masuk="—" aktif="—" />}
+        {s && s.tanpaNama > 0 && (
+          <KartuAlat
+            ua={null}
+            judul={`${s.tanpaNama} sesi tanpa nama perangkat`}
+            masuk="Sesi lama"
+            aktif={s.tanpaNamaTerakhir ? waktuRelatif(s.tanpaNamaTerakhir) : "—"}
+          />
         )}
       </ul>
       {s && jumlahLain === 0 && !galat && (
         <p className="akn__kosong"><Ikon ikon={CheckCircle} ukuran={16} /> Tidak ada perangkat lain yang masuk.</p>
       )}
-
-      <div className="akn__kaki">
-        <PenandaSimpan n={0} teks="Keluar juga mencabut sesi ini di server." />
-        <Tombol
-          jenis="ghost"
-          ukuran="medium"
-          kiri={NavSignOut}
-          memuat={keluarJalan}
-          onClick={async () => {
-            setKeluarJalan(true);
-            await keluar();
-            window.location.replace("/admin/masuk");
-          }}
-        >
-          Keluar dari perangkat ini
-        </Tombol>
-      </div>
     </div>
   );
 }
@@ -639,10 +773,7 @@ function PanelTampilan() {
 
   return (
     <div className="akn__panel akn__panel--tampilan">
-      <div className="akn__panelkepala">
-        <h3 id="akn-tema" className="akn__judul">Tema panel</h3>
-      </div>
-      <div className="akn__tema" role="radiogroup" aria-labelledby="akn-tema">
+      <div className="akn__tema" role="radiogroup" aria-label="Tema panel">
         {PILIHAN_TEMA.map((t) => (
           <label key={t.nilai} className="akn__temabutir">
             <input
@@ -672,6 +803,8 @@ function Isi() {
   const [akun, setAkun] = useState<InfoAkun | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
   const [namaKini, setNamaKini] = useState<string | null | undefined>(undefined);
+  const [ubahNama, setUbahNama] = useState(false);
+  const [fokusSandi, setFokusSandi] = useState(false);
   // "profil" juga yang dirender server; tab dari alamat dibaca sesudah
   // hidrasi (jebakan #8).
   const [tab, setTabState] = useState<Tab>("profil");
@@ -684,6 +817,7 @@ function Isi() {
   }, []);
   const setTab = (t: Tab) => {
     setTabState(t);
+    setFokusSandi(false);
     // replaceState, bukan location.hash: tidak menggulir ke elemen ber-id
     // yang kebetulan bernama sama, dan tidak menumpuk riwayat per klik tab.
     history.replaceState(history.state, "", t === "profil" ? location.pathname + location.search : `#${t}`);
@@ -704,12 +838,45 @@ function Isi() {
 
   return (
     <div className="akn">
-      <KepalaProfil nama={nama} email={email} master={master} tab={tab} setTab={setTab} />
-      <section className="akn__isi" role="tabpanel" aria-label={TAB.find((t) => t.nilai === tab)!.label}>
+      <header className="akn__kepala">
+        <Sampul akun={akun} master={master} />
+        <div className="akn__identitas">
+          <span className="akn__avatar" aria-hidden="true">
+            {inisial(nama)}
+            <i className="akn__avatarhidup" />
+          </span>
+          <div className="akn__siapa">
+            <h2 className="akn__nama">
+              {nama}
+              <Lencana bentuk="pejalkecil" nada={master ? "selesai" : "netral"}>{master ? "Master admin" : "Staf"}</Lencana>
+            </h2>
+            <p className="akn__email"><Ikon ikon={NavEnvelope} ukuran={14} />{email}</p>
+          </div>
+          <div className="akn__pintas">
+            <Tombol jenis="secondary" ukuran="medium" kiri={NotePencil} onClick={() => { setTab("profil"); setUbahNama(true); }}>
+              Ubah nama
+            </Tombol>
+            <Tombol jenis="primary" ukuran="medium" kiri={SpecialSealCheck} onClick={() => { setTab("keamanan"); setFokusSandi(true); }}>
+              Ganti kata sandi
+            </Tombol>
+          </div>
+        </div>
+        <TabAkun tab={tab} setTab={setTab} jumlahSesi={akun?.sesi.jumlah ?? null} />
+      </header>
+      <section className="akn__isi" id="akn-panel" role="tabpanel" aria-labelledby={`akn-tab-${tab}`}>
         {tab === "profil" && (
-          <PanelProfil akun={akun} nama={nama} namaTersimpan={namaTersimpan} email={email} master={master} onNama={setNamaKini} />
+          <PanelProfil
+            akun={akun}
+            nama={nama}
+            namaTersimpan={namaTersimpan}
+            email={email}
+            master={master}
+            ubah={ubahNama}
+            setUbah={setUbahNama}
+            onNama={setNamaKini}
+          />
         )}
-        {tab === "keamanan" && <PanelKeamanan email={email} onBerhasil={() => void muat()} />}
+        {tab === "keamanan" && <PanelKeamanan email={email} fokusAwal={fokusSandi} onBerhasil={() => void muat()} />}
         {tab === "perangkat" && <PanelPerangkat akun={akun} galat={galat} muat={muat} />}
         {tab === "tampilan" && <PanelTampilan />}
       </section>
