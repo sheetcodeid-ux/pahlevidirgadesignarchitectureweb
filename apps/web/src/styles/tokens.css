@@ -308,6 +308,24 @@
   /* Kartu kas pejal: hijau tua di KEDUA tema, sama seperti --kas-bidang. */
   --pra-kas: #1E4841;
 
+  /* Pratinjau di Info Studio — dua benda yang warnanya TIDAK ikut tema
+     panel, jadi nilainya tidak didefinisikan ulang di blok gelap:
+     - situs publik (gelap, aksen teal) — salinan token `publik.css`;
+     - kertas PDF berkop — salinan konstanta `lib/pdf.ts` (HITAM, ABU,
+       MERAH). Kertas tetap putih di tema gelap, seperti hasil cetaknya. */
+  --pub-gelap: #09090B;
+  --pub-kanvas: #18181B;
+  --pub-sel: #27272A;
+  --pub-teks: #FFFFFF;
+  --pub-teks-2: #A1A1AA;
+  --pub-teks-4: #71717A;
+  --pub-aksen: #2DD4BF;
+  --pdf-kertas: #FFFFFF;
+  --pdf-tinta: #0F0F0F;
+  --pdf-abu: #6B6B6B;
+  --pdf-merah: #CF1C17;
+  --pdf-garis: #E4E4E4;
+
   --focus: #1E4841;
   --focus-halo: rgba(187, 244, 156, 0.55);
 

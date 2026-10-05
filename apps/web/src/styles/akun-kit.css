@@ -1,94 +1,15 @@
 /* =============================================================================
    Halaman Akun (AkunKit) — halaman PROFIL bertema lembar gambar kerja.
 
-   Kepala: sampul kertas kalkir (denah garis, sumbu grid berbulatan, garis
-   ukur, panah utara, kop lembar berisi data akun), avatar besar, nama, dua
-   tombol pintas, lalu tab bergaris bawah. Di bawahnya satu panel untuk tab
-   yang terbuka. Tidak ada frame Coinest untuk halaman ini; dari kit yang
-   dipinjam bahannya — kartu putih r16 bergaris 1px, ubin mint, Isian,
-   Tombol, Lencana — bukan susunan Dashboard-nya.
-
-   Seluruh warna lewat token. Bidang hijau tua (--kas-bidang) sengaja tidak
-   berbalik di tema gelap, sama seperti setiap bidang hijau tua pejal panel.
+   Kerangkanya (sampul, kop lembar, identitas, tab, panel) milik bersama di
+   `lembar-kit.css`; berkas ini cuma bagian yang khas Akun: denah sampul,
+   avatar, kartu staf, baris setelan, hak akses, kata sandi, kartu
+   perangkat, dan pratinjau tema.
    ============================================================================= */
 
-.akn { display: flex; flex-direction: column; gap: 16px; min-height: 0; padding-bottom: 20px; }
-/* Wilayah toast Radix duduk SEBAGAI SAUDARA .akn di dalam pulau, dan aturan
-   satu-layar KitLayout memberi setiap anak pulau `flex: 1` — jadi ia ikut
-   menelan separuh sisa tinggi (jebakan #69). Toast-nya sendiri fixed. */
-.kl__isi > astro-island:has(> .akn) > [role="region"] { flex: none; }
+/* Denah sampul: lebarnya mengikuti viewBox. */
+.akn__denah { aspect-ratio: 460 / 116; }
 
-/* --- Kepala ---------------------------------------------------------------------- */
-.akn__kepala {
-  flex: none;
-  overflow: clip;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-}
-
-/* Sampul: kertas kalkir — kisi halus 12px, garis tebal tiap 48px. */
-.akn__sampul {
-  position: relative;
-  height: 108px;
-  overflow: clip;
-  color: var(--brand-mint);
-  background-color: var(--kas-bidang);
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--brand-mint) 13%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--brand-mint) 13%, transparent) 1px, transparent 1px),
-    linear-gradient(color-mix(in srgb, var(--brand-mint) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--brand-mint) 5%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px;
-  background-position: -1px -1px;
-}
-.akn__denah { position: absolute; top: 2px; left: 176px; height: calc(100% - 2px); width: auto; aspect-ratio: 460 / 116; }
-/* Garis sumbu: titik-strip, seperti garis as di gambar kerja. */
-.akn__denahsumbu line { stroke: currentColor; stroke-opacity: 0.38; stroke-width: 1; stroke-dasharray: 7 3 1.5 3; }
-.akn__denahbulat circle { fill: var(--kas-bidang); stroke: currentColor; stroke-opacity: 0.75; stroke-width: 1.2; }
-.akn__denahbulat text,
-.akn__denahangka text,
-.akn__utara text { fill: currentColor; font-family: var(--font-sans); text-anchor: middle; }
-.akn__denahbulat text { font-size: 9px; font-weight: 700; }
-.akn__denahdinding path { stroke: currentColor; stroke-opacity: 0.72; stroke-width: 5; stroke-linecap: square; }
-.akn__denahtipis path { stroke: currentColor; stroke-opacity: 0.55; stroke-width: 1.2; }
-.akn__denahangka text { font-size: 8.5px; fill-opacity: 0.8; }
-.akn__utara { position: absolute; top: 12px; right: 22px; width: 26px; height: 33px; }
-.akn__utara circle { fill: none; stroke: currentColor; stroke-opacity: 0.6; stroke-width: 1.2; }
-.akn__utara path { fill: currentColor; fill-opacity: 0.85; }
-.akn__utara text { font-size: 8px; font-weight: 700; }
-
-/* Kop lembar: tiga sel bergaris mint, bidangnya menutup kisi di belakangnya. */
-.akn__kop {
-  position: absolute;
-  right: 18px;
-  bottom: 12px;
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  margin: 0;
-  border: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent);
-  border-radius: 6px;
-  background: var(--kas-bidang);
-}
-.akn__kop > div { padding: 6px 14px 7px; }
-.akn__kop > div + div { border-left: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent); }
-.akn__kop dt {
-  font-size: 0.5625rem;
-  font-weight: var(--k-semi);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--kas-ink);
-  opacity: 0.8;
-}
-.akn__kop dd { margin: 2px 0 0; font-size: var(--k-t12); font-weight: var(--k-bold); color: var(--kas-nilai); white-space: nowrap; }
-
-.akn__identitas {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 8px 20px;
-  padding: 0 24px 14px;
-}
 .akn__avatar {
   /* Di atas sampul: sampulnya ber-posisi, jadi tanpa ini separuh atas
      avatar tergambar DI BAWAH sampul. */
@@ -118,131 +39,6 @@
   border-radius: 50%;
   background: var(--success);
 }
-.akn__siapa { min-width: 0; padding-bottom: 4px; }
-.akn__nama {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 12px;
-  margin: 0;
-  font-size: var(--k-h3);
-  font-weight: var(--k-bold);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  color: var(--text-strong);
-  overflow-wrap: anywhere;
-}
-.akn__nama .k-lencana { flex: none; }
-.akn__email {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 6px 0 0;
-  font-size: var(--k-t14);
-  color: var(--text-muted);
-  overflow-wrap: anywhere;
-}
-.akn__email svg { color: var(--brand); }
-.akn__pintas { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 4px; }
-
-/* Tab bergaris bawah, menyatu dengan kepala. */
-.akn__tabs { display: flex; gap: 4px; padding: 0 14px; border-top: 1px solid var(--border); }
-.akn__tabb {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 14px;
-  border: 0;
-  background: none;
-  color: var(--text-muted);
-  font-family: var(--font-sans);
-  font-size: var(--k-t14);
-  font-weight: var(--k-semi);
-  line-height: 1;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-}
-.akn__tabb:hover { color: var(--text-strong); background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
-.akn__tabb[aria-selected="true"] { color: var(--text-strong); }
-.akn__tabb[aria-selected="true"] svg { color: var(--brand); }
-.akn__tabb[aria-selected="true"]::after {
-  content: "";
-  position: absolute;
-  right: 10px;
-  bottom: -1px;
-  left: 10px;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--brand);
-}
-.akn__tabb:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; border-radius: 8px; }
-.akn__tabangka {
-  display: grid;
-  place-items: center;
-  min-width: 20px;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 9px;
-  background: var(--brand-soft);
-  color: var(--text-strong);
-  font-size: var(--k-t11);
-  font-weight: var(--k-bold);
-}
-
-/* --- Panel tab -------------------------------------------------------------------- */
-.akn__isi { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
-.akn__panel {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 20px;
-  min-height: 0;
-  padding: 18px 24px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-}
-.akn__panelkepala { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.akn__judul {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin: 0;
-  font-size: var(--k-t16);
-  font-weight: var(--k-bold);
-  line-height: 1.2;
-  color: var(--text-strong);
-}
-.akn__jumlah { font-size: var(--k-t12); font-weight: var(--k-reg); color: var(--text-muted); }
-.akn__kaki {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-.akn__kakiaksi { display: flex; flex-wrap: wrap; gap: 8px; }
-
-/* Ubin ikon mint — satu bahasa dengan ubin di seluruh kit. */
-.akn__ubin {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: var(--brand-mint);
-  color: var(--brand-mint-ink);
-}
-
 /* --- Profil ----------------------------------------------------------------------- */
 .akn__panel--profil {
   display: grid;
@@ -603,17 +399,8 @@
   .akn__lapis, .akn__temabutir:hover .akn__lapis { transform: none; transition: none; }
 }
 
-/* --- Kerangka saat sesi diperiksa ------------------------------------------------- */
-.akn--rangka .akn__kepala { min-height: 220px; }
-.akn--rangka .akn__isi { min-height: 360px; border: 1px solid var(--border); border-radius: 16px; }
-
 /* --- Ukuran layar ------------------------------------------------------------------ */
 
-/* Denahnya butuh ruang di antara avatar dan kop; di layar yang lebih sempit
-   kop lembar cukup sendirian. */
-@media (max-width: 1200px) {
-  .akn__denah { display: none; }
-}
 /* Laptop kecil & tablet: hak akses turun ke bawah kartu dan baris. */
 @media (max-width: 1288px) {
   .akn__panel--profil { grid-template-columns: 214px minmax(0, 1fr); gap: 24px 32px; }
@@ -622,24 +409,15 @@
 
 /* Ponsel: satu kolom, halaman menggulir. */
 @media (max-width: 56rem) {
-  .akn__sampul { height: 104px; }
-  .akn__kop { display: none; }
-  .akn__identitas { grid-template-columns: minmax(0, 1fr); padding: 0 16px 16px; }
   .akn__avatar { width: 88px; height: 88px; margin-top: -48px; font-size: var(--k-h4); }
-  .akn__nama { font-size: var(--k-h5); }
-  .akn__pintas > * { flex: 1 1 0; }
-  .akn__tabs { padding: 0 4px; gap: 0; }
-  .akn__tabb { flex: 1 1 0; flex-direction: column; justify-content: center; gap: 4px; height: 60px; padding: 0 4px; font-size: var(--k-t12); }
-  .akn__tabangka { position: absolute; top: 6px; right: calc(50% - 26px); min-width: 16px; height: 16px; padding: 0 4px; font-size: var(--k-t10); }
-  .akn__panel { padding: 16px; }
   .akn__panel--profil { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .akn__staf { width: min(240px, 100%); margin: 0 auto; }
   .akn__bagian--hak { grid-column: auto; }
   .akn__baris { grid-template-columns: minmax(0, 1fr) auto; }
   .akn__baris dt { grid-column: 1 / -1; }
   .akn__sandikisi { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .akn__kakiaksi { width: 100%; }
-  .akn__kakiaksi > * { flex: 1 1 auto; }
+  .akn .lbr-kakiaksi { width: 100%; }
+  .akn .lbr-kakiaksi > * { flex: 1 1 auto; }
   .akn__alatkisi { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .akn__tema { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .akn__temabutir { grid-template-columns: 112px minmax(0, 1fr) auto; align-items: center; }

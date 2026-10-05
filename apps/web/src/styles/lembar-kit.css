@@ -1,0 +1,246 @@
+/* =============================================================================
+   Kerangka "lembar gambar kerja" (components/admin/lembarKit.tsx) — dipakai
+   halaman Akun dan Info Studio. Lihat CLAUDE.md → "Selera pemilik".
+
+   Kepala: sampul kertas kalkir (gambar garis milik tiap halaman, panah
+   utara, kop lembar berisi data sungguhan), identitas besar yang menumpang
+   di tepi sampul, tombol pintas, tab bergaris bawah. Di bawahnya satu panel
+   untuk tab yang terbuka. Seluruh warna lewat token; bidang hijau tua
+   (--kas-bidang) sengaja tidak berbalik di tema gelap.
+   ============================================================================= */
+
+.lbr { display: flex; flex-direction: column; gap: 16px; min-height: 0; padding-bottom: 20px; }
+/* Wilayah toast Radix duduk SEBAGAI SAUDARA akar halaman di dalam pulau, dan
+   aturan satu-layar KitLayout memberi setiap anak pulau `flex: 1` — jadi ia
+   ikut menelan separuh sisa tinggi (jebakan #69). Toast-nya sendiri fixed. */
+.kl__isi > astro-island:has(> .lbr) > [role="region"] { flex: none; }
+
+/* --- Kepala ---------------------------------------------------------------------- */
+.lbr-kepala {
+  flex: none;
+  overflow: clip;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+/* Sampul: kertas kalkir — kisi halus 12px, garis tebal tiap 48px. */
+.lbr-sampul {
+  position: relative;
+  height: 108px;
+  overflow: clip;
+  color: var(--brand-mint);
+  background-color: var(--kas-bidang);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--brand-mint) 13%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--brand-mint) 13%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--brand-mint) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--brand-mint) 5%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px;
+  background-position: -1px -1px;
+}
+/* Gambar garis milik halaman (denah, tampak). Posisi kirinya memberi ruang
+   bagi identitas yang menumpang di tepi sampul. */
+.lbr-gambar { position: absolute; top: 2px; left: 176px; height: calc(100% - 2px); width: auto; }
+/* Garis sumbu: titik-strip, seperti garis as di gambar kerja. */
+.lbr-sumbu line,
+.lbr-sumbu path { fill: none; stroke: currentColor; stroke-opacity: 0.38; stroke-width: 1; stroke-dasharray: 7 3 1.5 3; }
+.lbr-bulat circle { fill: var(--kas-bidang); stroke: currentColor; stroke-opacity: 0.75; stroke-width: 1.2; }
+.lbr-bulat text,
+.lbr-angka text,
+.lbr-utara text { fill: currentColor; font-family: var(--font-sans); text-anchor: middle; }
+.lbr-bulat text { font-size: 9px; font-weight: 700; }
+.lbr-tebal path { fill: none; stroke: currentColor; stroke-opacity: 0.72; stroke-width: 5; stroke-linecap: square; }
+.lbr-tipis path { fill: none; stroke: currentColor; stroke-opacity: 0.55; stroke-width: 1.2; }
+.lbr-angka text { font-size: 8.5px; fill-opacity: 0.8; }
+.lbr-utara { position: absolute; top: 12px; right: 22px; width: 26px; height: 33px; }
+.lbr-utara circle { fill: none; stroke: currentColor; stroke-opacity: 0.6; stroke-width: 1.2; }
+.lbr-utara path { fill: currentColor; fill-opacity: 0.85; }
+.lbr-utara text { font-size: 8px; font-weight: 700; }
+
+/* Kop lembar: sel bergaris mint, bidangnya menutup kisi di belakangnya. */
+.lbr-kop {
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  display: grid;
+  grid-auto-columns: auto;
+  grid-auto-flow: column;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent);
+  border-radius: 6px;
+  background: var(--kas-bidang);
+}
+.lbr-kop > div { padding: 6px 14px 7px; }
+.lbr-kop > div + div { border-left: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent); }
+.lbr-kop dt {
+  font-size: 0.5625rem;
+  font-weight: var(--k-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kas-ink);
+  opacity: 0.8;
+}
+.lbr-kop dd { margin: 2px 0 0; font-size: var(--k-t12); font-weight: var(--k-bold); color: var(--kas-nilai); white-space: nowrap; }
+
+/* Identitas di bawah sampul: benda besar (avatar/logo) | nama | pintas. */
+.lbr-identitas {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 20px;
+  padding: 0 24px 14px;
+}
+.lbr-siapa { min-width: 0; padding-bottom: 4px; }
+.lbr-nama {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: var(--k-h3);
+  font-weight: var(--k-bold);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+.lbr-nama .k-lencana { flex: none; }
+.lbr-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-size: var(--k-t14);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.lbr-sub svg { color: var(--brand); }
+.lbr-pintas { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding-bottom: 4px; }
+
+/* Tab bergaris bawah, menyatu dengan kepala. */
+.lbr-tabs { display: flex; gap: 4px; padding: 0 14px; border-top: 1px solid var(--border); }
+.lbr-tabb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.lbr-tabb:hover { color: var(--text-strong); background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
+.lbr-tabb[aria-selected="true"] { color: var(--text-strong); }
+.lbr-tabb[aria-selected="true"] svg { color: var(--brand); }
+.lbr-tabb[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: -1px;
+  left: 10px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--brand);
+}
+.lbr-tabb:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; border-radius: 8px; }
+.lbr-tabangka {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--text-strong);
+  font-size: var(--k-t11);
+  font-weight: var(--k-bold);
+}
+/* Amber = ada yang perlu diisi di tab ini (aturan warna #1). */
+.lbr-tabangka--awas { background: var(--warn-soft); color: var(--warn-ink); }
+
+/* --- Panel tab -------------------------------------------------------------------- */
+.lbr-isi { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+.lbr-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  padding: 18px 24px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.lbr-panelkepala { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.lbr-judul {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-bold);
+  line-height: 1.2;
+  color: var(--text-strong);
+}
+.lbr-jumlah { font-size: var(--k-t12); font-weight: var(--k-reg); color: var(--text-muted); }
+.lbr-kaki {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.lbr-kakiaksi { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Ubin ikon mint — satu bahasa dengan ubin di seluruh kit. */
+.lbr-ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+}
+
+/* --- Kerangka saat sesi diperiksa ------------------------------------------------- */
+.lbr--rangka .lbr-kepala { min-height: 220px; }
+.lbr--rangka .lbr-isi { min-height: 360px; border: 1px solid var(--border); border-radius: 16px; }
+
+/* --- Ukuran layar ------------------------------------------------------------------ */
+
+/* Gambar garisnya butuh ruang di antara identitas dan kop; di layar yang
+   lebih sempit kop lembar cukup sendirian. */
+@media (max-width: 1200px) {
+  .lbr-gambar { display: none; }
+}
+
+/* Ponsel: satu kolom, halaman menggulir. */
+@media (max-width: 56rem) {
+  .lbr-sampul { height: 104px; }
+  .lbr-kop { display: none; }
+  .lbr-identitas { grid-template-columns: minmax(0, 1fr); padding: 0 16px 16px; }
+  .lbr-nama { font-size: var(--k-h5); }
+  .lbr-pintas { justify-content: stretch; }
+  .lbr-pintas > * { flex: 1 1 0; }
+  .lbr-tabs { padding: 0 4px; gap: 0; }
+  .lbr-tabb { flex: 1 1 0; flex-direction: column; justify-content: center; gap: 4px; height: 60px; padding: 0 4px; font-size: var(--k-t12); }
+  .lbr-tabangka { position: absolute; top: 6px; right: calc(50% - 26px); min-width: 16px; height: 16px; padding: 0 4px; font-size: var(--k-t10); }
+  .lbr-panel { padding: 16px; }
+}

@@ -690,7 +690,7 @@ export async function ambilLogoStudio(): Promise<{ bita: Uint8Array; tipe: strin
 
 // --- Akun ---------------------------------------------------------------
 
-export interface SesiAkun {
+interface SesiAkun {
   id: string;
   dibuat: string;
   terakhirAktif: string;

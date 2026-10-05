@@ -13,6 +13,7 @@ import {
   SpecialSealCheck, SpecialWindowsLogo, Users,
 } from "../kit/ikon";
 import { PenandaSimpan } from "./situsKit";
+import { BulatSumbu, LambangStudio, SampulLembar, TabLembar, tabDariAlamat, tulisTabKeAlamat } from "./lembarKit";
 import { waktuRelatif } from "./panelKabar";
 import {
   ambilAkun, keluar, keluarkanPerangkatLain, namaTampilan, sesiTetap, ubahNamaAkun, ubahPassword, waktuMasukSesi,
@@ -26,7 +27,7 @@ import { PERISTIWA_TEMA, pilihanTema, pilihTema, type PilihanTema } from "../../
 /* =============================================================================
    Akun — halaman akun, bukan dashboard.
 
-   Tema rupanya LEMBAR GAMBAR KERJA, karena ini panel studio arsitektur:
+   Kerangkanya `lembarKit` (dipakai bersama Info Studio). Tema rupanya LEMBAR GAMBAR KERJA, karena ini panel studio arsitektur:
    sampulnya kertas kalkir dengan denah garis, sumbu grid berbulatan
    (A–D / 1–2), garis ukur, dan panah utara; di pojoknya kop lembar yang
    memuat data akun sungguhan. Di bawahnya avatar besar, nama, lalu empat tab
@@ -49,10 +50,7 @@ const TAB: { nilai: Tab; label: string; ikon: DataIkon }[] = [
   { nilai: "perangkat", label: "Perangkat", ikon: Globe },
   { nilai: "tampilan", label: "Tampilan", ikon: SpecialMoonStars },
 ];
-const tabDariAlamat = (): Tab => {
-  const h = location.hash.slice(1);
-  return TAB.some((t) => t.nilai === h) ? (h as Tab) : "profil";
-};
+const NAMA_TAB = TAB.map((t) => t.nilai);
 
 const SYARAT: [string, (s: string) => boolean][] = [
   ["12 karakter atau lebih", (s) => s.length >= 12],
@@ -99,15 +97,6 @@ function inisial(nama: string) {
   return nama.split(/\s+/).filter(Boolean).slice(0, 2).map((k) => k[0]!.toUpperCase()).join("") || "?";
 }
 
-/** Lambang D studio — garis yang sama dengan tanda di kartu kas Dashboard. */
-function LambangStudio({ className, tebal = 3 }: { className?: string; tebal?: number }) {
-  return (
-    <svg className={className} viewBox="14 14 36 36" fill="none" aria-hidden="true">
-      <path d="M21 17 V47 M21 17 H28 A15 15 0 0 1 28 47 H21" stroke="currentColor" strokeWidth={tebal} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /* ─── Sampul: lembar gambar kerja ───────────────────────────────────────────
    Denahnya hiasan (tidak menggambar bangunan mana pun) — tapi kop lembarnya
    berisi data akun yang benar: peran, sesi aktif, dan terakhir masuk. */
@@ -115,106 +104,35 @@ function LambangStudio({ className, tebal = 3 }: { className?: string; tebal?: n
 function DenahSampul() {
   const sumbuX = [40, 180, 300, 420];
   return (
-    <svg className="akn__denah" viewBox="0 0 460 116" fill="none" aria-hidden="true">
+    <svg className="lbr-gambar akn__denah" viewBox="0 0 460 116" fill="none" aria-hidden="true">
       {/* Sumbu grid putus-putus dengan bulatan berhuruf, seperti gambar kerja. */}
-      <g className="akn__denahsumbu">
+      <g className="lbr-sumbu">
         {sumbuX.map((x) => <line key={x} x1={x} y1={22} x2={x} y2={116} />)}
         <line x1={22} y1={60} x2={460} y2={60} />
         <line x1={22} y1={104} x2={460} y2={104} />
       </g>
-      <g className="akn__denahbulat">
-        {sumbuX.map((x, i) => (
-          <g key={x}>
-            <circle cx={x} cy={11} r={8.5} />
-            <text x={x} y={14.2}>{"ABCD"[i]}</text>
-          </g>
-        ))}
-        {[60, 104].map((y, i) => (
-          <g key={y}>
-            <circle cx={11} cy={y} r={8.5} />
-            <text x={11} y={y + 3.2}>{i + 1}</text>
-          </g>
-        ))}
-      </g>
+      {sumbuX.map((x, i) => <BulatSumbu key={x} x={x} y={11} teks={"ABCD"[i]!} />)}
+      {[60, 104].map((y, i) => <BulatSumbu key={y} x={11} y={y} teks={String(i + 1)} />)}
       {/* Dinding: tebal; jendela di dinding atas; dua bukaan pintu. */}
-      <g className="akn__denahdinding">
+      <g className="lbr-tebal">
         <path d="M40 116 V40 H205 M265 40 H420 V116" />
         <path d="M180 40 V74 M180 100 V116" />
         <path d="M300 40 V66 M300 92 V116" />
         <path d="M300 92 H352" />
       </g>
-      <g className="akn__denahtipis">
+      <g className="lbr-tipis">
         <path d="M205 37.5 H265 M205 42.5 H265" />
         <path d="M180 100 L154 100 M154 100 A26 26 0 0 1 180 74" />
         <path d="M300 92 L326 92 M326 92 A26 26 0 0 0 300 66" />
         {/* Garis ukur dengan tanda miring dan angkanya. */}
         <path d="M40 28 H420 M36 32 L44 24 M176 32 L184 24 M296 32 L304 24 M416 32 L424 24" />
       </g>
-      <g className="akn__denahangka">
+      <g className="lbr-angka">
         <text x={110} y={24}>3.500</text>
         <text x={240} y={24}>3.000</text>
         <text x={360} y={24}>3.000</text>
       </g>
     </svg>
-  );
-}
-
-function Sampul({ akun, master }: { akun: InfoAkun | null; master: boolean }) {
-  return (
-    <div className="akn__sampul">
-      <DenahSampul />
-      {/* Panah utara. */}
-      <svg className="akn__utara" viewBox="0 0 32 40" fill="none" aria-hidden="true">
-        <circle cx={16} cy={24} r={13} />
-        <path d="M16 9 L22 30 L16 26 L10 30 Z" />
-        <text x={16} y={7}>U</text>
-      </svg>
-      {/* Kop lembar — data akun sungguhan, bukan hiasan. */}
-      <dl className="akn__kop">
-        <div><dt>Peran</dt><dd>{master ? "Master admin" : "Staf"}</dd></div>
-        <div><dt>Sesi aktif</dt><dd>{akun ? akun.sesi.jumlah : "—"}</dd></div>
-        <div><dt>Terakhir masuk</dt><dd>{akun ? tanggalJam(akun.terakhirMasuk) : "—"}</dd></div>
-      </dl>
-    </div>
-  );
-}
-
-/* ─── Tab bergaris bawah ─────────────────────────────────────────────────────
-   Pola tab ARIA lengkap: panah kiri/kanan, Home, End; hanya tab terpilih
-   yang ada di urutan Tab. */
-
-function TabAkun({ tab, setTab, jumlahSesi }: { tab: Tab; setTab: (t: Tab) => void; jumlahSesi: number | null }) {
-  const ref = useRef<(HTMLButtonElement | null)[]>([]);
-  function tombol(e: React.KeyboardEvent, i: number) {
-    const ke = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: TAB.length - 1 }[e.key];
-    if (ke === undefined) return;
-    e.preventDefault();
-    const j = (ke + TAB.length) % TAB.length;
-    setTab(TAB[j]!.nilai);
-    ref.current[j]?.focus();
-  }
-  return (
-    <div className="akn__tabs" role="tablist" aria-label="Bagian akun">
-      {TAB.map((t, i) => (
-        <button
-          key={t.nilai}
-          ref={(el) => { ref.current[i] = el; }}
-          type="button"
-          role="tab"
-          id={`akn-tab-${t.nilai}`}
-          aria-controls="akn-panel"
-          aria-selected={tab === t.nilai}
-          tabIndex={tab === t.nilai ? 0 : -1}
-          className="akn__tabb"
-          onClick={() => setTab(t.nilai)}
-          onKeyDown={(e) => tombol(e, i)}
-        >
-          <Ikon ikon={t.ikon} ukuran={16} />
-          <span>{t.label}</span>
-          {t.nilai === "perangkat" && jumlahSesi !== null && <span className="akn__tabangka">{jumlahSesi}</span>}
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -335,7 +253,7 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, 
   }, [master]);
 
   return (
-    <div className="akn__panel akn__panel--profil">
+    <div className="lbr-panel akn__panel--profil">
       {/* Kartu ikut nama yang SEDANG diketik — pratinjau tanpa perender kedua. */}
       <KartuStaf
         nama={ubah ? namaTampilan({ email, nama: isi }) : nama}
@@ -345,7 +263,7 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, 
       />
 
       <section className="akn__bagian" aria-labelledby="akn-info">
-        <h3 id="akn-info" className="akn__judul">Informasi akun</h3>
+        <h3 id="akn-info" className="lbr-judul">Informasi akun</h3>
         <dl className="akn__daftar">
           {ubah ? (
             <form className="akn__baris akn__baris--ubah" onSubmit={simpan}>
@@ -385,11 +303,11 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, 
       </section>
 
       <section className="akn__bagian akn__bagian--hak" aria-labelledby="akn-hak">
-        <h3 id="akn-hak" className="akn__judul">Hak akses</h3>
+        <h3 id="akn-hak" className="lbr-judul">Hak akses</h3>
         <ul className="akn__hak">
           {hak.kelompok.map(([nama, k]) => (
             <li key={nama}>
-              <span className="akn__ubin" aria-hidden="true"><Ikon ikon={IKON_KELOMPOK[nama] ?? NavSquaresFour} ukuran={16} /></span>
+              <span className="lbr-ubin" aria-hidden="true"><Ikon ikon={IKON_KELOMPOK[nama] ?? NavSquaresFour} ukuran={16} /></span>
               <span className="akn__haknama">{nama}</span>
               <span className={`akn__hakangka${k.bisa < k.total ? " is-terbatas" : ""}`}>
                 {k.bisa === k.total ? `${k.total} halaman` : `${k.bisa} dari ${k.total}`}
@@ -496,7 +414,7 @@ function PanelKeamanan({ email, fokusAwal, onBerhasil }: { email: string; fokusA
   }
 
   return (
-    <form className="akn__panel akn__panel--keamanan" onSubmit={simpan} aria-label="Ganti kata sandi">
+    <form className="lbr-panel akn__panel--keamanan" onSubmit={simpan} aria-label="Ganti kata sandi">
       {/* Nama pengguna tersembunyi: pengelola kata sandi peramban perlu tahu
           akun mana yang sandinya sedang diganti. */}
       <input type="text" name="username" autoComplete="username" value={email} readOnly hidden />
@@ -556,9 +474,9 @@ function PanelKeamanan({ email, fokusAwal, onBerhasil }: { email: string; fokusA
         </div>
       </div>
       {galat && <Peringatan nada="bahaya">{galat}</Peringatan>}
-      <div className="akn__kaki">
+      <div className="lbr-kaki">
         <PenandaSimpan n={siap ? 0 : 1} teks={alasan ?? "Siap disimpan. Perangkat lain akan dikeluarkan."} />
-        <div className="akn__kakiaksi">
+        <div className="lbr-kakiaksi">
           <Tombol jenis="secondary" ukuran="large" kiri={ArrowClockwise} onClick={buatAcak}>Buat sandi acak</Tombol>
           <Tombol memuat={kirim} ukuran="large" jenis="primary" tipeHtml="submit" disabled={!siap || kirim}>
             Simpan kata sandi
@@ -652,11 +570,11 @@ function PanelPerangkat({ akun, galat, muat }: { akun: InfoAkun | null; galat: s
   }
 
   return (
-    <div className="akn__panel akn__panel--perangkat">
-      <div className="akn__panelkepala">
-        <h3 className="akn__judul">
+    <div className="lbr-panel akn__panel--perangkat">
+      <div className="lbr-panelkepala">
+        <h3 className="lbr-judul">
           Perangkat yang masuk
-          {s && <span className="akn__jumlah">{s.jumlah} sesi · {s.aktif24j} aktif hari ini</span>}
+          {s && <span className="lbr-jumlah">{s.jumlah} sesi · {s.aktif24j} aktif hari ini</span>}
         </h3>
         <AlertDialog
           trigger={
@@ -772,7 +690,7 @@ function PanelTampilan() {
   }, []);
 
   return (
-    <div className="akn__panel akn__panel--tampilan">
+    <div className="lbr-panel akn__panel--tampilan">
       <div className="akn__tema" role="radiogroup" aria-label="Tema panel">
         {PILIHAN_TEMA.map((t) => (
           <label key={t.nilai} className="akn__temabutir">
@@ -810,17 +728,15 @@ function Isi() {
   const [tab, setTabState] = useState<Tab>("profil");
 
   useEffect(() => {
-    setTabState(tabDariAlamat());
-    const dengar = () => setTabState(tabDariAlamat());
+    setTabState(tabDariAlamat(NAMA_TAB));
+    const dengar = () => setTabState(tabDariAlamat(NAMA_TAB));
     window.addEventListener("hashchange", dengar);
     return () => window.removeEventListener("hashchange", dengar);
   }, []);
   const setTab = (t: Tab) => {
     setTabState(t);
     setFokusSandi(false);
-    // replaceState, bukan location.hash: tidak menggulir ke elemen ber-id
-    // yang kebetulan bernama sama, dan tidak menumpuk riwayat per klik tab.
-    history.replaceState(history.state, "", t === "profil" ? location.pathname + location.search : `#${t}`);
+    tulisTabKeAlamat(t, "profil");
   };
 
   function muat(): Promise<void> {
@@ -837,22 +753,30 @@ function Isi() {
   const nama = namaTampilan({ email, nama: namaTersimpan });
 
   return (
-    <div className="akn">
-      <header className="akn__kepala">
-        <Sampul akun={akun} master={master} />
-        <div className="akn__identitas">
+    <div className="lbr akn">
+      <header className="lbr-kepala">
+        {/* Kop lembar — data akun sungguhan, bukan hiasan. */}
+        <SampulLembar
+          gambar={<DenahSampul />}
+          kop={[
+            { label: "Peran", nilai: master ? "Master admin" : "Staf" },
+            { label: "Sesi aktif", nilai: akun ? akun.sesi.jumlah : "—" },
+            { label: "Terakhir masuk", nilai: akun ? tanggalJam(akun.terakhirMasuk) : "—" },
+          ]}
+        />
+        <div className="lbr-identitas">
           <span className="akn__avatar" aria-hidden="true">
             {inisial(nama)}
             <i className="akn__avatarhidup" />
           </span>
-          <div className="akn__siapa">
-            <h2 className="akn__nama">
+          <div className="lbr-siapa">
+            <h2 className="lbr-nama">
               {nama}
               <Lencana bentuk="pejalkecil" nada={master ? "selesai" : "netral"}>{master ? "Master admin" : "Staf"}</Lencana>
             </h2>
-            <p className="akn__email"><Ikon ikon={NavEnvelope} ukuran={14} />{email}</p>
+            <p className="lbr-sub"><Ikon ikon={NavEnvelope} ukuran={14} />{email}</p>
           </div>
-          <div className="akn__pintas">
+          <div className="lbr-pintas">
             <Tombol jenis="secondary" ukuran="medium" kiri={NotePencil} onClick={() => { setTab("profil"); setUbahNama(true); }}>
               Ubah nama
             </Tombol>
@@ -861,9 +785,15 @@ function Isi() {
             </Tombol>
           </div>
         </div>
-        <TabAkun tab={tab} setTab={setTab} jumlahSesi={akun?.sesi.jumlah ?? null} />
+        <TabLembar
+          awalan="akn"
+          label="Bagian akun"
+          nilai={tab}
+          onPilih={setTab}
+          tab={TAB.map((t) => (t.nilai === "perangkat" ? { ...t, angka: akun?.sesi.jumlah ?? null } : t))}
+        />
       </header>
-      <section className="akn__isi" id="akn-panel" role="tabpanel" aria-labelledby={`akn-tab-${tab}`}>
+      <section className="lbr-isi" id="akn-panel" role="tabpanel" aria-labelledby={`akn-tab-${tab}`}>
         {tab === "profil" && (
           <PanelProfil
             akun={akun}
@@ -886,9 +816,9 @@ function Isi() {
 
 function Kerangka(): ReactNode {
   return (
-    <div className="akn akn--rangka" aria-hidden="true">
-      <div className="akn__kepala"><div className="akn__sampul" /></div>
-      <div className="akn__isi" />
+    <div className="lbr lbr--rangka" aria-hidden="true">
+      <div className="lbr-kepala"><div className="lbr-sampul" /></div>
+      <div className="lbr-isi" />
     </div>
   );
 }

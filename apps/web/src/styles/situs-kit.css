@@ -359,55 +359,10 @@
 .bd-ubin__lepas { margin-left: 0; }
 @media (max-width: 40rem) { .bd-kisi { grid-template-columns: minmax(0, 1fr); } }
 
-/* --- Info Studio ------------------------------------------------------------ */
-.is-logo { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: stretch; }
-/* align-self:start — kalau ikut meregang setinggi kotak seret di
-   sebelahnya, aspect-ratio 1 menurunkan lebarnya dari tinggi itu, dan di
-   390px kotaknya melebar 32px menimpa kotak seret. */
-.is-logo__kotak {
-  align-self: start;
-  width: 100%;
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--bg);
-  color: var(--text-muted);
-}
-.is-logo__kotak img { width: 78%; height: 78%; object-fit: contain; }
-.is-logo__seret { justify-content: center; }
+/* Kotak seret berkas: cincin fokus di kotaknya, karena <input> aslinya
+   tersembunyi. (Aturan Info Studio lama di sekitar sini dibuang saat
+   halaman itu pindah ke lembarKit — lihat infostudio-kit.css.) */
 .pf__seret:focus-within { outline: 2px solid var(--brand); outline-offset: 2px; }
-
-/* Zona waktu: tiga kartu berdampingan, bukan dropdown. */
-.is-zona { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.is-zona__b {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.is-zona__b b { font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); }
-.is-zona__b span { font-size: var(--k-t12); color: var(--text-muted); }
-.is-zona__b small { font-size: var(--k-t12); font-variant-numeric: tabular-nums; color: var(--text-muted); }
-.is-zona__b:hover { border-color: var(--brand-mint); }
-.is-zona__b[aria-checked="true"] { border-color: var(--brand); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand); }
-.is-zona__b:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-
-/* Info Studio — isian opsional di dalam Lipat. */
-.is-opsional { display: flex; flex-direction: column; gap: 20px; padding-top: 4px; }
-
-@media (max-width: 40rem) {
-  .is-logo { grid-template-columns: 88px minmax(0, 1fr); }
-  .is-zona { grid-template-columns: minmax(0, 1fr); }
-}
 
 /* Tombol ubin di baris yang sama sejajar, berapa pun panjang keterangannya. */
 .situs .pf__ubin .pf__ubinaksi { margin-top: auto; }

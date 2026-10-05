@@ -267,6 +267,52 @@ Aturan yang mengikat:
 7. **Responsif wajib**, termasuk ponsel sempit. Tidak boleh ada gulir
    horizontal pada badan halaman.
 
+### Selera pemilik — patokan untuk SETIAP halaman berikutnya
+
+Ditetapkan pemilik sendiri setelah halaman Akun di-ACC (5 Okt 2026):
+"ini dia selera saya … ini paling mantap … tahap selanjutnya kamu sudah
+tahu apa yang saya inginkan, menyesuaikan kebutuhan halamannya". Sebelum
+itu ada dua penolakan yang sama pentingnya — keduanya tercatat di bawah.
+
+Yang DIA MAU:
+
+1. **Tiap halaman tampil sebagai JENIS halamannya sendiri**, versi premium.
+   Akun = halaman profil; pengaturan = halaman pengaturan. Bukan formulir
+   polos (versi lama Akun dinilai "0"), dan bukan salinan Dashboard.
+2. **Kreatif lewat tema yang hanya dimiliki studio arsitektur** — lembar
+   gambar kerja: kertas kalkir, denah garis, sumbu grid berbulatan (A–D /
+   1–2) bergaris titik-strip, garis ukur, panah utara, kop lembar. Tiap
+   halaman boleh memakai gambar yang berbeda (denah, tampak, potongan,
+   situasi) supaya tidak kembar.
+3. **Hiasan selalu membawa data sungguhan.** Kop lembar di sampul Akun
+   memuat peran, sesi aktif, terakhir masuk — bukan teks karangan.
+4. **Kerangka yang di-ACC**: kepala bersampul selebar halaman → identitas
+   besar (avatar/logo menumpang di tepi sampul) → tombol pintas → tab
+   bergaris bawah (ARIA penuh, panah/Home/End, disimpan di hash) → satu
+   panel per tab. Satu tab satu pekerjaan.
+5. **Satu benda yang menyenangkan disentuh per halaman** — kartu staf yang
+   miring mengikuti tetikus, gambar garis perangkat, pratinjau tema yang
+   dibelah miring. Geraknya hanya saat disentuh, tetikus saja (jebakan
+   #9), diam kalau `prefers-reduced-motion`.
+6. **Pratinjau yang ikut berubah saat diketik** dan memperlihatkan tempat
+   data itu benar-benar muncul (kartu staf ikut nama yang diketik).
+7. **Bahannya tetap kit**: kartu putih r16 garis 1px, ubin mint, Isian/
+   Tombol/Lencana kit, token warna, hijau tua pejal (`--kas-bidang`) untuk
+   bidang identitas. Aturan warna, kontras kedua tema, dan satu layar
+   (0 gulir dokumen, area isi, DAN panel pada 1440x790 & 1366x768) tetap
+   berlaku.
+
+Yang DITOLAK:
+
+- **Desain bebas yang meninggalkan bahasa kit** — Dashboard "malah makin
+  jelek yaa"; yang diterima justru frame 01-nya.
+- **Menyalin susunan Dashboard ke halaman lain** — Akun versi tiga kolom
+  dengan kartu hijau ala kartu kas dan cincin: "yang benar aja lu semua lu
+  mau samakan dengan dashboard … creative tapi jangan juga, layaknya akun
+  aja tapi versi upgrade".
+- **Menumpuk fitur untuk terlihat "lebih"** — ketika ditanya "100x lipat",
+  yang dia maksud tampilannya, bukan fitur baru.
+
 **Halaman UI Component (`/admin/kit`) adalah satu-satunya sumber kebenaran
 komponen panel.** Hanya master admin yang bisa membukanya. Isinya **62
 komponen dalam 8 folder** (Aksi, Formulir, Overlay, Navigasi, Data, Umpan
@@ -1352,6 +1398,7 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 | Keputusan | Alasan |
 | --- | --- |
 | **Halaman Akun = halaman PROFIL bertema LEMBAR GAMBAR KERJA, bukan dashboard** | Pemilik menilai versi lama "0", menolak versi tiga kolom yang meniru Dashboard ("jangan juga layaknya … tapi akun versi upgrade"), lalu meminta UI-nya dinaikkan lagi. Bentuknya: sampul kertas kalkir dengan denah garis hiasan, sumbu grid berbulatan A–D / 1–2 bergaris titik-strip, garis ukur, panah utara, dan **kop lembar berisi data akun sungguhan** (peran, sesi aktif, terakhir masuk); avatar 104 bertitik hidup; tombol pintas Ubah nama / Ganti kata sandi; tab bergaris bawah (pola tab ARIA lengkap, panah/Home/End) disimpan di alamat (`#keamanan`). Tab **Profil**: kartu staf berbentuk badge tegak berlubang tali yang miring mengikuti TETIKUS saja (jebakan #9; diam bila gerak dikurangi) dan ikut nama yang sedang diketik, baris setelan, hak akses dari `lib/navAdmin`. **Keamanan**: sandi lama wajib, mata per isian, meter kekuatan berperisai, syarat menyala, sandi acak. **Perangkat**: kartu bergambar garis laptop/ponsel/tablet dengan lambang sistemnya. **Tampilan**: pratinjau panel mini, "Ikuti sistem" dibelah miring. Nama tampilan = `profiles.full_name` (tanpa migrasi), dipakai kartu akun di rel lewat `PERISTIWA_PROFIL`. Terukur: keempat tab 0 gulir — dokumen, area isi, DAN panel — pada 1440x790 dan 1366x768; kontras bersih kedua tema; 31 cek alur di API tiruan |
+| **Info Studio = lembar gambar kerja kedua; kerangka bersama `lembarKit`** | Halaman kedua yang mengikuti "Selera pemilik". Sampul, panah utara, kop lembar, dan tab bergaris dipindah ke `components/admin/lembarKit.tsx` + `styles/lembar-kit.css` dan dipakai Akun DAN Info Studio (jebakan #32); Akun terbukti tidak berubah (ponsel identik piksel demi piksel, desktop hanya beda teks jam dari API tiruan). Gambar sampulnya milik tiap halaman: Akun DENAH, Info Studio TAMPAK dengan penanda peil ±0.00/+3.50/+6.80; kop lembarnya data studio (kota, tahun berdiri, zona). Logo besar di kepala bisa diklik dan diseret untuk mengganti. Empat tab, masing-masing isian + pratinjau TEMPAT DATANYA MUNCUL: Identitas → kepala situs (wordmark tanpa ekor "Architecture", logo segi enam teal bila kosong — sama dengan Header.astro), Kontak → kaki situs (baris kosong dihilangkan — sama dengan Footer.astro) + tombol uji mailto/wa.me/Instagram, Lokasi → jam studio menurut zona (jam panel & tanggal PDF), Kop dokumen → kop PDF digambar dalam `cqw` = pt × 100 / 595,28 dari `lib/pdf.ts`, di atas "meja" yang lurus saat disentuh. Satu Simpan di kepala untuk keempat tab; isian wajib yang kosong ditandai angka amber di tabnya. Logika lama (hanya kolom berubah yang dikirim, logo baru berlaku saat Simpan) dibawa apa adanya — 22 cek alur |
 | **Keluar MENCABUT sesi di Supabase; ganti sandi mengeluarkan perangkat lain** | Ketahuan dari produksi (dibaca saja): akun master punya 88 sesi hidup sejak 25 Agustus, 87 refresh token tidak pernah dicabut, karena Keluar cuma menghapus token di peramban. Sekarang `keluar()` memanggil `POST /admin/account/logout {scope:"local"}` (usaha-terbaik, 2,5 detik), tombol "Keluarkan perangkat lain" memakai `scope:"others"`, dan ganti sandi memanggil `others` di server. Token akses yang sudah terbit tetap sah sampai kedaluwarsa (≈1 jam) karena API memverifikasinya lewat JWKS — kalimat di halaman menyebut "paling lambat satu jam". Login kini meneruskan User-Agent peramban ke GoTrue; sebelumnya semua sesi tercatat "quic-go HTTP/3"/kosong, jadi sesi lama dirangkum sebagai "N sesi tanpa nama perangkat". Ganti sandi memverifikasi sandi lama dengan grant `password` lalu langsung mencabut sesi cek itu, dan dibatasi KV 10/jam. Galat GoTrue (`same_password`, `weak_password`, `reauthentication_needed`) diterjemahkan — dulu semuanya "gagal mengubah kata sandi". Batas di API dinaikkan dari 8 ke aturan Supabase (12 + empat jenis) |
 | **Info Studio `masterOnly` di peta navigasi** | Halamannya sudah lama `RequireAuth masterOnly`, tapi rel tetap menawarkannya ke staf — yang lalu melihat "Tidak bisa memuat panel". Konsekuensi: baris itu baru muncul sesudah peran dibaca, jadi penggulir rel ke baris aktif kini juga menunggu `master` (tanpanya baris Akun terdorong ke bawah kartu akun) |
 | Tombol Terbitkan di topbar, dengan cap perubahan dari trigger database | Pemilik mengisi delapan logo klien lalu menyimpulkan fiturnya rusak; datanya benar seluruhnya, situsnya saja belum dibangun ulang. Ditaruh di topbar (bukan hanya di editor proyek) karena perubahan yang perlu diterbitkan datang dari jurnal, logo klien, info studio, dan testimoni juga. Yang dibandingkan: cap `content_revision` dari database lawan stempel build yang dipanggang ke HTML panel — panel ini hasil build yang sama dengan situs publiknya, jadi ia satu-satunya sumber yang tahu umur dirinya sendiri. Capnya lewat trigger, bukan `max(updated_at)`, karena MENGHAPUS tidak meninggalkan baris yang bisa dijumlahkan — dan menghapus foto atau menarik tulisan justru perbuatan yang paling bikin panik kalau barangnya masih tampil |
