@@ -51,7 +51,12 @@ export async function jagaFokusSesudahHapus(pemicu: HTMLElement | null, kerja: (
     if (!document.querySelector("[role=dialog], [role=alertdialog]")) break;
   }
   await frame();
-  if (!pemicu || pemicu.isConnected || !cadangan?.isConnected) return;
+  /* Pemicu yang masih ada tapi jadi MATI sama saja dengan lenyap: tombol
+     mati tidak bisa difokus, jadi fokus balikan Radix jatuh ke <body>.
+     Terukur di halaman Akun — "Keluarkan perangkat lain" mati begitu tidak
+     ada perangkat lain. */
+  const masihBisa = pemicu?.isConnected && !(pemicu as HTMLButtonElement).disabled;
+  if (!pemicu || masihBisa || !cadangan?.isConnected) return;
   /* Jangan merebut fokus yang sudah dipindahkan pemakainya sendiri. */
   const aktif = document.activeElement;
   if (aktif && aktif !== document.body && aktif.isConnected) return;

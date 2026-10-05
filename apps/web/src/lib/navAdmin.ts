@@ -167,7 +167,10 @@ export const NAV: NavItem[] = [
   },
   /* Kategori Pengaturan: isinya baris DATAR, bukan submenu "Pengaturan" di
      dalam kategori "Pengaturan" — dua tingkat bernama sama untuk dua baris. */
-  { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "GearSix", group: "Pengaturan" },
+  /* masterOnly: halamannya memang hanya untuk master (`RequireAuth masterOnly`
+     di InfoStudioKit). Tanpa tanda ini rel menawarkannya ke staf, lalu
+     halamannya menolak dengan "Tidak bisa memuat panel". */
+  { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "GearSix", group: "Pengaturan", masterOnly: true },
   /* Persen tiap peran tim desain — dibaca Proyek Baru dan Tim & Bayaran. */
   { label: "Aturan Fee Tim", href: "/admin/pengaturan/fee", icon: "cash", ikonKit: "NavSealPercent", group: "Pengaturan" },
   { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "UserCircle", group: "Pengaturan" },

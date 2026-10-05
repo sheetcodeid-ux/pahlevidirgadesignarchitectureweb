@@ -17,7 +17,22 @@ export interface Profil {
   email: string;
   role: string;
   isMasterAdmin: boolean;
+  /** Nama tampilan dari `profiles.full_name`; kosong = diturunkan dari email. */
+  nama?: string | null;
 }
+
+/** Nama yang ditampilkan untuk sebuah profil: nama tampilannya kalau diisi,
+ *  kalau tidak bagian depan email ("dirga.pahlevi@…" → "Dirga Pahlevi"). */
+export function namaTampilan(p: Pick<Profil, "email" | "nama">): string {
+  if (p.nama?.trim()) return p.nama.trim();
+  const depan = (p.email.split("@")[0] || "Akun").replace(/[._-]+/g, " ").trim();
+  return depan.replace(/\b\p{L}/gu, (h) => h.toUpperCase());
+}
+
+/** Dikirim setiap kali profil tersimpan berubah (nama diganti di halaman
+ *  Akun, atau /me membawa nama yang lebih baru) — kartu akun di rel
+ *  ber-`transition:persist` dan tidak pernah dipasang ulang. */
+export const PERISTIWA_PROFIL = "pd:profil";
 
 /**
  * Sesi boleh disimpan di dua tempat, dan halaman masuk yang memilih:
@@ -59,12 +74,50 @@ function tulis(kunci: string, nilai: string, tetap: boolean) {
 }
 
 function simpanSesi(
-  d: { accessToken: string; refreshToken: string; email: string; role: string; isMasterAdmin: boolean },
+  d: { accessToken: string; refreshToken: string; email: string; role: string; isMasterAdmin: boolean; nama?: string | null },
   tetap = true,
 ) {
   tulis(KUNCI_AKSES, d.accessToken, tetap);
   tulis(KUNCI_SEGAR, d.refreshToken, tetap);
-  tulis(KUNCI_PROFIL, JSON.stringify({ email: d.email, role: d.role, isMasterAdmin: d.isMasterAdmin }), tetap);
+  tulis(KUNCI_PROFIL, JSON.stringify({ email: d.email, role: d.role, isMasterAdmin: d.isMasterAdmin, nama: d.nama ?? null }), tetap);
+}
+
+/**
+ * Menyamakan profil tersimpan dengan yang baru diketahui (nama yang baru
+ * disimpan, atau /me yang membawa nama dari perangkat lain). Ditulis ke
+ * penyimpanan TEMPAT SESI ITU BERADA — menulis ke localStorage secara buta
+ * akan menaikkan sesi yang sengaja dibuat tidak permanen.
+ */
+export function sinkronkanProfil(baru: Partial<Profil>) {
+  const lama = profilTersimpan();
+  if (!lama) return;
+  const gabung = { ...lama, ...baru };
+  if ((lama.nama ?? null) === (gabung.nama ?? null) && lama.role === gabung.role && lama.isMasterAdmin === gabung.isMasterAdmin) return;
+  tulis(KUNCI_PROFIL, JSON.stringify({ email: gabung.email, role: gabung.role, isMasterAdmin: gabung.isMasterAdmin, nama: gabung.nama ?? null }), sesiPermanen());
+  try { window.dispatchEvent(new CustomEvent(PERISTIWA_PROFIL, { detail: gabung })); } catch { /* di luar peramban */ }
+}
+
+/** Sesi ini disimpan permanen ("tetap masuk") atau hanya selama tab terbuka. */
+export function sesiTetap(): boolean {
+  return sesiPermanen();
+}
+
+/**
+ * Waktu sesi ini dimulai, dibaca dari klaim `amr` token akses (JWT dari
+ * Supabase). Hanya DIBACA untuk ditampilkan — keabsahannya diperiksa backend
+ * di setiap permintaan, bukan di sini. Token yang bukan JWT → null.
+ */
+export function waktuMasukSesi(): Date | null {
+  const token = baca(KUNCI_AKSES);
+  const bagian = token?.split(".")[1];
+  if (!bagian) return null;
+  try {
+    const json = JSON.parse(atob(bagian.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(bagian.length / 4) * 4, "=")));
+    const stempel = (json.amr as { timestamp?: number }[] | undefined)?.map((a) => a.timestamp ?? 0).sort((a, b) => b - a)[0];
+    return stempel ? new Date(stempel * 1000) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function hapusSesi() {
@@ -637,11 +690,69 @@ export async function ambilLogoStudio(): Promise<{ bita: Uint8Array; tipe: strin
 
 // --- Akun ---------------------------------------------------------------
 
-export const ubahPassword = (newPassword: string) =>
-  panggil<{ updated: boolean }>("/admin/account/password", {
+export interface SesiAkun {
+  id: string;
+  dibuat: string;
+  terakhirAktif: string;
+  userAgent: string | null;
+}
+
+export interface InfoAkun {
+  email: string;
+  role: string;
+  isMasterAdmin: boolean;
+  nama: string | null;
+  stafSejak: string;
+  terakhirMasuk: string | null;
+  sesi: {
+    /** Semua sesi hidup, termasuk yang sedang dipakai. */
+    jumlah: number;
+    aktif24j: number;
+    ini: SesiAkun | null;
+    /** Sesi lain berperamban — paling banyak empat, terbaru lebih dulu. */
+    lain: SesiAkun[];
+    /** Sesi lain tanpa nama perangkat (tercatat sebelum login meneruskannya). */
+    tanpaNama: number;
+    tanpaNamaTerakhir: string | null;
+  };
+}
+
+export const ambilAkun = () => panggil<InfoAkun>("/admin/account");
+
+export async function ubahNamaAkun(nama: string): Promise<string | null> {
+  const r = await panggil<{ nama: string | null }>("/admin/account/profile", {
     method: "PATCH",
-    body: JSON.stringify({ newPassword }),
+    body: JSON.stringify({ nama }),
   });
+  sinkronkanProfil({ nama: r.nama });
+  return r.nama;
+}
+
+export const ubahPassword = (currentPassword: string, newPassword: string) =>
+  panggil<{ updated: boolean; lainKeluar: boolean }>("/admin/account/password", {
+    method: "PATCH",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+/** Mencabut semua sesi akun ini KECUALI yang sedang dipakai. */
+export const keluarkanPerangkatLain = () =>
+  panggil<{ scope: string }>("/admin/account/logout", { method: "POST", body: JSON.stringify({ scope: "others" }) });
+
+/**
+ * Keluar: cabut sesi ini di Supabase, lalu hapus token di peramban.
+ *
+ * Dulu keluar cuma menghapus token lokal, jadi refresh token-nya tetap hidup
+ * di Supabase — produksi menumpuk 88 sesi. Pencabutannya usaha-terbaik dan
+ * dibatasi 2,5 detik: jaringan yang mati tidak boleh membuat orang tidak
+ * bisa keluar.
+ */
+export async function keluar(): Promise<void> {
+  await Promise.race([
+    panggil("/admin/account/logout", { method: "POST", body: JSON.stringify({ scope: "local" }) }, false).catch(() => null),
+    new Promise((r) => setTimeout(r, 2500)),
+  ]);
+  hapusSesi();
+}
 
 // --- Progres proyek (dilihat klien lewat link token) --------------------
 

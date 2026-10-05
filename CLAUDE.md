@@ -1125,6 +1125,15 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     menambah animasi pada isi Radix, pastikan nama keyframes-nya hidup di
     stylesheet yang halaman itu muat.
 
+69. **Wilayah toast Radix ikut jadi butir flex halaman satu-layar.**
+    `ToastProvider` menaruh `<div role="region">` sebagai SAUDARA akar
+    halaman di dalam pulau, dan aturan satu-layar KitLayout memberi setiap
+    anak pulau `flex: 1` — jadi wilayah kosong itu menelan separuh sisa
+    tinggi (terukur 48px kosong di bawah panel Akun). Halaman Akun menutupnya
+    sendiri (`astro-island:has(> .akn) > [role="region"] { flex: none }`);
+    halaman lain belum diperiksa — kalau kartu bawahnya tidak sampai ke kaki,
+    ini tersangka pertama.
+
 **Cara mengukur ongkos gulir tanpa tertipu.** Sebaran satu kondisi di
 harness ini mencapai +-45 ms, jadi membandingkan dua angka dari dua kali
 jalan tidak sah — apalagi lintas sesi. Yang bekerja: jalankan kondisi LAMA
@@ -1342,6 +1351,9 @@ Dicatat supaya tidak diulang kalau suatu saat dibangun ulang:
 
 | Keputusan | Alasan |
 | --- | --- |
+| **Halaman Akun = halaman PROFIL bertab, bukan dashboard** | Pemilik menilai versi lama "0", lalu menolak versi tiga kolom yang meniru Dashboard ("jangan juga layaknya … tapi akun versi upgrade"). Bentuknya kini kepala bersampul (hijau tua berpola kertas kalkir, lambang D samar, avatar 96 menumpang di tepinya) + `Segmen` empat tab: **Profil** (baris setelan: nama tampilan bisa diubah di tempat, email, peran, staf sejak, terakhir masuk; hak akses per kategori dari `lib/navAdmin`), **Keamanan** (sandi lama WAJIB, mata per isian, meter kekuatan, syarat menyala, sandi acak 20 karakter), **Perangkat** (sesi aktif dari `auth.sessions`), **Tampilan** (terang/gelap/ikuti sistem dengan pratinjau panel mini). Tab disimpan di alamat (`#keamanan`). Nama tampilan disimpan di `profiles.full_name` (kolom lama, tanpa migrasi) dan dipakai kartu akun di rel lewat `PERISTIWA_PROFIL`. Terukur: keempat tab 0 gulir pada 1440x790 dan 1366x768, kontras bersih kedua tema, 31 cek alur di API tiruan |
+| **Keluar MENCABUT sesi di Supabase; ganti sandi mengeluarkan perangkat lain** | Ketahuan dari produksi (dibaca saja): akun master punya 88 sesi hidup sejak 25 Agustus, 87 refresh token tidak pernah dicabut, karena Keluar cuma menghapus token di peramban. Sekarang `keluar()` memanggil `POST /admin/account/logout {scope:"local"}` (usaha-terbaik, 2,5 detik), tombol "Keluarkan perangkat lain" memakai `scope:"others"`, dan ganti sandi memanggil `others` di server. Token akses yang sudah terbit tetap sah sampai kedaluwarsa (≈1 jam) karena API memverifikasinya lewat JWKS — kalimat di halaman menyebut "paling lambat satu jam". Login kini meneruskan User-Agent peramban ke GoTrue; sebelumnya semua sesi tercatat "quic-go HTTP/3"/kosong, jadi sesi lama dirangkum sebagai "N sesi tanpa nama perangkat". Ganti sandi memverifikasi sandi lama dengan grant `password` lalu langsung mencabut sesi cek itu, dan dibatasi KV 10/jam. Galat GoTrue (`same_password`, `weak_password`, `reauthentication_needed`) diterjemahkan — dulu semuanya "gagal mengubah kata sandi". Batas di API dinaikkan dari 8 ke aturan Supabase (12 + empat jenis) |
+| **Info Studio `masterOnly` di peta navigasi** | Halamannya sudah lama `RequireAuth masterOnly`, tapi rel tetap menawarkannya ke staf — yang lalu melihat "Tidak bisa memuat panel". Konsekuensi: baris itu baru muncul sesudah peran dibaca, jadi penggulir rel ke baris aktif kini juga menunggu `master` (tanpanya baris Akun terdorong ke bawah kartu akun) |
 | Tombol Terbitkan di topbar, dengan cap perubahan dari trigger database | Pemilik mengisi delapan logo klien lalu menyimpulkan fiturnya rusak; datanya benar seluruhnya, situsnya saja belum dibangun ulang. Ditaruh di topbar (bukan hanya di editor proyek) karena perubahan yang perlu diterbitkan datang dari jurnal, logo klien, info studio, dan testimoni juga. Yang dibandingkan: cap `content_revision` dari database lawan stempel build yang dipanggang ke HTML panel — panel ini hasil build yang sama dengan situs publiknya, jadi ia satu-satunya sumber yang tahu umur dirinya sendiri. Capnya lewat trigger, bukan `max(updated_at)`, karena MENGHAPUS tidak meninggalkan baris yang bisa dijumlahkan — dan menghapus foto atau menarik tulisan justru perbuatan yang paling bikin panik kalau barangnya masih tampil |
 | Angka di lonceng tidak punya tombol "tandai sudah dibaca" | Dikonfirmasi pemilik. Angkanya diturunkan dari pekerjaan yang benar-benar belum ditangani (pesan belum dibaca, tenggat lewat, testimoni menunggu), jadi ia turun sendiri begitu sumbernya ditangani. Tombol tandai-dibaca butuh tabel keadaan-baca per akun, dan membuat angka bisa nol padahal pekerjaannya masih menumpuk — persis kebalikan dari gunanya |
 | Tab Milestone berisi pencapaian tahap PROYEK, bukan lama berlangganan | Dikonfirmasi pemilik. Aplikasi rujukan memakai milestone anggota (1/2/3/6/12/24 bulan) karena bisnisnya berlangganan; studio arsitektur tidak punya anggota berlangganan, dan yang setara maknanya adalah tahap pipeline yang sudah dilewati sebuah proyek |

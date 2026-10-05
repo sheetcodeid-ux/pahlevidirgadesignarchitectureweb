@@ -401,17 +401,8 @@
 .is-zona__b[aria-checked="true"] { border-color: var(--brand); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand); }
 .is-zona__b:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
-/* --- Akun ------------------------------------------------------------------- */
-.ak-profil { margin-left: -12px; }
-.ak-profil .k-butir__judul { font-size: var(--k-t16); white-space: normal; overflow-wrap: anywhere; }
-.ak-profil .k-butir__ket { white-space: normal; }
 /* Info Studio — isian opsional di dalam Lipat. */
 .is-opsional { display: flex; flex-direction: column; gap: 20px; padding-top: 4px; }
-.ak-syarat { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; padding: 0; list-style: none; }
-.ak-syarat li { display: flex; align-items: center; gap: 7px; font-size: var(--k-t12); color: var(--text-muted); }
-.ak-syarat li > span:first-child { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--border-strong); }
-.ak-syarat li[data-ok] { color: var(--text-strong); }
-.ak-syarat li[data-ok] > span:first-child { background: var(--success); box-shadow: none; }
 
 @media (max-width: 40rem) {
   .is-logo { grid-template-columns: 88px minmax(0, 1fr); }

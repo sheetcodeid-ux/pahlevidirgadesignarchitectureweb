@@ -10,7 +10,7 @@ import { IsiNotifikasi, TabNotifikasi } from "./NotifikasiPanel";
 import { ambilNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
 import { bukaProyek, setProyekAktif, proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import {
-  ambilSettings, profilTersimpan, hapusSesi, singkatanZona,
+  ambilSettings, profilTersimpan, keluar, singkatanZona,
   type Profil, type Proyek, type StudioSettings,
 } from "../../lib/admin";
 
@@ -223,7 +223,7 @@ function Identitas({ settings, profil, zona }: { settings: StudioSettings | null
           <button
             type="button"
             className="akunpop__aksi akunpop__aksi--keluar"
-            onClick={() => { hapusSesi(); window.location.replace("/admin/masuk"); }}
+            onClick={async () => { await keluar(); window.location.replace("/admin/masuk"); }}
           >
             <Icon name="logout" size={19} />
             <span className="akunpop__aksi-teks">

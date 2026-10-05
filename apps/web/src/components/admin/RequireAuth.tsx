@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { Icon } from "../ui/Icon";
-import { ambilProfil, GagalAuth, hapusSesi, profilTersimpan, type Profil } from "../../lib/admin";
+import { ambilProfil, GagalAuth, hapusSesi, profilTersimpan, sinkronkanProfil, type Profil } from "../../lib/admin";
 
 const Ctx = createContext<Profil | null>(null);
 
@@ -86,6 +86,9 @@ export function RequireAuth({ children, masterOnly = false, skeleton }: {
           setStatus("ditolak");
           return;
         }
+        // Nama atau peran yang diubah dari perangkat lain ikut sampai ke
+        // profil tersimpan (dan ke kartu akun di rel) di sini.
+        sinkronkanProfil({ nama: p.nama ?? null, role: p.role, isMasterAdmin: p.isMasterAdmin });
         setProfil(p);
         setStatus("siap");
       })

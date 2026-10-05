@@ -56,6 +56,10 @@ v1.route("/", auth);
 v1.use("/inquiries", rateLimit("inquiry", 5, 3600));
 v1.route("/", inquiries);
 
+// Ganti kata sandi memverifikasi sandi LAMA, jadi ia juga jalan untuk
+// menebak — oleh siapa pun yang sudah memegang sesi. Batasnya sama dengan
+// masuk.
+v1.use("/admin/account/password", rateLimit("sandi", 10, 3600));
 v1.route("/admin", admin);
 
 // Link progres klien: bukan lewat Turnstile (klien tidak dianggap mengisi

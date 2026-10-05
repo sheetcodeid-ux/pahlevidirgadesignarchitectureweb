@@ -288,6 +288,26 @@
      juga tidak boleh. */
   --situs-aksen: #2DD4BF;
 
+  /* Pratinjau TEMA di halaman Akun: tiga ubin mini yang menggambar panel
+     dalam tema terang dan gelap SEKALIGUS, apa pun tema yang sedang aktif.
+     Karena itu nilainya TIDAK didefinisikan ulang di blok tema gelap —
+     ubin "Terang" harus tetap terang saat panelnya gelap. Nilainya salinan
+     token panel masing-masing tema (rel, panel isi, kartu, garis, aksen). */
+  --pra-t-rel: #ECF4E9;
+  --pra-t-panel: #FBFBFC;
+  --pra-t-kartu: #FFFFFF;
+  --pra-t-garis: #E5E6E6;
+  --pra-t-aksen: #1E4841;
+  --pra-g-rel: #1E2E24;
+  --pra-g-panel: #171D1C;
+  --pra-g-kartu: #1F2725;
+  --pra-g-garis: #2C3735;
+  --pra-g-aksen: #BBF49C;
+  --pra-t-teks: #242E2C;
+  --pra-g-teks: #FBFBFC;
+  /* Kartu kas pejal: hijau tua di KEDUA tema, sama seperti --kas-bidang. */
+  --pra-kas: #1E4841;
+
   --focus: #1E4841;
   --focus-halo: rgba(187, 244, 156, 0.55);
 

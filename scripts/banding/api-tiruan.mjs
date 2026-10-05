@@ -325,7 +325,18 @@ for (let m = 1; m <= 30; m++) {
 }
 
 
-const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", role: "master", isMasterAdmin: true };
+const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", nama: "Dirga Pahlevi", role: "master", isMasterAdmin: true };
+
+/* Halaman Akun — sesi CONTOH. Produksi menyimpan agen peramban sejak login
+   meneruskannya; sesi lama tercatat tanpa nama perangkat (userAgent null). */
+const SANDI_TIRUAN = "Lama-Sandi-2026";
+const jamLalu = (j) => new Date(Date.now() - j * 3600e3).toISOString();
+const sesiIni = { id: "s-ini", dibuat: jamLalu(26), terakhirAktif: jamLalu(0.05), userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36" };
+let sesiLain = [
+  { id: "s-2", dibuat: jamLalu(30), terakhirAktif: jamLalu(3), userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1" },
+  { id: "s-3", dibuat: jamLalu(80), terakhirAktif: jamLalu(50), userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36 Edg/129.0" },
+];
+let sesiTanpaNama = 6;
 
 /* Proyek versi ADMIN — beda bentuk dari `proyek` di atas, yang meniru
    endpoint publik. Yang ini memuat contractValue dan paidTotal, dua kolom
@@ -838,6 +849,18 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/targets")) return targetAdmin;
   if (path.startsWith("/api/v1/admin/publish-status")) return { terakhirBerubah: capBerubah };
   if (path.startsWith("/api/v1/admin/settings")) return { ...setelan, terbitSitusAktif: true };
+  if (path.startsWith("/api/v1/admin/account")) {
+    return {
+      email: profil.email, role: "admin", isMasterAdmin: true, nama: profil.nama,
+      stafSejak: "2026-08-18T03:00:00.000Z", terakhirMasuk: jamLalu(26),
+      sesi: {
+        jumlah: 1 + sesiLain.length + sesiTanpaNama,
+        aktif24j: 1 + sesiLain.filter((x) => Date.now() - Date.parse(x.terakhirAktif) < 864e5).length,
+        ini: sesiIni, lain: sesiLain,
+        tanpaNama: sesiTanpaNama, tanpaNamaTerakhir: sesiTanpaNama ? jamLalu(24 * 12) : null,
+      },
+    };
+  }
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
@@ -1155,7 +1178,25 @@ function tulis(metode, path, badan) {
     return { updated: true };
   }
   if (path === "/api/v1/admin/account/password" && metode === "PATCH") {
-    return String(badan.newPassword ?? "").length >= 12 ? { updated: true } : { galat: 422 };
+    // Aturan yang sama dengan lib/gotrue.ts — sandi lama tiruan: Lama-Sandi-2026.
+    const b = String(badan.newPassword ?? "");
+    const kurang = [[b.length >= 12, "minimal 12 karakter"], [/[A-Z]/.test(b), "huruf besar"], [/[a-z]/.test(b), "huruf kecil"],
+      [/\d/.test(b), "angka"], [/[^A-Za-z0-9]/.test(b), "simbol"]].filter(([ok]) => !ok).map(([, l]) => l);
+    if (kurang.length) return { galat: 422, pesan: `kata sandi belum memenuhi: ${kurang.join(", ")}` };
+    if (badan.currentPassword !== SANDI_TIRUAN) return { galat: 422, pesan: "kata sandi saat ini salah" };
+    if (b === SANDI_TIRUAN) return { galat: 422, pesan: "kata sandi baru sama dengan yang sekarang" };
+    sesiLain = []; sesiTanpaNama = 0;
+    return { updated: true, lainKeluar: true };
+  }
+  if (path === "/api/v1/admin/account/profile" && metode === "PATCH") {
+    const nama = String(badan.nama ?? "").replace(/\s+/g, " ").trim();
+    if (nama.length > 60) return { galat: 422, pesan: "nama maksimal 60 karakter" };
+    profil.nama = nama || null;
+    return { nama: profil.nama };
+  }
+  if (path === "/api/v1/admin/account/logout" && metode === "POST") {
+    if (badan.scope === "others") { sesiLain = []; sesiTanpaNama = 0; }
+    return { scope: badan.scope };
   }
   {
     const kl = path.match(/^\/api\/v1\/admin\/clients(?:\/([^/?]+))?$/);
@@ -1368,7 +1409,7 @@ createServer((req, res) => {
       const hasil = tulis(metode, path, badan);
       if (hasil && hasil.galat) {
         res.writeHead(hasil.galat, kepala);
-        return res.end(JSON.stringify({ error: { status: hasil.galat, message: "tidak ada" } }));
+        return res.end(JSON.stringify({ error: { status: hasil.galat, message: hasil.pesan ?? "tidak ada" } }));
       }
       res.writeHead(hasil ? 200 : 201, kepala);
       res.end(JSON.stringify({ data: hasil ?? { id: "baru" } }));

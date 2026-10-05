@@ -25,7 +25,7 @@ import { ikonButir, kepalaHari, waktuButir } from "./linimasaNotif";
    ============================================================================= */
 
 /** "Baru saja" / "12 menit lalu" / "3 jam lalu" / "Kemarin" / "3 Okt". */
-function waktuRelatif(iso: string): string {
+export function waktuRelatif(iso: string): string {
   const d = new Date(iso);
   const detik = Math.round((Date.now() - d.getTime()) / 1000);
   if (detik < 60) return "Baru saja";

@@ -10,7 +10,7 @@ import { Ikon, type DataIkon } from "../kit/Ikon";
 import { Avatar } from "../kit/Tampilan";
 import { TombolIkon } from "../kit/Tombol";
 import { NAV } from "../../lib/navAdmin";
-import { hapusSesi, profilTersimpan } from "../../lib/admin";
+import { keluar, namaTampilan, PERISTIWA_PROFIL, profilTersimpan, type Profil } from "../../lib/admin";
 
 /* =============================================================================
    Rel samping panel admin, versi kit.
@@ -116,16 +116,22 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
   useEffect(() => {
     const p = profilTersimpan();
     setMaster(masterProp ?? p?.isMasterAdmin);
-    /* Profil cuma menyimpan email — namanya diturunkan dari bagian depannya
-       ("dirga.pahlevi@…" → "Dirga Pahlevi"); alamat lengkapnya jadi title. */
-    if (p) {
-      const depan = (p.email.split("@")[0] || "Akun").replace(/[._-]+/g, " ").trim();
-      const nama = depan.replace(/\b\p{L}/gu, (h) => h.toUpperCase());
-      setAkun({ nama, email: p.email, peran: p.isMasterAdmin ? "Master admin" : "Staf" });
-    }
+    /* Nama tampilan dari halaman Akun; kalau belum diisi, diturunkan dari
+       bagian depan email ("dirga.pahlevi@…" → "Dirga Pahlevi"). Rel ini
+       tidak pernah dipasang ulang (transition:persist), jadi nama yang baru
+       disimpan datang lewat PERISTIWA_PROFIL. */
+    const pasangAkun = (q: Profil | null) => {
+      if (q) setAkun({ nama: namaTampilan(q), email: q.email, peran: q.isMasterAdmin ? "Master admin" : "Staf" });
+    };
+    pasangAkun(p);
+    const dengarProfil = (e: Event) => pasangAkun((e as CustomEvent<Profil>).detail);
     const dengar = (e: Event) => setPesan((e as CustomEvent<number>).detail);
     window.addEventListener(PERISTIWA_PESAN, dengar);
-    return () => window.removeEventListener(PERISTIWA_PESAN, dengar);
+    window.addEventListener(PERISTIWA_PROFIL, dengarProfil);
+    return () => {
+      window.removeEventListener(PERISTIWA_PESAN, dengar);
+      window.removeEventListener(PERISTIWA_PROFIL, dengarProfil);
+    };
   }, [masterProp]);
   /* Halaman detail "<daftar>/satu" (Satu Proyek, Detail Paket) tidak punya
      baris sendiri di menu; yang menyala daftarnya. Tetap bukan startsWith —
@@ -156,7 +162,11 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
     const d = daftar.getBoundingClientRect();
     if (b.top < d.top) daftar.scrollTop -= d.top - b.top + 8;
     else if (b.bottom > d.bottom) daftar.scrollTop += b.bottom - d.bottom + 8;
-  }, [kini]);
+    /* `master` ikut: baris khusus master (Info Studio, UI Component) baru
+       muncul sesudah peran dibaca, dan Info Studio duduk DI ATAS Akun —
+       tanpa diukur ulang, baris Akun yang menyala terdorong ke bawah kartu
+       akun di kaki rel. */
+  }, [kini, master]);
   const lipat = (label: string) =>
     setTerbuka((t) => (t.includes(label) ? t.filter((x) => x !== label) : [...t, label]));
 
@@ -261,15 +271,16 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
             </span>
             {/* Keluar tetap tombol sungguhan di rel — sempat HILANG dari
                 seluruh panel (jebakan #38). Perilakunya sama dengan tombol
-                lama: sesi DAN cache data dibuang (hapusSesi), lalu ganti
+                lama: sesi DAN cache data dibuang — dan kini sesinya juga
+                dicabut di Supabase (`keluar`) — lalu ganti
                 riwayat supaya tombol Kembali tidak membuka panel. */}
             <TombolIkon
               ikon={NavSignOut}
               judul="Keluar"
               jenis="ghost"
               className="kl__keluar"
-              onClick={() => {
-                hapusSesi();
+              onClick={async () => {
+                await keluar();
                 window.location.replace("/admin/masuk");
               }}
             />

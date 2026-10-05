@@ -1,31 +1,10 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
 import { withDb } from "../db";
-import { role } from "../repository/profile";
+import { profil } from "../repository/akun";
+import { tukarToken, type TokenSupabase } from "../lib/gotrue";
 
 export const auth = new Hono<{ Bindings: Env }>();
-
-interface SupabaseToken {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  user: { id: string; email: string };
-}
-
-async function exchangeToken(env: Env, grant: string, body: Record<string, string>): Promise<SupabaseToken> {
-  const url = `${(env.SUPABASE_URL ?? "").replace(/\/$/, "")}/auth/v1/token?grant_type=${grant}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: env.SUPABASE_ANON_KEY ?? "" },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) throw new Error(`supabase menolak: status ${res.status}`);
-
-  const tok = (await res.json()) as SupabaseToken;
-  if (!tok.access_token) throw new Error("supabase tidak mengembalikan token");
-  return tok;
-}
 
 function authConfigured(env: Env): boolean {
   return Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY);
@@ -48,9 +27,9 @@ auth.post("/auth/login", async (c) => {
     return c.json({ error: { status: 422, message: "email dan kata sandi wajib diisi" } }, 422);
   }
 
-  let tok: SupabaseToken;
+  let tok: TokenSupabase;
   try {
-    tok = await exchangeToken(c.env, "password", { email, password });
+    tok = await tukarToken(c.env, "password", { email, password }, c.req.header("User-Agent"));
   } catch {
     // Pesan tunggal untuk email tidak dikenal maupun kata sandi salah —
     // membedakannya memberi tahu penyerang alamat mana yang terdaftar.
@@ -58,7 +37,8 @@ auth.post("/auth/login", async (c) => {
   }
 
   // Punya akun belum berarti berhak masuk panel.
-  const peran = await withDb(c.env, c.executionCtx, (sql) => role(sql, tok.user.id));
+  const p = await withDb(c.env, c.executionCtx, (sql) => profil(sql, tok.user.id));
+  const peran = p?.role ?? "";
   if (!peran) {
     return c.json({ error: { status: 403, message: "akun ini tidak berhak mengelola konten" } }, 403);
   }
@@ -71,6 +51,7 @@ auth.post("/auth/login", async (c) => {
       email: tok.user.email,
       role: peran,
       isMasterAdmin: peran === "admin",
+      nama: p?.nama ?? null,
     },
   });
 });
@@ -87,9 +68,9 @@ auth.post("/auth/refresh", async (c) => {
     return c.json({ error: { status: 400, message: "refresh token tidak ada" } }, 400);
   }
 
-  let tok: SupabaseToken;
+  let tok: TokenSupabase;
   try {
-    tok = await exchangeToken(c.env, "refresh_token", { refresh_token: refreshToken });
+    tok = await tukarToken(c.env, "refresh_token", { refresh_token: refreshToken });
   } catch {
     return c.json({ error: { status: 401, message: "sesi sudah berakhir, masuk kembali" } }, 401);
   }

@@ -1,0 +1,365 @@
+/* =============================================================================
+   Halaman Akun (AkunKit) — halaman PROFIL, bukan dashboard.
+
+   Kepala bersampul selebar halaman (avatar besar menumpang di tepi sampul,
+   nama, peran, dan tab), lalu satu panel untuk tab yang terbuka. Tidak ada
+   frame Coinest untuk halaman ini; yang dipinjam dari kit cuma bahannya —
+   kartu putih r16 bergaris 1px, ubin ikon mint, Segmen, Isian, Lencana —
+   bukan susunan Dashboard-nya.
+   ============================================================================= */
+
+.akn { display: flex; flex-direction: column; gap: 16px; min-height: 0; padding-bottom: 20px; }
+/* Wilayah toast Radix duduk SEBAGAI SAUDARA .akn di dalam pulau, dan aturan
+   satu-layar KitLayout memberi setiap anak pulau `flex: 1` — jadi ia ikut
+   menelan separuh sisa tinggi (terukur 48px kosong di bawah panel). Toast-nya
+   sendiri `position: fixed`; wilayahnya tidak perlu ruang. */
+.kl__isi > astro-island:has(> .akn) > [role="region"] { flex: none; }
+
+/* --- Kepala profil ------------------------------------------------------------ */
+.akn__kepala {
+  flex: none;
+  overflow: clip;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+/* Kertas kalkir: kisi halus 12px, garis tebal tiap 48px — lembar gambar
+   kerja. Bidangnya hijau tua di kedua tema (--kas-bidang), seperti setiap
+   bidang hijau tua pejal di panel. */
+.akn__sampul {
+  position: relative;
+  height: 104px;
+  overflow: clip;
+  background-color: var(--kas-bidang);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--brand-mint) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--brand-mint) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--brand-mint) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--brand-mint) 6%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px;
+  background-position: -1px -1px;
+}
+/* Lambang D studio, besar dan samar, terpotong tepi bawah sampul. */
+.akn__lambang {
+  position: absolute;
+  top: -18px;
+  right: 40px;
+  width: 168px;
+  height: 168px;
+  color: var(--brand-mint);
+  opacity: 0.22;
+}
+.akn__identitas {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 4px 20px;
+  padding: 0 24px 20px;
+}
+.akn__avatar {
+  /* Di atas sampul: sampulnya ber-posisi, jadi tanpa ini separuh atas
+     avatar tergambar DI BAWAH sampul. */
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-top: -48px;
+  border: 5px solid var(--surface);
+  border-radius: 50%;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+  font-size: 1.875rem;
+  font-weight: var(--k-bold);
+  letter-spacing: 0.02em;
+}
+.akn__siapa { min-width: 0; padding-bottom: 2px; }
+.akn__nama {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: var(--k-h4);
+  font-weight: var(--k-bold);
+  line-height: 1.2;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+.akn__nama .k-lencana { flex: none; }
+.akn__email { margin: 4px 0 0; font-size: var(--k-t14); color: var(--text-muted); overflow-wrap: anywhere; }
+.akn .akn__tab { width: 452px; margin-bottom: 4px; }
+
+/* --- Panel tab ------------------------------------------------------------------ */
+.akn__isi { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+.akn__panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.akn__panelkepala { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.akn__judul {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--k-t16);
+  font-weight: var(--k-bold);
+  line-height: 1.2;
+  color: var(--text-strong);
+}
+.akn__jumlah { font-size: var(--k-t12); font-weight: var(--k-reg); color: var(--text-muted); }
+.akn__kaki {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Ubin ikon mint — satu bahasa dengan ubin di seluruh kit. */
+.akn__ubin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--brand-mint);
+  color: var(--brand-mint-ink);
+  font-size: var(--k-t12);
+  font-weight: var(--k-bold);
+}
+.akn__ubin--pucat { background: var(--brand-soft); color: var(--text-muted); }
+
+/* --- Profil: baris setelan + hak akses ------------------------------------------ */
+.akn__panel--profil {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  align-content: start;
+  gap: 0 32px;
+}
+.akn__bagian { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.akn__daftar { margin: 0; }
+.akn__baris {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 16px;
+  min-height: 58px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.akn__baris:last-child { border-bottom: 0; }
+.akn__baris dt { font-size: var(--k-t12); color: var(--text-muted); }
+.akn__baris dd { display: flex; flex-direction: column; gap: 2px; min-width: 0; margin: 0; }
+.akn__baris dd b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); overflow-wrap: anywhere; }
+.akn__baris dd small { font-size: var(--k-t12); color: var(--text-muted); }
+.akn__barisaksi { align-items: flex-end; }
+/* Mode ubah: isian selebar kolom nilai, tombol di kanannya. */
+.akn__baris--ubah { grid-template-columns: minmax(0, 1fr) auto; align-items: start; padding: 12px 0; }
+/* 25 = label + celahnya; +8 menengahkan tombol terhadap kotak isian 46 (terukur). */
+.akn__ubahaksi { display: flex; gap: 8px; padding-top: 33px; }
+
+.akn__bagian--hak { padding-left: 32px; border-left: 1px solid var(--border); }
+.akn__hak { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 0; padding: 0; list-style: none; }
+.akn__hak li { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: var(--k-t14); color: var(--text-strong); }
+.akn__hak .akn__ubin { width: 28px; height: 28px; border-radius: 8px; }
+.akn__haknama { flex: 1 1 auto; min-width: 0; }
+.akn__hakangka { font-size: var(--k-t12); color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Amber = terbatas atau terkunci sebagian (aturan warna #1). */
+.akn__hakangka.is-terbatas { color: var(--warn-ink); font-weight: var(--k-semi); }
+.akn__hakkhusus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.akn__hakkhususlabel { flex-basis: 100%; font-size: var(--k-t12); color: var(--text-muted); }
+
+/* --- Keamanan ------------------------------------------------------------------- */
+.akn__sandikisi { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.akn__isian { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* Mata: tuas yang tertekan saat sandinya terlihat. */
+.akn .akn__mata { flex: none; margin-right: -6px; color: var(--text-muted); }
+.akn .akn__mata[aria-pressed="true"] { background: var(--brand-mint); color: var(--brand-mint-ink); }
+
+.akn__kekuatan {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: var(--brand-soft);
+}
+.akn__meter { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 10px 12px; }
+.akn__meterlabel { font-size: var(--k-t12); color: var(--text-muted); }
+.akn__metertingkat { font-size: var(--k-t16); font-weight: var(--k-bold); color: var(--text-muted); }
+.akn__meterbar { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.akn__meterbar i { height: 8px; border-radius: 4px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+.akn__meterbar i[data-isi] { background: var(--warn); box-shadow: none; }
+.akn__kekuatan--kuat .akn__meterbar i[data-isi],
+.akn__kekuatan--sangat .akn__meterbar i[data-isi] { background: var(--success); }
+.akn__kekuatan--kurang .akn__metertingkat { color: var(--warn-ink); }
+.akn__kekuatan--kuat .akn__metertingkat,
+.akn__kekuatan--sangat .akn__metertingkat { color: var(--success); }
+
+.akn__syarat { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin: 0; padding: 0; list-style: none; }
+.akn__syarat li { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--k-t12); color: var(--text-muted); }
+/* --text-muted, bukan --text-faint: di atas mint pucat --text-faint cuma 1,66. */
+.akn__syarat li svg { color: var(--text-muted); }
+.akn__syarat li[data-ok] { color: var(--text-strong); }
+.akn__syarat li[data-ok] svg { color: var(--success); }
+
+/* --- Perangkat ------------------------------------------------------------------ */
+.akn__perangkatlist {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin: -8px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  list-style: none;
+}
+.akn__perangkat {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1.7fr) repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.akn__perangkat:last-child { border-bottom: 0; }
+/* Perangkat ini: bidang mint pucat, tanpa garis — terbaca lebih dulu. */
+.akn__perangkat.is-ini { border-bottom: 0; border-radius: 12px; background: var(--brand-soft); }
+.akn__perangkatnama { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.akn__perangkatnama b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); overflow-wrap: anywhere; }
+.akn__perangkatsel { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: var(--k-t12); color: var(--text-strong); }
+.akn__perangkatsel small { font-size: var(--k-t10); color: var(--text-muted); }
+.akn__kosong { display: flex; align-items: center; gap: 8px; margin: 0; padding: 0 12px; font-size: var(--k-t12); color: var(--text-muted); }
+.akn__kosong svg { color: var(--success); }
+
+/* --- Tampilan ------------------------------------------------------------------- */
+.akn__tema { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.akn__temabutir {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.akn__temabutir:hover { border-color: var(--border-strong); }
+/* Radio ASLI (papan ketik, panah, nama kelompok), digambar sebagai kartu. */
+.akn__temabutir input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.akn__temabutir:has(input:checked) { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.akn__temabutir:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
+.akn__temateks { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.akn__temateks b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.akn__temateks small { font-size: var(--k-t12); color: var(--text-muted); }
+.akn__temacek { align-self: center; color: var(--success); opacity: 0; }
+.akn__temabutir:has(input:checked) .akn__temacek { opacity: 1; }
+
+.akn__pra {
+  position: relative;
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.akn__lapis {
+  --r: var(--pra-t-rel); --p: var(--pra-t-panel); --k: var(--pra-t-kartu); --g: var(--pra-t-garis);
+  --a: var(--pra-t-aksen); --t: var(--pra-t-teks);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 22% 1fr;
+  background: var(--r);
+}
+.akn__lapis--dark {
+  --r: var(--pra-g-rel); --p: var(--pra-g-panel); --k: var(--pra-g-kartu); --g: var(--pra-g-garis);
+  --a: var(--pra-g-aksen); --t: var(--pra-g-teks);
+}
+/* Ikuti sistem: lapisan gelap dipotong miring di atas yang terang. */
+.akn__pra--sistem .akn__lapis--dark { clip-path: polygon(60% 0, 100% 0, 100% 100%, 40% 100%); }
+.akn__prarel { display: flex; flex-direction: column; gap: 7%; padding: 14% 14%; }
+.akn__prarel i { display: block; height: 5px; border-radius: 3px; background: var(--g); }
+.akn__prarel i:first-child { width: 70%; height: 7px; margin-bottom: 18%; background: var(--t); opacity: 0.8; }
+.akn__prarel i:nth-child(3) { background: var(--a); }
+.akn__prapanel {
+  display: flex;
+  flex-direction: column;
+  gap: 7%;
+  margin-top: 6%;
+  padding: 6% 7%;
+  border-top-left-radius: 10px;
+  background: var(--p);
+}
+.akn__prajudul { display: block; width: 32%; height: 7px; border-radius: 3px; background: var(--t); opacity: 0.85; }
+.akn__prabaris { display: grid; flex: 1 1 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6%; }
+.akn__prabaris--dua { grid-template-columns: 2fr 1fr; }
+.akn__prabaris i { display: block; border: 1px solid var(--g); border-radius: 5px; background: var(--k); }
+.akn__prabaris i.is-pejal { border: 0; background: var(--pra-kas); }
+
+/* --- Kerangka saat sesi diperiksa --------------------------------------------------- */
+.akn--rangka .akn__kepala { min-height: 180px; }
+.akn--rangka .akn__isi { min-height: 360px; border: 1px solid var(--border); border-radius: 16px; }
+
+/* --- Ukuran layar -------------------------------------------------------------------- */
+
+/* Laptop sedang: tab turun ke baris sendiri di bawah nama. */
+@media (max-width: 1288px) {
+  .akn__identitas { grid-template-columns: auto minmax(0, 1fr); }
+  .akn .akn__tab { grid-column: 1 / -1; width: 100%; max-width: 452px; margin-top: 12px; }
+}
+@media (min-width: 56.01rem) and (max-width: 1288px) {
+  .akn__panel--profil { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .akn__bagian--hak { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--border); }
+}
+
+/* Ponsel sempit: empat segmen berikon tidak muat di 316px — "Tampilan"
+   terpotong tepi kartu. Labelnya saja sudah cukup jelas. */
+@media (max-width: 30rem) {
+  .akn .akn__tab svg { display: none; }
+}
+
+/* Ponsel: semuanya satu kolom, halaman menggulir. */
+@media (max-width: 56rem) {
+  .akn__sampul { height: 88px; }
+  .akn__lambang { right: 12px; width: 128px; height: 128px; }
+  .akn__identitas { padding: 0 16px 16px; }
+  .akn__avatar { width: 80px; height: 80px; margin-top: -40px; font-size: var(--k-h4); }
+  .akn__siapa { grid-column: 1 / -1; padding-top: 8px; }
+  .akn__nama { font-size: var(--k-h6); }
+  .akn .akn__tab { max-width: none; }
+  .akn__panel { padding: 16px; }
+  .akn__panel--profil { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .akn__bagian--hak { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--border); }
+  .akn__baris { grid-template-columns: minmax(0, 1fr) auto; }
+  .akn__baris dt { grid-column: 1 / -1; }
+  .akn__sandikisi { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .akn__perangkat { grid-template-columns: 36px minmax(0, 1fr); }
+  .akn__perangkatsel { grid-column: 2; flex-direction: row; gap: 6px; }
+  .akn__tema { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .akn__temabutir { grid-template-columns: 112px minmax(0, 1fr) auto; align-items: center; }
+  .akn__pra { grid-column: auto; }
+}

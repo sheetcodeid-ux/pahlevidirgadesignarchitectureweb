@@ -25,7 +25,7 @@ function getJWKS(supabaseUrl: string) {
   return jwks;
 }
 
-export function requireSupabaseAuth(): MiddlewareHandler<{ Bindings: Env; Variables: { userID: string; userEmail?: string; accessToken: string } }> {
+export function requireSupabaseAuth(): MiddlewareHandler<{ Bindings: Env; Variables: { userID: string; userEmail?: string; accessToken: string; sessionID?: string } }> {
   return async (c, next) => {
     const raw = c.req.header("Authorization")?.trim() ?? "";
     if (!raw.toLowerCase().startsWith("bearer ")) {
@@ -47,6 +47,9 @@ export function requireSupabaseAuth(): MiddlewareHandler<{ Bindings: Env; Variab
       c.set("userID", sub);
       c.set("accessToken", token);
       if (typeof payload.email === "string") c.set("userEmail", payload.email);
+      // Sesi GoTrue pemilik token — halaman Akun menandai "perangkat ini"
+      // di daftar sesi dengannya.
+      if (typeof payload.session_id === "string") c.set("sessionID", payload.session_id);
     } catch {
       return c.json({ error: { status: 401, message: "token tidak valid" } }, 401);
     }

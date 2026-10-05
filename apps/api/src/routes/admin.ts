@@ -3,7 +3,8 @@ import type { Env, ImagePatch } from "../types";
 import { withDb } from "../db";
 import { requireSupabaseAuth } from "../middleware/auth";
 import { requireStaff } from "../middleware/staff";
-import { role } from "../repository/profile";
+import * as akunRepo from "../repository/akun";
+import { cabutSesi, gantiSandi, periksaSandi, tukarToken } from "../lib/gotrue";
 import * as adminRepo from "../repository/admin";
 import * as settingsRepo from "../repository/settings";
 import * as progressRepo from "../repository/progress";
@@ -46,7 +47,7 @@ import {
   VALID_TESTIMONIAL_STATUS,
 } from "../types";
 
-type Vars = { userID: string; userEmail?: string; accessToken: string };
+type Vars = { userID: string; userEmail?: string; accessToken: string; sessionID?: string };
 
 export const admin = new Hono<{ Bindings: Env; Variables: Vars }>();
 
@@ -62,9 +63,10 @@ function assetBase(env: Env): string {
 // GET /api/v1/admin/me
 admin.get("/me", async (c) => {
   const userID = c.get("userID");
-  const peran = await withDb(c.env, c.executionCtx, (sql) => role(sql, userID));
+  const p = await withDb(c.env, c.executionCtx, (sql) => akunRepo.profil(sql, userID));
+  const peran = p?.role ?? "";
   return c.json({
-    data: { id: userID, email: c.get("userEmail"), role: peran, isMasterAdmin: peran === "admin" },
+    data: { id: userID, email: c.get("userEmail"), role: peran, isMasterAdmin: peran === "admin", nama: p?.nama ?? null },
   });
 });
 
@@ -247,34 +249,84 @@ admin.patch("/inquiries/:id", async (c) => {
   }
 });
 
-// PATCH /api/v1/admin/account/password
-//
-// Meneruskan ke Supabase Auth dengan token akses milik pemanggil sendiri
-// (bukan service_role) — GoTrue yang memverifikasi sesi itu benar-benar sah
-// sebelum mengganti password, kita tidak perlu menduplikasi logika itu.
-admin.patch("/account/password", async (c) => {
-  const body = await c.req.json<{ newPassword?: string }>().catch((): { newPassword?: string } => ({}));
-  const newPassword = body.newPassword ?? "";
-  if (newPassword.length < 8) {
-    return c.json({ error: { status: 422, message: "kata sandi minimal 8 karakter" } }, 422);
-  }
+// --- Akun yang sedang masuk -------------------------------------------------
 
-  const supabaseUrl = (c.env.SUPABASE_URL ?? "").replace(/\/$/, "");
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: c.env.SUPABASE_ANON_KEY ?? "",
-      Authorization: `Bearer ${c.get("accessToken")}`,
-    },
-    body: JSON.stringify({ password: newPassword }),
+// GET /api/v1/admin/account — profil, kapan terakhir masuk, dan sesi aktif.
+admin.get("/account", async (c) => {
+  const userID = c.get("userID");
+  const [info, sesi] = await withDb(c.env, c.executionCtx, (sql) =>
+    Promise.all([akunRepo.info(sql, userID), akunRepo.sesi(sql, userID, c.get("sessionID") ?? null)]));
+  if (!info) return c.json({ error: { status: 404, message: "akun tidak ditemukan" } }, 404);
+  return c.json({
+    data: { ...info, email: c.get("userEmail") ?? "", isMasterAdmin: info.role === "admin", sesi },
   });
+});
 
-  if (!res.ok) {
-    return c.json({ error: { status: 422, message: "gagal mengubah kata sandi" } }, 422);
+// PATCH /api/v1/admin/account/profile — nama tampilan.
+admin.patch("/account/profile", async (c) => {
+  const body = await c.req.json<{ nama?: unknown }>().catch((): { nama?: unknown } => ({}));
+  let nama: string | null;
+  try {
+    nama = akunRepo.rapikanNama(body.nama);
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+  await withDb(c.env, c.executionCtx, (sql) => akunRepo.ubahNama(sql, c.get("userID"), nama));
+  return c.json({ data: { nama } });
+});
+
+// POST /api/v1/admin/account/logout — { scope: "local" | "others" }
+//
+// "local" dipanggil tombol Keluar: tanpa ini refresh token sesi itu tetap
+// hidup di Supabase selamanya (produksi sempat menumpuk 88 sesi).
+admin.post("/account/logout", async (c) => {
+  const body = await c.req.json<{ scope?: string }>().catch((): { scope?: string } => ({}));
+  const scope = body.scope === "others" ? "others" : body.scope === "local" ? "local" : null;
+  if (!scope) return c.json({ error: { status: 422, message: "scope tidak dikenal" } }, 422);
+  const ok = await cabutSesi(c.env, c.get("accessToken"), scope);
+  if (!ok) return c.json({ error: { status: 502, message: "Supabase menolak mencabut sesi" } }, 502);
+  return c.json({ data: { scope } });
+});
+
+// PATCH /api/v1/admin/account/password — { currentPassword, newPassword }
+//
+// Kata sandi LAMA wajib dan diverifikasi lebih dulu: token panel tinggal di
+// localStorage, jadi siapa pun yang memegang laptop yang tak terkunci bisa
+// mengganti kata sandi dan mengunci pemiliknya keluar. Verifikasinya
+// menukar email + sandi lama jadi token — itu membuat satu sesi baru, yang
+// langsung dicabut lagi supaya tidak ikut menumpuk. Dibatasi lewat KV di
+// index.ts, sama seperti /auth/login.
+//
+// Penggantiannya sendiri diteruskan ke GoTrue dengan token akses milik
+// pemanggil (bukan service_role).
+admin.patch("/account/password", async (c) => {
+  const body = await c.req.json<{ currentPassword?: string; newPassword?: string }>()
+    .catch((): { currentPassword?: string; newPassword?: string } => ({}));
+  const lama = body.currentPassword ?? "";
+  const baru = body.newPassword ?? "";
+
+  const salah = periksaSandi(baru);
+  if (salah) return c.json({ error: { status: 422, message: salah } }, 422);
+  if (!lama) return c.json({ error: { status: 422, message: "kata sandi saat ini wajib diisi" } }, 422);
+  if (lama === baru) return c.json({ error: { status: 422, message: "kata sandi baru sama dengan yang sekarang" } }, 422);
+
+  const email = c.get("userEmail");
+  if (!email) return c.json({ error: { status: 422, message: "token tanpa email" } }, 422);
+  try {
+    const cek = await tukarToken(c.env, "password", { email, password: lama });
+    await cabutSesi(c.env, cek.access_token, "local").catch(() => false);
+  } catch {
+    return c.json({ error: { status: 422, message: "kata sandi saat ini salah" } }, 422);
   }
 
-  return c.json({ data: { updated: true } });
+  const galat = await gantiSandi(c.env, c.get("accessToken"), baru);
+  if (galat) return c.json({ error: { status: 422, message: galat } }, 422);
+
+  // Kata sandi baru tidak ada gunanya kalau sesi yang mungkin sudah dicuri
+  // tetap hidup: perangkat lain dikeluarkan di sini, di server, supaya
+  // tidak bergantung pada halaman yang memanggilnya.
+  const lainKeluar = await cabutSesi(c.env, c.get("accessToken"), "others").catch(() => false);
+  return c.json({ data: { updated: true, lainKeluar } });
 });
 
 // GET /api/v1/admin/team
