@@ -1,4 +1,5 @@
 ---
+import { JUDUL_BERANDA, KET_BERANDA } from "../lib/beranda";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import {
   listProjects,
@@ -120,8 +121,8 @@ const fakta = (p: Project) =>
 ---
 
 <BaseLayout
-  title="Coffee shop dan rumah tropis untuk iklim Indonesia"
-  description="Studio arsitektur spesialis coffee shop, restoran, dan rumah tropis. Kami merancang untuk panas dan lembapnya — lalu Anda memantau pembangunannya dari satu tautan."
+  title={JUDUL_BERANDA}
+  description={KET_BERANDA}
   image={sorot[0]?.coverImageUrl}
 >
   <div class="pita pita--panel pita--kepala">

@@ -9,7 +9,7 @@ import { Lencana } from "../kit/Lencana";
 import { Putar } from "../kit/Tampilan";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import {
-  CheckCircle, FilePdf, Globe, House, ImageSquare, InstagramLogo, MapPinArea, NavEnvelope, NavReceipt, Phone,
+  CheckCircle, FilePdf, Globe, House, ImageSquare, InstagramLogo, MagnifyingGlass, MapPinArea, NavEnvelope, NavReceipt, Phone,
   SpecialInvoice, Wallet,
 } from "../kit/ikon";
 import { Segmen } from "../kit/Segmen";
@@ -25,6 +25,7 @@ import {
   type StudioSettings,
 } from "../../lib/admin";
 import { useCegahPindah } from "../../lib/cegahPindah";
+import { JUDUL_BERANDA, KET_BERANDA } from "../../lib/beranda";
 
 /* =============================================================================
    Info Studio — identitas studio: nama, logo, kontak, lokasi, zona waktu.
@@ -146,9 +147,19 @@ function LogoBawaan({ ukuran }: { ukuran: number }) {
   );
 }
 
-function BingkaiPeramban({ alamat, children }: { alamat: string; children: ReactNode }) {
+/** Jendela peramban. `tab` = judul di tab — nama studio ikut di sana
+ *  karena BaseLayout menulis "<judul halaman> — <nama studio>". */
+function BingkaiPeramban({ alamat, tab, logo, children }: { alamat: string; tab?: string; logo?: string | null; children: ReactNode }) {
   return (
     <div className="ist__peramban" aria-hidden="true">
+      {tab && (
+        <div className="ist__peramban-tabjalur">
+          <span className="ist__peramban-tab">
+            {logo ? <img src={logo} alt="" /> : <LogoBawaan ukuran={11} />}
+            <span>{tab}</span>
+          </span>
+        </div>
+      )}
       <div className="ist__peramban-bilah">
         <span className="ist__peramban-titik"><i /><i /><i /></span>
         <span className="ist__peramban-alamat"><Ikon ikon={Globe} ukuran={11} />{alamat}</span>
@@ -308,7 +319,7 @@ const DOKUMEN: {
 
 function Isi() {
   const toast = useToast();
-  const [layar, setLayar] = useState<"desktop" | "ponsel">("desktop");
+  const [layar, setLayar] = useState<"desktop" | "ponsel" | "cari">("desktop");
   const [dok, setDok] = useState<JenisDok>("biaya");
   const dokumen = DOKUMEN.find((d) => d.nilai === dok)!;
   // Tanggal kop = tanggal di zona studio (lib/pdf.ts tanggalPanjang);
@@ -481,6 +492,7 @@ function Isi() {
             {...seret}
           >
             {logo ? <img src={logo} alt="" /> : <span className="ist__logokosong"><Ikon ikon={ImageSquare} ukuran={26} />Logo</span>}
+            <span className="ist__logokamera" aria-hidden="true"><Ikon ikon={ImageSquare} ukuran={14} /></span>
             <span className="ist__logotirai" aria-hidden="true">
               {mengunggah ? <Putar ukuran={18} label="Mengunggah" /> : <><Ikon ikon={ImageSquare} ukuran={18} />{logo ? "Ganti" : "Unggah"}</>}
             </span>
@@ -550,19 +562,19 @@ function Isi() {
               </div>
             </div>
             <Pratinjau
-              judul="Kepala situs"
+              judul={layar === "cari" ? "Hasil pencarian" : "Kepala situs"}
               aksi={
                 <Segmen
                   className="ist__layar"
                   judul="Ukuran layar pratinjau"
                   nilai={layar}
-                  onPilih={(v) => setLayar(v as "desktop" | "ponsel")}
-                  segmen={[{ nilai: "desktop", label: "Desktop" }, { nilai: "ponsel", label: "Ponsel" }]}
+                  onPilih={(v) => setLayar(v as "desktop" | "ponsel" | "cari")}
+                  segmen={[{ nilai: "desktop", label: "Desktop" }, { nilai: "ponsel", label: "Ponsel" }, { nilai: "cari", label: "Pencarian" }]}
                 />
               }
             >
               {layar === "desktop" ? (
-                <BingkaiPeramban alamat="pahlevidirgaarchitecture.com">
+                <BingkaiPeramban alamat="pahlevidirgaarchitecture.com" tab={`${JUDUL_BERANDA} — ${nama.trim() || "Dirga Pahlevi Architecture"}`} logo={logo}>
                   <div className="ist__pubkepala">
                     <span className="ist__pubmerek">
                       {logo ? <img src={logo} alt="" /> : <LogoBawaan ukuran={16} />}
@@ -577,6 +589,22 @@ function Isi() {
                     <i className="ist__pubhero-foto" />
                   </div>
                 </BingkaiPeramban>
+              ) : layar === "cari" ? (
+                /* Hasil mesin pencari: nama situs dari og:site_name, judul
+                   dari <title> (BaseLayout), cuplikan dari meta description
+                   beranda. Bentuknya umum, bukan tiruan merek mesin pencari. */
+                <div className="ist__cari" aria-hidden="true">
+                  <span className="ist__carikotak"><Ikon ikon={MagnifyingGlass} ukuran={13} />arsitek coffee shop {kota.trim() || "Pontianak"}</span>
+                  <div className="ist__carihasil">
+                    <span className="ist__carisitus">
+                      <span className="ist__carifav">{logo ? <img src={logo} alt="" /> : <LogoBawaan ukuran={14} />}</span>
+                      <span><b>{nama.trim() || "Dirga Pahlevi Architecture"}</b><small>pahlevidirgaarchitecture.com</small></span>
+                    </span>
+                    <span className="ist__carijudul">{JUDUL_BERANDA} — {nama.trim() || "Dirga Pahlevi Architecture"}</span>
+                    <span className="ist__cariket">{KET_BERANDA}</span>
+                  </div>
+                  <div className="ist__carihasil ist__carihasil--redup"><i /><i /><i /></div>
+                </div>
               ) : (
                 <BingkaiPonsel>
                   <div className="ist__pubkepala ist__pubkepala--ponsel">

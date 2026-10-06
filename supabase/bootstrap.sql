@@ -2233,6 +2233,31 @@ create trigger service_tiers_harga_berubah
   for each row execute function public.service_tiers_harga_berubah();
 
 -- ----------------------------------------------------------------------------
+-- 20261006000030_foto_akun.sql
+-- ----------------------------------------------------------------------------
+
+-- Foto pribadi akun staf.
+--
+-- Diminta pemilik: halaman Akun harus bisa mengunggah foto sendiri, sama
+-- seperti Info Studio mengunggah logo studio. Fotonya dipakai di panel saja
+-- (avatar halaman Akun, kartu staf, kartu akun di rel) — situs publik tidak
+-- membacanya.
+--
+-- Boleh kosong: akun tanpa foto tetap tampil dengan inisialnya. Berkasnya di
+-- R2 lewat folder `akun/`, dengan alasan yang sama seperti `studio/`,
+-- `klien/`, dan `jurnal/`: aset yang bukan milik proyek tidak boleh ikut
+-- terhapus saat proyek dibersihkan. CHECK menjaga kuncinya memang di folder
+-- itu, supaya kolom ini tidak bisa diarahkan ke foto proyek yang masih draf.
+
+alter table public.profiles
+  add column avatar_key text
+  check (avatar_key is null or avatar_key ~ '^akun/[A-Za-z0-9._-]+$');
+
+-- Tidak ada GRANT baru: hak atas profiles diberikan per TABEL
+-- (20260818000002), jadi kolom baru ikut aturan barisnya. Panel menulisnya
+-- lewat Worker API (Hyperdrive), bukan lewat peran authenticated.
+
+-- ----------------------------------------------------------------------------
 -- Catat di riwayat migrasi Supabase
 -- ----------------------------------------------------------------------------
 --
@@ -2281,7 +2306,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20260929000026', 'sampul_jurnal'),
   ('20261004000027', 'tim_kas_target'),
   ('20261004000028', 'lingkup_dan_tenggat'),
-  ('20261004000029', 'proyek_paket')
+  ('20261004000029', 'proyek_paket'),
+  ('20261006000030', 'foto_akun')
 on conflict (version) do update set name = excluded.name;
 
 commit;

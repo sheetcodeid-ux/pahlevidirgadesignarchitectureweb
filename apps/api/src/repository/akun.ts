@@ -15,6 +15,8 @@ import type { Sql } from "postgres";
 export interface ProfilStaf {
   role: string;
   nama: string | null;
+  /** Kunci R2 foto pribadi (`akun/…`); rute mengubahnya jadi URL. */
+  avatarKey: string | null;
 }
 
 export interface InfoAkun extends ProfilStaf {
@@ -29,17 +31,25 @@ export interface SesiAkun {
   userAgent: string | null;
 }
 
+/** URL publik foto akun (domain media R2), atau null. */
+export function urlFoto(assetBase: string, kunci: string | null): string | null {
+  if (!kunci) return null;
+  return `${assetBase.replace(/\/$/, "")}/${kunci}`;
+}
+
 /** Peran + nama, untuk /me dan masuk. Kosong = bukan staf. */
 export async function profil(sql: Sql, userID: string): Promise<ProfilStaf | null> {
-  const rows = await sql<{ role: string; full_name: string | null }[]>`
-    select role, full_name from public.profiles where id = ${userID}::uuid`;
+  const rows = await sql<{ role: string; full_name: string | null; avatar_key: string | null }[]>`
+    select role, full_name, avatar_key from public.profiles where id = ${userID}::uuid`;
   const r = rows[0];
-  return r ? { role: r.role, nama: r.full_name } : null;
+  return r ? { role: r.role, nama: r.full_name, avatarKey: r.avatar_key } : null;
 }
 
 export async function info(sql: Sql, userID: string): Promise<InfoAkun | null> {
-  const rows = await sql<{ role: string; full_name: string | null; staf_sejak: Date; terakhir_masuk: Date | null }[]>`
-    select p.role, p.full_name, p.created_at as staf_sejak, u.last_sign_in_at as terakhir_masuk
+  const rows = await sql<{
+    role: string; full_name: string | null; avatar_key: string | null; staf_sejak: Date; terakhir_masuk: Date | null;
+  }[]>`
+    select p.role, p.full_name, p.avatar_key, p.created_at as staf_sejak, u.last_sign_in_at as terakhir_masuk
     from public.profiles p
     left join auth.users u on u.id = p.id
     where p.id = ${userID}::uuid`;
@@ -48,6 +58,7 @@ export async function info(sql: Sql, userID: string): Promise<InfoAkun | null> {
   return {
     role: r.role,
     nama: r.full_name,
+    avatarKey: r.avatar_key,
     stafSejak: new Date(r.staf_sejak).toISOString(),
     terakhirMasuk: r.terakhir_masuk ? new Date(r.terakhir_masuk).toISOString() : null,
   };
@@ -64,6 +75,21 @@ export function rapikanNama(nama: unknown): string | null {
 
 export async function ubahNama(sql: Sql, userID: string, nama: string | null): Promise<void> {
   await sql`update public.profiles set full_name = ${nama} where id = ${userID}::uuid`;
+}
+
+/** Kunci foto dari panel: null = hapus foto, selain itu WAJIB di folder
+ *  `akun/` — aturan yang sama dengan CHECK di migrasi 20261006000030, diulang
+ *  di sini supaya galatnya terbaca, bukan pelanggaran constraint mentah. */
+export function rapikanKunciFoto(kunci: unknown): string | null {
+  if (kunci === null) return null;
+  if (typeof kunci !== "string" || !/^akun\/[A-Za-z0-9._-]+$/.test(kunci)) {
+    throw new Error("kunci foto harus berkas di folder akun/");
+  }
+  return kunci;
+}
+
+export async function ubahFoto(sql: Sql, userID: string, kunci: string | null): Promise<void> {
+  await sql`update public.profiles set avatar_key = ${kunci} where id = ${userID}::uuid`;
 }
 
 export interface RingkasSesi {

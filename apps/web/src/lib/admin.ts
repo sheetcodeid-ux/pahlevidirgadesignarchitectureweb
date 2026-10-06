@@ -19,6 +19,14 @@ export interface Profil {
   isMasterAdmin: boolean;
   /** Nama tampilan dari `profiles.full_name`; kosong = diturunkan dari email. */
   nama?: string | null;
+  /** Foto pribadi (R2 `akun/`); kosong = inisial. */
+  avatarUrl?: string | null;
+}
+
+/** Bentuk profil yang disimpan — satu tempat, supaya simpanSesi dan
+ *  sinkronkanProfil tidak bisa lupa satu kolom. */
+function profilUntukDisimpan(p: Profil): string {
+  return JSON.stringify({ email: p.email, role: p.role, isMasterAdmin: p.isMasterAdmin, nama: p.nama ?? null, avatarUrl: p.avatarUrl ?? null });
 }
 
 /** Nama yang ditampilkan untuk sebuah profil: nama tampilannya kalau diisi,
@@ -74,12 +82,12 @@ function tulis(kunci: string, nilai: string, tetap: boolean) {
 }
 
 function simpanSesi(
-  d: { accessToken: string; refreshToken: string; email: string; role: string; isMasterAdmin: boolean; nama?: string | null },
+  d: { accessToken: string; refreshToken: string; email: string; role: string; isMasterAdmin: boolean; nama?: string | null; avatarUrl?: string | null },
   tetap = true,
 ) {
   tulis(KUNCI_AKSES, d.accessToken, tetap);
   tulis(KUNCI_SEGAR, d.refreshToken, tetap);
-  tulis(KUNCI_PROFIL, JSON.stringify({ email: d.email, role: d.role, isMasterAdmin: d.isMasterAdmin, nama: d.nama ?? null }), tetap);
+  tulis(KUNCI_PROFIL, profilUntukDisimpan(d), tetap);
 }
 
 /**
@@ -92,8 +100,8 @@ export function sinkronkanProfil(baru: Partial<Profil>) {
   const lama = profilTersimpan();
   if (!lama) return;
   const gabung = { ...lama, ...baru };
-  if ((lama.nama ?? null) === (gabung.nama ?? null) && lama.role === gabung.role && lama.isMasterAdmin === gabung.isMasterAdmin) return;
-  tulis(KUNCI_PROFIL, JSON.stringify({ email: gabung.email, role: gabung.role, isMasterAdmin: gabung.isMasterAdmin, nama: gabung.nama ?? null }), sesiPermanen());
+  if (profilUntukDisimpan(lama) === profilUntukDisimpan(gabung)) return;
+  tulis(KUNCI_PROFIL, profilUntukDisimpan(gabung), sesiPermanen());
   try { window.dispatchEvent(new CustomEvent(PERISTIWA_PROFIL, { detail: gabung })); } catch { /* di luar peramban */ }
 }
 
@@ -702,6 +710,7 @@ export interface InfoAkun {
   role: string;
   isMasterAdmin: boolean;
   nama: string | null;
+  avatarUrl: string | null;
   stafSejak: string;
   terakhirMasuk: string | null;
   sesi: {
@@ -720,13 +729,29 @@ export interface InfoAkun {
 export const ambilAkun = () => panggil<InfoAkun>("/admin/account");
 
 export async function ubahNamaAkun(nama: string): Promise<string | null> {
-  const r = await panggil<{ nama: string | null }>("/admin/account/profile", {
+  const r = await panggil<{ nama: string | null; avatarUrl: string | null }>("/admin/account/profile", {
     method: "PATCH",
     body: JSON.stringify({ nama }),
   });
-  sinkronkanProfil({ nama: r.nama });
+  sinkronkanProfil({ nama: r.nama, avatarUrl: r.avatarUrl });
   return r.nama;
 }
+
+/** Foto pribadi: kunci R2 hasil unggahan, atau null untuk melepasnya. */
+export async function ubahFotoAkun(avatarKey: string | null): Promise<string | null> {
+  const r = await panggil<{ nama: string | null; avatarUrl: string | null }>("/admin/account/profile", {
+    method: "PATCH",
+    body: JSON.stringify({ avatarKey }),
+  });
+  sinkronkanProfil({ avatarUrl: r.avatarUrl });
+  return r.avatarUrl;
+}
+
+export const mintaUrlUnggahAkun = (contentType: string) =>
+  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
+    method: "POST",
+    body: JSON.stringify({ scope: "akun", contentType }),
+  });
 
 export const ubahPassword = (currentPassword: string, newPassword: string) =>
   panggil<{ updated: boolean; lainKeluar: boolean }>("/admin/account/password", {

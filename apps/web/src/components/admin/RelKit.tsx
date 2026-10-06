@@ -112,7 +112,7 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
   /* Kartu akun di kaki rel — nama dan peran akun yang sedang masuk. Dengan
      dua akun penulis, "siapa yang sedang memegang panel ini" perlu terbaca
      sekilas. Dari profil tersimpan, dibaca di efek (jebakan #8). */
-  const [akun, setAkun] = useState<{ nama: string; email: string; peran: string } | null>(null);
+  const [akun, setAkun] = useState<{ nama: string; email: string; peran: string; foto: string | null } | null>(null);
   useEffect(() => {
     const p = profilTersimpan();
     setMaster(masterProp ?? p?.isMasterAdmin);
@@ -121,7 +121,7 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
        tidak pernah dipasang ulang (transition:persist), jadi nama yang baru
        disimpan datang lewat PERISTIWA_PROFIL. */
     const pasangAkun = (q: Profil | null) => {
-      if (q) setAkun({ nama: namaTampilan(q), email: q.email, peran: q.isMasterAdmin ? "Master admin" : "Staf" });
+      if (q) setAkun({ nama: namaTampilan(q), email: q.email, peran: q.isMasterAdmin ? "Master admin" : "Staf", foto: q.avatarUrl ?? null });
     };
     pasangAkun(p);
     const dengarProfil = (e: Event) => pasangAkun((e as CustomEvent<Profil>).detail);
@@ -264,7 +264,7 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
           <div className="kl__akun">
             {/* Avatar baru tergambar sesudah profil terbaca; sebelum itu
                 tempatnya dijaga supaya kartunya tidak melompat. */}
-            {akun ? <Avatar nama={akun.nama} ukuran="sm" hiasan /> : <span className="kl__akunkosong" aria-hidden="true" />}
+            {akun ? <Avatar nama={akun.nama} src={akun.foto} ukuran="sm" hiasan /> : <span className="kl__akunkosong" aria-hidden="true" />}
             <span className="kl__akunteks">
               <b className="kl__akunnama" title={akun?.email}>{akun?.nama ?? "\u00a0"}</b>
               <small className="kl__akunperan">{akun?.peran ?? "\u00a0"}</small>

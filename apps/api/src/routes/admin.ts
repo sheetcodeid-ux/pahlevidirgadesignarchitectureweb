@@ -66,7 +66,10 @@ admin.get("/me", async (c) => {
   const p = await withDb(c.env, c.executionCtx, (sql) => akunRepo.profil(sql, userID));
   const peran = p?.role ?? "";
   return c.json({
-    data: { id: userID, email: c.get("userEmail"), role: peran, isMasterAdmin: peran === "admin", nama: p?.nama ?? null },
+    data: {
+      id: userID, email: c.get("userEmail"), role: peran, isMasterAdmin: peran === "admin", nama: p?.nama ?? null,
+      avatarUrl: akunRepo.urlFoto(assetBase(c.env), p?.avatarKey ?? null),
+    },
   });
 });
 
@@ -88,6 +91,10 @@ admin.post("/uploads", async (c) => {
     // deploy berjalan, "studio" untuk pemakai baru — potret tim dan foto
     // sebelum/sesudah, yang juga aset studio tapi jelas bukan logo.
     folder = "studio";
+  } else if (body.scope === "akun") {
+    // Foto pribadi akun staf (halaman Akun) — folder sendiri, alasan yang
+    // sama dengan klien dan jurnal.
+    folder = "akun";
   } else if (body.scope === "jurnal") {
     // Sampul tulisan jurnal — folder sendiri, alasan yang sama dengan klien.
     folder = "jurnal";
@@ -257,22 +264,43 @@ admin.get("/account", async (c) => {
   const [info, sesi] = await withDb(c.env, c.executionCtx, (sql) =>
     Promise.all([akunRepo.info(sql, userID), akunRepo.sesi(sql, userID, c.get("sessionID") ?? null)]));
   if (!info) return c.json({ error: { status: 404, message: "akun tidak ditemukan" } }, 404);
+  const { avatarKey, ...sisa } = info;
   return c.json({
-    data: { ...info, email: c.get("userEmail") ?? "", isMasterAdmin: info.role === "admin", sesi },
+    data: {
+      ...sisa, avatarUrl: akunRepo.urlFoto(assetBase(c.env), avatarKey),
+      email: c.get("userEmail") ?? "", isMasterAdmin: info.role === "admin", sesi,
+    },
   });
 });
 
-// PATCH /api/v1/admin/account/profile — nama tampilan.
+// PATCH /api/v1/admin/account/profile — { nama?, avatarKey? }
+//
+// Tiap kolom hanya ditulis kalau DIKIRIM: mengunggah foto tidak boleh
+// menghapus nama, dan sebaliknya. avatarKey null = foto dilepas. Berkas lama
+// di R2 tidak dihapus — sama seperti logo studio; yatimnya cuma beberapa
+// ratus KB per pergantian, dan menghapus berarti satu jalur gagal lagi.
 admin.patch("/account/profile", async (c) => {
-  const body = await c.req.json<{ nama?: unknown }>().catch((): { nama?: unknown } => ({}));
-  let nama: string | null;
+  type Badan = { nama?: unknown; avatarKey?: unknown };
+  const mentah = await c.req.json<unknown>().catch(() => ({}));
+  const body: Badan = mentah && typeof mentah === "object" ? (mentah as Badan) : {};
+  let nama: string | null | undefined;
+  let kunci: string | null | undefined;
   try {
-    nama = akunRepo.rapikanNama(body.nama);
+    if ("nama" in body) nama = akunRepo.rapikanNama(body.nama);
+    if ("avatarKey" in body) kunci = akunRepo.rapikanKunciFoto(body.avatarKey);
   } catch (err) {
     return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
   }
-  await withDb(c.env, c.executionCtx, (sql) => akunRepo.ubahNama(sql, c.get("userID"), nama));
-  return c.json({ data: { nama } });
+  if (nama === undefined && kunci === undefined) {
+    return c.json({ error: { status: 422, message: "tidak ada yang diubah" } }, 422);
+  }
+  const userID = c.get("userID");
+  const p = await withDb(c.env, c.executionCtx, async (sql) => {
+    if (nama !== undefined) await akunRepo.ubahNama(sql, userID, nama);
+    if (kunci !== undefined) await akunRepo.ubahFoto(sql, userID, kunci);
+    return akunRepo.profil(sql, userID);
+  });
+  return c.json({ data: { nama: p?.nama ?? null, avatarUrl: akunRepo.urlFoto(assetBase(c.env), p?.avatarKey ?? null) } });
 });
 
 // POST /api/v1/admin/account/logout — { scope: "local" | "others" }

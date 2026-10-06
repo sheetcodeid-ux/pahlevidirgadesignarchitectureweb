@@ -52,7 +52,7 @@ it.skipIf(!adaPostgres)("nama, info akun, dan sesi dengan setelan koneksi produk
 
   console.log("\n── profil & nama ──");
   cek("profil tanpa nama: peran ada, nama null",
-    JSON.stringify(await akun.profil(sql, dirga)) === JSON.stringify({ role: "admin", nama: null }));
+    JSON.stringify(await akun.profil(sql, dirga)) === JSON.stringify({ role: "admin", nama: null, avatarKey: null }));
   cek("bukan staf → null", (await akun.profil(sql, "33333333-3333-4333-8333-333333333333")) === null);
   cek("nama dirapikan: spasi ganda dan tepi dibuang", akun.rapikanNama("  Dirga   Pahlevi ") === "Dirga Pahlevi");
   cek("nama kosong → null (kembali ke turunan email)", akun.rapikanNama("   ") === null && akun.rapikanNama(undefined) === null);
@@ -63,8 +63,27 @@ it.skipIf(!adaPostgres)("nama, info akun, dan sesi dengan setelan koneksi produk
   cek("nama tersimpan dan terbaca profil()", (await akun.profil(sql, dirga))?.nama === "Dirga Pahlevi");
   cek("nama akun lain tidak ikut berubah", (await akun.profil(sql, lain))?.nama === null);
 
+  console.log("\n── foto ──");
+  cek("kunci foto di folder akun/ diterima", akun.rapikanKunciFoto("akun/abc-123.webp") === "akun/abc-123.webp");
+  cek("null = lepas foto", akun.rapikanKunciFoto(null) === null);
+  for (const salah of ["projects/rumah/1.jpg", "akun/../projects/x.jpg", "akun/", 42, undefined]) {
+    let g = "";
+    try { akun.rapikanKunciFoto(salah); } catch (e) { g = (e as Error).message; }
+    cek(`kunci ${JSON.stringify(salah)} ditolak`, g.includes("folder akun/"), g);
+  }
+  await akun.ubahFoto(sql, dirga, "akun/dirga.webp");
+  cek("foto tersimpan dan terbaca profil()", (await akun.profil(sql, dirga))?.avatarKey === "akun/dirga.webp");
+  cek("nama tidak ikut berubah saat foto diganti", (await akun.profil(sql, dirga))?.nama === "Dirga Pahlevi");
+  let tolak = "";
+  try { await sql`update public.profiles set avatar_key = 'projects/x/1.jpg' where id = ${dirga}::uuid`; }
+  catch (e) { tolak = (e as Error).message; }
+  cek("CHECK database menolak kunci di luar akun/", tolak.includes("check"), tolak);
+  cek("URL foto dirakit dari domain media", akun.urlFoto("https://media.contoh.id/", "akun/dirga.webp") === "https://media.contoh.id/akun/dirga.webp"
+    && akun.urlFoto("https://media.contoh.id", null) === null);
+
   console.log("\n── info ──");
   const i = await akun.info(sql, dirga);
+  cek("info membawa kunci foto", i?.avatarKey === "akun/dirga.webp", i);
   cek("staf sejak & terakhir masuk sebagai ISO UTC",
     i?.stafSejak === "2026-08-18T00:00:00.000Z" && i?.terakhirMasuk === "2026-10-05T02:00:00.000Z", i);
   cek("terakhir masuk kosong tetap null", (await akun.info(sql, lain))?.terakhirMasuk === null);

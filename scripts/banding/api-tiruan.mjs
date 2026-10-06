@@ -325,7 +325,12 @@ for (let m = 1; m <= 30; m++) {
 }
 
 
-const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", nama: "Dirga Pahlevi", role: "master", isMasterAdmin: true };
+const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", nama: "Dirga Pahlevi", role: "master", isMasterAdmin: true, avatarUrl: null };
+/* Berkas yang diunggah ke /unggah?key=… disimpan di memori dan disajikan
+   lagi di /media/<key>, supaya foto akun hasil potongan benar-benar tampil
+   di uji — bukan gambar contoh pengganti. */
+const unggahan = new Map();
+let nomorUnggah = 0;
 
 /* Halaman Akun — sesi CONTOH. Produksi menyimpan agen peramban sejak login
    meneruskannya; sesi lama tercatat tanpa nama perangkat (userAgent null). */
@@ -851,7 +856,7 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/settings")) return { ...setelan, terbitSitusAktif: true };
   if (path.startsWith("/api/v1/admin/account")) {
     return {
-      email: profil.email, role: "admin", isMasterAdmin: true, nama: profil.nama,
+      email: profil.email, role: "admin", isMasterAdmin: true, nama: profil.nama, avatarUrl: profil.avatarUrl,
       stafSejak: "2026-08-18T03:00:00.000Z", terakhirMasuk: jamLalu(26),
       sesi: {
         jumlah: 1 + sesiLain.length + sesiTanpaNama,
@@ -1189,10 +1194,18 @@ function tulis(metode, path, badan) {
     return { updated: true, lainKeluar: true };
   }
   if (path === "/api/v1/admin/account/profile" && metode === "PATCH") {
-    const nama = String(badan.nama ?? "").replace(/\s+/g, " ").trim();
-    if (nama.length > 60) return { galat: 422, pesan: "nama maksimal 60 karakter" };
-    profil.nama = nama || null;
-    return { nama: profil.nama };
+    // Aturan yang sama dengan rute sungguhan: tiap kolom hanya ditulis kalau dikirim.
+    if ("avatarKey" in badan) {
+      const k = badan.avatarKey;
+      if (k !== null && !/^akun\/[A-Za-z0-9._-]+$/.test(String(k))) return { galat: 422, pesan: "kunci foto harus berkas di folder akun/" };
+      profil.avatarUrl = urlMedia(k);
+    }
+    if ("nama" in badan) {
+      const nama = String(badan.nama ?? "").replace(/\s+/g, " ").trim();
+      if (nama.length > 60) return { galat: 422, pesan: "nama maksimal 60 karakter" };
+      profil.nama = nama || null;
+    }
+    return { nama: profil.nama, avatarUrl: profil.avatarUrl };
   }
   if (path === "/api/v1/admin/account/logout" && metode === "POST") {
     if (badan.scope === "others") { sesiLain = []; sesiTanpaNama = 0; }
@@ -1351,6 +1364,12 @@ function tulis(metode, path, badan) {
      sana diterima begitu saja. Kuncinya menunjuk salah satu sampul contoh
      supaya gambar hasil unggahan tetap tergambar. */
   if (path === "/api/v1/admin/uploads" && metode === "POST") {
+    if (badan.scope === "akun") {
+      const ext = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" }[badan.contentType];
+      if (!ext) return { galat: 422, pesan: `tipe file "${badan.contentType}" tidak diizinkan` };
+      const key = `akun/uji-${++nomorUnggah}.${ext}`;
+      return { key, uploadUrl: `http://127.0.0.1:${PORT}/unggah?key=${encodeURIComponent(key)}`, expiresAt: new Date(Date.now() + 6e5).toISOString() };
+    }
     const kunci = { jurnal: "jurnal/contoh-3.svg", klien: "klien/logo-2.svg", logo: "studio/logo-2.svg", studio: "studio/contoh-4.svg" };
     return { key: kunci[badan.scope] ?? "projects/uji/contoh-3.svg",
       uploadUrl: `http://127.0.0.1:${PORT}/unggah`, expiresAt: new Date(Date.now() + 6e5).toISOString() };
@@ -1400,6 +1419,16 @@ createServer((req, res) => {
     res.writeHead(204, kepala);
     return res.end();
   }
+  if (metode === "PUT" && path.startsWith("/unggah")) {
+    const key = new URL(path, "http://x").searchParams.get("key");
+    const potong = [];
+    req.on("data", (c) => potong.push(c));
+    return req.on("end", () => {
+      if (key) unggahan.set(key, { tipe: req.headers["content-type"] || "application/octet-stream", isi: Buffer.concat(potong) });
+      res.writeHead(200, { "access-control-allow-origin": "*" });
+      res.end();
+    });
+  }
   if (metode !== "GET") {
     let mentah = "";
     req.on("data", (c) => (mentah += c));
@@ -1414,6 +1443,13 @@ createServer((req, res) => {
       res.writeHead(hasil ? 200 : 201, kepala);
       res.end(JSON.stringify({ data: hasil ?? { id: "baru" } }));
     });
+  }
+  {
+    const u = path.startsWith("/media/") && unggahan.get(decodeURIComponent(path.slice(7)));
+    if (u) {
+      res.writeHead(200, { "content-type": u.tipe, "access-control-allow-origin": "*" });
+      return res.end(u.isi);
+    }
   }
   {
     const m = path.match(/^\/media\/.*contoh-(\d+)\.svg$/);

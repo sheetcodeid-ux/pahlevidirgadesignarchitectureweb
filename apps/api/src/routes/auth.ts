@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../types";
 import { withDb } from "../db";
-import { profil } from "../repository/akun";
+import { profil, urlFoto } from "../repository/akun";
 import { tukarToken, type TokenSupabase } from "../lib/gotrue";
 
 export const auth = new Hono<{ Bindings: Env }>();
@@ -52,6 +52,7 @@ auth.post("/auth/login", async (c) => {
       role: peran,
       isMasterAdmin: peran === "admin",
       nama: p?.nama ?? null,
+      avatarUrl: urlFoto(c.env.R2_PUBLIC_BASE_URL ?? "", p?.avatarKey ?? null),
     },
   });
 });

@@ -88,7 +88,7 @@ export function RequireAuth({ children, masterOnly = false, skeleton }: {
         }
         // Nama atau peran yang diubah dari perangkat lain ikut sampai ke
         // profil tersimpan (dan ke kartu akun di rel) di sini.
-        sinkronkanProfil({ nama: p.nama ?? null, role: p.role, isMasterAdmin: p.isMasterAdmin });
+        sinkronkanProfil({ nama: p.nama ?? null, avatarUrl: p.avatarUrl ?? null, role: p.role, isMasterAdmin: p.isMasterAdmin });
         setProfil(p);
         setStatus("siap");
       })

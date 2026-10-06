@@ -8,16 +8,17 @@ import { AlertDialog } from "../kit/Overlay";
 import { Peringatan, Rangka } from "../kit/Tampilan";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import {
-  ArrowClockwise, Briefcase, CheckCircle, CircleDashed, Eye, GearSix, Globe, IdentificationBadge, NavEnvelope,
+  ArrowClockwise, Briefcase, CheckCircle, CircleDashed, Eye, GearSix, Globe, IdentificationBadge, ImageSquare, MapPinArea, NavEnvelope,
   NavSignOut, NavSquaresFour, NotePencil, Question, SpecialAppleLogo, SpecialGoogleLogo, SpecialMoonStars,
-  SpecialSealCheck, SpecialWindowsLogo, Users,
+  Phone, SpecialSealCheck, SpecialWindowsLogo, Trash, Users,
 } from "../kit/ikon";
+import { PotongFoto } from "./potongFoto";
 import { PenandaSimpan } from "./situsKit";
 import { BulatSumbu, LambangStudio, SampulLembar, TabLembar, tabDariAlamat, tulisTabKeAlamat } from "./lembarKit";
 import { waktuRelatif } from "./panelKabar";
 import {
-  ambilAkun, keluar, keluarkanPerangkatLain, namaTampilan, sesiTetap, ubahNamaAkun, ubahPassword, waktuMasukSesi,
-  type InfoAkun,
+  ambilAkun, ambilSettings, keluar, keluarkanPerangkatLain, mintaUrlUnggahAkun, namaTampilan, sesiTetap, ubahFotoAkun,
+  ubahNamaAkun, ubahPassword, waktuMasukSesi, type InfoAkun, type StudioSettings,
 } from "../../lib/admin";
 import { NAV } from "../../lib/navAdmin";
 import { jagaFokusSesudahHapus } from "../../lib/fokus";
@@ -128,9 +129,9 @@ function DenahSampul() {
         <path d="M40 28 H420 M36 32 L44 24 M176 32 L184 24 M296 32 L304 24 M416 32 L424 24" />
       </g>
       <g className="lbr-angka">
-        <text x={110} y={24}>3.500</text>
-        <text x={240} y={24}>3.000</text>
-        <text x={360} y={24}>3.000</text>
+        <text x={110} y={21}>3.500</text>
+        <text x={240} y={21}>3.000</text>
+        <text x={360} y={21}>3.000</text>
       </g>
     </svg>
   );
@@ -146,15 +147,57 @@ const IKON_KELOMPOK: Record<string, DataIkon> = {
   Pengaturan: GearSix,
 };
 
+/** Kode batang hiasan yang MEMBAWA data: batangnya diturunkan dari email
+ *  (FNV-1a lalu LCG), jadi tiap akun punya pola sendiri yang selalu sama,
+ *  dan nomor di bawahnya tahun bergabung + empat digit heksa dari hash yang
+ *  sama — "PD-2026-A41F". Bukan kode yang bisa dipindai; tidak ada yang
+ *  memindainya. */
+function hashTeks(t: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h;
+}
+function KodeStaf({ email, stafSejak }: { email: string; stafSejak: string | null }) {
+  const h = hashTeks(email.toLowerCase());
+  const batang: { x: number; w: number }[] = [];
+  let acak = h || 1;
+  let x = 0;
+  while (x < 118) {
+    acak = (Math.imul(acak, 1664525) + 1013904223) >>> 0;
+    const w = 1 + (acak >>> 30);          // 1–4 px
+    const celah = 1 + ((acak >>> 27) & 1); // 1–2 px
+    if (x + w > 120) break;
+    batang.push({ x, w });
+    x += w + celah;
+  }
+  const tahun = stafSejak ? new Date(stafSejak).getFullYear() : "—";
+  const nomor = `PD-${tahun}-${h.toString(16).toUpperCase().padStart(8, "0").slice(0, 4)}`;
+  return (
+    <span className="akn__stafkode">
+      <svg viewBox="0 0 120 22" preserveAspectRatio="none" aria-hidden="true">
+        {batang.map((b) => <rect key={b.x} x={b.x} y={0} width={b.w} height={22} />)}
+      </svg>
+      <span><small>No. staf</small><b>{nomor}</b></span>
+    </span>
+  );
+}
+
 /** Kartu staf: badge tegak yang BERGANTUNG di tali. Saat tetikus di
  *  atasnya, kartunya miring mengikuti kursor (3D) dan berayun dari titik
  *  gantungnya ke arah kursor; dilepas, ia berayun balik dan berhenti.
  *  Hanya tetikus (jebakan #9: peristiwa tiruan sentuh tidak pernah
  *  "pergi"), dan diam kalau pemakai meminta gerak dikurangi (CSS). Kotaknya
- *  dibaca SEKALI saat kursor masuk, bukan di tiap gerakan. */
-function KartuStaf({ nama, email, master, stafSejak }: { nama: string; email: string; master: boolean; stafSejak: string | null }) {
+ *  dibaca SEKALI saat kursor masuk, bukan di tiap gerakan.
+ *
+ *  Kartunya bisa DIBALIK (klik kartu, atau tombol putar untuk papan ketik):
+ *  sisi belakangnya kop studio dari Info Studio — nama, alamat, kontak —
+ *  seperti kartu identitas sungguhan. */
+function KartuStaf({ nama, email, master, stafSejak, foto, studio }: {
+  nama: string; email: string; master: boolean; stafSejak: string | null; foto: string | null; studio: StudioSettings | null;
+}) {
   const gantung = useRef<HTMLDivElement>(null);
   const kotak = useRef<DOMRect | null>(null);
+  const [balik, setBalik] = useState(false);
   const atur = (rx: number, ry: number, ayun: number, mx = 50, my = 50) => {
     const el = gantung.current;
     if (!el) return;
@@ -164,6 +207,7 @@ function KartuStaf({ nama, email, master, stafSejak }: { nama: string; email: st
     el.style.setProperty("--mx", `${mx}%`);
     el.style.setProperty("--my", `${my}%`);
   };
+  const alamat = [studio?.address, studio?.city].filter((x) => x?.trim()).join(", ");
   return (
     <div
       ref={gantung}
@@ -180,20 +224,58 @@ function KartuStaf({ nama, email, master, stafSejak }: { nama: string; email: st
     >
       <span className="akn__tali" aria-hidden="true"><i /><b /></span>
       <div className="akn__staf">
-        <div className="akn__stafatas">
-          <span className="akn__staflubang" aria-hidden="true" />
-          <span className="akn__staflabel"><LambangStudio className="akn__staflambang" tebal={4} />Kartu staf</span>
+        <div className="akn__stafputar" data-balik={balik || undefined} onClick={() => setBalik((b) => !b)}>
+          <div className="akn__stafmuka" aria-hidden={balik || undefined}>
+            <div className="akn__stafatas">
+              <span className="akn__staflubang" aria-hidden="true" />
+              <span className="akn__staflabel"><LambangStudio className="akn__staflambang" tebal={4} />Kartu staf</span>
+            </div>
+            <span className="akn__staffoto" aria-hidden="true">
+              {foto ? <img src={foto} alt="" /> : inisial(nama)}
+            </span>
+            <div className="akn__stafbadan">
+              <b className="akn__stafnama">{nama}</b>
+              <span className="akn__stafperan">{master ? "Master admin" : "Staf"}</span>
+              {/* Email sengaja tidak di kartu: sudah di kepala halaman dan di
+                  Informasi akun, dan baris ketiga tidak muat di atas kode. */}
+              <dl className="akn__stafdata">
+                <div><dt>Staf sejak</dt><dd>{stafSejak ? tanggal(stafSejak) : "—"}</dd></div>
+              </dl>
+            </div>
+            <KodeStaf email={email} stafSejak={stafSejak} />
+            <span className="akn__stafkilau" aria-hidden="true" />
+          </div>
+          <div className="akn__stafbelakang" aria-hidden={!balik || undefined}>
+            <div className="akn__stafatas akn__stafatas--belakang">
+              <span className="akn__staflubang" aria-hidden="true" />
+              {studio?.logoUrl
+                ? <img className="akn__staflogo" src={studio.logoUrl} alt="" />
+                : <LambangStudio className="akn__staflogo akn__staflogo--garis" tebal={3} />}
+            </div>
+            <div className="akn__stafbadan akn__stafbadan--belakang">
+              <b className="akn__stafstudio">{studio?.studioName || "Studio"}</b>
+              {studio?.tagline && <span className="akn__staftag">{studio.tagline}</span>}
+              <ul className="akn__stafkontak">
+                {alamat && <li><Ikon ikon={MapPinArea} ukuran={13} />{alamat}</li>}
+                {studio?.phone && <li><Ikon ikon={Phone} ukuran={13} />{studio.phone}</li>}
+                {studio?.email && <li><Ikon ikon={NavEnvelope} ukuran={13} />{studio.email}</li>}
+              </ul>
+              <span className="akn__staftangan">
+                <i>{nama}</i>
+                <small>Pemegang kartu</small>
+              </span>
+            </div>
+          </div>
         </div>
-        <span className="akn__staffoto" aria-hidden="true">{inisial(nama)}</span>
-        <div className="akn__stafbadan">
-          <b className="akn__stafnama">{nama}</b>
-          <span className="akn__stafperan">{master ? "Master admin" : "Staf"}</span>
-          <dl className="akn__stafdata">
-            <div><dt>Email</dt><dd>{email}</dd></div>
-            <div><dt>Staf sejak</dt><dd>{stafSejak ? tanggal(stafSejak) : "—"}</dd></div>
-          </dl>
-        </div>
-        <span className="akn__stafkilau" aria-hidden="true" />
+        <button
+          type="button"
+          className="akn__stafbalik"
+          aria-pressed={balik}
+          aria-label={balik ? "Tampilkan muka kartu staf" : "Balik kartu staf"}
+          onClick={() => setBalik((b) => !b)}
+        >
+          <Ikon ikon={ArrowClockwise} ukuran={14} />
+        </button>
       </div>
     </div>
   );
@@ -210,9 +292,11 @@ function Baris({ label, children, aksi }: { label: string; children: ReactNode; 
   );
 }
 
-function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, onNama }: {
+function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, onNama, foto, studio, mengunggah, onPilihFoto, onLepasFoto }: {
   akun: InfoAkun | null; nama: string; namaTersimpan: string; email: string; master: boolean;
   ubah: boolean; setUbah: (b: boolean) => void; onNama: (n: string | null) => void;
+  foto: string | null; studio: StudioSettings | null; mengunggah: boolean;
+  onPilihFoto: () => void; onLepasFoto: () => void;
 }) {
   const toast = useToast();
   const [isi, setIsi] = useState("");
@@ -266,6 +350,8 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, 
         email={email}
         master={master}
         stafSejak={akun?.stafSejak ?? null}
+        foto={foto}
+        studio={studio}
       />
 
       <section className="akn__bagian" aria-labelledby="akn-info">
@@ -299,6 +385,22 @@ function PanelProfil({ akun, nama, namaTersimpan, email, master, ubah, setUbah, 
               {!namaTersimpan && <small>Diturunkan dari email</small>}
             </Baris>
           )}
+          <Baris
+            label="Foto"
+            aksi={
+              <span className="akn__fotoaksi">
+                <Tombol jenis="ghost" ukuran="small" kiri={ImageSquare} memuat={mengunggah} disabled={mengunggah} onClick={onPilihFoto}>
+                  {foto ? "Ganti" : "Unggah"}
+                </Tombol>
+                {foto && <TombolIkon ikon={Trash} judul="Lepas foto" jenis="ghost" ukuran="small" disabled={mengunggah} onClick={onLepasFoto} />}
+              </span>
+            }
+          >
+            <span className="akn__fotobaris">
+              <span className="akn__fotomini" aria-hidden="true">{foto ? <img src={foto} alt="" /> : inisial(nama)}</span>
+              <span><b>{foto ? "Foto terpasang" : "Belum ada foto"}</b><small>Dipotong persegi</small></span>
+            </span>
+          </Baris>
           <Baris label="Email"><b>{email}</b><small>Dipakai untuk masuk</small></Baris>
           <Baris label="Peran">
             <b>{master ? "Master admin" : "Staf"}</b>
@@ -660,10 +762,16 @@ function PanelPerangkat({ akun, galat, muat }: { akun: InfoAkun | null; galat: s
             aktif={s.tanpaNamaTerakhir ? waktuRelatif(s.tanpaNamaTerakhir) : "—"}
           />
         )}
+        {/* Di dalam kisi, di samping kartu perangkat ini — di bawahnya ia
+            mendorong panel melewati tinggi layar 768. */}
+        {s && jumlahLain === 0 && !galat && (
+          <li className="akn__kosong">
+            <span className="akn__kosongubin" aria-hidden="true"><Ikon ikon={CheckCircle} ukuran={22} /></span>
+            <b>Hanya perangkat ini</b>
+            <small>Tidak ada perangkat lain yang masuk ke akun ini.</small>
+          </li>
+        )}
       </ul>
-      {s && jumlahLain === 0 && !galat && (
-        <p className="akn__kosong"><Ikon ikon={CheckCircle} ukuran={16} /> Tidak ada perangkat lain yang masuk.</p>
-      )}
     </div>
   );
 }
@@ -793,6 +901,14 @@ function Isi() {
   // "profil" juga yang dirender server; tab dari alamat dibaca sesudah
   // hidrasi (jebakan #8).
   const [tab, setTabState] = useState<Tab>("profil");
+  const toast = useToast();
+  const [studio, setStudio] = useState<StudioSettings | null>(null);
+  const [fotoKini, setFotoKini] = useState<string | null | undefined>(undefined);
+  const [berkasFoto, setBerkasFoto] = useState<File | null>(null);
+  const [mengunggah, setMengunggah] = useState(false);
+  const [diseret, setDiseret] = useState(false);
+  const pilihRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { ambilSettings().then(setStudio).catch(() => {}); }, []);
 
   useEffect(() => {
     setTabState(tabDariAlamat(NAMA_TAB));
@@ -809,7 +925,7 @@ function Isi() {
   function muat(): Promise<void> {
     setGalat(null);
     return ambilAkun()
-      .then((a) => { setAkun(a); setNamaKini(a.nama); })
+      .then((a) => { setAkun(a); setNamaKini(a.nama); setFotoKini(a.avatarUrl ?? null); })
       .catch((e) => setGalat((e as Error).message));
   }
   useEffect(() => { void muat(); }, []);
@@ -818,9 +934,63 @@ function Isi() {
   const master = akun?.isMasterAdmin ?? profil.isMasterAdmin;
   const namaTersimpan = (namaKini !== undefined ? namaKini : profil.nama) ?? "";
   const nama = namaTampilan({ email, nama: namaTersimpan });
+  const foto = (fotoKini !== undefined ? fotoKini : profil.avatarUrl) ?? null;
+
+  const TIPE_FOTO = new Set(["image/jpeg", "image/png", "image/webp"]);
+  function terimaBerkas(f: File | undefined) {
+    if (!f) return;
+    if (!TIPE_FOTO.has(f.type)) {
+      toast({ judul: "Format tidak didukung", keterangan: "Pakai JPG, PNG, atau WebP.", nada: "gagal" });
+      return;
+    }
+    if (f.size > 15 * 1024 * 1024) {
+      toast({ judul: "Berkas terlalu besar", keterangan: "Maksimal 15 MB — fotonya dikecilkan sebelum diunggah.", nada: "gagal" });
+      return;
+    }
+    setBerkasFoto(f);
+  }
+  async function pasangFoto(hasil: Blob) {
+    setMengunggah(true);
+    try {
+      const target = await mintaUrlUnggahAkun(hasil.type);
+      const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": hasil.type }, body: hasil });
+      if (!res.ok) throw new Error(`Penyimpanan menolak berkas (${res.status})`);
+      setFotoKini(await ubahFotoAkun(target.key));
+      setBerkasFoto(null);
+      toast({ judul: "Foto dipasang", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal memasang foto", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMengunggah(false);
+    }
+  }
+  async function lepasFoto() {
+    setMengunggah(true);
+    try {
+      setFotoKini(await ubahFotoAkun(null));
+      toast({ judul: "Foto dilepas", nada: "sukses" });
+    } catch (e) {
+      toast({ judul: "Gagal melepas foto", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMengunggah(false);
+    }
+  }
+  const seret = {
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); setDiseret(true); },
+    onDragLeave: () => setDiseret(false),
+    onDrop: (e: React.DragEvent) => { e.preventDefault(); setDiseret(false); terimaBerkas(e.dataTransfer.files[0]); },
+  };
 
   return (
     <div className="lbr akn">
+      <input
+        ref={pilihRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        hidden
+        onChange={(e) => { terimaBerkas(e.currentTarget.files?.[0]); e.currentTarget.value = ""; }}
+      />
+      <PotongFoto berkas={berkasFoto} menyimpan={mengunggah} onBatal={() => setBerkasFoto(null)} onSimpan={(b) => void pasangFoto(b)} />
       <header className="lbr-kepala">
         {/* Kop lembar — data akun sungguhan, bukan hiasan. */}
         <SampulLembar
@@ -833,10 +1003,20 @@ function Isi() {
           ]}
         />
         <div className="lbr-identitas">
-          <span className="akn__avatar" aria-hidden="true">
-            {inisial(nama)}
-            <i className="akn__avatarhidup" />
-          </span>
+          <button
+            type="button"
+            className="akn__avatar"
+            data-diseret={diseret || undefined}
+            aria-label={foto ? "Ganti foto" : "Unggah foto"}
+            disabled={mengunggah}
+            onClick={() => pilihRef.current?.click()}
+            {...seret}
+          >
+            <span className="akn__avatarisi">{foto ? <img src={foto} alt="" /> : inisial(nama)}</span>
+            <span className="akn__avatartirai" aria-hidden="true"><Ikon ikon={ImageSquare} ukuran={18} />{foto ? "Ganti" : "Unggah"}</span>
+            <span className="akn__avatarkamera" aria-hidden="true"><Ikon ikon={ImageSquare} ukuran={14} /></span>
+            <i className="akn__avatarhidup" aria-hidden="true" />
+          </button>
           <div className="lbr-siapa">
             <h2 className="lbr-nama">
               {nama}
@@ -872,6 +1052,11 @@ function Isi() {
             ubah={ubahNama}
             setUbah={setUbahNama}
             onNama={setNamaKini}
+            foto={foto}
+            studio={studio}
+            mengunggah={mengunggah}
+            onPilihFoto={() => pilihRef.current?.click()}
+            onLepasFoto={() => void lepasFoto()}
           />
         )}
         {tab === "keamanan" && <PanelKeamanan email={email} fokusAwal={fokusSandi} onBerhasil={() => void muat()} />}

@@ -57,6 +57,24 @@
 .ist__logo[data-diseret] .ist__logotirai,
 .ist__logo:disabled .ist__logotirai { opacity: 1; }
 .ist__logo:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+/* Lencana kamera di pojok — tanda logonya bisa diganti tanpa harus
+   disentuh dulu (sama dengan avatar Akun). Di dalam ubin, karena ubinnya
+   memotong isinya sendiri. */
+.ist__logokamera {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--brand);
+  color: var(--surface);
+  transition: opacity 0.15s;
+}
+.ist__logo:hover .ist__logokamera, .ist__logo:focus-visible .ist__logokamera { opacity: 0; }
 .ist__namakosong { color: var(--warn-ink); }
 .ist__tagline { font-style: italic; }
 
@@ -144,11 +162,28 @@
 .ist__pratinjau-judul b { font-size: var(--k-t14); font-weight: var(--k-bold); color: var(--text-strong); }
 .ist__pratinjau-judul > span { font-size: var(--k-t12); color: var(--text-muted); }
 /* Pemilih ukuran layar di kepala pratinjau: kecil, di ujung kanan. */
-.ist__pratinjau-judul .ist__layar { width: 172px; margin-left: auto; }
+.ist__pratinjau-judul .ist__layar { width: 252px; margin-left: auto; }
 .ist__pratinjau-judul:has(.ist__layar) { align-items: center; }
 
 /* Jendela peramban berisi potongan situs publik (gelap). */
 .ist__peramban { overflow: clip; border: 1px solid var(--border); border-radius: 10px; background: var(--pub-gelap); box-shadow: var(--shadow-md); }
+/* Jalur tab peramban: judul halaman + nama studio, persis <title> BaseLayout. */
+.ist__peramban-tabjalur { display: flex; padding: 6px 10px 0; background: var(--pub-gelap); }
+.ist__peramban-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 300px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 12px;
+  border-radius: 8px 8px 0 0;
+  background: var(--pub-kanvas);
+  color: var(--pub-teks-2);
+  font-size: var(--k-t10);
+}
+.ist__peramban-tab img { flex: none; width: 11px; height: 11px; object-fit: contain; }
+.ist__peramban-tab > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ist__peramban-bilah { display: flex; align-items: center; gap: 12px; height: 28px; padding: 0 10px; background: var(--pub-kanvas); }
 .ist__peramban-titik { display: flex; gap: 5px; }
 .ist__peramban-titik i { width: 7px; height: 7px; border-radius: 50%; background: var(--pub-sel); }
@@ -222,6 +257,56 @@
 .ist__pubhero--ponsel .ist__pubhero-garis { height: 8px; width: 90%; }
 .ist__pubhero--ponsel .ist__pubhero-garis--pendek { width: 60%; }
 .ist__pubhero--ponsel .ist__pubhero-foto { height: 86px; }
+
+/* Pratinjau hasil pencarian — kertas putih netral, bukan tiruan merek. */
+.ist__cari {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 194px;
+  overflow: clip;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--pdf-kertas);
+  box-shadow: var(--shadow-md);
+  color: var(--pdf-tinta);
+}
+.ist__carikotak {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 340px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--pdf-garis);
+  border-radius: 14px;
+  font-size: var(--k-t11);
+  color: var(--pdf-tinta);
+}
+.ist__carikotak svg { color: var(--pdf-abu); }
+.ist__carihasil { display: flex; flex-direction: column; gap: 4px; }
+.ist__carisitus { display: flex; align-items: center; gap: 8px; }
+.ist__carisitus > span:last-child { display: flex; flex-direction: column; line-height: 1.25; }
+.ist__carisitus b { font-size: var(--k-t12); font-weight: var(--k-semi); }
+.ist__carisitus small { font-size: var(--k-t10); color: var(--pdf-abu); }
+.ist__carifav {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  overflow: clip;
+  border: 1px solid var(--pdf-garis);
+  border-radius: 50%;
+  background: var(--pub-gelap);
+}
+.ist__carifav img { width: 16px; height: 16px; object-fit: contain; }
+.ist__carijudul { font-size: var(--k-t16); line-height: 1.3; color: var(--pdf-tautan); }
+.ist__cariket { font-size: var(--k-t12); line-height: 1.5; color: var(--pdf-abu); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ist__carihasil--redup { gap: 6px; padding-top: 10px; border-top: 1px solid var(--pdf-garis); }
+.ist__carihasil--redup i { display: block; width: 46%; height: 8px; border-radius: 4px; background: var(--pdf-garis); }
+.ist__carihasil--redup i:nth-child(2) { width: 72%; }
+.ist__carihasil--redup i:nth-child(3) { width: 60%; }
 
 /* --- Jam studio ------------------------------------------------------------------- */
 .ist__jam { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }

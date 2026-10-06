@@ -325,6 +325,8 @@
   --pdf-abu: #6B6B6B;
   --pdf-merah: #CF1C17;
   --pdf-garis: #E4E4E4;
+  /* Tautan di atas kertas putih (pratinjau hasil pencarian) — tidak ikut tema. */
+  --pdf-tautan: #1A4FB8;
 
   --focus: #1E4841;
   --focus-halo: rgba(187, 244, 156, 0.55);
