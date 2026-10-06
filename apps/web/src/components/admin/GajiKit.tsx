@@ -4,7 +4,8 @@ import { RequireAuth } from "./RequireAuth";
 import { LencanaTren } from "../kit/Ukuran";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
-import { ArrowClockwise, CopySimple, DownloadSimple, Plus } from "../kit/ikon";
+import { ArrowClockwise, Check, CopySimple, DownloadSimple, Plus } from "../kit/ikon";
+import { Ikon } from "../kit/Ikon";
 import { Dialog, AlertDialog } from "../kit/Overlay";
 import { ToastProvider, useToast } from "../kit/Toast";
 import { Keterangan, pemberiKet, type KabarKartu } from "../kit/kartuGrafik";
@@ -24,6 +25,7 @@ import {
   type BulanBuku,
   type JilidGaji,
   type AnggotaTim,
+  type StudioSettings,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 import { terbilang } from "../../lib/terbilang";
@@ -80,6 +82,20 @@ const persen = (n: number, dari: number) => (dari > 0 ? (n / dari) * 100 : 0);
 const teksPersen = (p: number) => `${p.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
 const tanda = (n: number) => (n >= 0 ? "+" : "−");
 
+/** "Dirga Pahlevi Architecture" → "DPA"; "Sari Ningsih" → "SN". */
+const inisial = (nama: string, n = 2) =>
+  nama
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((k) => k[0]!.toUpperCase())
+    .slice(0, n)
+    .join("");
+
+const hariDalamBulan = (period: string) => {
+  const [y, m] = period.split("-").map(Number);
+  return new Date(y!, m!, 0).getDate();
+};
+
 /** Bulan dari `?bulan=YYYY-MM` — tautan dari halaman lain mendarat di lembar
  *  bulan itu. Bulan yang belum datang tidak bisa dibuka. */
 function bulanDariAlamat(): string {
@@ -91,6 +107,9 @@ function bulanDariAlamat(): string {
 
 interface Baris extends BarisGajiBulan {
   no: number;
+  /** Jumlah semua baris SEBELUM baris ini, dalam urutan lembar — untuk
+   *  penggaris yang mengukur kumulatif. */
+  kumSebelum: number;
 }
 
 function Isi() {
@@ -112,9 +131,15 @@ function Isi() {
   const [bulanLalu, setBulanLalu] = useState<BarisGajiBulan[]>([]);
   const [tim, setTim] = useState<AnggotaTim[]>([]);
   const [menyalin, setMenyalin] = useState(false);
-  /* Kop lembar: nama studio dari Info Studio. Kunci cache `settings` milik
-     Info Studio — di sini dibaca saja (jebakan #8). */
-  const [studio, setStudio] = useState<string | null>(() => bacaCache<{ studioName?: string }>("settings")?.studioName ?? null);
+  /* Sampul: nama dan logo studio dari Info Studio. Kunci cache `settings`
+     milik Info Studio — di sini dibaca saja (jebakan #8). */
+  const [studio, setStudio] = useState<{ nama: string; logo: string | null } | null>(() => {
+    const s = bacaCache<StudioSettings>("settings");
+    return s?.studioName ? { nama: s.studioName, logo: s.logoUrl ?? null } : null;
+  });
+  /* Cap yang baru saja dibubuhkan: hanya dia yang "tercap" (geraknya sekali,
+     sebagai jawaban atas klik — bukan animasi masuk halaman). */
+  const [capBaru, setCapBaru] = useState<string | null>(null);
 
   function muatBuku(y = tahun) {
     setGalat(null);
@@ -137,7 +162,9 @@ function Isi() {
 
   useEffect(() => {
     daftarTim().then(setTim).catch(() => setTim([]));
-    ambilSettings().then((d) => setStudio(d.studioName || null)).catch(() => {});
+    ambilSettings()
+      .then((d) => setStudio(d.studioName ? { nama: d.studioName, logo: d.logoUrl ?? null } : null))
+      .catch(() => {});
   }, []);
   useEffect(() => {
     /* Jilid lain: yang lama tetap tergambar (rak dan sampulnya tidak
@@ -170,12 +197,21 @@ function Isi() {
           period: `${tahun}-${String(i + 1).padStart(2, "0")}`,
           salary: 0, salaryCount: 0, salaryUnpaid: 0, fee: 0, feeCount: 0, people: 0, total: 0,
         }));
-    const maks = Math.max(1, ...ini.map((m) => m.total));
+    /* Bulan yang sama tahun lalu: takik hantu di tepi atas tiap tab. Skala
+       memuat KEDUA tahun, supaya takik dan tab bisa dibandingkan. */
+    const lalu = semua.filter((m) => m.period.startsWith(`${tahun - 1}-`));
+    const maks = Math.max(1, ...ini.map((m) => m.total), ...lalu.map((m) => m.total));
     /* Panjang tab = dasar (cukup untuk "Agu" dan titik amber) + rentang ×
-       bagian bulan itu dari bulan tertinggi jilidnya — mulai dari NOL, jadi
-       bulan setengahnya memang tergambar setengahnya. Dasar dan rentangnya
-       di CSS (`--gji-tab0`, `--gji-tabr`), karena ikut lebar layar. */
-    return ini.map((m) => ({ ...m, mendatang: m.period > BULAN_INI, rasio: m.total / maks }));
+       bagian bulan itu dari bulan tertinggi — mulai dari NOL, jadi bulan
+       setengahnya memang tergambar setengahnya. Dasar dan rentangnya di CSS
+       (`--gji-tab0`, `--gji-tabr`), karena ikut lebar layar. */
+    return ini.map((m, i) => ({
+      ...m,
+      mendatang: m.period > BULAN_INI,
+      rasio: m.total / maks,
+      lalu: lalu[i]?.total ?? 0,
+      rasioLalu: (lalu[i]?.total ?? 0) / maks,
+    }));
   }, [buku, tahun]);
 
   const bulanBuku = (k: string) => buku?.months.find((m) => m.period === k) ?? null;
@@ -205,16 +241,23 @@ function Isi() {
   /* ---- Lembar bulan terpilih --------------------------------------------- */
   const kelompok = useMemo(() => {
     let no = 0;
+    let kum = 0;
     return JENIS.map((j) => {
       const isi = (baris ?? []).filter((b) => b.kind === j).sort((a, z) => a.name.localeCompare(z.name, "id"));
       return {
         jenis: j,
         label: LABEL_JENIS_ANGGOTA[j],
         jumlah: isi.reduce((n, b) => n + b.total, 0),
-        baris: isi.map((b): Baris => ({ ...b, no: ++no })),
+        baris: isi.map((b): Baris => {
+          const r = { ...b, no: ++no, kumSebelum: kum };
+          kum += b.total;
+          return r;
+        }),
       };
     }).filter((k) => k.baris.length > 0);
   }, [baris]);
+  /* Urutan lembar, rata — dipakai batang penerima di label dan cap kecil. */
+  const urut = useMemo(() => kelompok.flatMap((k) => k.baris), [kelompok]);
 
   const ringkas = useMemo(() => {
     const d = baris ?? [];
@@ -271,6 +314,11 @@ function Isi() {
     const sebelumnya = baris;
     const tgl = dibayar ? HARI_INI() : null;
     setBaris(baris.map((x) => (x.salaryId === b.salaryId ? { ...x, salaryPaidOn: tgl } : x)));
+    if (dibayar) {
+      const id = b.salaryId;
+      setCapBaru(id);
+      window.setTimeout(() => setCapBaru((c) => (c === id ? null : c)), 700);
+    }
     try {
       await ubahGaji(b.salaryId, { paidOn: tgl });
       muatBuku();
@@ -306,13 +354,30 @@ function Isi() {
      PITA kosong di bawah isi baris, jadi tidak pernah lewat di belakang
      tulisan (jebakan #70). */
   const wadahRef = useRef<HTMLDivElement>(null);
-  const [garis, setGaris] = useState<{ y: number; bagian: number } | null>(null);
+  const barisRef = useRef(new Map<string, HTMLTableRowElement>());
+  const [garis, setGaris] = useState<{ y: number; id: string; bagian: number; kumA: number; kumB: number } | null>(null);
   function ukurGaris(tr: HTMLElement, b: Baris) {
     const w = wadahRef.current;
     if (!w) return;
     const y = tr.getBoundingClientRect().bottom - w.getBoundingClientRect().top + w.scrollTop;
-    setGaris({ y, bagian: persen(b.total, ringkas.total) });
+    setGaris({
+      y,
+      id: b.teamMemberId,
+      bagian: persen(b.total, ringkas.total),
+      kumA: persen(b.kumSebelum, ringkas.total),
+      kumB: persen(b.kumSebelum + b.total, ringkas.total),
+    });
   }
+  /* Menyorot dari luar lembar (batang penerima, cap kecil di sampul): baris
+     yang sama dicari lewat ref, digulir bila perlu, lalu diukur. */
+  function sorotkan(b: Baris, gulir = false) {
+    const tr = barisRef.current.get(b.teamMemberId);
+    if (!tr) return;
+    if (gulir) tr.scrollIntoView({ block: "nearest" });
+    ukurGaris(tr, b);
+  }
+  const sorot = garis?.id ?? null;
+  const kelasSorot = (id: string) => (sorot ? (sorot === id ? " is-sorot" : " is-redup") : "");
 
   /* ---- Papan ketik di indeks: panah atas/bawah, Home, End ---------------- */
   const tabRef = useRef<(HTMLButtonElement | null)[]>([]);
@@ -364,17 +429,55 @@ function Isi() {
   const trenJilid = banding.lalu > 0 ? ((banding.kini - banding.lalu) / banding.lalu) * 100 : null;
   const belumDibayar = ringkas.gaji - ringkas.gajiDiterima;
   const pctGaji = persen(ringkas.gaji, ringkas.total);
-  const jumlahBaris = kelompok.reduce((n, k) => n + k.baris.length, 0);
+  const jumlahBaris = urut.length;
+  const bergaji = urut.filter((b) => b.salaryId);
+  const namaStudio = studio?.nama ?? "Studio";
+  const inisialStudio = inisial(namaStudio, 3);
+  const bulanKe = Number(period.slice(5, 7));
 
   return (
     <div className="gji">
       <Keterangan kabar={kabar} />
       <div className="gji__papan">
+        {/* Pita pembatas buku: selalu menandai lembar BULAN BERJALAN. Dari
+            lembar lain, menariknya membuka kembali bulan ini. Ia tergantung di
+            lipatan antara sampul dan lembar — ruang kosong 16px yang tidak
+            dilewati tulisan apa pun, juga saat ia berayun (±2,5°). */}
+        <button
+          type="button"
+          className={`gji__pita${period === BULAN_INI ? " is-di-sini" : ""}`}
+          aria-label={
+            period === BULAN_INI
+              ? `Pita pembatas di lembar bulan ini, ${labelBulan(BULAN_INI)}`
+              : `Kembali ke lembar bulan ini, ${labelBulan(BULAN_INI)}`
+          }
+          onClick={() => {
+            kabar.current?.(null);
+            setPeriod(BULAN_INI);
+          }}
+          {...ket(() => ({
+            judul: "Pita pembatas",
+            baris: [
+              { label: "Menandai", nilai: labelBulan(BULAN_INI) },
+              ...(period === BULAN_INI ? [] : [{ label: "Tarik untuk", nilai: "kembali ke sini" }]),
+            ],
+          }))}
+        >
+          <span className="gji__pitateks">{BULAN_PENDEK[Number(BULAN_INI.slice(5, 7)) - 1]}</span>
+        </button>
+
         {/* ==== SAMPUL DALAM ================================================ */}
         <aside className="gji__sampul" aria-label="Rekap buku gaji">
           <header className="gji__judulbuku">
-            <span>Buku gaji · Jilid {tahun}</span>
-            <b>{studio ?? "Studio"}</b>
+            <span className="gji__judulatas">Buku gaji · Jilid</span>
+            <div className="gji__judulbaris">
+              {/* Tahun jilid timbul di sampul — angka yang sama dengan rak. */}
+              <b className="gji__tahunbesar">{tahun}</b>
+              <span className="gji__monogram" aria-hidden="true">
+                {studio?.logo ? <img src={studio.logo} alt="" /> : inisialStudio}
+              </span>
+            </div>
+            <strong className="gji__studio">{namaStudio}</strong>
           </header>
 
           {/* Label tempel: rekap bulan yang sedang dibuka. */}
@@ -413,13 +516,43 @@ function Isi() {
                 <span>Fee proyek</span>
                 <b>{formatRupiah(ringkas.fee)}</b>
               </p>
+              {/* Satu ruas per penerima (urutan lembar), tiap ruas dibelah gaji
+                  dan fee-nya — jumlah gelapnya tetap terbaca sebagai gaji vs fee.
+                  Menyentuh ruas menyorot barisnya di lembar, dan sebaliknya. */}
               <span
-                className="gji__pecahbatang"
+                className={`gji__pecahbatang${sorot ? " is-menyorot" : ""}`}
                 role="img"
-                aria-label={`Gaji ${teksPersen(pctGaji)}, fee proyek ${teksPersen(100 - pctGaji)}`}
+                aria-label={`Gaji ${teksPersen(pctGaji)}, fee proyek ${teksPersen(100 - pctGaji)}, ${jumlahBaris} penerima`}
               >
-                <i className="gji__kotak--gaji" style={{ width: `${pctGaji}%` }} />
-                <i className="gji__kotak--fee" style={{ width: `${ringkas.total > 0 ? 100 - pctGaji : 0}%` }} />
+                {urut.map((b) => {
+                  const kp = ket(() => ({
+                    judul: `${String(b.no).padStart(2, "0")} · ${b.name}`,
+                    baris: [
+                      ...((b.salaryAmount ?? 0) > 0 ? [{ warna: "var(--ramp-1)", label: "Gaji", nilai: formatRupiah(b.salaryAmount ?? 0) }] : []),
+                      ...(b.feeAmount > 0 ? [{ warna: "var(--ramp-2)", label: "Fee proyek", nilai: formatRupiah(b.feeAmount) }] : []),
+                      { label: `${teksPersen(Math.round(persen(b.total, ringkas.total) * 10) / 10)} dari ${nBulan}`, nilai: formatRupiah(b.total) },
+                    ],
+                  }));
+                  return (
+                    <span
+                      key={b.teamMemberId}
+                      className={`gji__ruas${kelasSorot(b.teamMemberId)}`}
+                      style={{ flexGrow: b.total }}
+                      {...kp}
+                      onPointerEnter={(e) => {
+                        kp.onPointerEnter(e);
+                        if (e.pointerType === "mouse") sorotkan(b);
+                      }}
+                      onPointerLeave={(e) => {
+                        kp.onPointerLeave(e);
+                        if (e.pointerType === "mouse") setGaris(null);
+                      }}
+                    >
+                      {(b.salaryAmount ?? 0) > 0 && <i className="gji__kotak--gaji" style={{ flexGrow: b.salaryAmount ?? 0 }} />}
+                      {b.feeAmount > 0 && <i className="gji__kotak--fee" style={{ flexGrow: b.feeAmount }} />}
+                    </span>
+                  );
+                })}
               </span>
             </div>
           </section>
@@ -432,14 +565,37 @@ function Isi() {
                 {ringkas.diterima} dari {ringkas.bergaji}
               </b>
             </p>
-            <span
-              className="gji__meter"
-              role="img"
-              aria-label={`Diterima ${formatRupiah(ringkas.gajiDiterima)}, belum ${formatRupiah(belumDibayar)}`}
-            >
-              <i className="gji__meter--terima" style={{ width: `${persen(ringkas.gajiDiterima, ringkas.gaji)}%` }} />
-              <i className="gji__meter--belum" style={{ width: `${persen(belumDibayar, ringkas.gaji)}%` }} />
-            </span>
+            {/* Satu cap kecil per orang bergaji — bentuk yang sama dengan cap
+                DITERIMA di lembar. Mint bercincin rangkap = sudah diterima;
+                amber putus-putus = belum. Menekannya membuka barisnya. */}
+            {bergaji.length > 0 && (
+              <ul className="gji__capderet">
+                {bergaji.map((b) => {
+                  const terima = Boolean(b.salaryPaidOn);
+                  return (
+                    <li key={b.teamMemberId}>
+                      <button
+                        type="button"
+                        className={`gji__capkecil ${terima ? "is-terima" : "is-belum"}${kelasSorot(b.teamMemberId)}`}
+                        aria-label={`${b.name}: ${terima ? `diterima ${tanggalPendek(b.salaryPaidOn!)}` : "belum dibayar"}`}
+                        onClick={() => sorotkan(b, true)}
+                        {...ket(() => ({
+                          judul: b.name,
+                          baris: [
+                            { label: "Gaji", nilai: formatRupiah(b.salaryAmount ?? 0) },
+                            terima
+                              ? { warna: "var(--brand-mint)", label: "Diterima", nilai: tanggalPendek(b.salaryPaidOn!) }
+                              : { warna: "var(--warn)", label: "Status", nilai: "Belum dibayar" },
+                          ],
+                        }))}
+                      >
+                        {inisial(b.name)}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
             <p className={`gji__terimaket${belumDibayar > 0 ? " gji__terimaket--belum" : ""}`}>
               {baris === null
                 ? "Memuat…"
@@ -464,7 +620,7 @@ function Isi() {
                      tertinggi; raknya sendiri mengisi sisa tinggi sampul. */
                   style={{ "--gji-r": j.rasio } as React.CSSProperties}
                   aria-pressed={j.year === tahun}
-                  aria-label={`Jilid ${j.year}: ${formatRupiah(j.total)}`}
+                  aria-label={`Jilid ${j.year}: ${formatRupiah(j.total)}${j.year === tahun ? ", sedang dibuka" : ""}`}
                   onClick={() => {
                     kabar.current?.(null);
                     if (j.year === tahun) return;
@@ -473,7 +629,7 @@ function Isi() {
                     setPeriod(j.year === TAHUN_INI ? BULAN_INI : `${j.year}-12`);
                   }}
                   {...ket(() => ({
-                    judul: `Jilid ${j.year}${j.year === TAHUN_INI ? " · berjalan" : ""}`,
+                    judul: `Jilid ${j.year}${j.year === tahun ? " · sedang dibuka" : j.year === TAHUN_INI ? " · berjalan" : ""}`,
                     baris: [
                       { warna: "var(--ramp-1)", label: "Gaji", nilai: formatRupiah(j.salary) },
                       { warna: "var(--ramp-2)", label: "Fee proyek", nilai: formatRupiah(j.fee) },
@@ -481,8 +637,13 @@ function Isi() {
                     ],
                   }))}
                 >
+                  {/* Jilid yang sedang dibuka meninggalkan RUANG KOSONG di rak:
+                      bukunya sedang terbuka di meja, di sebelahnya. */}
                   <span className="gji__jilidpita" aria-hidden="true" />
-                  <span className="gji__jilidtahun">{j.year}</span>
+                  <span className="gji__jilidlabel">
+                    <span className="gji__jilidtahun">{j.year}</span>
+                  </span>
+                  <span className="gji__jilidkaki" aria-hidden="true" />
                 </button>
               ))}
             </div>
@@ -507,7 +668,7 @@ function Isi() {
           <header className="gji__kop">
             <div className="gji__kopkiri">
               <p className="gji__kopatas">
-                Daftar penerimaan gaji · Lembar {Number(period.slice(5, 7))}
+                Daftar penerimaan gaji · 1–{hariDalamBulan(period)} {nBulan}
               </p>
               <p className="gji__kopjudul">
                 <span id="gji-judul" role="heading" aria-level={2}>
@@ -540,6 +701,14 @@ function Isi() {
                 }
               />
               <TombolIkon ikon={DownloadSimple} jenis="ghost" ukuran="small" judul="Unduh CSV" onClick={ekspor} />
+              {/* Nomor halaman buku besar: lembar ke berapa dari dua belas. */}
+              <span className="gji__folio" aria-label={`Folio ${bulanKe} dari 12`}>
+                <small>Folio</small>
+                <b>
+                  {bulanKe}
+                  <i>/12</i>
+                </b>
+              </span>
             </div>
           </header>
 
@@ -598,7 +767,11 @@ function Isi() {
                       {k.baris.map((b) => (
                         <tr
                           key={b.teamMemberId}
-                          className="gji__baris"
+                          ref={(el) => {
+                            if (el) barisRef.current.set(b.teamMemberId, el);
+                            else barisRef.current.delete(b.teamMemberId);
+                          }}
+                          className={`gji__baris${sorot === b.teamMemberId ? " is-sorot" : ""}`}
                           onPointerEnter={(e) => {
                             if (e.pointerType === "mouse") ukurGaris(e.currentTarget, b);
                           }}
@@ -657,7 +830,13 @@ function Isi() {
                           <td className={`gji__ttd gji__ttd--${b.no % 2 ? "kiri" : "kanan"}`}>
                             <span className="gji__ttdslot">
                               <span className="gji__ttdno">{b.no}.</span>
-                              <TandaTerima b={b} bulan={nBulan} onTandai={(v) => tandaiDibayar(b, v)} />
+                              <TandaTerima
+                                b={b}
+                                bulan={nBulan}
+                                studio={inisialStudio}
+                                baru={capBaru !== null && capBaru === b.salaryId}
+                                onTandai={(v) => tandaiDibayar(b, v)}
+                              />
                             </span>
                           </td>
                         </tr>
@@ -673,7 +852,10 @@ function Isi() {
                       </th>
                       <td className="gji__angka">{formatRupiah(ringkas.gaji)}</td>
                       <td className="gji__angka">{formatRupiah(ringkas.fee)}</td>
-                      <td className="gji__angka gji__jumlah">{formatRupiah(ringkas.total)}</td>
+                      <td className="gji__angka gji__jumlah">
+                        {/* Garis bawah ganda: tanda jumlah akhir di buku besar. */}
+                        <span className="gji__ganda">{formatRupiah(ringkas.total)}</span>
+                      </td>
                       <td className="gji__ttdjumlah">
                         {ringkas.bergaji > 0 ? `${ringkas.diterima}/${ringkas.bergaji} diterima` : ""}
                       </td>
@@ -691,11 +873,15 @@ function Isi() {
                 style={{ transform: `translateY(${garis.y}px)` }}
                 aria-hidden="true"
               >
+                {/* Skala 0–100% jumlah bulan. Ruas pekat = orang ini; ruas pucat
+                    di kirinya = semua baris sebelumnya, jadi menyusuri daftar ke
+                    bawah membuat ruasnya berjalan dari 0 sampai tepat 100%. */}
                 <span className="gji__penggarisbadan">
-                  <i style={{ width: `${garis.bagian}%` }} />
+                  <i className="gji__penggariskum" style={{ width: `${garis.kumA}%` }} />
+                  <i className="gji__penggarisini" style={{ left: `${garis.kumA}%`, width: `${garis.bagian}%` }} />
                 </span>
                 <span className="gji__penggarisket">
-                  {teksPersen(Math.round(garis.bagian * 10) / 10)} dari {nBulan}
+                  <b>{teksPersen(Math.round(garis.bagian * 10) / 10)}</b> · s.d. sini {teksPersen(Math.round(garis.kumB * 10) / 10)}
                 </span>
               </span>
             )}
@@ -704,7 +890,13 @@ function Isi() {
           {baris !== null && jumlahBaris > 0 && (
             <p className="gji__terbilang">
               <span>Terbilang</span>
-              <em>{terbilang(ringkas.total)}</em>
+              {/* Tanda pagar di kedua ujung, seperti di kuitansi: tidak ada
+                  ruang untuk menambah kata sesudah ditulis. */}
+              <em>
+                <i aria-hidden="true"># </i>
+                {terbilang(ringkas.total)}
+                <i aria-hidden="true"> #</i>
+              </em>
             </p>
           )}
         </section>
@@ -726,8 +918,8 @@ function Isi() {
                 tabIndex={aktif ? 0 : -1}
                 disabled={m.mendatang}
                 className={`gji__tab${aktif ? " is-aktif" : ""}${m.total === 0 && !m.mendatang ? " gji__tab--kosong" : ""}`}
-                style={{ "--gji-t": m.mendatang ? 0 : m.rasio } as React.CSSProperties}
-                aria-label={`${labelBulan(m.period)}${m.mendatang ? ", belum tiba" : `: ${formatRupiah(m.total)}`}${m.salaryUnpaid ? `, ${m.salaryUnpaid} gaji belum dibayar` : ""}`}
+                style={{ "--gji-t": m.mendatang ? 0 : m.rasio, "--gji-tl": m.rasioLalu } as React.CSSProperties}
+                aria-label={`${labelBulan(m.period)}${m.mendatang ? ", belum tiba" : `: ${formatRupiah(m.total)}`}${m.salaryUnpaid ? `, ${m.salaryUnpaid} gaji belum dibayar` : m.salaryCount ? ", semua gaji diterima" : ""}`}
                 onClick={() => setPeriod(m.period)}
                 onKeyDown={(e) => tombolIndeks(e, i)}
                 {...(m.mendatang
@@ -738,6 +930,9 @@ function Isi() {
                         { warna: "var(--ramp-1)", label: "Gaji", nilai: formatRupiah(m.salary) },
                         { warna: "var(--ramp-2)", label: "Fee proyek", nilai: formatRupiah(m.fee) },
                         { label: `Jumlah · ${m.people} orang`, nilai: formatRupiah(m.total) },
+                        ...(m.lalu > 0
+                          ? [{ label: `${BULAN_PENDEK[i]} ${tahun - 1}`, nilai: formatRupiah(m.lalu) }]
+                          : []),
                         ...(m.salaryUnpaid
                           ? [{ warna: "var(--warn)", label: "Belum dibayar", nilai: `${m.salaryUnpaid} gaji` }]
                           : []),
@@ -746,6 +941,18 @@ function Isi() {
               >
                 <span className="gji__tablabel">{BULAN_PENDEK[i]}</span>
                 {m.salaryUnpaid > 0 && <i className="gji__tabtitik" aria-hidden="true" />}
+                {/* Semua gaji bulan itu sudah diterima: lembarnya "ditutup". */}
+                {m.salaryCount > 0 && m.salaryUnpaid === 0 && <Ikon ikon={Check} ukuran={10} className="gji__tabcentang" />}
+                {/* Dasar tab: belahan gaji/fee bulan itu. */}
+                {m.total > 0 && (
+                  <span className="gji__tabpita" aria-hidden="true">
+                    <i className="gji__tabgaji" style={{ flexGrow: m.salary }} />
+                    <i className="gji__tabfee" style={{ flexGrow: m.fee }} />
+                  </span>
+                )}
+                {/* Takik hantu di tepi atas: bulan yang sama tahun lalu, pada
+                    skala yang sama — bisa jatuh di luar ujung tab. */}
+                {m.lalu > 0 && <i className="gji__tabhantu" aria-hidden="true" />}
               </button>
             );
           })}
@@ -762,32 +969,56 @@ function Isi() {
  *   - hanya fee          → tanpa tanda terima: fee proyek sudah uang yang
  *                          keluar saat dicatat, bukan janji yang menunggu
  */
-function TandaTerima({ b, bulan, onTandai }: { b: BarisGajiBulan; bulan: string; onTandai: (dibayar: boolean) => void }) {
+function TandaTerima({
+  b,
+  bulan,
+  studio,
+  baru,
+  onTandai,
+}: {
+  b: BarisGajiBulan;
+  bulan: string;
+  /** Inisial studio di busur bawah cap. */
+  studio: string;
+  /** Baru saja dibubuhkan: geraknya "tercap" sekali. */
+  baru: boolean;
+  onTandai: (dibayar: boolean) => void;
+}) {
   if (!b.salaryId) {
     return <span className="gji__ttdfee">fee proyek</span>;
   }
   if (b.salaryPaidOn) {
     const [, m, h] = b.salaryPaidOn.split("-");
+    /* Geometri cap 48×48: cincin rangkap di r 22,6 & 21; "DITERIMA" di busur
+       atas (alas r 15, huruf ke luar sampai ±r 20); inisial studio di busur
+       bawah (alas r 17,5, huruf ke dalam sampai ±r 13); tanggal di tengah
+       (y 23–31). Tidak ada garis yang melintas di belakang huruf mana pun. */
     return (
       <button
         type="button"
-        className="gji__cap"
+        className={`gji__cap${baru ? " is-baru" : ""}`}
         aria-label={`Gaji ${bulan} diterima ${tanggalPendek(b.salaryPaidOn)}. Tekan untuk membatalkan tanda.`}
         title={`Diterima ${tanggalPendek(b.salaryPaidOn)} — klik untuk membatalkan`}
         onClick={() => onTandai(false)}
       >
         <svg viewBox="0 0 48 48" width="46" height="46" aria-hidden="true">
           <defs>
-            <path id={`gji-busur-${b.salaryId}`} d="M 8.5 25 A 15.5 15.5 0 0 1 39.5 25" />
+            <path id={`gji-atas-${b.salaryId}`} d="M 9 24 A 15 15 0 0 1 39 24" />
+            <path id={`gji-bawah-${b.salaryId}`} d="M 6.5 24 A 17.5 17.5 0 0 0 41.5 24" />
           </defs>
-          <circle cx="24" cy="24" r="22.5" className="gji__capluar" />
-          <circle cx="24" cy="24" r="19.5" className="gji__capdalam" />
+          <circle cx="24" cy="24" r="22.6" className="gji__capluar" />
+          <circle cx="24" cy="24" r="21" className="gji__capdalam" />
           <text className="gji__capbusur">
-            <textPath href={`#gji-busur-${b.salaryId}`} startOffset="50%" textAnchor="middle">
+            <textPath href={`#gji-atas-${b.salaryId}`} startOffset="50%" textAnchor="middle">
               DITERIMA
             </textPath>
           </text>
-          <text x="24" y="33" textAnchor="middle" className="gji__captgl">
+          <text className="gji__capbusur gji__capbusur--bawah">
+            <textPath href={`#gji-bawah-${b.salaryId}`} startOffset="50%" textAnchor="middle">
+              {studio}
+            </textPath>
+          </text>
+          <text x="24" y="31" textAnchor="middle" className="gji__captgl">
             {`${Number(h)}/${Number(m)}`}
           </text>
         </svg>
