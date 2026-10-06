@@ -152,17 +152,8 @@
 /* Amplop yang sedang dibuka = amplop besar versi mini: bidang uang pejal,
    jadi mata langsung menyambungkan baris ini dengan amplop di kanan. */
 .byt__orang[aria-current="true"] { background: var(--kas-bidang); }
-/* Tutup amplop mini — segitiga samar yang sama dengan amplop besar. */
-.byt__orang[aria-current="true"]::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 24px;
-  border-radius: 12px 12px 0 0;
-  background: color-mix(in srgb, var(--kas-ink) 8%, transparent);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
-  pointer-events: none;
-}
+/* Amplop mini SENGAJA tanpa segitiga tutup: segitiga di belakang nama dan
+   nominal terbaca sebagai teks yang menimpa gambar (ditolak pemilik). */
 .byt__orang[aria-current="true"] .byt__orangisi b,
 .byt__orang[aria-current="true"] .byt__orangkanan b { color: var(--kas-nilai); }
 .byt__orang[aria-current="true"] .byt__orangisi small,
@@ -187,9 +178,13 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
-  padding: 18px 22px 16px;
+  /* --byt-tutup = tinggi ujung tutup. Isi mulai SESUDAH ujungnya (+6), jadi
+     garis tutup tidak pernah lewat di belakang tulisan mana pun — di kolom
+     kiri/kanan garisnya selalu lebih tinggi dari ujungnya sendiri. */
+  --byt-tutup: 34px;
+  padding: calc(var(--byt-tutup) + 6px) 22px 14px;
   overflow: hidden;
   border-radius: 16px;
   background: var(--kas-bidang);
@@ -200,7 +195,7 @@
   position: absolute;
   inset: 0 0 auto 0;
   width: 100%;
-  height: 60px;
+  height: var(--byt-tutup);
   pointer-events: none;
 }
 .byt__tutup path {
@@ -212,7 +207,7 @@
 .byt__amplopatas {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 60px minmax(0, 1fr);
   align-items: start;
   gap: 16px;
 }
@@ -235,20 +230,21 @@
 .byt__segel {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
-  margin-top: 10px;
+  width: 60px;
+  height: 60px;
+  /* Pusat segel = ujung tutup: (tutup + 6) − 30 di atas awal isi. */
+  margin-top: calc(-6px - 30px);
   border-radius: 50%;
   background: var(--kas-bidang);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--kas-ink) 24%, transparent);
 }
-.byt__segel .k-avatar { width: 52px; height: 52px; font-size: var(--k-t16); outline: 1.5px dashed var(--brand-mint); outline-offset: 3px; }
+.byt__segel .k-avatar { width: 48px; height: 48px; font-size: var(--k-t16); outline: 1.5px dashed var(--brand-mint); outline-offset: 3px; }
 
 .byt__isiamplop { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; text-align: right; }
 .byt__isiamplop > b { font-size: var(--k-h4); font-weight: var(--k-bold); line-height: 1.2; color: var(--kas-nilai); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.byt__isibaris { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 10px; margin-top: 2px; }
 .byt__isirinci { font-size: var(--k-t12); color: var(--byt-redup); white-space: nowrap; }
 .byt__capkecil {
-  margin-top: 4px;
   padding: 2px 8px;
   border: 1px solid color-mix(in srgb, var(--brand-mint) 70%, transparent);
   border-radius: 999px;
@@ -267,8 +263,8 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 14px 28px;
-  padding-top: 14px;
+  gap: 12px 28px;
+  padding-top: 12px;
   border-top: 1px dashed color-mix(in srgb, var(--kas-ink) 22%, transparent);
 }
 .byt__hakorang { display: flex; flex-direction: column; gap: 10px; flex: 1 1 300px; min-width: 0; max-width: 460px; }
@@ -438,9 +434,11 @@
 .byt__grand dd { font-size: var(--k-h6); font-weight: var(--k-bold); }
 /* Cap keadaan gaji bulan itu — data sungguhan (paid_on), bukan hiasan. */
 .byt__cap {
+  /* Di antara label "Dibayar oleh" (16px) dan nama: terukur tidak
+     menyentuh keduanya di 1440/1366/1280/1024/390. */
   position: absolute;
-  top: 12px;
-  left: 6px;
+  top: 20px;
+  left: 4px;
   padding: 3px 9px;
   border: 1.5px solid var(--success);
   border-radius: 6px;
@@ -450,7 +448,7 @@
   text-transform: uppercase;
   color: var(--success);
   white-space: nowrap;
-  transform: rotate(-6deg);
+  transform: rotate(-3deg);
   pointer-events: none;
 }
 .byt__cap--belum { border-color: var(--warn-ink); color: var(--warn-ink); }
@@ -461,7 +459,7 @@
 .byt__ttd { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 4px; }
 .byt__ttd > div { position: relative; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .byt__ttd small { font-size: var(--k-t10); color: var(--text-muted); }
-.byt__ttd i { display: block; height: 28px; border-bottom: 1px dotted var(--border-strong); }
+.byt__ttd i { display: block; height: 30px; border-bottom: 1px dotted var(--border-strong); }
 .byt__ttd b { overflow: hidden; font-size: var(--k-t11); font-weight: var(--k-semi); color: var(--text-strong); text-overflow: ellipsis; white-space: nowrap; }
 .byt__kertaskosong { margin: 6px 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-body); }
 
@@ -493,7 +491,7 @@
 .rk--b { height: 190px; }
 .rk--c { height: 0; }
 .rk--baris { height: 52px; }
-.byt--rangka .byt__orangkepala { min-height: 244px; }
+.byt--rangka .byt__orangkepala { min-height: 237px; }
 .byt--rangka .byt__orangkepala .rk { background: color-mix(in srgb, var(--kas-ink) 10%, transparent); }
 .rk--id { width: 40%; height: 64px; }
 .rk--riwayat { height: 72px; margin-top: auto; }
@@ -533,7 +531,7 @@
 @media (min-width: 1288.02px) and (max-width: 1408px) {
   .byt__kertas { gap: 6px; padding-bottom: 16px; }
   .byt__rincian li { padding: 5px 0; }
-  .byt__ttd i { height: 20px; }
+  .byt__ttd i { height: 28px; }
 }
 
 /* Satu layar (lihat "Panel kit MUAT SATU LAYAR" di CLAUDE.md): tinggi
@@ -549,8 +547,9 @@
 /* Ponsel & tablet tegak: amplop bertumpuk — segel di atas, isi di bawahnya. */
 @media (max-width: 40rem) {
   .byt__orangkepala { padding: 16px; }
-  .byt__amplopatas { grid-template-columns: minmax(0, 1fr) 64px; }
+  .byt__amplopatas { grid-template-columns: minmax(0, 1fr) 60px; }
   .byt__isiamplop { grid-column: 1 / -1; align-items: flex-start; text-align: left; }
+  .byt__isibaris { justify-content: flex-start; }
   .byt__tutup { display: none; }
   .byt__segel { margin-top: 0; }
   .byt__riwayat { flex-basis: 100%; max-width: none; min-width: 0; }

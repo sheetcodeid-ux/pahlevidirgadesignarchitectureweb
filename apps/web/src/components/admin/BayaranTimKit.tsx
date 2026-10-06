@@ -523,14 +523,18 @@ function Isi() {
           <div className="byt__isiamplop" aria-live="polite">
             <small>Isi amplop {namaBulan}</small>
             <b>{slip ? formatRupiah(slip.total) : "…"}</b>
-            <span className="byt__isirinci">
-              {slip ? `gaji ${formatRupiah(slip.salaryAmount)} · fee ${formatRupiah(slip.feeAmount)}` : "\u00a0"}
-            </span>
-            {slip?.salary && (
-              <span className={`byt__capkecil${slip.salary.paidOn ? "" : " is-belum"}`}>
-                {slip.salary.paidOn ? `Gaji dibayar ${tanggalPendek(slip.salary.paidOn)}` : "Gaji belum dibayar"}
+            {/* Rincian dan cap sebaris — dua baris di sini membuat amplop
+                lebih tinggi dan slip di bawahnya ikut menggulir. */}
+            <span className="byt__isibaris">
+              <span className="byt__isirinci">
+                {slip ? `gaji ${formatRupiah(slip.salaryAmount)} · fee ${formatRupiah(slip.feeAmount)}` : "\u00a0"}
               </span>
-            )}
+              {slip?.salary && (
+                <span className={`byt__capkecil${slip.salary.paidOn ? "" : " is-belum"}`}>
+                  {slip.salary.paidOn ? `Gaji dibayar ${tanggalTanpaTahun(slip.salary.paidOn)}` : "Gaji belum dibayar"}
+                </span>
+              )}
+            </span>
           </div>
         </div>
 
@@ -711,7 +715,7 @@ function Isi() {
                           atas kolom pembayar seperti cap di slip kertas. */}
                       {slip.salary && (
                         <span className={`byt__cap${slip.salary.paidOn ? "" : " byt__cap--belum"}`}>
-                          {slip.salary.paidOn ? `Dibayar ${tanggalPendek(slip.salary.paidOn)}` : "Belum dibayar"}
+                          {slip.salary.paidOn ? `Dibayar ${tanggalTanpaTahun(slip.salary.paidOn)}` : "Belum dibayar"}
                         </span>
                       )}
                     </div>
