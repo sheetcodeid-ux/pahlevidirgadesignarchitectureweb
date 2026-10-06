@@ -28,7 +28,20 @@ for (const tema of ["light", "dark"]) {
     await p.goto("http://127.0.0.1:4399" + h, { waitUntil: "networkidle" });
     await p.waitForTimeout(700);
     const hasil = await p.evaluate(() => {
-      const rgb = (s) => (s.match(/[\d.]+/g) || []).map(Number);
+      /* Dua bentuk yang dikembalikan getComputedStyle: `rgb(r, g, b[, a])`
+         berskala 0–255, dan `color(srgb r g b[ / a])` — hasil color-mix() —
+         berskala 0–1. Sempat buta pada yang kedua (jebakan #36): hijau
+         campuran #4F8A5E terbaca rgb(0.31, 0.54, 0.37), nyaris hitam, dan
+         setiap teks di atasnya dilaporkan kontras 1,00. */
+      const rgb = (s) => {
+        const n = (s.match(/[\d.]+/g) || []).map(Number);
+        if (s.startsWith("color(")) return [n[0] * 255, n[1] * 255, n[2] * 255, ...(n.length > 3 ? [n[3]] : [])];
+        return n;
+      };
+      /* Tinta setengah tembus dicampur dulu dengan latarnya — sempat buta di
+         sini juga: teks 70% dianggap pejal 100% sehingga terbaca LEBIH
+         kontras… atau, dengan bentuk color(), jauh lebih buruk dari aslinya. */
+      const campur = (t, l) => (t[3] === undefined || t[3] === 1 ? t : [0, 1, 2].map((i) => t[i] * t[3] + l[i] * (1 - t[3])));
       const lum = (c) => {
         const [r, g, bl] = c.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
         return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
@@ -69,7 +82,7 @@ for (const tema of ["light", "dark"]) {
           if (c.length >= 3 && c[3] > 0) { latar = null; break; }
         }
         if (!latar) continue;
-        const r = rasio(rgb(g.color), latar);
+        const r = rasio(campur(rgb(g.color), latar), latar);
         if (r < 3) {
           out.push({
             kelas: (ikon ? "ikon " : "") + ((el.className.baseVal ?? el.className).toString() || el.tagName).slice(0, 40),
