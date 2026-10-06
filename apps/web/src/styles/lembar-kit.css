@@ -155,9 +155,14 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: end;
   gap: 8px 20px;
-  padding: 0 24px 14px;
+  padding: 0 24px;
 }
-.lbr-siapa { min-width: 0; padding-bottom: 4px; }
+/* Nama diberi jarak dari tepi sampul (dulu 0px — menempel), dan jarak yang
+   SAMA di bawahnya, supaya baris identitas simetris dan tombol pintas bisa
+   ditengahkan tepat di antara sampul dan tab. Benda besar di kiri tetap
+   rata bawah dengan sisa 12px ke garis tab, seperti sebelumnya. */
+.lbr-siapa { min-width: 0; padding: 12px 0; }
+.lbr-identitas > :first-child { margin-bottom: 12px; }
 .lbr-nama {
   display: flex;
   flex-wrap: wrap;
@@ -183,7 +188,7 @@
   overflow-wrap: anywhere;
 }
 .lbr-sub svg { color: var(--brand); }
-.lbr-pintas { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding-bottom: 4px; }
+.lbr-pintas { display: flex; flex-wrap: wrap; align-items: center; align-self: center; justify-content: flex-end; gap: 8px; }
 
 /* Tab bergaris bawah, menyatu dengan kepala. */
 .lbr-tabs { position: relative; display: flex; gap: 4px; padding: 0 14px; border-top: 1px solid var(--border); }
@@ -298,7 +303,7 @@
   flex-direction: column;
   gap: 20px;
   min-height: 0;
-  padding: 18px 24px;
+  padding: 15px 24px;
   overflow-y: auto;
   scrollbar-width: thin;
   border: 1px solid var(--border);
