@@ -24,12 +24,14 @@ import {
   ambilSlip,
   bacaCache,
   daftarTim,
+  gajiBulan,
   penugasanOrang,
   ringkasanBayaranTim,
   tulisCache,
   LABEL_JENIS_ANGGOTA,
   LABEL_PERAN,
   type AnggotaTim,
+  type BarisGajiBulan,
   type BulanSlip,
   type PenugasanTim,
   type RingkasanBayaranOrang,
@@ -157,9 +159,9 @@ function Meteran({ b, label, besar }: { b: Bagian; label: string; besar?: boolea
       role="img"
       aria-label={`${label}: dibayar ${formatRupiah(b.dibayar)}, jatuh tempo ${formatRupiah(b.tempo)}, belum tempo ${formatRupiah(b.belum)}`}
     >
-      <i style={{ width: pct(b.dibayar), background: WARNA.dibayar }} />
-      <i style={{ width: pct(b.tempo), background: WARNA.tempo }} />
-      <i style={{ width: pct(b.belum), background: WARNA.belum }} />
+      <i className="m-bayar" style={{ width: pct(b.dibayar) }} />
+      <i className="m-tempo" style={{ width: pct(b.tempo) }} />
+      <i className="m-belum" style={{ width: pct(b.belum) }} />
     </span>
   );
 }
@@ -194,6 +196,9 @@ function Isi() {
   const [bayar, setBayar] = useState<PilihanBayar | null>(null);
   const [membuatPdf, setMembuatPdf] = useState(false);
   const [wujud, setWujud] = useState<"kertas" | "wa">("kertas");
+  /* Gajian bulan berjalan untuk seluruh tim — sumber yang sama dengan
+     halaman Gaji (`payroll.bulan()`), dibaca saja. */
+  const [gajian, setGajian] = useState<BarisGajiBulan[] | null>(null);
   /* Kop slip: nama studio dari Info Studio. Kunci cache `settings` milik
      Info Studio — di sini cuma dibaca (jebakan #8). */
   const [studio, setStudio] = useState<string | null>(() => bacaCache<{ studioName?: string }>("settings")?.studioName ?? null);
@@ -219,6 +224,7 @@ function Isi() {
     muatTim();
     muatRingkas();
     ambilSettings().then((d) => setStudio(d.studioName || null)).catch(() => {});
+    gajiBulan(BULAN_INI).then(setGajian).catch(() => setGajian([]));
   }, []);
 
   /* Ketukan di luar kartu keterangan menutupnya (layar sentuh). */
@@ -304,6 +310,9 @@ function Isi() {
   const wa = nomorWa(slip?.phone ?? aktif?.anggota?.phone);
   const kosongSlip = slip !== null && !slip.salary && slip.fees.length === 0;
   const memuatAwal = tim === null && ringkas === null;
+  const bergaji = (gajian ?? []).filter((g) => (g.salaryAmount ?? 0) > 0);
+  const gajiTotal = bergaji.reduce((n, g) => n + (g.salaryAmount ?? 0), 0);
+  const gajiLunas = bergaji.filter((g) => g.salaryPaidOn).length;
 
   async function pdf() {
     if (!slip) return;
@@ -355,8 +364,36 @@ function Isi() {
           <h2>Amplop tim</h2>
           <span>{orang.length} orang</span>
         </header>
-        <div className="byt__timtotal" {...ketBagian("Seluruh tim", bagTim)}>
-          <small>Terutang ke tim</small>
+        <div className="byt__ringkas">
+        {/* Gajian bulan berjalan: satu ruas per orang bergaji — hijau sudah
+            dibayar, amber belum. */}
+        <div className="byt__gajian">
+          <p className="byt__gajiankepala">
+            <small>Gajian {labelBulan(BULAN_INI)}</small>
+            <span>{gajian ? `${gajiLunas} dari ${bergaji.length} dibayar` : ""}</span>
+          </p>
+          <b>{gajian ? formatRupiah(gajiTotal) : "—"}</b>
+          <span className="byt__gajianruas" role="img" aria-label={`Gaji ${labelBulan(BULAN_INI)}: ${gajiLunas} dari ${bergaji.length} orang sudah dibayar`}>
+            {bergaji.map((g) => (
+              <i
+                key={g.teamMemberId}
+                className={g.salaryPaidOn ? "is-lunas" : undefined}
+                {...ket(() => ({
+                  judul: g.name,
+                  baris: [
+                    {
+                      warna: g.salaryPaidOn ? WARNA.dibayar : WARNA.tempo,
+                      label: g.salaryPaidOn ? `Dibayar ${tanggalPendek(g.salaryPaidOn)}` : "Belum dibayar",
+                      nilai: formatRupiah(g.salaryAmount ?? 0),
+                    },
+                  ],
+                }))}
+              />
+            ))}
+          </span>
+        </div>
+        <div className="byt__timtotal" {...ketBagian("Fee proyek seluruh tim", bagTim)}>
+          <small>Fee proyek terutang</small>
           <b>{formatRupiah(total.terutang)}</b>
           <Meteran b={bagTim} label="Seluruh tim" besar />
           <dl>
@@ -373,6 +410,7 @@ function Isi() {
               <dd>{formatRupiah(bagTim.belum)}</dd>
             </div>
           </dl>
+        </div>
         </div>
         {galat && (
           <p className="byt__galat" role="alert">
@@ -442,11 +480,19 @@ function Isi() {
         </ul>
       </article>
 
-      {/* ==== Kepala orang + riwayat dua belas bulan ======================== */}
-      <section className="byt__orangkepala" aria-label={aktif ? `Bayaran ${aktif.nama}` : "Bayaran"}>
-        <div className="byt__identitas">
-          <Avatar nama={aktif?.nama ?? "?"} ukuran="lg" hiasan />
-          <div>
+      {/* ==== Amplop orang terpilih ===========================================
+          Amplop gaji pejal (bidang uang kit, tidak berbalik tema): tutup
+          segitiga dengan SEGEL avatar di ujungnya, nama di kiri, ISI AMPLOP
+          bulan terpilih di kanan, dan di dasarnya hak/dibayar/terutang serta
+          riwayat dua belas bulan yang sekaligus memilih bulan slip. Slip di
+          bawahnya keluar dari balik amplop ini. */}
+      <section className="byt__orangkepala" aria-label={aktif ? `Amplop gaji ${aktif.nama}` : "Amplop gaji"}>
+        <svg className="byt__tutup" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 0 L50 60 L100 0 Z" />
+        </svg>
+        <div className="byt__amplopatas">
+          <div className="byt__identitas">
+            <p className="byt__amplopkop">Amplop gaji</p>
             <h2>{aktif?.nama ?? "—"}</h2>
             <p className="byt__kontak">
               <span>{aktif?.anggota?.role ?? (aktif?.anggota ? LABEL_JENIS_ANGGOTA[aktif.anggota.kind] : "")}</span>
@@ -457,9 +503,29 @@ function Isi() {
                 aktif && <a className="byt__wa-kosong" href="/admin/tim">WhatsApp belum diisi</a>
               )}
             </p>
+          </div>
+          <span className="byt__segel">
+            <Avatar nama={aktif?.nama ?? "?"} ukuran="lg" hiasan />
+          </span>
+          <div className="byt__isiamplop" aria-live="polite">
+            <small>Isi amplop {namaBulan}</small>
+            <b>{slip ? formatRupiah(slip.total) : "…"}</b>
+            <span className="byt__isirinci">
+              {slip ? `gaji ${formatRupiah(slip.salaryAmount)} · fee ${formatRupiah(slip.feeAmount)}` : "\u00a0"}
+            </span>
+            {slip?.salary && (
+              <span className={`byt__capkecil${slip.salary.paidOn ? "" : " is-belum"}`}>
+                {slip.salary.paidOn ? `Gaji dibayar ${tanggalPendek(slip.salary.paidOn)}` : "Gaji belum dibayar"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="byt__amplopbawah">
+          <div className="byt__hakorang">
             <dl className="byt__angka">
               <div>
-                <dt>Hak</dt>
+                <dt>Hak fee</dt>
                 <dd>{aktif?.r ? formatRupiah(aktif.r.hak) : "—"}</dd>
               </div>
               <div>
@@ -467,52 +533,57 @@ function Isi() {
                 <dd>{aktif?.r ? formatRupiah(aktif.r.dibayar) : "—"}</dd>
               </div>
               <div className={aktif?.r && aktif.r.jatuhTempo > 0 ? "is-tempo" : undefined}>
-                <dt>Terutang</dt>
+                <dt>{aktif?.r && aktif.r.jatuhTempo > 0 ? `Terutang · ${formatRupiah(aktif.r.jatuhTempo)} jatuh tempo` : "Terutang"}</dt>
                 <dd>{aktif?.r ? formatRupiah(aktif.r.terutang) : "—"}</dd>
               </div>
             </dl>
+            {aktif?.r && aktif.r.hak > 0 && (
+              <span className="byt__metersel" {...ketBagian(aktif.nama, bagianDari(aktif.r))}>
+                <Meteran b={bagianDari(aktif.r)} label={aktif.nama} besar />
+              </span>
+            )}
           </div>
-        </div>
 
-        <div className="byt__riwayat">
-          <div className="byt__riwayatkepala">
-            <span>Slip 12 bulan terakhir</span>
-            <span className="byt__legenda">
-              <i style={{ background: WARNA.gaji }} />Gaji
-              <i style={{ background: WARNA.fee }} />Fee proyek
-            </span>
-          </div>
-          <div className="byt__kolom" role="group" aria-label="Pilih bulan slip">
-            {(riwayat ?? Array.from({ length: 12 }, () => null)).map((m, i) => {
-              if (!m) return <span key={i} className="byt__bln is-rangka"><span className="byt__batang" /><small>&nbsp;</small></span>;
-              const tinggi = (n: number) => `${(n / maksRiwayat) * 100}%`;
-              const b = Number(m.period.slice(5, 7)) - 1;
-              return (
-                <button
-                  key={m.period}
-                  type="button"
-                  className={`byt__bln${m.total === 0 ? " is-kosong" : ""}`}
-                  aria-pressed={m.period === bulan}
-                  aria-label={`${labelBulan(m.period)}: total ${formatRupiah(m.total)}`}
-                  onClick={() => setBulan(m.period)}
-                  {...ket(() => ({
-                    judul: labelBulan(m.period),
-                    baris: [
-                      { warna: WARNA.gaji, label: m.salaryPaid === false ? "Gaji (belum dibayar)" : "Gaji", nilai: formatRupiah(m.salary) },
-                      { warna: WARNA.fee, label: `Fee proyek${m.feeCount ? ` · ${m.feeCount} baris` : ""}`, nilai: formatRupiah(m.fee) },
-                      { label: "Total", nilai: formatRupiah(m.total) },
-                    ],
-                  }))}
-                >
-                  <span className="byt__batang">
-                    {m.salaryPaid === false && <span className="byt__belum" aria-hidden="true" />}
-                    <i className="byt__fee" style={{ height: tinggi(m.fee) }} />
-                    <i className="byt__gaji" style={{ height: tinggi(m.salary) }} />
-                  </span>
-                  <small>{BULAN_PENDEK[b]}</small>
-                </button>
-              );
-            })}
+          <div className="byt__riwayat">
+            <div className="byt__riwayatkepala">
+              <span>12 bulan terakhir — pilih bulan slip</span>
+              <span className="byt__legenda">
+                <i className="l-gaji" />Gaji
+                <i className="l-fee" />Fee
+              </span>
+            </div>
+            <div className="byt__kolom" role="group" aria-label="Pilih bulan slip">
+              {(riwayat ?? Array.from({ length: 12 }, () => null)).map((m, i) => {
+                if (!m) return <span key={i} className="byt__bln is-rangka"><span className="byt__batang" /><small>&nbsp;</small></span>;
+                const tinggi = (n: number) => `${(n / maksRiwayat) * 100}%`;
+                const b = Number(m.period.slice(5, 7)) - 1;
+                return (
+                  <button
+                    key={m.period}
+                    type="button"
+                    className={`byt__bln${m.total === 0 ? " is-kosong" : ""}`}
+                    aria-pressed={m.period === bulan}
+                    aria-label={`${labelBulan(m.period)}: total ${formatRupiah(m.total)}`}
+                    onClick={() => setBulan(m.period)}
+                    {...ket(() => ({
+                      judul: labelBulan(m.period),
+                      baris: [
+                        { warna: WARNA.gaji, label: m.salaryPaid === false ? "Gaji (belum dibayar)" : "Gaji", nilai: formatRupiah(m.salary) },
+                        { warna: WARNA.fee, label: `Fee proyek${m.feeCount ? ` · ${m.feeCount} baris` : ""}`, nilai: formatRupiah(m.fee) },
+                        { label: "Total", nilai: formatRupiah(m.total) },
+                      ],
+                    }))}
+                  >
+                    <span className="byt__batang">
+                      {m.salaryPaid === false && <span className="byt__belum" aria-hidden="true" />}
+                      <i className="byt__fee" style={{ height: tinggi(m.fee) }} />
+                      <i className="byt__gaji" style={{ height: tinggi(m.salary) }} />
+                    </span>
+                    <small>{BULAN_PENDEK[b]}</small>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -544,6 +615,13 @@ function Isi() {
                   </span>
                   <span className="byt__hak">{p.hak === null ? "—" : formatRupiah(p.hak)}</span>
                 </div>
+                {/* Dari mana angka hak itu: fee design proyek × persen peran. */}
+                {p.feeDesign !== null && p.pctBerlaku !== null && (
+                  <p className="byt__dasar">
+                    fee design {formatRupiah(p.feeDesign)} × {p.pctBerlaku.toLocaleString("id-ID")}%
+                    {p.dibayar > 0 ? ` · dibayar ${formatRupiah(p.dibayar)}` : ""}
+                  </p>
+                )}
                 <div className="byt__lintas">
                   {(["awal", "akhir"] as const).map((j) => {
                     const t = p.tahap.find((x) => x.tahap === j);
@@ -558,20 +636,7 @@ function Isi() {
 
       {/* ==== 3. Slip ======================================================== */}
       <article className="byt__slip" aria-label={`Slip ${namaBulan}`}>
-        <header className="byt__kartukepala">
-          <h3>Slip {namaBulan}</h3>
-          <Segmen
-            judul="Wujud slip"
-            className="byt__wujud"
-            nilai={wujud}
-            onPilih={(v) => setWujud(v as "kertas" | "wa")}
-            segmen={[
-              { nilai: "kertas", label: "Kertas", ikon: FileText },
-              { nilai: "wa", label: "WhatsApp", ikon: ChatTeardropDots },
-            ]}
-          />
-        </header>
-
+        <h3 className="sr-only">Slip {namaBulan}</h3>
         <div className="byt__slipisi">
           {slip === null ? (
             <div className="byt__kertas is-rangka" aria-label="Memuat slip"><i /><i /><i /><i /></div>
@@ -660,6 +725,16 @@ function Isi() {
         </div>
 
         <footer className="byt__slipaksi">
+          <Segmen
+            judul="Wujud slip"
+            className="byt__wujud"
+            nilai={wujud}
+            onPilih={(v) => setWujud(v as "kertas" | "wa")}
+            segmen={[
+              { nilai: "kertas", label: "Kertas", ikon: FileText },
+              { nilai: "wa", label: "WhatsApp", ikon: ChatTeardropDots },
+            ]}
+          />
           <Tombol ukuran="medium" jenis="ghost" kiri={FilePdf} onClick={pdf} disabled={!slip || kosongSlip || membuatPdf} memuat={membuatPdf}>
             Unduh PDF
           </Tombol>

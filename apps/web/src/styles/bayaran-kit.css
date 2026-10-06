@@ -1,11 +1,20 @@
 /* =============================================================================
-   Bayaran Tim (/admin/gaji/tim) — MEJA GAJI: rak amplop (kiri), kepala orang
-   dengan riwayat dua belas bulan, buku upah per proyek, dan slip (kertas atau
-   pesan WhatsApp). Dialog bayar dan `.sat__*` milik Satu Proyek
-   (satu-kit.css, dimuat halaman ini — jebakan #5).
+   Bayaran Tim (/admin/gaji/tim) — MEJA GAJI.
+
+   Empat benda: RAK amplop (kiri), AMPLOP orang terpilih (bidang uang pejal,
+   tutup segitiga + segel), BUKU UPAH per proyek, dan SLIP yang keluar dari
+   balik amplop. Dialog bayar dan `.sat__*` milik Satu Proyek (satu-kit.css,
+   dimuat halaman ini — jebakan #5).
+
+   Amplop memakai token yang TIDAK berbalik tema (`--kas-bidang`, `--kas-ink`,
+   `--kas-nilai`, `--brand-mint`, `--warn`) — warnanya sama di terang dan
+   gelap, seperti kartu kas Dashboard.
    ============================================================================= */
 
 .byt {
+  /* Seberapa dalam slip terselip di balik amplop (0 = berdiri sendiri). */
+  --byt-selip: 0px;
+  --byt-redup: color-mix(in srgb, var(--kas-ink) 72%, transparent);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas: "rak" "kepala" "buku" "slip";
@@ -15,10 +24,10 @@
 .byt__orangkepala { grid-area: kepala; }
 .byt__buku { grid-area: buku; }
 .byt__slip { grid-area: slip; }
+.byt p { max-width: none; }
 
-/* Empat benda di meja: kartu kit (r16, garis 1px, tanpa bayangan). */
+/* Kartu kit: r16, garis 1px, tanpa bayangan. */
 .byt__rak,
-.byt__orangkepala,
 .byt__buku,
 .byt__slip {
   display: flex;
@@ -29,7 +38,16 @@
   border-radius: 16px;
   background: var(--surface);
 }
-.byt p { max-width: none; }
+
+/* ---- Meteran: dibayar / jatuh tempo / belum tempo -------------------------- */
+.byt__meter { display: flex; overflow: hidden; width: 100%; height: 4px; border-radius: 999px; background: var(--ramp-4); }
+.byt__meter--besar { height: 8px; }
+.byt__meter i { display: block; height: 100%; }
+.byt__meter i + i { box-shadow: -1px 0 0 var(--surface); }
+.m-bayar { background: var(--ramp-1); }
+.m-tempo { background: var(--warn); }
+.m-belum { background: var(--ramp-4); }
+.byt__metersel { display: flex; align-items: center; min-height: 8px; }
 
 /* ---- 1. Rak amplop --------------------------------------------------------- */
 .byt__rak { padding: 16px 16px 8px; }
@@ -37,40 +55,34 @@
 .byt__rakkepala h2 { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); }
 .byt__rakkepala span { font-size: var(--k-t12); color: var(--text-muted); }
 
-/* Jumlah seluruh tim: satu ubin mint, angka penuh, meteran yang sama
-   dengan tiap amplop di bawahnya. */
-.byt__timtotal {
+/* Ubin ringkas: gajian bulan berjalan, lalu fee proyek terutang. */
+.byt__ringkas {
   display: flex;
   flex-direction: column;
-  gap: 2px;
   margin-top: 12px;
-  padding: 14px 14px 12px;
   border-radius: 12px;
   background: var(--brand-soft);
 }
+.byt__gajian,
+.byt__timtotal { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; }
+.byt__timtotal { border-top: 1px dashed color-mix(in srgb, var(--text-muted) 45%, transparent); }
+.byt__gajiankepala { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0; }
+.byt__gajiankepala small,
 .byt__timtotal > small { font-size: var(--k-t12); color: var(--text-body); }
-.byt__timtotal > b { font-size: var(--k-h5); font-weight: var(--k-bold); line-height: 1.25; color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.byt__timtotal .byt__meter { margin: 8px 0 8px; }
-.byt__timtotal dl { display: flex; flex-direction: column; gap: 3px; margin: 0; }
+.byt__gajiankepala span { font-size: var(--k-t11); font-weight: var(--k-semi); color: var(--text-strong); white-space: nowrap; }
+.byt__gajian > b,
+.byt__timtotal > b { font-size: var(--k-t18); font-weight: var(--k-bold); line-height: 1.3; color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Satu ruas per orang bergaji: hijau = gajinya sudah dibayar. */
+.byt__gajianruas { display: flex; gap: 3px; margin-top: 6px; }
+.byt__gajianruas i { flex: 1; height: 8px; border-radius: 3px; background: var(--warn); }
+.byt__gajianruas i.is-lunas { background: var(--ramp-1); }
+.byt__timtotal .byt__meter { margin: 6px 0 8px; }
+.byt__timtotal dl { display: flex; flex-direction: column; gap: 2px; margin: 0; }
 .byt__timtotal dl div { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: var(--k-t12); }
 .byt__timtotal dt { display: inline-flex; align-items: center; gap: 6px; color: var(--text-body); }
-.byt__timtotal dt i,
-.byt__legenda i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.byt__timtotal dt i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
 .byt__timtotal dd { margin: 0; font-weight: var(--k-semi); color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .byt__timtotal .is-tempo dd { color: var(--warn-ink); }
-
-/* Meteran dibayar / jatuh tempo / belum tempo. */
-.byt__meter {
-  display: flex;
-  overflow: hidden;
-  width: 100%;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--ramp-4);
-}
-.byt__meter--besar { height: 8px; }
-.byt__meter i { display: block; height: 100%; }
-.byt__meter i + i { box-shadow: -1px 0 0 var(--surface); }
 
 .byt__galat {
   display: flex;
@@ -101,15 +113,9 @@
   cursor: pointer;
 }
 
-.byt__amplop {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 10px -8px 0;
-  padding: 0 0 8px;
-  list-style: none;
-}
+.byt__amplop { display: flex; flex-direction: column; gap: 2px; margin: 10px -8px 0; padding: 0 0 8px; list-style: none; }
 .byt__orang {
+  position: relative;
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) auto;
   grid-template-areas: "av isi kanan" "av meter meter";
@@ -130,8 +136,6 @@
   cursor: pointer;
 }
 .byt__orang:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
-/* Amplop yang dibuka: bidang mint + lidah 3px di tepi kiri. */
-.byt__orang[aria-current="true"] { background-color: var(--brand-soft); box-shadow: inset 3px 0 0 var(--ramp-1); }
 .byt__orang .k-avatar { grid-area: av; align-self: start; }
 .byt__orangisi { grid-area: isi; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .byt__orangisi b,
@@ -143,72 +147,162 @@
 .byt__orangkanan small { font-size: var(--k-t11); color: var(--text-muted); white-space: nowrap; }
 .byt__orangkanan .byt__tempo { font-weight: var(--k-semi); color: var(--warn-ink); }
 .byt__orangkanan .byt__lunas { color: var(--success); }
-.byt__metersel { grid-area: meter; display: flex; align-items: center; height: 8px; }
+.byt__orang .byt__metersel { grid-area: meter; }
 
-/* ---- Kepala orang + riwayat ------------------------------------------------ */
+/* Amplop yang sedang dibuka = amplop besar versi mini: bidang uang pejal,
+   jadi mata langsung menyambungkan baris ini dengan amplop di kanan. */
+.byt__orang[aria-current="true"] { background: var(--kas-bidang); }
+.byt__orang[aria-current="true"] .byt__orangisi b,
+.byt__orang[aria-current="true"] .byt__orangkanan b { color: var(--kas-nilai); }
+.byt__orang[aria-current="true"] .byt__orangisi small,
+.byt__orang[aria-current="true"] .byt__orangkanan small { color: var(--byt-redup); }
+.byt__orang[aria-current="true"] .byt__tempo { color: var(--warn); }
+.byt__orang[aria-current="true"] .byt__lunas { color: var(--brand-mint); }
+.byt__orang[aria-current="true"] .k-avatar { box-shadow: 0 0 0 2px var(--brand-mint); }
+
+/* Meteran di atas bidang uang: mint/amber/garis tipis kas-ink. */
+.byt__orang[aria-current="true"] .byt__meter,
+.byt__orangkepala .byt__meter { background: color-mix(in srgb, var(--kas-ink) 22%, transparent); }
+.byt__orang[aria-current="true"] .byt__meter i + i,
+.byt__orangkepala .byt__meter i + i { box-shadow: -1px 0 0 var(--kas-bidang); }
+.byt__orang[aria-current="true"] .m-bayar,
+.byt__orangkepala .m-bayar { background: var(--brand-mint); }
+.byt__orang[aria-current="true"] .m-belum,
+.byt__orangkepala .m-belum { background: color-mix(in srgb, var(--kas-ink) 22%, transparent); }
+
+/* ---- 2. Amplop orang terpilih ---------------------------------------------- */
 .byt__orangkepala {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 16px 24px;
-  padding: 16px 20px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 22px 16px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
 }
-.byt__identitas { display: flex; flex: 0 1 auto; align-items: flex-start; gap: 14px; min-width: 0; }
-.byt__identitas > div { min-width: 0; }
-.byt__identitas h2 { margin: 0; font-size: var(--k-h6); font-weight: var(--k-semi); line-height: 1.2; color: var(--text-strong); }
-.byt__kontak { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; margin: 4px 0 0; font-size: var(--k-t12); color: var(--text-muted); }
-.byt__kontak > * + *::before { content: "·"; margin: 0 6px; color: var(--text-muted); }
-.byt__wa-nomor { display: inline-flex; align-items: center; gap: 4px; color: var(--text-body); font-variant-numeric: tabular-nums; }
-.byt__wa-nomor::before { margin-right: 6px !important; }
-.byt__wa-kosong { color: var(--warn-ink); font-weight: var(--k-semi); text-decoration: underline; text-underline-offset: 2px; }
-.byt__angka { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 12px 0 0; }
-.byt__angka div { display: flex; flex-direction: column; gap: 1px; }
-.byt__angka dt { font-size: var(--k-t11); color: var(--text-muted); }
-.byt__angka dd { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.byt__angka .is-tempo dd { color: var(--warn-ink); }
+/* Tutup amplop: segitiga selebar kartu, ujungnya di bawah segel. */
+.byt__tutup {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 60px;
+  pointer-events: none;
+}
+.byt__tutup path {
+  fill: color-mix(in srgb, var(--kas-ink) 6%, transparent);
+  stroke: color-mix(in srgb, var(--kas-ink) 24%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.byt__amplopatas {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+.byt__identitas { min-width: 0; }
+.byt__amplopkop,
+.byt__isiamplop > small { margin: 0; font-size: var(--k-t10); font-weight: var(--k-semi); letter-spacing: 0.14em; text-transform: uppercase; color: var(--byt-redup); }
+.byt__identitas h2 { margin: 4px 0 0; overflow: hidden; font-size: var(--k-h5); font-weight: var(--k-semi); line-height: 1.2; color: var(--kas-nilai); text-overflow: ellipsis; white-space: nowrap; }
+.byt__kontak { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; margin: 6px 0 0; font-size: var(--k-t12); color: var(--byt-redup); }
+.byt__kontak > * + *::before { content: "·"; margin: 0 6px; }
+.byt__wa-nomor { display: inline-flex; align-items: center; gap: 4px; color: var(--kas-ink); font-variant-numeric: tabular-nums; }
+.byt__wa-kosong { color: var(--warn); font-weight: var(--k-semi); text-decoration: underline; text-underline-offset: 2px; }
+/* Ikon telepon sudah jadi pemisahnya — titik tengah di sini tertinggal di
+   awal baris begitu kontaknya terlipat (1024). */
+.byt__kontak > .byt__wa-nomor::before,
+.byt__kontak > .byt__wa-kosong::before { content: none; }
+.byt__kontak > .byt__wa-nomor,
+.byt__kontak > .byt__wa-kosong { margin-left: 12px; }
 
-/* Dasar 240, tumbuh sampai 400: dengan dasar 380 flex-wrap menurunkannya ke
-   baris kedua di 1366 walaupun sebenarnya muat. */
-.byt__riwayat { display: flex; flex-direction: column; gap: 6px; flex: 1 1 240px; max-width: 400px; min-width: 240px; }
-.byt__riwayatkepala { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: var(--k-t11); color: var(--text-muted); }
+/* Segel: avatar di ujung tutup, berbingkai mint putus-putus seperti segel lak. */
+.byt__segel {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-top: 10px;
+  border-radius: 50%;
+  background: var(--kas-bidang);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--kas-ink) 24%, transparent);
+}
+.byt__segel .k-avatar { width: 52px; height: 52px; font-size: var(--k-t16); outline: 1.5px dashed var(--brand-mint); outline-offset: 3px; }
+
+.byt__isiamplop { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; text-align: right; }
+.byt__isiamplop > b { font-size: var(--k-h4); font-weight: var(--k-bold); line-height: 1.2; color: var(--kas-nilai); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.byt__isirinci { font-size: var(--k-t12); color: var(--byt-redup); white-space: nowrap; }
+.byt__capkecil {
+  margin-top: 4px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--brand-mint) 70%, transparent);
+  border-radius: 999px;
+  font-size: var(--k-t10);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-mint);
+  white-space: nowrap;
+}
+.byt__capkecil.is-belum { border-color: color-mix(in srgb, var(--warn) 70%, transparent); color: var(--warn); }
+
+.byt__amplopbawah {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 28px;
+  padding-top: 14px;
+  border-top: 1px dashed color-mix(in srgb, var(--kas-ink) 22%, transparent);
+}
+.byt__hakorang { display: flex; flex-direction: column; gap: 10px; flex: 1 1 300px; min-width: 0; max-width: 460px; }
+.byt__angka { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; }
+.byt__angka div { display: flex; flex-direction: column; gap: 1px; }
+.byt__angka dt { font-size: var(--k-t11); color: var(--byt-redup); white-space: nowrap; }
+.byt__angka dd { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--kas-nilai); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.byt__angka .is-tempo dt,
+.byt__angka .is-tempo dd { color: var(--warn); }
+
+/* Riwayat dua belas bulan di atas bidang uang — sekaligus pemilih bulan. */
+.byt__riwayat { display: flex; flex-direction: column; gap: 4px; flex: 1 1 240px; max-width: 400px; min-width: 240px; }
+.byt__riwayatkepala { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: var(--k-t11); color: var(--byt-redup); }
 .byt__legenda { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-.byt__legenda i + * , .byt__legenda i:not(:first-child) { margin-left: 6px; }
-.byt__kolom { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; flex: 1; }
+.byt__legenda i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.byt__legenda i:not(:first-child) { margin-left: 6px; }
+.l-gaji { background: color-mix(in srgb, var(--kas-ink) 62%, transparent); }
+.l-fee { background: var(--brand-mint); }
+.byt__kolom { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; }
 .byt__bln {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
-  padding: 6px 0 4px;
+  padding: 5px 0 3px;
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--byt-redup);
   font-family: inherit;
   line-height: 1.2;
   cursor: pointer;
 }
-.byt__bln:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
-.byt__bln[aria-pressed="true"] { background-color: var(--brand-soft); color: var(--text-strong); }
+.byt__bln:hover { background: color-mix(in srgb, var(--kas-ink) 8%, transparent); }
+.byt__bln[aria-pressed="true"] { background: color-mix(in srgb, var(--kas-ink) 14%, transparent); color: var(--kas-nilai); }
 .byt__bln[aria-pressed="true"] small { font-weight: var(--k-bold); }
 .byt__bln small { font-size: var(--k-t10); }
-/* Batang: gaji di bawah, fee di atasnya; tingginya bagian dari bulan
-   terbesar di dua belas bulan itu. */
-.byt__batang {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  width: 12px;
-  height: 52px;
-}
+.byt__bln:focus-visible { outline: 2px solid var(--brand-mint); outline-offset: 1px; box-shadow: none; }
+.byt__batang { position: relative; display: flex; flex-direction: column; justify-content: flex-end; width: 12px; height: 40px; }
 .byt__batang i { display: block; width: 100%; flex: none; border-radius: 2px; }
-.byt__fee { background: var(--ramp-2); }
-.byt__gaji { background: var(--ramp-1); }
-/* Celah 1px di antara gaji dan fee, hanya kalau keduanya ada. */
+.byt__gaji { background: color-mix(in srgb, var(--kas-ink) 62%, transparent); }
+.byt__fee { background: var(--brand-mint); }
+.byt__bln[aria-pressed="true"] .byt__gaji { background: var(--kas-nilai); }
 .byt__fee:not([style*="height: 0%"]) + .byt__gaji:not([style*="height: 0%"]) { margin-top: 1px; }
 .byt__bln.is-kosong .byt__batang::after {
   content: "";
@@ -218,11 +312,11 @@
   width: 6px;
   height: 2px;
   border-radius: 1px;
-  background: var(--border-strong);
+  background: color-mix(in srgb, var(--kas-ink) 35%, transparent);
 }
 /* Gaji bulan itu belum dibayar: satu titik amber di puncak kolom. */
 .byt__belum { position: absolute; top: -2px; left: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
-.byt__bln.is-rangka .byt__batang { height: 52px; border-radius: 3px; background: var(--k-latar); }
+.byt__bln.is-rangka .byt__batang { border-radius: 3px; background: color-mix(in srgb, var(--kas-ink) 10%, transparent); }
 
 /* ---- Kepala kartu bersama -------------------------------------------------- */
 .byt__kartukepala {
@@ -231,14 +325,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px 12px;
-  min-height: 56px;
+  min-height: 52px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--border);
 }
 .byt__kartukepala h3 { margin: 0; font-size: var(--k-t16); font-weight: var(--k-semi); color: var(--text-strong); }
 .byt__kartukepala > span { font-size: var(--k-t12); color: var(--text-muted); }
 
-/* ---- 2. Buku upah ---------------------------------------------------------- */
+/* ---- 3. Buku upah ---------------------------------------------------------- */
 .byt__jalurlist { display: flex; flex-direction: column; margin: 0; padding: 0 20px 4px; list-style: none; }
 .byt__jalur { padding: 14px 0; border-bottom: 1px solid var(--border); }
 .byt__jalur:last-child { border-bottom: 0; }
@@ -247,6 +341,7 @@
 .byt__proyek:hover { text-decoration: underline; text-underline-offset: 2px; }
 .byt__peran { flex: none; padding: 2px 8px; border-radius: 999px; background: var(--brand-soft); font-size: var(--k-t11); font-weight: var(--k-semi); color: var(--text-strong); white-space: nowrap; }
 .byt__hak { flex: none; margin-left: auto; font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.byt__dasar { margin: 3px 0 0; font-size: var(--k-t11); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
 /* Lintasan: dua ruas, lebarnya sebanding nominal tahapnya. */
 .byt__lintas { display: flex; gap: 6px; margin-top: 10px; }
@@ -285,24 +380,20 @@
 .byt__kosong { margin: 0; padding: 20px; font-size: 0.8125rem; line-height: 1.5; color: var(--text-muted); }
 .byt__kosong a { color: var(--text-strong); font-weight: var(--k-semi); }
 
-/* ---- 3. Slip --------------------------------------------------------------- */
-.byt__wujud { width: auto; height: 30px; }
-.byt__wujud .k-segmen__b { padding: 0 10px; }
-.byt__slipisi { display: flex; flex-direction: column; padding: 16px 20px 0; }
-
-/* Kertas slip: bertepi sobek atas-bawah, kop nama studio. */
+/* ---- 4. Slip: kertas yang keluar dari balik amplop --------------------------- */
+.byt__slip { position: relative; z-index: 0; }
+.byt__slipisi { display: flex; flex-direction: column; padding: 0 16px; }
+/* Kertas bertepi sobek di bawah; bagian atasnya terselip di balik amplop. */
 .byt__kertas {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 18px 16px 18px;
+  padding: calc(var(--byt-selip) + 18px) 16px 20px;
   background-color: var(--brand-soft);
-  background-image:
-    radial-gradient(circle at 5px 0, var(--surface) 3.5px, transparent 4px),
-    radial-gradient(circle at 5px 100%, var(--surface) 3.5px, transparent 4px);
-  background-size: 10px 8px, 10px 8px;
-  background-position: 0 0, 0 100%;
+  background-image: radial-gradient(circle at 5px 100%, var(--surface) 3.5px, transparent 4px);
+  background-size: 10px 8px;
+  background-position: 0 100%;
   background-repeat: repeat-x;
 }
 .byt__kop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: var(--k-t10); font-weight: var(--k-semi); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
@@ -340,41 +431,43 @@
 .byt__kertaskosong { margin: 6px 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-body); }
 
 /* Pesan WhatsApp: kalimat yang persis akan dikirim tombol di bawahnya. */
-.byt__obrolan { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--k-latar); }
+.byt__obrolan { display: flex; flex-direction: column; gap: 10px; margin-top: calc(var(--byt-selip) + 12px); padding: 12px; border-radius: 12px; background: var(--k-latar); }
 .byt__ke { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: var(--k-t11); font-weight: var(--k-semi); color: var(--text-body); }
-.byt__gelembung {
-  align-self: flex-end;
-  max-width: 100%;
-  padding: 10px 12px 6px;
-  border-radius: 12px 12px 2px 12px;
-  background: var(--brand-soft);
-  border: 1px solid var(--border);
-}
+.byt__gelembung { align-self: flex-end; max-width: 100%; padding: 10px 12px 6px; border: 1px solid var(--border); border-radius: 12px 12px 2px 12px; background: var(--brand-soft); }
 .byt__gelembung pre { margin: 0; font-family: inherit; font-size: var(--k-t12); line-height: 1.5; color: var(--text-strong); white-space: pre-wrap; overflow-wrap: anywhere; }
 .byt__gelembung small { display: block; margin-top: 4px; font-size: var(--k-t10); color: var(--text-muted); text-align: right; }
 .byt__wa-tanpa { display: flex; gap: 8px; margin: 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-strong); }
 .byt__wa-tanpa svg { flex: none; margin-top: 2px; color: var(--warn-ink); }
 .byt__wa-tanpa a { font-weight: var(--k-semi); color: var(--text-strong); }
 
-.byt__slipaksi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; padding: 16px 20px; }
+.byt__slipaksi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; padding: 14px 16px 16px; }
+.byt__slipaksi .byt__wujud { grid-column: 1 / -1; width: 100%; height: 30px; }
 .byt__slipaksi .k-tombol { width: 100%; justify-content: center; }
+
+/* Kertas ditarik sedikit keluar saat disentuh tetikus — satu-satunya gerak
+   di halaman ini, dan cuma selama kursor di atasnya. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .byt__kertas { transition: transform 160ms ease; }
+  .byt__slipisi:hover .byt__kertas:not(.is-rangka) { transform: translateY(5px); }
+}
 
 /* ---- Kerangka memuat: bentuk meja yang sama, diam ---------------------------- */
 .byt--rangka .rk { display: block; border-radius: 10px; background: var(--k-latar); }
 .byt--rangka .byt__rak { gap: 10px; }
 .rk--a { width: 40%; height: 16px; }
-.rk--b { height: 128px; }
+.rk--b { height: 190px; }
 .rk--c { height: 0; }
 .rk--baris { height: 52px; }
-.byt--rangka .byt__orangkepala { min-height: 137px; }
-.rk--id { flex: 1 1 360px; height: 96px; }
-.rk--riwayat { flex: 0 1 380px; height: 96px; }
+.byt--rangka .byt__orangkepala { min-height: 244px; }
+.byt--rangka .byt__orangkepala .rk { background: color-mix(in srgb, var(--kas-ink) 10%, transparent); }
+.rk--id { width: 40%; height: 64px; }
+.rk--riwayat { height: 72px; margin-top: auto; }
 .byt--rangka .byt__buku { gap: 12px; padding: 20px; }
 .rk--jalur { height: 76px; }
 .byt--rangka .byt__slip { padding: 20px; }
 .rk--kertas { height: 300px; }
 .byt__jalur.is-rangka { display: flex; flex-direction: column; gap: 10px; }
-.byt__jalur.is-rangka i { display: block; height: 14px; width: 50%; border-radius: 6px; background: var(--k-latar); }
+.byt__jalur.is-rangka i { display: block; width: 50%; height: 14px; border-radius: 6px; background: var(--k-latar); }
 .byt__jalur.is-rangka i + i { width: 100%; height: 48px; border-radius: 10px; }
 .byt__kertas.is-rangka { min-height: 240px; }
 .byt__kertas.is-rangka i { display: block; height: 14px; border-radius: 6px; background: var(--surface); }
@@ -388,12 +481,15 @@
     align-items: start;
   }
 }
-/* Laptop: meja utuh — rak | buku | slip, kepala orang di atas keduanya. */
+/* Laptop: meja utuh — rak | buku | slip, amplop di atas keduanya, dan slip
+   terselip di balik amplop. */
 @media (min-width: 1288.02px) {
   .byt {
+    --byt-selip: 30px;
     grid-template-columns: 280px minmax(0, 1fr) 330px;
     grid-template-areas: "rak kepala kepala" "rak buku slip";
   }
+  .byt__slip { margin-top: calc(-16px - var(--byt-selip)); }
 }
 @media (min-width: 1408.02px) {
   .byt { grid-template-columns: 296px minmax(0, 1fr) 344px; }
@@ -406,19 +502,21 @@
   .byt__amplop,
   .byt__jalurlist,
   .byt__slipisi { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-  .byt__slipisi { padding-bottom: 4px; }
   .byt__slipaksi { margin-top: 0; padding-top: 12px; border-top: 1px solid var(--border); }
 }
 
-/* Ponsel: lintasan tahap bertumpuk, riwayat selebar penuh. */
+/* Ponsel & tablet tegak: amplop bertumpuk — segel di atas, isi di bawahnya. */
 @media (max-width: 40rem) {
   .byt__orangkepala { padding: 16px; }
+  .byt__amplopatas { grid-template-columns: minmax(0, 1fr) 64px; }
+  .byt__isiamplop { grid-column: 1 / -1; align-items: flex-start; text-align: left; }
+  .byt__tutup { display: none; }
+  .byt__segel { margin-top: 0; }
   .byt__riwayat { flex-basis: 100%; max-width: none; min-width: 0; }
   .byt__lintas { flex-direction: column; }
   .byt__ruas { min-width: 0; }
-  .byt__jalurlist, .byt__slipisi { padding-left: 16px; padding-right: 16px; }
+  .byt__jalurlist { padding-left: 16px; padding-right: 16px; }
   .byt__kartukepala { padding: 12px 16px; }
-  .byt__slipaksi { padding: 16px; }
 }
 
 /* Wilayah toast Radix menelan tinggi halaman satu-layar (jebakan #69). */
