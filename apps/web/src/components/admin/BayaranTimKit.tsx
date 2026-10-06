@@ -40,6 +40,7 @@ import {
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 import { keteranganFee, unduhSlipGaji } from "../../lib/pdfProyek";
+import { terbilang } from "../../lib/terbilang";
 import { BULAN, BULAN_PENDEK } from "./frame25";
 import { DialogBayar, SYARAT, type PilihanBayar } from "./timProyekKit";
 
@@ -79,6 +80,13 @@ const tanggalTanpaTahun = (iso: string) => {
   return `${h} ${BULAN_PENDEK[(b ?? 1) - 1]}`;
 };
 const BULAN_INI = kunciBulan(new Date());
+
+/** Nomor amplop/slip: "GJ-2610-BP" = gaji, tahun-bulan, inisial penerima.
+ *  Diturunkan dari data (bulan + nama), bukan nomor urut karangan. */
+function nomorAmplop(nama: string, period: string): string {
+  const inisial = nama.split(/\s+/).filter(Boolean).slice(0, 2).map((k) => k[0]!.toUpperCase()).join("") || "X";
+  return `GJ-${period.slice(2, 4)}${period.slice(5, 7)}-${inisial}`;
+}
 
 /** Nomor Indonesia untuk wa.me: "0812-3456-7890" / "+62 812…" → "62812…". */
 export function nomorWa(telepon: string | null | undefined): string | null {
@@ -342,6 +350,9 @@ function Isi() {
     [tugas],
   );
   const maksRiwayat = Math.max(1, ...(riwayat ?? []).map((m) => m.total));
+  /* Rata-rata dua belas bulan (bulan kosong ikut dihitung — itu memang
+     bulan tanpa bayaran). Digambar sebagai garis putus di atas batang. */
+  const rataRiwayat = riwayat && riwayat.length ? riwayat.reduce((n, m) => n + m.total, 0) / riwayat.length : 0;
   const ketBagian = (judul: string, b: Bagian) =>
     ket(() => ({
       judul,
@@ -492,7 +503,9 @@ function Isi() {
         </svg>
         <div className="byt__amplopatas">
           <div className="byt__identitas">
-            <p className="byt__amplopkop">Amplop gaji</p>
+            <p className="byt__amplopkop">
+              Amplop gaji{aktif ? <> · <span className="byt__nomor">No. {nomorAmplop(aktif.nama, bulan)}</span></> : null}
+            </p>
             <h2>{aktif?.nama ?? "—"}</h2>
             <p className="byt__kontak">
               <span>{aktif?.anggota?.role ?? (aktif?.anggota ? LABEL_JENIS_ANGGOTA[aktif.anggota.kind] : "")}</span>
@@ -546,13 +559,20 @@ function Isi() {
 
           <div className="byt__riwayat">
             <div className="byt__riwayatkepala">
-              <span>12 bulan terakhir — pilih bulan slip</span>
+              <span>12 bulan · rata-rata <b>{riwayat ? formatRupiah(Math.round(rataRiwayat)) : "—"}</b></span>
               <span className="byt__legenda">
                 <i className="l-gaji" />Gaji
                 <i className="l-fee" />Fee
+                <i className="l-rata" />Rata-rata
               </span>
             </div>
-            <div className="byt__kolom" role="group" aria-label="Pilih bulan slip">
+            <div
+              className="byt__kolom"
+              role="group"
+              aria-label="Pilih bulan slip"
+              style={{ ["--byt-rata" as string]: `${(rataRiwayat / maksRiwayat) * 40}px` }}
+            >
+              {riwayat && rataRiwayat > 0 && <span className="byt__rata" aria-hidden="true" />}
               {(riwayat ?? Array.from({ length: 12 }, () => null)).map((m, i) => {
                 if (!m) return <span key={i} className="byt__bln is-rangka"><span className="byt__batang" /><small>&nbsp;</small></span>;
                 const tinggi = (n: number) => `${(n / maksRiwayat) * 100}%`;
@@ -644,9 +664,9 @@ function Isi() {
             <div className="byt__kertas">
               <div className="byt__kop">
                 <b>{studio ?? "Slip gaji"}</b>
-                <span>{namaBulan}</span>
+                <span>No. {nomorAmplop(slip.name, bulan)}</span>
               </div>
-              <p className="byt__kopnama">Slip gaji · {slip.name}{slip.role ? ` · ${slip.role}` : ""}</p>
+              <p className="byt__kopnama">Slip gaji {namaBulan} · {slip.name}</p>
               {kosongSlip ? (
                 <p className="byt__kertaskosong">Tidak ada gaji maupun fee atas nama {slip.name} di {namaBulan}.</p>
               ) : (
@@ -672,25 +692,35 @@ function Isi() {
                     ))}
                   </ul>
                   <dl className="byt__jumlah">
-                    <div>
-                      <dt>Gaji pokok</dt>
-                      <dd>{formatRupiah(slip.salaryAmount)}</dd>
-                    </div>
-                    <div>
-                      <dt>Fee proyek</dt>
-                      <dd>{formatRupiah(slip.feeAmount)}</dd>
-                    </div>
                     <div className="byt__grand">
-                      <dt>Total</dt>
+                      <dt>Total diterima</dt>
                       <dd>{formatRupiah(slip.total)}</dd>
                     </div>
                   </dl>
-                  {/* Cap: keadaan gaji SUNGGUHAN bulan itu, bukan hiasan. */}
-                  {slip.salary && (
-                    <span className={`byt__cap${slip.salary.paidOn ? "" : " byt__cap--belum"}`}>
-                      {slip.salary.paidOn ? `Gaji dibayar ${tanggalPendek(slip.salary.paidOn)}` : "Gaji belum dibayar"}
-                    </span>
-                  )}
+                  {/* Terbilang — seperti kuitansi: angka yang tidak bisa diubah
+                      dengan menambah satu digit. */}
+                  <p className="byt__terbilang">
+                    <span>Terbilang</span> {terbilang(slip.total)}
+                  </p>
+                  <div className="byt__ttd">
+                    <div>
+                      <small>Dibayar oleh</small>
+                      <i />
+                      <b>{studio ?? "Studio"}</b>
+                      {/* Cap: keadaan gaji SUNGGUHAN bulan itu, dibubuhkan di
+                          atas kolom pembayar seperti cap di slip kertas. */}
+                      {slip.salary && (
+                        <span className={`byt__cap${slip.salary.paidOn ? "" : " byt__cap--belum"}`}>
+                          {slip.salary.paidOn ? `Dibayar ${tanggalPendek(slip.salary.paidOn)}` : "Belum dibayar"}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <small>Diterima oleh</small>
+                      <i />
+                      <b>{slip.name}</b>
+                    </div>
+                  </div>
                 </>
               )}
             </div>
