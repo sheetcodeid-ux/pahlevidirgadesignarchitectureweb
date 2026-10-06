@@ -1,11 +1,12 @@
 ---
 import KitLayout from "../../layouts/KitLayout.astro";
 import { FeeKit } from "../../components/admin/FeeKit";
+/* fee-kit.css masih membawa pemilih teks (`fee__pilihteks`) milik frame 25. */
 import "../../styles/fee-kit.css";
+import "../../styles/lemari-kit.css";
 
-/* Halaman KEDELAPAN yang pindah ke kit (P4), mengikuti frame Figma
-   "25. Investments". Menggantikan FeePanel: tetap cuma MEMBACA — fee diketik
-   di Keuangan → Catat Pengeluaran. */
+/* Fee Proyek — LEMARI LACI GAMBAR: satu laci per proyek. Tetap cuma
+   MEMBACA — fee diketik di Keuangan atau lewat tombol Bayar di Satu Proyek. */
 ---
 
 <KitLayout title="Fee Proyek" judul="Fee Proyek">

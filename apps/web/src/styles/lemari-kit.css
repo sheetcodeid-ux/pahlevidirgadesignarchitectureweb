@@ -1,0 +1,830 @@
+/* =============================================================================
+   Fee Proyek (/admin/fee) — LEMARI LACI GAMBAR.
+
+   Lemari dan rak kartu memakai bidang uang kit (`--kas-bidang`) yang TIDAK
+   berbalik tema, dan semua "kertas" di atasnya — label laci, map di dalam
+   laci, kartu di rak — memakai `--kas-ink` yang juga tetap. Jadi benda-benda
+   ini terlihat sama di kedua tema, seperti kartu kas di Dashboard; yang
+   berbalik cuma bilah di atasnya (yang duduk di panel halaman).
+
+   Hiasan tidak pernah lewat di belakang tulisan (jebakan #70): mistar laci
+   duduk di pitanya sendiri di bawah teks porsi, pegangan punya kolomnya
+   sendiri, garis rata-rata pita bulan berhenti di atas label bulan.
+   ============================================================================= */
+
+.lmr {
+  --lmr-rak: 320px;
+  --lmr-muka: 50px;
+  --lmr-celah: 4px;
+  /* Satu warna per jenis penerima, di atas bidang hijau tua. */
+  --lmr-partner: var(--kas-ink);
+  --lmr-inti: var(--brand-mint);
+  --lmr-proyek: color-mix(in srgb, var(--kas-ink) 56%, var(--kas-bidang));
+  --lmr-staf: color-mix(in srgb, var(--brand-mint) 46%, var(--kas-bidang));
+  --lmr-tanpa: var(--warn);
+  --lmr-arsir: repeating-linear-gradient(135deg, var(--warn) 0 3px, color-mix(in srgb, var(--warn) 30%, transparent) 3px 6px);
+  /* Muka laci sedikit lebih terang dari badan lemari — celah antarlaci
+     memperlihatkan badannya. */
+  --lmr-muka-bg: color-mix(in srgb, var(--kas-ink) 8%, var(--kas-bidang));
+  --lmr-muka-hover: color-mix(in srgb, var(--kas-ink) 12%, var(--kas-bidang));
+  --lmr-redup: color-mix(in srgb, var(--kas-ink) 70%, transparent);
+  --lmr-garis: color-mix(in srgb, var(--kas-ink) 18%, transparent);
+  /* Kertas tetap (label, map, kartu): terang di kedua tema. */
+  --lmr-kertas: var(--kas-ink);
+  --lmr-tinta: var(--kas-bidang);
+  --lmr-tinta-redup: color-mix(in srgb, var(--kas-bidang) 72%, var(--kas-ink));
+  --lmr-gerak: 460ms cubic-bezier(0.22, 1, 0.36, 1);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--lmr-rak);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "bilah bilah" "lemari rak";
+  gap: 12px 16px;
+  min-width: 0;
+}
+.lmr p { max-width: none; margin: 0; }
+
+/* ---- Bilah atas ------------------------------------------------------------ */
+.lmr__bilah {
+  grid-area: bilah;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  min-height: 34px;
+}
+.lmr__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--k-t12);
+  line-height: 1;
+  color: var(--text-muted);
+}
+.lmr__legenda li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+/* Kotak gelap kecil berisi titik warna — warnanya dibuat untuk bidang hijau
+   tua, jadi legendanya ikut membawa bidang itu. */
+.lmr__titikwarna {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--kas-bidang);
+}
+.lmr__titikwarna::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 2px;
+  background: var(--lmr-w);
+}
+.lmr__titikwarna--tanpa::after { background: var(--lmr-arsir); }
+.lmr__kontrol { display: flex; align-items: center; gap: 12px; }
+.lmr__urut { margin-right: 0; }
+
+/* ---- Lemari ------------------------------------------------------------------ */
+.lmr__lemari {
+  grid-area: lemari;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 16px;
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
+}
+
+/* Kop lemari: plat nama + pita 12 bulan. Lis di bawahnya memisahkan kop
+   dari laci-laci, seperti papan atas lemari gambar. */
+.lmr__kop {
+  flex: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 28px;
+  margin: 0 12px;
+  padding: 12px 6px 10px;
+  border-bottom: 1px solid var(--lmr-garis);
+}
+.lmr__plat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--kas-ink) 30%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--kas-ink) 5%, transparent);
+}
+.lmr__alis {
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.09em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--lmr-redup);
+}
+.lmr__total { display: flex; align-items: baseline; line-height: 1; white-space: nowrap; }
+.lmr__total b { font-size: 26px; font-weight: var(--k-bold); letter-spacing: -0.01em; color: var(--kas-nilai); }
+.lmr__total > span:not(.rk) { font-size: var(--k-t18); color: var(--lmr-redup); }
+.lmr__sub { font-size: var(--k-t11); line-height: 1.2; color: var(--lmr-redup); white-space: nowrap; }
+
+.lmr__pita { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lmr__pitajudul {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--k-t11);
+  line-height: 1;
+  color: var(--lmr-redup);
+  white-space: nowrap;
+}
+.lmr__pitajudul > span:first-child {
+  font-weight: var(--k-semi);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: var(--k-t10);
+}
+.lmr__pitajudul b { font-weight: var(--k-semi); color: var(--kas-nilai); }
+.lmr__pitabatang {
+  --lmr-pita-h: 40px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex: 1;
+  min-height: calc(var(--lmr-pita-h) + 16px);
+}
+.lmr__bln {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  height: 100%;
+  cursor: default;
+}
+.lmr__bln i {
+  display: block;
+  width: 100%;
+  max-width: 26px;
+  height: max(2px, calc(var(--lmr-t) * var(--lmr-pita-h)));
+  border-radius: 3px 3px 1px 1px;
+  background: color-mix(in srgb, var(--kas-ink) 34%, transparent);
+  transition: background-color 150ms;
+}
+.lmr__bln small {
+  font-size: 9.5px;
+  line-height: 10px;
+  color: var(--lmr-redup);
+}
+.lmr__bln.is-kini i { background: var(--brand-mint); }
+.lmr__bln.is-kini small { color: var(--brand-mint); font-weight: var(--k-semi); }
+.lmr__bln:hover i { background: color-mix(in srgb, var(--kas-ink) 62%, transparent); }
+.lmr__bln.is-kini:hover i { background: var(--brand-mint-hover); }
+/* Garis rata-rata: berhenti di atas label bulan (14px dari dasar). */
+.lmr__rata {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(14px + var(--lmr-t) * var(--lmr-pita-h));
+  border-top: 1px dashed color-mix(in srgb, var(--brand-mint) 70%, transparent);
+  pointer-events: none;
+}
+
+/* ---- Laci-laci ---------------------------------------------------------------- */
+.lmr__laci-laci {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lmr-celah);
+  flex: 1;
+  min-height: 0;
+  padding: 10px 12px 6px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--kas-ink) 24%, transparent) transparent;
+}
+.lmr__laci { flex: none; display: flex; flex-direction: column; }
+.lmr__laci--rangka {
+  height: var(--lmr-muka);
+  border-radius: 8px;
+  background: var(--lmr-muka-bg);
+}
+
+.lmr__muka {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4px 248px 64px minmax(0, 1fr) 168px;
+  align-items: center;
+  gap: 16px;
+  height: var(--lmr-muka);
+  padding: 0 18px 0 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--kas-ink) 14%, transparent);
+  border-radius: 8px;
+  background: var(--lmr-muka-bg);
+  color: var(--kas-ink);
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.lmr__muka:hover { background: var(--lmr-muka-hover); }
+.lmr__muka:focus-visible { outline: 2px solid var(--brand-mint); outline-offset: 2px; box-shadow: none; }
+.lmr__muka > * { transition: opacity 160ms; }
+.lmr__laci.is-redup .lmr__muka > *:not(.lmr__tepi) { opacity: 0.4; }
+
+/* Tepi kiri: mint saat laci ditarik atau saat orang yang disorot dibayar
+   di laci ini. */
+.lmr__tepi {
+  align-self: stretch;
+  margin: 10px 0;
+  border-radius: 0 3px 3px 0;
+  background: transparent;
+  transition: background-color 160ms;
+}
+.lmr__laci.is-buka .lmr__tepi,
+.lmr__laci.is-punya .lmr__tepi { background: var(--brand-mint); }
+
+/* Tempat label berbingkai: bingkai logam + kartu kertas di dalamnya. */
+.lmr__bingkai {
+  display: flex;
+  min-width: 0;
+  padding: 3px;
+  border: 1.5px solid color-mix(in srgb, var(--kas-ink) 42%, transparent);
+  border-radius: 5px;
+}
+.lmr__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 9px 5px;
+  border-radius: 2px;
+  background: var(--lmr-kertas);
+  color: var(--lmr-tinta);
+}
+.lmr__labelno {
+  font-size: 9px;
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--lmr-tinta-redup);
+}
+.lmr__labeljudul {
+  overflow: hidden;
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lmr__labelket {
+  overflow: hidden;
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--lmr-tinta-redup);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lmr__laci.is-buka .lmr__label { background: color-mix(in srgb, var(--brand-mint) 42%, var(--lmr-kertas)); }
+
+/* Pegangan tarik: batang di atas dua kaki. Turun 2px saat laci ditarik. */
+.lmr__pegangan { display: flex; justify-content: center; }
+.lmr__pegangan i {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 11px;
+  border: 2px solid color-mix(in srgb, var(--kas-ink) 52%, transparent);
+  border-top-width: 0;
+  border-radius: 0 0 6px 6px;
+  transition: transform var(--lmr-gerak), border-color 150ms;
+}
+.lmr__pegangan i::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  bottom: -2px;
+  height: 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--kas-ink) 52%, transparent);
+  transition: background-color 150ms;
+}
+.lmr__muka:hover .lmr__pegangan i,
+.lmr__laci.is-buka .lmr__pegangan i { border-color: var(--brand-mint); }
+.lmr__muka:hover .lmr__pegangan i::before,
+.lmr__laci.is-buka .lmr__pegangan i::before { background: var(--brand-mint); }
+.lmr__laci.is-buka .lmr__pegangan i { transform: translateY(2px); }
+
+/* Mistar porsi: teks di atas, mistar di pitanya sendiri di bawah. */
+.lmr__ukur { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.lmr__ukurteks {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  font-size: var(--k-t11);
+  line-height: 1;
+  color: var(--lmr-redup);
+  white-space: nowrap;
+}
+.lmr__ukurteks b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--kas-nilai); }
+.lmr__ukurorang { overflow: hidden; text-overflow: ellipsis; }
+.lmr__ukurorang em { font-style: normal; color: var(--warn); }
+.lmr__ukurkosong { color: var(--warn); }
+.lmr__mistar {
+  position: relative;
+  height: 10px;
+  margin-bottom: 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--kas-bidang) 100%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kas-ink) 12%, transparent);
+}
+/* Strip skala di BAWAH mistar: garis tiap 10%, garis panjang tiap 50%. */
+.lmr__mistar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  height: 4px;
+  background:
+    linear-gradient(to right, color-mix(in srgb, var(--kas-ink) 40%, transparent) 1px, transparent 1px) 0 0 / 50% 4px repeat-x,
+    linear-gradient(to right, color-mix(in srgb, var(--kas-ink) 22%, transparent) 1px, transparent 1px) 0 0 / 10% 2px repeat-x;
+  pointer-events: none;
+}
+.lmr__mistar.is-kosong {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn) 60%, transparent);
+}
+.lmr__ruas {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  border-right: 1px solid var(--kas-bidang);
+  transition: opacity 160ms, filter 160ms;
+}
+.lmr__ruas:first-child { border-radius: 2px 0 0 2px; }
+.lmr__ruas.is-tanpa { background: var(--lmr-arsir); }
+.lmr__ruas.is-pudar { opacity: 0.25; }
+.lmr__lewat {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  translate: 0 -50%;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--warn);
+  color: var(--kas-bidang);
+  font-size: 9px;
+  font-weight: var(--k-semi);
+  line-height: 10px;
+}
+
+.lmr__jumlah {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+.lmr__jumlah b { font-size: var(--k-t16); font-weight: var(--k-bold); color: var(--kas-nilai); }
+.lmr__jumlah span { font-size: var(--k-t10); color: var(--lmr-redup); }
+.lmr__laci.is-buka .lmr__jumlah b { color: var(--brand-mint); }
+
+/* ---- Laci yang ditarik ---------------------------------------------------------
+   Isinya muncul DI ATAS muka laci: muka bergerak turun mendekati pembaca,
+   dan dasar laci yang tadinya terlihat miring dari depan rebah ke datar. */
+.lmr__baki {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--lmr-gerak);
+}
+.lmr__laci.is-buka .lmr__baki { grid-template-rows: 1fr; }
+.lmr__bakidalam { min-height: 0; overflow: hidden; }
+.lmr__dasar {
+  position: relative;
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: 12px;
+  height: clamp(172px, calc(var(--lmr-ruang, 640px) - var(--lmr-n) * (var(--lmr-muka) + var(--lmr-celah)) - 20px), 320px);
+  margin: 2px 10px 0;
+  padding: 16px 12px 10px;
+  border: 1px solid var(--lmr-garis);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background:
+    linear-gradient(to bottom, color-mix(in srgb, var(--kas-bidang) 70%, transparent), transparent 14px),
+    color-mix(in srgb, var(--kas-ink) 15%, var(--kas-bidang));
+  transform-origin: 50% 100%;
+  transition: transform var(--lmr-gerak);
+}
+.lmr__laci:not(.is-buka) .lmr__dasar { transform: perspective(900px) rotateX(38deg); }
+
+.lmr__catatan {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 0;
+  padding: 9px 11px 10px;
+  border-radius: 6px;
+  background: var(--lmr-kertas);
+  color: var(--lmr-tinta);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.lmr__catatanjudul {
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--lmr-tinta-redup);
+}
+.lmr__catatan dl { display: flex; flex-direction: column; gap: 5px; margin: 0; }
+.lmr__catatan dl > div { display: flex; justify-content: space-between; gap: 8px; font-size: var(--k-t11); line-height: 1.1; }
+.lmr__catatan dt { color: var(--lmr-tinta-redup); }
+.lmr__catatan dd { margin: 0; font-weight: var(--k-semi); white-space: nowrap; }
+.lmr__catatan .lmr__garisbuku { padding-top: 5px; border-top: 1px dashed color-mix(in srgb, var(--kas-bidang) 30%, transparent); }
+.lmr__catatan .is-tempo dd,
+.lmr__catatan .is-tanpa dd { padding: 1px 5px; border-radius: 4px; background: var(--warn); color: var(--kas-bidang); }
+.lmr__catatan .is-tanpa dt { display: inline-flex; align-items: center; gap: 5px; }
+/* Arsir amber cuma di kotak kecil di DEPAN label — bukan di belakang angka. */
+.lmr__catatan .is-tanpa dt::before { content: ""; flex: none; width: 9px; height: 9px; border-radius: 2px; background: var(--lmr-arsir); }
+.lmr__catatanket { font-size: var(--k-t10); line-height: 1.2; color: var(--lmr-tinta-redup); }
+.lmr__buka {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: auto;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 150ms, color 150ms;
+}
+.lmr__buka:hover { background: var(--brand-mint); color: var(--kas-bidang); }
+.lmr__buka:focus-visible { outline: 2px solid var(--kas-bidang); outline-offset: 2px; box-shadow: none; }
+
+/* Map per penerima: kertas dengan tab bernama di atasnya. */
+.lmr__map-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  align-content: start;
+  gap: 20px 10px;
+  min-height: 0;
+  padding: 14px 4px 14px 0;
+  /* Map yang lebih banyak dari tinggi laci menggulir di dalam laci; tepi
+     bawahnya memudar supaya baris yang terpotong terbaca "masih ada". */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--kas-ink) 24%, transparent) transparent;
+}
+.lmr__map {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 0 7px 7px 7px;
+  background: var(--lmr-kertas);
+  color: var(--lmr-tinta);
+  transition: opacity 160ms, transform 200ms;
+}
+.lmr__maptab {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  display: flex;
+  max-width: 82%;
+  height: 16px;
+  padding: 0 10px;
+  border-radius: 6px 6px 0 0;
+  background: var(--lmr-w);
+  color: var(--kas-bidang);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  line-height: 16px;
+}
+.lmr__maptab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Partner warnanya sama dengan kertasnya — tab menyatu dengan mapnya,
+   seperti map polos. Garis tipis memisahkan supaya tetap terbaca sebagai tab. */
+.lmr__map .lmr__maptab { box-shadow: inset 0 1px 0 color-mix(in srgb, var(--kas-bidang) 10%, transparent); }
+.lmr__mapisi { display: flex; flex-direction: column; gap: 4px; padding: 7px 10px 8px; }
+.lmr__mapperan {
+  overflow: hidden;
+  font-size: var(--k-t10);
+  line-height: 1.15;
+  color: var(--lmr-tinta-redup);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lmr__mapnilai { font-size: var(--k-t14); font-weight: var(--k-bold); line-height: 1; letter-spacing: -0.005em; }
+.lmr__mapket { font-size: var(--k-t10); line-height: 1.15; color: var(--lmr-tinta-redup); }
+.lmr__map.is-pudar { opacity: 0.4; }
+.lmr__map.is-nyala { transform: translateY(-3px); }
+.lmr__tahap { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 0; padding: 0; list-style: none; }
+.lmr__tahap li {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: var(--k-semi);
+  line-height: 12px;
+  white-space: nowrap;
+}
+.lmr__tahap .is-dibayar { background: color-mix(in srgb, var(--brand-mint) 70%, var(--lmr-kertas)); color: var(--kas-bidang); }
+.lmr__tahap .is-jatuh_tempo { background: var(--warn); color: var(--kas-bidang); }
+.lmr__tahap .is-menunggu { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kas-bidang) 40%, transparent); color: var(--lmr-tinta-redup); }
+.lmr__tahap .is-belum_ditentukan { border: 1px dashed color-mix(in srgb, var(--kas-bidang) 40%, transparent); color: var(--lmr-tinta-redup); }
+
+.lmr__bakikosong,
+.lmr__kosong {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px;
+  font-size: var(--k-t12);
+  color: var(--kas-ink);
+}
+.lmr__kosong { margin: auto; align-items: center; text-align: center; }
+.lmr__kosongket { max-width: 44ch !important; font-size: var(--k-t11); color: var(--lmr-redup); }
+.lmr__coba {
+  padding: 7px 12px;
+  border: 1px solid var(--lmr-garis);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--kas-ink);
+  font: inherit;
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  cursor: pointer;
+}
+.lmr__coba:hover { background: var(--brand-mint); color: var(--kas-bidang); }
+
+/* Map meletak satu per satu — hanya pada tarikan baru, sekali. */
+@media (prefers-reduced-motion: no-preference) {
+  .lmr__dasar.is-baru .lmr__map,
+  .lmr__dasar.is-baru .lmr__catatan {
+    animation: lmr-letak 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(140ms + var(--lmr-i, 0) * 45ms);
+  }
+}
+@keyframes lmr-letak {
+  from { opacity: 0; transform: translateY(-12px) rotate(-1.2deg); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lmr__baki, .lmr__dasar, .lmr__pegangan i { transition: none; }
+}
+
+/* Alas lemari: lis bawah dengan dua kaki yang menggantung darinya. */
+.lmr__alas {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  height: 12px;
+  margin: 0 12px;
+  padding: 0 34px;
+  border-top: 2px solid color-mix(in srgb, var(--kas-ink) 16%, transparent);
+}
+.lmr__alas span {
+  width: 30px;
+  height: 6px;
+  border-radius: 0 0 3px 3px;
+  background: color-mix(in srgb, var(--kas-ink) 16%, transparent);
+}
+
+/* ---- Rak kartu penerima ----------------------------------------------------------- */
+.lmr__rak {
+  grid-area: rak;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 14px 10px;
+  border-radius: 16px;
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
+}
+.lmr__rakkepala { flex: none; display: flex; flex-direction: column; gap: 11px; padding: 0 2px; }
+.lmr__rakjudul {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--k-t14);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--kas-nilai);
+}
+.lmr__rakjudul span { font-size: var(--k-t11); font-weight: 400; color: var(--lmr-redup); }
+.lmr__porsijenis { display: flex; gap: 2px; height: 10px; border-radius: 5px; overflow: hidden; }
+.lmr__porsijenis span { flex-basis: 0; min-width: 4px; }
+.lmr__porsijenis span.is-tanpa { background: var(--lmr-arsir); }
+.lmr__rakisi {
+  flex: 1;
+  min-height: 0;
+  margin-top: 4px;
+  padding: 0 10px 0 2px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--kas-ink) 24%, transparent) transparent;
+}
+.lmr__rakkosong { padding: 18px 2px; font-size: var(--k-t12); color: var(--lmr-redup); }
+.lmr__sekat {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 7px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed var(--lmr-garis);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.07em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--lmr-redup);
+}
+.lmr__sekat span:last-child { letter-spacing: 0; text-transform: none; font-weight: 400; white-space: nowrap; }
+
+/* Kartu: kantong gelap di kiri (ikon jenis), kertas menyembul darinya. */
+.lmr__kartu {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  width: 100%;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 160ms;
+}
+.lmr__kartu:focus-visible { outline: 2px solid var(--brand-mint); outline-offset: 2px; border-radius: 7px; box-shadow: none; }
+.lmr__kantong {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--lmr-garis);
+  border-right: 0;
+  border-radius: 7px 0 0 7px;
+  background: color-mix(in srgb, var(--kas-ink) 10%, var(--kas-bidang));
+  color: var(--lmr-w);
+  transition: background-color 160ms, color 160ms;
+}
+.lmr__kartu[aria-pressed="true"] .lmr__kantong { background: var(--brand-mint); color: var(--kas-bidang); }
+.lmr__kertas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 7px 10px 7px;
+  border-radius: 0 7px 7px 0;
+  background: var(--lmr-kertas);
+  color: var(--lmr-tinta);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lmr__kartuatas { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; line-height: 1.1; }
+.lmr__kartuatas b { overflow: hidden; font-size: var(--k-t12); font-weight: var(--k-semi); text-overflow: ellipsis; white-space: nowrap; }
+.lmr__kartuatas span { flex: none; font-size: var(--k-t12); font-weight: var(--k-bold); }
+.lmr__kartuket {
+  overflow: hidden;
+  font-size: var(--k-t10);
+  line-height: 1.15;
+  color: var(--lmr-tinta-redup);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Lubang skala kartu: bagian orang ini dari penerima terbesar. */
+.lmr__lubang {
+  display: block;
+  height: 4px;
+  margin-top: 1px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--kas-bidang) 14%, var(--lmr-kertas));
+  overflow: hidden;
+}
+.lmr__lubang i { display: block; width: calc(var(--lmr-t) * 100%); height: 100%; border-radius: 2px; background: var(--kas-bidang); }
+.lmr__kartu.is-tarik .lmr__kertas { transform: translateX(7px); }
+/* Kartu tanpa nama: bukan tombol, kantong amber. */
+.lmr__kartu--tanpa { cursor: default; }
+.lmr__kartu--tanpa .lmr__kantong { background: var(--warn); color: var(--kas-bidang); border-color: var(--warn); }
+.lmr__kartu.is-redup { opacity: 0.42; }
+@media (prefers-reduced-motion: reduce) {
+  .lmr__kertas { transition: none; }
+}
+
+/* ---- Kerangka memuat -------------------------------------------------------------- */
+.lmr--rangka .lmr__rak { min-height: 420px; }
+.lmr .rk { display: block; border-radius: 6px; background: var(--k-latar); }
+.lmr .rk--gelap { background: color-mix(in srgb, var(--kas-ink) 14%, transparent); }
+
+/* ---- Lebar ---------------------------------------------------------------------- */
+@media (min-width: 1288.02px) and (max-width: 1408px) {
+  .lmr { --lmr-rak: 288px; }
+  .lmr__muka { grid-template-columns: 4px 216px 56px minmax(0, 1fr) 150px; gap: 14px; }
+  .lmr__dasar { grid-template-columns: 184px minmax(0, 1fr); }
+  .lmr__total b { font-size: 24px; }
+}
+
+/* SATU LAYAR: lemari dan rak setinggi area isi; laci-laci menggulir di
+   dalam lemari kalau proyeknya lebih banyak dari tingginya. */
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .lmr { height: 100%; }
+}
+
+/* Di bawah 1288: rak turun ke bawah lemari, kartunya berkolom. */
+@media (max-width: 1288px) {
+  .lmr {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas: "bilah" "lemari" "rak";
+  }
+  .lmr__laci-laci { overflow: visible; }
+  /* Isi laci setinggi isinya: tidak ada tinggi lemari yang harus dibagi. */
+  .lmr__dasar { height: auto; min-height: 200px; }
+  .lmr__map-map { overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .lmr__rakisi {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0 18px;
+    overflow: visible;
+  }
+}
+@media (max-width: 1100px) {
+  .lmr__muka { grid-template-columns: 4px 210px 48px minmax(0, 1fr) 140px; gap: 12px; }
+  .lmr__kop { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}
+
+/* Ponsel: muka laci dua baris (label + jumlah, lalu mistar), pegangan
+   disembunyikan; isi laci setinggi isinya, catatan di atas map. */
+@media (max-width: 40rem) {
+  .lmr__bilah { align-items: flex-start; }
+  .lmr__legenda { gap: 6px 12px; }
+  .lmr__kop { margin: 0 8px; padding: 14px 4px 12px; }
+  .lmr__plat { padding: 10px 12px; }
+  .lmr__total b { font-size: 22px; }
+  .lmr__sub { white-space: normal; }
+  .lmr__pitajudul { flex-direction: column; gap: 6px; white-space: normal; }
+  .lmr__laci-laci { padding: 8px 8px 6px; }
+  .lmr__muka {
+    grid-template-columns: 4px minmax(0, 1fr) auto;
+    grid-template-areas: "tepi label jumlah" "tepi ukur ukur";
+    gap: 10px 12px;
+    height: auto;
+    padding: 8px 12px 6px 0;
+  }
+  .lmr__tepi { grid-area: tepi; margin: 8px 0; }
+  .lmr__bingkai { grid-area: label; }
+  .lmr__pegangan { display: none; }
+  .lmr__ukur { grid-area: ukur; }
+  .lmr__jumlah { grid-area: jumlah; }
+  .lmr__jumlah b { font-size: var(--k-t14); }
+  .lmr__ukurteks { flex-direction: column; align-items: flex-start; gap: 4px; white-space: normal; }
+  .lmr__dasar {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    margin: 2px 4px 0;
+    padding: 18px 10px 10px;
+  }
+  .lmr__map-map { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); overflow: visible; }
+  .lmr__rak { padding: 14px 12px 8px; }
+  .lmr__rakisi { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Wilayah toast Radix tidak dipakai di sini, tapi aturan satu-layar
+   KitLayout memberi setiap anak pulau flex: 1 (jebakan #69). */
+.kl__isi > astro-island:has(> .lmr) > [role="region"] { flex: none; }
