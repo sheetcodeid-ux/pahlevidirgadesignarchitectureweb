@@ -3,10 +3,11 @@ import KitLayout from "../../layouts/KitLayout.astro";
 import { FeeKit } from "../../components/admin/FeeKit";
 /* fee-kit.css masih membawa pemilih teks (`fee__pilihteks`) milik frame 25. */
 import "../../styles/fee-kit.css";
-import "../../styles/lemari-kit.css";
+import "../../styles/kuitansi-kit.css";
 
-/* Fee Proyek — LEMARI LACI GAMBAR: satu laci per proyek. Tetap cuma
-   MEMBACA — fee diketik di Keuangan atau lewat tombol Bayar di Satu Proyek. */
+/* Fee Proyek — BUKU KUITANSI FEE: satu blok kuitansi per proyek, bonggol tiap
+   pembayaran. Tetap cuma MEMBACA — fee dicatat dari tombol Bayar di Satu
+   Proyek atau Catat Pengeluaran. */
 ---
 
 <KitLayout title="Fee Proyek" judul="Fee Proyek">

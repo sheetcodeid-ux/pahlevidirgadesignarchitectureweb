@@ -4,15 +4,16 @@ import { TombolIkon } from "../kit/Tombol";
 import { DropdownMenu } from "../kit/Overlay";
 import { PilihMenu } from "../kit/Formulir";
 import { Ikon } from "../kit/Ikon";
-import { ArrowRight, CaretDown, Check, DownloadSimple, Hourglass, WarningOctagon } from "../kit/ikon";
+import { ArrowRight, CaretDown, DownloadSimple, Hourglass } from "../kit/ikon";
 import { Keterangan, pemberiKet, type KabarKartu } from "../kit/kartuGrafik";
-import { BULAN, BULAN_PENDEK, JENIS, IKON_JENIS, PilihTombol, teksPersen } from "./frame25";
+import { BULAN, BULAN_PENDEK, PilihTombol, teksPersen } from "./frame25";
 import {
   feePerProyek,
   feePerOrang,
   semuaBiaya,
   daftarBiaya,
   daftarTimProyek,
+  ambilSettings,
   bacaCache,
   tulisCache,
   LABEL_JENIS_ANGGOTA,
@@ -22,38 +23,37 @@ import {
   type BiayaProyek,
   type PenugasanTim,
   type JenisAnggota,
+  type StudioSettings,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
+import { terbilang } from "../../lib/terbilang";
 import { unduhCsv } from "../../lib/csv";
 
 /* =============================================================================
-   Fee Proyek — LEMARI LACI GAMBAR.
+   Fee Proyek — BUKU KUITANSI FEE.
 
-   Benda dunia nyatanya lemari gambar (plan chest) di studio: laci lebar yang
-   dangkal, satu laci per proyek, dengan tempat label berbingkai di mukanya.
-   Halaman ini menjawab "proyek ini mengeluarkan fee berapa, ke siapa, dan
-   berapa bagian dari kontraknya" — jadi bentuknya laci PER PROYEK. Gaji sudah
-   menjawab per bulan (buku), Bayaran Tim per orang (amplop), Aturan Fee
-   aturannya (aliran); tiga bentuk itu sengaja tidak dipakai di sini.
+   Benda dunia nyata yang paling dekat dengan "fee proyek" adalah kuitansi:
+   setiap fee yang dibayarkan ke orang dibuktikan selembar kuitansi, dan buku
+   kuitansi menyimpan BONGGOLNYA — siapa, berapa, kapan, untuk proyek apa.
+   Gaji sudah berbentuk buku daftar penerimaan (per bulan), Bayaran Tim
+   amplop (per orang), Aturan Fee papan aliran; halaman ini PER PROYEK.
 
-     Kop lemari        jumlah fee keluar pada rentang + pita 12 bulan
-     Muka laci         label berbingkai (nomor laci, proyek, kontrak),
-                       pegangan, MISTAR porsi fee terhadap kontrak yang
-                       dipotong per penerima, dan jumlah fee
-     Laci ditarik      isinya: map per penerima (peran, diterima, tahap
-                       bayar), map amber untuk fee tanpa nama, dan kartu
-                       catatan (kontrak, hak tim, jatuh tempo)
-     Rak kartu         penerima fee per jenis, kartu menyembul dari
-                       kantongnya; bilah porsi tiap jenis di kepala rak
+     Papan (kiri)      jumlah fee keluar pada rentang, pita 12 bulan, dan
+                       satu BLOK KUITANSI per proyek — tebal tumpukan lembar
+                       di bawahnya = jumlah kuitansi proyek itu
+     Lembar (kanan)    buku kuitansi proyek terpilih: kolom BONGGOL (tiap
+                       pembayaran fee; tahap yang belum dibayar = bonggol
+                       kosong), garis sobek berlubang, KUITANSI terpilih
+                       (terbilang, untuk pembayaran, tanda tangan, cap LUNAS),
+                       dan RINCIAN FEE proyek per penerima (dibayar lawan hak)
 
-   Menyentuh satu laci menarik kartu orang-orangnya dari rak; menyentuh satu
-   kartu menandai laci-laci tempat orang itu dibayar. Dua arah, tetikus saja.
+   Selaras dengan Gaji: papan hijau berjahit + kertas yang ikut tema; gerak
+   3D HANYA satu — kuitansi berayun keluar dari garis sobeknya saat dipilih —
+   dan cap yang "tercap" sekali. Hiasan tidak pernah di belakang tulisan.
 
-   Halaman ini TIDAK PERNAH MENULIS apa pun. Fee diketik satu kali saja, di
-   Keuangan → Catat Pengeluaran atau tombol Bayar di Satu Proyek, dan di sini
-   cuma dibaca — aturan yang menjaga beban studio tidak tercatat dua kali.
-   Yang DIANGGAP fee sama dengan repository/fee.ts: biaya berkategori
-   freelancer atau prinsipal.
+   Halaman ini TIDAK PERNAH MENULIS. Fee dicatat dari tombol Bayar di Satu
+   Proyek atau Catat Pengeluaran; di sini cuma dibaca. Yang dianggap fee sama
+   dengan repository/fee.ts: biaya berkategori freelancer atau prinsipal.
    ============================================================================= */
 
 const KATEGORI_FEE = new Set(["freelancer", "prinsipal"]);
@@ -91,34 +91,57 @@ function tanggalPendek(iso: string, tahun = false): string {
   const [t, b, h] = iso.slice(0, 10).split("-").map(Number);
   return `${h} ${BULAN_PENDEK[(b ?? 1) - 1]}${tahun ? ` ${t}` : ""}`;
 }
+function tanggalPanjang(iso: string): string {
+  const [t, b, h] = iso.slice(0, 10).split("-").map(Number);
+  return `${h} ${BULAN[(b ?? 1) - 1]} ${t}`;
+}
 
-/* Satu warna per JENIS penerima — di muka laci yang hijau tua dan di rak.
-   Warnanya hidup sebagai token `--lmr-<jenis>` di lemari-kit.css, satu tangga
-   terang di atas bidang uang (yang tidak ikut berbalik tema). */
-const WARNA_JENIS = (j: JenisAnggota | "tanpa") => `var(--lmr-${j})`;
+/** Kode proyek di nomor kuitansi: huruf depan tiap kata — "Kedai Kopi Ruas" → KKR. */
+function kodeProyek(judul: string): string {
+  const k = judul
+    .split(/\s+/)
+    .filter((w) => /^[A-Za-z]/.test(w))
+    .slice(0, 3)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+  return k || "PR";
+}
+
+function inisial(nama: string): string {
+  return nama
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+}
+
+/* Satu warna per JENIS penerima (`--kwt-<jenis>` di kuitansi-kit.css). */
+const WARNA_JENIS = (j: JenisAnggota | "tanpa") => `var(--kwt-${j})`;
 
 const pakaiGerak = () =>
   typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** Isi satu laci — diambil saat laci ditarik (atau saat kursor mendekatinya). */
-interface IsiLaci {
+/** Isi satu buku: penugasan tim + biaya proyek itu. */
+interface IsiBuku {
   tim: PenugasanTim[];
   biaya: BiayaProyek[];
 }
 
-/** Satu map di dalam laci: satu penerima di satu proyek. */
-interface Map_ {
+/** Satu bonggol: kuitansi yang sudah ditulis (dibayar), atau yang belum. */
+interface Bonggol {
   id: string;
-  nama: string;
-  jenis: JenisAnggota;
-  diterima: number;
-  kali: number;
-  terakhir: string | null;
-  tugas: PenugasanTim[];
+  /** Nomor urut kuitansi di proyek ini (kronologis); null = belum ditulis. */
+  no: number | null;
+  tanggal: string | null;
+  nama: string | null;
+  teamMemberId: string | null;
+  jenis: JenisAnggota | "tanpa";
+  nominal: number;
+  /** "fee Render 5% · tahap awal", atau label biaya kalau tidak tertaut penugasan. */
+  untuk: string;
+  keadaan: "dibayar" | "jatuh_tempo" | "menunggu";
 }
-
-/* Sorotan dua arah antara laci dan rak. */
-type Sorot = { laci: string } | { orang: string } | null;
 
 function Isi() {
   const kabar: KabarKartu = useRef(null);
@@ -128,6 +151,12 @@ function Isi() {
   const [orangSemua, setOrangSemua] = useState<FeeOrang[] | null>(() => bacaCache<FeeOrang[]>("feeorang"));
   const [proyekSemua, setProyekSemua] = useState<FeeProyek[] | null>(() => bacaCache<FeeProyek[]>("feeproyek"));
   const [galat, setGalat] = useState(false);
+  /* Nama dan kota studio dari Info Studio — kunci cache `settings` milik Info
+     Studio, di sini dibaca saja (jebakan #8). */
+  const [studio, setStudio] = useState<{ nama: string; kota: string | null }>(() => {
+    const s = bacaCache<StudioSettings>("settings");
+    return { nama: s?.studioName || "Studio", kota: s?.city ?? null };
+  });
 
   const [rentang, setRentang] = useState("semua");
   const [urut, setUrut] = useState("fee");
@@ -137,21 +166,19 @@ function Isi() {
   const [proyekRentang, setProyekRentang] = useState<FeeProyek[] | null>(null);
   const [orangRentang, setOrangRentang] = useState<FeeOrang[] | null>(null);
 
-  /* undefined = belum dipilih (laci pertama dibuka begitu daftarnya ada);
-     null = semua laci tertutup. */
-  const [buka, setBuka] = useState<string | null | undefined>(() => {
-    if (typeof window === "undefined") return undefined;
-    return new URLSearchParams(location.search).get("laci") ?? undefined;
-  });
-  const [isi, setIsi] = useState<Record<string, IsiLaci | "galat">>({});
+  const [pilih, setPilih] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(location.search).get("proyek"),
+  );
+  const [isi, setIsi] = useState<Record<string, IsiBuku | "galat">>({});
   const meminta = useRef(new Set<string>());
-  const [sorot, setSorot] = useState<Sorot>(null);
-  const [sematan, setSematan] = useState<string | null>(null);
-  /* Laci yang BARU ditarik: map di dalamnya meletak satu per satu. Hanya
-     sekali per tarikan — menggambar ulang tidak mengulang geraknya. */
-  const [baruDitarik, setBaruDitarik] = useState<string | null>(null);
+  /* Kuitansi yang dibuka; null = yang terbaru. */
+  const [kuitansiPilih, setKuitansiPilih] = useState<string | null>(null);
+  /* Ayunan kuitansi hanya sebagai jawaban atas pilihan — bukan animasi masuk. */
+  const [ayun, setAyun] = useState(0);
+  const [sorotOrang, setSorotOrang] = useState<string | null>(null);
 
-  const lemariRef = useRef<HTMLDivElement>(null);
+  const daftarRef = useRef<HTMLDivElement>(null);
+  const bonggolRef = useRef<HTMLOListElement>(null);
 
   function muat() {
     setGalat(false);
@@ -180,7 +207,12 @@ function Isi() {
         setGalat(true);
       });
   }
-  useEffect(muat, []);
+  useEffect(() => {
+    muat();
+    ambilSettings()
+      .then((d) => setStudio({ nama: d.studioName || "Studio", kota: d.city ?? null }))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (rentang === "semua") return;
@@ -201,8 +233,8 @@ function Isi() {
   const proyek = rentang === "semua" ? proyekSemua : proyekRentang;
   const orang = rentang === "semua" ? orangSemua : orangRentang;
 
-  /* Jenis tiap orang — dari daftar SEPANJANG WAKTU, supaya orang yang belum
-     dibayar di rentang ini tetap berwarna benar di dalam laci. */
+  /* Jenis tiap orang dari daftar SEPANJANG WAKTU, supaya orang yang belum
+     dibayar di rentang ini tetap berwarna benar. */
   const jenisOrang = useMemo(() => {
     const m = new Map<string, JenisAnggota>();
     for (const o of orangSemua ?? []) m.set(o.teamMemberId, o.kind);
@@ -210,8 +242,8 @@ function Isi() {
     return m;
   }, [orangSemua, proyekSemua]);
 
-  /* ---- Laci-laci -------------------------------------------------------- */
-  const laci = useMemo(() => {
+  /* ---- Blok kuitansi per proyek ----------------------------------------- */
+  const blok = useMemo(() => {
     const d = [...(proyek ?? [])];
     const keluar = (p: FeeProyek) => p.feeTotal + p.feeTanpaNama;
     const porsi = (p: FeeProyek) => (p.contractValue ? keluar(p) / p.contractValue : -1);
@@ -221,27 +253,20 @@ function Isi() {
     return d;
   }, [proyek, urut]);
 
-  /* Nomor laci MENGIKUTI PROYEK, bukan urutan tampil: laci Kedai Kopi tetap
-     "Laci 02" walau urutannya diganti — persis lemari sungguhan, yang lacinya
-     tidak berpindah tempat saat orang mencari dengan cara lain. */
-  const nomorLaci = useMemo(() => {
+  /* Jumlah kuitansi per proyek pada rentang — dari daftar biaya lintas proyek. */
+  const jumlahKuitansi = useMemo(() => {
     const m = new Map<string, number>();
-    [...(proyekSemua ?? [])]
-      .sort((a, z) => z.feeTotal + z.feeTanpaNama - (a.feeTotal + a.feeTanpaNama))
-      .forEach((p, i) => m.set(p.projectId, i + 1));
-    let n = m.size;
-    for (const p of laci) if (!m.has(p.projectId)) m.set(p.projectId, ++n);
-    return m;
-  }, [proyekSemua, laci]);
-
-  /* Laci pertama dibuka begitu daftarnya ada — halaman tidak dibuka sebagai
-     lemari tertutup yang belum bercerita apa-apa. */
-  useEffect(() => {
-    if (buka === undefined && laci.length > 0) setBuka(laci[0]!.projectId);
-    if (typeof buka === "string" && proyek && laci.length > 0 && !laci.some((p) => p.projectId === buka)) {
-      setBuka(laci[0]!.projectId);
+    for (const b of biaya ?? []) {
+      if (!KATEGORI_FEE.has(b.category) || !dalamRentang(b.incurredOn, rentang)) continue;
+      m.set(b.projectId, (m.get(b.projectId) ?? 0) + 1);
     }
-  }, [buka, laci, proyek]);
+    return m;
+  }, [biaya, rentang]);
+
+  /* Proyek terpilih: dari alamat; kalau tidak ada (atau tidak ada di rentang
+     ini) yang pertama — buku tidak pernah dibuka dalam keadaan kosong. */
+  const terpilih = blok.find((p) => p.projectId === pilih) ?? blok[0] ?? null;
+  const idTerpilih = terpilih?.projectId ?? null;
 
   function ambilIsi(id: string, paksa = false) {
     if (!paksa && meminta.current.has(id)) return;
@@ -254,52 +279,36 @@ function Isi() {
       });
   }
   useEffect(() => {
-    if (typeof buka === "string") ambilIsi(buka);
-  }, [buka]);
+    if (idTerpilih) ambilIsi(idTerpilih);
+  }, [idTerpilih]);
 
-  function tarik(id: string) {
-    const baru = buka === id ? null : id;
-    setBuka(baru);
-    setBaruDitarik(baru);
+  function pilihProyek(id: string) {
+    if (id === idTerpilih) return;
+    setPilih(id);
+    setKuitansiPilih(null);
+    setAyun((n) => n + 1);
+    setSorotOrang(null);
     kabar.current?.(null);
     const u = new URL(location.href);
-    if (baru) u.searchParams.set("laci", baru);
-    else u.searchParams.delete("laci");
+    u.searchParams.set("proyek", id);
     history.replaceState(history.state, "", u);
   }
 
-  /* Ruang tegak untuk isi laci yang terbuka: sisa tinggi lemari sesudah
-     semua muka laci. Diukur sekali per perubahan ukuran — bukan di handler
-     gulir (jebakan #21). */
-  useEffect(() => {
-    const el = lemariRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => el.style.setProperty("--lmr-ruang", `${el.clientHeight}px`));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [proyek === null]);
-
-  /* Panah atas/bawah, Home/End berpindah antar-muka laci. */
-  function tombolLaci(e: React.KeyboardEvent, i: number) {
+  /* Panah atas/bawah, Home/End antarblok — memilih sambil berpindah. */
+  function tombolBlok(e: React.KeyboardEvent, i: number) {
     const tujuan =
-      e.key === "ArrowDown" ? i + 1 : e.key === "ArrowUp" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? laci.length - 1 : null;
-    if (tujuan === null) {
-      if (e.key === "Escape" && buka) {
-        e.preventDefault();
-        tarik(buka);
-      }
-      return;
-    }
+      e.key === "ArrowDown" ? i + 1 : e.key === "ArrowUp" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? blok.length - 1 : null;
+    if (tujuan === null) return;
     e.preventDefault();
-    const n = Math.max(0, Math.min(laci.length - 1, tujuan));
-    lemariRef.current?.querySelectorAll<HTMLButtonElement>(".lmr__muka")[n]?.focus();
+    const n = Math.max(0, Math.min(blok.length - 1, tujuan));
+    daftarRef.current?.querySelectorAll<HTMLButtonElement>(".kwt__blok")[n]?.focus();
+    if (blok[n]) pilihProyek(blok[n].projectId);
   }
 
   /* ---- Pita 12 bulan ---------------------------------------------------- */
   const bulanan = useMemo(() => {
     const kunci: string[] = [];
     const d = new Date();
-    d.setDate(1);
     for (let i = 11; i >= 0; i--) {
       const x = new Date(d.getFullYear(), d.getMonth() - i, 1);
       kunci.push(`${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}`);
@@ -312,52 +321,115 @@ function Isi() {
     }
     const bln = kunci.map((k) => ({ bulan: k, nilai: jumlah.get(k)! }));
     const maks = Math.max(1, ...bln.map((b) => b.nilai));
-    const total = bln.reduce((a, b) => a + b.nilai, 0);
-    return { bln, maks, rata: total / 12 };
+    return { bln, maks, rata: bln.reduce((a, b) => a + b.nilai, 0) / 12 };
   }, [biaya]);
 
-  /* ---- Rak kartu -------------------------------------------------------- */
-  const tanpaNama = (proyek ?? []).reduce((a, p) => a + p.feeTanpaNama, 0);
-  const rak = useMemo(() => {
-    const total = (orang ?? []).reduce((a, o) => a + o.total, 0) + tanpaNama;
-    const maks = Math.max(1, ...(orang ?? []).map((o) => o.total));
-    const kelompok = JENIS.map((j) => {
-      const isi = (orang ?? []).filter((o) => o.kind === j);
-      const n = isi.reduce((a, o) => a + o.total, 0);
-      return { jenis: j, isi, total: n, persen: total > 0 ? (n / total) * 100 : 0 };
-    }).filter((k) => k.isi.length > 0);
-    return { total, maks, kelompok };
-  }, [orang, tanpaNama]);
+  /* ---- Buku proyek terpilih -------------------------------------------- */
+  const isiTerpilih = idTerpilih ? isi[idTerpilih] : undefined;
+  const data = isiTerpilih && isiTerpilih !== "galat" ? isiTerpilih : null;
 
-  /* Siapa saja di tiap laci — untuk sorotan dua arah. */
-  const orangLaci = useMemo(() => {
-    const m = new Map<string, Set<string>>();
-    for (const p of laci) m.set(p.projectId, new Set(p.orang.map((o) => o.teamMemberId)));
-    return m;
-  }, [laci]);
+  const bonggol = useMemo<Bonggol[]>(() => {
+    if (!terpilih || !data) return [];
+    /* costId → penugasan + tahap, supaya kuitansi bisa menulis "untuk
+       pembayaran fee Render 5% tahap awal", bukan label biaya mentah. */
+    const tahapBiaya = new Map<string, { t: PenugasanTim; tahap: string }>();
+    for (const t of data.tim) for (const x of t.tahap) if (x.costId) tahapBiaya.set(x.costId, { t, tahap: x.tahap });
+    const dibayar = data.biaya
+      .filter((b) => KATEGORI_FEE.has(b.category) && dalamRentang(b.incurredOn, rentang))
+      .sort((a, z) => a.incurredOn.localeCompare(z.incurredOn) || a.id.localeCompare(z.id))
+      .map((b, i): Bonggol => {
+        const tt = tahapBiaya.get(b.id);
+        const pct = tt?.t.pctBerlaku;
+        return {
+          id: b.id,
+          no: i + 1,
+          tanggal: b.incurredOn,
+          nama: b.teamMemberName ?? null,
+          teamMemberId: b.teamMemberId ?? null,
+          jenis: b.teamMemberId ? (jenisOrang.get(b.teamMemberId) ?? "proyek") : "tanpa",
+          nominal: b.amount,
+          untuk: tt
+            ? `fee ${LABEL_PERAN[tt.t.role]}${pct != null ? ` ${teksPersen(pct)}` : ""} · tahap ${tt.tahap === "awal" ? "awal" : "akhir"}`
+            : b.label,
+          keadaan: "dibayar",
+        };
+      });
+    /* Tahap yang belum dibayar = bonggol KOSONG: kuitansinya belum ditulis. */
+    const kosong: Bonggol[] = [];
+    for (const t of data.tim) {
+      for (const x of t.tahap) {
+        if ((x.keadaan !== "jatuh_tempo" && x.keadaan !== "menunggu") || x.nominal == null) continue;
+        kosong.push({
+          id: `kosong-${t.id}-${x.tahap}`,
+          no: null,
+          tanggal: null,
+          nama: t.teamMemberName,
+          teamMemberId: t.teamMemberId,
+          jenis: jenisOrang.get(t.teamMemberId) ?? (t.teamMemberKind as JenisAnggota),
+          nominal: x.nominal,
+          untuk: `fee ${LABEL_PERAN[t.role]}${t.pctBerlaku != null ? ` ${teksPersen(t.pctBerlaku)}` : ""} · tahap ${x.tahap === "awal" ? "awal" : "akhir"}`,
+          keadaan: x.keadaan,
+        });
+      }
+    }
+    kosong.sort((a, z) => (a.keadaan === z.keadaan ? 0 : a.keadaan === "jatuh_tempo" ? -1 : 1));
+    // Yang belum ditulis paling atas, lalu bonggol terbaru.
+    return [...kosong, ...dibayar.reverse()];
+  }, [terpilih, data, rentang, jenisOrang]);
 
-  const sorotan: Sorot = sorot ?? (sematan ? { orang: sematan } : null);
-  const orangDisorot = sorotan && "orang" in sorotan ? sorotan.orang : null;
-  const laciDisorot = sorotan && "laci" in sorotan ? sorotan.laci : null;
+  const kuitansi =
+    bonggol.find((b) => b.id === kuitansiPilih) ?? bonggol.find((b) => b.keadaan === "dibayar") ?? bonggol[0] ?? null;
+
+  function pilihKuitansi(id: string) {
+    if (id === kuitansi?.id) return;
+    setKuitansiPilih(id);
+    setAyun((n) => n + 1);
+  }
+  function tombolBonggol(e: React.KeyboardEvent, i: number) {
+    const tujuan =
+      e.key === "ArrowDown" ? i + 1 : e.key === "ArrowUp" ? i - 1 : e.key === "Home" ? 0 : e.key === "End" ? bonggol.length - 1 : null;
+    if (tujuan === null) return;
+    e.preventDefault();
+    const n = Math.max(0, Math.min(bonggol.length - 1, tujuan));
+    bonggolRef.current?.querySelectorAll<HTMLButtonElement>(".kwt__bonggol")[n]?.focus();
+    if (bonggol[n]) pilihKuitansi(bonggol[n].id);
+  }
+
+  /* Rincian fee proyek: per penerima, dibayar (rentang) lawan hak (penugasan). */
+  const rincian = useMemo(() => {
+    if (!terpilih) return [];
+    type R = { id: string; nama: string; jenis: JenisAnggota | "tanpa"; dibayar: number; hak: number; peran: string[] };
+    const per = new Map<string, R>();
+    for (const o of terpilih.orang) per.set(o.teamMemberId, { id: o.teamMemberId, nama: o.name, jenis: o.kind, dibayar: o.amount, hak: 0, peran: [] });
+    for (const t of data?.tim ?? []) {
+      const r: R = per.get(t.teamMemberId) ?? {
+        id: t.teamMemberId,
+        nama: t.teamMemberName,
+        jenis: jenisOrang.get(t.teamMemberId) ?? (t.teamMemberKind as JenisAnggota),
+        dibayar: 0,
+        hak: 0,
+        peran: [],
+      };
+      r.hak += t.hak ?? 0;
+      r.peran.push(`${LABEL_PERAN[t.role]}${t.pctBerlaku != null ? ` ${teksPersen(t.pctBerlaku)}` : " · persen belum ditentukan"}`);
+      per.set(t.teamMemberId, r);
+    }
+    const d = [...per.values()].sort((a, z) => z.dibayar - a.dibayar || z.hak - a.hak);
+    if (terpilih.feeTanpaNama > 0) d.push({ id: "tanpa", nama: "Tanpa nama", jenis: "tanpa", dibayar: terpilih.feeTanpaNama, hak: 0, peran: [] });
+    return d;
+  }, [terpilih, data, jenisOrang]);
 
   function ekspor(mode: "proyek" | "orang") {
     const tanda = new Date().toISOString().slice(0, 10);
     if (mode === "orang") {
       unduhCsv(`fee-per-orang-${tanda}.csv`, [
         ["Nama", "Jenis", "Peran", "Jumlah proyek", "Terakhir", "Total diterima"],
-        ...(orang ?? []).map((o) => [
-          o.name,
-          LABEL_JENIS_ANGGOTA[o.kind],
-          o.role ?? "",
-          String(o.projectCount),
-          o.lastOn ?? "",
-          String(o.total),
-        ]),
+        ...(orang ?? []).map((o) => [o.name, LABEL_JENIS_ANGGOTA[o.kind], o.role ?? "", String(o.projectCount), o.lastOn ?? "", String(o.total)]),
       ]);
     } else {
       unduhCsv(`fee-per-proyek-${tanda}.csv`, [
         ["Proyek", "Nilai kontrak", "Fee bernama", "Fee tanpa nama", "Porsi fee %", "Penerima"],
-        ...laci.map((p) => [
+        ...blok.map((p) => [
           p.projectTitle,
           p.contractValue === null ? "" : String(p.contractValue),
           String(p.feeTotal),
@@ -377,295 +449,261 @@ function Isi() {
   const kontrakBerfee = (proyek ?? []).filter((p) => p.contractValue).reduce((a, p) => a + p.feeTotal + p.feeTanpaNama, 0);
   const porsiRata = kontrakTotal > 0 ? (kontrakBerfee / kontrakTotal) * 100 : null;
   const labelRentang = RENTANG.find((r) => r.nilai === rentang)!.label;
-  const bulanIni = bulanan.bln[11]!;
+  const maksBlok = Math.max(1, ...jumlahKuitansi.values());
 
   return (
-    <div className="lmr">
+    <div className="kwt">
       <Keterangan kabar={kabar} />
+      <div className="kwt__papan">
+        {/* ---- Papan: ringkasan, 12 bulan, blok kuitansi per proyek -------- */}
+        <aside className="kwt__sisi" aria-label="Ringkasan fee proyek">
+          <div className="kwt__kop">
+            <p className="kwt__alis">Fee proyek · {labelRentang.toLowerCase()}</p>
+            <p className="kwt__total">{memuat ? <span className="rk rk--gelap" style={{ width: 200, height: 26 }} /> : <RupiahBesar n={keluarTotal} />}</p>
+            <p className="kwt__sub">
+              {blok.length} proyek · {(orang ?? []).length} penerima
+              {porsiRata !== null && <> · {teksPersen(porsiRata)} dari kontrak</>}
+            </p>
+          </div>
 
-      {/* ---- Lemari: gulungan di atas, papan, badan, alas ------------------ */}
-      <section className="lmr__lemari" aria-label="Lemari gambar — fee per proyek">
-        {/* Dua belas gulungan gambar berdiri di atas lemari: satu per bulan,
-            TINGGINYA fee bulan itu. Pita 12 bulan dalam wujud benda. */}
-        <div className="lmr__gul-gul" role="list" aria-label="Fee per bulan, 12 bulan terakhir">
-          {bulanan.bln.map((b, i) => {
-            const m = Number(b.bulan.slice(5, 7));
-            return (
-              <span
-                key={b.bulan}
-                role="listitem"
-                className={`lmr__gul${i === 11 ? " is-kini" : ""}${b.nilai === 0 ? " is-kosong" : ""}`}
-                style={{ "--lmr-t": b.nilai / bulanan.maks } as React.CSSProperties}
-                aria-label={`${BULAN[m - 1]} ${b.bulan.slice(0, 4)}: ${formatRupiah(b.nilai)}`}
-                {...ket(() => ({
-                  judul: `${BULAN[m - 1]} ${b.bulan.slice(0, 4)}`,
-                  baris: [
-                    { label: "Fee keluar", nilai: formatRupiah(b.nilai) },
-                    { label: "Rata-rata 12 bulan", nilai: formatRupiah(Math.round(bulanan.rata)) },
-                  ],
-                }))}
-              >
-                <i />
-              </span>
-            );
-          })}
-        </div>
-        <div className="lmr__papan" aria-hidden="true">
-          {bulanan.bln.map((b, i) => (
-            <span key={b.bulan} className={i === 11 ? "is-kini" : undefined}>
-              {BULAN_PENDEK[Number(b.bulan.slice(5, 7)) - 1]}
-            </span>
-          ))}
-        </div>
+          <div className="kwt__bulan" role="list" aria-label="Fee per bulan, 12 bulan terakhir">
+            {bulanan.bln.map((b, i) => {
+              const m = Number(b.bulan.slice(5, 7));
+              return (
+                <span
+                  key={b.bulan}
+                  role="listitem"
+                  className={`kwt__bln${i === 11 ? " is-kini" : ""}`}
+                  style={{ "--kwt-t": b.nilai / bulanan.maks } as React.CSSProperties}
+                  aria-label={`${BULAN[m - 1]} ${b.bulan.slice(0, 4)}: ${formatRupiah(b.nilai)}`}
+                  {...ket(() => ({
+                    judul: `${BULAN[m - 1]} ${b.bulan.slice(0, 4)}`,
+                    baris: [
+                      { label: "Fee keluar", nilai: formatRupiah(b.nilai) },
+                      { label: "Rata-rata 12 bulan", nilai: formatRupiah(Math.round(bulanan.rata)) },
+                    ],
+                  }))}
+                >
+                  <i />
+                  <small>{BULAN_PENDEK[m - 1]!.slice(0, 1)}</small>
+                </span>
+              );
+            })}
+          </div>
 
-        <div className="lmr__badan">
-          <header className="lmr__kop">
-            <div className="lmr__plat">
-              <p className="lmr__alis">Fee proyek · {labelRentang.toLowerCase()}</p>
-              <p className="lmr__total">
-                {memuat ? <span className="rk" style={{ width: 200, height: 26 }} /> : <RupiahBesar n={keluarTotal} />}
-              </p>
-            </div>
-            <dl className="lmr__angka">
-              <div>
-                <dt>Laci</dt>
-                <dd>{laci.length}</dd>
-              </div>
-              <div>
-                <dt>Penerima</dt>
-                <dd>{(orang ?? []).length}</dd>
-              </div>
-              <div>
-                <dt>Porsi dari kontrak</dt>
-                <dd>{porsiRata === null ? "—" : teksPersen(porsiRata)}</dd>
-              </div>
-              <div>
-                <dt>Bulan ini</dt>
-                <dd>{formatRupiah(bulanIni.nilai)}</dd>
-              </div>
-            </dl>
-          </header>
-
-          <div
-            className="lmr__laci-laci"
-            ref={lemariRef}
-            style={{ "--lmr-n": Math.max(1, laci.length) } as React.CSSProperties}
-            onPointerLeave={(e) => e.pointerType === "mouse" && setSorot(null)}
-          >
-            {galat && laci.length === 0 ? (
-              <div className="lmr__kosong">
-                <p>Isi lemari gagal dimuat.</p>
-                <button type="button" className="lmr__coba" onClick={muat}>
+          <div className="kwt__blok-blok" ref={daftarRef} role="listbox" aria-label="Buku kuitansi per proyek">
+            {galat && blok.length === 0 ? (
+              <div className="kwt__kosong">
+                <p>Buku kuitansi gagal dimuat.</p>
+                <button type="button" className="kwt__coba" onClick={muat}>
                   Coba lagi
                 </button>
               </div>
             ) : memuat ? (
-              Array.from({ length: 5 }, (_, i) => <div key={i} className="lmr__laci lmr__laci--rangka" />)
-            ) : laci.length === 0 ? (
-              <div className="lmr__kosong">
-                <p>Belum ada fee pada rentang ini.</p>
-                <p className="lmr__kosongket">
-                  Fee tercatat dari tombol Bayar di Satu Proyek, atau biaya berkategori Freelancer/Prinsipal di Keuangan.
-                </p>
-              </div>
+              Array.from({ length: 5 }, (_, i) => <div key={i} className="kwt__blok kwt__blok--rangka" />)
+            ) : blok.length === 0 ? (
+              <p className="kwt__kosong">Belum ada fee pada rentang ini.</p>
             ) : (
-              laci.map((p, i) => (
-                <Laci
-                  key={p.projectId}
-                  p={p}
-                  no={nomorLaci.get(p.projectId) ?? i + 1}
-                  terbuka={buka === p.projectId}
-                  baru={baruDitarik === p.projectId}
-                  isi={isi[p.projectId]}
-                  rentang={rentang}
-                  jenisOrang={jenisOrang}
-                  orangDisorot={orangDisorot}
-                  punya={orangDisorot !== null && !!orangLaci.get(p.projectId)?.has(orangDisorot)}
-                  redup={
-                    (orangDisorot !== null && !orangLaci.get(p.projectId)?.has(orangDisorot)) ||
-                    (laciDisorot !== null && laciDisorot !== p.projectId)
-                  }
-                  ket={ket}
-                  onTarik={() => tarik(p.projectId)}
-                  onCobaLagi={() => ambilIsi(p.projectId, true)}
-                  onDekat={(e) => {
-                    if (e.pointerType !== "mouse") return;
-                    ambilIsi(p.projectId);
-                    setSorot({ laci: p.projectId });
-                  }}
-                  onKey={(e) => tombolLaci(e, i)}
-                />
-              ))
+              blok.map((p, i) => {
+                const keluar = p.feeTotal + p.feeTanpaNama;
+                const kontrak = p.contractValue && p.contractValue > 0 ? p.contractValue : null;
+                const n = jumlahKuitansi.get(p.projectId) ?? 0;
+                const aktif = p.projectId === idTerpilih;
+                return (
+                  <button
+                    key={p.projectId}
+                    type="button"
+                    role="option"
+                    aria-selected={aktif}
+                    tabIndex={aktif ? 0 : -1}
+                    className={`kwt__blok kwt__blok--lapis${Math.max(1, Math.round((n / maksBlok) * 3))}${aktif ? " is-aktif" : ""}`}
+                    onClick={() => pilihProyek(p.projectId)}
+                    onKeyDown={(e) => tombolBlok(e, i)}
+                    onPointerEnter={(e) => e.pointerType === "mouse" && ambilIsi(p.projectId)}
+                  >
+                    <span className="kwt__blokatas">
+                      <span className="kwt__kode">{kodeProyek(p.projectTitle)}</span>
+                      <span className="kwt__blokjudul">{p.projectTitle}</span>
+                      <b className="kwt__bloknilai">{formatRupiah(keluar)}</b>
+                    </span>
+                    <Mistar p={p} kecil />
+                    <span className="kwt__blokket">
+                      <span>{kontrak ? `${teksPersen((keluar / kontrak) * 100)} dari kontrak` : "kontrak belum diisi"}</span>
+                      <span>
+                        {n} kuitansi · {p.orang.length} penerima
+                      </span>
+                    </span>
+                  </button>
+                );
+              })
             )}
           </div>
-        </div>
+        </aside>
 
-        {/* Alas: lis kaki yang menjorok ke dalam, legenda warna mistar
-            terukir di mukanya, dua kaki dan bayangan di lantai. */}
-        <footer className="lmr__alas">
-          <ul className="lmr__legenda" aria-label="Warna penerima di mistar laci">
-            {JENIS.map((j) => (
-              <li key={j}>
-                <span className="lmr__titikwarna" style={{ "--lmr-w": WARNA_JENIS(j) } as React.CSSProperties} />
-                {LABEL_JENIS_ANGGOTA[j]}
-              </li>
-            ))}
-            <li>
-              <span className="lmr__titikwarna lmr__titikwarna--tanpa" />
-              Tanpa nama
-            </li>
-          </ul>
-        </footer>
-        <div className="lmr__kaki" aria-hidden="true">
-          <span />
-          <span />
-        </div>
-      </section>
-
-      {/* ---- Kontrol di atas rak -------------------------------------------- */}
-      <div className="lmr__kontrol">
-        <PilihTombol judul="Rentang fee" nilai={rentang} opsi={RENTANG} onUbah={setRentang} />
-        <PilihMenu
-          label="Urutan laci"
-          nilai={urut}
-          opsi={URUT}
-          onUbah={setUrut}
-          align="end"
-          pemicu={
-            <button type="button" className="fee__pilihteks lmr__urut">
-              <span>{URUT.find((u) => u.nilai === urut)!.label}</span>
-              <Ikon ikon={CaretDown} ukuran={12} />
-            </button>
-          }
-        />
-        <DropdownMenu
-          trigger={<TombolIkon ikon={DownloadSimple} jenis="ghost" judul="Unduh CSV" />}
-          sections={[
-            {
-              label: `Unduh CSV · ${labelRentang.toLowerCase()}`,
-              items: [
-                { label: "Fee per proyek", onSelect: () => ekspor("proyek") },
-                { label: "Fee per orang", onSelect: () => ekspor("orang") },
-              ],
-            },
-          ]}
-        />
-      </div>
-
-      {/* ---- Rak kartu penerima di dinding ---------------------------------- */}
-      <aside className="lmr__rak" aria-label="Rak kartu penerima fee">
-        <header className="lmr__rakkepala">
-          <p className="lmr__rakjudul">
-            Rak kartu penerima <span>{(orang ?? []).length} orang</span>
-          </p>
-          <div className="lmr__porsijenis" aria-label="Porsi fee per jenis penerima">
-            {rak.kelompok.map((k) => (
-              <span
-                key={k.jenis}
-                style={{ flexGrow: k.total, background: WARNA_JENIS(k.jenis) }}
-                {...ket(() => ({
-                  judul: LABEL_JENIS_ANGGOTA[k.jenis],
-                  baris: [
-                    { label: "Fee", nilai: formatRupiah(k.total) },
-                    { label: "Porsi", nilai: teksPersen(k.persen) },
-                  ],
-                }))}
+        {/* ---- Lembar: buku kuitansi proyek terpilih ------------------------- */}
+        <section className="kwt__lembar" aria-label={terpilih ? `Buku kuitansi fee — ${terpilih.projectTitle}` : "Buku kuitansi fee"}>
+          <header className="kwt__lembarkop">
+            <div className="kwt__lembarjudul">
+              <p className="kwt__alis kwt__alis--kertas">Buku kuitansi fee</p>
+              <h2>
+                {terpilih ? (
+                  <>
+                    {terpilih.projectTitle} <span className="kwt__kodebesar">{kodeProyek(terpilih.projectTitle)}</span>
+                  </>
+                ) : (
+                  "—"
+                )}
+              </h2>
+            </div>
+            <div className="kwt__kontrol">
+              <PilihTombol judul="Rentang fee" nilai={rentang} opsi={RENTANG} onUbah={setRentang} />
+              <PilihMenu
+                label="Urutan buku"
+                nilai={urut}
+                opsi={URUT}
+                onUbah={setUrut}
+                align="end"
+                pemicu={
+                  <button type="button" className="fee__pilihteks kwt__urut">
+                    <span>{URUT.find((u) => u.nilai === urut)!.label}</span>
+                    <Ikon ikon={CaretDown} ukuran={12} />
+                  </button>
+                }
               />
-            ))}
-            {tanpaNama > 0 && (
-              <span
-                className="is-tanpa"
-                style={{ flexGrow: tanpaNama }}
-                {...ket(() => ({
-                  judul: "Tanpa nama",
-                  baris: [
-                    { label: "Fee", nilai: formatRupiah(tanpaNama) },
-                    { label: "Porsi", nilai: teksPersen(rak.total > 0 ? (tanpaNama / rak.total) * 100 : 0) },
-                  ],
-                }))}
+              <DropdownMenu
+                trigger={<TombolIkon ikon={DownloadSimple} jenis="ghost" judul="Unduh CSV" />}
+                sections={[
+                  {
+                    label: `Unduh CSV · ${labelRentang.toLowerCase()}`,
+                    items: [
+                      { label: "Fee per proyek", onSelect: () => ekspor("proyek") },
+                      { label: "Fee per orang", onSelect: () => ekspor("orang") },
+                    ],
+                  },
+                ]}
               />
-            )}
-          </div>
-        </header>
-        <div className="lmr__rakisi" onPointerLeave={(e) => e.pointerType === "mouse" && setSorot(null)}>
-          {memuat ? (
-            <p className="lmr__rakkosong">Memuat…</p>
-          ) : rak.kelompok.length === 0 ? (
-            <p className="lmr__rakkosong">Belum ada fee bernama pada rentang ini.</p>
+            </div>
+          </header>
+
+          {!terpilih ? (
+            <p className="kwt__kosongkertas">{memuat ? "Membuka buku…" : "Belum ada fee pada rentang ini."}</p>
+          ) : isiTerpilih === "galat" ? (
+            <div className="kwt__kosongkertas">
+              <p>Isi buku gagal dimuat.</p>
+              <button type="button" className="kwt__coba kwt__coba--kertas" onClick={() => ambilIsi(terpilih.projectId, true)}>
+                Coba lagi
+              </button>
+            </div>
           ) : (
-            rak.kelompok.map((k) => (
-              <section key={k.jenis} className="lmr__kelompok">
-                <h3 className="lmr__sekat">
-                  <span>{LABEL_JENIS_ANGGOTA[k.jenis]}</span>
-                  <span>
-                    {formatRupiah(k.total)} · {teksPersen(k.persen)}
-                  </span>
-                </h3>
-                {k.isi.map((o) => {
-                  const ditarik =
-                    sematan === o.teamMemberId ||
-                    orangDisorot === o.teamMemberId ||
-                    (laciDisorot !== null && orangLaci.get(laciDisorot)?.has(o.teamMemberId));
-                  const redup =
-                    (laciDisorot !== null && !orangLaci.get(laciDisorot)?.has(o.teamMemberId)) ||
-                    (orangDisorot !== null && orangDisorot !== o.teamMemberId);
-                  return (
-                    <button
-                      key={o.teamMemberId}
-                      type="button"
-                      className={`lmr__kartu${ditarik ? " is-tarik" : ""}${redup ? " is-redup" : ""}`}
-                      style={{ "--lmr-w": WARNA_JENIS(o.kind), "--lmr-t": o.total / rak.maks } as React.CSSProperties}
-                      aria-pressed={sematan === o.teamMemberId}
-                      aria-label={`${o.name}, ${formatRupiah(o.total)} dari ${o.projectCount} proyek. Tandai laci-lacinya`}
-                      onClick={() => setSematan((s) => (s === o.teamMemberId ? null : o.teamMemberId))}
-                      onPointerEnter={(e) => e.pointerType === "mouse" && setSorot({ orang: o.teamMemberId })}
-                    >
-                      {/* Kartu menyembul dari kantongnya setinggi bagiannya
-                          dari penerima terbesar. */}
-                      <span className="lmr__kertas">
-                        <b>{o.name}</b>
-                        <span>{formatRupiah(o.total)}</span>
-                      </span>
-                      <span className="lmr__kantong">
-                        <Ikon ikon={IKON_JENIS[o.kind]} ukuran={12} />
-                        <span>
-                          {o.role ?? LABEL_JENIS_ANGGOTA[o.kind]} · {o.projectCount} proyek
-                          {o.lastOn && <> · {tanggalPendek(o.lastOn)}</>}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </section>
-            ))
-          )}
-          {!memuat && tanpaNama > 0 && (
-            <section className="lmr__kelompok">
-              <h3 className="lmr__sekat">
-                <span>Belum ditautkan</span>
-                <span>
-                  {formatRupiah(tanpaNama)} · {teksPersen(rak.total > 0 ? (tanpaNama / rak.total) * 100 : 0)}
-                </span>
-              </h3>
-              <div className="lmr__kartu lmr__kartu--tanpa" style={{ "--lmr-t": 1 } as React.CSSProperties}>
-                <span className="lmr__kertas">
-                  <b>Tanpa nama</b>
-                  <span>{formatRupiah(tanpaNama)}</span>
-                </span>
-                <span className="lmr__kantong">
-                  <Ikon ikon={WarningOctagon} ukuran={12} />
-                  <span>di {(proyek ?? []).filter((p) => p.feeTanpaNama > 0).length} proyek, belum bernama penerima</span>
-                </span>
+            <div className="kwt__isi">
+              {/* Kolom bonggol */}
+              <div className="kwt__bonggolwrap">
+                <p className="kwt__kepalakolom">
+                  Bonggol <span>{bonggol.filter((b) => b.no !== null).length} kuitansi</span>
+                </p>
+                <ol className="kwt__bonggol-bonggol" ref={bonggolRef} aria-label="Bonggol kuitansi">
+                  {!data
+                    ? Array.from({ length: 4 }, (_, i) => <li key={i} className="kwt__bonggolrangka" />)
+                    : bonggol.map((b, i) => {
+                        const aktif = b.id === kuitansi?.id;
+                        const redup = sorotOrang !== null && (b.teamMemberId ?? "tanpa") !== sorotOrang;
+                        return (
+                          <li key={b.id}>
+                            <button
+                              type="button"
+                              className={`kwt__bonggol is-${b.keadaan}${aktif ? " is-aktif" : ""}${redup ? " is-redup" : ""}`}
+                              style={{ "--kwt-w": WARNA_JENIS(b.jenis) } as React.CSSProperties}
+                              aria-current={aktif || undefined}
+                              tabIndex={aktif ? 0 : -1}
+                              onClick={() => pilihKuitansi(b.id)}
+                              onKeyDown={(e) => tombolBonggol(e, i)}
+                            >
+                              <span className="kwt__bonggolno">{b.no === null ? "—" : String(b.no).padStart(2, "0")}</span>
+                              <span className="kwt__bonggolisi">
+                                <b>{b.nama ?? "Tanpa nama"}</b>
+                                <span>
+                                  {b.keadaan === "dibayar"
+                                    ? tanggalPendek(b.tanggal!, true)
+                                    : b.keadaan === "jatuh_tempo"
+                                      ? "belum ditulis · jatuh tempo"
+                                      : "belum ditulis · menunggu"}
+                                </span>
+                              </span>
+                              <span className="kwt__bonggolnominal">{formatRupiah(b.nominal)}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                  {data && bonggol.length === 0 && <li className="kwt__bonggolkosong">Belum ada kuitansi fee di rentang ini.</li>}
+                </ol>
               </div>
-            </section>
+
+              {/* Garis sobek: deret lubang perforasi */}
+              <div className="kwt__sobek" aria-hidden="true" />
+
+              <div className="kwt__kanan">
+                <div className="kwt__meja">
+                  {kuitansi ? (
+                    <Kuitansi key={`${kuitansi.id}-${ayun}`} k={kuitansi} proyek={terpilih} studio={studio} ayun={ayun > 0 && pakaiGerak()} />
+                  ) : (
+                    <div className="kwt__kuitansi kwt__kuitansi--kosong">{data ? "Belum ada kuitansi di rentang ini." : "Membuka buku…"}</div>
+                  )}
+                </div>
+
+                {/* Rincian fee proyek */}
+                <div className="kwt__rincian" onPointerLeave={(e) => e.pointerType === "mouse" && setSorotOrang(null)}>
+                  <p className="kwt__kepalakolom">
+                    Rincian fee proyek
+                    <span>
+                      {terpilih.contractValue
+                        ? `${teksPersen(((terpilih.feeTotal + terpilih.feeTanpaNama) / terpilih.contractValue) * 100)} dari kontrak ${formatRupiah(terpilih.contractValue)}`
+                        : "kontrak belum diisi"}
+                    </span>
+                  </p>
+                  <Mistar p={terpilih} ket={ket} />
+                  <ul className="kwt__orang-orang">
+                    {rincian.map((r) => {
+                      const skala = Math.max(r.hak, r.dibayar, 1);
+                      return (
+                        <li
+                          key={r.id}
+                          className={`kwt__orang${r.id === "tanpa" ? " is-tanpa" : ""}${sorotOrang && sorotOrang !== r.id ? " is-redup" : ""}`}
+                          style={{ "--kwt-w": WARNA_JENIS(r.jenis), "--kwt-bayar": r.dibayar / skala } as React.CSSProperties}
+                          onPointerEnter={(e) => e.pointerType === "mouse" && setSorotOrang(r.id)}
+                        >
+                          <span className="kwt__inisial" aria-hidden="true">
+                            {r.id === "tanpa" ? "?" : inisial(r.nama)}
+                          </span>
+                          <span className="kwt__orangnama">
+                            <b>{r.nama}</b>
+                            <span>
+                              {r.id === "tanpa"
+                                ? "biaya fee belum ditautkan ke nama"
+                                : r.peran.join(" · ") || `${LABEL_JENIS_ANGGOTA[r.jenis as JenisAnggota]} · fee lepas`}
+                            </span>
+                          </span>
+                          <span className="kwt__orangbatang" aria-hidden="true">
+                            <i />
+                          </span>
+                          <span className="kwt__orangnilai">
+                            <b>{formatRupiah(r.dibayar)}</b>
+                            <span>{r.hak > 0 ? `dari hak ${formatRupiah(r.hak)}` : "dibayar"}</span>
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            </div>
           )}
-        </div>
-      </aside>
+        </section>
+      </div>
     </div>
   );
 }
 
-/** Rupiah besar di plat logam: ribuan terakhir dikecilkan seperti nominal kit. */
+/** Rupiah besar: ribuan terakhir dikecilkan seperti nominal kit. */
 function RupiahBesar({ n }: { n: number }) {
   const s = formatRupiah(n);
   const i = s.lastIndexOf(".");
@@ -677,370 +715,173 @@ function RupiahBesar({ n }: { n: number }) {
   );
 }
 
-/* =============================================================================
-   Satu laci
-   ============================================================================= */
-
-function Laci({
-  p,
-  no,
-  terbuka,
-  baru,
-  isi,
-  rentang,
-  jenisOrang,
-  orangDisorot,
-  punya,
-  redup,
-  ket,
-  onTarik,
-  onCobaLagi,
-  onDekat,
-  onKey,
-}: {
-  p: FeeProyek;
-  no: number;
-  terbuka: boolean;
-  baru: boolean;
-  isi: IsiLaci | "galat" | undefined;
-  rentang: string;
-  jenisOrang: Map<string, JenisAnggota>;
-  orangDisorot: string | null;
-  punya: boolean;
-  redup: boolean;
-  ket: ReturnType<typeof pemberiKet>;
-  onTarik: () => void;
-  onCobaLagi: () => void;
-  onDekat: (e: React.PointerEvent) => void;
-  onKey: (e: React.KeyboardEvent) => void;
-}) {
-  const keluar = p.feeTotal + p.feeTanpaNama;
+/* Mistar porsi fee terhadap kontrak, dipotong per penerima menurut warna
+   jenisnya; arsir amber = fee tanpa nama. Strip skala di BAWAHNYA, bukan di
+   belakang tulisan. */
+function Mistar({ p, kecil, ket }: { p: FeeProyek; kecil?: boolean; ket?: ReturnType<typeof pemberiKet> }) {
   const kontrak = p.contractValue && p.contractValue > 0 ? p.contractValue : null;
-  const porsi = kontrak ? (keluar / kontrak) * 100 : null;
-  const idBaki = `lmr-baki-${p.projectId}`;
-  const nomor = String(no).padStart(2, "0");
-
-  /* Ruas mistar: satu per penerima, lalu tanpa nama. Dipotong di 100% —
-     fee yang melewati kontraknya ditandai, bukan digambar keluar laci. */
-  const ruas: { id: string; nama: string; nilai: number; warna: string; tanpa?: boolean }[] = [
-    ...p.orang.map((o) => ({ id: o.teamMemberId, nama: o.name, nilai: o.amount, warna: WARNA_JENIS(o.kind) })),
-    ...(p.feeTanpaNama > 0
-      ? [{ id: "tanpa", nama: "Tanpa nama", nilai: p.feeTanpaNama, warna: WARNA_JENIS("tanpa"), tanpa: true }]
-      : []),
+  if (!kontrak) return <span className={`kwt__mistar is-kosong${kecil ? " kwt__mistar--kecil" : ""}`} aria-hidden="true" />;
+  const ruas = [
+    ...p.orang.map((o) => ({ id: o.teamMemberId, nama: o.name, nilai: o.amount, warna: WARNA_JENIS(o.kind), tanpa: false })),
+    ...(p.feeTanpaNama > 0 ? [{ id: "tanpa", nama: "Tanpa nama", nilai: p.feeTanpaNama, warna: "", tanpa: true }] : []),
   ];
   let kiri = 0;
-
-  /* Isi laci tetap terpasang sesudah pernah ditarik: laci yang MENUTUP
-     masuk membawa isinya, bukan meluncur sebagai baki kosong. */
-  const [pernah, setPernah] = useState(terbuka);
-  if (terbuka && !pernah) setPernah(true);
-
   return (
-    <div className={`lmr__laci${terbuka ? " is-buka" : ""}${redup ? " is-redup" : ""}${punya ? " is-punya" : ""}`}>
-      <div className="lmr__baki" id={idBaki} role="region" aria-label={`Isi laci ${nomor} — ${p.projectTitle}`}>
-        <div className="lmr__bakidalam" inert={!terbuka || undefined}>
-          {(terbuka || pernah) && (
-            <IsiBaki p={p} isi={isi} rentang={rentang} jenisOrang={jenisOrang} orangDisorot={orangDisorot} baru={baru} onCobaLagi={onCobaLagi} />
-          )}
-        </div>
-      </div>
-      <button
-        type="button"
-        className="lmr__muka"
-        aria-expanded={terbuka}
-        aria-controls={idBaki}
-        onClick={onTarik}
-        onPointerEnter={onDekat}
-        onKeyDown={onKey}
-      >
-        <span className="lmr__tepi" aria-hidden="true" />
-        <span className="lmr__bingkai">
-          <span className="lmr__label">
-            <span className="lmr__labelatas">
-              <span className="lmr__labelno">
-                <span className="sr-only">Laci </span>
-                {nomor}
-              </span>
-              <span className="lmr__labeljudul">{p.projectTitle}</span>
-            </span>
-            <span className="lmr__labelket">{kontrak ? `Kontrak ${formatRupiah(kontrak)}` : "Kontrak belum diisi"}</span>
-          </span>
-        </span>
-        <span className="lmr__pegangan" aria-hidden="true">
-          <i />
-        </span>
-        <span className="lmr__ukur">
-          <span className="lmr__ukurteks">
-            {porsi === null ? (
-              <span className="lmr__ukurkosong">Porsi belum bisa dihitung</span>
-            ) : (
-              <span>
-                <b>{teksPersen(porsi)}</b> dari kontrak
-              </span>
-            )}
-            <span className="lmr__ukurorang">
-              {p.orang.length} penerima
-            </span>
-          </span>
-          <span className={`lmr__mistar${porsi === null ? " is-kosong" : ""}`} aria-hidden="true">
-            {porsi !== null &&
-              ruas.map((r) => {
-                const lebar = Math.max(0, Math.min(100 - kiri, (r.nilai / kontrak!) * 100));
-                const el = (
-                  <span
-                    key={r.id}
-                    className={`lmr__ruas${r.tanpa ? " is-tanpa" : ""}${orangDisorot && orangDisorot !== r.id ? " is-pudar" : ""}${orangDisorot === r.id ? " is-nyala" : ""}`}
-                    style={{ left: `${kiri}%`, width: `${lebar}%`, background: r.tanpa ? undefined : r.warna }}
-                    {...ket(() => ({
-                      judul: `${r.nama} · ${p.projectTitle}`,
-                      baris: [
-                        { warna: r.tanpa ? "var(--warn)" : r.warna, label: "Fee", nilai: formatRupiah(r.nilai) },
-                        { label: "Dari kontrak", nilai: teksPersen((r.nilai / kontrak!) * 100) },
-                      ],
-                    }))}
-                  />
-                );
-                kiri += lebar;
-                return el;
-              })}
-            {porsi !== null && porsi > 100 && <span className="lmr__lewat">lewat</span>}
-          </span>
-        </span>
-        <span className="lmr__jumlah">
-          <b>{formatRupiah(keluar)}</b>
-          <span>fee keluar</span>
-        </span>
-      </button>
-    </div>
+    <span className={`kwt__mistar${kecil ? " kwt__mistar--kecil" : ""}`} aria-hidden="true">
+      {ruas.map((r) => {
+        const lebar = Math.max(0, Math.min(100 - kiri, (r.nilai / kontrak) * 100));
+        const el = (
+          <span
+            key={r.id}
+            className={`kwt__ruas${r.tanpa ? " is-tanpa" : ""}`}
+            style={{ left: `${kiri}%`, width: `${lebar}%`, background: r.tanpa ? undefined : r.warna }}
+            {...(ket
+              ? ket(() => ({
+                  judul: r.nama,
+                  baris: [
+                    { warna: r.tanpa ? "var(--warn)" : r.warna, label: "Fee", nilai: formatRupiah(r.nilai) },
+                    { label: "Dari kontrak", nilai: teksPersen((r.nilai / kontrak) * 100) },
+                  ],
+                }))
+              : {})}
+          />
+        );
+        kiri += lebar;
+        return el;
+      })}
+    </span>
   );
 }
 
 /* =============================================================================
-   Isi laci yang ditarik
+   Kuitansi — selembar, seperti yang ditandatangani penerima fee.
    ============================================================================= */
 
-function IsiBaki({
-  p,
-  isi,
-  rentang,
-  jenisOrang,
-  orangDisorot,
-  baru,
-  onCobaLagi,
+function Kuitansi({
+  k,
+  proyek,
+  studio,
+  ayun,
 }: {
-  p: FeeProyek;
-  isi: IsiLaci | "galat" | undefined;
-  rentang: string;
-  jenisOrang: Map<string, JenisAnggota>;
-  orangDisorot: string | null;
-  baru: boolean;
-  onCobaLagi: () => void;
+  k: Bonggol;
+  proyek: FeeProyek;
+  studio: { nama: string; kota: string | null };
+  ayun: boolean;
 }) {
-  const data = isi && isi !== "galat" ? isi : null;
-
-  const map = useMemo<Map_[]>(() => {
-    const per = new Map<string, Map_>();
-    for (const o of p.orang) {
-      per.set(o.teamMemberId, { id: o.teamMemberId, nama: o.name, jenis: o.kind, diterima: o.amount, kali: 0, terakhir: null, tugas: [] });
-    }
-    for (const b of data?.biaya ?? []) {
-      if (!KATEGORI_FEE.has(b.category) || !b.teamMemberId || !dalamRentang(b.incurredOn, rentang)) continue;
-      const m = per.get(b.teamMemberId);
-      if (!m) continue;
-      m.kali += 1;
-      if (!m.terakhir || b.incurredOn > m.terakhir) m.terakhir = b.incurredOn;
-    }
-    /* Orang yang DITUGASKAN tapi belum dibayar di rentang ini tetap punya
-       map — map kosong yang berlabel hak adalah kabar, bukan celah. */
-    for (const t of data?.tim ?? []) {
-      const m =
-        per.get(t.teamMemberId) ??
-        ({
-          id: t.teamMemberId,
-          nama: t.teamMemberName,
-          jenis: (jenisOrang.get(t.teamMemberId) ?? t.teamMemberKind) as JenisAnggota,
-          diterima: 0,
-          kali: 0,
-          terakhir: null,
-          tugas: [],
-        } satisfies Map_);
-      m.tugas.push(t);
-      per.set(t.teamMemberId, m);
-    }
-    return [...per.values()].sort((a, z) => z.diterima - a.diterima);
-  }, [p, data, rentang, jenisOrang]);
-
-  const hak = (data?.tim ?? []).reduce((a, t) => a + (t.hak ?? 0), 0);
-  const dibayar = (data?.tim ?? []).reduce((a, t) => a + t.dibayar, 0);
-  const tempo = (data?.tim ?? []).reduce(
-    (a, t) => a + t.tahap.filter((x) => x.keadaan === "jatuh_tempo").reduce((s, x) => s + (x.nominal ?? 0), 0),
-    0,
-  );
-  const tanpaPersen = (data?.tim ?? []).filter((t) => t.pctBerlaku === null).length;
-  /* Fee tanpa nama bukan milik penerima mana pun, jadi ia tidak dapat map:
-     ia keterangan tentang LACINYA — biaya lama yang belum ditautkan. */
-  const tanpa = (data?.biaya ?? []).filter(
-    (b) => KATEGORI_FEE.has(b.category) && !b.teamMemberId && dalamRentang(b.incurredOn, rentang),
-  );
-
+  const nomor = k.no === null ? "belum ditulis" : `FP-${kodeProyek(proyek.projectTitle)}-${String(k.no).padStart(2, "0")}`;
+  const dibayar = k.keadaan === "dibayar";
   return (
-    <div className={`lmr__dasar${baru && pakaiGerak() ? " is-baru" : ""}`}>
-      {/* Dinding dalam laci: dinding belakang di atas, dua dinding samping
-          yang menyempit ke belakang. Isinya duduk di antara ketiganya. */}
-      <i className="lmr__dinding lmr__dinding--kiri" aria-hidden="true" />
-      <i className="lmr__dinding lmr__dinding--kanan" aria-hidden="true" />
-      <div className="lmr__catatan">
-        <p className="lmr__catatanjudul">Catatan laci</p>
-        {/* Kontrak dan fee keluar sudah tertulis di muka laci — catatan
-            hanya memuat yang tidak tampak dari luar. */}
-        <dl>
-          {p.feeTanpaNama > 0 && (
-            <div className="is-tanpa">
-              <dt title={tanpa.length > 0 ? `${tanpa.length} biaya fee belum ditautkan ke nama siapa pun` : undefined}>Tanpa nama</dt>
-              <dd>{formatRupiah(p.feeTanpaNama)}</dd>
-            </div>
-          )}
-          {!data ? (
-            <div>
-              <dt>Hak tim</dt>
-              <dd>…</dd>
-            </div>
-          ) : data.tim.length === 0 ? (
-            <div>
-              <dt>Penugasan tim</dt>
-              <dd>belum ada</dd>
-            </div>
-          ) : (
+    <article className={`kwt__kuitansi${dibayar ? "" : " is-belum"}${ayun ? " is-ayun" : ""}`} aria-label={`Kuitansi ${nomor}`}>
+      <header className="kwt__kkop">
+        <p className="kwt__kjudul">Kuitansi</p>
+        <p className="kwt__kno">
+          No. <b>{nomor}</b>
+        </p>
+      </header>
+      <dl className="kwt__kbaris">
+        <div>
+          <dt>Telah terima dari</dt>
+          <dd>{studio.nama}</dd>
+        </div>
+        <div>
+          <dt>Uang sejumlah</dt>
+          <dd>
+            <span className="kwt__kuang">{formatRupiah(k.nominal)}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Terbilang</dt>
+          <dd className="kwt__kterbilang"># {terbilang(k.nominal)} #</dd>
+        </div>
+        <div>
+          <dt>Untuk pembayaran</dt>
+          <dd>
+            {k.untuk.charAt(0).toUpperCase() + k.untuk.slice(1)} — proyek {proyek.projectTitle}
+          </dd>
+        </div>
+      </dl>
+      <footer className="kwt__kkaki">
+        <div className="kwt__ktempat">
+          {dibayar ? (
             <>
-              <div>
-                <dt>
-                  Hak tim
-                  {tanpaPersen > 0 && <span className="lmr__tanpapersen"> · {tanpaPersen} tanpa %</span>}
-                </dt>
-                <dd>{hak > 0 ? formatRupiah(hak) : "—"}</dd>
-              </div>
-              <div>
-                <dt>Sudah dibayar</dt>
-                <dd>{formatRupiah(dibayar)}</dd>
-              </div>
-              {tempo > 0 && (
-                <div className="is-tempo">
-                  <dt>Jatuh tempo</dt>
-                  <dd>{formatRupiah(tempo)}</dd>
-                </div>
-              )}
+              {studio.kota ? `${studio.kota}, ` : ""}
+              {tanggalPanjang(k.tanggal!)}
             </>
+          ) : (
+            <span className="kwt__kstatus">
+              <Ikon ikon={Hourglass} ukuran={12} />
+              {k.keadaan === "jatuh_tempo" ? "Jatuh tempo — belum dibayar" : "Menunggu tahapnya tiba"}
+            </span>
           )}
-        </dl>
-        <a className="lmr__buka" href={`/admin/proyek/satu?id=${encodeURIComponent(p.projectId)}#tim-bayaran`}>
-          {tempo > 0 ? "Bayar di Satu Proyek" : "Buka proyek"}
-          <Ikon ikon={ArrowRight} ukuran={14} />
-        </a>
-      </div>
-
-      <div className="lmr__map-map">
-        {isi === "galat" ? (
-          <div className="lmr__bakikosong">
-            <p>Isi laci gagal dimuat.</p>
-            <button type="button" className="lmr__coba lmr__coba--terang" onClick={onCobaLagi}>
-              Coba lagi
-            </button>
-          </div>
-        ) : (
-          map.map((m, i) => (
-            <MapOrang key={m.id} m={m} urutan={i} pudar={orangDisorot !== null && orangDisorot !== m.id} nyala={orangDisorot === m.id} />
-          ))
-        )}
-      </div>
-    </div>
+        </div>
+        <div className="kwt__kttd">
+          <span className="kwt__kttdlabel">Yang menerima,</span>
+          <span className="kwt__kttdruang">
+            {dibayar ? (
+              <CapLunas tanggal={k.tanggal!} studio={inisial(studio.nama) || "ST"} id={k.id} />
+            ) : (
+              <a className="kwt__kbayar" href={`/admin/proyek/satu?id=${encodeURIComponent(proyek.projectId)}#tim-bayaran`}>
+                Bayar di Satu Proyek
+                <Ikon ikon={ArrowRight} ukuran={13} />
+              </a>
+            )}
+          </span>
+          <span className={`kwt__kttdnama${k.nama ? "" : " is-tanpa"}`}>{k.nama ?? "belum ditautkan ke nama"}</span>
+        </div>
+      </footer>
+    </article>
   );
 }
 
-function MapOrang({ m, urutan, pudar, nyala }: { m: Map_; urutan: number; pudar: boolean; nyala: boolean }) {
-  const peran = m.tugas.map((t) => `${LABEL_PERAN[t.role]}${t.pctBerlaku !== null ? ` ${teksPersen(t.pctBerlaku)}` : ""}`).join(" · ");
-  const tahap = m.tugas.flatMap((t) => t.tahap.map((x) => ({ ...x, peran: LABEL_PERAN[t.role] })));
-  const hak = m.tugas.reduce((a, t) => a + (t.hak ?? 0), 0);
+/* Cap LUNAS: cincin rangkap, "LUNAS" di busur atas, inisial studio di busur
+   bawah, tanggal di tengah — keluarga yang sama dengan cap DITERIMA di Gaji.
+   Tidak ada garis yang melintas di belakang huruf mana pun. */
+function CapLunas({ tanggal, studio, id }: { tanggal: string; studio: string; id: string }) {
+  const [, m, h] = tanggal.slice(0, 10).split("-");
+  const aman = id.replace(/[^A-Za-z0-9_-]/g, "");
   return (
-    <article
-      /* Tumpukan lembar di belakang map = berapa kali orang ini dibayar di
-         proyek ini (sampai tiga lapis). */
-      className={`lmr__map lmr__map--lapis${Math.min(3, Math.max(0, m.kali - 1))}${pudar ? " is-pudar" : ""}${nyala ? " is-nyala" : ""}`}
-      style={{ "--lmr-w": WARNA_JENIS(m.jenis), "--lmr-i": urutan } as React.CSSProperties}
-    >
-      <p className="lmr__maptab">
-        <span>{m.nama}</span>
-      </p>
-      <div className="lmr__mapisi">
-        <p className="lmr__mapperan">
-          {peran || `${LABEL_JENIS_ANGGOTA[m.jenis]} · fee lepas`}
-        </p>
-        <p className="lmr__mapnilai">{formatRupiah(m.diterima)}</p>
-        {(tahap.length === 0 || (m.diterima === 0 && hak > 0)) && (
-          <p className="lmr__mapket">
-            {m.diterima === 0 && hak > 0
-              ? `Belum dibayar · hak ${formatRupiah(hak)}`
-              : `${m.kali > 0 ? `${m.kali}× dibayar` : "dibayar"}${m.terakhir ? ` · ${tanggalPendek(m.terakhir, true)}` : ""}`}
-          </p>
-        )}
-        {tahap.length > 0 && (
-          <ul className="lmr__tahap">
-            {tahap.map((x, i) => (
-              <li
-                key={i}
-                className={`is-${x.keadaan}`}
-                title={`${x.peran} · tahap ${x.tahap === "awal" ? "awal" : "akhir"}: ${
-                  x.keadaan === "dibayar" ? "dibayar" : x.keadaan === "jatuh_tempo" ? "jatuh tempo" : x.keadaan === "menunggu" ? "menunggu" : "persen belum ditentukan"
-                }`}
-              >
-                {x.keadaan === "dibayar" ? (
-                  <Ikon ikon={Check} ukuran={10} />
-                ) : x.keadaan === "jatuh_tempo" || x.keadaan === "menunggu" ? (
-                  <Ikon ikon={Hourglass} ukuran={10} />
-                ) : null}
-                <span>
-                  {tahap.length > 2 ? `${x.peran} ` : ""}
-                  {x.tahap === "awal" ? "Awal" : "Akhir"}
-                  {x.keadaan === "dibayar" && x.dibayarPada ? ` ${tanggalPendek(x.dibayarPada)}` : ""}
-                </span>
-                <span className="sr-only">
-                  {x.keadaan === "dibayar" ? "dibayar" : x.keadaan === "jatuh_tempo" ? "jatuh tempo" : x.keadaan === "menunggu" ? "menunggu" : "persen belum ditentukan"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </article>
+    <svg className="kwt__cap" viewBox="0 0 48 48" width="46" height="46" role="img" aria-label={`Lunas ${tanggalPendek(tanggal)}`}>
+      <defs>
+        <path id={`kwt-atas-${aman}`} d="M 9 24 A 15 15 0 0 1 39 24" />
+        <path id={`kwt-bawah-${aman}`} d="M 6.5 24 A 17.5 17.5 0 0 0 41.5 24" />
+      </defs>
+      <circle cx="24" cy="24" r="22.6" className="kwt__capluar" />
+      <circle cx="24" cy="24" r="21" className="kwt__capdalam" />
+      <text className="kwt__capbusur">
+        <textPath href={`#kwt-atas-${aman}`} startOffset="50%" textAnchor="middle">
+          LUNAS
+        </textPath>
+      </text>
+      <text className="kwt__capbusur kwt__capbusur--bawah">
+        <textPath href={`#kwt-bawah-${aman}`} startOffset="50%" textAnchor="middle">
+          {studio}
+        </textPath>
+      </text>
+      <text x="24" y="31" textAnchor="middle" className="kwt__captgl">
+        {`${Number(h)}/${Number(m)}`}
+      </text>
+    </svg>
   );
 }
 
 function Kerangka(): ReactNode {
   return (
-    <div className="lmr lmr--rangka" aria-busy="true">
-      <section className="lmr__lemari">
-        <div className="lmr__gul-gul" />
-        <div className="lmr__papan" />
-        <div className="lmr__badan">
-          <header className="lmr__kop">
-            <div className="lmr__plat">
-              <span className="rk" style={{ width: 120, height: 9 }} />
-              <span className="rk" style={{ width: 210, height: 26 }} />
-            </div>
-          </header>
-          <div className="lmr__laci-laci">
+    <div className="kwt kwt--rangka" aria-busy="true">
+      <div className="kwt__papan">
+        <aside className="kwt__sisi">
+          <div className="kwt__kop">
+            <span className="rk rk--gelap" style={{ width: 140, height: 10 }} />
+            <span className="rk rk--gelap" style={{ width: 210, height: 26 }} />
+            <span className="rk rk--gelap" style={{ width: 180, height: 10 }} />
+          </div>
+          <div className="kwt__blok-blok">
             {Array.from({ length: 5 }, (_, i) => (
-              <div key={i} className="lmr__laci lmr__laci--rangka" />
+              <div key={i} className="kwt__blok kwt__blok--rangka" />
             ))}
           </div>
-        </div>
-        <footer className="lmr__alas" />
-        <div className="lmr__kaki" aria-hidden="true">
-          <span />
-          <span />
-        </div>
-      </section>
-      <div className="lmr__kontrol" />
-      <aside className="lmr__rak" />
+        </aside>
+        <section className="kwt__lembar" />
+      </div>
     </div>
   );
 }
