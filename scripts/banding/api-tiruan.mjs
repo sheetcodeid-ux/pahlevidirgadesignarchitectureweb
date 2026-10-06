@@ -703,6 +703,18 @@ function slipTiruan(orang, period) {
     salary: g ? { id: g.id, amount: g.amount, paidOn: g.paidOn, note: g.note } : null,
     fees, salaryAmount, feeAmount, total: salaryAmount + feeAmount };
 }
+/* Riwayat slip dua belas bulan — sama dengan payroll.riwayatSlip() di API:
+   tiap bulan dijumlah dari slipTiruan() supaya batang = total slip. */
+function riwayatSlipTiruan(orang, sampai) {
+  const [y, m] = sampai.split("-").map(Number);
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(Date.UTC(y, m - 1 - (11 - i), 1));
+    const k = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    const s = slipTiruan(orang, k);
+    return { period: k, salary: s?.salaryAmount ?? 0, salaryPaid: s?.salary ? !!s.salary.paidOn : null,
+      fee: s?.feeAmount ?? 0, feeCount: s?.fees.length ?? 0, total: s?.total ?? 0 };
+  });
+}
 /* Ringkasan hak per orang — sama dengan projectTeam.perOrang() di API. */
 function orangTiruan() {
   const peta = new Map();
@@ -836,6 +848,10 @@ const jawab = (path) => {
   {
     const gb = path.match(/^\/api\/v1\/admin\/payroll\/month\?period=([0-9-]+)/);
     if (gb) return gajiSebulan(gb[1]);
+  }
+  {
+    const rw = path.match(/^\/api\/v1\/admin\/payroll\/slip\/history\?teamMemberId=([^&]+)&until=([0-9-]+)/);
+    if (rw) return riwayatSlipTiruan(decodeURIComponent(rw[1]), rw[2]);
   }
   {
     const sl = path.match(/^\/api\/v1\/admin\/payroll\/slip\?teamMemberId=([^&]+)&period=([0-9-]+)/);

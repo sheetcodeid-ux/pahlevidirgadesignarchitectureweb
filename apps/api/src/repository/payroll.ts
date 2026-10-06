@@ -1,6 +1,6 @@
 import type { Sql } from "postgres";
 import type {
-  MemberKind, PayoutStage, PaySlip, PayrollEntry, PayrollInput, PayrollMonthRow, TeamRole,
+  MemberKind, PayoutStage, PaySlip, PaySlipMonth, PayrollEntry, PayrollInput, PayrollMonthRow, TeamRole,
 } from "../types";
 import { NotFoundError } from "./projects";
 
@@ -201,6 +201,59 @@ export async function slip(sql: Sql, teamMemberId: string, period: string): Prom
     feeAmount,
     total: salaryAmount + feeAmount,
   };
+}
+
+/**
+ * Riwayat slip satu orang: `jumlah` bulan berakhir di `sampai` (termasuk),
+ * terlama lebih dulu. Saringannya SAMA dengan `slip()` — gaji dari `payroll`
+ * pada bulan itu, fee dari `project_costs` atas nama orang itu yang terjadi
+ * di bulan itu — jadi batang riwayat dan total slip bulan yang sama tidak
+ * bisa berbeda (dijaga tes). Bulan tanpa apa pun tetap dikirim sebagai 0:
+ * yang menggambar butuh dua belas kolom, bukan hanya bulan yang berisi.
+ */
+export async function riwayatSlip(sql: Sql, teamMemberId: string, sampai: string, jumlah = 12): Promise<PaySlipMonth[]> {
+  const akhir = awalBulan(sampai);
+  const id = teamMemberId.trim();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("orang tidak sah");
+  const n = Math.min(Math.max(Math.trunc(jumlah), 1), 24);
+  const rows = await sql<{ period: string; gaji: string; gaji_ada: number; gaji_belum: number; fee: string; fee_n: number }[]>`
+    with bulan as (
+      select (${akhir}::date - make_interval(months => i))::date as awal
+        from generate_series(0, ${n - 1}::int) as i
+    )
+    select to_char(b.awal, 'YYYY-MM') as period,
+           coalesce(g.jumlah, 0) as gaji,
+           coalesce(g.ada, 0)::int as gaji_ada,
+           coalesce(g.belum, 0)::int as gaji_belum,
+           coalesce(f.jumlah, 0) as fee,
+           coalesce(f.n, 0)::int as fee_n
+      from bulan b
+      left join lateral (
+        select sum(amount) as jumlah, count(*) as ada, count(*) filter (where paid_on is null) as belum
+          from public.payroll
+         where team_member_id = ${id}::uuid and period = b.awal
+      ) g on true
+      left join lateral (
+        select sum(c.amount) as jumlah, count(*) as n
+          from public.project_costs c
+          join public.projects p on p.id = c.project_id
+         where c.team_member_id = ${id}::uuid
+           and c.incurred_on >= b.awal
+           and c.incurred_on <  (b.awal + interval '1 month')
+      ) f on true
+     order by b.awal`;
+  return rows.map((r) => {
+    const salary = Number(r.gaji);
+    const fee = Number(r.fee);
+    return {
+      period: r.period,
+      salary,
+      salaryPaid: r.gaji_ada === 0 ? null : r.gaji_belum === 0,
+      fee,
+      feeCount: r.fee_n,
+      total: salary + fee,
+    };
+  });
 }
 
 export async function create(sql: Sql, input: PayrollInput): Promise<string> {

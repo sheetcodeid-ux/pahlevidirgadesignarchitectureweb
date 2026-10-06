@@ -1237,6 +1237,20 @@ export interface SlipGaji {
   feeAmount: number;
   total: number;
 }
+/** Satu bulan riwayat slip — jumlahnya sama dengan slip bulan itu. */
+export interface BulanSlip {
+  /** 'YYYY-MM' */
+  period: string;
+  salary: number;
+  /** null = tidak ada gaji bulan itu; false = ada tapi belum dibayar. */
+  salaryPaid: boolean | null;
+  fee: number;
+  feeCount: number;
+  total: number;
+}
+/** Dua belas bulan berakhir di `sampai` ('YYYY-MM'), terlama dulu. */
+export const ambilRiwayatSlip = (teamMemberId: string, sampai: string) =>
+  panggil<BulanSlip[]>(`/admin/payroll/slip/history?teamMemberId=${encodeURIComponent(teamMemberId)}&until=${sampai}`);
 /** `period` = 'YYYY-MM'. */
 export const ambilSlip = (teamMemberId: string, period: string) =>
   panggil<SlipGaji>(`/admin/payroll/slip?teamMemberId=${encodeURIComponent(teamMemberId)}&period=${period}`);

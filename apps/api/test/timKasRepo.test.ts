@@ -189,6 +189,18 @@ it.skipIf(!adaPostgres)("tim, bayaran, kas, dan target jalan dengan setelan kone
     (await payroll.slip(sql, dany, "2025-01"))?.total === 0);
   cek("orang tak dikenal: null", (await payroll.slip(sql, "00000000-0000-4000-8000-000000000000", "2026-08")) === null);
 
+  console.log("\n── riwayat slip 12 bulan (batang pemilih bulan di Bayaran Tim) ──");
+  const riwayat = await payroll.riwayatSlip(sql, dany, "2026-09");
+  cek("dua belas bulan, terlama dulu, berakhir di bulan yang diminta",
+    riwayat.length === 12 && riwayat[0]!.period === "2025-10" && riwayat[11]!.period === "2026-09", riwayat.map((r) => r.period));
+  const rAgu = riwayat.find((r) => r.period === "2026-08")!;
+  cek("Agustus di riwayat = total slip Agustus", rAgu.total === slip.total && rAgu.salary === slip.salaryAmount && rAgu.fee === slip.feeAmount, rAgu);
+  cek("Agustus: 2 baris fee, gaji ada tapi belum dibayar", rAgu.feeCount === 2 && rAgu.salaryPaid === false, rAgu);
+  const slipSep = (await payroll.slip(sql, dany, "2026-09"))!;
+  const rSep = riwayat.find((r) => r.period === "2026-09")!;
+  cek("September di riwayat = total slip September (999 rb, tanpa gaji)", rSep.total === slipSep.total && rSep.total === 999_000 && rSep.salaryPaid === null, rSep);
+  cek("bulan kosong tetap dikirim sebagai 0", riwayat.filter((r) => r.total === 0).length === 10);
+
   console.log("\n── kas studio ──");
   const pvc = await ledger.create(sql, {
     direction: "masuk", category: "penjualan_material", label: "PVC 120 batang",

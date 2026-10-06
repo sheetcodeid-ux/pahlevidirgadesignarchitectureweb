@@ -634,6 +634,21 @@ admin.get("/payroll/slip", async (c) => {
   }
 });
 
+/** Riwayat slip satu orang — `?teamMemberId=&until=YYYY-MM`, dua belas bulan. */
+admin.get("/payroll/slip/history", async (c) => {
+  const orang = c.req.query("teamMemberId");
+  const sampai = c.req.query("until");
+  if (!orang || !sampai) {
+    return c.json({ error: { status: 422, message: "orang dan bulan akhir wajib diisi" } }, 422);
+  }
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) => payrollRepo.riwayatSlip(sql, orang, sampai));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
 admin.get("/payroll/month", async (c) => {
   const period = c.req.query("period");
   if (!period) return c.json({ error: { status: 422, message: "periode wajib diisi" } }, 422);

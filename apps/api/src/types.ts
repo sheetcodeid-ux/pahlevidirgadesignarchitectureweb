@@ -811,6 +811,21 @@ export interface PaySlip {
   total: number;
 }
 
+/**
+ * Satu bulan di riwayat slip — jumlah yang sama dengan `slip()` untuk bulan
+ * itu (gaji di `payroll`, fee di `project_costs` atas nama orang itu).
+ */
+export interface PaySlipMonth {
+  /** 'YYYY-MM' */
+  period: string;
+  salary: number;
+  /** null = tidak ada gaji bulan itu; false = ada tapi belum dibayar. */
+  salaryPaid: boolean | null;
+  fee: number;
+  feeCount: number;
+  total: number;
+}
+
 /** Fee satu proyek, dipecah per orang. */
 export interface FeeProject {
   projectId: string;

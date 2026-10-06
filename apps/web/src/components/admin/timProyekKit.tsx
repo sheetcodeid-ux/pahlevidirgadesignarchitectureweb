@@ -45,7 +45,7 @@ const persenDari = (v: string) => {
   return t === "" ? null : Number(t);
 };
 
-const SYARAT: Record<TahapBayaran["tahap"], string> = {
+export const SYARAT: Record<TahapBayaran["tahap"], string> = {
   awal: "Tunggu DP klien",
   akhir: "Tunggu desain selesai",
 };
