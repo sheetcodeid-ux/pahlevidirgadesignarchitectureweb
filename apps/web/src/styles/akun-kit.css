@@ -47,15 +47,60 @@
   gap: 0 32px;
 }
 
-/* Kartu staf: badge tegak berlubang tali. Miringnya dari --rx/--ry yang
-   disetel penunjuk; kilaunya mengikuti --mx/--my. */
+/* Kartu staf yang DIGANTUNG: tali dari tepi atas panel, jepit logam, lalu
+   kartunya. Miringnya (--rx/--ry) dan ayunannya (--ayun) disetel penunjuk
+   di pembungkus; ayunannya berporos di titik gantung, dan kembali dengan
+   pegas begitu kursor pergi. Kilaunya mengikuti --mx/--my. */
+.akn__gantung {
+  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%; --ayun: 0deg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: rotate(var(--ayun));
+  transform-origin: 50% 0;
+  transition: transform 0.9s cubic-bezier(0.3, 1.8, 0.5, 1);
+}
+.akn__gantung:hover { transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1); }
+/* Tali: pita tipis bergaris, jepitnya logam berlubang. */
+.akn__tali { display: flex; flex-direction: column; align-items: center; flex: none; }
+.akn__tali i {
+  display: block;
+  width: 12px;
+  height: 14px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in srgb, var(--kas-bidang) 30%, transparent) 3px 4px),
+    var(--brand-mint);
+  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--kas-bidang) 25%, transparent), inset -1px 0 0 color-mix(in srgb, var(--kas-bidang) 25%, transparent);
+}
+.akn__tali b {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 14px;
+  margin-bottom: -7px;
+  border: 2px solid var(--text-muted);
+  border-radius: 4px 4px 7px 7px;
+  background: var(--surface);
+  z-index: 2;
+}
+.akn__tali b::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 6px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--text-muted);
+  transform: translateX(-50%);
+}
 .akn__staf {
-  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 318px;
+  width: 100%;
+  height: 312px;
   overflow: clip;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -73,7 +118,7 @@
   align-items: center;
   gap: 14px;
   width: 100%;
-  height: 104px;
+  height: 92px;
   padding-top: 12px;
   color: var(--brand-mint);
   background-color: var(--kas-bidang);
@@ -100,9 +145,9 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 80px;
-  height: 80px;
-  margin-top: -40px;
+  width: 76px;
+  height: 76px;
+  margin-top: -38px;
   border: 4px solid var(--surface);
   border-radius: 50%;
   background: var(--brand-mint);
@@ -112,7 +157,7 @@
   position: relative;
   z-index: 1;
 }
-.akn__stafbadan { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 10px 16px 0; text-align: center; }
+.akn__stafbadan { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 8px 16px 0; text-align: center; }
 .akn__stafnama { max-width: 100%; font-size: var(--k-t18); font-weight: var(--k-bold); line-height: 1.2; color: var(--text-strong); overflow-wrap: anywhere; }
 .akn__stafperan {
   padding: 2px 10px;
@@ -127,8 +172,8 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  margin: 10px 0 0;
-  padding-top: 12px;
+  margin: 8px 0 0;
+  padding-top: 10px;
   border-top: 1px dashed var(--border-strong);
   text-align: left;
 }
@@ -146,7 +191,7 @@
 }
 .akn__staf:hover .akn__stafkilau { opacity: 0.6; }
 @media (prefers-reduced-motion: reduce) {
-  .akn__staf, .akn__staf:hover { transform: none; transition: none; }
+  .akn__gantung, .akn__gantung:hover, .akn__staf, .akn__staf:hover { transform: none; transition: none; }
 }
 
 .akn__bagian { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -197,19 +242,29 @@
   background: var(--brand-soft);
 }
 .akn__meter { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; }
-.akn__meterperisai {
+/* Gembok gambar garis: busurnya terangkat selama aturan belum lengkap,
+   lalu turun mengunci. Amber = belum memenuhi, mint = terkunci (aturan
+   warna #1). */
+.akn__gembokwadah {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 52px;
   border-radius: 12px;
   background: var(--surface);
   color: var(--text-muted);
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.25s, color 0.25s;
 }
-.akn__kekuatan--kurang .akn__meterperisai { color: var(--warn-ink); }
-.akn__kekuatan--kuat .akn__meterperisai,
-.akn__kekuatan--sangat .akn__meterperisai { background: var(--brand-mint); color: var(--brand-mint-ink); }
+.akn__gembok { width: 30px; height: 35px; overflow: visible; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.akn__gembok circle { fill: currentColor; stroke: none; }
+.akn__gembokbusur { transform: translateY(-7px); transition: transform 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.akn__gembok[data-kunci] .akn__gembokbusur { transform: none; }
+.akn__kekuatan--kurang .akn__gembokwadah { color: var(--warn-ink); }
+.akn__kekuatan--kuat .akn__gembokwadah,
+.akn__kekuatan--sangat .akn__gembokwadah { background: var(--brand-mint); color: var(--brand-mint-ink); }
+@media (prefers-reduced-motion: reduce) {
+  .akn__gembokbusur { transition: none; }
+}
 .akn__metertulis { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .akn__meterlabel { font-size: var(--k-t12); color: var(--text-muted); }
 .akn__metertingkat { font-size: var(--k-t18); font-weight: var(--k-bold); color: var(--text-strong); }
@@ -328,7 +383,43 @@
 /* "+N perangkat lain": layar bertumpuk. */
 .akn__alat--banyak .akn__alatlayar { box-shadow: 6px -6px 0 -2px var(--surface), 6px -6px 0 0 var(--border-strong); }
 
+/* Layar perangkat INI menggambar panel ini sendiri: rel mint, kepala
+   bersampul kisi, dua kartu — dengan lambang sistemnya di pojok. */
+.akn__alatui { position: absolute; inset: 3px; display: grid; grid-template-columns: 22% 1fr; gap: 3px; overflow: hidden; border-radius: 4px; background: var(--surface); }
+.akn__alatlayar:has(.akn__alatui) { position: relative; }
+.akn__alatui-rel { display: block; background: var(--brand-soft); box-shadow: inset -1px 0 0 var(--border); }
+.akn__alatui-isi { display: grid; grid-template-rows: 40% 1fr 1fr; gap: 3px; padding: 3px 3px 3px 0; }
+.akn__alatui-isi i { display: block; border: 1px solid var(--border); border-radius: 2px; }
+.akn__alatui-isi .akn__alatui-sampul {
+  border: 0;
+  background-color: var(--brand-soft);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--brand) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--brand) 22%, transparent) 1px, transparent 1px);
+  background-size: 5px 5px;
+}
+.akn__alatui-lambang {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: var(--brand);
+  color: var(--surface);
+}
+
 /* --- Tampilan -------------------------------------------------------------------- */
+/* Pergantian tema melingkar (View Transitions): animasi pudar silang bawaan
+   dimatikan supaya yang terlihat cuma lingkarannya. Kelasnya hanya ada
+   selama pergantian dari halaman ini, jadi router tidak ikut kena. */
+html.lbr-temaganti::view-transition-old(root),
+html.lbr-temaganti::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html.lbr-temaganti::view-transition-old(root) { z-index: 1; }
+html.lbr-temaganti::view-transition-new(root) { z-index: 2; }
+
 .akn__tema { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .akn__temabutir {
   position: relative;

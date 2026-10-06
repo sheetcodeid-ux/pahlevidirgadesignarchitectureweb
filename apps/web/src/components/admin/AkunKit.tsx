@@ -146,49 +146,55 @@ const IKON_KELOMPOK: Record<string, DataIkon> = {
   Pengaturan: GearSix,
 };
 
-/** Kartu staf: badge tegak berlubang tali, miring mengikuti kursor. Hanya
- *  tetikus (jebakan #9: peristiwa tiruan sentuh tidak pernah "pergi"), dan
- *  diam kalau pemakai meminta gerak dikurangi (CSS). */
+/** Kartu staf: badge tegak yang BERGANTUNG di tali. Saat tetikus di
+ *  atasnya, kartunya miring mengikuti kursor (3D) dan berayun dari titik
+ *  gantungnya ke arah kursor; dilepas, ia berayun balik dan berhenti.
+ *  Hanya tetikus (jebakan #9: peristiwa tiruan sentuh tidak pernah
+ *  "pergi"), dan diam kalau pemakai meminta gerak dikurangi (CSS). Kotaknya
+ *  dibaca SEKALI saat kursor masuk, bukan di tiap gerakan. */
 function KartuStaf({ nama, email, master, stafSejak }: { nama: string; email: string; master: boolean; stafSejak: string | null }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const gantung = useRef<HTMLDivElement>(null);
   const kotak = useRef<DOMRect | null>(null);
-  const atur = (rx: number, ry: number, mx = 50, my = 50) => {
-    const el = ref.current;
+  const atur = (rx: number, ry: number, ayun: number, mx = 50, my = 50) => {
+    const el = gantung.current;
     if (!el) return;
     el.style.setProperty("--rx", `${rx}deg`);
     el.style.setProperty("--ry", `${ry}deg`);
+    el.style.setProperty("--ayun", `${ayun}deg`);
     el.style.setProperty("--mx", `${mx}%`);
     el.style.setProperty("--my", `${my}%`);
   };
   return (
     <div
-      ref={ref}
-      className="akn__staf"
-      // Kotaknya dibaca SEKALI saat kursor masuk, bukan di tiap gerakan.
+      ref={gantung}
+      className="akn__gantung"
       onPointerEnter={(e) => { if (e.pointerType === "mouse") kotak.current = e.currentTarget.getBoundingClientRect(); }}
       onPointerMove={(e) => {
         const r = kotak.current;
         if (e.pointerType !== "mouse" || !r) return;
         const x = (e.clientX - r.left) / r.width;
         const y = (e.clientY - r.top) / r.height;
-        atur((0.5 - y) * 10, (x - 0.5) * 14, x * 100, y * 100);
+        atur((0.5 - y) * 10, (x - 0.5) * 14, (0.5 - x) * 7, x * 100, y * 100);
       }}
-      onPointerLeave={() => { kotak.current = null; atur(0, 0); }}
+      onPointerLeave={() => { kotak.current = null; atur(0, 0, 0); }}
     >
-      <div className="akn__stafatas">
-        <span className="akn__staflubang" aria-hidden="true" />
-        <span className="akn__staflabel"><LambangStudio className="akn__staflambang" tebal={4} />Kartu staf</span>
+      <span className="akn__tali" aria-hidden="true"><i /><b /></span>
+      <div className="akn__staf">
+        <div className="akn__stafatas">
+          <span className="akn__staflubang" aria-hidden="true" />
+          <span className="akn__staflabel"><LambangStudio className="akn__staflambang" tebal={4} />Kartu staf</span>
+        </div>
+        <span className="akn__staffoto" aria-hidden="true">{inisial(nama)}</span>
+        <div className="akn__stafbadan">
+          <b className="akn__stafnama">{nama}</b>
+          <span className="akn__stafperan">{master ? "Master admin" : "Staf"}</span>
+          <dl className="akn__stafdata">
+            <div><dt>Email</dt><dd>{email}</dd></div>
+            <div><dt>Staf sejak</dt><dd>{stafSejak ? tanggal(stafSejak) : "—"}</dd></div>
+          </dl>
+        </div>
+        <span className="akn__stafkilau" aria-hidden="true" />
       </div>
-      <span className="akn__staffoto" aria-hidden="true">{inisial(nama)}</span>
-      <div className="akn__stafbadan">
-        <b className="akn__stafnama">{nama}</b>
-        <span className="akn__stafperan">{master ? "Master admin" : "Staf"}</span>
-        <dl className="akn__stafdata">
-          <div><dt>Email</dt><dd>{email}</dd></div>
-          <div><dt>Staf sejak</dt><dd>{stafSejak ? tanggal(stafSejak) : "—"}</dd></div>
-        </dl>
-      </div>
-      <span className="akn__stafkilau" aria-hidden="true" />
     </div>
   );
 }
@@ -340,6 +346,21 @@ function TombolMata({ lihat, setLihat, apa }: { lihat: boolean; setLihat: (b: bo
   );
 }
 
+/** Gembok gambar garis: busurnya terangkat (terbuka) sampai kata sandi
+ *  baru memenuhi kelima aturan, lalu turun mengunci. */
+function Gembok({ kunci }: { kunci: boolean }) {
+  return (
+    <span className="akn__gembokwadah" aria-hidden="true">
+      <svg className="akn__gembok" data-kunci={kunci || undefined} viewBox="0 0 48 56" fill="none">
+        <path className="akn__gembokbusur" d="M15 27 V18 a9 9 0 0 1 18 0 V27" />
+        <rect x="8" y="27" width="32" height="25" rx="5" />
+        <circle cx="24" cy="38" r="3.2" />
+        <path d="M24 41 V46" />
+      </svg>
+    </span>
+  );
+}
+
 function PanelKeamanan({ email, fokusAwal, onBerhasil }: { email: string; fokusAwal: boolean; onBerhasil: () => void }) {
   const toast = useToast();
   const [lama, setLama] = useState("");
@@ -450,7 +471,7 @@ function PanelKeamanan({ email, fokusAwal, onBerhasil }: { email: string; fokusA
             daripada satu kalimat galat sesudah menekan Simpan. */}
         <div className={`akn__kekuatan akn__kekuatan--${tingkat}`}>
           <div className="akn__meter" id={meterId}>
-            <span className="akn__meterperisai" aria-hidden="true"><Ikon ikon={SpecialSealCheck} ukuran={22} /></span>
+            <Gembok kunci={tingkat === "kuat" || tingkat === "sangat"} />
             <span className="akn__metertulis">
               <span className="akn__meterlabel">Kekuatan kata sandi</span>
               <b className="akn__metertingkat">{labelTingkat}</b>
@@ -500,13 +521,21 @@ const IKON_SISTEM: Partial<Record<SistemPerangkat, DataIkon>> = {
 
 /** Gambar garis perangkatnya — laptop, ponsel, tablet, atau tanda tanya
  *  kalau agennya tidak dikenali — dengan lambang sistemnya di layar. */
-function GambarAlat({ ua, angka }: { ua: string | null; angka?: number }) {
+function GambarAlat({ ua, angka, ini }: { ua: string | null; angka?: number; ini?: boolean }) {
   const p = bacaPerangkat(ua);
   const jenis = angka !== undefined ? "banyak" : p ? p.jenis : "tak";
   return (
     <span className={`akn__alat akn__alat--${jenis}`} aria-hidden="true">
       <span className="akn__alatlayar">
-        {angka !== undefined ? <b>{angka}</b> : <Ikon ikon={p ? (IKON_SISTEM[p.sistem] ?? Globe) : Question} ukuran={20} />}
+        {/* Perangkat ini: layarnya menampilkan panel ini sendiri — rel, kepala
+            bersampul, kartu — dengan lambang sistemnya di pojok. */}
+        {ini && p ? (
+          <span className="akn__alatui">
+            <i className="akn__alatui-rel" />
+            <span className="akn__alatui-isi"><i className="akn__alatui-sampul" /><i /><i /></span>
+            <span className="akn__alatui-lambang"><Ikon ikon={IKON_SISTEM[p.sistem] ?? Globe} ukuran={10} /></span>
+          </span>
+        ) : angka !== undefined ? <b>{angka}</b> : <Ikon ikon={p ? (IKON_SISTEM[p.sistem] ?? Globe) : Question} ukuran={20} />}
       </span>
       {jenis === "komputer" && <span className="akn__alatalas" />}
     </span>
@@ -519,7 +548,7 @@ function KartuAlat({ ua, angka, judul, ket, masuk, aktif, ini, children }: {
   return (
     <li className={`akn__alatkartu${ini ? " is-ini" : ""}${angka !== undefined || !bacaPerangkat(ua) ? " is-pudar" : ""}`}>
       {ini && <span className="akn__alathidup"><i aria-hidden="true" />Sekarang</span>}
-      <GambarAlat ua={ua} angka={angka} />
+      <GambarAlat ua={ua} angka={angka} ini={ini} />
       <span className="akn__alatjudul">
         <b className="akn__alatnama">{judul}</b>
         {ket && <small>{ket}</small>}
@@ -677,10 +706,40 @@ function PratinjauTema({ nilai }: { nilai: PilihanTema }) {
   );
 }
 
+/**
+ * Ganti tema dengan lingkaran yang melebar dari titik klik (View
+ * Transitions): peramban memotret halaman lama, tema diganti, lalu halaman
+ * baru dibuka sebagai lingkaran. Peramban tanpa API itu, atau pemakai yang
+ * meminta gerak dikurangi, mendapat pergantian seketika seperti biasa.
+ */
+function temaMelingkar(nilai: PilihanTema, x: number, y: number) {
+  const dok = document as Document & {
+    startViewTransition?: (ubah: () => void) => { ready: Promise<void>; finished: Promise<void> };
+  };
+  if (!dok.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    pilihTema(nilai);
+    return;
+  }
+  const akar = document.documentElement;
+  akar.classList.add("lbr-temaganti");
+  const vt = dok.startViewTransition(() => pilihTema(nilai));
+  const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  vt.ready
+    .then(() => {
+      akar.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+        { duration: 520, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" },
+      );
+    })
+    .catch(() => {});
+  vt.finished.finally(() => akar.classList.remove("lbr-temaganti"));
+}
+
 function PanelTampilan() {
   // "sistem" juga nilai yang dirender server — pilihan sungguhannya dibaca
   // sesudah hidrasi (jebakan #8).
   const [tema, setTema] = useState<PilihanTema>("sistem");
+  const titik = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     setTema(pilihanTema());
     // Tombol tema di navbar menulis pilihan eksplisit; ikuti.
@@ -693,13 +752,21 @@ function PanelTampilan() {
     <div className="lbr-panel akn__panel--tampilan">
       <div className="akn__tema" role="radiogroup" aria-label="Tema panel">
         {PILIHAN_TEMA.map((t) => (
-          <label key={t.nilai} className="akn__temabutir">
+          <label key={t.nilai} className="akn__temabutir" onPointerDown={(e) => { titik.current = { x: e.clientX, y: e.clientY }; }}>
             <input
               type="radio"
               name="akn-tema"
               value={t.nilai}
               checked={tema === t.nilai}
-              onChange={() => { pilihTema(t.nilai); setTema(t.nilai); }}
+              onChange={(e) => {
+                // Pusat lingkarannya titik klik; dari papan ketik, tengah ubinnya.
+                const r = e.currentTarget.getBoundingClientRect();
+                const x = titik.current?.x ?? r.left + r.width / 2;
+                const y = titik.current?.y ?? r.top + r.height / 2;
+                titik.current = null;
+                temaMelingkar(t.nilai, x, y);
+                setTema(t.nilai);
+              }}
             />
             <PratinjauTema nilai={t.nilai} />
             <span className="akn__temateks">
@@ -757,6 +824,7 @@ function Isi() {
       <header className="lbr-kepala">
         {/* Kop lembar — data akun sungguhan, bukan hiasan. */}
         <SampulLembar
+          judul="Akun"
           gambar={<DenahSampul />}
           kop={[
             { label: "Peran", nilai: master ? "Master admin" : "Staf" },

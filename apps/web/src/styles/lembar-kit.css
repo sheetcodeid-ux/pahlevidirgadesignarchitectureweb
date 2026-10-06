@@ -53,27 +53,91 @@
 .lbr-tebal path { fill: none; stroke: currentColor; stroke-opacity: 0.72; stroke-width: 5; stroke-linecap: square; }
 .lbr-tipis path { fill: none; stroke: currentColor; stroke-opacity: 0.55; stroke-width: 1.2; }
 .lbr-angka text { font-size: 8.5px; fill-opacity: 0.8; }
-.lbr-utara { position: absolute; top: 12px; right: 22px; width: 26px; height: 33px; }
-.lbr-utara circle { fill: none; stroke: currentColor; stroke-opacity: 0.6; stroke-width: 1.2; }
-.lbr-utara path { fill: currentColor; fill-opacity: 0.85; }
-.lbr-utara text { font-size: 8px; font-weight: 700; }
+/* Bingkai tepi kertas gambar: garis tipis 6px dari tepi sampul. */
+.lbr-sampul::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid color-mix(in srgb, var(--brand-mint) 28%, transparent);
+  border-radius: 11px 11px 2px 2px;
+  pointer-events: none;
+}
 
-/* Kop lembar: sel bergaris mint, bidangnya menutup kisi di belakangnya. */
+/* Kursor CAD: garis silang + kotak pilih + pembacaan koordinat. Posisinya
+   dari --cx/--cy yang ditulis penunjuk; hanya transform, jadi pindahnya
+   cuma tugas compositor. */
+.lbr-sampul[data-cad] { cursor: none; }
+.lbr-cad { position: absolute; inset: 0; z-index: 1; overflow: clip; opacity: 0; pointer-events: none; transition: opacity 0.12s; }
+.lbr-sampul[data-cad] .lbr-cad { opacity: 1; }
+.lbr-cad__h,
+.lbr-cad__v,
+.lbr-cad__kotak { position: absolute; top: 0; left: 0; }
+.lbr-cad__h { right: 0; height: 1px; background: color-mix(in srgb, var(--brand-mint) 60%, transparent); transform: translateY(var(--cy, 0)); }
+.lbr-cad__v { bottom: 0; width: 1px; background: color-mix(in srgb, var(--brand-mint) 60%, transparent); transform: translateX(var(--cx, 0)); }
+.lbr-cad__kotak {
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--brand-mint);
+  background: var(--kas-bidang);
+  transform: translate(calc(var(--cx, 0px) - 5px), calc(var(--cy, 0px) - 5px));
+}
+/* Snap ke perpotongan kisi: kotak pejal mint, seperti penanda osnap. */
+.lbr-sampul[data-snap] .lbr-cad__kotak { background: var(--brand-mint); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-mint) 30%, transparent); }
+.lbr-cad__baca {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--brand-mint) 55%, transparent);
+  border-radius: 4px;
+  background: var(--kas-bidang);
+  color: var(--kas-nilai);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: pre;
+  --bx: calc(var(--cx, 0px) + 12px);
+  --by: calc(var(--cy, 0px) + 12px);
+  transform: translate(var(--bx), var(--by));
+}
+.lbr-sampul[data-kiri] .lbr-cad__baca { --bx: calc(var(--cx, 0px) - 100% - 12px); }
+.lbr-sampul[data-atas] .lbr-cad__baca { --by: calc(var(--cy, 0px) - 100% - 12px); }
+
+/* Kop lembar: baris judul (LEMBAR · nama, panah utara) di atas sel data
+   bergaris mint; bidangnya menutup kisi di belakangnya. */
 .lbr-kop {
   position: absolute;
   right: 18px;
   bottom: 12px;
-  display: grid;
-  grid-auto-columns: auto;
-  grid-auto-flow: column;
-  margin: 0;
+  z-index: 2;
+  overflow: clip;
   border: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent);
   border-radius: 6px;
   background: var(--kas-bidang);
 }
-.lbr-kop > div { padding: 6px 14px 7px; }
-.lbr-kop > div + div { border-left: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent); }
-.lbr-kop dt {
+.lbr-kopjudul {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 3px 8px 3px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent);
+  color: var(--kas-ink);
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lbr-kopjudul span { opacity: 0.8; }
+.lbr-kopjudul b { flex: 1 1 auto; font-weight: var(--k-bold); color: var(--kas-nilai); }
+.lbr-utara { flex: none; width: 13px; height: 16px; color: var(--brand-mint); }
+.lbr-utara circle { fill: none; stroke: currentColor; stroke-opacity: 0.7; stroke-width: 1.6; }
+.lbr-utara path { fill: currentColor; }
+.lbr-utara text { font-size: 9px; font-weight: 700; }
+.lbr-kopsel { display: grid; grid-auto-columns: auto; grid-auto-flow: column; margin: 0; }
+.lbr-kopsel > div { padding: 5px 14px 6px; }
+.lbr-kopsel > div + div { border-left: 1px solid color-mix(in srgb, var(--brand-mint) 50%, transparent); }
+.lbr-kopsel dt {
   font-size: 0.5625rem;
   font-weight: var(--k-semi);
   letter-spacing: 0.08em;
@@ -81,7 +145,7 @@
   color: var(--kas-ink);
   opacity: 0.8;
 }
-.lbr-kop dd { margin: 2px 0 0; font-size: var(--k-t12); font-weight: var(--k-bold); color: var(--kas-nilai); white-space: nowrap; }
+.lbr-kopsel dd { margin: 2px 0 0; font-size: var(--k-t12); font-weight: var(--k-bold); color: var(--kas-nilai); white-space: nowrap; }
 
 /* Identitas di bawah sampul: benda besar (avatar/logo) | nama | pintas. */
 .lbr-identitas {
@@ -120,7 +184,7 @@
 .lbr-pintas { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding-bottom: 4px; }
 
 /* Tab bergaris bawah, menyatu dengan kepala. */
-.lbr-tabs { display: flex; gap: 4px; padding: 0 14px; border-top: 1px solid var(--border); }
+.lbr-tabs { position: relative; display: flex; gap: 4px; padding: 0 14px; border-top: 1px solid var(--border); }
 .lbr-tabb {
   position: relative;
   display: flex;
@@ -142,7 +206,9 @@
 .lbr-tabb:hover { color: var(--text-strong); background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
 .lbr-tabb[aria-selected="true"] { color: var(--text-strong); }
 .lbr-tabb[aria-selected="true"] svg { color: var(--brand); }
-.lbr-tabb[aria-selected="true"]::after {
+/* Garis bawah: sebelum diukur tiap tab terpilih menggambar garisnya
+   sendiri; sesudahnya satu garis yang meluncur (.lbr-tabgaris). */
+.lbr-tabs:not([data-garis]) .lbr-tabb[aria-selected="true"]::after {
   content: "";
   position: absolute;
   right: 10px;
@@ -153,6 +219,20 @@
   background: var(--brand);
 }
 .lbr-tabb:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; border-radius: 8px; }
+.lbr-tabgaris {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--brand);
+  pointer-events: none;
+}
+.lbr-tabs[data-garis="hidup"] .lbr-tabgaris { transition: transform 0.28s cubic-bezier(0.3, 0.7, 0.2, 1), width 0.28s cubic-bezier(0.3, 0.7, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .lbr-tabs[data-garis="hidup"] .lbr-tabgaris { transition: none; }
+  .lbr-cad { transition: none; }
+}
 .lbr-tabangka {
   display: grid;
   place-items: center;
@@ -235,6 +315,7 @@
 @media (max-width: 56rem) {
   .lbr-sampul { height: 104px; }
   .lbr-kop { display: none; }
+  .lbr-sampul[data-cad] { cursor: auto; }
   .lbr-identitas { grid-template-columns: minmax(0, 1fr); padding: 0 16px 16px; }
   .lbr-nama { font-size: var(--k-h5); }
   .lbr-pintas { justify-content: stretch; }

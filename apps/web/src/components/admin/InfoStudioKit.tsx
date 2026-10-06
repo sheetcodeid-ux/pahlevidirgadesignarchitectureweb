@@ -9,8 +9,10 @@ import { Lencana } from "../kit/Lencana";
 import { Putar } from "../kit/Tampilan";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import {
-  CheckCircle, FilePdf, Globe, House, ImageSquare, InstagramLogo, MapPinArea, NavEnvelope, Phone,
+  CheckCircle, FilePdf, Globe, House, ImageSquare, InstagramLogo, MapPinArea, NavEnvelope, NavReceipt, Phone,
+  SpecialInvoice, Wallet,
 } from "../kit/ikon";
+import { Segmen } from "../kit/Segmen";
 import { PenandaSimpan } from "./situsKit";
 import { BulatSumbu, SampulLembar, TabLembar, tabDariAlamat, tulisTabKeAlamat } from "./lembarKit";
 import {
@@ -156,15 +158,35 @@ function BingkaiPeramban({ alamat, children }: { alamat: string; children: React
   );
 }
 
-function Pratinjau({ judul, ket, children }: { judul: string; ket?: string; children: ReactNode }) {
+function Pratinjau({ judul, ket, aksi, children }: { judul: string; ket?: string; aksi?: ReactNode; children: ReactNode }) {
   return (
     <figure className="ist__pratinjau">
       <figcaption className="ist__pratinjau-judul">
         <b>{judul}</b>
         {ket && <span>{ket}</span>}
+        {aksi}
       </figcaption>
       {children}
     </figure>
+  );
+}
+
+/** Ponsel gambar garis berisi kepala situs versi ponsel — persis
+ *  Header.astro di bawah titik-patahnya: logo, wordmark, dua garis menu. */
+function BingkaiPonsel({ children }: { children: ReactNode }) {
+  return (
+    <div className="ist__ponselmeja" aria-hidden="true">
+      <div className="ist__ponsel">
+        <span className="ist__ponselponi" />
+        <span className="ist__ponselstatus"><b>9.41</b><i /><i /></span>
+        {children}
+      </div>
+      {/* Garis ukur lebar layar: 390 = lebar ponsel acuan di panel ini. */}
+      <svg className="ist__ponselukur" viewBox="0 0 160 14" fill="none">
+        <path d="M1 3 V11 M159 3 V11 M1 7 H159" />
+        <text x="80" y="5">390</text>
+      </svg>
+    </div>
   );
 }
 
@@ -175,6 +197,51 @@ function jamDi(zona: string, d: Date) {
 }
 function tanggalDi(zona: string, d: Date) {
   return new Intl.DateTimeFormat("id-ID", { timeZone: zona, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d);
+}
+
+/** Jam dinding bergaya busur derajat: 60 strip menit, strip tebal tiap
+ *  lima, angka derajat 0/90/180/270 di cincin luar seperti busur gambar.
+ *  Jarumnya dihitung dari jam DI ZONA STUDIO, bukan jam peramban. */
+function JamBusur({ zona, kini }: { zona: string; kini: Date | null }) {
+  let sj = 0;
+  let sm = 0;
+  if (kini) {
+    const [j, m] = jamDi(zona, kini).split(".").map(Number);
+    sm = (m ?? 0) * 6;
+    sj = ((j ?? 0) % 12) * 30 + (m ?? 0) * 0.5;
+  }
+  return (
+    <svg className="ist__busur" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+      <circle className="ist__busur-luar" cx="60" cy="60" r="57" />
+      <circle className="ist__busur-dalam" cx="60" cy="60" r="44" />
+      {Array.from({ length: 60 }, (_, i) => {
+        const tebal = i % 5 === 0;
+        return (
+          <line
+            key={i}
+            className={tebal ? "ist__busur-strip ist__busur-strip--tebal" : "ist__busur-strip"}
+            x1="60" y1={tebal ? 17 : 18} x2="60" y2="22"
+            transform={`rotate(${i * 6} 60 60)`}
+          />
+        );
+      })}
+      {[0, 90, 180, 270].map((d) => {
+        const r = (d - 90) * (Math.PI / 180);
+        return (
+          <text key={d} className="ist__busur-derajat" x={60 + Math.cos(r) * 50.5} y={60 + Math.sin(r) * 50.5 + 2.3}>
+            {d}°
+          </text>
+        );
+      })}
+      {kini && (
+        <>
+          <line className="ist__busur-jarumjam" x1="60" y1="60" x2="60" y2="36" transform={`rotate(${sj} 60 60)`} />
+          <line className="ist__busur-jarummenit" x1="60" y1="64" x2="60" y2="25" transform={`rotate(${sm} 60 60)`} />
+        </>
+      )}
+      <circle className="ist__busur-poros" cx="60" cy="60" r="3.2" />
+    </svg>
+  );
 }
 
 function JamStudio({ zona }: { zona: string }) {
@@ -189,9 +256,14 @@ function JamStudio({ zona }: { zona: string }) {
   const z = ZONA_WAKTU.find((x) => x.id === zona) ?? ZONA_WAKTU[0]!;
   return (
     <div className="ist__jam">
-      <span className="ist__jamlabel">Sekarang di studio</span>
-      <b className="ist__jamangka">{kini ? jamDi(z.id, kini) : "—.—"}<small>{z.label}</small></b>
-      <span className="ist__jamtanggal">{kini ? tanggalDi(z.id, kini) : " "}</span>
+      <div className="ist__jamatas">
+        <JamBusur zona={z.id} kini={kini} />
+        <div className="ist__jamteks">
+          <span className="ist__jamlabel">Sekarang di studio</span>
+          <b className="ist__jamangka">{kini ? jamDi(z.id, kini) : "—.—"}<small>{z.label}</small></b>
+          <span className="ist__jamtanggal">{kini ? tanggalDi(z.id, kini) : " "}</span>
+        </div>
+      </div>
       <ul className="ist__jamzona">
         {ZONA_WAKTU.map((x) => (
           <li key={x.id} data-pilih={x.id === z.id || undefined}>
@@ -206,8 +278,43 @@ function JamStudio({ zona }: { zona: string }) {
 
 /* ─── Halaman ────────────────────────────────────────────────────────────── */
 
+type JenisDok = "biaya" | "tagihan" | "gaji";
+
+/** Tiga dokumen yang memakai kop ini — judul dan kolom tengahnya sama
+ *  dengan lib/pdfProyek.ts; barisnya CONTOH, ditandai begitu di halaman. */
+const DOKUMEN: {
+  nilai: JenisDok; judul: string; untuk: string; ikon: DataIkon; sub: string; tengah: string;
+  baris: [string, string, string][]; total: string;
+}[] = [
+  {
+    nilai: "biaya", judul: "Rincian Biaya Proyek", untuk: "Internal studio", ikon: NavReceipt,
+    sub: "Rumah Tropis Sungai Raya", tengah: "Kategori",
+    baris: [["Fee drafter", "Tim", "Rp4.500.000"], ["Cetak gambar A1", "Produksi", "Rp850.000"], ["Survei lokasi", "Perjalanan", "Rp600.000"]],
+    total: "Rp5.950.000",
+  },
+  {
+    nilai: "tagihan", judul: "Daftar Tagihan", untuk: "Dikirim ke klien", ikon: SpecialInvoice,
+    sub: "Rumah Tropis Sungai Raya", tengah: "Status",
+    baris: [["Termin 1 — DP 50%", "Lunas", "Rp22.500.000"], ["Termin 2 — Desain final", "Terbit", "Rp13.500.000"], ["Termin 3 — Gambar kerja", "Draf", "Rp9.000.000"]],
+    total: "Rp45.000.000",
+  },
+  {
+    nilai: "gaji", judul: "Slip Gaji", untuk: "Untuk anggota tim", ikon: Wallet,
+    sub: "Anggota tim · Oktober 2026", tengah: "Keterangan",
+    baris: [["Gaji pokok", "Dibayar 1 Okt 2026", "Rp4.000.000"], ["Fee Rumah Tropis", "Drafter 10% · tahap awal", "Rp2.250.000"], ["Fee Kedai Kopi Tepian", "Render 5% · tahap akhir", "Rp900.000"]],
+    total: "Rp7.150.000",
+  },
+];
+
 function Isi() {
   const toast = useToast();
+  const [layar, setLayar] = useState<"desktop" | "ponsel">("desktop");
+  const [dok, setDok] = useState<JenisDok>("biaya");
+  const dokumen = DOKUMEN.find((d) => d.nilai === dok)!;
+  // Tanggal kop = tanggal di zona studio (lib/pdf.ts tanggalPanjang);
+  // dibaca sesudah hidrasi, server tidak tahu harinya (jebakan #8).
+  const [hariIni, setHariIni] = useState<Date | null>(null);
+  useEffect(() => setHariIni(new Date()), []);
   const [asli, setAsli] = useState<StudioSettings | null>(() => bacaCache<StudioSettings>("settings"));
   const [draf, setDraf] = useState<Draf>({});
   const [galat, setGalat] = useState<string | null>(null);
@@ -314,6 +421,9 @@ function Isi() {
   const logo = pratinjau ?? (logoDilepas ? null : asli.logoUrl ?? null);
   const zona = nilai("timezone") || "Asia/Jakarta";
   const zonaInfo = ZONA_WAKTU.find((z) => z.id === zona) ?? ZONA_WAKTU[0]!;
+  const tanggalKop = hariIni
+    ? new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: zona }).format(hariIni)
+    : "";
   const nama = nilai("studioName");
   const kota = nilai("city");
   const tagline = nilai("tagline");
@@ -352,6 +462,7 @@ function Isi() {
       <header className="lbr-kepala">
         {/* Kop lembar — data studio sungguhan, ikut draf yang sedang diketik. */}
         <SampulLembar
+          judul="Info studio"
           gambar={<TampakSampul />}
           kop={[
             { label: "Kota", nilai: kota || "—" },
@@ -438,22 +549,50 @@ function Isi() {
                 {logo && <Tombol jenis="ghost" ukuran="small" onClick={lepasLogo}>Lepas</Tombol>}
               </div>
             </div>
-            <Pratinjau judul="Kepala situs" ket="Di setiap halaman publik">
-              <BingkaiPeramban alamat="pahlevidirgaarchitecture.com">
-                <div className="ist__pubkepala">
-                  <span className="ist__pubmerek">
-                    {logo ? <img src={logo} alt="" /> : <LogoBawaan ukuran={16} />}
-                    {wordmark(nama)}
-                  </span>
-                  <span className="ist__pubnav"><i>Karya</i><i>Studio</i><i>Jurnal</i><i>Kontak</i></span>
-                  <span className="ist__pubtombol">Mulai proyek</span>
-                </div>
-                <div className="ist__pubhero">
-                  <i className="ist__pubhero-garis" />
-                  <i className="ist__pubhero-garis ist__pubhero-garis--pendek" />
-                  <i className="ist__pubhero-foto" />
-                </div>
-              </BingkaiPeramban>
+            <Pratinjau
+              judul="Kepala situs"
+              aksi={
+                <Segmen
+                  className="ist__layar"
+                  judul="Ukuran layar pratinjau"
+                  nilai={layar}
+                  onPilih={(v) => setLayar(v as "desktop" | "ponsel")}
+                  segmen={[{ nilai: "desktop", label: "Desktop" }, { nilai: "ponsel", label: "Ponsel" }]}
+                />
+              }
+            >
+              {layar === "desktop" ? (
+                <BingkaiPeramban alamat="pahlevidirgaarchitecture.com">
+                  <div className="ist__pubkepala">
+                    <span className="ist__pubmerek">
+                      {logo ? <img src={logo} alt="" /> : <LogoBawaan ukuran={16} />}
+                      {wordmark(nama)}
+                    </span>
+                    <span className="ist__pubnav"><i>Karya</i><i>Studio</i><i>Jurnal</i><i>Kontak</i></span>
+                    <span className="ist__pubtombol">Mulai proyek</span>
+                  </div>
+                  <div className="ist__pubhero">
+                    <i className="ist__pubhero-garis" />
+                    <i className="ist__pubhero-garis ist__pubhero-garis--pendek" />
+                    <i className="ist__pubhero-foto" />
+                  </div>
+                </BingkaiPeramban>
+              ) : (
+                <BingkaiPonsel>
+                  <div className="ist__pubkepala ist__pubkepala--ponsel">
+                    <span className="ist__pubmerek">
+                      {logo ? <img src={logo} alt="" /> : <LogoBawaan ukuran={14} />}
+                      <span className="ist__pubmerekteks">{wordmark(nama)}</span>
+                    </span>
+                    <svg className="ist__pubmenu" width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M2 6h16M2 14h16" /></svg>
+                  </div>
+                  <div className="ist__pubhero ist__pubhero--ponsel">
+                    <i className="ist__pubhero-garis" />
+                    <i className="ist__pubhero-garis ist__pubhero-garis--pendek" />
+                    <i className="ist__pubhero-foto" />
+                  </div>
+                </BingkaiPonsel>
+              )}
             </Pratinjau>
           </div>
         )}
@@ -553,13 +692,33 @@ function Isi() {
         {tab === "kop" && (
           <div className="lbr-panel ist__panel ist__panel--kop">
             <div className="ist__kopket">
-              <h3 className="lbr-judul">Kop di setiap dokumen PDF</h3>
-              <ul className="ist__dokumen">
-                <li><span className="lbr-ubin" aria-hidden="true"><Ikon ikon={FilePdf} ukuran={16} /></span>Rincian Biaya</li>
-                <li><span className="lbr-ubin" aria-hidden="true"><Ikon ikon={FilePdf} ukuran={16} /></span>Daftar Tagihan</li>
-                <li><span className="lbr-ubin" aria-hidden="true"><Ikon ikon={FilePdf} ukuran={16} /></span>Slip Gaji</li>
-              </ul>
-              <p className="ist__kopcatatan">Diambil saat dokumen dibuat — tidak perlu Terbitkan.</p>
+              <h3 className="lbr-judul" id="ist-dok">Kop di setiap dokumen PDF</h3>
+              <div className="ist__dokumen" role="radiogroup" aria-labelledby="ist-dok">
+                {DOKUMEN.map((d) => (
+                  <button
+                    key={d.nilai}
+                    type="button"
+                    role="radio"
+                    aria-checked={dok === d.nilai}
+                    tabIndex={dok === d.nilai ? 0 : -1}
+                    className="ist__dokb"
+                    onClick={() => setDok(d.nilai)}
+                    onKeyDown={(e) => {
+                      const i = DOKUMEN.findIndex((x) => x.nilai === dok);
+                      const ke = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1 }[e.key];
+                      if (ke === undefined) return;
+                      e.preventDefault();
+                      const j = (ke + DOKUMEN.length) % DOKUMEN.length;
+                      setDok(DOKUMEN[j]!.nilai);
+                      (e.currentTarget.parentElement?.children[j] as HTMLElement | undefined)?.focus();
+                    }}
+                  >
+                    <span className="lbr-ubin" aria-hidden="true"><Ikon ikon={d.ikon} ukuran={16} /></span>
+                    <span className="ist__dokteks"><b>{d.judul}</b><small>{d.untuk}</small></span>
+                  </button>
+                ))}
+              </div>
+              <p className="ist__kopcatatan">Kop diambil saat dokumen dibuat — tidak perlu Terbitkan. Baris di bawah kop hanya contoh.</p>
             </div>
             <div className="ist__meja" aria-label="Pratinjau kop dokumen">
               {/* Kertasnya wadah ukuran (container-type): seluruh ukuran di
@@ -567,25 +726,33 @@ function Isi() {
                   di lib/pdf.ts — jadi perbandingannya sama dengan PDF-nya. */}
               <div className="ist__kertas" aria-hidden="true">
                 <div className="ist__kertasisi">
-                <div className="ist__kop">
-                  <div className="ist__kopkiri">
-                    {logo && <img className="ist__koplogo" src={logo} alt="" />}
-                    <b className="ist__kopnama">{nama.trim() || "Nama studio"}</b>
-                    {tagline && <span className="ist__koptag">{tagline}</span>}
+                  <div className="ist__kop">
+                    <div className="ist__kopkiri">
+                      {logo && <img className="ist__koplogo" src={logo} alt="" />}
+                      <b className="ist__kopnama">{nama.trim() || "Nama studio"}</b>
+                      {tagline && <span className="ist__koptag">{tagline}</span>}
+                    </div>
+                    <div className="ist__kopkanan">
+                      {[[alamat, kota].filter((x) => x.trim()).join(", "), email, telepon]
+                        .filter((b) => b.trim())
+                        .map((b) => <span key={b}>{b}</span>)}
+                    </div>
                   </div>
-                  <div className="ist__kopkanan">
-                    {[[alamat, kota].filter((x) => x.trim()).join(", "), email, telepon]
-                      .filter((b) => b.trim())
-                      .map((b) => <span key={b}>{b}</span>)}
-                  </div>
-                </div>
-                <i className="ist__kopgaris" />
-                <b className="ist__kopjudul">RINCIAN BIAYA</b>
-                <span className="ist__kopsub">Rumah Tropis Sungai Raya</span>
-                <span className="ist__kopbaris" />
-                <span className="ist__kopbaris" />
-                <span className="ist__kopbaris ist__kopbaris--pendek" />
-                <span className="ist__kopbaris" />
+                  <i className="ist__kopgaris" />
+                  <b className="ist__kopjudul">{dokumen.judul}</b>
+                  <span className="ist__kopsub">
+                    <span>{dokumen.sub}</span>
+                    <span className="ist__koptanggal">{tanggalKop}</span>
+                  </span>
+                  <span className="ist__koptabel ist__koptabel--kepala">
+                    <span>URAIAN</span><span>{dokumen.tengah.toUpperCase()}</span><span>NOMINAL</span>
+                  </span>
+                  {dokumen.baris.map(([l, k, n]) => (
+                    <span key={l} className="ist__koptabel">
+                      <span>{l}</span><span className="ist__kopabu">{k}</span><span>{n}</span>
+                    </span>
+                  ))}
+                  <span className="ist__kopringkas"><span>Total</span><b>{dokumen.total}</b></span>
                 </div>
               </div>
             </div>
