@@ -24,6 +24,12 @@
   --gji-jumlah: 124px;
   --gji-ttd: 176px;
   --gji-redup: color-mix(in srgb, var(--kas-ink) 72%, transparent);
+  /* Kertas buku besar: bersemu hijau, bergaris kolom hijau. Semuanya
+     campuran token, jadi ikut berbalik tema. */
+  --gji-kertas: color-mix(in srgb, var(--brand-soft) 60%, var(--surface));
+  --gji-garis: color-mix(in srgb, var(--ramp-1) 20%, transparent);
+  --gji-garis-kuat: color-mix(in srgb, var(--ramp-1) 42%, transparent);
+  --gji-pita: color-mix(in srgb, var(--brand-mint) 36%, var(--gji-kertas));
   min-width: 0;
 }
 .gji p { max-width: none; margin: 0; }
@@ -35,7 +41,7 @@
   grid-template-columns: var(--gji-sampul) minmax(0, 1fr) var(--gji-tepi);
   grid-template-areas: "sampul lembar indeks";
   min-height: 0;
-  padding: 8px 0;
+  padding: 8px 0 15px;
   border-radius: 16px;
   background: var(--kas-bidang);
   color: var(--kas-ink);
@@ -119,6 +125,13 @@
   -webkit-text-fill-color: transparent;
   -webkit-text-stroke: 1.2px color-mix(in srgb, var(--kas-ink) 70%, transparent);
   font-variant-numeric: tabular-nums;
+  /* Kilau foil: pita terang yang menyapu isi angka saat sampul disentuh.
+     Diam di luar huruf (posisi 130%) selama tidak disentuh. */
+  background: linear-gradient(105deg, transparent 38%, color-mix(in srgb, var(--brand-mint) 80%, transparent) 50%, transparent 62%) no-repeat;
+  background-position: 130% 0;
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 .gji__monogram {
   display: grid;
@@ -310,8 +323,34 @@
   min-width: 0;
   min-height: 0;
   border-radius: 4px 10px 10px 4px;
-  background: var(--surface);
+  /* Lengkung kertas ke jilid: 24px pertama sedikit menggelap. Di lajur itu
+     hanya ada jahitan — isi lembar mulai 30px. */
+  background:
+    linear-gradient(to right, color-mix(in srgb, var(--kas-bidang) 14%, transparent), transparent 24px),
+    var(--gji-kertas);
   color: var(--text-strong);
+}
+/* Tumpukan lembar di bawah lembar terbuka: dua tepi kertas mengintip 4px
+   dan 8px di bawahnya (papan memberi ruang 15px; jahitan sampul di 5px). */
+.gji__tumpuk {
+  grid-area: lembar;
+  position: relative;
+  align-self: end;
+  height: 24px;
+  margin: 0 15px 0 10px;
+  border-radius: 0 0 8px 3px;
+  border-bottom: 1px solid var(--gji-garis-kuat);
+  background: color-mix(in srgb, var(--gji-kertas) 62%, var(--kas-bidang));
+  transform: translateY(8px);
+}
+.gji__tumpuk::after {
+  content: "";
+  position: absolute;
+  inset: 0 -5px;
+  border-radius: inherit;
+  border-bottom: 1px solid var(--gji-garis-kuat);
+  background: color-mix(in srgb, var(--gji-kertas) 82%, var(--kas-bidang));
+  transform: translateY(-4px);
 }
 /* Jahitan jilid di tepi kiri lembar — berhenti 14px dari tepi, isinya
    mulai di 30px. */
@@ -331,13 +370,15 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px 16px;
-  padding: 16px var(--gji-kanan) 12px var(--gji-kiri);
-  border-bottom: 3px double var(--border-strong);
+  padding: 14px var(--gji-kanan) 10px var(--gji-kiri);
+  border-bottom: 3px double var(--gji-garis-kuat);
 }
 .gji__kopkiri { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .gji__kopatas { font-size: var(--k-t10); font-weight: var(--k-semi); line-height: 1.2; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
 .gji__kopjudul { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
-.gji__kopjudul > span:first-child { font-size: var(--k-h5); font-weight: var(--k-semi); line-height: 1.15; color: var(--judul-ink); }
+.gji__judulbulan { font-size: var(--k-h2); font-weight: var(--k-bold); line-height: 1.05; letter-spacing: -0.015em; color: var(--judul-ink); }
+/* Tahun bergaris tanpa isi — gema tahun timbul di sampul. */
+.gji__judultahun { font-weight: var(--k-xbold); -webkit-text-fill-color: transparent; -webkit-text-stroke: 1px var(--judul-ink); }
 .gji__kopbawah { font-size: var(--k-t12); color: var(--text-muted); }
 .gji__kopbelum { color: var(--warn-ink); }
 .gji__kopaksi { display: flex; align-items: center; gap: 8px; }
@@ -377,7 +418,7 @@
   flex: 1 1 0;
   min-height: 0;
   margin: 0 var(--gji-kanan) 12px var(--gji-kiri);
-  background: repeating-linear-gradient(to bottom, transparent 0 31px, var(--border) 31px 32px);
+  background: repeating-linear-gradient(to bottom, transparent 0 31px, var(--gji-garis) 31px 32px);
 }
 
 .gji__daftar {
@@ -397,17 +438,24 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  height: 34px;
+  height: 32px;
   padding: 0 8px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  border-bottom: 1px solid var(--gji-garis-kuat);
+  background: var(--gji-pita);
   font-size: var(--k-t10);
-  font-weight: var(--k-semi);
+  font-weight: var(--k-bold);
   letter-spacing: 0.06em;
   text-align: left;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--judul-ink);
 }
+/* GARIS KOLOM buku besar: tunggal di antara kolom uang, RANGKAP sebelum
+   Jumlah dan sebelum Tanda terima. Garisnya tepi sel; isi sel berjarak 8px
+   darinya, jadi tidak ada angka yang ditembus garis. */
+.gji__daftar .gji__k-gaji,
+.gji__daftar .gji__k-fee { border-left: 1px solid var(--gji-garis); }
+.gji__daftar .gji__k-jumlah,
+.gji__daftar .gji__k-ttd { border-left: 3px double var(--gji-garis-kuat); }
 .gji__daftar th:first-child,
 .gji__daftar td:first-child { padding-left: 0; }
 .gji__daftar .gji__angka { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -432,7 +480,7 @@
 .gji__baris td {
   height: 64px;
   padding: 8px 8px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--gji-garis);
   vertical-align: top;
 }
 .gji__baris td.gji__angka { padding-top: 11px; }
@@ -514,7 +562,7 @@
 }
 .gji__cap:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .gji__cap svg { display: block; }
-.gji__capluar { fill: var(--surface); stroke: currentColor; stroke-width: 1.4; }
+.gji__capluar { fill: var(--gji-kertas); stroke: currentColor; stroke-width: 1.4; }
 .gji__capdalam { fill: none; stroke: currentColor; stroke-width: 0.7; }
 .gji__capbusur { fill: currentColor; font-size: 6.6px; font-weight: var(--k-bold); letter-spacing: 0.14em; }
 .gji__capbusur--bawah { font-size: 6px; letter-spacing: 0.3em; }
@@ -529,7 +577,7 @@
   55% { opacity: 1; transform: scale(0.9) rotate(-4deg); }
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
-.gji__cap:hover .gji__capluar { fill: color-mix(in srgb, var(--brand-mint) 30%, var(--surface)); }
+.gji__cap:hover .gji__capluar { fill: color-mix(in srgb, var(--brand-mint) 30%, var(--gji-kertas)); }
 
 /* Baris Jumlah: garis rangkap di atasnya, menempel di kaki saat digulir. */
 .gji__daftar tfoot th,
@@ -539,8 +587,8 @@
   z-index: 2;
   height: 40px;
   padding: 0 8px;
-  border-top: 3px double var(--border-strong);
-  background: var(--surface);
+  border-top: 3px double var(--gji-garis-kuat);
+  background: var(--gji-kertas);
   font-size: var(--k-t12);
   font-weight: var(--k-bold);
   text-align: left;
@@ -582,7 +630,7 @@
   background:
     repeating-linear-gradient(to right, color-mix(in srgb, var(--ramp-1) 70%, transparent) 0 1px, transparent 1px 25%) top left / 100% 5px no-repeat,
     repeating-linear-gradient(to right, color-mix(in srgb, var(--ramp-1) 45%, transparent) 0 1px, transparent 1px 5%) top left / 100% 3px no-repeat,
-    color-mix(in srgb, var(--brand-mint) 28%, var(--surface));
+    color-mix(in srgb, var(--brand-mint) 28%, var(--gji-kertas));
 }
 .gji__penggarisbadan i { position: absolute; bottom: 0; height: 3px; }
 .gji__penggariskum { left: 0; background: color-mix(in srgb, var(--ramp-1) 32%, transparent); }
@@ -631,7 +679,7 @@
 }
 .gji__tab:hover:not(.is-aktif):not(:disabled) { background: color-mix(in srgb, var(--kas-ink) 30%, var(--kas-bidang)); }
 .gji__tab:focus-visible { outline: 2px solid var(--brand-mint); outline-offset: -2px; }
-.gji__tab.is-aktif { background: var(--surface); color: var(--text-strong); cursor: default; }
+.gji__tab.is-aktif { background: var(--gji-kertas); color: var(--text-strong); cursor: default; }
 .gji__tab.is-aktif:focus-visible { outline-color: var(--brand); }
 .gji__tab--kosong:not(.is-aktif) { color: var(--gji-redup); }
 .gji__tab:disabled {
@@ -676,6 +724,42 @@
   .gji__jilid { transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 160ms; }
   .gji__jilid:not(.is-aktif):hover { transform: rotate(-4deg); }
   .gji__pita:hover { animation: gji-ayun 900ms cubic-bezier(0.3, 0.6, 0.3, 1); }
+  .gji__judulbuku:hover .gji__tahunbesar { animation: gji-foil 1100ms cubic-bezier(0.3, 0.6, 0.3, 1); }
+}
+@keyframes gji-foil {
+  from { background-position: 130% 0; }
+  to { background-position: -30% 0; }
+}
+
+/* ---- Balik halaman (View Transitions) ---------------------------------------
+   Kelas di <html> hanya selama satu pembalikan (GajiKit `balikHalaman`).
+   Seluruh halaman lain berganti seketika (root tanpa animasi); hanya lembar
+   yang diberi nama dan berputar di engsel kirinya. Maju: lembar LAMA
+   terangkat ke kiri di atas yang baru. Mundur: lembar BARU turun dari kiri
+   menutup yang lama. Sisi belakang tersembunyi, jadi setelah 90° lembarnya
+   lenyap ke arah sampul. */
+html.gji-balik .gji__lembar { view-transition-name: gji-lembar; }
+html.gji-balik::view-transition-old(root),
+html.gji-balik::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html.gji-balik::view-transition-image-pair(gji-lembar) { isolation: isolate; perspective: 5000px; }
+html.gji-balik::view-transition-old(gji-lembar),
+html.gji-balik::view-transition-new(gji-lembar) {
+  animation: none;
+  mix-blend-mode: normal;
+  transform-origin: 0 50%;
+  backface-visibility: hidden;
+}
+html.gji-maju::view-transition-old(gji-lembar) { z-index: 2; animation: gji-angkat 480ms cubic-bezier(0.5, 0.05, 0.4, 1) both; }
+html.gji-maju::view-transition-new(gji-lembar) { z-index: 1; }
+html.gji-mundur::view-transition-new(gji-lembar) { z-index: 2; animation: gji-turun 480ms cubic-bezier(0.3, 0.2, 0.3, 1) both; }
+html.gji-mundur::view-transition-old(gji-lembar) { z-index: 1; }
+@keyframes gji-angkat {
+  0% { transform: rotateY(0deg); filter: brightness(1); }
+  100% { transform: rotateY(-100deg); filter: brightness(0.78); }
+}
+@keyframes gji-turun {
+  0% { transform: rotateY(-100deg); filter: brightness(0.78); }
+  100% { transform: rotateY(0deg); filter: brightness(1); }
 }
 @keyframes gji-ayun {
   0% { transform: rotate(0); }
@@ -747,6 +831,7 @@
   /* Lembar menjorok 8px dari tepi kiri sampul, seperti di atas dan bawah:
      sudutnya tidak keluar dari lengkung papan, jahitan sampul tetap tampak. */
   .gji__lembar { min-height: 560px; margin-left: 8px; }
+  .gji__tumpuk { margin-left: 18px; }
 }
 
 /* ≤1100: kolom rapat. Tab indeks lebih pendek, nominal dirapatkan, dan
@@ -765,8 +850,9 @@
   .gji__papan {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "sampul" "indeks" "lembar";
-    padding: 0 8px 8px;
+    padding: 0 8px 15px;
   }
+  .gji__tumpuk { margin: 0 13px; }
   .gji__sampul { grid-template-columns: minmax(0, 1fr); grid-template-areas: "judul" "label" "terima" "rak"; padding: 18px 8px; }
   .gji__rakisi { flex: none; height: 132px; min-height: 0; }
   .gji__indeks {

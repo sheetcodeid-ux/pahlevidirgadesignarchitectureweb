@@ -1,5 +1,6 @@
 import { IsianTempel, PilihMenu, IsianTanggal } from "../kit/Formulir";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { RequireAuth } from "./RequireAuth";
 import { LencanaTren } from "../kit/Ukuran";
 import { Tombol, TombolIkon } from "../kit/Tombol";
@@ -150,12 +151,37 @@ function Isi() {
       })
       .catch((e) => setGalat((e as Error).message));
   }
+  /* Lembar yang sudah pernah diambil, per bulan — di MEMORI halaman saja,
+     bukan sessionStorage. Gunanya satu: saat halaman dibalik, lembar baru
+     sudah berisi, bukan kerangka. Setiap penulisan mengosongkannya (aturan
+     yang sama dengan cache panel: menebak bulan mana yang berubah adalah
+     cara paling mudah menampilkan angka basi). */
+  const simpanan = useRef(new Map<string, BarisGajiBulan[]>());
+  function ambilBulan(k: string): Promise<BarisGajiBulan[]> {
+    const ada = simpanan.current.get(k);
+    if (ada) return Promise.resolve(ada);
+    return gajiBulan(k).then((d) => {
+      simpanan.current.set(k, d);
+      return d;
+    });
+  }
+  /* Diambil lebih dulu saat kursor/fokus mendekati tab bulan itu. */
+  function siapkan(k: string) {
+    if (k <= BULAN_INI && !simpanan.current.has(k)) ambilBulan(k).catch(() => {});
+  }
   function muatBulan() {
-    gajiBulan(period).then(setBaris).catch(() => setBaris((l) => l ?? []));
+    const k = period;
+    gajiBulan(k)
+      .then((d) => {
+        simpanan.current.set(k, d);
+        setBaris(d);
+      })
+      .catch(() => setBaris((l) => l ?? []));
     /* Diam-diam: kalau gagal, tombol salin sekadar tidak muncul. */
-    gajiBulan(bulanSebelum(period)).then(setBulanLalu).catch(() => setBulanLalu([]));
+    ambilBulan(bulanSebelum(k)).then(setBulanLalu).catch(() => setBulanLalu([]));
   }
   function muatUlang() {
+    simpanan.current.clear();
     muatBulan();
     muatBuku();
   }
@@ -173,9 +199,56 @@ function Isi() {
     muatBuku(tahun);
   }, [tahun]);
   useEffect(() => {
-    setBaris(null);
+    /* Lembar yang sudah tersimpan tampil seketika (dan sudah tergambar oleh
+       balikHalaman); permintaan segar tetap jalan di belakang. */
+    setBaris(simpanan.current.get(period) ?? null);
     muatBulan();
+    /* Bulan di kiri-kanannya disiapkan: membalik satu halaman ke depan atau
+       ke belakang hampir selalu tidak menunggu jaringan. */
+    siapkan(bulanSebelum(period));
+    const [y, m] = period.split("-").map(Number);
+    siapkan(kunciBulan(new Date(y!, m!, 1)));
   }, [period]);
+
+  /* ---- Balik halaman --------------------------------------------------------
+     Pindah bulan = membalik lembar buku (View Transitions): lembar lama
+     berputar di engsel jilidnya; ke depan ia terangkat ke kiri, ke belakang
+     lembar baru turun dari kiri menutupi yang lama. Lembar tujuan disiapkan
+     dulu (paling lama 350 ms) supaya yang terbuka berisi, bukan kerangka.
+     Hanya lembarnya yang bergerak — sampul, indeks, dan pita berganti
+     seketika. Peramban tanpa API ini, atau gerak dikurangi: seketika. */
+  const giliran = useRef(0);
+  async function balikHalaman(tujuan: string) {
+    kabar.current?.(null);
+    if (tujuan === period) return;
+    const ke = ++giliran.current;
+    let isi = simpanan.current.get(tujuan) ?? null;
+    if (!isi) {
+      isi = await Promise.race([
+        ambilBulan(tujuan).catch(() => null),
+        new Promise<null>((r) => window.setTimeout(() => r(null), 350)),
+      ]);
+    }
+    if (ke !== giliran.current) return; // sudah ada klik yang lebih baru
+    const ganti = () =>
+      flushSync(() => {
+        setGaris(null);
+        setPeriod(tujuan);
+        setBaris(isi);
+      });
+    const dok = document as Document & {
+      startViewTransition?: (ubah: () => void) => { finished: Promise<void> };
+    };
+    if (!dok.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      ganti();
+      return;
+    }
+    const akar = document.documentElement;
+    const arah = tujuan > period ? "gji-maju" : "gji-mundur";
+    akar.classList.add("gji-balik", arah);
+    const vt = dok.startViewTransition(ganti);
+    vt.finished.finally(() => akar.classList.remove("gji-balik", "gji-maju", "gji-mundur"));
+  }
 
   /* Ketukan jari di luar benda berketerangan menutup kartunya. */
   useEffect(() => {
@@ -401,8 +474,8 @@ function Isi() {
     else if (e.key === "End") tujuan = hidup[hidup.length - 1]!;
     if (tujuan === null) return;
     e.preventDefault();
-    setPeriod(indeks[tujuan]!.period);
     tabRef.current[tujuan]?.focus();
+    void balikHalaman(indeks[tujuan]!.period);
   }
 
   if (galat && !buku) {
@@ -451,10 +524,7 @@ function Isi() {
               ? `Pita pembatas di lembar bulan ini, ${labelBulan(BULAN_INI)}`
               : `Kembali ke lembar bulan ini, ${labelBulan(BULAN_INI)}`
           }
-          onClick={() => {
-            kabar.current?.(null);
-            setPeriod(BULAN_INI);
-          }}
+          onClick={() => void balikHalaman(BULAN_INI)}
           {...ket(() => ({
             judul: "Pita pembatas",
             baris: [
@@ -626,7 +696,7 @@ function Isi() {
                     if (j.year === tahun) return;
                     /* Jilid berjalan dibuka di bulan ini; jilid lama di
                        Desember — lembar terakhir yang ditutup. */
-                    setPeriod(j.year === TAHUN_INI ? BULAN_INI : `${j.year}-12`);
+                    void balikHalaman(j.year === TAHUN_INI ? BULAN_INI : `${j.year}-12`);
                   }}
                   {...ket(() => ({
                     judul: `Jilid ${j.year}${j.year === tahun ? " · sedang dibuka" : j.year === TAHUN_INI ? " · berjalan" : ""}`,
@@ -663,6 +733,10 @@ function Isi() {
           </section>
         </aside>
 
+        {/* Tumpukan lembar di bawah lembar yang terbuka — dua tepi kertas
+            yang mengintip 3px dan 6px di bawahnya. */}
+        <div className="gji__tumpuk" aria-hidden="true" />
+
         {/* ==== LEMBAR ====================================================== */}
         <section className="gji__lembar" id="gji-lembar" aria-labelledby="gji-judul">
           <header className="gji__kop">
@@ -671,8 +745,8 @@ function Isi() {
                 Daftar penerimaan gaji · 1–{hariDalamBulan(period)} {nBulan}
               </p>
               <p className="gji__kopjudul">
-                <span id="gji-judul" role="heading" aria-level={2}>
-                  {labelBulan(period)}
+                <span id="gji-judul" role="heading" aria-level={2} className="gji__judulbulan">
+                  {nBulan} <b className="gji__judultahun">{tahun}</b>
                 </span>
                 <span className="gji__kopbawah">
                   {baris === null ? "Memuat…" : `${jumlahBaris} penerima`}
@@ -738,10 +812,10 @@ function Isi() {
                   <tr>
                     <th scope="col">No</th>
                     <th scope="col">Penerima</th>
-                    <th scope="col" className="gji__angka">Gaji</th>
-                    <th scope="col" className="gji__angka">Fee proyek</th>
-                    <th scope="col" className="gji__angka">Jumlah</th>
-                    <th scope="col" className="gji__ttdkepala">Tanda terima</th>
+                    <th scope="col" className="gji__angka gji__k-gaji">Gaji</th>
+                    <th scope="col" className="gji__angka gji__k-fee">Fee proyek</th>
+                    <th scope="col" className="gji__angka gji__k-jumlah">Jumlah</th>
+                    <th scope="col" className="gji__ttdkepala gji__k-ttd">Tanda terima</th>
                   </tr>
                 </thead>
                 {baris === null ? (
@@ -757,12 +831,16 @@ function Isi() {
                 ) : (
                   kelompok.map((k) => (
                     <tbody key={k.jenis}>
+                      {/* Garis kolom buku besar menembus kepala kelompok: sel
+                          kosong per kolom, bukan satu sel yang membentang. */}
                       <tr className="gji__grup">
-                        <th scope="rowgroup" colSpan={4}>
+                        <th scope="rowgroup" colSpan={2}>
                           {k.label}
                         </th>
-                        <td className="gji__angka">{formatRupiah(k.jumlah)}</td>
-                        <td />
+                        <td className="gji__k-gaji" />
+                        <td className="gji__k-fee" />
+                        <td className="gji__angka gji__k-jumlah">{formatRupiah(k.jumlah)}</td>
+                        <td className="gji__k-ttd" />
                       </tr>
                       {k.baris.map((b) => (
                         <tr
@@ -799,14 +877,14 @@ function Isi() {
                               <a href={`/admin/gaji/tim?orang=${encodeURIComponent(b.teamMemberId)}&bulan=${period}`}>Slip</a>
                             </span>
                           </td>
-                          <td className="gji__angka">
+                          <td className="gji__angka gji__k-gaji">
                             {b.salaryAmount === null || b.salaryAmount === undefined ? (
                               <span className="gji__redup">—</span>
                             ) : (
                               formatRupiah(b.salaryAmount)
                             )}
                           </td>
-                          <td className="gji__angka">
+                          <td className="gji__angka gji__k-fee">
                             {b.feeAmount === 0 ? (
                               <span className="gji__redup">—</span>
                             ) : (
@@ -826,8 +904,8 @@ function Isi() {
                               </span>
                             )}
                           </td>
-                          <td className="gji__angka gji__jumlah">{formatRupiah(b.total)}</td>
-                          <td className={`gji__ttd gji__ttd--${b.no % 2 ? "kiri" : "kanan"}`}>
+                          <td className="gji__angka gji__jumlah gji__k-jumlah">{formatRupiah(b.total)}</td>
+                          <td className={`gji__ttd gji__ttd--${b.no % 2 ? "kiri" : "kanan"} gji__k-ttd`}>
                             <span className="gji__ttdslot">
                               <span className="gji__ttdno">{b.no}.</span>
                               <TandaTerima
@@ -850,13 +928,13 @@ function Isi() {
                       <th scope="row" colSpan={2}>
                         Jumlah
                       </th>
-                      <td className="gji__angka">{formatRupiah(ringkas.gaji)}</td>
-                      <td className="gji__angka">{formatRupiah(ringkas.fee)}</td>
-                      <td className="gji__angka gji__jumlah">
+                      <td className="gji__angka gji__k-gaji">{formatRupiah(ringkas.gaji)}</td>
+                      <td className="gji__angka gji__k-fee">{formatRupiah(ringkas.fee)}</td>
+                      <td className="gji__angka gji__jumlah gji__k-jumlah">
                         {/* Garis bawah ganda: tanda jumlah akhir di buku besar. */}
                         <span className="gji__ganda">{formatRupiah(ringkas.total)}</span>
                       </td>
-                      <td className="gji__ttdjumlah">
+                      <td className="gji__ttdjumlah gji__k-ttd">
                         {ringkas.bergaji > 0 ? `${ringkas.diterima}/${ringkas.bergaji} diterima` : ""}
                       </td>
                     </tr>
@@ -905,6 +983,18 @@ function Isi() {
         <div className="gji__indeks" ref={indeksRef} role="tablist" aria-orientation="vertical" aria-label={`Bulan di jilid ${tahun}`}>
           {indeks.map((m, i) => {
             const aktif = m.period === period;
+            const kp = m.mendatang
+              ? null
+              : ket(() => ({
+                  judul: labelBulan(m.period),
+                  baris: [
+                    { warna: "var(--ramp-1)", label: "Gaji", nilai: formatRupiah(m.salary) },
+                    { warna: "var(--ramp-2)", label: "Fee proyek", nilai: formatRupiah(m.fee) },
+                    { label: `Jumlah · ${m.people} orang`, nilai: formatRupiah(m.total) },
+                    ...(m.lalu > 0 ? [{ label: `${BULAN_PENDEK[i]} ${tahun - 1}`, nilai: formatRupiah(m.lalu) }] : []),
+                    ...(m.salaryUnpaid ? [{ warna: "var(--warn)", label: "Belum dibayar", nilai: `${m.salaryUnpaid} gaji` }] : []),
+                  ],
+                }));
             return (
               <button
                 key={m.period}
@@ -920,24 +1010,15 @@ function Isi() {
                 className={`gji__tab${aktif ? " is-aktif" : ""}${m.total === 0 && !m.mendatang ? " gji__tab--kosong" : ""}`}
                 style={{ "--gji-t": m.mendatang ? 0 : m.rasio, "--gji-tl": m.rasioLalu } as React.CSSProperties}
                 aria-label={`${labelBulan(m.period)}${m.mendatang ? ", belum tiba" : `: ${formatRupiah(m.total)}`}${m.salaryUnpaid ? `, ${m.salaryUnpaid} gaji belum dibayar` : m.salaryCount ? ", semua gaji diterima" : ""}`}
-                onClick={() => setPeriod(m.period)}
+                onClick={() => void balikHalaman(m.period)}
+                onFocus={() => siapkan(m.period)}
                 onKeyDown={(e) => tombolIndeks(e, i)}
-                {...(m.mendatang
-                  ? {}
-                  : ket(() => ({
-                      judul: labelBulan(m.period),
-                      baris: [
-                        { warna: "var(--ramp-1)", label: "Gaji", nilai: formatRupiah(m.salary) },
-                        { warna: "var(--ramp-2)", label: "Fee proyek", nilai: formatRupiah(m.fee) },
-                        { label: `Jumlah · ${m.people} orang`, nilai: formatRupiah(m.total) },
-                        ...(m.lalu > 0
-                          ? [{ label: `${BULAN_PENDEK[i]} ${tahun - 1}`, nilai: formatRupiah(m.lalu) }]
-                          : []),
-                        ...(m.salaryUnpaid
-                          ? [{ warna: "var(--warn)", label: "Belum dibayar", nilai: `${m.salaryUnpaid} gaji` }]
-                          : []),
-                      ],
-                    })))}
+                {...(kp ?? {})}
+                onPointerEnter={(e) => {
+                  kp?.onPointerEnter(e);
+                  /* Lembarnya disiapkan selagi kursor masih di atas tab. */
+                  if (e.pointerType === "mouse") siapkan(m.period);
+                }}
               >
                 <span className="gji__tablabel">{BULAN_PENDEK[i]}</span>
                 {m.salaryUnpaid > 0 && <i className="gji__tabtitik" aria-hidden="true" />}
