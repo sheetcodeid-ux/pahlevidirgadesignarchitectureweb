@@ -305,6 +305,30 @@ Yang DIA MAU:
    bidang identitas. Aturan warna, kontras kedua tema, dan satu layar
    (0 gulir dokumen, area isi, DAN panel pada 1440x790 & 1366x768) tetap
    berlaku.
+8. **Metafora benda nyata yang UTUH, bukan hiasan bertema.** Disahkan
+   pemilik sesudah Buku Gaji di-ACC (6 Okt 2026): "nah gini kamu sudah tau
+   selera saya". Yang membuatnya diterima bukan tiap detailnya, melainkan
+   halamannya BERPERILAKU seperti bendanya: buku gaji punya sampul kulit
+   berjahit, rak jilid per tahun, pita pembatas di bulan berjalan, lembar
+   kertas buku besar bergaris kolom, indeks bulan di tepi yang sekaligus
+   grafik, cap DITERIMA/LUNAS, halaman depan rekapitulasi, dan HALAMANNYA
+   DIBALIK saat pindah bulan (panah papan ketik juga membalik). Tiap bagian
+   tetap membawa data sungguhan (butir 3) — panjang tab = jumlah bulan itu,
+   tinggi buku di rak = jumlah tahun itu.
+9. **"Tingkatkan 1000x" = PANDANGAN PERTAMA dan GERAK, bukan detail kecil.**
+   Putaran yang cuma menambah detail halus (jahitan, takik, foil) dibalas
+   "kenapa masih biasa aja" — detail sekecil itu tidak terbaca dari
+   tangkapan layar. Yang diterima adalah perubahan yang langsung terlihat
+   (kertas buku besar, judul besar, tumpukan lembar) DAN gerak yang hidup
+   (balik halaman). Permintaan naik berturut-turut itu wajar dan akan
+   datang lagi; tiap putaran harus mengubah kesan pertama, bukan
+   menumpuk di pinggir. **Kalau ada gerak, kirim VIDEO** (Playwright
+   `recordVideo`) di samping tangkapan layar — gambar diam tidak bisa
+   menunjukkan balik halaman.
+10. **"Kebebasan penuh" tetap di dalam metaforanya.** Saat diberi kebebasan
+    tanpa batas, yang di-ACC adalah memperdalam benda yang sama (halaman
+    depan rekap di dalam buku yang sama, dibuka dari tab dan dari rak),
+    bukan pindah ke konsep baru atau menambah fitur.
 
 Yang DITOLAK:
 
