@@ -4,16 +4,9 @@ import { TagihanKit } from "../../../components/admin/TagihanKit";
 import "../../../styles/daftar-kit.css";
 import "../../../styles/tagihan-kit.css";
 
-/* Halaman KELIMA yang pindah ke kit (P4), mengikuti frame Figma
-   "16. Invoices".
-
-   Halaman BACA-dan-ubah-status, bukan halaman buat: satu termin milik satu
-   kontrak dan urutannya cuma masuk akal di dalam proyeknya, jadi pembuatan
-   tetap di editor proyek. Yang dikerjakan dari sini justru yang lintas
-   proyek — "termin mana saja yang sudah dibayar minggu ini".
-
-   Endpoint `GET /admin/invoices` dibuat bersama halaman ini, ketiga dari
-   keluarga yang sama bentuknya dengan /admin/costs dan /admin/payments. */
+/* Tagihan & Termin — papan jadwal termin + papan jepit surat tagihan.
+   Penjelasan bentuknya di kepala TagihanKit.tsx dan tagihan-kit.css.
+   daftar-kit.css tetap dimuat untuk isian dialog Termin baru (`kd-form`). */
 ---
 
 <KitLayout title="Tagihan & Termin" judul="Tagihan & Termin">

@@ -1335,7 +1335,15 @@ function tulis(metode, path, badan) {
   if (m && metode === "PATCH") {
     const t = tagihanAdmin.find((x) => x.id === m[1]);
     if (!t) return { galat: 404 };
-    if (badan.status) t.status = badan.status;
+    /* Sama dengan invoicesRepo.update: hanya kolom yang dikirim, dan paid_at
+       mengikuti status — diisi saat lunas, dikosongkan saat ditarik mundur. */
+    if (badan.label !== undefined) t.label = badan.label;
+    if (badan.amount !== undefined) t.amount = badan.amount;
+    if (badan.dueDate !== undefined) t.dueDate = badan.dueDate;
+    if (badan.status) {
+      t.status = badan.status;
+      t.paidAt = badan.status === "lunas" ? (t.paidAt ?? new Date().toISOString()) : null;
+    }
     return { updated: true };
   }
   const tp = path.match(/^\/api\/v1\/admin\/tiers(?:\/([^/?]+))?$/);

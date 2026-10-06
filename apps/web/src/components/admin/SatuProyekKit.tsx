@@ -425,7 +425,7 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                     items: [
                       { label: "Terima pembayaran", ikon: CoinIn, onSelect: () => navigate(`/admin/keuangan/terima?proyek=${idKini}`) },
                       { label: "Catat pengeluaran", ikon: CoinOut, onSelect: () => navigate("/admin/keuangan/keluar") },
-                      { label: "Tagihan & termin", ikon: NavReceipt, onSelect: () => navigate("/admin/keuangan/tagihan") },
+                      { label: "Tagihan & termin", ikon: NavReceipt, onSelect: () => navigate(`/admin/keuangan/tagihan?proyek=${idKini}`) },
                     ],
                   },
                 ],

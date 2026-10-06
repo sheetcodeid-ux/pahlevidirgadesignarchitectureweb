@@ -26,6 +26,8 @@ import {
   type StudioSettings,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
+import { kodeProyek, inisial } from "../../lib/nomorDokumen";
+import { CapLunas } from "./capLunas";
 import { terbilang } from "../../lib/terbilang";
 import { unduhCsv } from "../../lib/csv";
 
@@ -94,26 +96,6 @@ function tanggalPendek(iso: string, tahun = false): string {
 function tanggalPanjang(iso: string): string {
   const [t, b, h] = iso.slice(0, 10).split("-").map(Number);
   return `${h} ${BULAN[(b ?? 1) - 1]} ${t}`;
-}
-
-/** Kode proyek di nomor kuitansi: huruf depan tiap kata — "Kedai Kopi Ruas" → KKR. */
-function kodeProyek(judul: string): string {
-  const k = judul
-    .split(/\s+/)
-    .filter((w) => /^[A-Za-z]/.test(w))
-    .slice(0, 3)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
-  return k || "PR";
-}
-
-function inisial(nama: string): string {
-  return nama
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
 }
 
 /* Satu warna per JENIS penerima (`--kwt-<jenis>` di kuitansi-kit.css). */
@@ -818,7 +800,7 @@ function Kuitansi({
           <span className="kwt__kttdlabel">Yang menerima,</span>
           <span className="kwt__kttdruang">
             {dibayar ? (
-              <CapLunas tanggal={k.tanggal!} studio={inisial(studio.nama) || "ST"} id={k.id} />
+              <CapLunas tanggal={k.tanggal!} studio={inisial(studio.nama) || "ST"} id={k.id} kelas="kwt" />
             ) : (
               <a className="kwt__kbayar" href={`/admin/proyek/satu?id=${encodeURIComponent(proyek.projectId)}#tim-bayaran`}>
                 Bayar di Satu Proyek
@@ -830,37 +812,6 @@ function Kuitansi({
         </div>
       </footer>
     </article>
-  );
-}
-
-/* Cap LUNAS: cincin rangkap, "LUNAS" di busur atas, inisial studio di busur
-   bawah, tanggal di tengah — keluarga yang sama dengan cap DITERIMA di Gaji.
-   Tidak ada garis yang melintas di belakang huruf mana pun. */
-function CapLunas({ tanggal, studio, id }: { tanggal: string; studio: string; id: string }) {
-  const [, m, h] = tanggal.slice(0, 10).split("-");
-  const aman = id.replace(/[^A-Za-z0-9_-]/g, "");
-  return (
-    <svg className="kwt__cap" viewBox="0 0 48 48" width="46" height="46" role="img" aria-label={`Lunas ${tanggalPendek(tanggal)}`}>
-      <defs>
-        <path id={`kwt-atas-${aman}`} d="M 9 24 A 15 15 0 0 1 39 24" />
-        <path id={`kwt-bawah-${aman}`} d="M 6.5 24 A 17.5 17.5 0 0 0 41.5 24" />
-      </defs>
-      <circle cx="24" cy="24" r="22.6" className="kwt__capluar" />
-      <circle cx="24" cy="24" r="21" className="kwt__capdalam" />
-      <text className="kwt__capbusur">
-        <textPath href={`#kwt-atas-${aman}`} startOffset="50%" textAnchor="middle">
-          LUNAS
-        </textPath>
-      </text>
-      <text className="kwt__capbusur kwt__capbusur--bawah">
-        <textPath href={`#kwt-bawah-${aman}`} startOffset="50%" textAnchor="middle">
-          {studio}
-        </textPath>
-      </text>
-      <text x="24" y="31" textAnchor="middle" className="kwt__captgl">
-        {`${Number(h)}/${Number(m)}`}
-      </text>
-    </svg>
   );
 }
 
