@@ -1,0 +1,305 @@
+/* =============================================================================
+   Halaman Aturan Fee Tim (AturanFeeKit) — kerangka `lembar-kit.css` + bagian
+   yang khas halaman ini: potongan A–A di sampul, stempel persen, pita bagian
+   tim dengan penanda jatah, garis ukur tahap bayar yang bisa digeser, dan
+   timbangan jatah lawan persen peran.
+
+   Warna ruas per peran memakai tangga --ramp-* (urutan tetap Leader →
+   Estimator), sama dengan tangga donat di seluruh kit.
+   ============================================================================= */
+
+.afee__potongan { aspect-ratio: 470 / 116; }
+.afee__galat { margin: 24px; color: var(--danger); }
+
+/* --- Stempel persen di kepala ---------------------------------------------------- */
+.afee__stempel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 104px;
+  height: 104px;
+  margin-top: -52px;
+  border: 5px solid var(--surface);
+  border-radius: 24px;
+  background-color: var(--kas-bidang);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--brand-mint) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--brand-mint) 12%, transparent) 1px, transparent 1px);
+  background-size: 12px 12px;
+  box-shadow: var(--shadow-md);
+  color: var(--kas-nilai);
+}
+.afee__stempel b { display: flex; align-items: baseline; font-size: 2.125rem; font-weight: var(--k-bold); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.afee__stempel b small { margin-left: 1px; font-size: var(--k-t16); color: var(--brand-mint); }
+.afee__stempel > span { font-size: var(--k-t10); font-weight: var(--k-semi); letter-spacing: 0.12em; text-transform: uppercase; color: var(--kas-ink); }
+/* Melebihi jatah: cincin amber di dalam bingkai (aturan warna #1). */
+.afee__stempel--lewat { box-shadow: var(--shadow-md), inset 0 0 0 2px var(--warn); }
+
+/* --- Panel umum ------------------------------------------------------------------ */
+.lbr-panel.afee__panel { gap: 14px; }
+.afee__contoh { display: flex; align-items: center; gap: 10px; font-size: var(--k-t12); color: var(--text-muted); }
+.afee__contoh .k-kelisian { width: 168px; height: 38px; }
+.afee__pct { width: 104px; height: 40px; }
+.afee__pct--kecil { width: 92px; }
+.afee__pct--besar { width: 160px; height: 60px; }
+.afee__pct--besar .k-kelisian__input { font-size: var(--k-h4); font-weight: var(--k-bold); }
+.afee__belum {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  white-space: nowrap;
+}
+
+/* Warna ruas per peran. */
+.afee__ruas--leader { background: var(--ramp-1); color: var(--ramp-1-ink); }
+.afee__ruas--drafter { background: var(--ramp-2); color: var(--ramp-2-ink); }
+.afee__ruas--render { background: var(--ramp-5); color: var(--ramp-5-ink); }
+.afee__ruas--estimator { background: var(--ramp-4); color: var(--ramp-4-ink); }
+
+/* --- Tab Persen peran ------------------------------------------------------------- */
+.afee__peranpita { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 28px; align-items: start; }
+.afee__peran { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.afee__peranbaris {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 104px 132px;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 10px;
+  transition: background-color 0.15s;
+}
+.afee__peranbaris:last-child { border-bottom: 0; }
+.afee__peranbaris[data-sorot] { background: var(--brand-soft); }
+.afee__ubin { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; }
+.afee__ubin--leader { background: var(--ramp-1); color: var(--ramp-1-ink); }
+.afee__ubin--drafter { background: var(--ramp-2); color: var(--ramp-2-ink); }
+.afee__ubin--render { background: var(--ramp-5); color: var(--ramp-5-ink); }
+.afee__ubin--estimator { background: var(--ramp-4); color: var(--ramp-4-ink); }
+.afee__perannama { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.afee__perannama b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.afee__perannama small { font-size: var(--k-t12); color: var(--text-muted); }
+.afee__hak { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-align: right; }
+.afee__hak b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.afee__hak small { font-size: var(--k-t11); color: var(--text-muted); }
+
+/* Pita bagian di atas kertas berkisi. */
+.afee__pitakartu {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+.afee__pitalabel { font-size: var(--k-t12); color: var(--text-muted); }
+.afee__pitatotal { display: flex; align-items: baseline; gap: 10px; }
+.afee__pitatotal b { font-size: var(--k-h3); font-weight: var(--k-bold); line-height: 1; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.afee__pitatotal small { font-size: var(--k-t12); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.afee__pita { position: relative; padding-top: 22px; }
+.afee__pitajalur { position: relative; display: flex; height: 26px; overflow: clip; border-radius: 8px; background: var(--border); }
+.afee__ruas { display: block; flex: none; height: 100%; box-shadow: inset -2px 0 0 var(--surface); transition: opacity 0.15s; }
+.afee__ruas[data-redup] { opacity: 0.35; }
+/* Bagian di atas jatah: arsir amber di atas ruasnya. */
+.afee__lewat {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(135deg, var(--warn) 0 3px, transparent 3px 7px);
+  box-shadow: inset 0 0 0 1px var(--warn);
+  pointer-events: none;
+}
+.afee__jatah {
+  position: absolute;
+  top: 0;
+  left: var(--jatah);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: calc(22px + 26px + 6px);
+  transform: translateX(-50%);
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.afee__jatah i { order: 2; flex: 1 1 auto; margin-top: 3px; border-left: 2px dashed var(--text-strong); }
+.afee__skala { display: flex; justify-content: space-between; margin-top: 6px; font-size: var(--k-t10); color: var(--text-muted); }
+.afee__legenda { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; margin: 4px 0 0; padding: 0; list-style: none; }
+.afee__legenda li { display: flex; align-items: center; gap: 8px; font-size: var(--k-t12); color: var(--text-strong); }
+.afee__legenda li[data-sorot] { font-weight: var(--k-semi); }
+.afee__legenda b { margin-left: auto; font-weight: var(--k-semi); font-variant-numeric: tabular-nums; }
+.afee__titik { flex: none; width: 10px; height: 10px; border-radius: 3px; }
+.afee__titik[data-kosong] { background: none; box-shadow: inset 0 0 0 1px var(--border-strong); }
+.afee__catatan {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+  font-size: var(--k-t12);
+  line-height: 1.45;
+}
+.afee__catatan svg { flex: none; margin-top: 1px; }
+
+/* --- Tab Tahap bayar: garis ukur yang bisa digeser -------------------------------- */
+.afee__ukur { display: flex; flex-direction: column; gap: 2px; padding: 0 14px; }
+.afee__ukurlabel { position: relative; height: 18px; }
+.afee__ukurseg { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; font-size: var(--k-t12); color: var(--text-strong); }
+.afee__ukurseg b { font-weight: var(--k-semi); }
+.afee__ukurseg--awal { left: clamp(70px, calc(var(--awal) / 2), calc(100% - 70px)); }
+.afee__ukurseg--akhir { left: clamp(70px, calc(var(--awal) + (100% - var(--awal)) / 2), calc(100% - 70px)); color: var(--text-muted); }
+.afee__ukurgaris { position: relative; height: 30px; }
+/* Garis ukur: garis dasar tipis + tanda miring di kedua ujung. */
+.afee__ukurgaris::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.afee__ukurgaris::after {
+  content: "";
+  position: absolute;
+  inset: 2px -6px;
+  background:
+    linear-gradient(135deg, transparent calc(50% - 1px), var(--text-strong) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)) left center / 12px 26px no-repeat,
+    linear-gradient(135deg, transparent calc(50% - 1px), var(--text-strong) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)) right center / 12px 26px no-repeat;
+  pointer-events: none;
+}
+.afee__ukurisi { position: absolute; top: 50%; left: 0; width: var(--awal); height: 6px; margin-top: -3px; border-radius: 3px; background: var(--brand); }
+.afee__ukurgaris input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: none;
+  cursor: grab;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.afee__ukurgaris input:active { cursor: grabbing; }
+.afee__ukurgaris input:focus { outline: none; box-shadow: none; }
+.afee__ukurgaris input::-webkit-slider-runnable-track { height: 100%; background: none; }
+.afee__ukurgaris input::-moz-range-track { height: 100%; background: none; }
+.afee__ukurgaris input::-webkit-slider-thumb {
+  width: 26px;
+  height: 26px;
+  margin-top: 2px;
+  border: 3px solid var(--brand);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: transform 0.15s;
+}
+.afee__ukurgaris input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--brand);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+.afee__ukurgaris input:hover::-webkit-slider-thumb { transform: scale(1.12); }
+.afee__ukurgaris input:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--focus); outline-offset: 2px; }
+.afee__ukurgaris input:focus-visible::-moz-range-thumb { outline: 2px solid var(--focus); outline-offset: 2px; }
+.afee__ukurujung { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: var(--k-t12); color: var(--text-muted); }
+.afee__ukurujung > span { display: flex; align-items: center; gap: 6px; }
+.afee__ukurujung svg { color: var(--brand); }
+@media (prefers-reduced-motion: reduce) {
+  .afee__ukurgaris input::-webkit-slider-thumb { transition: none; }
+  .afee__ruas, .afee__peranbaris { transition: none; }
+}
+
+.afee__tahapbawah { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.afee__tabel { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.afee__tabel th { padding: 0 0 6px; border-bottom: 1px solid var(--border); font-size: var(--k-t12); font-weight: var(--k-med); color: var(--text-muted); text-align: right; }
+.afee__tabel td { padding: 4px 0; border-bottom: 1px solid var(--border); font-size: var(--k-t14); color: var(--text-strong); text-align: right; white-space: nowrap; }
+.afee__tabel tr:last-child td { border-bottom: 0; }
+.afee__tabel :is(th, td):first-child { text-align: left; font-weight: var(--k-semi); }
+.afee__tabel th:first-child { font-weight: var(--k-med); }
+.afee__belumsel { text-align: right; }
+.afee__aturan { display: flex; flex-direction: column; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.afee__aturan li { display: flex; align-items: flex-start; gap: 10px; }
+.afee__aturan li > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.afee__aturan b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--text-strong); }
+.afee__aturan small { font-size: var(--k-t12); line-height: 1.35; color: var(--text-muted); }
+
+/* --- Tab Jatah bonus: timbangan ---------------------------------------------------- */
+.afee__jatahkisi { display: grid; grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.6fr); gap: 36px; align-items: center; padding-top: 6px; }
+.afee__jatahisi { display: flex; flex-direction: column; gap: 12px; }
+.afee__jatahbesar { display: flex; flex-direction: column; gap: 8px; font-size: var(--k-t12); color: var(--text-muted); }
+.afee__jatahket { margin: 0; font-size: var(--k-t12); line-height: 1.5; color: var(--text-muted); }
+.afee__timbang { display: flex; flex-direction: column; gap: 16px; padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; }
+.afee__timbangbaris { display: grid; grid-template-columns: 104px minmax(0, 1fr) 132px; align-items: center; gap: 14px; }
+.afee__timbanglabel { font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--text-strong); }
+.afee__timbangjalur { position: relative; display: flex; height: 18px; overflow: clip; border-radius: 9px; background: var(--border); }
+.afee__timbangisi { display: block; flex: none; height: 100%; }
+.afee__timbangisi:first-child { border-radius: 9px 0 0 9px; }
+/* Penanda jatah di jalur persen peran: titik batasnya terbaca di kedua bar. */
+.afee__timbangpenanda { position: absolute; top: -2px; bottom: -2px; left: var(--jatah); border-left: 2px dashed var(--text-strong); }
+.afee__timbangisi--jatah { background: var(--ramp-1); }
+.afee__timbangisi--peran { background: var(--ramp-2); }
+.afee__timbangisi--lewat { background: repeating-linear-gradient(135deg, var(--warn) 0 4px, color-mix(in srgb, var(--warn) 55%, transparent) 4px 8px); }
+.afee__timbangnilai { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.afee__timbangnilai b { font-size: var(--k-t16); font-weight: var(--k-bold); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.afee__timbangnilai small { font-size: var(--k-t11); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.afee__putusan {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--success-soft);
+  color: var(--text-strong);
+  font-size: var(--k-t12);
+  line-height: 1.5;
+}
+.afee__putusan svg { flex: none; margin-top: 1px; color: var(--success); }
+.afee__putusan--lewat { background: var(--warn-soft); color: var(--warn-ink); }
+.afee__putusan--lewat svg { color: var(--warn-ink); }
+
+/* --- Ukuran layar ------------------------------------------------------------------ */
+@media (max-width: 1288px) {
+  .afee__peranpita, .afee__tahapbawah { grid-template-columns: minmax(0, 1fr); }
+  .afee__jatahkisi { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+}
+@media (max-width: 56rem) {
+  .afee__stempel { width: 88px; height: 88px; margin-top: -44px; border-radius: 20px; }
+  .afee__stempel b { font-size: var(--k-h4); }
+  .afee__stempel > span { font-size: 0.5625rem; letter-spacing: 0.06em; white-space: nowrap; }
+  .afee__contoh { width: 100%; justify-content: space-between; }
+  .afee__peranbaris { grid-template-columns: 34px minmax(0, 1fr) 92px; }
+  .afee__hak { grid-column: 2 / -1; flex-direction: row; justify-content: space-between; align-items: baseline; }
+  .afee__pct { width: 92px; }
+  .afee__timbangbaris { grid-template-columns: minmax(0, 1fr) auto; }
+  .afee__timbangjalur { grid-column: 1 / -1; grid-row: 2; }
+}

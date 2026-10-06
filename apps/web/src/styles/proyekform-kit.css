@@ -350,38 +350,6 @@
   .pas.pjb .pak__bidang--besar .pak__harga b { font-size: 2.5rem; }
 }
 
-/* --- Aturan Fee Tim (/admin/pengaturan/fee) ---------------------------------
-   Meminjam kerangka Proyek Baru (bidang besar, bagian bergaris, kolom samping
-   dengan Simpan di atas); yang miliknya sendiri cuma tabel peran. */
-.afee__tabel { display: flex; flex-direction: column; }
-.afee__baris {
-  display: grid;
-  grid-template-columns: 112px 128px repeat(3, minmax(0, 1fr));
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-.afee__baris--kepala {
-  padding: 0 0 8px;
-  font-size: var(--k-t12);
-  font-weight: var(--k-med);
-  color: var(--text-muted);
-}
-.afee__rp { font-size: var(--k-t14); color: var(--text-body); white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* Satu sel yang membentang tiga kolom rupiah: "belum ditentukan" bukan Rp0. */
-.afee__belum { grid-column: 3 / -1; justify-self: end; font-size: var(--k-t12); font-weight: var(--k-med); color: var(--warn-ink); }
-.afee__galat { margin: 24px; color: var(--danger); }
-
-@media (max-width: 40rem) {
-  .afee__baris { grid-template-columns: minmax(0, 1fr) 112px; row-gap: 6px; }
-  .afee__baris--kepala { display: none; }
-  .afee__baris > :nth-child(n + 3) { grid-column: 1 / -1; justify-self: stretch; text-align: left; }
-  .afee__baris > :is(.afee__rp, .pjb__rp)::before { color: var(--text-muted); font-size: var(--k-t12); font-weight: var(--k-reg, 400); margin-right: 8px; }
-  .afee__baris > :nth-child(3).pjb__rp::before { content: "Hak"; }
-  .afee__baris > :nth-child(4)::before { content: "Saat DP masuk"; }
-  .afee__baris > :nth-child(5)::before { content: "Saat desain selesai"; }
-}
 /* `.pjb__ket` dibuat untuk baris MENDATAR kaki tim (flex-basis 260px); di
    dalam bagian yang berkolom basis itu jadi TINGGI — celah kosong 260px. */
 .pjb__bagian > .pjb__ket { flex: none; }
