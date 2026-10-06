@@ -125,8 +125,25 @@ it.skipIf(!adaPostgres)("tim, bayaran, kas, dan target jalan dengan setelan kone
   daftar = await tim.list(sql, { projectId: weng.id });
   cek("tahap akhir jatuh tempo", d().tahap[1].keadaan === "jatuh_tempo", d().tahap[1]);
 
+  console.log("\n── ringkasan & dampak (kop halaman Aturan Fee Tim) ──");
+  let kop = await feeRules.ringkasan(sql);
+  cek("belum pernah diubah lewat panel: pengubah kosong", kop.diubahOleh === null, kop);
+  cek("Leader: 1 penugasan berjalan ikut aturan studio (persennya kosong)",
+    kop.perPeran.leader.ikutAturan === 1 && kop.perPeran.leader.persenTetap === 0, kop.perPeran.leader);
+  cek("Drafter & Render: persennya dibekukan, tidak ada yang ikut",
+    kop.perPeran.drafter.ikutAturan === 0 && kop.perPeran.drafter.persenTetap === 1 && kop.perPeran.render.persenTetap === 1, kop.perPeran);
+  cek("Estimator tanpa penugasan: nol, bukan hilang", kop.perPeran.estimator.ikutAturan === 0, kop.perPeran.estimator);
+  cek("tiga penugasan masih punya tahap belum dibayar", kop.belumLunas === 3, kop.belumLunas);
+
   console.log("\n── aturan berubah ──");
-  await feeRules.update(sql, { pctLeader: 3, pctDrafter: 12 });
+  const pengubah = "00000000-0000-4000-8000-0000000000aa";
+  await sql`insert into auth.users (id, email) values (${pengubah}::uuid, 'dirga@contoh.id')`;
+  await sql`insert into public.profiles (id, full_name, role) values (${pengubah}::uuid, 'Dirga Pahlevi', 'admin')`;
+  await feeRules.update(sql, { pctLeader: 3, pctDrafter: 12 }, pengubah);
+  kop = await feeRules.ringkasan(sql);
+  cek("sesudah disimpan: pengubahnya nama tampilan akun", kop.diubahOleh === "Dirga Pahlevi", kop.diubahOleh);
+  await sql`update public.profiles set full_name = null where id = ${pengubah}::uuid`;
+  cek("tanpa nama tampilan: bagian depan email", (await feeRules.ringkasan(sql)).diubahOleh === "dirga");
   daftar = await tim.list(sql, { projectId: weng.id });
   cek("Leader yang belum ditentukan IKUT aturan baru: 12 jt × 3% = 360 rb",
     daftar.find((x) => x.id === aDirga)?.hak === 360_000, daftar.find((x) => x.id === aDirga));

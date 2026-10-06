@@ -1005,6 +1005,14 @@ export type PayoutStage = "awal" | "akhir";
 export const VALID_PAYOUT_STAGE: ReadonlySet<string> = new Set(["awal", "akhir"]);
 
 /** Aturan persen studio. `null` = belum ditentukan (bukan nol). */
+/** Kop dan dampak halaman Aturan Fee Tim — lihat feeRules.ringkasan(). */
+export interface RingkasanAturanFee {
+  diubahPada: string;
+  diubahOleh: string | null;
+  perPeran: Record<TeamRole, { ikutAturan: number; persenTetap: number }>;
+  belumLunas: number;
+}
+
 export interface FeeRules {
   pctLeader: number | null;
   pctDrafter: number | null;

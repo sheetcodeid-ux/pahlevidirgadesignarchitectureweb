@@ -5,11 +5,22 @@ import { Tombol } from "../kit/Tombol";
 import { Busur, type IrisBusur } from "../kit/Ukuran";
 import { KartuGrafik, type BarisKartu } from "../kit/kartuGrafik";
 import { Ikon, type DataIkon } from "../kit/Ikon";
-import { Medal, NavReceipt, NavSquaresFour, Ruler, SpecialCube, SpecialListNumbers } from "../kit/ikon";
+import {
+  ArrowClockwise,
+  ArrowRight,
+  Medal,
+  NavReceipt,
+  NavSquaresFour,
+  Ruler,
+  SpecialCube,
+  SpecialListNumbers,
+  SpecialWarning,
+} from "../kit/ikon";
 import { PenandaSimpan } from "./situsKit";
 import { SelTahap } from "./timProyekKit";
 import {
   ambilAturanFee,
+  ambilRingkasanAturanFee,
   ambilSettings,
   bacaCache,
   daftarPaket,
@@ -21,6 +32,7 @@ import {
   type BarisSlip,
   type PenugasanTim,
   type PeranTim,
+  type RingkasanAturanFee,
   type TahapBayaran,
 } from "../../lib/admin";
 import type { Paket } from "../../lib/api";
@@ -52,9 +64,10 @@ import { keteranganFee } from "../../lib/pdfProyek";
    jawaban pemilik "belum ditentukan". Kosong BUKAN nol: nol berarti "peran
    ini tidak dibayar", kosong berarti "belum diputuskan".
 
-   Siapa yang terpengaruh kalau angkanya diubah:
-   - persen peran → penugasan BARU, dan penugasan lama yang persennya kosong.
-     Persen yang sudah ditentukan dibekukan saat orang ditugaskan.
+   Siapa yang terpengaruh kalau angkanya diubah — dan halaman ini menyebut
+   jumlahnya dari data (`/admin/fee-rules/ringkasan`):
+   - persen peran → penugasan BARU, dan penugasan berjalan yang persennya
+     kosong. Persen yang sudah ditentukan dibekukan saat orang ditugaskan.
    - bagian tahap awal → semua tahap yang BELUM dibayar.
    - jatah bonus → pembanding saja, tidak membatasi apa pun.
    ============================================================================= */
@@ -73,10 +86,10 @@ const IKON_PERAN: Record<PeranTim, DataIkon> = {
   estimator: SpecialListNumbers,
 };
 
-/* Warna peran di kartu PUTIH (Busur, pratinjau) — tangga donat kit, urutan
-   yang sama dengan ubin peran di Satu Proyek. Di bidang hijau tua warnanya
-   tangga sendiri (`--atf-<peran>` di CSS), karena hijau tua di atas hijau
-   tua tidak kelihatan. */
+/* Warna peran di kartu PUTIH (Busur, pratinjau, kartu keterangan) — tangga
+   donat kit, urutan yang sama dengan ubin peran di Satu Proyek. Di bidang
+   hijau tua warnanya tangga sendiri (`--atf-<peran>` di CSS), karena hijau
+   tua di atas hijau tua tidak kelihatan. */
 const RAMP: Record<PeranTim, string> = {
   leader: "var(--ramp-1)",
   drafter: "var(--ramp-2)",
@@ -84,7 +97,9 @@ const RAMP: Record<PeranTim, string> = {
   estimator: "var(--ramp-4)",
 };
 
-type Isi = Record<PeranTim | "pool" | "awal", string>;
+type Kunci = PeranTim | "pool" | "awal";
+type Isi = Record<Kunci, string>;
+const NAMA_KUNCI: Record<Kunci, string> = { ...LABEL_PERAN, pool: "Jatah bonus", awal: "Tahap awal" };
 
 const keTeks = (n: number | null) => (n === null ? "" : String(n).replace(".", ","));
 /** "" → null; teks yang bukan angka → NaN (ditolak sebelum dikirim). */
@@ -110,6 +125,16 @@ function dariAturan(a: AturanFee): Isi {
   };
 }
 
+/** Persen peran yang DIGAMBAR: yang kosong atau tidak sah = null ("belum"). */
+function nilaiPeran(isi: Isi): Record<PeranTim, number | null> {
+  return Object.fromEntries(
+    URUTAN_PERAN.map((r) => {
+      const v = keAngka(isi[r]);
+      return [r, sah(v) && v >= 0 && v <= 100 ? v : null];
+    }),
+  ) as Record<PeranTim, number | null>;
+}
+
 /* --- Geometri diagram ----------------------------------------------------------
    Satu tempat menghitung letak SEMUA bagian — kartu peran (HTML) dan pita
    (SVG) membaca angka yang sama, jadi keduanya mustahil meleset satu sama
@@ -119,20 +144,21 @@ const CELAH_PERAN = 8;
 const MIN_PERAN = 44; // kartu peran terpendek: nama + rupiah + isian
 const CELAH_TAHAP = 12;
 
-interface Blok { r: PeranTim; v: number | null; y: number; h: number }
+interface Blok { r: PeranTim; y: number; h: number }
 
 /** Kartu peran: tiap kartu minimal 44px, sisanya dibagi menurut persen.
  *  Pemetaannya afin, bukan sebanding murni — kartu 0,5% tetap harus muat
  *  isiannya. Yang sebanding PERSIS adalah irisan di batang fee dan di node
  *  tahap; pitanya menyempit-melebar di antara keduanya. */
-function tataPeran(nilai: Record<PeranTim, number | null>, total: number): Blok[] {
+function tataPeran(g: Record<PeranTim, number>): Blok[] {
   const n = URUTAN_PERAN.length;
+  const total = URUTAN_PERAN.reduce((s, r) => s + g[r], 0);
   const sisa = T - CELAH_PERAN * (n - 1) - MIN_PERAN * n;
-  const tinggi = URUTAN_PERAN.map((r) => MIN_PERAN + (nilai[r] !== null && total > 0 ? (sisa * nilai[r]!) / total : 0));
+  const tinggi = URUTAN_PERAN.map((r) => MIN_PERAN + (total > 0 ? (sisa * g[r]) / total : 0));
   const pakai = tinggi.reduce((a, b) => a + b, 0) + CELAH_PERAN * (n - 1);
   let y = Math.max(0, (T - pakai) / 2);
   return URUTAN_PERAN.map((r, i) => {
-    const b = { r, v: nilai[r], y, h: tinggi[i]! };
+    const b = { r, y, h: tinggi[i]! };
     y += tinggi[i]! + CELAH_PERAN;
     return b;
   });
@@ -143,6 +169,58 @@ function tataPeran(nilai: Record<PeranTim, number | null>, total: number): Blok[
  *  jadi rentangan mendatarnya tidak merusak apa pun. */
 const pita = (a0: number, a1: number, b0: number, b1: number) =>
   `M0 ${a0}C50 ${a0} 50 ${b0} 100 ${b0}L100 ${b1}C50 ${b1} 50 ${a1} 0 ${a1}Z`;
+/** Garis tengah sebuah pita — jalur titik "uang mengalir", dan jalur garis
+ *  putus "akan mengalir" untuk peran yang belum ditentukan. */
+const alir = (a: number, b: number) => `M0 ${a}C50 ${a} 50 ${b} 100 ${b}`;
+
+/* --- Gerak halus ---------------------------------------------------------------
+   Saat persen diketik atau belahan diseret, GEOMETRINYA (bukan angkanya)
+   meluncur ke tempat baru dalam 160 ms. Yang di-tween angka mentahnya, lalu
+   seluruh geometri dihitung ulang dari situ — jadi kartu HTML dan pita SVG
+   bergerak bersama di semua peramban (transisi CSS `d` tidak ada di Safari,
+   dan kartu yang bergerak sementara pitanya melompat terlihat retak).
+   Teks dan rupiah TIDAK di-tween: angka yang lewat di tengah jalan adalah
+   angka yang salah. Diam kalau `prefers-reduced-motion`. */
+interface Geo { leader: number; drafter: number; render: number; estimator: number; awal: number; pool: number }
+
+/** `siap` = datanya sudah ada. Sasaran PERTAMA sesudah siap dipasang
+ *  langsung, tanpa meluncur dari nol — tidak ada animasi masuk (permintaan
+ *  pemilik: "jangan ada yang melekat"); yang meluncur hanya perubahan. */
+function useHalus(sasaran: Geo, siap: boolean, ms = 160): Geo {
+  const [kini, setKini] = useState(sasaran);
+  const kiniRef = useRef(sasaran);
+  const pernahSiap = useRef(siap);
+  const raf = useRef(0);
+  const kunci = JSON.stringify(sasaran);
+  useEffect(() => {
+    cancelAnimationFrame(raf.current);
+    const diam = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const pertama = siap && !pernahSiap.current;
+    if (siap) pernahSiap.current = true;
+    if (diam || pertama || !siap) {
+      kiniRef.current = sasaran;
+      setKini(sasaran);
+      return;
+    }
+    const dari = kiniRef.current;
+    const mulai = performance.now();
+    const langkah = (t: number) => {
+      const p = Math.min(1, (t - mulai) / ms);
+      const e = 1 - (1 - p) ** 3;
+      const v = Object.fromEntries(
+        (Object.keys(sasaran) as (keyof Geo)[]).map((k) => [k, dari[k] + (sasaran[k] - dari[k]) * e]),
+      ) as unknown as Geo;
+      kiniRef.current = v;
+      setKini(v);
+      if (p < 1) raf.current = requestAnimationFrame(langkah);
+    };
+    raf.current = requestAnimationFrame(langkah);
+    return () => cancelAnimationFrame(raf.current);
+    // `kunci` mewakili isi `sasaran`; objeknya sendiri baru tiap render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kunci, siap, ms]);
+  return kini;
+}
 
 /** Penugasan contoh untuk pratinjau — bentuk data yang SAMA dengan yang
  *  dipakai Satu Proyek, jadi `SelTahap` menggambarnya persis seperti di sana:
@@ -162,9 +240,6 @@ function penugasanContoh(r: PeranTim, pct: number | null, fee: number, awal: num
   };
 }
 
-/** Garis tengah sebuah pita — jalur titik "uang mengalir" saat disorot. */
-const alir = (a: number, b: number) => `M0 ${a}C50 ${a} 50 ${b} 100 ${b}`;
-
 /* Kartu keterangan pita. State-nya milik komponen kecil ini sendiri, bukan
    milik Halaman: kursor yang bergerak di atas pita memperbarui posisinya
    tiap gerakan, dan yang perlu digambar ulang cuma kartu ini — bukan seluruh
@@ -181,12 +256,13 @@ function KartuPita({ kabar }: { kabar: KabarPita }) {
   return info ? <KartuGrafik x={info.x} y={info.y} judul={info.judul} baris={info.baris} /> : null;
 }
 
-/** Isian persen kecil: angka tebal, "%" di kanan. */
-function IsianPersen({ label, nilai, onUbah, kosong = "—", kelas }: {
-  label: string; nilai: string; onUbah: (v: string) => void; kosong?: string; kelas?: string;
+/** Isian persen kecil: angka tebal, "%" di kanan. `berubah` = titik amber
+ *  "belum disimpan" di sudutnya — warna yang sama dengan penanda simpan. */
+function IsianPersen({ label, nilai, onUbah, kosong = "—", kelas, berubah }: {
+  label: string; nilai: string; onUbah: (v: string) => void; kosong?: string; kelas?: string; berubah?: boolean;
 }) {
   return (
-    <span className={`atf__pct${kelas ? ` ${kelas}` : ""}`}>
+    <span className={`atf__pct${kelas ? ` ${kelas}` : ""}${berubah ? " is-berubah" : ""}`}>
       <input aria-label={label} inputMode="decimal" placeholder={kosong} value={nilai} onChange={(e) => onUbah(e.currentTarget.value)} />
       <span aria-hidden="true">%</span>
     </span>
@@ -197,7 +273,7 @@ function IsianPersen({ label, nilai, onUbah, kosong = "—", kelas }: {
  *  role="slider" sungguhan — panah, PageUp/PageDown, Home/End — dan tetikus
  *  maupun jari lewat pointer capture. Kotaknya dibaca SEKALI saat ditekan,
  *  bukan di tiap gerakan (jebakan #21). */
-function PembagiTahap({ awal, onUbah }: { awal: number; onUbah: (v: number) => void }) {
+function PembagiTahap({ awal, tampil, onUbah }: { awal: number; tampil: number; onUbah: (v: number) => void }) {
   const tarik = useRef<{ atas: number } | null>(null);
   const dari = (clientY: number) => {
     const t = tarik.current;
@@ -205,7 +281,9 @@ function PembagiTahap({ awal, onUbah }: { awal: number; onUbah: (v: number) => v
     const v = ((clientY - t.atas - CELAH_TAHAP / 2) / (T - CELAH_TAHAP)) * 100;
     onUbah(Math.min(100, Math.max(0, Math.round(v / 5) * 5)));
   };
-  const y = (awal / 100) * (T - CELAH_TAHAP) + CELAH_TAHAP / 2;
+  // Letaknya dari nilai yang sedang meluncur (`tampil`), supaya pegangan
+  // dan belahan node bergerak bersama; nilai ARIA tetap nilai sebenarnya.
+  const y = (tampil / 100) * (T - CELAH_TAHAP) + CELAH_TAHAP / 2;
   return (
     <div
       className="atf__seret"
@@ -248,44 +326,77 @@ function PembagiTahap({ awal, onUbah }: { awal: number; onUbah: (v: number) => v
   );
 }
 
+const fmtWaktu = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}, ${d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+};
+
 function Halaman() {
   const toast = useToast();
   const [aturan, setAturan] = useState<AturanFee | null>(() => bacaCache<AturanFee>("aturan-fee"));
   const [isi, setIsi] = useState<Isi | null>(() => (aturan ? dariAturan(aturan) : null));
+  const [ringkasan, setRingkasan] = useState<RingkasanAturanFee | null>(null);
   const [fee, setFee] = useState("12.000.000");
   const [paket, setPaket] = useState<Paket[]>([]);
   const [paketDipilih, setPaketDipilih] = useState("");
   const [menyimpan, setMenyimpan] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
-  // "semua" = seluruh aliran tim disorot (kursor di angka utama atau batang).
+  const [memuatUlang, setMemuatUlang] = useState(false);
+  // "semua" = seluruh aliran tim disorot (kursor di angka utama).
   const [sorot, setSorot] = useState<PeranTim | "semua" | null>(null);
   const kabar: KabarPita = useRef(null);
   // Nama studio di kop slip — dibaca saja; kuncinya milik Info Studio (jebakan #8).
   const [studio, setStudio] = useState<string | null>(() => bacaCache<{ studioName?: string }>("settings")?.studioName ?? null);
 
-  useEffect(() => {
+  function muatRingkasan() {
+    // Kop & dampak tambahan — gagal memuatnya tidak menghalangi halaman.
+    ambilRingkasanAturanFee().then(setRingkasan).catch(() => {});
+  }
+  function muat() {
+    setGalat(null);
+    setMemuatUlang(true);
     ambilAturanFee()
       .then((a) => {
         tulisCache("aturan-fee", a);
         setAturan(a);
         setIsi((l) => l ?? dariAturan(a));
       })
-      .catch((e) => setGalat((e as Error).message));
+      .catch((e) => setGalat((e as Error).message))
+      .finally(() => setMemuatUlang(false));
+    muatRingkasan();
+  }
+
+  useEffect(() => {
+    muat();
     // Paket cuma jalan pintas fee contoh; gagal memuatnya tidak mengganggu.
     daftarPaket().then((p) => setPaket(p.filter((x) => x.active))).catch(() => {});
     ambilSettings().then((d) => setStudio(d.studioName || null)).catch(() => {});
   }, []);
 
   const asal = aturan ? dariAturan(aturan) : null;
-  const berubahKunci = isi && asal ? (Object.keys(isi) as (keyof Isi)[]).filter((k) => isi[k].trim() !== asal[k]) : [];
+  const berubahKunci = isi && asal ? (Object.keys(isi) as Kunci[]).filter((k) => isi[k].trim() !== asal[k]) : [];
   const berubah = berubahKunci.length > 0;
   useCegahPindah(berubah && !menyimpan);
 
+  // Sasaran gerak halus — dihitung SEBELUM keluar lebih awal, karena hook
+  // tidak boleh dipanggil sesudahnya.
+  const nilaiSasaran = isi ? nilaiPeran(isi) : null;
+  const awalMentah = isi ? keAngka(isi.awal) : null;
+  const poolMentah = isi ? keAngka(isi.pool) : null;
+  const geo = useHalus({
+    leader: nilaiSasaran?.leader ?? 0,
+    drafter: nilaiSasaran?.drafter ?? 0,
+    render: nilaiSasaran?.render ?? 0,
+    estimator: nilaiSasaran?.estimator ?? 0,
+    awal: sah(awalMentah) ? Math.min(100, Math.max(0, awalMentah)) : aturan?.firstTranchePct ?? 50,
+    pool: sah(poolMentah) ? Math.min(100, Math.max(0, poolMentah)) : aturan?.poolPct ?? 10,
+  }, isi !== null && aturan !== null);
+
   if (!isi || !aturan) {
-    return galat ? <p className="atf__galat">Aturan fee tidak bisa dimuat: {galat}</p> : <Kerangka />;
+    return galat ? <Galat pesan={galat} memuat={memuatUlang} onUlang={muat} /> : <Kerangka />;
   }
 
-  const n = (k: keyof Isi) => keAngka(isi[k]);
+  const n = (k: Kunci) => keAngka(isi[k]);
   const awal = n("awal");
   const pool = n("pool");
 
@@ -301,13 +412,8 @@ function Halaman() {
     ? `Periksa ${salah.join(", ")} — isi angka 0 sampai 100${salah.some((s) => s.startsWith("persen")) ? ", atau kosongkan persen peran" : ""}.`
     : null;
 
-  /* Nilai yang DIGAMBAR: persen yang tidak sah digambar sebagai "belum". */
-  const nilai = Object.fromEntries(
-    URUTAN_PERAN.map((r) => {
-      const v = n(r);
-      return [r, sah(v) && v >= 0 && v <= 100 ? v : null];
-    }),
-  ) as Record<PeranTim, number | null>;
+  /* --- Angka sebenarnya (teks, rupiah, keadaan) -------------------------- */
+  const nilai = nilaiSasaran!;
   const total = URUTAN_PERAN.reduce((s, r) => s + (nilai[r] ?? 0), 0);
   const awalAman = sah(awal) ? Math.min(100, Math.max(0, awal)) : aturan.firstTranchePct;
   const poolAman = sah(pool) ? Math.min(100, Math.max(0, pool)) : aturan.poolPct;
@@ -317,38 +423,46 @@ function Halaman() {
   const awalRp = (pct: number) => Math.round((rp(pct) * awalAman) / 100);
   const timTotal = URUTAN_PERAN.reduce((s, r) => s + (nilai[r] !== null ? rp(nilai[r]!) : 0), 0);
   const timAwal = URUTAN_PERAN.reduce((s, r) => s + (nilai[r] !== null ? awalRp(nilai[r]!) : 0), 0);
+  const studioRp = Math.max(0, feeAngka - timTotal);
+  const studioPct = Math.max(0, 100 - total);
   const sorotPeran = sorot && sorot !== "semua" ? sorot : null;
   const slipPeran = (sorotPeran && nilai[sorotPeran] !== null ? sorotPeran : URUTAN_PERAN.find((r) => nilai[r] !== null)) ?? null;
 
-  /* --- Letak diagram ---------------------------------------------------- */
-  const blok = tataPeran(nilai, total);
+  /* --- Letak diagram (dari nilai yang sedang meluncur) ------------------- */
+  const g: Record<PeranTim, number> = { leader: geo.leader, drafter: geo.drafter, render: geo.render, estimator: geo.estimator };
+  const ada = (r: PeranTim) => nilai[r] !== null && g[r] > 0.001;
+  const gTotal = URUTAN_PERAN.reduce((s, r) => s + (ada(r) ? g[r] : 0), 0);
+  const blok = tataPeran(Object.fromEntries(URUTAN_PERAN.map((r) => [r, nilai[r] !== null ? g[r] : 0])) as Record<PeranTim, number>);
   // Batang fee: 0–100% setinggi bidang. Kalau persen peran menjumlah lebih
   // dari 100, batangnya diisi penuh oleh tim (bagian studio 0).
-  const skala = T / Math.max(100, total);
+  const skala = T / Math.max(100, gTotal);
   const irisFee: Partial<Record<PeranTim, [number, number]>> = {};
+  const irisTim: Partial<Record<PeranTim, [number, number]>> = {};
   {
     let y = 0;
+    let t = 0;
     for (const r of URUTAN_PERAN) {
-      const v = nilai[r];
-      if (v === null || v <= 0) continue;
-      irisFee[r] = [y, y + v * skala];
-      y += v * skala;
+      if (!ada(r)) continue;
+      irisFee[r] = [y, y + g[r] * skala];
+      y += g[r] * skala;
+      irisTim[r] = [t, t + (g[r] / gTotal) * T]; // batang tim ponsel: 100% = bagian tim
+      t += (g[r] / gTotal) * T;
     }
   }
-  const timY = Math.min(T, total * skala);
-  const jatahY = Math.min(T, poolAman * skala);
+  const timY = Math.min(T, gTotal * skala);
+  const jatahY = Math.min(T, geo.pool * skala);
   // Node tahap: DP di atas, Finish di bawah, dibelah di persen tahap awal.
-  const dpH = (awalAman / 100) * (T - CELAH_TAHAP);
+  const dpH = (geo.awal / 100) * (T - CELAH_TAHAP);
   const finY = dpH + CELAH_TAHAP;
+  const belahY = dpH + CELAH_TAHAP / 2;
   const irisTahap: Partial<Record<PeranTim, { dp: [number, number]; fin: [number, number] }>> = {};
   {
     let a = 0;
     let b = finY;
     for (const r of URUTAN_PERAN) {
-      const v = nilai[r];
-      if (v === null || v <= 0 || total <= 0) continue;
-      const ha = (v / total) * dpH;
-      const hb = (v / total) * (T - finY);
+      if (!ada(r) || gTotal <= 0) continue;
+      const ha = (g[r] / gTotal) * dpH;
+      const hb = (g[r] / gTotal) * (T - finY);
       irisTahap[r] = { dp: [a, a + ha], fin: [b, b + hb] };
       a += ha;
       b += hb;
@@ -366,10 +480,38 @@ function Halaman() {
     labelFin = Math.min(T - LABEL_T, labelDp + LABEL_T + 4);
     labelDp = labelFin - LABEL_T - 4;
   }
+  // Petunjuk "seret" di samping pegangan — hanya kalau ada celah di antara
+  // kedua label; kalau tidak, ia akan menimpa angka.
+  const adaCelahPetunjuk = belahY - 9 >= labelDp + LABEL_T + 2 && belahY + 9 <= labelFin - 2;
+  // Label studio tegak di batang: lengkap, ringkas, atau tidak sama sekali.
+  const ruangStudio = T - timY;
 
-  function set(k: keyof Isi, v: string) {
+  function set(k: Kunci, v: string) {
     setIsi((l) => (l ? { ...l, [k]: v.replace(/[^\d.,]/g, "") } : l));
   }
+
+  /* --- Dampak perubahan (dari data, bukan tebakan) ----------------------- */
+  function dampak(k: Kunci): { pendek: string; panjang: string } {
+    if (k === "pool") return { pendek: "pembanding", panjang: "Jatah bonus hanya pembanding — tidak mengubah bayaran siapa pun." };
+    if (!ringkasan) return { pendek: "", panjang: "" };
+    if (k === "awal") {
+      const b = ringkasan.belumLunas;
+      return b > 0
+        ? { pendek: `${b} belum lunas ikut`, panjang: `${b} penugasan berjalan yang masih punya tahap belum dibayar ikut memakai pembagian baru, ditambah penugasan baru.` }
+        : { pendek: "hanya yang baru", panjang: "Tidak ada tahap berjalan yang belum dibayar — hanya penugasan baru yang terpengaruh." };
+    }
+    const p = ringkasan.perPeran[k];
+    return p.ikutAturan > 0
+      ? {
+          pendek: `${p.ikutAturan} berjalan ikut`,
+          panjang: `${p.ikutAturan} penugasan ${LABEL_PERAN[k]} berjalan yang persennya masih kosong langsung ikut berubah${p.persenTetap > 0 ? `; ${p.persenTetap} lainnya sudah dibekukan dan tidak berubah` : ""}.`,
+        }
+      : {
+          pendek: "hanya yang baru",
+          panjang: `Hanya penugasan ${LABEL_PERAN[k]} baru yang memakai persen ini${p.persenTetap > 0 ? ` — ${p.persenTetap} penugasan berjalan sudah dibekukan dan tidak berubah` : ""}.`,
+        };
+  }
+  const tampilNilai = (s: string) => (s.trim() === "" ? "—" : `${s}%`);
 
   async function simpan() {
     if (galatIsi || !berubah || !isi || !asal) return;
@@ -377,13 +519,27 @@ function Halaman() {
     for (const r of URUTAN_PERAN) if (isi[r].trim() !== asal[r]) ubah[KUNCI_PCT[r]] = n(r);
     if (isi.pool.trim() !== asal.pool) ubah.poolPct = n("pool")!;
     if (isi.awal.trim() !== asal.awal) ubah.firstTranchePct = n("awal")!;
+    // Kalimat dampak disusun SEBELUM ringkasannya dimuat ulang.
+    const ikut = berubahKunci
+      .filter((k): k is PeranTim => k !== "pool" && k !== "awal")
+      .map((k) => ({ k, n: ringkasan?.perPeran[k].ikutAturan ?? 0 }))
+      .filter((x) => x.n > 0)
+      .map((x) => `${x.n} penugasan ${LABEL_PERAN[x.k]}`);
+    if (berubahKunci.includes("awal") && (ringkasan?.belumLunas ?? 0) > 0) ikut.push(`${ringkasan!.belumLunas} penugasan belum lunas`);
     setMenyimpan(true);
     try {
       const a = await simpanAturanFee(ubah);
       tulisCache("aturan-fee", a);
       setAturan(a);
       setIsi(dariAturan(a));
-      toast({ judul: "Aturan fee disimpan", keterangan: "Berlaku untuk penugasan baru dan tahap yang belum dibayar.", nada: "sukses" });
+      muatRingkasan();
+      toast({
+        judul: "Aturan fee disimpan",
+        keterangan: ikut.length
+          ? `Ikut berubah: ${ikut.join(", ")} — ditambah semua penugasan baru.`
+          : "Berlaku untuk penugasan baru dan tahap yang belum dibayar.",
+        nada: "sukses",
+      });
     } catch (err) {
       toast({ judul: "Gagal menyimpan aturan fee", keterangan: (err as Error).message, nada: "gagal" });
     } finally {
@@ -391,23 +547,35 @@ function Halaman() {
     }
   }
 
+  /* --- Sorotan & keterangan ---------------------------------------------- */
   // Menyorot satu peran (tetikus saja, jebakan #9) menyalakan kartunya,
   // kedua pitanya, irisannya di batang dan node, baris pratinjaunya, dan
   // mengganti slip ke peran itu — satu aturan, semua akibatnya.
   const sorotan = (r: PeranTim | "semua") => ({
     onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType === "mouse") setSorot(r); },
-    onPointerLeave: () => setSorot(null),
+    onPointerLeave: (e: React.PointerEvent) => { if (e.pointerType === "mouse") setSorot(null); },
   });
   const disorot = (r: PeranTim) => sorot === r || (sorot === "semua" && nilai[r] !== null);
   const warna = (r: PeranTim) => `atf__w--${r}${disorot(r) ? " is-sorot" : ""}`;
-  // Pita dan irisan menjawab "berapa" di bawah kursor (aturan semua grafik
-  // kit), sekaligus menyorot perannya. Tetikus saja — jebakan #9.
+  // Pita dan irisan menjawab "berapa". Tetikus: di bawah kursor selama ia di
+  // atasnya. Sentuh: diketuk sekali, dan hilang saat bagian lain diketuk —
+  // `pointerleave` jari datang tepat sesudah diangkat, jadi tidak dipakai.
   const keterangan = (r: PeranTim | "semua" | null, judul: string, baris: BarisKartu[]) => ({
+    "data-ket": "",
     onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType === "mouse") setSorot(r); },
     onPointerMove: (e: React.PointerEvent) => {
       if (e.pointerType === "mouse") kabar.current?.({ x: e.clientX, y: e.clientY, judul, baris });
     },
-    onPointerLeave: () => { setSorot(null); kabar.current?.(null); },
+    onPointerLeave: (e: React.PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      setSorot(null);
+      kabar.current?.(null);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") return;
+      setSorot(r);
+      kabar.current?.({ x: e.clientX, y: e.clientY, judul, baris });
+    },
   });
   const ketPeran = (r: PeranTim) => {
     const v = nilai[r]!;
@@ -424,6 +592,7 @@ function Halaman() {
       { warna: RAMP[r], label: `${pctTampil(dp ? awalAman : 100 - awalAman)}% dari hak`, nilai: formatRupiah(dp ? awalRp(v) : rp(v) - awalRp(v)) },
     ]);
   };
+  const ketStudio = keterangan(null, "Studio", [{ label: `${pctTampil(studioPct)}% dari fee design`, nilai: formatRupiah(studioRp) }]);
   // Mistar batang fee: 0–100 menurut skala batang yang sama.
   const mistar = [0, 25, 50, 75, 100].filter((p) => p * skala <= T + 0.5);
 
@@ -445,14 +614,59 @@ function Halaman() {
 
   const bulan = new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
+  /* Ringkasan teks untuk pembaca layar: diagramnya sendiri aria-hidden,
+     jadi seluruh isinya juga ditulis sebagai kalimat. */
+  const ringkasTeks = [
+    `Dari fee design contoh ${formatRupiah(feeAngka)}, tim menerima ${pctTampil(total)} persen, ${formatRupiah(timTotal)}; studio ${pctTampil(studioPct)} persen, ${formatRupiah(studioRp)}.`,
+    ...URUTAN_PERAN.map((r) => {
+      const v = nilai[r];
+      return v === null
+        ? `${LABEL_PERAN[r]}: persen belum ditentukan.`
+        : `${LABEL_PERAN[r]}: ${pctTampil(v)} persen, ${formatRupiah(rp(v))} — ${formatRupiah(awalRp(v))} saat DP masuk dan ${formatRupiah(rp(v) - awalRp(v))} saat Finish.`;
+    }),
+    `Jatah bonus ${pctTampil(poolAman)} persen per proyek${lewat > 0 ? `, terlewati ${pctTampil(lewat)} poin` : ""}.`,
+  ].join(" ");
+
   return (
-    <div className="atf">
+    <div
+      className="atf"
+      // Ketukan jari di luar pita menutup kartu keterangan sentuh.
+      onPointerDown={(e) => {
+        if (e.pointerType === "mouse" || (e.target as Element).closest("[data-ket]")) return;
+        kabar.current?.(null);
+        setSorot(null);
+      }}
+    >
       {/* ─── Papan aliran ──────────────────────────────────────────────────── */}
-      <section className={`atf__aliran${sorot ? " is-menyorot" : ""}`} aria-labelledby="atf-judul">
+      <section className={`atf__aliran${sorot ? " is-menyorot" : ""}`} aria-labelledby="atf-judul" aria-describedby="atf-ringkas">
+        <p id="atf-ringkas" className="sr-only">{ringkasTeks}</p>
         <header className="atf__kepala">
           <div className="atf__kepalajudul">
             <h2 id="atf-judul">Aliran fee satu proyek</h2>
-            <p>Berlaku untuk penugasan baru dan tahap yang belum dibayar.</p>
+            {berubah ? (
+              /* Sebelum menyimpan: apa yang berubah, dan siapa yang kena. */
+              <ul className="atf__beda" aria-label="Perubahan yang belum disimpan">
+                {berubahKunci.map((k) => {
+                  const d = dampak(k);
+                  return (
+                    <li key={k} title={d.panjang || undefined}>
+                      <b>{NAMA_KUNCI[k]}</b>
+                      <s>{tampilNilai(asal![k])}</s>
+                      <span aria-hidden="true">→</span>
+                      <em>{tampilNilai(isi[k])}</em>
+                      {d.pendek && <small>{d.pendek}</small>}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="atf__kop">
+                {ringkasan?.diubahOleh && (
+                  <>Terakhir diubah <b>{fmtWaktu(ringkasan.diubahPada)}</b> oleh <b>{ringkasan.diubahOleh}</b> · </>
+                )}
+                Berlaku untuk penugasan baru dan tahap yang belum dibayar.
+              </p>
+            )}
           </div>
           <div className="atf__simpan">
             <PenandaSimpan n={galatIsi ? 1 : berubahKunci.length} teks={galatIsi ?? undefined} />
@@ -464,10 +678,11 @@ function Halaman() {
         </header>
 
         <div className="atf__badan">
-          {/* Sumber: fee design contoh — alat bantu baca, tidak disimpan. */}
+          {/* Sumber: fee design CONTOH — alat bantu baca, tidak disimpan. Garis
+              bawahnya putus-putus dan bertanda, beda dari kotak aturan. */}
           <div className="atf__sumber">
             <label className="atf__fee">
-              <span>Fee design contoh</span>
+              <span className="atf__feelabel">Fee design contoh <em>tidak disimpan</em></span>
               <span className="atf__feeisian">
                 <small aria-hidden="true">Rp</small>
                 <input
@@ -485,9 +700,6 @@ function Halaman() {
                     type="button"
                     className="atf__paket"
                     aria-pressed={paketDipilih === p.id}
-                    // Batas bawah paket — angka yang dipakai saat diklik, dan
-                    // yang langsung tampil di isian fee di atasnya.
-                    title={`Mulai Rp${p.feeMin} jt`}
                     onClick={() => {
                       setPaketDipilih(p.id);
                       // Fee paket disimpan dalam JUTA (Starter 15 → Rp15.000.000).
@@ -495,6 +707,8 @@ function Halaman() {
                     }}
                   >
                     {p.name}
+                    {/* Batas bawah paket — angka yang dipakai saat diklik. */}
+                    <small>{p.feeMin} jt</small>
                   </button>
                 ))}
               </div>
@@ -505,19 +719,8 @@ function Halaman() {
               <span>Tim menerima <em>{pctTampil(total)}%</em></span>
               <b>{formatRupiah(timTotal)}</b>
             </p>
-            <dl className="atf__legenda">
-              <div>
-                <dt><i className="atf__kotak atf__kotak--studio" />Studio</dt>
-                <dd><b>{pctTampil(Math.max(0, 100 - total))}%</b><span>{formatRupiah(Math.max(0, feeAngka - timTotal))}</span></dd>
-              </div>
-              <div className={lewat > 0 ? "is-lewat" : undefined}>
-                <dt><i className="atf__kotak atf__kotak--jatah" />Jatah bonus</dt>
-                <dd><b>{pctTampil(poolAman)}%</b><span>{lewat > 0 ? `lewat ${pctTampil(lewat)} poin` : `sisa ${pctTampil(poolAman - total)} poin`}</span></dd>
-              </div>
-            </dl>
           </div>
 
-          {/* Diagram. Di ponsel digulir mendatar di dalam bidangnya sendiri. */}
           <div className="atf__petagulir">
             <div className="atf__peta" style={{ ["--atf-t" as string]: `${T}px` }}>
               <span className="atf__kol atf__kol--fee">Fee<span className="atf__kolsisa"> design</span></span>
@@ -533,9 +736,13 @@ function Halaman() {
                     <pattern id="atf-arsir" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                       <rect width="2.5" height="6" className="atf__arsir" />
                     </pattern>
+                    {/* Bagian studio bergaris seperti halaman buku kas. */}
+                    <pattern id="atf-garis" width="44" height="6" patternUnits="userSpaceOnUse">
+                      <rect y="5" width="44" height="1" className="atf__garisbuku" />
+                    </pattern>
                     <clipPath id="atf-batang"><rect width="44" height={T} rx="10" /></clipPath>
                     {/* Gradien pita: pekat di kedua ujung (tempat ia menempel),
-                        menerawang di tengah. Dipakai kedua kolom pita. */}
+                        menerawang di tengah. Dipakai semua kolom pita. */}
                     {URUTAN_PERAN.map((r) => (
                       <linearGradient key={r} id={`atf-g-${r}`} x1="0" x2="1" y1="0" y2="0">
                         <stop offset="0" className={`atf__stop atf__w--${r}`} stopOpacity="0.62" />
@@ -545,12 +752,8 @@ function Halaman() {
                     ))}
                   </defs>
                   <g clipPath="url(#atf-batang)">
-                    <rect
-                      width="44"
-                      height={T}
-                      className="atf__studio"
-                      {...keterangan(null, "Studio", [{ label: `${pctTampil(Math.max(0, 100 - total))}% dari fee design`, nilai: formatRupiah(Math.max(0, feeAngka - timTotal)) }])}
-                    />
+                    <rect width="44" height={T} className="atf__studio" {...ketStudio} />
+                    <rect y={timY} width="44" height={Math.max(0, T - timY)} fill="url(#atf-garis)" className="atf__studiogaris" />
                     {URUTAN_PERAN.map((r) => {
                       const s = irisFee[r];
                       return s ? <rect key={r} y={s[0]} width="44" height={Math.max(0, s[1] - s[0])} className={`atf__iris ${warna(r)}`} {...ketPeran(r)} /> : null;
@@ -565,18 +768,25 @@ function Halaman() {
                 {mistar.map((p) => (
                   <span key={p} className="atf__mistarlabel" style={{ top: Math.min(T - 5, Math.max(5, p * skala)) }}>{p}</span>
                 ))}
-                <span className="atf__studiolabel">
-                  Studio<b>{pctTampil(Math.max(0, 100 - total))}%</b>
-                </span>
+                {ruangStudio > 70 && (
+                  <span className="atf__studiolabel" style={{ top: timY }}>
+                    <span>
+                      Studio <b>{pctTampil(studioPct)}%</b>
+                      {ruangStudio > 190 && <> · {formatRupiah(studioRp)}</>}
+                    </span>
+                  </span>
+                )}
               </div>
 
-              {/* Pita fee → peran. */}
+              {/* Pita fee → peran. Peran yang belum ditentukan mendapat garis
+                  putus "akan mengalir ke sini begitu persennya diisi". */}
               <div className="atf__pitasel atf__pitasel--a">
                 <svg viewBox={`0 0 100 ${T}`} preserveAspectRatio="none" aria-hidden="true">
                   {blok.map((b) => {
                     const s = irisFee[b.r];
                     return s ? <path key={b.r} d={pita(s[0], s[1], b.y, b.y + b.h)} className={`atf__pita ${warna(b.r)}`} {...ketPeran(b.r)} /> : null;
                   })}
+                  {blok.map((b) => (nilai[b.r] === null ? <path key={b.r} d={alir(timY, b.y + b.h / 2)} className="atf__hantu" /> : null))}
                   {blok.map((b) => {
                     const s = irisFee[b.r];
                     return s && disorot(b.r) ? <path key={b.r} d={alir((s[0] + s[1]) / 2, b.y + b.h / 2)} className="atf__alir" /> : null;
@@ -591,7 +801,8 @@ function Halaman() {
               <ul className="atf__peran">
                 {blok.map((b) => {
                   const mentah = n(b.r);
-                  const belum = b.v === null;
+                  const belum = nilai[b.r] === null;
+                  const ikut = ringkasan?.perPeran[b.r].ikutAturan ?? 0;
                   return (
                     <li
                       key={b.r}
@@ -599,16 +810,30 @@ function Halaman() {
                       style={{ top: b.y, height: b.h }}
                       {...sorotan(b.r)}
                     >
-                      <span className="atf__ubin" aria-hidden="true"><Ikon ikon={IKON_PERAN[b.r]} ukuran={14} /></span>
+                      <span className="atf__ubin">
+                        <Ikon ikon={IKON_PERAN[b.r]} ukuran={14} />
+                        {/* Penugasan berjalan yang persennya kosong — ikut
+                            angka ini, dan langsung berubah begitu diubah. */}
+                        {ikut > 0 && (
+                          <span
+                            className="atf__ikut"
+                            title={belum
+                              ? `${ikut} penugasan berjalan menunggu persen ini — langsung terhitung begitu diisi`
+                              : `${ikut} penugasan berjalan ikut persen ini — langsung berubah kalau persennya diubah`}
+                          >
+                            {ikut}
+                          </span>
+                        )}
+                      </span>
                       <span className="atf__nama">
                         <b>{LABEL_PERAN[b.r]}</b>
                         {belum ? (
                           <small className="atf__belum">{mentah === null ? "Belum ditentukan" : "Bukan angka 0–100"}</small>
                         ) : (
-                          <small>{formatRupiah(rp(b.v!))}</small>
+                          <small>{formatRupiah(rp(nilai[b.r]!))}</small>
                         )}
                       </span>
-                      <IsianPersen label={`Persen ${LABEL_PERAN[b.r]}`} nilai={isi[b.r]} onUbah={(x) => set(b.r, x)} />
+                      <IsianPersen label={`Persen ${LABEL_PERAN[b.r]}`} nilai={isi[b.r]} onUbah={(x) => set(b.r, x)} berubah={berubahKunci.includes(b.r)} />
                     </li>
                   );
                 })}
@@ -620,7 +845,7 @@ function Halaman() {
                   {blok.map((b) => {
                     const s = irisTahap[b.r];
                     if (!s) return null;
-                    const belah = b.y + (b.h * awalAman) / 100;
+                    const belah = b.y + (b.h * geo.awal) / 100;
                     return (
                       <g key={b.r} className={`atf__pita ${warna(b.r)}`}>
                         {s.dp[1] > s.dp[0] && <path d={pita(b.y, belah, s.dp[0], s.dp[1])} {...ketTahap(b.r, "dp")} />}
@@ -630,39 +855,75 @@ function Halaman() {
                       </g>
                     );
                   })}
+                  {blok.map((b) => (nilai[b.r] === null ? <path key={b.r} d={alir(b.y + b.h / 2, belahY)} className="atf__hantu" /> : null))}
                 </svg>
               </div>
 
-              {/* Node tahap + label + pembagi yang diseret. */}
-              <div className="atf__tahap">
-                <svg viewBox={`0 0 14 ${T}`} width={14} height={T} aria-hidden="true">
-                  {dpH > 0 && <rect width="14" height={dpH} rx="4" className="atf__node" />}
-                  {T - finY > 0 && <rect y={finY} width="14" height={T - finY} rx="4" className="atf__node" />}
-                  {URUTAN_PERAN.map((r) => {
-                    const s = irisTahap[r];
-                    if (!s) return null;
-                    return (
-                      <g key={r} className={`atf__iris ${warna(r)}`}>
-                        <rect y={s.dp[0]} width="14" height={Math.max(0, s.dp[1] - s.dp[0])} />
-                        <rect y={s.fin[0]} width="14" height={Math.max(0, s.fin[1] - s.fin[0])} />
-                      </g>
-                    );
-                  })}
-                </svg>
-                <PembagiTahap awal={awalAman} onUbah={(v) => set("awal", String(v))} />
-                <div className="atf__tahaplabel" style={{ top: labelDp }}>
-                  <small>Saat DP masuk</small>
-                  <span>
-                    <IsianPersen label="Bagian tahap awal" nilai={isi.awal} onUbah={(x) => set("awal", x)} kosong="0" />
-                    <b>{formatRupiah(timAwal)}</b>
-                  </span>
+              {/* Ujung aliran: node tahap + label + pembagi. Di ponsel kolom ini
+                  turun ke bawah diagram, jadi ia membawa batang tim dan pitanya
+                  sendiri supaya tetap tersambung (`--m` hanya tampil di sana). */}
+              <div className="atf__ujung">
+                <div className="atf__timbatang" aria-hidden="true">
+                  <svg viewBox={`0 0 44 ${T}`} width={44} height={T}>
+                    <g clipPath="url(#atf-batang)">
+                      <rect width="44" height={T} className="atf__studio" />
+                      {URUTAN_PERAN.map((r) => {
+                        const s = irisTim[r];
+                        return s ? <rect key={r} y={s[0]} width="44" height={Math.max(0, s[1] - s[0])} className={`atf__iris ${warna(r)}`} /> : null;
+                      })}
+                    </g>
+                  </svg>
+                  <span className="atf__timbatanglabel">Tim<b>{pctTampil(total)}%</b></span>
                 </div>
-                <div className="atf__tahaplabel" style={{ top: labelFin }}>
-                  <small>Saat Finish</small>
-                  <span>
-                    <em>{pctTampil(100 - awalAman)}%</em>
-                    <b>{formatRupiah(timTotal - timAwal)}</b>
-                  </span>
+                <div className="atf__pitasel atf__pitasel--m" aria-hidden="true">
+                  <svg viewBox={`0 0 100 ${T}`} preserveAspectRatio="none">
+                    {URUTAN_PERAN.map((r) => {
+                      const a = irisTim[r];
+                      const s = irisTahap[r];
+                      if (!a || !s) return null;
+                      const belah = a[0] + ((a[1] - a[0]) * geo.awal) / 100;
+                      return (
+                        <g key={r} className={`atf__pita ${warna(r)}`}>
+                          {s.dp[1] > s.dp[0] && <path d={pita(a[0], belah, s.dp[0], s.dp[1])} {...ketTahap(r, "dp")} />}
+                          {s.fin[1] > s.fin[0] && <path d={pita(belah, a[1], s.fin[0], s.fin[1])} {...ketTahap(r, "fin")} />}
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+                <div className="atf__tahap">
+                  <svg viewBox={`0 0 14 ${T}`} width={14} height={T} aria-hidden="true">
+                    {dpH > 0 && <rect width="14" height={dpH} rx="4" className="atf__node" />}
+                    {T - finY > 0 && <rect y={finY} width="14" height={T - finY} rx="4" className="atf__node" />}
+                    {URUTAN_PERAN.map((r) => {
+                      const s = irisTahap[r];
+                      if (!s) return null;
+                      return (
+                        <g key={r} className={`atf__iris ${warna(r)}`}>
+                          <rect y={s.dp[0]} width="14" height={Math.max(0, s.dp[1] - s.dp[0])} />
+                          <rect y={s.fin[0]} width="14" height={Math.max(0, s.fin[1] - s.fin[0])} />
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  <PembagiTahap awal={awalAman} tampil={geo.awal} onUbah={(v) => set("awal", String(v))} />
+                  {adaCelahPetunjuk && (
+                    <span className="atf__petunjuk" style={{ top: belahY }} aria-hidden="true">seret untuk membagi</span>
+                  )}
+                  <div className="atf__tahaplabel" style={{ top: labelDp }}>
+                    <small>Saat DP masuk</small>
+                    <span>
+                      <IsianPersen label="Bagian tahap awal" nilai={isi.awal} onUbah={(x) => set("awal", x)} kosong="0" berubah={berubahKunci.includes("awal")} />
+                      <b>{formatRupiah(timAwal)}</b>
+                    </span>
+                  </div>
+                  <div className="atf__tahaplabel" style={{ top: labelFin }}>
+                    <small>Saat Finish</small>
+                    <span>
+                      <em>{pctTampil(100 - awalAman)}%</em>
+                      <b>{formatRupiah(timTotal - timAwal)}</b>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -676,7 +937,14 @@ function Halaman() {
       <section className="atf__kartu atf__jatah" aria-labelledby="atf-jatah">
         <div className="atf__kartukepala">
           <h3 id="atf-jatah">Jatah bonus tim</h3>
-          <IsianPersen label="Jatah bonus tim per proyek" nilai={isi.pool} onUbah={(x) => set("pool", x)} kosong="0" kelas="atf__pct--terang" />
+          <IsianPersen
+            label="Jatah bonus tim per proyek"
+            nilai={isi.pool}
+            onUbah={(x) => set("pool", x)}
+            kosong="0"
+            kelas="atf__pct--terang"
+            berubah={berubahKunci.includes("pool")}
+          />
         </div>
         <Busur
           iris={irisJatah}
@@ -685,20 +953,27 @@ function Halaman() {
           nilai={`${pctTampil(total)}%`}
           ket={`dari jatah ${pctTampil(poolAman)}% per proyek`}
         />
-        <p className={`atf__status${lewat > 0 ? " is-lewat" : ""}`}>
-          {lewat > 0
-            ? `Lewat ${pctTampil(lewat)} poin. Belum diputuskan — bayaran tetap dihitung dari persen peran.`
-            : `Di dalam jatah, sisa ${pctTampil(poolAman - total)} poin.`}
-        </p>
+        {lewat > 0 ? (
+          <div className="atf__putus">
+            <p className="atf__status is-lewat" title="Bayaran tetap dihitung dari persen peran — jatah hanya pembanding.">
+              <Ikon ikon={SpecialWarning} ukuran={13} />Lewat {pctTampil(lewat)} poin — belum diputuskan.
+            </p>
+            {/* Keputusannya milik pemilik; tombol ini cuma membuatnya satu klik
+                (mengisi kotak jatah — tetap harus disimpan). */}
+            <Tombol jenis="secondary" ukuran="small" onClick={() => set("pool", keTeks(Math.round(total * 100) / 100))}>
+              Jadikan jatah {pctTampil(total)}%
+            </Tombol>
+          </div>
+        ) : (
+          <p className="atf__status">Di dalam jatah, sisa {pctTampil(poolAman - total)} poin.</p>
+        )}
       </section>
 
       {/* ─── Tampil di Satu Proyek ─────────────────────────────────────────── */}
       <section className="atf__kartu atf__tampil" aria-labelledby="atf-tampil">
         <div className="atf__kartukepala">
           <h3 id="atf-tampil"><Ikon ikon={NavSquaresFour} ukuran={15} />Tampil di Satu Proyek</h3>
-          {/* Kepala kartu ini bergaya bilah judul layar: yang di bawahnya
-              memang potongan layar Satu Proyek. */}
-          <small>Proyek contoh <i>/</i> <b>Tim &amp; Bayaran</b></small>
+          <a className="atf__tautan" href="/admin/proyek/">Buka proyek<Ikon ikon={ArrowRight} ukuran={12} /></a>
         </div>
         {/* Komponen tahapnya ASLI; `inert` supaya tombol contohnya tidak bisa
             ditekan atau difokus. Sorotan datang dari kartu peran di diagram. */}
@@ -732,7 +1007,7 @@ function Halaman() {
       <section className="atf__kartu atf__slip" aria-labelledby="atf-slip">
         <div className="atf__kartukepala">
           <h3 id="atf-slip"><Ikon ikon={NavReceipt} ukuran={15} />Tampil di slip gaji</h3>
-          <small>{slipPeran ? `baris fee ${LABEL_PERAN[slipPeran]}` : "—"}</small>
+          <a className="atf__tautan" href="/admin/gaji/tim/">Bayaran Tim<Ikon ikon={ArrowRight} ukuran={12} /></a>
         </div>
         {slipPeran ? (
           <div className="atf__kertas">
@@ -741,7 +1016,7 @@ function Halaman() {
               <b>{studio ?? "Slip gaji"}</b>
               <span>{bulan}</span>
             </div>
-            <p className="atf__kertasnama">{studio ? "Slip gaji · anggota tim contoh" : "Anggota tim contoh"}</p>
+            <p className="atf__kertasnama">{studio ? "Slip gaji" : "Contoh"} · baris fee {LABEL_PERAN[slipPeran]}</p>
             <ul>
               {(["awal", "akhir"] as const).map((t) => {
                 const v = nilai[slipPeran]!;
@@ -768,8 +1043,69 @@ function Halaman() {
   );
 }
 
+/* Saat aturan gagal dimuat: bidang yang sama dengan papannya, dengan alasan
+   dan jalan keluarnya — bukan satu baris teks mentah. */
+function Galat({ pesan, memuat, onUlang }: { pesan: string; memuat: boolean; onUlang: () => void }) {
+  return (
+    <div className="atf atf--galat">
+      <section className="atf__aliran atf__galat" role="alert">
+        <span className="atf__galatikon" aria-hidden="true"><Ikon ikon={SpecialWarning} ukuran={22} /></span>
+        <h2>Aturan fee tidak bisa dimuat</h2>
+        <p>{pesan}</p>
+        <Tombol jenis="primary" ukuran="medium" kiri={ArrowClockwise} memuat={memuat} onClick={onUlang}>Coba lagi</Tombol>
+      </section>
+    </div>
+  );
+}
+
+/* Kerangka saat memuat: bentuk papannya sendiri — batang, pita bayangan,
+   empat kartu peran, node tahap — supaya detik pertama pun sudah terbaca
+   sebagai halaman ini, dan tidak ada yang melompat saat datanya tiba.
+   Geometrinya dari tataPeran() dengan persen bawaan studio. */
 function Kerangka(): ReactNode {
-  return <div className="atf atf--rangka" aria-hidden="true"><i /><i /><i /><i /></div>;
+  const contoh = { leader: 0, drafter: 10, render: 5, estimator: 0 };
+  const blok = tataPeran(contoh);
+  const skala = T / 100;
+  const fee: Record<string, [number, number]> = { drafter: [0, 10 * skala], render: [10 * skala, 15 * skala] };
+  return (
+    <div className="atf atf--rangka" aria-hidden="true">
+      <section className="atf__aliran">
+        <header className="atf__kepala">
+          <div className="atf__kepalajudul"><i className="rk rk--judul" /><i className="rk rk--kop" /></div>
+          <i className="rk rk--tombol" />
+        </header>
+        <div className="atf__badan">
+          <div className="atf__sumber">
+            <div className="atf__fee"><i className="rk rk--label" /><i className="rk rk--angka" /></div>
+            <div className="atf__paketlist">{[0, 1, 2, 3, 4, 5].map((k) => <i key={k} className="rk rk--keping" />)}</div>
+            <i className="rk rk--hasil" />
+          </div>
+          <div className="atf__petagulir">
+            <div className="atf__peta" style={{ ["--atf-t" as string]: `${T}px` }}>
+              <i className="rk rk--kol" /><span /><i className="rk rk--kol" /><span /><i className="rk rk--kol" />
+              <div className="atf__batang"><i className="rk rk--batang" /></div>
+              <div className="atf__pitasel">
+                <svg viewBox={`0 0 100 ${T}`} preserveAspectRatio="none">
+                  {blok.map((b) => (fee[b.r] ? <path key={b.r} d={pita(fee[b.r]![0], fee[b.r]![1], b.y, b.y + b.h)} className="rk-pita" /> : null))}
+                </svg>
+              </div>
+              <div className="atf__peran">
+                {blok.map((b) => <i key={b.r} className="rk rk--blok" style={{ top: b.y, height: b.h }} />)}
+              </div>
+              <span />
+              <div className="atf__ujung"><div className="atf__tahap"><i className="rk rk--node" /></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      {[0, 1, 2].map((k) => (
+        <section key={k} className="atf__kartu">
+          <div className="atf__kartukepala"><i className="rk rk--kartujudul" /></div>
+          <i className="rk rk--kartuisi" />
+        </section>
+      ))}
+    </div>
+  );
 }
 
 export function AturanFeeKit() {

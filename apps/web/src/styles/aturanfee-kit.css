@@ -4,7 +4,8 @@
    Atas: bidang hijau tua (`--kas-bidang`, bidang uang kit — tidak ikut
    berbalik tema) berisi diagram aliran fee design → tiap peran → saat DP /
    saat Finish. Bawah: tiga kartu putih kit — jatah bonus (Busur), dan dua
-   tempat aturan ini muncul (Satu Proyek, slip gaji).
+   tempat aturan ini muncul (Satu Proyek, slip gaji) — yang disambung ke
+   papan di atasnya oleh tiga garis titik: aturannya mengalir ke sana.
 
    Warna peran DI BIDANG HIJAU memakai tangga sendiri: terang→redup dalam
    rona hijau yang sama, karena tangga donat kit (`--ramp-*`) dibuat untuk
@@ -13,17 +14,23 @@
    kontras, Drafter mint, Render dan Estimator makin redup.
    ============================================================================= */
 
+/* Wilayah toast Radix ikut jadi butir flex halaman satu-layar dan menelan
+   14–28px kosong di bawah kartu (jebakan #69) — sama seperti Akun. */
+.kl__isi > astro-island:has(> .atf) > [role="region"] { flex: none; }
+
 .atf {
   /* Sisa jatah di Busur = lintasan kosong, bukan irisan: lebih pudar dari
      ramp-4 Estimator supaya keduanya tidak terbaca sebagai peran yang sama. */
   --atf-sisa: color-mix(in srgb, var(--text-muted) 13%, transparent);
+  /* Lebar kolom kartu bawah — dipakai juga oleh garis sambung di bawah papan. */
+  --atf-k1: 296px;
+  --atf-k3: 336px;
   display: grid;
-  grid-template-columns: 296px minmax(0, 1fr) 336px;
+  grid-template-columns: var(--atf-k1) minmax(0, 1fr) var(--atf-k3);
   grid-template-rows: auto minmax(0, 1fr);
   gap: 16px;
   min-height: 0;
 }
-.atf__galat { margin: 24px; color: var(--danger); }
 .atf p { max-width: none; }
 
 /* --- Papan aliran (bidang hijau tua) ------------------------------------------- */
@@ -34,6 +41,7 @@
   --atf-estimator: color-mix(in srgb, var(--kas-ink) 36%, var(--kas-bidang));
   --atf-redup: color-mix(in srgb, var(--kas-ink) 70%, transparent);
   --atf-garis: color-mix(in srgb, var(--kas-ink) 18%, transparent);
+  position: relative;
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
@@ -41,8 +49,8 @@
   min-width: 0;
   padding: 18px 24px 20px;
   border-radius: 16px;
-  /* Kisi titik halus: kertas milimeter di bawah diagram. Statis — dilukis
-     sekali, tidak beranimasi (jebakan #22). */
+  /* Pijar mint + kisi titik halus: kertas milimeter di bawah diagram.
+     Statis — dilukis sekali, tidak beranimasi (jebakan #22). */
   background-color: var(--kas-bidang);
   background-image:
     radial-gradient(ellipse 55% 70% at 62% 58%, color-mix(in srgb, var(--brand-mint) 11%, transparent), transparent 70%),
@@ -51,14 +59,72 @@
   background-position: 0 0, 8px 8px;
   color: var(--kas-ink);
 }
+/* Tiga garis titik dari papan ke tengah tiap kartu di bawahnya: tempat
+   aturan ini mengalir. Letaknya dihitung dari lebar kolom grid yang sama. */
+.atf__aliran::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -16px;
+  left: 0;
+  height: 16px;
+  background-image:
+    linear-gradient(var(--brand-mint) 50%, transparent 0),
+    linear-gradient(var(--brand-mint) 50%, transparent 0),
+    linear-gradient(var(--brand-mint) 50%, transparent 0);
+  background-size: 2px 4px;
+  background-repeat: repeat-y;
+  background-position:
+    calc(var(--atf-k1) / 2 - 1px) 0,
+    calc(50% + (var(--atf-k1) - var(--atf-k3)) / 2 - 1px) 0,
+    calc(100% - var(--atf-k3) / 2 + 1px) 0;
+  pointer-events: none;
+}
 .atf__w--leader { --atf-warna: var(--atf-leader); }
 .atf__w--drafter { --atf-warna: var(--atf-drafter); }
 .atf__w--render { --atf-warna: var(--atf-render); }
 .atf__w--estimator { --atf-warna: var(--atf-estimator); }
 
+/* Kepala: judul + satu baris kop (kapan & oleh siapa, ATAU daftar perubahan). */
 .atf__kepala { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.atf__kepalajudul { min-width: 0; flex: 1 1 360px; }
 .atf__kepalajudul h2 { margin: 0; font-size: var(--k-t18); font-weight: var(--k-bold); line-height: 1.25; color: var(--kas-nilai); }
-.atf__kepalajudul p { margin: 2px 0 0; font-size: var(--k-t12); color: var(--atf-redup); }
+/* Kop dan keping perubahan sama-sama 20px: kepala tidak meloncat saat isian pertama diubah. */
+.atf__kop { overflow: hidden; margin: 3px 0 0; font-size: var(--k-t12); line-height: 20px; color: var(--atf-redup); text-overflow: ellipsis; white-space: nowrap; }
+.atf__kop b { font-weight: var(--k-semi); color: var(--kas-ink); }
+/* Perubahan belum disimpan: satu keping per isian, nilai lama dicoret →
+   nilai baru, lalu siapa yang kena. Satu baris; kalau tidak muat, ujungnya
+   memudar dan kalimat lengkapnya ada di keterangan melayang tiap keping. */
+.atf__beda {
+  display: flex;
+  gap: 6px;
+  margin: 3px 0 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+}
+.atf__beda li {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--warn) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  font-size: var(--k-t11);
+  line-height: 18px;
+  color: var(--kas-ink);
+  white-space: nowrap;
+}
+.atf__beda b { font-weight: var(--k-semi); color: var(--kas-nilai); }
+.atf__beda s { color: var(--atf-redup); }
+.atf__beda em { font-style: normal; font-weight: var(--k-bold); color: var(--warn); }
+.atf__beda small { font-size: var(--k-t10); color: var(--atf-redup); }
+.atf__beda small::before { content: "· "; }
+
 .atf__simpan { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
 .atf__aliran .pf__penanda { max-width: 380px; color: var(--atf-redup); }
 .atf__aliran .pf__penanda--belum { color: var(--kas-nilai); }
@@ -73,18 +139,32 @@
 
 .atf__badan { display: grid; grid-template-columns: 228px minmax(0, 1fr); gap: 28px; align-items: start; }
 
-/* Sumber: fee contoh, paket, legenda. */
-.atf__sumber { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-top: 2px; }
+/* --- Sumber: fee CONTOH, paket, angka utama ------------------------------------ */
+/* Setinggi diagram, dengan angka utama rata dasar batang fee. */
+.atf__sumber { display: flex; flex-direction: column; align-self: stretch; gap: 12px; min-width: 0; padding-top: 2px; }
+.atf__sumber .atf__hasil { margin-top: auto; }
 .atf__fee { display: flex; flex-direction: column; gap: 4px; font-size: var(--k-t12); color: var(--atf-redup); }
+/* "tidak disimpan": angka ini alat bantu baca, bukan aturan. */
+.atf__feelabel { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.atf__feelabel em {
+  padding: 0 7px;
+  border: 1px dashed color-mix(in srgb, var(--kas-ink) 40%, transparent);
+  border-radius: 999px;
+  font-size: var(--k-t10);
+  font-style: normal;
+  line-height: 1.6;
+  color: var(--atf-redup);
+}
+/* Garis bawah PUTUS-PUTUS — isian aturan berkotak pejal; yang ini contoh. */
 .atf__feeisian {
   display: flex;
   align-items: baseline;
   gap: 6px;
   padding-bottom: 4px;
-  border-bottom: 1px solid color-mix(in srgb, var(--kas-ink) 30%, transparent);
+  border-bottom: 1px dashed color-mix(in srgb, var(--kas-ink) 40%, transparent);
   transition: border-color 0.15s;
 }
-.atf__feeisian:focus-within { border-bottom-color: var(--brand-mint); }
+.atf__feeisian:focus-within { border-bottom-color: var(--brand-mint); border-bottom-style: solid; }
 .atf__feeisian small { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--atf-redup); }
 .atf__feeisian input {
   flex: 1;
@@ -103,13 +183,15 @@
 }
 .atf__feeisian input:focus-visible { outline: none; box-shadow: none; }
 
+/* Keping paket: nama + harga bawahnya (batas bawah, yang dipakai saat diklik). */
 .atf__paketlist { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .atf__paket {
   display: flex;
-  align-items: baseline;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   min-width: 0;
-  padding: 6px 4px;
+  padding: 5px 4px 4px;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--kas-ink) 22%, transparent);
   border-radius: 8px;
   background: transparent;
@@ -120,14 +202,15 @@
   line-height: 1.2;
   letter-spacing: inherit;
   text-rendering: inherit;
-  white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
   transition: border-color 0.15s, background-color 0.15s;
 }
+.atf__paket small { font-size: var(--k-t10); font-weight: var(--k-reg); color: var(--atf-redup); font-variant-numeric: tabular-nums; }
 .atf__paket:hover { border-color: var(--brand-mint); }
 .atf__paket[aria-pressed="true"] { border-color: var(--brand-mint); background: var(--brand-mint); color: var(--brand-mint-ink); }
+.atf__paket[aria-pressed="true"] small { color: var(--brand-mint-ink); }
 .atf__paket:focus-visible { outline: 2px solid var(--brand-mint); outline-offset: 2px; box-shadow: none; }
 
 /* Angka utama: berapa yang sampai ke tim. Bidang mint tipis = "ini uang
@@ -147,17 +230,6 @@
 .atf__hasil span { font-size: var(--k-t12); color: var(--kas-ink); }
 .atf__hasil em { font-style: normal; font-weight: var(--k-bold); color: var(--brand-mint); }
 .atf__hasil b { font-size: var(--k-h4); font-weight: var(--k-bold); letter-spacing: -0.02em; line-height: 1.15; color: var(--brand-mint); font-variant-numeric: tabular-nums; }
-.atf__legenda { display: flex; flex-direction: column; gap: 7px; margin: 0; }
-.atf__legenda > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.atf__legenda dt { display: flex; align-items: center; gap: 8px; font-size: var(--k-t12); color: var(--atf-redup); }
-.atf__legenda dd { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: var(--k-t12); color: var(--kas-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.atf__legenda dd b { font-size: var(--k-t14); font-weight: var(--k-bold); color: var(--kas-nilai); }
-.atf__legenda .is-lewat dt,
-.atf__legenda .is-lewat dd,
-.atf__legenda .is-lewat dd b { color: var(--warn); }
-.atf__kotak { flex: none; width: 10px; height: 10px; border-radius: 3px; }
-.atf__kotak--studio { border: 1px solid color-mix(in srgb, var(--kas-ink) 40%, transparent); background: color-mix(in srgb, var(--kas-ink) 12%, transparent); }
-.atf__kotak--jatah { height: 0; border-top: 2px dashed currentColor; border-radius: 0; }
 
 /* --- Diagram ------------------------------------------------------------------ */
 .atf__petagulir { min-width: 0; }
@@ -169,14 +241,18 @@
 }
 .atf__kol { font-size: var(--k-t10); font-weight: var(--k-semi); letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; color: var(--atf-redup); }
 
+/* Batang fee design. */
 .atf__batang { position: relative; }
 .atf__batang svg,
-.atf__tahap svg { display: block; overflow: visible; }
+.atf__tahap svg,
+.atf__timbatang svg { display: block; overflow: visible; }
 .atf__studio { fill: color-mix(in srgb, var(--kas-ink) 13%, transparent); }
+.atf__garisbuku { fill: color-mix(in srgb, var(--kas-ink) 9%, transparent); }
 .atf__iris { fill: var(--atf-warna); transition: opacity 0.15s; }
 .atf__arsir { fill: var(--warn); }
 .atf__jatahgaris { stroke: var(--kas-ink); stroke-width: 1.5; stroke-dasharray: 3 3; pointer-events: none; }
-.atf__arsirisi, .atf__mistar { pointer-events: none; }
+.atf__jatahgaris.is-lewat { stroke: var(--warn); }
+.atf__arsirisi, .atf__mistar, .atf__studiogaris { pointer-events: none; }
 /* Mistar 0–100 di sisi kiri batang — skala yang sama dengan irisannya. */
 .atf__mistar { stroke: var(--atf-redup); stroke-width: 1; }
 .atf__mistarlabel {
@@ -189,33 +265,44 @@
   transform: translateY(-50%);
   pointer-events: none;
 }
-.atf__jatahgaris.is-lewat { stroke: var(--warn); }
+/* Label studio TEGAK di bagian studio batang — bagian terbesar batang
+   membawa angkanya sendiri, tidak lagi blok abu yang diam. */
 .atf__studiolabel {
   position: absolute;
   right: 0;
-  bottom: 10px;
+  bottom: 0;
   left: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  font-size: var(--k-t10);
-  line-height: 1.25;
-  color: var(--atf-redup);
+  justify-content: center;
   pointer-events: none;
 }
-.atf__studiolabel b { font-size: var(--k-t12); font-weight: var(--k-bold); color: var(--kas-nilai); }
+.atf__studiolabel > span {
+  font-size: var(--k-t11);
+  line-height: 1;
+  color: var(--kas-ink);
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-variant-numeric: tabular-nums;
+}
+.atf__studiolabel b { font-weight: var(--k-bold); color: var(--kas-nilai); }
 
+/* Pita. */
 .atf__pitasel { position: relative; min-width: 0; }
 .atf__pitasel svg { display: block; width: 100%; height: var(--atf-t); overflow: visible; }
-/* Pita bergradasi (defs di batang): pekat di ujung, menerawang di tengah. */
+/* Bergradasi (defs di batang): pekat di ujung, menerawang di tengah. */
 .atf__pita { transition: opacity 0.15s; }
 .atf__pita.atf__w--leader { fill: url(#atf-g-leader); }
 .atf__pita.atf__w--drafter { fill: url(#atf-g-drafter); }
 .atf__pita.atf__w--render { fill: url(#atf-g-render); }
 .atf__pita.atf__w--estimator { fill: url(#atf-g-estimator); }
 .atf__stop { stop-color: var(--atf-warna); }
-.atf__aliran.is-menyorot .atf__pita:not(.is-sorot) { opacity: 0.22; }
+/* Sorotan meredupkan yang lain separuh, bukan menghilangkannya — konteks
+   (peran lain masih di sana, sebesar apa) tetap terbaca. */
+.atf__aliran.is-menyorot .atf__pita:not(.is-sorot) { opacity: 0.45; }
 .atf__aliran.is-menyorot .atf__pita.is-sorot { fill: var(--atf-warna); fill-opacity: 0.7; }
+.atf__aliran.is-menyorot .atf__iris:not(.is-sorot) { opacity: 0.5; }
 /* "Uang mengalir": titik terang berjalan di garis tengah pita yang
    disorot. Hanya ada SELAMA disorot (elemennya baru dipasang saat itu),
    jadi tidak ada animasi yang berjalan terus (jebakan #22). Garisnya tidak
@@ -231,7 +318,17 @@
   animation: atf-alir 0.6s linear infinite;
 }
 @keyframes atf-alir { to { stroke-dashoffset: -10.01; } }
-.atf__aliran.is-menyorot .atf__iris:not(.is-sorot) { opacity: 0.32; }
+/* Peran yang belum ditentukan: garis putus amber "akan mengalir ke sini
+   begitu persennya diisi" — dari ujung bagian tim ke kartunya, dan dari
+   kartunya ke belahan DP/Finish. Diam. */
+.atf__hantu {
+  fill: none;
+  stroke: color-mix(in srgb, var(--warn) 65%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 5;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
 .atf__jatahlabel {
   position: absolute;
   left: 8px;
@@ -270,19 +367,42 @@
 .atf__blok::before { left: -2px; }
 .atf__blok::after { right: -2px; }
 .atf__blok.is-sorot { border-color: var(--atf-warna); background: color-mix(in srgb, var(--kas-ink) 14%, var(--kas-bidang)); }
-/* Belum ditentukan: garis putus amber, tanpa pita — memang belum mengalir. */
+/* Belum ditentukan: garis putus amber, ujungnya tanpa warna peran. */
 .atf__blok.is-belum { border-style: dashed; border-color: color-mix(in srgb, var(--warn) 60%, transparent); background: color-mix(in srgb, var(--kas-ink) 3%, var(--kas-bidang)); }
 .atf__blok.is-belum::before,
 .atf__blok.is-belum::after { display: none; }
-.atf__ubin { display: grid; flex: none; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--atf-warna); color: var(--kas-bidang); }
+.atf__ubin { position: relative; display: grid; flex: none; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--atf-warna); color: var(--kas-bidang); }
 .atf__w--estimator .atf__ubin { color: var(--kas-nilai); }
+/* Jumlah penugasan berjalan yang ikut persen ini (persennya masih kosong).
+   Amber = menunggu keputusan; hijau tua di atas peran yang sudah berpersen. */
+.atf__ikut {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 2px solid var(--kas-bidang);
+  border-radius: 999px;
+  background: var(--kas-nilai);
+  color: var(--kas-bidang);
+  font-size: var(--k-t10);
+  font-weight: var(--k-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.atf__blok.is-belum .atf__ikut { background: var(--warn); color: var(--kas-bidang); }
 .atf__nama { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; line-height: 1.2; }
 .atf__nama b { font-size: var(--k-t14); font-weight: var(--k-semi); color: var(--kas-nilai); }
 .atf__nama small { overflow: hidden; font-size: var(--k-t12); color: var(--kas-ink); font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
 .atf__nama small.atf__belum { color: var(--warn); }
 
-/* Isian persen kecil — di bidang hijau tua (bawaan) dan di kartu putih. */
+/* Isian persen kecil — di bidang hijau tua (bawaan) dan di kartu putih.
+   Kotak PEJAL = aturan yang disimpan; bandingkan garis putus fee contoh. */
 .atf__pct {
+  position: relative;
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -312,37 +432,68 @@
 /* Fokus ditandai di kotaknya; cincin global input dimatikan (jebakan #44). */
 .atf__pct input:focus-visible { outline: none; box-shadow: none; }
 .atf__pct:focus-within { border-color: var(--brand-mint); box-shadow: 0 0 0 1px var(--brand-mint); }
+/* Belum disimpan: titik amber di sudut — warna yang sama dengan penanda simpan. */
+.atf__pct.is-berubah::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--kas-bidang);
+  border-radius: 50%;
+  background: var(--warn);
+}
 .atf__pct--terang { border-color: var(--border-strong); background: var(--surface); }
+.atf__pct--terang.is-berubah::after { border-color: var(--surface); }
 .atf__pct--terang input { color: var(--text-strong); }
 .atf__pct--terang input::placeholder,
 .atf__pct--terang > span { color: var(--text-muted); }
 .atf__pct--terang:focus-within { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
 
-/* Kolom tahap: node, pembagi yang diseret, dan label. */
+/* --- Ujung aliran: node tahap, pembagi, label ---------------------------------- */
+.atf__ujung { position: relative; min-width: 0; }
+/* Batang tim & pita ketiga hanya untuk ponsel (lihat bawah). */
+.atf__timbatang,
+.atf__pitasel--m { display: none; }
 .atf__tahap { position: relative; height: var(--atf-t); }
 .atf__node { fill: color-mix(in srgb, var(--kas-ink) 16%, transparent); }
-.atf__seret { position: absolute; top: 0; bottom: 0; left: -12px; width: 38px; cursor: ns-resize; touch-action: none; }
+.atf__seret { position: absolute; top: 0; bottom: 0; left: -14px; width: 42px; cursor: ns-resize; touch-action: none; }
+/* Pegangan lebih besar dari sebelumnya, bergaris tiga, dengan petunjuk
+   "seret" di sebelahnya bila ada celah — terbaca bisa digeser sebelum
+   disentuh. */
 .atf__pegangan {
   position: absolute;
-  left: 3px;
+  left: 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  width: 32px;
-  height: 16px;
+  gap: 2.5px;
+  width: 38px;
+  height: 20px;
   border-radius: 999px;
   background: var(--kas-nilai);
-  box-shadow: 0 0 0 2px var(--kas-bidang);
+  box-shadow: 0 0 0 2px var(--kas-bidang), 0 0 0 3px color-mix(in srgb, var(--brand-mint) 55%, transparent);
   transform: translateY(-50%);
   transition: background-color 0.15s;
 }
-.atf__pegangan i { display: block; width: 12px; height: 1.5px; border-radius: 1px; background: var(--kas-bidang); }
+.atf__pegangan i { display: block; width: 14px; height: 1.5px; border-radius: 1px; background: var(--kas-bidang); }
 .atf__seret:hover .atf__pegangan,
 .atf__pegangan:focus-visible { background: var(--brand-mint); }
 .atf__pegangan:focus-visible { outline: 2px solid var(--brand-mint); outline-offset: 3px; box-shadow: 0 0 0 2px var(--kas-bidang); }
-.atf__tahaplabel { position: absolute; right: 0; left: 26px; display: flex; flex-direction: column; justify-content: center; gap: 4px; height: 50px; }
+.atf__petunjuk {
+  position: absolute;
+  left: 30px;
+  font-size: var(--k-t10);
+  line-height: 1;
+  color: var(--atf-redup);
+  white-space: nowrap;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.atf__petunjuk::before { content: "⇅ "; color: var(--brand-mint); }
+.atf__tahaplabel { position: absolute; right: 0; left: 30px; display: flex; flex-direction: column; justify-content: center; gap: 4px; height: 50px; }
 .atf__tahaplabel small { font-size: var(--k-t11); color: var(--atf-redup); }
 .atf__tahaplabel > span { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .atf__tahaplabel .atf__pct { width: 58px; }
@@ -356,37 +507,45 @@
   gap: 10px;
   min-width: 0;
   min-height: 0;
-  padding: 16px 20px;
+  padding: 0 20px 16px;
   overflow-y: auto;
   scrollbar-width: thin;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--surface);
 }
-.atf__kartukepala { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 12px; }
+/* Kepala tiap kartu = bilah judul layar (bidang panel, garis bawah): yang
+   di bawahnya potongan tempat aturan ini dipakai. */
+.atf__kartukepala {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  margin: 0 -20px;
+  padding: 6px 20px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  background: var(--k-panel);
+}
 .atf__kartukepala h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--k-t14); font-weight: var(--k-bold); color: var(--text-strong); }
 .atf__kartukepala h3 svg { color: var(--text-muted); }
-.atf__kartukepala small { font-size: var(--k-t12); color: var(--text-muted); white-space: nowrap; }
+.atf__tautan { display: inline-flex; align-items: center; gap: 4px; font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--brand); white-space: nowrap; text-decoration: none; }
+.atf__tautan:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* Jatah. */
 .atf__busur { flex: none; width: 224px; align-self: center; }
 .atf__busur.is-lewat .k-busur__nilai { color: var(--warn-ink); }
-.atf__status { margin: auto 0 0; padding-top: 6px; font-size: var(--k-t12); line-height: 1.45; color: var(--text-muted); text-align: center; text-wrap: balance; }
+.atf__status { display: flex; align-items: center; justify-content: center; gap: 6px; margin: auto 0 0; font-size: var(--k-t12); line-height: 1.45; color: var(--text-muted); text-align: center; text-wrap: balance; }
 .atf__status.is-lewat { color: var(--warn-ink); }
+.atf__putus { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: auto; }
+.atf__putus .atf__status { margin: 0; }
 
 /* Pratinjau Tim & Bayaran: baris tabel Satu Proyek, tahapnya SelTahap asli. */
 .atf__tabel { width: 100%; border-collapse: collapse; }
 .atf__tabel th { padding: 0 8px 6px 0; border-bottom: 1px solid var(--border); font-size: var(--k-t11); font-weight: var(--k-med); color: var(--text-muted); text-align: left; }
 .atf__tabel td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
-.atf__tampil .atf__kartukepala {
-  margin: -16px -20px 2px;
-  padding: 11px 20px;
-  border-bottom: 1px solid var(--border);
-  border-radius: 16px 16px 0 0;
-  background: var(--k-panel);
-}
-.atf__tampil .atf__kartukepala small i { font-style: normal; color: var(--text-muted); }
-.atf__tampil .atf__kartukepala small b { font-weight: var(--k-semi); color: var(--text-strong); }
 .atf__tabel tr:last-child td { border-bottom: 0; }
 .atf__tabel tbody tr[data-sorot] td { background: var(--brand-soft); }
 .atf__tabel tbody tr[data-sorot] td:first-child { border-radius: 8px 0 0 8px; }
@@ -395,15 +554,13 @@
 .atf__peranteks small { font-size: var(--k-t12); font-weight: var(--k-reg); color: var(--text-muted); }
 .atf__peranteks i { flex: none; width: 8px; height: 8px; border-radius: 2px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-strong) 14%, transparent); }
 
-/* Slip: kertas dengan tepi atas berlubang sobekan. */
+/* Slip: kertas bertepi sobek atas dan bawah, berkop nama studio. */
 .atf__kertas {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 16px 16px 15px;
   background-color: var(--brand-soft);
-  /* Tepi atas DAN bawah berlubang sobekan — slip yang baru dirobek dari
-     bukunya. Lubangnya warna kartu induk. */
   background-image:
     radial-gradient(circle at 5px 0, var(--surface) 3.5px, transparent 4px),
     radial-gradient(circle at 5px 100%, var(--surface) 3.5px, transparent 4px);
@@ -421,9 +578,33 @@
 .atf__kertasjumlah b { font-size: var(--k-t16); font-weight: var(--k-bold); color: var(--text-strong); font-variant-numeric: tabular-nums; }
 .atf__kosong { margin: 0; font-size: var(--k-t12); color: var(--text-muted); }
 
-/* Kerangka saat memuat. */
-.atf--rangka i { display: block; min-height: 200px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
-.atf--rangka i:first-child { grid-column: 1 / -1; min-height: 368px; border-color: transparent; background: var(--kas-bidang); }
+/* --- Galat muat: bidang yang sama, alasan + jalan keluar ------------------------ */
+.atf--galat { grid-template-rows: auto; }
+.atf__galat { align-items: center; justify-content: center; min-height: 280px; text-align: center; }
+.atf__galat::after { display: none; }
+.atf__galat h2 { margin: 0; font-size: var(--k-t18); font-weight: var(--k-bold); color: var(--kas-nilai); }
+.atf__galat p { max-width: 460px; margin: 0; font-size: var(--k-t12); color: var(--atf-redup); }
+.atf__galatikon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+
+/* --- Kerangka saat memuat: bentuk papannya sendiri, diam ------------------------ */
+.atf--rangka .rk { display: block; border-radius: 8px; background: color-mix(in srgb, var(--kas-ink) 10%, transparent); }
+.atf--rangka .atf__kartu .rk { background: var(--k-latar); }
+.atf--rangka .atf__aliran::after { opacity: 0.4; }
+.rk--judul { width: 220px; height: 22px; }
+.rk--kop { width: 360px; height: 14px; margin: 7px 0 3px; }
+.rk--tombol { width: 260px; height: 36px; }
+.rk--label { width: 140px; height: 12px; }
+.rk--angka { width: 200px; height: 30px; }
+.rk--keping { height: 34px; }
+.atf--rangka .rk--hasil { height: 64px; border-radius: 12px; }
+/* Setinggi baris judul kolom (16) supaya papan tidak meloncat saat data tiba. */
+.rk--kol { width: 70px; height: 10px; margin-block: 3px; }
+.atf--rangka .rk--batang { width: 44px; height: var(--atf-t); border-radius: 10px; }
+.atf--rangka .rk--blok { position: absolute; right: 0; left: 0; border-radius: 10px; }
+.atf--rangka .rk--node { width: 14px; height: var(--atf-t); border-radius: 4px; }
+.rk-pita { fill: color-mix(in srgb, var(--kas-ink) 7%, transparent); }
+.rk--kartujudul { width: 140px; height: 14px; }
+.atf--rangka .rk--kartuisi { flex: 1; min-height: 150px; border-radius: 12px; }
 
 @media (prefers-reduced-motion: reduce) {
   .atf__pita, .atf__iris, .atf__blok, .atf__pegangan, .atf__paket, .atf__pct, .atf__hasil { transition: none; }
@@ -432,35 +613,39 @@
 
 /* --- Ukuran layar ------------------------------------------------------------- */
 @media (max-width: 1408px) {
-  .atf { grid-template-columns: 276px minmax(0, 1fr) 312px; }
-  .atf__kartu { gap: 8px; padding: 14px 18px; }
+  .atf { --atf-k1: 276px; --atf-k3: 312px; }
+  .atf__kartu { gap: 8px; padding: 0 18px 14px; }
+  .atf__kartukepala { margin: 0 -18px; padding: 6px 18px; }
   .atf__kertas { gap: 6px; padding: 14px 14px 13px; }
-  .atf__badan { grid-template-columns: 212px minmax(0, 1fr); gap: 24px; }
+  .atf__badan { grid-template-columns: 216px minmax(0, 1fr); gap: 24px; }
   .atf__peta { grid-template-columns: 44px minmax(36px, 1fr) 236px minmax(36px, 1fr) 190px; }
 }
 @media (max-width: 1288px) {
   .atf { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
+  .atf__aliran::after { display: none; }
   .atf__tampil { grid-column: 1 / -1; grid-row: 3; }
   .atf__kartu { overflow: visible; }
 }
 @media (max-width: 1148px) {
   .atf__badan { grid-template-columns: minmax(0, 1fr); }
-  .atf__petagulir { padding-left: 8px; }
   .atf__sumber { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: start; gap: 16px 24px; }
-  .atf__legenda { padding-top: 0; border-top: 0; }
+  .atf__sumber .atf__hasil { margin-top: 0; }
+  .atf__petagulir { padding-left: 8px; }
 }
 @media (max-width: 56rem) {
   .atf { grid-template-columns: minmax(0, 1fr); }
   .atf__aliran { padding: 16px; }
-  .atf__kartu { padding: 16px; }
+  .atf__kartu { padding: 0 16px 16px; }
+  .atf__kartukepala { margin: 0 -16px; padding: 6px 16px; }
   .atf__tampil { grid-row: auto; overflow-x: auto; }
   .atf__simpan { width: 100%; justify-content: stretch; }
   .atf__simpan .pf__penanda { flex: 1 1 100%; max-width: none; }
   .atf__simpan .k-tombol { flex: 1 1 auto; }
 }
 /* Ponsel: lima kolom tidak muat. Fee → peran tetap satu gambar; kolom
-   "Dibayar" turun ke bawahnya selebar penuh, tanpa pita kedua — node,
-   label, dan pembaginya tetap bekerja sendiri. Tidak ada gulir mendatar. */
+   "Dibayar" turun ke bawahnya selebar penuh dan membawa BATANG TIM serta
+   pitanya sendiri — jadi aliran ke DP/Finish tetap tersambung, bukan node
+   yang berdiri sendiri. Tidak ada gulir mendatar. */
 @media (max-width: 40rem) {
   .atf__peta { grid-template-columns: 44px 20px minmax(0, 1fr); }
   .atf__sela, .atf__pitasel--b { display: none; }
@@ -470,6 +655,14 @@
   .atf__pitasel--a { grid-area: 2 / 2; }
   .atf__peran { grid-area: 2 / 3; }
   .atf__kol--tahap { grid-area: 3 / 1 / 4 / -1; margin-top: 10px; }
-  .atf__tahap { grid-area: 4 / 1 / 5 / -1; }
-  .atf__jatahlabel, .atf__kolsisa, .atf__mistarlabel, .atf__mistar, .atf__tampil .atf__kartukepala small { display: none; }
+  .atf__ujung { grid-area: 4 / 1 / 5 / -1; display: grid; grid-template-columns: 44px 48px minmax(0, 1fr); }
+  .atf__timbatang, .atf__pitasel--m { display: block; }
+  .atf__timbatang { position: relative; }
+  /* Label di atas alas sendiri: irisan di bawahnya bisa warna peran mana pun. */
+  .atf__timbatanglabel { position: absolute; top: 6px; left: 50%; display: flex; flex-direction: column; align-items: center; padding: 3px 5px; border-radius: 6px; background: var(--kas-bidang); font-size: var(--k-t10); line-height: 1.2; color: var(--kas-ink); transform: translateX(-50%); pointer-events: none; }
+  .atf__timbatanglabel b { font-size: var(--k-t12); color: var(--kas-nilai); }
+  .atf__tahap { margin-left: 2px; }
+  .atf__jatahlabel, .atf__kolsisa, .atf__mistarlabel, .atf__mistar, .atf__tampil .atf__tautan, .atf__petunjuk { display: none; }
+  /* Kalimat "berlaku untuk…" justru yang terpotong di 390 — biarkan terlipat. */
+  .atf__kop { line-height: 1.4; white-space: normal; }
 }

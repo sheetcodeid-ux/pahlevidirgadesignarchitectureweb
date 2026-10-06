@@ -2258,6 +2258,28 @@ alter table public.profiles
 -- lewat Worker API (Hyperdrive), bukan lewat peran authenticated.
 
 -- ----------------------------------------------------------------------------
+-- 20261006000031_aturan_fee_pengubah.sql
+-- ----------------------------------------------------------------------------
+
+-- Siapa yang terakhir mengubah aturan fee tim.
+--
+-- Kop halaman Aturan Fee Tim menulis "terakhir diubah <kapan> oleh <siapa>".
+-- `updated_at` sudah ada (trigger touch_updated_at); yang belum ada orangnya.
+-- Dengan dua akun penulis (master dan staf penginput), "oleh siapa" adalah
+-- satu-satunya cara tahu angka bayaran tim diubah oleh orang yang berhak
+-- memutuskannya.
+--
+-- Boleh kosong: baris yang ada belum pernah diubah lewat panel sejak kolom
+-- ini lahir, dan `on delete set null` supaya menghapus akun tidak bisa
+-- menghapus (atau menggagalkan) aturan fee studio.
+--
+-- Tanpa GRANT baru: tabelnya sudah ada beserta GRANT dan policy-nya, dan
+-- menambah kolom tidak membuka akses apa pun.
+
+alter table public.studio_fee_settings
+  add column updated_by uuid references auth.users (id) on delete set null;
+
+-- ----------------------------------------------------------------------------
 -- Catat di riwayat migrasi Supabase
 -- ----------------------------------------------------------------------------
 --
@@ -2307,7 +2329,8 @@ insert into supabase_migrations.schema_migrations (version, name) values
   ('20261004000027', 'tim_kas_target'),
   ('20261004000028', 'lingkup_dan_tenggat'),
   ('20261004000029', 'proyek_paket'),
-  ('20261006000030', 'foto_akun')
+  ('20261006000030', 'foto_akun'),
+  ('20261006000031', 'aturan_fee_pengubah')
 on conflict (version) do update set name = excluded.name;
 
 commit;

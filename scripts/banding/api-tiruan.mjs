@@ -381,6 +381,7 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
    masuk, tahap akhir saat pipeline ≥ finish — supaya panel lokal
    menggambar angka yang sama dengan produksi. */
 const aturanFee = { pctLeader: null, pctDrafter: 10, pctRender: 5, pctEstimator: null, poolPct: 10, firstTranchePct: 50 };
+const aturanFeeKop = { diubahPada: "2026-10-04T02:12:00.000Z", diubahOleh: "Dirga Pahlevi" };
 const URUT_TAHAP = ["proposal", "deal_kontrak", "dp_50", "desain_1", "desain_2", "finish", "pelunasan"];
 const timProyek = [
   ["k1", "t1", "leader", null], ["k1", "t3", "drafter", 10], ["k1", "t4", "render", 5],
@@ -888,6 +889,16 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/fee/projects")) return feeProyek(path);
   if (path.startsWith("/api/v1/admin/clients")) return urutKlien();
   if (path.startsWith("/api/v1/admin/studio-team")) return orangStudio;
+  // Sama dengan feeRules.ringkasan(): dihitung dari timProyek dan biaya
+  // bertaut tahapnya, bukan angka karangan.
+  if (path === "/api/v1/admin/fee-rules/ringkasan") {
+    const perPeran = Object.fromEntries(["leader", "drafter", "render", "estimator"].map((r) => [r, {
+      ikutAturan: timProyek.filter((t) => t.role === r && t.pct === null).length,
+      persenTetap: timProyek.filter((t) => t.role === r && t.pct !== null).length,
+    }]));
+    const lunas = (t) => [...biayaKeu, ...biayaRiwayat].filter((b) => b.projectTeamId === t.id).length >= 2;
+    return { ...aturanFeeKop, perPeran, belumLunas: timProyek.filter((t) => !lunas(t)).length };
+  }
   if (path.startsWith("/api/v1/admin/fee-rules")) return aturanFee;
   if (path.startsWith("/api/v1/admin/team-payouts/people")) return orangTiruan();
   if (path.startsWith("/api/v1/admin/team-payouts")) {
@@ -1036,6 +1047,7 @@ function tulis(metode, path, badan) {
   }
   if (path === "/api/v1/admin/fee-rules" && metode === "PATCH") {
     for (const [k, v] of Object.entries(badan)) if (k in aturanFee) aturanFee[k] = v;
+    Object.assign(aturanFeeKop, { diubahPada: new Date().toISOString(), diubahOleh: "Dirga Pahlevi" });
     return aturanFee;
   }
   {

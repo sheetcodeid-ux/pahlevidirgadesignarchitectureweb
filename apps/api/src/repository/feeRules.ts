@@ -1,5 +1,5 @@
 import type { Sql } from "postgres";
-import type { FeeRules, FeeRulesInput, TeamRole } from "../types";
+import type { FeeRules, FeeRulesInput, RingkasanAturanFee, TeamRole } from "../types";
 
 /**
  * Aturan persen bayaran tim — satu baris untuk seluruh studio.
@@ -63,8 +63,50 @@ function persen(v: unknown, nama: string, bolehKosong: boolean): number | null {
   return Math.round(v * 100) / 100;
 }
 
-/** Hanya kolom yang dikirim yang diubah. */
-export async function update(sql: Sql, input: FeeRulesInput): Promise<void> {
+/**
+ * Kop dan dampak untuk halaman Aturan Fee Tim:
+ * - kapan aturan terakhir diubah dan oleh siapa (nama tampilan, atau bagian
+ *   depan email kalau nama belum diisi — sama dengan kartu akun di rel);
+ * - per peran, berapa penugasan BERJALAN yang persennya masih kosong dan
+ *   karena itu ikut berubah begitu persen peran itu diubah. Yang persennya
+ *   sudah dibekukan tidak ikut — dihitung terpisah supaya kalimatnya jujur;
+ * - berapa penugasan yang masih punya tahap belum dibayar — yang ikut
+ *   berubah kalau bagian tahap awal diubah.
+ */
+export async function ringkasan(sql: Sql): Promise<RingkasanAturanFee> {
+  const [kop] = await sql<{ diubah_pada: Date; oleh: string | null }[]>`
+    select s.updated_at as diubah_pada,
+           coalesce(nullif(trim(p.full_name), ''), nullif(split_part(u.email, '@', 1), '')) as oleh
+      from public.studio_fee_settings s
+      left join public.profiles p on p.id = s.updated_by
+      left join auth.users u on u.id = s.updated_by
+     where s.id`;
+  if (!kop) throw new Error("aturan fee studio tidak ditemukan");
+  const peran = await sql<{ role: TeamRole; ikut: number; tetap: number }[]>`
+    select role::text as role,
+           count(*) filter (where pct is null)::int as ikut,
+           count(*) filter (where pct is not null)::int as tetap
+      from public.project_team
+     group by role`;
+  const [belum] = await sql<{ n: number }[]>`
+    select count(*)::int as n
+      from public.project_team t
+     where (select count(*) from public.project_costs c where c.project_team_id = t.id) < 2`;
+  const kosong = { ikutAturan: 0, persenTetap: 0 };
+  const perPeran: RingkasanAturanFee["perPeran"] = {
+    leader: { ...kosong }, drafter: { ...kosong }, render: { ...kosong }, estimator: { ...kosong },
+  };
+  for (const r of peran) perPeran[r.role] = { ikutAturan: r.ikut, persenTetap: r.tetap };
+  return {
+    diubahPada: new Date(kop.diubah_pada).toISOString(),
+    diubahOleh: kop.oleh,
+    perPeran,
+    belumLunas: belum?.n ?? 0,
+  };
+}
+
+/** Hanya kolom yang dikirim yang diubah. `oleh` = id akun yang menyimpan. */
+export async function update(sql: Sql, input: FeeRulesInput, oleh?: string): Promise<void> {
   type Fragment = ReturnType<Sql>;
   const f: Fragment[] = [];
   if (input.pctLeader !== undefined) f.push(sql`pct_leader = ${persen(input.pctLeader, "persen Leader", true)}`);
@@ -76,6 +118,8 @@ export async function update(sql: Sql, input: FeeRulesInput): Promise<void> {
     f.push(sql`first_tranche_pct = ${persen(input.firstTranchePct, "bagian tahap awal", false)}`);
   }
   if (f.length === 0) return;
+
+  if (oleh) f.push(sql`updated_by = ${oleh}::uuid`);
 
   let set = f[0];
   for (let i = 1; i < f.length; i++) set = sql`${set}, ${f[i]}`;

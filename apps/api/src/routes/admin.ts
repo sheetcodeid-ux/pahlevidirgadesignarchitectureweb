@@ -706,10 +706,15 @@ admin.get("/fee-rules", async (c) => {
   return c.json({ data });
 });
 
+admin.get("/fee-rules/ringkasan", async (c) => {
+  const data = await withDb(c.env, c.executionCtx, (sql) => feeRulesRepo.ringkasan(sql));
+  return c.json({ data });
+});
+
 admin.patch("/fee-rules", async (c) => {
   const input = await c.req.json<FeeRulesInput>().catch(() => ({}) as FeeRulesInput);
   try {
-    await withDb(c.env, c.executionCtx, (sql) => feeRulesRepo.update(sql, input));
+    await withDb(c.env, c.executionCtx, (sql) => feeRulesRepo.update(sql, input, c.get("userID")));
     const data = await withDb(c.env, c.executionCtx, (sql) => feeRulesRepo.get(sql));
     return c.json({ data });
   } catch (err) {

@@ -1162,6 +1162,18 @@ export interface PenugasanTim {
 }
 
 export const ambilAturanFee = () => panggil<AturanFee>("/admin/fee-rules");
+
+/** Kop dan dampak halaman Aturan Fee Tim — lihat feeRules.ringkasan() di API. */
+export interface RingkasanAturanFee {
+  diubahPada: string;
+  /** Nama tampilan pengubah, atau bagian depan emailnya; null = belum pernah diubah lewat panel. */
+  diubahOleh: string | null;
+  /** Per peran: penugasan berjalan yang persennya kosong (ikut berubah) dan yang sudah dibekukan. */
+  perPeran: Record<PeranTim, { ikutAturan: number; persenTetap: number }>;
+  /** Penugasan yang masih punya tahap belum dibayar — ikut berubah kalau tahap awal diubah. */
+  belumLunas: number;
+}
+export const ambilRingkasanAturanFee = () => panggil<RingkasanAturanFee>("/admin/fee-rules/ringkasan");
 export const simpanAturanFee = (a: Partial<AturanFee>) =>
   panggil<AturanFee>("/admin/fee-rules", { method: "PATCH", body: JSON.stringify(a) });
 
