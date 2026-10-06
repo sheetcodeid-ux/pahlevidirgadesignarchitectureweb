@@ -179,6 +179,9 @@
      gelap akan menyilaukan pada bidang sebesar itu. */
   --kas-bidang: #1E4841;
   --kas-ink: #ECF4E9;
+  /* Sisi DALAM bidang uang — celah laci, dinding laci, bayangan di bawah
+     benda pejal. Tetap di kedua tema, sama seperti --kas-bidang. */
+  --kas-dalam: #112C27;
 
   /* Tangga irisan donat — hijau ke abu, berurut besaran. Coinest tidak
      memakai lima rona berbeda untuk memecah satu besaran; ia memakai satu
@@ -409,6 +412,9 @@
   /* Sama persis dengan tema terang — lihat alasannya di blok terang. */
   --kas-bidang: #1E4841;
   --kas-ink: #ECF4E9;
+  /* Sisi DALAM bidang uang — celah laci, dinding laci, bayangan di bawah
+     benda pejal. Tetap di kedua tema, sama seperti --kas-bidang. */
+  --kas-dalam: #112C27;
 
   /* Tangga yang sama, dibalik arah terangnya: di atas bidang gelap yang
      paling menonjol adalah yang paling TERANG. Yang dijaga hubungannya —

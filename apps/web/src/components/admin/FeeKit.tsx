@@ -383,158 +383,176 @@ function Isi() {
     <div className="lmr">
       <Keterangan kabar={kabar} />
 
-      {/* ---- Bilah atas: legenda warna mistar + kontrol ------------------ */}
-      <div className="lmr__bilah">
-        <ul className="lmr__legenda" aria-label="Warna penerima di mistar laci">
-          {JENIS.map((j) => (
-            <li key={j}>
-              <span className="lmr__titikwarna" style={{ "--lmr-w": WARNA_JENIS(j) } as React.CSSProperties} />
-              {LABEL_JENIS_ANGGOTA[j]}
-            </li>
-          ))}
-          <li>
-            <span className="lmr__titikwarna lmr__titikwarna--tanpa" />
-            Tanpa nama
-          </li>
-        </ul>
-        <div className="lmr__kontrol">
-          <PilihTombol judul="Rentang fee" nilai={rentang} opsi={RENTANG} onUbah={setRentang} />
-          <PilihMenu
-            label="Urutan laci"
-            nilai={urut}
-            opsi={URUT}
-            onUbah={setUrut}
-            align="end"
-            pemicu={
-              <button type="button" className="fee__pilihteks lmr__urut">
-                <span>{URUT.find((u) => u.nilai === urut)!.label}</span>
-                <Ikon ikon={CaretDown} ukuran={12} />
-              </button>
-            }
-          />
-          <DropdownMenu
-            trigger={<TombolIkon ikon={DownloadSimple} jenis="ghost" judul="Unduh CSV" />}
-            sections={[
-              {
-                label: `Unduh CSV · ${labelRentang.toLowerCase()}`,
-                items: [
-                  { label: "Fee per proyek", onSelect: () => ekspor("proyek") },
-                  { label: "Fee per orang", onSelect: () => ekspor("orang") },
-                ],
-              },
-            ]}
-          />
-        </div>
-      </div>
-
-      {/* ---- Lemari ------------------------------------------------------ */}
+      {/* ---- Lemari: gulungan di atas, papan, badan, alas ------------------ */}
       <section className="lmr__lemari" aria-label="Lemari gambar — fee per proyek">
-        <header className="lmr__kop">
-          <div className="lmr__plat">
-            <p className="lmr__alis">Lemari gambar · fee proyek</p>
-            <p className="lmr__total">
-              {memuat ? (
-                <span className="rk rk--gelap" style={{ width: 200, height: 26 }} />
-              ) : (
-                <RupiahBesar n={keluarTotal} />
-              )}
-            </p>
-            <p className="lmr__sub">
-              {labelRentang} · {laci.length} laci · {(orang ?? []).length} penerima
-              {porsiRata !== null && <> · rata-rata {teksPersen(porsiRata)} dari kontrak</>}
-            </p>
-          </div>
-          <div className="lmr__pita" aria-label="Fee per bulan, 12 bulan terakhir">
-            <p className="lmr__pitajudul">
-              <span>Fee per bulan</span>
-              <span>
-                bulan ini <b>{formatRupiah(bulanIni.nilai)}</b> · rata-rata {formatRupiah(Math.round(bulanan.rata))}
+        {/* Dua belas gulungan gambar berdiri di atas lemari: satu per bulan,
+            TINGGINYA fee bulan itu. Pita 12 bulan dalam wujud benda. */}
+        <div className="lmr__gul-gul" role="list" aria-label="Fee per bulan, 12 bulan terakhir">
+          {bulanan.bln.map((b, i) => {
+            const m = Number(b.bulan.slice(5, 7));
+            return (
+              <span
+                key={b.bulan}
+                role="listitem"
+                className={`lmr__gul${i === 11 ? " is-kini" : ""}${b.nilai === 0 ? " is-kosong" : ""}`}
+                style={{ "--lmr-t": b.nilai / bulanan.maks } as React.CSSProperties}
+                aria-label={`${BULAN[m - 1]} ${b.bulan.slice(0, 4)}: ${formatRupiah(b.nilai)}`}
+                {...ket(() => ({
+                  judul: `${BULAN[m - 1]} ${b.bulan.slice(0, 4)}`,
+                  baris: [
+                    { label: "Fee keluar", nilai: formatRupiah(b.nilai) },
+                    { label: "Rata-rata 12 bulan", nilai: formatRupiah(Math.round(bulanan.rata)) },
+                  ],
+                }))}
+              >
+                <i />
               </span>
-            </p>
-            <div className="lmr__pitabatang" role="list">
-              {bulanan.bln.map((b, i) => {
-                const m = Number(b.bulan.slice(5, 7));
-                return (
-                  <span
-                    key={b.bulan}
-                    role="listitem"
-                    className={`lmr__bln${i === 11 ? " is-kini" : ""}`}
-                    style={{ "--lmr-t": b.nilai / bulanan.maks } as React.CSSProperties}
-                    aria-label={`${BULAN[m - 1]} ${b.bulan.slice(0, 4)}: ${formatRupiah(b.nilai)}`}
-                    {...ket(() => ({
-                      judul: `${BULAN[m - 1]} ${b.bulan.slice(0, 4)}`,
-                      baris: [{ label: "Fee keluar", nilai: formatRupiah(b.nilai) }],
-                    }))}
-                  >
-                    <i />
-                    <small>{BULAN_PENDEK[m - 1]!.slice(0, 3)}</small>
-                  </span>
-                );
-              })}
-              <span className="lmr__rata" style={{ "--lmr-t": bulanan.rata / bulanan.maks } as React.CSSProperties} />
-            </div>
-          </div>
-        </header>
+            );
+          })}
+        </div>
+        <div className="lmr__papan" aria-hidden="true">
+          {bulanan.bln.map((b, i) => (
+            <span key={b.bulan} className={i === 11 ? "is-kini" : undefined}>
+              {BULAN_PENDEK[Number(b.bulan.slice(5, 7)) - 1]}
+            </span>
+          ))}
+        </div>
 
-        <div
-          className="lmr__laci-laci"
-          ref={lemariRef}
-          style={{ "--lmr-n": Math.max(1, laci.length) } as React.CSSProperties}
-          onPointerLeave={(e) => e.pointerType === "mouse" && setSorot(null)}
-        >
-          {galat && laci.length === 0 ? (
-            <div className="lmr__kosong">
-              <p>Isi lemari gagal dimuat.</p>
-              <button type="button" className="lmr__coba" onClick={muat}>
-                Coba lagi
-              </button>
-            </div>
-          ) : memuat ? (
-            Array.from({ length: 5 }, (_, i) => <div key={i} className="lmr__laci lmr__laci--rangka" />)
-          ) : laci.length === 0 ? (
-            <div className="lmr__kosong">
-              <p>Belum ada fee pada rentang ini.</p>
-              <p className="lmr__kosongket">
-                Fee tercatat dari tombol Bayar di Satu Proyek, atau biaya berkategori Freelancer/Prinsipal di Keuangan.
+        <div className="lmr__badan">
+          <header className="lmr__kop">
+            <div className="lmr__plat">
+              <p className="lmr__alis">Fee proyek · {labelRentang.toLowerCase()}</p>
+              <p className="lmr__total">
+                {memuat ? <span className="rk" style={{ width: 200, height: 26 }} /> : <RupiahBesar n={keluarTotal} />}
               </p>
             </div>
-          ) : (
-            laci.map((p, i) => (
-              <Laci
-                key={p.projectId}
-                p={p}
-                no={nomorLaci.get(p.projectId) ?? i + 1}
-                terbuka={buka === p.projectId}
-                baru={baruDitarik === p.projectId}
-                isi={isi[p.projectId]}
-                rentang={rentang}
-                jenisOrang={jenisOrang}
-                orangDisorot={orangDisorot}
-                punya={orangDisorot !== null && !!orangLaci.get(p.projectId)?.has(orangDisorot)}
-                redup={
-                  (orangDisorot !== null && !orangLaci.get(p.projectId)?.has(orangDisorot)) ||
-                  (laciDisorot !== null && laciDisorot !== p.projectId)
-                }
-                ket={ket}
-                onTarik={() => tarik(p.projectId)}
-                onCobaLagi={() => ambilIsi(p.projectId, true)}
-                onDekat={(e) => {
-                  if (e.pointerType !== "mouse") return;
-                  ambilIsi(p.projectId);
-                  setSorot({ laci: p.projectId });
-                }}
-                onKey={(e) => tombolLaci(e, i)}
-              />
-            ))
-          )}
+            <dl className="lmr__angka">
+              <div>
+                <dt>Laci</dt>
+                <dd>{laci.length}</dd>
+              </div>
+              <div>
+                <dt>Penerima</dt>
+                <dd>{(orang ?? []).length}</dd>
+              </div>
+              <div>
+                <dt>Porsi dari kontrak</dt>
+                <dd>{porsiRata === null ? "—" : teksPersen(porsiRata)}</dd>
+              </div>
+              <div>
+                <dt>Bulan ini</dt>
+                <dd>{formatRupiah(bulanIni.nilai)}</dd>
+              </div>
+            </dl>
+          </header>
+
+          <div
+            className="lmr__laci-laci"
+            ref={lemariRef}
+            style={{ "--lmr-n": Math.max(1, laci.length) } as React.CSSProperties}
+            onPointerLeave={(e) => e.pointerType === "mouse" && setSorot(null)}
+          >
+            {galat && laci.length === 0 ? (
+              <div className="lmr__kosong">
+                <p>Isi lemari gagal dimuat.</p>
+                <button type="button" className="lmr__coba" onClick={muat}>
+                  Coba lagi
+                </button>
+              </div>
+            ) : memuat ? (
+              Array.from({ length: 5 }, (_, i) => <div key={i} className="lmr__laci lmr__laci--rangka" />)
+            ) : laci.length === 0 ? (
+              <div className="lmr__kosong">
+                <p>Belum ada fee pada rentang ini.</p>
+                <p className="lmr__kosongket">
+                  Fee tercatat dari tombol Bayar di Satu Proyek, atau biaya berkategori Freelancer/Prinsipal di Keuangan.
+                </p>
+              </div>
+            ) : (
+              laci.map((p, i) => (
+                <Laci
+                  key={p.projectId}
+                  p={p}
+                  no={nomorLaci.get(p.projectId) ?? i + 1}
+                  terbuka={buka === p.projectId}
+                  baru={baruDitarik === p.projectId}
+                  isi={isi[p.projectId]}
+                  rentang={rentang}
+                  jenisOrang={jenisOrang}
+                  orangDisorot={orangDisorot}
+                  punya={orangDisorot !== null && !!orangLaci.get(p.projectId)?.has(orangDisorot)}
+                  redup={
+                    (orangDisorot !== null && !orangLaci.get(p.projectId)?.has(orangDisorot)) ||
+                    (laciDisorot !== null && laciDisorot !== p.projectId)
+                  }
+                  ket={ket}
+                  onTarik={() => tarik(p.projectId)}
+                  onCobaLagi={() => ambilIsi(p.projectId, true)}
+                  onDekat={(e) => {
+                    if (e.pointerType !== "mouse") return;
+                    ambilIsi(p.projectId);
+                    setSorot({ laci: p.projectId });
+                  }}
+                  onKey={(e) => tombolLaci(e, i)}
+                />
+              ))
+            )}
+          </div>
         </div>
-        <footer className="lmr__alas" aria-hidden="true">
-          <span />
-          <span />
+
+        {/* Alas: lis kaki yang menjorok ke dalam, legenda warna mistar
+            terukir di mukanya, dua kaki dan bayangan di lantai. */}
+        <footer className="lmr__alas">
+          <ul className="lmr__legenda" aria-label="Warna penerima di mistar laci">
+            {JENIS.map((j) => (
+              <li key={j}>
+                <span className="lmr__titikwarna" style={{ "--lmr-w": WARNA_JENIS(j) } as React.CSSProperties} />
+                {LABEL_JENIS_ANGGOTA[j]}
+              </li>
+            ))}
+            <li>
+              <span className="lmr__titikwarna lmr__titikwarna--tanpa" />
+              Tanpa nama
+            </li>
+          </ul>
         </footer>
+        <div className="lmr__kaki" aria-hidden="true">
+          <span />
+          <span />
+        </div>
       </section>
 
-      {/* ---- Rak kartu penerima ------------------------------------------ */}
+      {/* ---- Kontrol di atas rak -------------------------------------------- */}
+      <div className="lmr__kontrol">
+        <PilihTombol judul="Rentang fee" nilai={rentang} opsi={RENTANG} onUbah={setRentang} />
+        <PilihMenu
+          label="Urutan laci"
+          nilai={urut}
+          opsi={URUT}
+          onUbah={setUrut}
+          align="end"
+          pemicu={
+            <button type="button" className="fee__pilihteks lmr__urut">
+              <span>{URUT.find((u) => u.nilai === urut)!.label}</span>
+              <Ikon ikon={CaretDown} ukuran={12} />
+            </button>
+          }
+        />
+        <DropdownMenu
+          trigger={<TombolIkon ikon={DownloadSimple} jenis="ghost" judul="Unduh CSV" />}
+          sections={[
+            {
+              label: `Unduh CSV · ${labelRentang.toLowerCase()}`,
+              items: [
+                { label: "Fee per proyek", onSelect: () => ekspor("proyek") },
+                { label: "Fee per orang", onSelect: () => ekspor("orang") },
+              ],
+            },
+          ]}
+        />
+      </div>
+
+      {/* ---- Rak kartu penerima di dinding ---------------------------------- */}
       <aside className="lmr__rak" aria-label="Rak kartu penerima fee">
         <header className="lmr__rakkepala">
           <p className="lmr__rakjudul">
@@ -602,20 +620,17 @@ function Isi() {
                       onClick={() => setSematan((s) => (s === o.teamMemberId ? null : o.teamMemberId))}
                       onPointerEnter={(e) => e.pointerType === "mouse" && setSorot({ orang: o.teamMemberId })}
                     >
-                      <span className="lmr__kantong" aria-hidden="true">
-                        <Ikon ikon={IKON_JENIS[o.kind]} ukuran={14} />
-                      </span>
+                      {/* Kartu menyembul dari kantongnya setinggi bagiannya
+                          dari penerima terbesar. */}
                       <span className="lmr__kertas">
-                        <span className="lmr__kartuatas">
-                          <b>{o.name}</b>
-                          <span>{formatRupiah(o.total)}</span>
-                        </span>
-                        <span className="lmr__kartuket">
+                        <b>{o.name}</b>
+                        <span>{formatRupiah(o.total)}</span>
+                      </span>
+                      <span className="lmr__kantong">
+                        <Ikon ikon={IKON_JENIS[o.kind]} ukuran={12} />
+                        <span>
                           {o.role ?? LABEL_JENIS_ANGGOTA[o.kind]} · {o.projectCount} proyek
-                          {o.lastOn && <> · terakhir {tanggalPendek(o.lastOn)}</>}
-                        </span>
-                        <span className="lmr__lubang" aria-hidden="true">
-                          <i />
+                          {o.lastOn && <> · {tanggalPendek(o.lastOn)}</>}
                         </span>
                       </span>
                     </button>
@@ -632,18 +647,14 @@ function Isi() {
                   {formatRupiah(tanpaNama)} · {teksPersen(rak.total > 0 ? (tanpaNama / rak.total) * 100 : 0)}
                 </span>
               </h3>
-              <div className="lmr__kartu lmr__kartu--tanpa">
-                <span className="lmr__kantong" aria-hidden="true">
-                  <Ikon ikon={WarningOctagon} ukuran={14} />
-                </span>
+              <div className="lmr__kartu lmr__kartu--tanpa" style={{ "--lmr-t": 1 } as React.CSSProperties}>
                 <span className="lmr__kertas">
-                  <span className="lmr__kartuatas">
-                    <b>Tanpa nama</b>
-                    <span>{formatRupiah(tanpaNama)}</span>
-                  </span>
-                  <span className="lmr__kartuket">
-                    fee di {(proyek ?? []).filter((p) => p.feeTanpaNama > 0).length} proyek belum bernama penerima
-                  </span>
+                  <b>Tanpa nama</b>
+                  <span>{formatRupiah(tanpaNama)}</span>
+                </span>
+                <span className="lmr__kantong">
+                  <Ikon ikon={WarningOctagon} ukuran={12} />
+                  <span>di {(proyek ?? []).filter((p) => p.feeTanpaNama > 0).length} proyek, belum bernama penerima</span>
                 </span>
               </div>
             </section>
@@ -654,7 +665,7 @@ function Isi() {
   );
 }
 
-/** Rupiah besar di plat kuningan: ribuan terakhir dikecilkan seperti nominal kit. */
+/** Rupiah besar di plat logam: ribuan terakhir dikecilkan seperti nominal kit. */
 function RupiahBesar({ n }: { n: number }) {
   const s = formatRupiah(n);
   const i = s.lastIndexOf(".");
@@ -745,8 +756,13 @@ function Laci({
         <span className="lmr__tepi" aria-hidden="true" />
         <span className="lmr__bingkai">
           <span className="lmr__label">
-            <span className="lmr__labelno">Laci {nomor}</span>
-            <span className="lmr__labeljudul">{p.projectTitle}</span>
+            <span className="lmr__labelatas">
+              <span className="lmr__labelno">
+                <span className="sr-only">Laci </span>
+                {nomor}
+              </span>
+              <span className="lmr__labeljudul">{p.projectTitle}</span>
+            </span>
             <span className="lmr__labelket">{kontrak ? `Kontrak ${formatRupiah(kontrak)}` : "Kontrak belum diisi"}</span>
           </span>
         </span>
@@ -866,21 +882,18 @@ function IsiBaki({
   const tanpa = (data?.biaya ?? []).filter(
     (b) => KATEGORI_FEE.has(b.category) && !b.teamMemberId && dalamRentang(b.incurredOn, rentang),
   );
-  const keluar = p.feeTotal + p.feeTanpaNama;
 
   return (
     <div className={`lmr__dasar${baru && pakaiGerak() ? " is-baru" : ""}`}>
+      {/* Dinding dalam laci: dinding belakang di atas, dua dinding samping
+          yang menyempit ke belakang. Isinya duduk di antara ketiganya. */}
+      <i className="lmr__dinding lmr__dinding--kiri" aria-hidden="true" />
+      <i className="lmr__dinding lmr__dinding--kanan" aria-hidden="true" />
       <div className="lmr__catatan">
         <p className="lmr__catatanjudul">Catatan laci</p>
+        {/* Kontrak dan fee keluar sudah tertulis di muka laci — catatan
+            hanya memuat yang tidak tampak dari luar. */}
         <dl>
-          <div>
-            <dt>Kontrak</dt>
-            <dd>{p.contractValue ? formatRupiah(p.contractValue) : "—"}</dd>
-          </div>
-          <div>
-            <dt>Fee keluar</dt>
-            <dd>{formatRupiah(keluar)}</dd>
-          </div>
           {p.feeTanpaNama > 0 && (
             <div className="is-tanpa">
               <dt title={tanpa.length > 0 ? `${tanpa.length} biaya fee belum ditautkan ke nama siapa pun` : undefined}>Tanpa nama</dt>
@@ -888,19 +901,22 @@ function IsiBaki({
             </div>
           )}
           {!data ? (
-            <div className="lmr__garisbuku">
+            <div>
               <dt>Hak tim</dt>
               <dd>…</dd>
             </div>
           ) : data.tim.length === 0 ? (
-            <div className="lmr__garisbuku">
+            <div>
               <dt>Penugasan tim</dt>
               <dd>belum ada</dd>
             </div>
           ) : (
             <>
-              <div className="lmr__garisbuku">
-                <dt>Hak tim</dt>
+              <div>
+                <dt>
+                  Hak tim
+                  {tanpaPersen > 0 && <span className="lmr__tanpapersen"> · {tanpaPersen} tanpa %</span>}
+                </dt>
                 <dd>{hak > 0 ? formatRupiah(hak) : "—"}</dd>
               </div>
               <div>
@@ -916,7 +932,6 @@ function IsiBaki({
             </>
           )}
         </dl>
-        {tanpaPersen > 0 && <p className="lmr__catatanket">{tanpaPersen} peran belum berpersen</p>}
         <a className="lmr__buka" href={`/admin/proyek/satu?id=${encodeURIComponent(p.projectId)}#tim-bayaran`}>
           {tempo > 0 ? "Bayar di Satu Proyek" : "Buka proyek"}
           <Ikon ikon={ArrowRight} ukuran={14} />
@@ -947,7 +962,9 @@ function MapOrang({ m, urutan, pudar, nyala }: { m: Map_; urutan: number; pudar:
   const hak = m.tugas.reduce((a, t) => a + (t.hak ?? 0), 0);
   return (
     <article
-      className={`lmr__map${pudar ? " is-pudar" : ""}${nyala ? " is-nyala" : ""}`}
+      /* Tumpukan lembar di belakang map = berapa kali orang ini dibayar di
+         proyek ini (sampai tiga lapis). */
+      className={`lmr__map lmr__map--lapis${Math.min(3, Math.max(0, m.kali - 1))}${pudar ? " is-pudar" : ""}${nyala ? " is-nyala" : ""}`}
       style={{ "--lmr-w": WARNA_JENIS(m.jenis), "--lmr-i": urutan } as React.CSSProperties}
     >
       <p className="lmr__maptab">
@@ -958,15 +975,23 @@ function MapOrang({ m, urutan, pudar, nyala }: { m: Map_; urutan: number; pudar:
           {peran || `${LABEL_JENIS_ANGGOTA[m.jenis]} · fee lepas`}
         </p>
         <p className="lmr__mapnilai">{formatRupiah(m.diterima)}</p>
-        <p className="lmr__mapket">
-          {m.diterima === 0 && hak > 0
-            ? `Belum dibayar · hak ${formatRupiah(hak)}`
-            : `${m.kali > 0 ? `${m.kali}× dibayar` : "dibayar"}${m.terakhir ? ` · ${tanggalPendek(m.terakhir, true)}` : ""}`}
-        </p>
+        {(tahap.length === 0 || (m.diterima === 0 && hak > 0)) && (
+          <p className="lmr__mapket">
+            {m.diterima === 0 && hak > 0
+              ? `Belum dibayar · hak ${formatRupiah(hak)}`
+              : `${m.kali > 0 ? `${m.kali}× dibayar` : "dibayar"}${m.terakhir ? ` · ${tanggalPendek(m.terakhir, true)}` : ""}`}
+          </p>
+        )}
         {tahap.length > 0 && (
           <ul className="lmr__tahap">
             {tahap.map((x, i) => (
-              <li key={i} className={`is-${x.keadaan}`}>
+              <li
+                key={i}
+                className={`is-${x.keadaan}`}
+                title={`${x.peran} · tahap ${x.tahap === "awal" ? "awal" : "akhir"}: ${
+                  x.keadaan === "dibayar" ? "dibayar" : x.keadaan === "jatuh_tempo" ? "jatuh tempo" : x.keadaan === "menunggu" ? "menunggu" : "persen belum ditentukan"
+                }`}
+              >
                 {x.keadaan === "dibayar" ? (
                   <Ikon ikon={Check} ukuran={10} />
                 ) : x.keadaan === "jatuh_tempo" || x.keadaan === "menunggu" ? (
@@ -975,13 +1000,10 @@ function MapOrang({ m, urutan, pudar, nyala }: { m: Map_; urutan: number; pudar:
                 <span>
                   {tahap.length > 2 ? `${x.peran} ` : ""}
                   {x.tahap === "awal" ? "Awal" : "Akhir"}
-                  {x.keadaan === "dibayar" && x.dibayarPada
-                    ? ` ${tanggalPendek(x.dibayarPada)}`
-                    : x.keadaan === "jatuh_tempo"
-                      ? " jatuh tempo"
-                      : x.keadaan === "menunggu"
-                        ? " menunggu"
-                        : " tanpa persen"}
+                  {x.keadaan === "dibayar" && x.dibayarPada ? ` ${tanggalPendek(x.dibayarPada)}` : ""}
+                </span>
+                <span className="sr-only">
+                  {x.keadaan === "dibayar" ? "dibayar" : x.keadaan === "jatuh_tempo" ? "jatuh tempo" : x.keadaan === "menunggu" ? "menunggu" : "persen belum ditentukan"}
                 </span>
               </li>
             ))}
@@ -995,25 +1017,29 @@ function MapOrang({ m, urutan, pudar, nyala }: { m: Map_; urutan: number; pudar:
 function Kerangka(): ReactNode {
   return (
     <div className="lmr lmr--rangka" aria-busy="true">
-      <div className="lmr__bilah" />
       <section className="lmr__lemari">
-        <header className="lmr__kop">
-          <div className="lmr__plat">
-            <span className="rk rk--gelap" style={{ width: 150, height: 10 }} />
-            <span className="rk rk--gelap" style={{ width: 220, height: 26 }} />
-            <span className="rk rk--gelap" style={{ width: 260, height: 10 }} />
+        <div className="lmr__gul-gul" />
+        <div className="lmr__papan" />
+        <div className="lmr__badan">
+          <header className="lmr__kop">
+            <div className="lmr__plat">
+              <span className="rk" style={{ width: 120, height: 9 }} />
+              <span className="rk" style={{ width: 210, height: 26 }} />
+            </div>
+          </header>
+          <div className="lmr__laci-laci">
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="lmr__laci lmr__laci--rangka" />
+            ))}
           </div>
-        </header>
-        <div className="lmr__laci-laci">
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="lmr__laci lmr__laci--rangka" />
-          ))}
         </div>
-        <footer className="lmr__alas" aria-hidden="true">
+        <footer className="lmr__alas" />
+        <div className="lmr__kaki" aria-hidden="true">
           <span />
           <span />
-        </footer>
+        </div>
       </section>
+      <div className="lmr__kontrol" />
       <aside className="lmr__rak" />
     </div>
   );
