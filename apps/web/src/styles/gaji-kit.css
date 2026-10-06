@@ -221,6 +221,11 @@
 .gji__capkecil.is-sorot { background: color-mix(in srgb, var(--kas-ink) 14%, transparent); }
 .gji__capkecil.is-redup { opacity: 0.45; }
 .gji__capkecil:focus-visible { outline: 2px solid var(--kas-nilai); outline-offset: 2px; }
+/* Halaman depan: dua belas cap bulan, enam sebaris. */
+.gji__capderet--bulan { gap: 6px; max-width: 216px; }
+.gji__capkecil--bulan { width: 30px; height: 30px; font-size: var(--k-t9); letter-spacing: 0; }
+.gji__capkecil.is-kosong { border: 1px dashed color-mix(in srgb, var(--kas-ink) 34%, transparent); color: var(--gji-redup); }
+.gji__capkecil:disabled { cursor: default; }
 .gji__terimaket { font-size: var(--k-t11); color: var(--gji-redup); }
 .gji__terimaket--belum { color: var(--warn); }
 
@@ -231,7 +236,7 @@
   flex: 1 1 0;
   align-items: flex-end;
   gap: 8px;
-  min-height: 112px;
+  min-height: 72px;
   max-height: 240px;
   padding: 0 4px;
   border-bottom: 2px solid color-mix(in srgb, var(--kas-ink) 38%, transparent);
@@ -579,6 +584,88 @@
 }
 .gji__cap:hover .gji__capluar { fill: color-mix(in srgb, var(--brand-mint) 30%, var(--gji-kertas)); }
 
+/* ---- Halaman depan: REKAPITULASI jilid -------------------------------------
+   Dua belas baris setinggi 30px. Kolom kedua satu-satunya kolom tanpa
+   tulisan: batang gaji/fee sebulan, takik bulan yang sama tahun lalu, dan
+   garis putus rata-rata per bulan yang menyambung dari baris ke baris. */
+.gji__c-bln { width: 112px; }
+/* Status bulan cukup selebar cap LUNAS — sisanya untuk batang. */
+.gji__c-status { width: 112px; }
+.gji__rekap th,
+.gji__rekap td {
+  height: 30px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--gji-garis);
+  font-size: var(--k-t12);
+  text-align: left;
+  vertical-align: middle;
+}
+.gji__rekap th { padding-left: 0; font-weight: var(--k-reg); }
+.gji__rekapbln {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: var(--k-t13, 0.8125rem);
+  font-weight: var(--k-semi);
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+}
+span.gji__rekapbln { cursor: default; color: var(--text-muted); }
+.gji__rekapbln i { font-size: var(--k-t10); font-style: normal; font-weight: var(--k-semi); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+button.gji__rekapbln:hover { text-decoration: underline; text-underline-offset: 3px; }
+button.gji__rekapbln:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+.gji__rekapgrafik { padding-right: 14px !important; }
+.gji__rekapbatang { position: relative; display: block; height: 10px; }
+.gji__rekapbatang::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  bottom: -11px;
+  left: calc(var(--gji-rata, 0) * 100%);
+  border-left: 1px dashed color-mix(in srgb, var(--ramp-1) 55%, transparent);
+  pointer-events: none;
+}
+.gji__rekapisi { display: flex; gap: 1px; height: 100%; overflow: hidden; border-radius: 2px; }
+.gji__rekapisi i { display: block; flex-basis: 0; min-width: 1px; height: 100%; }
+.gji__rekaphantu { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--text-muted); }
+.gji__rekapstatus { padding-left: 16px !important; }
+.gji__rekapbelum { font-size: var(--k-t11); font-weight: var(--k-semi); color: var(--warn-ink); }
+.gji__rekapket { font-size: var(--k-t11) !important; font-weight: var(--k-reg) !important; color: var(--text-muted); white-space: nowrap; }
+.gji__rekap.is-mendatang th,
+.gji__rekap.is-mendatang td { color: var(--text-muted); }
+.gji__rekap.is-redup { opacity: 0.42; }
+.gji__rekap.is-sorot .gji__rekapbln { color: var(--judul-ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .gji__rekap { transition: opacity 120ms; }
+}
+.gji__rekaplegenda { display: inline-flex; align-items: center; gap: 5px; font-weight: var(--k-semi); color: var(--text-muted); white-space: nowrap; }
+.gji__legrata { display: inline-block; width: 0; height: 11px; border-left: 1px dashed color-mix(in srgb, var(--ramp-1) 55%, transparent); }
+.gji__leghantu { display: inline-block; width: 2px; height: 11px; margin-left: 6px; border-radius: 1px; background: var(--text-muted); }
+
+/* Cap LUNAS: segel persegi bercincin rangkap — di baris Jumlah lembar yang
+   semua gajinya sudah diterima, dan di tiap bulan lunas di halaman depan. */
+.gji__segel {
+  display: inline-block;
+  padding: 1px 7px;
+  border: 1.5px solid var(--ramp-1);
+  border-radius: 4px;
+  outline: 1px solid color-mix(in srgb, var(--ramp-1) 45%, transparent);
+  outline-offset: 1px;
+  font-size: var(--k-t10);
+  font-weight: var(--k-xbold);
+  line-height: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ramp-1);
+  white-space: nowrap;
+  transform: rotate(-4deg);
+}
+
 /* Baris Jumlah: garis rangkap di atasnya, menempel di kaki saat digulir. */
 .gji__daftar tfoot th,
 .gji__daftar tfoot td {
@@ -682,6 +769,9 @@
 .gji__tab.is-aktif { background: var(--gji-kertas); color: var(--text-strong); cursor: default; }
 .gji__tab.is-aktif:focus-visible { outline-color: var(--brand); }
 .gji__tab--kosong:not(.is-aktif) { color: var(--gji-redup); }
+/* Tab halaman depan: selalu penuh dan bermint — bukan bagian grafik. */
+.gji__tab--rekap { width: calc(var(--gji-tab0) + var(--gji-tabr)); background: var(--brand-mint); color: var(--kas-bidang); }
+.gji__tab--rekap:hover:not(.is-aktif) { background: var(--brand-mint-hover); }
 .gji__tab:disabled {
   border: 1px dashed color-mix(in srgb, var(--kas-ink) 32%, transparent);
   border-left: 0;
@@ -839,6 +929,7 @@ html.gji-mundur::view-transition-old(gji-lembar) { z-index: 1; }
    karena 62% kolom tidak lagi muat nomor + "Tandai dibayar". */
 @media (max-width: 1100px) {
   .gji { --gji-tepi: 62px; --gji-tab0: 28px; --gji-tabr: 28px; --gji-no: 32px; --gji-uang: 96px; --gji-jumlah: 108px; --gji-ttd: 156px; }
+  .gji__c-bln { width: 100px; }
   .gji__ttdslot { width: 100%; }
   .gji__ttd--kanan .gji__ttdslot { justify-content: flex-end; margin-left: 0; }
 }
@@ -920,6 +1011,31 @@ html.gji-mundur::view-transition-old(gji-lembar) { z-index: 1; }
   .gji__daftar tfoot .gji__jumlah { grid-column: 2; grid-row: 1; }
   .gji__ttdjumlah { grid-column: 2; padding-left: 0 !important; text-align: right !important; }
   .gji__penggaris { display: none; }
+  .gji__rekap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "bln jumlah" "grafik grafik" "status status";
+    gap: 6px 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gji-garis);
+  }
+  .gji__rekap th,
+  .gji__rekap td { display: block; height: auto; padding: 0 !important; border: 0 !important; }
+  .gji__rekap th { grid-area: bln; }
+  .gji__rekap .gji__rekapgrafik { grid-area: grafik; }
+  .gji__rekap .gji__jumlah { grid-area: jumlah; }
+  .gji__rekap .gji__k-gaji,
+  .gji__rekap .gji__k-fee { display: none; }
+  .gji__rekap .gji__rekapstatus { grid-area: status; }
+  .gji__rekap .gji__rekapbatang::after { top: -3px; bottom: -3px; }
+  /* Kaki halaman depan di ponsel: cuma Jumlah dan status lunas — label
+     "Gaji/Fee" milik kaki lembar bulan tidak berlaku di sini. */
+  .gji__daftar--rekap tfoot td::before { content: none !important; }
+  .gji__daftar--rekap tfoot .gji__rekapket,
+  .gji__daftar--rekap tfoot .gji__k-gaji,
+  .gji__daftar--rekap tfoot .gji__k-fee { display: none; }
+  /* Garis kolom buku besar tidak berarti di kartu bertingkat. */
+  .gji__daftar :is(.gji__k-gaji, .gji__k-fee, .gji__k-jumlah, .gji__k-ttd) { border-left: 0 !important; }
   .gji__tabhantu { display: none; }
   .gji__terbilang { flex-direction: column; gap: 2px; padding-bottom: 14px; }
 }
