@@ -1,89 +1,61 @@
-import { IsianTempel, PilihMenu } from "../kit/Formulir";
-import { IsianTanggal } from "../kit/Formulir";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { IsianTempel, PilihMenu, IsianTanggal } from "../kit/Formulir";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { KepalaSeksi, BarisPantau, BarisAset } from "../kit/Item";
-import { GrafikArea, Busur, LencanaTren } from "../kit/Ukuran";
-import { KolomGrafik, type BatangGrafik } from "../kit/Grafik";
-import { Tabel, SelDua, SelIkon, type KolomTabel } from "../kit/Tabel";
+import { LencanaTren } from "../kit/Ukuran";
 import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
-import { CopySimple, DownloadSimple, Plus } from "../kit/ikon";
+import { ArrowClockwise, CopySimple, DownloadSimple, Plus } from "../kit/ikon";
 import { Dialog, AlertDialog } from "../kit/Overlay";
 import { ToastProvider, useToast } from "../kit/Toast";
+import { Keterangan, pemberiKet, type KabarKartu } from "../kit/kartuGrafik";
+import { BULAN, BULAN_PENDEK, JENIS } from "./frame25";
 import {
-  BULAN,
-  BULAN_PENDEK,
-  JENIS,
-  IKON_JENIS,
-  bulatkan,
-  sumbu,
-  NominalBesar,
-  persen,
-  teksPersen,
-  PilihTombol,
-} from "./frame25";
-import {
+  ambilSettings,
+  bukuGaji,
   gajiBulan,
-  riwayatGaji,
   catatGaji,
   ubahGaji,
   hapusGaji,
-  semuaBiaya,
   daftarTim,
   bacaCache,
+  tulisCache,
   LABEL_JENIS_ANGGOTA,
   type BarisGajiBulan,
-  type EntriGaji,
-  type BiayaProyek,
+  type BulanBuku,
+  type JilidGaji,
   type AnggotaTim,
 } from "../../lib/admin";
-import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
+import { formatRupiah } from "../../lib/format";
+import { terbilang } from "../../lib/terbilang";
 import { unduhCsv } from "../../lib/csv";
 
 /* =============================================================================
-   Gaji, mengikuti frame Figma "25. Investments" — kerangka yang SAMA dengan
-   Fee Proyek, dipilih pemilik: dua halaman yang menjawab "berapa yang
-   dibayarkan studio kepada orang" dari dua sisi harus terbaca sebagai satu
-   keluarga.
+   Gaji — BUKU GAJI yang terbuka di meja.
 
-   Aturannya tetap satu kalimat, dan dijaga di lapisan data: FEE MENULIS, GAJI
-   MEMBACA. Kolom Gaji diketik di sini, hanya untuk bayaran yang TIDAK lahir
-   dari proyek. Kolom Fee tidak bisa diketik di mana pun di halaman ini — ia
-   dijumlahkan SQL dari biaya proyek bernama yang dicatat di Keuangan.
+   Benda dunia nyatanya: buku daftar penerimaan gaji. Bayaran Tim sudah
+   menjawab "orang ini menerima berapa" (amplop per orang); halaman ini
+   menjawab "bulan ini studio membayar siapa saja, dan siapa yang sudah
+   menerima" — jadi bentuknya DAFTAR per bulan, bukan amplop.
 
-     Coinest            Halaman ini
-     -----------------  ----------------------------------------------------
-     Portfolio Value    Total Gaji — gaji per bulan sebagai grafik tangga
-     Profits            Untuk Orang per Tahun — gaji dan fee bertumpuk
-     Watchlist          Penerima bulan terpilih + status bayar
-     Assets             Per Jenis — partner / inti / proyek / staf
-     My Portfolio       Gaji bulan terpilih — tempat mencatat, menandai
-                        dibayar, menyalin dari bulan lalu, dan mengekspor
+     Sampul dalam (bidang uang)   rekap bulan, tanda terima, rak jilid/tahun
+     Lembar                       Daftar Penerimaan Gaji: nomor, penerima,
+                                  gaji, fee, jumlah, tanda terima ZIG-ZAG
+                                  (nomor ganjil di kiri, genap di kanan —
+                                  konvensi formulir tanda terima kantor)
+     Indeks di tepi lembar        satu tab per bulan; PANJANG tab = jumlah
+                                  bulan itu, jadi tepi buku sekaligus grafik
+     Penggaris baca               benda yang disentuh: meluncur ke baris di
+                                  bawah kursor dan mengukur bagian orang itu
+                                  dari jumlah bulan
 
-   Stylesheet-nya fee-kit.css: satu frame, satu berkas gaya.
+   Aturannya tetap satu kalimat dan dijaga di lapisan data: FEE MENULIS, GAJI
+   MEMBACA. Kolom Gaji diketik di sini; kolom Fee dijumlahkan SQL dari biaya
+   proyek bernama yang dicatat di Keuangan, dan tidak bisa diketik di sini.
    ============================================================================= */
 
-const PILIH_BULAN = [
-  { nilai: "6", label: "6 bulan" },
-  { nilai: "10", label: "10 bulan" },
-  { nilai: "12", label: "12 bulan" },
-];
-const PILIH_TAHUN = [
-  { nilai: "4", label: "4 tahun" },
-  { nilai: "8", label: "8 tahun" },
-];
-
-/* Tumpukan dari ATAS ke bawah. Gaji di atas dengan rona paling pekat: ia yang
-   ditanyakan halaman ini; fee ikut digambar supaya "keluar untuk orang"
-   terbaca utuh tanpa pindah halaman. */
-const TUMPUK = [
-  { nilai: "gaji", label: "Gaji", warna: "var(--ramp-1)" },
-  { nilai: "fee", label: "Fee proyek", warna: "var(--ramp-2)" },
-] as const;
-
 const kunciBulan = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-const bulanIni = () => kunciBulan(new Date());
+const BULAN_INI = kunciBulan(new Date());
+const TAHUN_INI = new Date().getFullYear();
 
 function bulanSebelum(period: string): string {
   const [y, m] = period.split("-").map(Number);
@@ -91,53 +63,67 @@ function bulanSebelum(period: string): string {
   return kunciBulan(new Date(y!, m! - 2, 1));
 }
 
-function labelBulan(period: string): string {
-  const [y, m] = period.split("-").map(Number);
-  return `${BULAN[m! - 1]} ${y}`;
-}
+const namaBulan = (period: string) => BULAN[Number(period.slice(5, 7)) - 1]!;
+const labelBulan = (period: string) => `${namaBulan(period)} ${period.slice(0, 4)}`;
 
 function tanggalPendek(iso: string): string {
-  const [t, b, h] = iso.slice(0, 10).split("-").map(Number);
-  return `${h} ${BULAN_PENDEK[(b ?? 1) - 1]} ${t}`;
+  const [, b, h] = iso.slice(0, 10).split("-").map(Number);
+  return `${h} ${BULAN_PENDEK[(b ?? 1) - 1]}`;
 }
 
-const HARI_INI = () => new Date().toISOString().slice(0, 10);
-
-/* Delapan belas bulan ke belakang. Gaji yang lebih tua dari itu tidak pernah
-   diubah lagi; yang perlu dibaca ada di grafik dan di CSV. */
-const DAFTAR_BULAN = (() => {
+const HARI_INI = () => {
   const d = new Date();
-  d.setDate(1);
-  return Array.from({ length: 18 }, (_, i) => {
-    const x = new Date(d);
-    x.setMonth(d.getMonth() - i);
-    const k = kunciBulan(x);
-    return { nilai: k, label: labelBulan(k) };
-  });
-})();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const persen = (n: number, dari: number) => (dari > 0 ? (n / dari) * 100 : 0);
+const teksPersen = (p: number) => `${p.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+const tanda = (n: number) => (n >= 0 ? "+" : "−");
+
+/** Bulan dari `?bulan=YYYY-MM` — tautan dari halaman lain mendarat di lembar
+ *  bulan itu. Bulan yang belum datang tidak bisa dibuka. */
+function bulanDariAlamat(): string {
+  if (typeof location === "undefined") return BULAN_INI;
+  const b = new URLSearchParams(location.search).get("bulan");
+  return b && /^\d{4}-\d{2}$/.test(b) && b <= BULAN_INI ? b : BULAN_INI;
+}
+
+
+interface Baris extends BarisGajiBulan {
+  no: number;
+}
 
 function Isi() {
   const toast = useToast();
-  const [riwayat, setRiwayat] = useState<EntriGaji[] | null>(null);
-  /* Dibaca dari cache saja — pemilik daftar biaya adalah halaman Keuangan
-     (jebakan #8: yang boleh menulis cache hanya pemilik daftarnya). */
-  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() => bacaCache<BiayaProyek[]>("biaya-semua"));
-  const [tim, setTim] = useState<AnggotaTim[]>([]);
+  const kabar: KabarKartu = useRef(null);
+  const ket = pemberiKet(kabar);
 
-  const [period, setPeriod] = useState(bulanIni());
-  /* TIDAK di-cache. Isinya milik satu bulan tertentu, dan cache yang tidak
-     membawa bulannya di kunci adalah cara paling mudah menampilkan angka
-     bulan lalu sebagai angka bulan ini. */
+  const [period, setPeriod] = useState(bulanDariAlamat);
+  const tahun = Number(period.slice(0, 4));
+
+  /* Buku satu tahun. Kuncinya membawa tahunnya — cache tanpa tahun di kunci
+     adalah cara paling mudah menampilkan jilid lain sebagai jilid ini. */
+  const [buku, setBuku] = useState<{ months: BulanBuku[]; years: JilidGaji[] } | null>(() =>
+    bacaCache(`gaji-buku-${Number(bulanDariAlamat().slice(0, 4))}`),
+  );
+  const [galat, setGalat] = useState<string | null>(null);
+  /* TIDAK di-cache: isinya milik satu bulan tertentu. */
   const [baris, setBaris] = useState<BarisGajiBulan[] | null>(null);
   const [bulanLalu, setBulanLalu] = useState<BarisGajiBulan[]>([]);
+  const [tim, setTim] = useState<AnggotaTim[]>([]);
   const [menyalin, setMenyalin] = useState(false);
+  /* Kop lembar: nama studio dari Info Studio. Kunci cache `settings` milik
+     Info Studio — di sini dibaca saja (jebakan #8). */
+  const [studio, setStudio] = useState<string | null>(() => bacaCache<{ studioName?: string }>("settings")?.studioName ?? null);
 
-  const [nBulan, setNBulan] = useState("10");
-  const [nTahun, setNTahun] = useState("4");
-  const tabelRef = useRef<HTMLElement>(null);
-
-  function muatRiwayat() {
-    riwayatGaji().then(setRiwayat).catch(() => setRiwayat((l) => l ?? []));
+  function muatBuku(y = tahun) {
+    setGalat(null);
+    bukuGaji(y)
+      .then((d) => {
+        setBuku(d);
+        tulisCache(`gaji-buku-${y}`, d);
+      })
+      .catch((e) => setGalat((e as Error).message));
   }
   function muatBulan() {
     gajiBulan(period).then(setBaris).catch(() => setBaris((l) => l ?? []));
@@ -146,142 +132,100 @@ function Isi() {
   }
   function muatUlang() {
     muatBulan();
-    muatRiwayat();
+    muatBuku();
   }
 
   useEffect(() => {
-    muatRiwayat();
-    semuaBiaya().then(setBiaya).catch(() => setBiaya((l) => l ?? []));
     daftarTim().then(setTim).catch(() => setTim([]));
+    ambilSettings().then((d) => setStudio(d.studioName || null)).catch(() => {});
   }, []);
+  useEffect(() => {
+    /* Jilid lain: yang lama tetap tergambar (rak dan sampulnya tidak
+       berkedip) sampai jilid barunya tiba; indeksnya kosong sebentar. */
+    setBuku((b) => bacaCache(`gaji-buku-${tahun}`) ?? b);
+    muatBuku(tahun);
+  }, [tahun]);
   useEffect(() => {
     setBaris(null);
     muatBulan();
   }, [period]);
 
-  /* Fee di halaman ini = biaya proyek yang BERNAMA — definisi yang sama
-     dengan `/payroll/month`, supaya grafik dan tabel sepakat. */
-  const feeBernama = useMemo(() => (biaya ?? []).filter((b) => b.teamMemberId), [biaya]);
+  /* Ketukan jari di luar benda berketerangan menutup kartunya. */
+  useEffect(() => {
+    const tutup = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return;
+      if (!(e.target as Element).closest?.("[data-ket]")) kabar.current?.(null);
+    };
+    document.addEventListener("pointerdown", tutup);
+    return () => document.removeEventListener("pointerdown", tutup);
+  }, []);
 
-  /* ---- Total Gaji: gaji per bulan ------------------------------------- */
-  const bulanan = useMemo(() => {
-    const n = Number(nBulan);
-    const kunci: string[] = [];
-    const d = new Date();
-    d.setDate(1);
-    for (let i = 2 * n - 1; i >= 0; i--) {
-      const x = new Date(d);
-      x.setMonth(d.getMonth() - i);
-      kunci.push(kunciBulan(x));
-    }
-    const jumlah = new Map(kunci.map((k) => [k, 0]));
-    for (const g of riwayat ?? []) {
-      const k = g.period.slice(0, 7);
-      if (jumlah.has(k)) jumlah.set(k, jumlah.get(k)! + g.amount);
-    }
-    const semua = kunci.map((k) => ({ bulan: k, nilai: jumlah.get(k)! }));
-    const kini = semua.slice(n);
-    const lalu = semua.slice(0, n);
-    const total = kini.reduce((a, b) => a + b.nilai, 0);
-    const totalLalu = lalu.reduce((a, b) => a + b.nilai, 0);
-    let puncak = -1;
-    kini.forEach((b, i) => {
-      if (b.nilai > 0 && (puncak < 0 || b.nilai >= kini[puncak]!.nilai)) puncak = i;
-    });
-    /* Puncak paling tinggi 80% sumbu — rasio framenya (31,6 rb di sumbu
-       40 rb). Gaji hampir rata dari bulan ke bulan, jadi tanpa ruang kepala
-       garisnya menempel di batas atas dan menimpa tooltip puncaknya. */
-    const tertinggi = Math.max(0, ...kini.map((b) => b.nilai));
-    return { kini, total, totalLalu, puncak, maks: bulatkan(tertinggi / 0.8) };
-  }, [riwayat, nBulan]);
+  /* ---- Indeks bulan (12 tab jilid terpilih) ------------------------------ */
+  const indeks = useMemo(() => {
+    const semua = buku?.months ?? [];
+    const ada = semua.filter((m) => m.period.startsWith(`${tahun}-`));
+    const ini: BulanBuku[] = ada.length
+      ? ada
+      : Array.from({ length: 12 }, (_, i) => ({
+          period: `${tahun}-${String(i + 1).padStart(2, "0")}`,
+          salary: 0, salaryCount: 0, salaryUnpaid: 0, fee: 0, feeCount: 0, people: 0, total: 0,
+        }));
+    const maks = Math.max(1, ...ini.map((m) => m.total));
+    /* Panjang tab = dasar (cukup untuk "Agu" dan titik amber) + rentang ×
+       bagian bulan itu dari bulan tertinggi jilidnya — mulai dari NOL, jadi
+       bulan setengahnya memang tergambar setengahnya. Dasar dan rentangnya
+       di CSS (`--gji-tab0`, `--gji-tabr`), karena ikut lebar layar. */
+    return ini.map((m) => ({ ...m, mendatang: m.period > BULAN_INI, rasio: m.total / maks }));
+  }, [buku, tahun]);
 
-  /* ---- Untuk Orang per Tahun: gaji + fee ------------------------------ */
-  const tahunan = useMemo(() => {
-    const kini = new Date();
-    const y = kini.getFullYear();
-    const n = Number(nTahun);
-    const tahunData = [
-      ...(riwayat ?? []).map((g) => Number(g.period.slice(0, 4))),
-      ...feeBernama.map((b) => Number(b.incurredOn.slice(0, 4))),
-    ].filter(Boolean);
-    const pertama = tahunData.length ? Math.min(...tahunData) : y;
-    /* Paling sedikit empat kolom — alasan yang sama dengan Fee Proyek. */
-    const mulai = Math.min(y - 3, Math.max(y - n + 1, pertama));
-    const daftar = Array.from({ length: y - mulai + 1 }, (_, i) => mulai + i);
-    const per = new Map(daftar.map((t) => [t, { gaji: 0, fee: 0 } as Record<string, number>]));
-    /* Pembanding pada PERIODE YANG SAMA tahun lalu, bukan setahun penuh. */
-    const bulanKini = kini.getMonth() + 1;
-    const hariIni = kini.toISOString().slice(5, 10);
-    let ytd = 0;
-    let ytdLalu = 0;
-    for (const g of riwayat ?? []) {
-      const t = Number(g.period.slice(0, 4));
-      const b = Number(g.period.slice(5, 7));
-      const k = per.get(t);
-      if (k) k.gaji! += g.amount;
-      if (t === y) ytd += g.amount;
-      if (t === y - 1 && b <= bulanKini) ytdLalu += g.amount;
-    }
-    for (const f of feeBernama) {
-      const t = Number(f.incurredOn.slice(0, 4));
-      const k = per.get(t);
-      if (k) k.fee! += f.amount;
-      if (t === y) ytd += f.amount;
-      if (t === y - 1 && f.incurredOn.slice(5, 10) <= hariIni) ytdLalu += f.amount;
-    }
-    const kolom = daftar.map((t) => {
-      const v = per.get(t)!;
-      return { tahun: t, nilai: v, total: v.gaji! + v.fee! };
-    });
-    return { kolom, total: kolom.reduce((a, k) => a + k.total, 0), ytd, ytdLalu };
-  }, [riwayat, feeBernama, nTahun]);
+  const bulanBuku = (k: string) => buku?.months.find((m) => m.period === k) ?? null;
+  const sekarang = bulanBuku(period);
+  const sebelum = bulanBuku(bulanSebelum(period));
 
-  /* Geometri tumpukan sama dengan Fee Proyek: puncak 139 dari bidang 174,
-     celah 4 di atas nilai, bukan dipotong darinya. */
-  const TINGGI_BIDANG = 174;
-  const batangTahun = useMemo(() => {
-    const maks = Math.max(1, ...tahunan.kolom.map((k) => k.total));
-    return tahunan.kolom.map((k) => {
-      const isi = TUMPUK.filter((x) => (k.nilai[x.nilai] ?? 0) > 0);
-      let dasar = TINGGI_BIDANG;
-      const potong: BatangGrafik[] = [];
-      [...isi].reverse().forEach((x, i) => {
-        const h = Math.max(2, ((k.nilai[x.nilai] ?? 0) / maks) * 139);
-        const atas = dasar - h;
-        potong.push({
-          atas: (atas / TINGGI_BIDANG) * 100,
-          bawah: (dasar / TINGGI_BIDANG) * 100,
-          radiusAtas: 2,
-          radiusBawah: i === 0 ? 0 : 2,
-          warna: x.warna,
-        });
-        dasar = atas - 4;
-      });
-      return { ...k, potong, puncak: dasar + 4 };
-    });
-  }, [tahunan]);
+  /* ---- Rak jilid: tiap tahun berdata, ditambah tahun ini ----------------- */
+  const jilid = useMemo(() => {
+    const per = new Map<number, JilidGaji>((buku?.years ?? []).map((y) => [y.year, y]));
+    for (const y of [TAHUN_INI, tahun]) if (!per.has(y)) per.set(y, { year: y, salary: 0, fee: 0, total: 0 });
+    const daftar = [...per.values()].sort((a, z) => a.year - z.year).slice(-5);
+    const maks = Math.max(1, ...daftar.map((j) => j.total));
+    return daftar.map((j) => ({ ...j, rasio: j.total / maks }));
+  }, [buku, tahun]);
 
-  /* ---- Bulan terpilih ---------------------------------------------------- */
+  /* Pembanding jilid: periode yang SAMA tahun lalu — sampai bulan ini untuk
+     jilid berjalan, setahun penuh untuk jilid lama. */
+  const banding = useMemo(() => {
+    const batas = tahun === TAHUN_INI ? Number(BULAN_INI.slice(5, 7)) : 12;
+    const jumlah = (y: number) =>
+      (buku?.months ?? [])
+        .filter((m) => m.period.startsWith(`${y}-`) && Number(m.period.slice(5, 7)) <= batas)
+        .reduce((n, m) => n + m.total, 0);
+    return { batas, kini: jumlah(tahun), lalu: jumlah(tahun - 1) };
+  }, [buku, tahun]);
+
+  /* ---- Lembar bulan terpilih --------------------------------------------- */
+  const kelompok = useMemo(() => {
+    let no = 0;
+    return JENIS.map((j) => {
+      const isi = (baris ?? []).filter((b) => b.kind === j).sort((a, z) => a.name.localeCompare(z.name, "id"));
+      return {
+        jenis: j,
+        label: LABEL_JENIS_ANGGOTA[j],
+        jumlah: isi.reduce((n, b) => n + b.total, 0),
+        baris: isi.map((b): Baris => ({ ...b, no: ++no })),
+      };
+    }).filter((k) => k.baris.length > 0);
+  }, [baris]);
+
   const ringkas = useMemo(() => {
     const d = baris ?? [];
+    const bergaji = d.filter((b) => b.salaryId);
     return {
       gaji: d.reduce((a, b) => a + (b.salaryAmount ?? 0), 0),
       fee: d.reduce((a, b) => a + b.feeAmount, 0),
       total: d.reduce((a, b) => a + b.total, 0),
-      belum: d.filter((b) => b.salaryId && !b.salaryPaidOn).length,
-    };
-  }, [baris]);
-
-  const jenis = useMemo(() => {
-    const per = JENIS.map((j) => ({
-      kunci: j as string,
-      label: LABEL_JENIS_ANGGOTA[j],
-      nilai: (baris ?? []).filter((o) => o.kind === j).reduce((a, o) => a + o.total, 0),
-    })).filter((x) => x.nilai > 0);
-    const total = per.reduce((a, x) => a + x.nilai, 0);
-    return {
-      total,
-      iris: per.map((x, i) => ({ ...x, warna: `var(--ramp-${i + 1})`, persen: persen(x.nilai, total) })),
+      bergaji: bergaji.length,
+      diterima: bergaji.filter((b) => b.salaryPaidOn).length,
+      gajiDiterima: bergaji.filter((b) => b.salaryPaidOn).reduce((a, b) => a + (b.salaryAmount ?? 0), 0),
     };
   }, [baris]);
 
@@ -324,387 +268,574 @@ function Isi() {
 
   async function tandaiDibayar(b: BarisGajiBulan, dibayar: boolean) {
     if (!b.salaryId || !baris) return;
-    const sebelum = baris;
+    const sebelumnya = baris;
     const tgl = dibayar ? HARI_INI() : null;
     setBaris(baris.map((x) => (x.salaryId === b.salaryId ? { ...x, salaryPaidOn: tgl } : x)));
     try {
       await ubahGaji(b.salaryId, { paidOn: tgl });
-      muatRiwayat();
+      muatBuku();
     } catch (e) {
-      setBaris(sebelum);
+      setBaris(sebelumnya);
       toast({ judul: "Gagal mengubah status", keterangan: (e as Error).message, nada: "gagal" });
     }
   }
 
   function ekspor() {
     unduhCsv(`gaji-${period}.csv`, [
-      ["Nama", "Jenis", "Peran", "Gaji", "Fee bulan ini", "Total", "Dibayar pada", "Catatan"],
-      ...(baris ?? []).map((b) => [
-        b.name,
-        LABEL_JENIS_ANGGOTA[b.kind],
-        b.role ?? "",
-        b.salaryAmount === null || b.salaryAmount === undefined ? "" : String(b.salaryAmount),
-        String(b.feeAmount),
-        String(b.total),
-        b.salaryPaidOn ?? "",
-        b.salaryNote ?? "",
-      ]),
+      ["No", "Nama", "Jenis", "Peran", "Gaji", "Fee bulan ini", "Jumlah", "Dibayar pada", "Catatan"],
+      ...kelompok.flatMap((k) =>
+        k.baris.map((b) => [
+          String(b.no),
+          b.name,
+          LABEL_JENIS_ANGGOTA[b.kind],
+          b.role ?? "",
+          b.salaryAmount === null || b.salaryAmount === undefined ? "" : String(b.salaryAmount),
+          String(b.feeAmount),
+          String(b.total),
+          b.salaryPaidOn ?? "",
+          b.salaryNote ?? "",
+        ]),
+      ),
     ]);
   }
 
-  /* Lebar kolom dari jangkar tinta framenya — sama dengan tabel Fee. */
-  const kolom: KolomTabel[] = [
-    { judul: "Nama", lebar: 161.3 },
-    { judul: "Gaji", lebar: 100.8 },
-    { judul: "Fee", lebar: 85.8, redup: true },
-    { judul: "Total", lebar: 89 },
-    /* 117, bukan 100 milik frame: lencana "Tandai dibayar" meluber 10px
-       dan terpotong tepi kartu. Diambil dari dua kolom nominal yang
-       angkanya ringkas ("Rp9,3 jt"); jumlah lebarnya tetap. */
-    { judul: "Status", lebar: 117.1 },
-  ];
-
-  const barisTabel = (baris ?? []).map((b) => [
-    <SelIkon ikon={IKON_JENIS[b.kind]} ukuran={30} ikonPx={14}>
-      {/* Nama = tombol ubah. Tabel kit tidak punya aksi per baris, dan satu
-          kolom ikon pensil untuk tiap orang memakan ruang yang frame ini
-          berikan ke angka. */}
-      <DialogGaji
-        tim={tim}
-        period={period}
-        awal={b}
-        onSelesai={muatUlang}
-        pemicu={
-          <button type="button" className="fee__sel gaji__nama" title={`Ubah gaji ${b.name}`}>
-            <SelDua besar atas={b.name} bawah={b.role ?? LABEL_JENIS_ANGGOTA[b.kind]} />
-          </button>
-        }
-      />
-    </SelIkon>,
-    b.salaryAmount === null || b.salaryAmount === undefined ? (
-      <span className="fee__redup">—</span>
-    ) : (
-      <span title={formatRupiah(b.salaryAmount)}>{formatRupiahRingkas(b.salaryAmount)}</span>
-    ),
-    b.feeAmount === 0 ? (
-      "—"
-    ) : (
-      /* Tidak bisa diketik di sini; judulnya menjawab "kenapa" di tempat
-         pertanyaan itu muncul. */
-      <span title={`Dari ${b.feeCount} biaya proyek bulan ini. Diubah di Keuangan, bukan di sini.`}>
-        {formatRupiahRingkas(b.feeAmount)}
-      </span>
-    ),
-    <b title={formatRupiah(b.total)}>{formatRupiahRingkas(b.total)}</b>,
-    /* Yang cuma dapat fee TIDAK punya status bayar: fee proyek sudah uang
-       yang keluar saat dicatat, bukan janji yang menunggu dibayar. */
-    !b.salaryId ? (
-      <span className="k-trenlebar k-trenlebar--netral">fee saja</span>
-    ) : b.salaryPaidOn ? (
-      <button
-        type="button"
-        className="gaji__status"
-        title={`Dibayar ${tanggalPendek(b.salaryPaidOn)}. Klik untuk membatalkan tanda.`}
-        onClick={() => tandaiDibayar(b, false)}
-      >
-        <span className="k-trenlebar">Dibayar {tanggalPendek(b.salaryPaidOn).replace(/ \d{4}$/, "")}</span>
-      </button>
-    ) : (
-      <button
-        type="button"
-        className="gaji__status"
-        title="Klik untuk menandai sudah dibayar hari ini"
-        onClick={() => tandaiDibayar(b, true)}
-      >
-        <span className="k-trenlebar k-trenlebar--tunggu">Tandai dibayar</span>
-      </button>
-    ),
-  ]);
-
-  if (riwayat === null || biaya === null) {
-    return <div className="fee fee--rangka" aria-busy="true" />;
+  /* ---- Penggaris baca -----------------------------------------------------
+     Satu benda yang meluncur ke baris di bawah kursor (atau baris yang
+     sedang difokus papan ketik). Letak barisnya dibaca SEKALI saat kursor
+     masuk ke baris itu, bukan di penangan gulir (jebakan #21). Ia duduk di
+     PITA kosong di bawah isi baris, jadi tidak pernah lewat di belakang
+     tulisan (jebakan #70). */
+  const wadahRef = useRef<HTMLDivElement>(null);
+  const [garis, setGaris] = useState<{ y: number; bagian: number } | null>(null);
+  function ukurGaris(tr: HTMLElement, b: Baris) {
+    const w = wadahRef.current;
+    if (!w) return;
+    const y = tr.getBoundingClientRect().bottom - w.getBoundingClientRect().top + w.scrollTop;
+    setGaris({ y, bagian: persen(b.total, ringkas.total) });
   }
 
-  const selisihBulan = bulanan.total - bulanan.totalLalu;
-  const trenBulan = bulanan.totalLalu > 0 ? (selisihBulan / bulanan.totalLalu) * 100 : null;
-  const selisihTahun = tahunan.ytd - tahunan.ytdLalu;
-  const trenTahun = tahunan.ytdLalu > 0 ? (selisihTahun / tahunan.ytdLalu) * 100 : null;
-  const puncak = bulanan.puncak >= 0 ? bulanan.kini[bulanan.puncak]! : null;
-  const tanda = (n: number) => (n >= 0 ? "+" : "−");
-  const penerima = [...(baris ?? [])].sort((a, z) => z.total - a.total).slice(0, 6);
-  const namaBulan = labelBulan(period);
+  /* ---- Papan ketik di indeks: panah atas/bawah, Home, End ---------------- */
+  const tabRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const indeksRef = useRef<HTMLDivElement>(null);
+  /* Di ponsel indeksnya pita mendatar: tab bulan terpilih digeser ke
+     tengah. Dibaca sekali per pergantian bulan, bukan saat digulir. Di
+     desktop pita itu tidak bisa digulir, jadi ini tidak berbuat apa-apa. */
+  useEffect(() => {
+    const pita = indeksRef.current;
+    const tab = tabRef.current[Number(period.slice(5, 7)) - 1];
+    if (!pita || !tab || pita.scrollWidth <= pita.clientWidth) return;
+    pita.scrollLeft = tab.offsetLeft - (pita.clientWidth - tab.offsetWidth) / 2;
+  }, [period, buku !== null]);
+  function tombolIndeks(e: React.KeyboardEvent, i: number) {
+    const hidup = indeks.map((m, j) => (m.mendatang ? -1 : j)).filter((j) => j >= 0);
+    const posisi = hidup.indexOf(i);
+    let tujuan: number | null = null;
+    if (e.key === "ArrowDown") tujuan = hidup[Math.min(posisi + 1, hidup.length - 1)]!;
+    else if (e.key === "ArrowUp") tujuan = hidup[Math.max(posisi - 1, 0)]!;
+    else if (e.key === "Home") tujuan = hidup[0]!;
+    else if (e.key === "End") tujuan = hidup[hidup.length - 1]!;
+    if (tujuan === null) return;
+    e.preventDefault();
+    setPeriod(indeks[tujuan]!.period);
+    tabRef.current[tujuan]?.focus();
+  }
+
+  if (galat && !buku) {
+    return (
+      <div className="gji gji--galat" role="alert">
+        <div className="gji__papan">
+          <div className="gji__galat">
+            <b>Buku gaji tidak bisa dibuka</b>
+            <span>{galat}</span>
+            <Tombol jenis="secondary" ukuran="small" kiri={ArrowClockwise} onClick={() => muatBuku()}>
+              Coba lagi
+            </Tombol>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!buku) return <Kerangka />;
+
+  const nBulan = namaBulan(period);
+  const nBulanLalu = namaBulan(bulanSebelum(period));
+  const selisihBulan = sekarang && sebelum ? sekarang.total - sebelum.total : null;
+  const trenBulan = sekarang && sebelum && sebelum.total > 0 ? ((sekarang.total - sebelum.total) / sebelum.total) * 100 : null;
+  const trenJilid = banding.lalu > 0 ? ((banding.kini - banding.lalu) / banding.lalu) * 100 : null;
+  const belumDibayar = ringkas.gaji - ringkas.gajiDiterima;
+  const pctGaji = persen(ringkas.gaji, ringkas.total);
+  const jumlahBaris = kelompok.reduce((n, k) => n + k.baris.length, 0);
 
   return (
-    <div className="fee">
-      {/* ---- Total Gaji (Portfolio Value) -------------------------------- */}
-      <article className="fee__w fee__bulan">
-        <KepalaSeksi
-          judul="Total Gaji"
-          kanan={<PilihTombol judul="Rentang bulan" nilai={nBulan} opsi={PILIH_BULAN} onUbah={setNBulan} />}
-        />
-        <div className="fee__info">
-          <p className="fee__label">Gaji {nBulan} bulan terakhir</p>
-          <p className="fee__baris">
-            <NominalBesar n={bulanan.total} />
-            {trenBulan !== null && (
-              /* Gaji yang naik bukan kabar buruk: orang yang sama dibayar
-                 lebih wajar. Hijau di kedua arah; ikonnya yang membawa arah. */
-              <LencanaTren naik={trenBulan >= 0} baik>
-                {teksPersen(Math.abs(trenBulan))}
-              </LencanaTren>
+    <div className="gji">
+      <Keterangan kabar={kabar} />
+      <div className="gji__papan">
+        {/* ==== SAMPUL DALAM ================================================ */}
+        <aside className="gji__sampul" aria-label="Rekap buku gaji">
+          <header className="gji__judulbuku">
+            <span>Buku gaji · Jilid {tahun}</span>
+            <b>{studio ?? "Studio"}</b>
+          </header>
+
+          {/* Label tempel: rekap bulan yang sedang dibuka. */}
+          <section className="gji__label" aria-label={`Rekap ${labelBulan(period)}`}>
+            <p className="gji__labelatas">
+              <span>Keluar untuk orang</span>
+              <span>{labelBulan(period)}</span>
+            </p>
+            <p className="gji__total">{baris === null ? "…" : formatRupiah(ringkas.total)}</p>
+            {selisihBulan !== null && (
+              <p className="gji__beda">
+                {trenBulan !== null && (
+                  /* Naik bukan kabar buruk: orang yang sama dibayar lebih
+                     wajar. Arah dibawa ikonnya, bukan warnanya. */
+                  <LencanaTren naik={trenBulan >= 0} baik>
+                    {teksPersen(Math.abs(trenBulan))}
+                  </LencanaTren>
+                )}
+                <span>
+                  <b>
+                    {tanda(selisihBulan)}
+                    {formatRupiah(Math.abs(selisihBulan))}
+                  </b>{" "}
+                  dari {nBulanLalu}
+                </span>
+              </p>
             )}
-          </p>
-          <p className="fee__beda">
-            <b>
-              {tanda(selisihBulan)}
-              {formatRupiah(Math.abs(selisihBulan))}
-            </b>{" "}
-            dari {nBulan} bulan sebelumnya
-          </p>
-        </div>
-        <GrafikArea
-          className={[
-            "fee__grafik",
-            bulanan.puncak === 0 && "fee__grafik--awal",
-            bulanan.puncak === bulanan.kini.length - 1 && "fee__grafik--akhir",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          bentuk="tangga"
-          tinggi={174}
-          ruangAtas={25.5}
-          jarakLabelX={18.5}
-          maks={bulanan.maks}
-          labelY={[1, 0.75, 0.5, 0.25, 0].map((f) => (f === 0 ? "0" : sumbu(bulanan.maks * f)))}
-          labelX={bulanan.kini.map((b) => BULAN_PENDEK[Number(b.bulan.slice(5, 7)) - 1]!)}
-          deret={[{ titik: bulanan.kini.map((b) => b.nilai) }]}
-          keterangan={(i) => ({ judul: labelBulan(bulanan.kini[i]!.bulan), nilai: formatRupiah(bulanan.kini[i]!.nilai) })}
-          sorot={
-            puncak
-              ? {
-                  indeks: bulanan.puncak,
-                  judul: labelBulan(puncak.bulan),
-                  nilai: formatRupiah(puncak.nilai),
-                }
-              : undefined
-          }
-        />
-      </article>
-
-      {/* ---- Untuk Orang per Tahun (Profits) ----------------------------- */}
-      <article className="fee__w fee__tahun">
-        <KepalaSeksi
-          judul="Untuk Orang per Tahun"
-          kanan={<PilihTombol judul="Rentang tahun" nilai={nTahun} opsi={PILIH_TAHUN} onUbah={setNTahun} />}
-        />
-        <div className="fee__info fee__info--legenda">
-          <div>
-            <p className="fee__label">Gaji dan fee</p>
-            <p className="fee__baris">
-              <NominalBesar n={tahunan.total} />
-              {trenTahun !== null && (
-                <LencanaTren naik={trenTahun >= 0} baik={trenTahun < 0}>
-                  {teksPersen(Math.abs(trenTahun))}
-                </LencanaTren>
-              )}
-            </p>
-            <p className="fee__beda">
-              <b>
-                {tanda(selisihTahun)}
-                {formatRupiah(Math.abs(selisihTahun))}
-              </b>{" "}
-              dari periode sama tahun lalu
-            </p>
-          </div>
-          <ul className="fee__legenda">
-            {TUMPUK.map((k) => (
-              <li key={k.nilai}>
-                <span className="fee__kotak" style={{ background: k.warna }} />
-                {k.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="fee__batang" style={{ "--fee-kolom": batangTahun.length } as React.CSSProperties}>
-          {batangTahun.map((k, i) => (
-            <div className="fee__kolom" key={k.tahun}>
-              <KolomGrafik
-                batang={k.potong}
-                tumpuk
-                lebar={69.25}
-                lebarBatang={49.3}
-                tinggi={TINGGI_BIDANG}
-                label={k.tahun}
-                className="fee__kolomgrafik"
-                sisiKartu={i >= batangTahun.length / 2 ? "kiri" : "kanan"}
-                keterangan={
-                  k.total > 0
-                    ? {
-                        judul: `${k.tahun} · ${formatRupiah(k.total)}`,
-                        baris: TUMPUK.filter((x) => (k.nilai[x.nilai] ?? 0) > 0).map((x) => ({
-                          warna: x.warna,
-                          label: x.label,
-                          nilai: formatRupiahRingkas(k.nilai[x.nilai] ?? 0),
-                        })),
-                      }
-                    : undefined
-                }
-              />
-            </div>
-          ))}
-        </div>
-      </article>
-
-      {/* ---- Penerima bulan terpilih (Watchlist) ------------------------- */}
-      <article className="fee__w fee__penerima">
-        <KepalaSeksi
-          judul={`Penerima ${BULAN[Number(period.slice(5, 7)) - 1]}`}
-          kanan={
-            <button
-              type="button"
-              className="fee__tautan"
-              onClick={() => tabelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })}
-            >
-              Lihat Semua
-            </button>
-          }
-        />
-        <div className="fee__pantau">
-          {baris === null ? (
-            <p className="fee__kosong">Memuat…</p>
-          ) : (
-            penerima.map((o) => (
-              /* Tiap penerima membuka slipnya di Bayaran Tim — sheet "GAJI
-                 <nama>" yang dulu disalin tangan. */
-              <a
-                key={o.teamMemberId}
-                className="gaji__slip"
-                href={`/admin/gaji/tim?orang=${encodeURIComponent(o.teamMemberId)}&bulan=${period}`}
-                title={`Slip ${o.name} — ${namaBulan}`}
+            <div className="gji__pecah">
+              <p>
+                <i className="gji__kotak gji__kotak--gaji" />
+                <span>Gaji</span>
+                <b>{formatRupiah(ringkas.gaji)}</b>
+              </p>
+              <p>
+                <i className="gji__kotak gji__kotak--fee" />
+                <span>Fee proyek</span>
+                <b>{formatRupiah(ringkas.fee)}</b>
+              </p>
+              <span
+                className="gji__pecahbatang"
+                role="img"
+                aria-label={`Gaji ${teksPersen(pctGaji)}, fee proyek ${teksPersen(100 - pctGaji)}`}
               >
-              <BarisPantau
-                ikon={IKON_JENIS[o.kind]}
-                simbol={o.name}
-                nama={o.role ?? LABEL_JENIS_ANGGOTA[o.kind]}
-                nilai={<span title={formatRupiah(o.total)}>{formatRupiahRingkas(o.total)}</span>}
-                tren={
-                  !o.salaryId ? (
-                    <span className="k-trenlebar k-trenlebar--netral">fee saja</span>
-                  ) : o.salaryPaidOn ? (
-                    <span className="k-trenlebar">dibayar</span>
-                  ) : (
-                    <span className="k-trenlebar k-trenlebar--tunggu">belum</span>
-                  )
-                }
-              />
-              </a>
-            ))
-          )}
-          {baris !== null && penerima.length === 0 && (
-            <p className="fee__kosong">
-              Belum ada gaji atau fee di {namaBulan}. Tekan tombol tambah di tabel untuk mencatat gaji bulanan.
-            </p>
-          )}
-        </div>
-      </article>
+                <i className="gji__kotak--gaji" style={{ width: `${pctGaji}%` }} />
+                <i className="gji__kotak--fee" style={{ width: `${ringkas.total > 0 ? 100 - pctGaji : 0}%` }} />
+              </span>
+            </div>
+          </section>
 
-      {/* ---- Per Jenis (Assets) ------------------------------------------ */}
-      <article className="fee__w fee__jenis">
-        <KepalaSeksi judul="Per Jenis" kanan={<span className="fee__ketkepala">{namaBulan}</span>} />
-        {baris === null ? (
-          <p className="fee__kosong">Memuat…</p>
-        ) : jenis.total === 0 ? (
-          <p className="fee__kosong">Belum ada yang dibayar di {namaBulan}.</p>
-        ) : (
-          <>
-            <Busur
-              className="fee__busur"
-              iris={jenis.iris.map((x) => ({ nilai: x.nilai, warna: x.warna, label: x.label, ket: formatRupiah(x.nilai) }))}
-              label="Keluar untuk orang"
-              nilai={formatRupiahRingkas(jenis.total)}
-              tanda={String((baris ?? []).length)}
-              ket="orang dibayar"
-            />
-            <hr className="fee__garis" />
-            <div className={`fee__aset${jenis.iris.length > 4 ? " fee__aset--rapat" : ""}`}>
-              {jenis.iris.map((x) => (
-                <BarisAset
-                  key={x.kunci}
-                  warna={x.warna}
-                  nama={x.label}
-                  persen={`${Math.round(x.persen)}%`}
-                  total={<span title={formatRupiah(x.nilai)}>{formatRupiahRingkas(x.nilai)}</span>}
-                />
+          {/* Tanda terima: berapa gaji tetap bulan ini yang sudah diterima. */}
+          <section className="gji__terima" aria-label="Tanda terima gaji">
+            <p className="gji__terimaatas">
+              <span>Tanda terima gaji</span>
+              <b>
+                {ringkas.diterima} dari {ringkas.bergaji}
+              </b>
+            </p>
+            <span
+              className="gji__meter"
+              role="img"
+              aria-label={`Diterima ${formatRupiah(ringkas.gajiDiterima)}, belum ${formatRupiah(belumDibayar)}`}
+            >
+              <i className="gji__meter--terima" style={{ width: `${persen(ringkas.gajiDiterima, ringkas.gaji)}%` }} />
+              <i className="gji__meter--belum" style={{ width: `${persen(belumDibayar, ringkas.gaji)}%` }} />
+            </span>
+            <p className={`gji__terimaket${belumDibayar > 0 ? " gji__terimaket--belum" : ""}`}>
+              {baris === null
+                ? "Memuat…"
+                : ringkas.bergaji === 0
+                  ? `Tidak ada gaji tetap di ${nBulan}`
+                  : belumDibayar > 0
+                    ? `${formatRupiah(belumDibayar)} belum dibayar`
+                    : `Semua gaji ${nBulan} sudah diterima`}
+            </p>
+          </section>
+
+          {/* Rak jilid: satu buku per tahun, tingginya = jumlah tahun itu. */}
+          <section className="gji__rak" aria-label="Arsip jilid per tahun">
+            <p className="gji__rakjudul">Arsip jilid</p>
+            <div className="gji__rakisi" role="group" aria-label="Pilih jilid">
+              {jilid.map((j) => (
+                <button
+                  key={j.year}
+                  type="button"
+                  className={`gji__jilid${j.year === tahun ? " is-aktif" : ""}${j.total === 0 ? " gji__jilid--kosong" : ""}`}
+                  /* Tinggi = 52px + sisa rak × bagian jilid ini dari jilid
+                     tertinggi; raknya sendiri mengisi sisa tinggi sampul. */
+                  style={{ "--gji-r": j.rasio } as React.CSSProperties}
+                  aria-pressed={j.year === tahun}
+                  aria-label={`Jilid ${j.year}: ${formatRupiah(j.total)}`}
+                  onClick={() => {
+                    kabar.current?.(null);
+                    if (j.year === tahun) return;
+                    /* Jilid berjalan dibuka di bulan ini; jilid lama di
+                       Desember — lembar terakhir yang ditutup. */
+                    setPeriod(j.year === TAHUN_INI ? BULAN_INI : `${j.year}-12`);
+                  }}
+                  {...ket(() => ({
+                    judul: `Jilid ${j.year}${j.year === TAHUN_INI ? " · berjalan" : ""}`,
+                    baris: [
+                      { warna: "var(--ramp-1)", label: "Gaji", nilai: formatRupiah(j.salary) },
+                      { warna: "var(--ramp-2)", label: "Fee proyek", nilai: formatRupiah(j.fee) },
+                      { label: "Jumlah", nilai: formatRupiah(j.total) },
+                    ],
+                  }))}
+                >
+                  <span className="gji__jilidpita" aria-hidden="true" />
+                  <span className="gji__jilidtahun">{j.year}</span>
+                </button>
               ))}
             </div>
-          </>
-        )}
-      </article>
+            <p className="gji__rakket">
+              <span>
+                {tahun}
+                {tahun === TAHUN_INI ? ` s.d. ${BULAN_PENDEK[banding.batas - 1]}` : ""}
+              </span>
+              <b>{formatRupiah(banding.kini)}</b>
+              {trenJilid !== null && (
+                <em>
+                  {tanda(trenJilid)}
+                  {teksPersen(Math.abs(trenJilid))} dari periode sama {tahun - 1}
+                </em>
+              )}
+            </p>
+          </section>
+        </aside>
 
-      {/* ---- Gaji bulan terpilih (My Portfolio) -------------------------- */}
-      <article className="fee__w fee__tabelw" ref={tabelRef}>
-        <KepalaSeksi
-          judul="Gaji Bulanan"
-          kanan={
-            <>
-              <PilihTombol judul="Bulan" nilai={period} opsi={DAFTAR_BULAN} onUbah={setPeriod} />
+        {/* ==== LEMBAR ====================================================== */}
+        <section className="gji__lembar" id="gji-lembar" aria-labelledby="gji-judul">
+          <header className="gji__kop">
+            <div className="gji__kopkiri">
+              <p className="gji__kopatas">
+                Daftar penerimaan gaji · Lembar {Number(period.slice(5, 7))}
+              </p>
+              <p className="gji__kopjudul">
+                <span id="gji-judul" role="heading" aria-level={2}>
+                  {labelBulan(period)}
+                </span>
+                <span className="gji__kopbawah">
+                  {baris === null ? "Memuat…" : `${jumlahBaris} penerima`}
+                  {sekarang && sekarang.salaryUnpaid > 0 && (
+                    <span className="gji__kopbelum"> · {sekarang.salaryUnpaid} belum menerima gaji</span>
+                  )}
+                </span>
+              </p>
+            </div>
+            <div className="gji__kopaksi">
               {/* Muncul HANYA kalau ada yang bisa disalin: tombol yang sering
                   tidak melakukan apa-apa mengajari staf mengabaikannya. */}
               {bisaDisalin.length > 0 && (
-                <TombolIkon
-                  ikon={CopySimple}
-                  jenis="ghost"
-                  judul={`Salin ${bisaDisalin.length} gaji dari ${labelBulan(bulanSebelum(period))}, semuanya sebagai belum dibayar`}
-                  disabled={menyalin}
-                  onClick={salinBulanLalu}
-                />
+                <Tombol jenis="secondary" ukuran="small" kiri={CopySimple} memuat={menyalin} onClick={salinBulanLalu}>
+                  Salin {bisaDisalin.length} dari {nBulanLalu}
+                </Tombol>
               )}
               <DialogGaji
                 tim={tim}
                 period={period}
                 onSelesai={muatUlang}
-                pemicu={<TombolIkon ikon={Plus} jenis="ghost" judul={`Catat gaji ${namaBulan}`} />}
+                pemicu={
+                  <Tombol jenis="primary" ukuran="small" kiri={Plus}>
+                    Catat gaji
+                  </Tombol>
+                }
               />
-              <TombolIkon ikon={DownloadSimple} jenis="ghost" judul="Unduh CSV" onClick={ekspor} />
-            </>
-          }
-        />
-        {baris === null ? (
-          <p className="fee__kosong">Memuat…</p>
-        ) : barisTabel.length === 0 ? (
-          <p className="fee__kosong">
-            Belum ada gaji atau fee di {namaBulan}. Tombol tambah mencatat gaji bulanan; fee freelancer tidak
-            diketik di sini — ia muncul sendiri dari pengeluaran proyek yang dicatat di Keuangan.
-          </p>
-        ) : (
-          <>
-            <div className="fee__tabel">
-              <Tabel kolom={kolom} baris={barisTabel} pad={12.5} tinggiKepala={39} tinggiBaris={61} />
+              <TombolIkon ikon={DownloadSimple} jenis="ghost" ukuran="small" judul="Unduh CSV" onClick={ekspor} />
             </div>
-            <p className="gaji__jumlah">
-              <span>
-                Gaji <b>{formatRupiah(ringkas.gaji)}</b>
+          </header>
+
+          <div
+            className="gji__wadah"
+            ref={wadahRef}
+            onPointerLeave={(e) => {
+              if (e.pointerType === "mouse") setGaris(null);
+            }}
+          >
+            {baris !== null && jumlahBaris === 0 ? (
+              <p className="gji__kosong">
+                Belum ada gaji atau fee di {labelBulan(period)}. Catat gaji bulanan dengan tombol di atas — fee
+                freelancer muncul sendiri dari pengeluaran proyek yang dicatat di Keuangan.
+              </p>
+            ) : (
+              <table className="gji__daftar">
+                <colgroup>
+                  <col className="gji__c-no" />
+                  <col />
+                  <col className="gji__c-uang" />
+                  <col className="gji__c-uang" />
+                  <col className="gji__c-jumlah" />
+                  <col className="gji__c-ttd" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">Penerima</th>
+                    <th scope="col" className="gji__angka">Gaji</th>
+                    <th scope="col" className="gji__angka">Fee proyek</th>
+                    <th scope="col" className="gji__angka">Jumlah</th>
+                    <th scope="col" className="gji__ttdkepala">Tanda terima</th>
+                  </tr>
+                </thead>
+                {baris === null ? (
+                  <tbody>
+                    {[0, 1, 2].map((i) => (
+                      <tr key={i} className="gji__baris gji__baris--muat">
+                        <td colSpan={6}>
+                          <span className="rk" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                ) : (
+                  kelompok.map((k) => (
+                    <tbody key={k.jenis}>
+                      <tr className="gji__grup">
+                        <th scope="rowgroup" colSpan={4}>
+                          {k.label}
+                        </th>
+                        <td className="gji__angka">{formatRupiah(k.jumlah)}</td>
+                        <td />
+                      </tr>
+                      {k.baris.map((b) => (
+                        <tr
+                          key={b.teamMemberId}
+                          className="gji__baris"
+                          onPointerEnter={(e) => {
+                            if (e.pointerType === "mouse") ukurGaris(e.currentTarget, b);
+                          }}
+                          onFocus={(e) => ukurGaris(e.currentTarget, b)}
+                        >
+                          <td className="gji__no">{String(b.no).padStart(2, "0")}</td>
+                          <td className="gji__penerima">
+                            {/* Nama = pintu ubah/hapus: satu kolom ikon pensil
+                                untuk tiap orang memakan ruang angkanya. */}
+                            <DialogGaji
+                              tim={tim}
+                              period={period}
+                              awal={b}
+                              onSelesai={muatUlang}
+                              pemicu={
+                                <button type="button" className="gji__nama">
+                                  {b.name}
+                                </button>
+                              }
+                            />
+                            <span className="gji__peran">
+                              {b.role ?? LABEL_JENIS_ANGGOTA[b.kind]}
+                              {/* Slip orang ini di Bayaran Tim — sheet "GAJI
+                                  <nama>" yang dulu disalin tangan. */}
+                              <a href={`/admin/gaji/tim?orang=${encodeURIComponent(b.teamMemberId)}&bulan=${period}`}>Slip</a>
+                            </span>
+                          </td>
+                          <td className="gji__angka">
+                            {b.salaryAmount === null || b.salaryAmount === undefined ? (
+                              <span className="gji__redup">—</span>
+                            ) : (
+                              formatRupiah(b.salaryAmount)
+                            )}
+                          </td>
+                          <td className="gji__angka">
+                            {b.feeAmount === 0 ? (
+                              <span className="gji__redup">—</span>
+                            ) : (
+                              /* Tidak bisa diketik di sini; keterangannya
+                                 menjawab "kenapa" di tempat pertanyaan itu muncul. */
+                              <span
+                                className="gji__fee"
+                                {...ket(() => ({
+                                  judul: `Fee ${b.name} · ${nBulan}`,
+                                  baris: [
+                                    { label: `${b.feeCount} biaya proyek`, nilai: formatRupiah(b.feeAmount) },
+                                    { label: "Diubah di", nilai: "Keuangan" },
+                                  ],
+                                }))}
+                              >
+                                {formatRupiah(b.feeAmount)}
+                              </span>
+                            )}
+                          </td>
+                          <td className="gji__angka gji__jumlah">{formatRupiah(b.total)}</td>
+                          <td className={`gji__ttd gji__ttd--${b.no % 2 ? "kiri" : "kanan"}`}>
+                            <span className="gji__ttdslot">
+                              <span className="gji__ttdno">{b.no}.</span>
+                              <TandaTerima b={b} bulan={nBulan} onTandai={(v) => tandaiDibayar(b, v)} />
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  ))
+                )}
+                {baris !== null && jumlahBaris > 0 && (
+                  <tfoot>
+                    <tr>
+                      <th scope="row" colSpan={2}>
+                        Jumlah
+                      </th>
+                      <td className="gji__angka">{formatRupiah(ringkas.gaji)}</td>
+                      <td className="gji__angka">{formatRupiah(ringkas.fee)}</td>
+                      <td className="gji__angka gji__jumlah">{formatRupiah(ringkas.total)}</td>
+                      <td className="gji__ttdjumlah">
+                        {ringkas.bergaji > 0 ? `${ringkas.diterima}/${ringkas.bergaji} diterima` : ""}
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            )}
+            {garis && (
+              /* Dipasang hanya selama kursor di atas daftar: penggaris yang
+                 baru muncul langsung berdiri di barisnya, dan transisi
+                 `transform` hanya berlaku saat ia pindah baris. */
+              <span
+                className="gji__penggaris"
+                style={{ transform: `translateY(${garis.y}px)` }}
+                aria-hidden="true"
+              >
+                <span className="gji__penggarisbadan">
+                  <i style={{ width: `${garis.bagian}%` }} />
+                </span>
+                <span className="gji__penggarisket">
+                  {teksPersen(Math.round(garis.bagian * 10) / 10)} dari {nBulan}
+                </span>
               </span>
-              <span>
-                Fee <b>{formatRupiah(ringkas.fee)}</b>
-              </span>
-              <span>
-                Total <b>{formatRupiah(ringkas.total)}</b>
-              </span>
-              <span className={ringkas.belum > 0 ? "gaji__belum" : undefined}>
-                {ringkas.belum > 0 ? `${ringkas.belum} gaji belum dibayar` : "semua gaji sudah dibayar"}
-              </span>
+            )}
+          </div>
+
+          {baris !== null && jumlahBaris > 0 && (
+            <p className="gji__terbilang">
+              <span>Terbilang</span>
+              <em>{terbilang(ringkas.total)}</em>
             </p>
-          </>
-        )}
-      </article>
+          )}
+        </section>
+
+        {/* ==== INDEKS BULAN ================================================ */}
+        <div className="gji__indeks" ref={indeksRef} role="tablist" aria-orientation="vertical" aria-label={`Bulan di jilid ${tahun}`}>
+          {indeks.map((m, i) => {
+            const aktif = m.period === period;
+            return (
+              <button
+                key={m.period}
+                ref={(el) => {
+                  tabRef.current[i] = el;
+                }}
+                type="button"
+                role="tab"
+                aria-selected={aktif}
+                aria-controls="gji-lembar"
+                tabIndex={aktif ? 0 : -1}
+                disabled={m.mendatang}
+                className={`gji__tab${aktif ? " is-aktif" : ""}${m.total === 0 && !m.mendatang ? " gji__tab--kosong" : ""}`}
+                style={{ "--gji-t": m.mendatang ? 0 : m.rasio } as React.CSSProperties}
+                aria-label={`${labelBulan(m.period)}${m.mendatang ? ", belum tiba" : `: ${formatRupiah(m.total)}`}${m.salaryUnpaid ? `, ${m.salaryUnpaid} gaji belum dibayar` : ""}`}
+                onClick={() => setPeriod(m.period)}
+                onKeyDown={(e) => tombolIndeks(e, i)}
+                {...(m.mendatang
+                  ? {}
+                  : ket(() => ({
+                      judul: labelBulan(m.period),
+                      baris: [
+                        { warna: "var(--ramp-1)", label: "Gaji", nilai: formatRupiah(m.salary) },
+                        { warna: "var(--ramp-2)", label: "Fee proyek", nilai: formatRupiah(m.fee) },
+                        { label: `Jumlah · ${m.people} orang`, nilai: formatRupiah(m.total) },
+                        ...(m.salaryUnpaid
+                          ? [{ warna: "var(--warn)", label: "Belum dibayar", nilai: `${m.salaryUnpaid} gaji` }]
+                          : []),
+                      ],
+                    })))}
+              >
+                <span className="gji__tablabel">{BULAN_PENDEK[i]}</span>
+                {m.salaryUnpaid > 0 && <i className="gji__tabtitik" aria-hidden="true" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Tanda terima ────────────────────────────────────────────────────────────
+ * Tiga keadaan, sama dengan formulir kertasnya:
+ *   - gaji sudah dibayar → CAP bulat "DITERIMA" bertanggal (klik = batalkan)
+ *   - gaji belum dibayar → garis tanda tangan kosong + tombol "Tandai dibayar"
+ *   - hanya fee          → tanpa tanda terima: fee proyek sudah uang yang
+ *                          keluar saat dicatat, bukan janji yang menunggu
+ */
+function TandaTerima({ b, bulan, onTandai }: { b: BarisGajiBulan; bulan: string; onTandai: (dibayar: boolean) => void }) {
+  if (!b.salaryId) {
+    return <span className="gji__ttdfee">fee proyek</span>;
+  }
+  if (b.salaryPaidOn) {
+    const [, m, h] = b.salaryPaidOn.split("-");
+    return (
+      <button
+        type="button"
+        className="gji__cap"
+        aria-label={`Gaji ${bulan} diterima ${tanggalPendek(b.salaryPaidOn)}. Tekan untuk membatalkan tanda.`}
+        title={`Diterima ${tanggalPendek(b.salaryPaidOn)} — klik untuk membatalkan`}
+        onClick={() => onTandai(false)}
+      >
+        <svg viewBox="0 0 48 48" width="46" height="46" aria-hidden="true">
+          <defs>
+            <path id={`gji-busur-${b.salaryId}`} d="M 8.5 25 A 15.5 15.5 0 0 1 39.5 25" />
+          </defs>
+          <circle cx="24" cy="24" r="22.5" className="gji__capluar" />
+          <circle cx="24" cy="24" r="19.5" className="gji__capdalam" />
+          <text className="gji__capbusur">
+            <textPath href={`#gji-busur-${b.salaryId}`} startOffset="50%" textAnchor="middle">
+              DITERIMA
+            </textPath>
+          </text>
+          <text x="24" y="33" textAnchor="middle" className="gji__captgl">
+            {`${Number(h)}/${Number(m)}`}
+          </text>
+        </svg>
+      </button>
+    );
+  }
+  return (
+    <button type="button" className="gji__tandai" onClick={() => onTandai(true)}>
+      Tandai dibayar
+    </button>
+  );
+}
+
+/* ── Kerangka memuat: berbentuk buku, setinggi buku aslinya ───────────────── */
+function Kerangka(): ReactNode {
+  return (
+    <div className="gji gji--rangka" aria-busy="true">
+      <div className="gji__papan">
+        <aside className="gji__sampul">
+          <span className="rk rk--gelap" style={{ width: "60%", height: 12 }} />
+          <span className="rk rk--gelap" style={{ width: "80%", height: 16 }} />
+          <div className="gji__label">
+            <span className="rk" style={{ width: "70%", height: 12 }} />
+            <span className="rk" style={{ width: "85%", height: 26 }} />
+            <span className="rk" style={{ width: "60%", height: 12 }} />
+          </div>
+        </aside>
+        <section className="gji__lembar">
+          <header className="gji__kop">
+            <div className="gji__kopkiri">
+              <span className="rk" style={{ width: 180, height: 10 }} />
+              <span className="rk" style={{ width: 160, height: 22 }} />
+            </div>
+          </header>
+        </section>
+        <div className="gji__indeks">
+          {Array.from({ length: 12 }, (_, i) => (
+            <span key={i} className="gji__tab gji__tab--rangka" style={{ "--gji-t": 0.25 } as React.CSSProperties} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 /* ── Dialog catat / ubah gaji ────────────────────────────────────────────
- * Satu dialog untuk dua hal, dan hapus tinggal di dalamnya: tabel kit tidak
- * punya kolom aksi, jadi nama orang di tabel adalah pintunya. */
+ * Satu dialog untuk dua hal, dan hapus tinggal di dalamnya: nama orang di
+ * daftar adalah pintunya. */
 function DialogGaji({
   tim,
   period,
@@ -831,9 +962,7 @@ function DialogGaji({
               .map((t) => ({ nilai: t.id, label: t.role ? `${t.name} — ${t.role}` : t.name }))}
           />
           {perluIngat && !ubah && (
-            <p className="k-isian__bantu">
-              Freelancer — fee proyeknya sudah otomatis masuk kolom Fee.
-            </p>
+            <p className="k-isian__bantu">Freelancer — fee proyeknya sudah otomatis masuk kolom Fee.</p>
           )}
         </div>
         <div className="gaji__dua">
@@ -864,7 +993,7 @@ function DialogGaji({
 
 export function GajiKit() {
   return (
-    <RequireAuth skeleton={<div className="fee fee--rangka" />}>
+    <RequireAuth skeleton={<Kerangka />}>
       <ToastProvider>
         <Isi />
       </ToastProvider>

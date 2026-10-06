@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider, useToast } from "../kit/Toast";
 import { Avatar } from "../kit/Tampilan";
 import { Ikon } from "../kit/Ikon";
 import { Segmen } from "../kit/Segmen";
 import { Tombol } from "../kit/Tombol";
-import { KartuGrafik, type BarisKartu } from "../kit/kartuGrafik";
+import { Keterangan, pemberiKet, type KabarKartu } from "../kit/kartuGrafik";
 import {
   ArrowClockwise,
   ArrowRight,
@@ -114,41 +114,6 @@ function teksWa(slip: SlipGaji, namaBulan: string): string {
   return baris.join("\n");
 }
 
-/* --- Kartu keterangan ------------------------------------------------------
-   Seperti di Aturan Fee: state kartunya milik komponen kecil sendiri, supaya
-   kursor yang bergerak tidak menggambar ulang seluruh meja. Tetikus lewat
-   pointerenter/move/leave; jari lewat pointerup (ketuk = tampilkan), dan
-   ketukan di luar menutupnya — `pointerType` diperiksa (jebakan #9). */
-interface Info { x: number; y: number; judul: string; baris: BarisKartu[] }
-type Kabar = RefObject<((i: Info | null) => void) | null>;
-
-function Keterangan({ kabar }: { kabar: Kabar }) {
-  const [info, setInfo] = useState<Info | null>(null);
-  useEffect(() => {
-    kabar.current = setInfo;
-    return () => { kabar.current = null; };
-  }, [kabar]);
-  return info ? <KartuGrafik x={info.x} y={info.y} judul={info.judul} baris={info.baris} /> : null;
-}
-
-function pemberiKet(kabar: Kabar) {
-  return (isi: () => { judul: string; baris: BarisKartu[] }) => ({
-    "data-ket": "",
-    onPointerEnter: (e: React.PointerEvent) => {
-      if (e.pointerType === "mouse") kabar.current?.({ x: e.clientX, y: e.clientY, ...isi() });
-    },
-    onPointerMove: (e: React.PointerEvent) => {
-      if (e.pointerType === "mouse") kabar.current?.({ x: e.clientX, y: e.clientY, ...isi() });
-    },
-    onPointerLeave: (e: React.PointerEvent) => {
-      if (e.pointerType === "mouse") kabar.current?.(null);
-    },
-    onPointerUp: (e: React.PointerEvent) => {
-      if (e.pointerType !== "mouse") kabar.current?.({ x: e.clientX, y: e.clientY, ...isi() });
-    },
-  });
-}
-
 /* --- Meteran dibayar / jatuh tempo / belum tempo ---------------------------
    Satu bentuk untuk tim dan untuk tiap orang — membaca satu sama dengan
    membaca yang lain. Lebarnya bagian dari HAK; hak nol = meteran kosong. */
@@ -183,7 +148,7 @@ interface Orang {
 
 function Isi() {
   const toast = useToast();
-  const kabar: Kabar = useRef(null);
+  const kabar: KabarKartu = useRef(null);
   const ket = pemberiKet(kabar);
 
   const [tim, setTim] = useState<AnggotaTim[] | null>(() => bacaCache<AnggotaTim[]>("tim"));

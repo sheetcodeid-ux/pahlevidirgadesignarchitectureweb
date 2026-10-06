@@ -1089,6 +1089,33 @@ export interface EntriGaji {
 /** Seluruh riwayat gaji, semua bulan — untuk grafik bulanan dan tahunan. */
 export const riwayatGaji = () => panggil<EntriGaji[]>("/admin/payroll");
 
+/** Satu bulan di buku gaji — jumlah SELURUH orang (sama dengan baris
+ *  Jumlah di `gajiBulan`). */
+export interface BulanBuku {
+  /** 'YYYY-MM' */
+  period: string;
+  salary: number;
+  salaryCount: number;
+  salaryUnpaid: number;
+  fee: number;
+  feeCount: number;
+  people: number;
+  total: number;
+}
+
+export interface JilidGaji {
+  year: number;
+  salary: number;
+  fee: number;
+  total: number;
+}
+
+/** Buku gaji satu tahun: 24 bulan (Januari tahun lalu – Desember tahun itu)
+ *  dan total setiap tahun yang berdata. Dihitung di server — `/costs` dibatasi
+ *  200 baris, jadi fee lama tidak bisa dijumlah di peramban. */
+export const bukuGaji = (tahun: number) =>
+  panggil<{ months: BulanBuku[]; years: JilidGaji[] }>(`/admin/payroll/ledger?year=${tahun}`);
+
 export const gajiBulan = (period: string) =>
   panggil<BarisGajiBulan[]>(`/admin/payroll/month?period=${encodeURIComponent(period)}`);
 

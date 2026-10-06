@@ -749,6 +749,39 @@ function gajiSebulan(period) {
     .filter(Boolean);
 }
 
+/* Buku gaji satu tahun — sama dengan payroll.buku() di API: tiap bulan
+   dijumlah dari gajiSebulan(), jadi indeks bulan = baris Jumlah daftarnya. */
+function bukuTiruan(tahun) {
+  const y = Number(tahun);
+  const months = Array.from({ length: 24 }, (_, i) => {
+    const k = `${y - 1 + Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, "0")}`;
+    const d = gajiSebulan(k);
+    const salary = d.reduce((n, r) => n + (r.salaryAmount ?? 0), 0);
+    const fee = d.reduce((n, r) => n + r.feeAmount, 0);
+    return {
+      period: k, salary, salaryCount: d.filter((r) => r.salaryId).length,
+      salaryUnpaid: d.filter((r) => r.salaryId && !r.salaryPaidOn).length,
+      fee, feeCount: d.reduce((n, r) => n + r.feeCount, 0), people: d.length, total: salary + fee,
+    };
+  });
+  const per = new Map();
+  for (const g of gajiAdmin) {
+    const t = Number(g.period.slice(0, 4));
+    const v = per.get(t) ?? { year: t, salary: 0, fee: 0 };
+    v.salary += g.amount;
+    per.set(t, v);
+  }
+  for (const b of [...biayaKeu, ...biayaRiwayat]) {
+    if (!b.teamMemberId) continue;
+    const t = Number(b.incurredOn.slice(0, 4));
+    const v = per.get(t) ?? { year: t, salary: 0, fee: 0 };
+    v.fee += b.amount;
+    per.set(t, v);
+  }
+  const years = [...per.values()].sort((a, z) => a.year - z.year).map((v) => ({ ...v, total: v.salary + v.fee }));
+  return { months, years };
+}
+
 /* Tombol Terbitkan. Cap perubahan bergeser tiap kali ada penulisan — sama
    dengan trigger content_revision di database — dan mulai dari jauh di masa
    lalu, jadi halaman yang baru dimuat bertanda "sudah sama" sampai sesuatu
@@ -848,6 +881,10 @@ const jawab = (path) => {
   {
     const gb = path.match(/^\/api\/v1\/admin\/payroll\/month\?period=([0-9-]+)/);
     if (gb) return gajiSebulan(gb[1]);
+  }
+  {
+    const bk = path.match(/^\/api\/v1\/admin\/payroll\/ledger\?year=(\d{4})/);
+    if (bk) return bukuTiruan(bk[1]);
   }
   {
     const rw = path.match(/^\/api\/v1\/admin\/payroll\/slip\/history\?teamMemberId=([^&]+)&until=([0-9-]+)/);

@@ -826,6 +826,42 @@ export interface PaySlipMonth {
   total: number;
 }
 
+/**
+ * Satu bulan di buku gaji: gaji dan fee SELURUH orang, dengan saringan yang
+ * sama dengan `payroll.bulan()` — jadi jumlahnya selalu sama dengan baris
+ * Jumlah di daftar bulan itu.
+ */
+export interface PayrollLedgerMonth {
+  /** 'YYYY-MM' */
+  period: string;
+  salary: number;
+  /** Banyaknya baris gaji bulan itu. */
+  salaryCount: number;
+  /** Baris gaji yang belum bertanggal bayar. */
+  salaryUnpaid: number;
+  fee: number;
+  feeCount: number;
+  /** Orang berbeda yang menerima gaji ATAU fee. */
+  people: number;
+  total: number;
+}
+
+/** Satu jilid (tahun) buku gaji. */
+export interface PayrollLedgerYear {
+  year: number;
+  salary: number;
+  fee: number;
+  total: number;
+}
+
+export interface PayrollLedger {
+  /** Dua puluh empat bulan: Januari tahun SEBELUMNYA sampai Desember tahun
+   *  yang diminta — tahun lalu ikut untuk pembanding periode yang sama. */
+  months: PayrollLedgerMonth[];
+  /** Setiap tahun yang punya gaji atau fee bernama, terlama lebih dulu. */
+  years: PayrollLedgerYear[];
+}
+
 /** Fee satu proyek, dipecah per orang. */
 export interface FeeProject {
   projectId: string;

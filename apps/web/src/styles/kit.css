@@ -3357,10 +3357,9 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .pro__kartub .k-kas { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
 .pro__kartub:hover .k-kas { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
-/* Nama orang di tabel Gaji dan status gaji: teks yang bisa diklik bergaris
-   bawah saat disentuh, sama dengan nama transaksi di Semua Transaksi. */
-.fee__sel:hover .k-sel2__atas,
-.gaji__status:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Nama di tabel Fee: teks yang bisa diklik bergaris bawah saat disentuh,
+   sama dengan nama transaksi di Semua Transaksi. */
+.fee__sel:hover .k-sel2__atas { text-decoration: underline; text-underline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
   .pro__kartub .k-kas { transition: none; }

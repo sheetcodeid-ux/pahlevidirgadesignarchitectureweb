@@ -649,6 +649,19 @@ admin.get("/payroll/slip/history", async (c) => {
   }
 });
 
+/** Buku gaji satu tahun — `?year=YYYY`: 24 bulan (tahun lalu + tahun itu)
+ *  dan total per tahun. */
+admin.get("/payroll/ledger", async (c) => {
+  const tahun = Number(c.req.query("year"));
+  if (!tahun) return c.json({ error: { status: 422, message: "tahun wajib diisi" } }, 422);
+  try {
+    const data = await withDb(c.env, c.executionCtx, (sql) => payrollRepo.buku(sql, tahun));
+    return c.json({ data });
+  } catch (err) {
+    return c.json({ error: { status: 422, message: (err as Error).message } }, 422);
+  }
+});
+
 admin.get("/payroll/month", async (c) => {
   const period = c.req.query("period");
   if (!period) return c.json({ error: { status: 422, message: "periode wajib diisi" } }, 422);

@@ -201,6 +201,26 @@ it.skipIf(!adaPostgres)("tim, bayaran, kas, dan target jalan dengan setelan kone
   cek("September di riwayat = total slip September (999 rb, tanpa gaji)", rSep.total === slipSep.total && rSep.total === 999_000 && rSep.salaryPaid === null, rSep);
   cek("bulan kosong tetap dikirim sebagai 0", riwayat.filter((r) => r.total === 0).length === 10);
 
+  console.log("\n── buku gaji satu tahun (indeks bulan & rak jilid di halaman Gaji) ──");
+  const buku = await payroll.buku(sql, 2026);
+  cek("24 bulan: Januari tahun lalu sampai Desember tahun yang diminta",
+    buku.months.length === 24 && buku.months[0]!.period === "2025-01" && buku.months[23]!.period === "2026-12",
+    buku.months.map((m) => m.period));
+  for (const k of ["2026-08", "2026-09"]) {
+    const daftarBulan = await payroll.bulan(sql, k);
+    const m = buku.months.find((x) => x.period === k)!;
+    const jumlah = daftarBulan.reduce((n, r) => n + r.total, 0);
+    cek(`${k}: jumlah buku = jumlah daftar bulan itu, orang dan gaji belum dibayar sama`,
+      m.total === jumlah && m.people === daftarBulan.length &&
+        m.salaryCount === daftarBulan.filter((r) => r.salaryId).length &&
+        m.salaryUnpaid === daftarBulan.filter((r) => r.salaryId && !r.salaryPaidOn).length,
+      { m, jumlah, orang: daftarBulan.length });
+  }
+  const jilid = buku.years.find((t) => t.year === 2026);
+  const jumlah2026 = buku.months.filter((m) => m.period.startsWith("2026")).reduce((n, m) => n + m.total, 0);
+  cek("jilid 2026 = jumlah dua belas bulannya", jilid?.total === jumlah2026 && jumlah2026 > 0, { jilid, jumlah2026 });
+  cek("tahun di luar akal ditolak", (await galat(() => payroll.buku(sql, 26))) === "tahun tidak sah");
+
   console.log("\n── kas studio ──");
   const pvc = await ledger.create(sql, {
     direction: "masuk", category: "penjualan_material", label: "PVC 120 batang",

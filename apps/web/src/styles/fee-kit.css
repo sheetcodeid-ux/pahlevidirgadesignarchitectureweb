@@ -215,44 +215,6 @@
 
 .fee__kosong { margin: 16px 0 0; font-size: var(--k-t12); color: var(--text-muted); }
 
-/* --- Gaji (frame 25 yang sama, isi gaji) ------------------------------------ */
-/* Keterangan bulan di kepala widget Per Jenis — tempat "Today ▾" framenya,
-   tanpa pemilih karena bulannya dipilih di tabel. */
-.fee__ketkepala { font-size: var(--k-t12); color: var(--text-muted); white-space: nowrap; }
-
-/* Nama orang = tombol ubah: tanpa bingkai, tinta sama dengan sel biasa. */
-.gaji__nama { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-.gaji__nama:hover .k-sel2__atas { text-decoration: underline; text-underline-offset: 2px; }
-.gaji__nama:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
-.gaji__status { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
-.gaji__status:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 9px; }
-
-/* Jumlah bulan di kaki tabel — pengganti tiga kartu angka halaman lama. */
-.gaji__jumlah {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 20px;
-  max-width: none;
-  margin: auto 0 0;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-  font-size: var(--k-t12);
-  color: var(--text-muted);
-}
-.gaji__jumlah b { font-weight: var(--k-semi); color: var(--text-strong); }
-.gaji__belum { margin-left: auto; color: var(--text-strong); }
-
-/* Dialog catat/ubah. Isiannya kit; bingkai dialognya overlay lama — satu
-   perilaku focus-trap untuk seluruh panel. */
-.gaji__form { display: flex; flex-direction: column; gap: 16px; font-family: var(--font-sans); }
-.gaji__dua { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
-.gaji__form select.k-isian__input { appearance: auto; cursor: pointer; }
-.gaji__kaki { display: flex; align-items: center; justify-content: flex-end; gap: 16px; width: 100%; }
-/* `margin: 0 auto 0 0`, bukan cuma margin-right: .pas__hapus membawa
-   margin-left:auto sendiri, dan keduanya bersama memusatkannya. */
-.gaji__kaki .pas__hapus { margin: 0 auto 0 0; }
-.gaji__alasan { font-size: var(--k-t12); color: var(--text-muted); }
-
 /* Di bawah lebar framenya: dua kolom, lalu satu. */
 @media (max-width: 1288px) {
   .fee {
@@ -271,7 +233,7 @@
   .fee__info--legenda { flex-wrap: wrap; }
 }
 
-/* --- SATU LAYAR (desktop): Fee Proyek dan Gaji ------------------------------
+/* --- SATU LAYAR (desktop): Fee Proyek ------------------------------
    Dua baris frame (373 + 485) dipadatkan ke tinggi area isi: kedua grafik
    baris atas mengecil (bidang 174 → 112; batangnya persen, jadi ikut), dan
    ketiga kartu baris bawah menggulir isinya sendiri — daftar penerima,
@@ -287,8 +249,3 @@
   .fee__busur { margin-top: 12px; }
   .fee__garis { margin-top: 16px; }
 }
-
-/* Penerima di Gaji membuka slip di Bayaran Tim. Tautan pembungkus tidak boleh
-   mengubah tata letak baris pantaunya — cuma menambah hover. */
-.gaji__slip { display: block; margin: -4px -6px; padding: 4px 6px; border-radius: 12px; color: inherit; text-decoration: none; }
-.gaji__slip:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }

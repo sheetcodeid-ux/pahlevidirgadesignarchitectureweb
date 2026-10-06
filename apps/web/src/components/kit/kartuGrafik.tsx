@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
 /* =============================================================================
@@ -62,4 +62,40 @@ export function KartuGrafik({
     </div>,
     document.body,
   );
+}
+
+/* --- Keterangan untuk benda yang BUKAN grafik kit ---------------------------
+   Amplop, tab bulan, jilid di rak: state kartunya milik komponen kecil
+   `Keterangan`, bukan halaman, supaya kursor yang bergerak tidak menggambar
+   ulang seluruh halaman. Tetikus lewat pointerenter/move/leave; jari lewat
+   pointerup (ketuk = tampilkan) — `pointerType` diperiksa (jebakan #9).
+   Halaman yang memakainya menutup kartu dari ketukan di luar sendiri. */
+export interface InfoKartu { x: number; y: number; judul: string; baris: BarisKartu[] }
+export type KabarKartu = RefObject<((i: InfoKartu | null) => void) | null>;
+
+export function Keterangan({ kabar }: { kabar: KabarKartu }) {
+  const [info, setInfo] = useState<InfoKartu | null>(null);
+  useEffect(() => {
+    kabar.current = setInfo;
+    return () => { kabar.current = null; };
+  }, [kabar]);
+  return info ? <KartuGrafik x={info.x} y={info.y} judul={info.judul} baris={info.baris} /> : null;
+}
+
+export function pemberiKet(kabar: KabarKartu) {
+  return (isi: () => { judul: string; baris: BarisKartu[] }) => ({
+    "data-ket": "",
+    onPointerEnter: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") kabar.current?.({ x: e.clientX, y: e.clientY, ...isi() });
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") kabar.current?.({ x: e.clientX, y: e.clientY, ...isi() });
+    },
+    onPointerLeave: (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse") kabar.current?.(null);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      if (e.pointerType !== "mouse") kabar.current?.({ x: e.clientX, y: e.clientY, ...isi() });
+    },
+  });
 }

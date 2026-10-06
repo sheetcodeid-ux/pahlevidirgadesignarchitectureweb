@@ -1,6 +1,6 @@
 import type { Sql } from "postgres";
 import type {
-  MemberKind, PayoutStage, PaySlip, PaySlipMonth, PayrollEntry, PayrollInput, PayrollMonthRow, TeamRole,
+  MemberKind, PayoutStage, PaySlip, PaySlipMonth, PayrollEntry, PayrollInput, PayrollLedger, PayrollMonthRow, TeamRole,
 } from "../types";
 import { NotFoundError } from "./projects";
 
@@ -254,6 +254,96 @@ export async function riwayatSlip(sql: Sql, teamMemberId: string, sampai: string
       total: salary + fee,
     };
   });
+}
+
+/**
+ * Buku gaji satu tahun: tiap bulan dijumlah untuk SELURUH orang, ditambah
+ * total per tahun untuk rak jilid.
+ *
+ * Saringannya SAMA dengan `bulan()` — gaji dari `payroll` pada bulan itu, fee
+ * dari `project_costs` yang bernama dan terjadi di bulan itu — jadi indeks
+ * bulan di tepi lembar dan baris Jumlah di daftarnya tidak bisa berbeda
+ * (dijaga tes). Dihitung di sini, bukan dari `/costs` di peramban: daftar itu
+ * dibatasi 200 baris, dan fee lama diam-diam hilang dari jumlahnya.
+ */
+export async function buku(sql: Sql, tahun: number): Promise<PayrollLedger> {
+  const y = Math.trunc(tahun);
+  if (!Number.isFinite(y) || y < 2000 || y > 2100) throw new Error("tahun tidak sah");
+  const mulai = `${y - 1}-01-01`;
+
+  interface M {
+    period: string; gaji: string; gaji_n: number; gaji_belum: number; fee: string; fee_n: number; orang: number;
+  }
+  interface T { tahun: number; gaji: string; fee: string }
+
+  const [bulanan, tahunan] = await Promise.all([
+    sql<M[]>`
+      with bulan as (
+        select (${mulai}::date + make_interval(months => i))::date as awal
+          from generate_series(0, 23) as i
+      )
+      select to_char(b.awal, 'YYYY-MM') as period,
+             coalesce(g.jumlah, 0) as gaji,
+             coalesce(g.n, 0)::int as gaji_n,
+             coalesce(g.belum, 0)::int as gaji_belum,
+             coalesce(f.jumlah, 0) as fee,
+             coalesce(f.n, 0)::int as fee_n,
+             (select count(distinct o.id)::int from (
+                select team_member_id as id from public.payroll where period = b.awal
+                union
+                select team_member_id from public.project_costs
+                 where team_member_id is not null
+                   and incurred_on >= b.awal and incurred_on < (b.awal + interval '1 month')
+              ) o) as orang
+        from bulan b
+        left join lateral (
+          select sum(amount) as jumlah, count(*) as n, count(*) filter (where paid_on is null) as belum
+            from public.payroll
+           where period = b.awal
+        ) g on true
+        left join lateral (
+          select sum(amount) as jumlah, count(*) as n
+            from public.project_costs
+           where team_member_id is not null
+             and incurred_on >= b.awal
+             and incurred_on <  (b.awal + interval '1 month')
+        ) f on true
+       order by b.awal`,
+    sql<T[]>`
+      select t.tahun, coalesce(sum(t.gaji), 0) as gaji, coalesce(sum(t.fee), 0) as fee
+        from (
+          select extract(year from period)::int as tahun, amount as gaji, 0::numeric as fee
+            from public.payroll
+          union all
+          select extract(year from incurred_on)::int, 0, amount
+            from public.project_costs
+           where team_member_id is not null
+        ) t
+       group by t.tahun
+       order by t.tahun`,
+  ]);
+
+  return {
+    months: bulanan.map((r) => {
+      const salary = Number(r.gaji);
+      const fee = Number(r.fee);
+      return {
+        period: r.period,
+        salary,
+        salaryCount: r.gaji_n,
+        salaryUnpaid: r.gaji_belum,
+        fee,
+        feeCount: r.fee_n,
+        people: r.orang,
+        total: salary + fee,
+      };
+    }),
+    years: tahunan.map((r) => {
+      const salary = Number(r.gaji);
+      const fee = Number(r.fee);
+      return { year: r.tahun, salary, fee, total: salary + fee };
+    }),
+  };
 }
 
 export async function create(sql: Sql, input: PayrollInput): Promise<string> {
