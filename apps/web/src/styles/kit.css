@@ -3370,7 +3370,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
    `:not(:focus-within)` — garis fokus (--brand) tidak boleh ditimpa garis
    hover saat kursor kebetulan melintas di kotak yang sedang diisi. */
 .k-pilihtombol:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
-:is(.k-isian__kotak, .kd-status, .tr__pilih):hover:not(:focus-within) { border-color: var(--border-strong); }
+:is(.k-isian__kotak, .kd-status):hover:not(:focus-within) { border-color: var(--border-strong); }
 /* Pemilih berbentuk teks ("Bulan ini ⌄") di kepala kartu: <select> tak
    tampak di atas teksnya, jadi teksnya yang bergaris bawah. */
 .fee__pilihteks:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -3396,9 +3396,6 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .kl-body :is(
   .gal-atas .k-cari,
   .dsb__kol > .k-jalurtab,
-  .tr__kiri > .k-jalurtab,
-  .tr__cari > .k-cari,
-  .tr__cari > .k-bulat,
   .pas__utama > .k-segmen,
   .pf__bagian > .k-jalurtab,
   .pk__tautan,
@@ -3419,8 +3416,6 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
    persis dengan latar halaman (#171D1C) begitu ia duduk di luar kartu. */
 :root[data-theme="dark"] .kl-body :is(
   .keu__stat > .k-statkecil,
-  .tr__gulir > .k-transfer:not([aria-pressed="true"]),
-  .tr__akor > .k-penyedia,
   .is-logo__kotak
 ) {
   background-color: var(--surface);

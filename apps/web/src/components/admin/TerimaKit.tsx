@@ -1,72 +1,82 @@
-import { KelompokIsian, PilihMenu } from "../kit/Formulir";
-import { useEffect, useMemo, useState } from "react";
-import { RequireAuth } from "./RequireAuth";
-import { DropdownMenu } from "../kit/Overlay";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { navigate } from "astro:transitions/client";
-import { KepalaSeksi, BarisTransfer, TombolBulat } from "../kit/Item";
-import { Segmen, KelompokTab } from "../kit/Segmen";
+import { RequireAuth } from "./RequireAuth";
+import { DialogBukti } from "./buktiKit";
+import { CapLunas } from "./capLunas";
+import { PilihMenu } from "../kit/Formulir";
+import { DropdownMenu } from "../kit/Overlay";
 import { Cari } from "../kit/Isian";
-import { Tombol, TombolIkon } from "../kit/Tombol";
+import { Tombol } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
+import { TombolBulat } from "../kit/Item";
 import { ToastProvider, useToast } from "../kit/Toast";
-import { CoinVertical, NavCreditCard, VirtualAccount, DotsThree, Sliders, NavReceipt, Hourglass, Plus, CheckCircle, NavArrowsLeftRight, ChartBar } from "../kit/ikon";
+import { DotsThree, Sliders, Plus, CaretDown, NavReceipt, NavArrowsLeftRight, ChartBar } from "../kit/ikon";
 import {
   daftarProyek,
   daftarPembayaran,
   catatPembayaran,
+  ambilSettings,
   bacaCache,
   tulisCache,
   type Proyek,
   type Pembayaran,
+  type StudioSettings,
 } from "../../lib/admin";
+import { CATEGORY_LABELS, type ProjectCategory } from "../../lib/api";
 import { proyekAktif, setProyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
-import { DialogBukti } from "./buktiKit";
+import { terbilang } from "../../lib/terbilang";
+import { kodeProyek, inisial } from "../../lib/nomorDokumen";
+import { BULAN_PENDEK } from "./frame25";
 
 /* =============================================================================
-   Terima Pembayaran — frame Figma "07. Transfer".
+   Terima Pembayaran — KOTAK KARTU PEMBAYARAN KLIEN.
 
-   TATA LETAKNYA milik frame; ISINYA milik studio ini. Pemetaannya kebetulan
-   jatuh rapi, dan itu bukan kebetulan yang dipaksakan — kolom enum di
-   database memang sejumlah slot di framenya:
+   Benda dunia nyatanya: di meja administrasi studio ada sebuah kotak berisi
+   satu KARTU PEMBAYARAN per proyek — kartu karton bergaris seperti kartu
+   angsuran atau kartu SPP. Saat klien membayar, petugas menarik kartunya
+   dari kotak, menaruhnya di meja, menulis satu baris (tanggal, uraian,
+   jumlah diterima, sisa), lalu memarafnya. Sengaja berbeda dari tetangganya
+   di Keuangan — Gaji (buku), Fee (kuitansi), Tagihan (papan jepit), Kas
+   (mesin kas), Semua Transaksi (rekening koran), Catat Pengeluaran (nota +
+   paku).
 
-     Coinest                        Halaman ini
-     ----------------------------   ------------------------------------------
-     4 tab mode kiri                `payment_method`: tunai / transfer / qris /
-     (Transfer/Payment/VA/Top Up)   lainnya — PERSIS empat
-     Cari + saring                  cari proyek
-     Daftar penerima (302x67)       daftar proyek, sisa tagihan di bawah nama
-     "Add New Recipient"            "Proyek Baru"
-     Recent Transfer (3 kartu)      pembayaran terbaru proyek terpilih
-     Segmented Local/International  `payment_kind`: dp / termin / pelunasan
-     Payment Account (2 kartu)      nilai kontrak / sudah diterima
-     Select Recipient               proyek
-     Amount + Transfer Method       nominal + diterima oleh (`receiver`)
-     Note                           catatan (`note`)
-     Cancel / Send Money            Batal / Catat Pembayaran
+   Satu papan `--kas-bidang` berjahit, dua bagian:
 
-   Tiga selisih yang DISENGAJA, semuanya karena datanya memang lain:
+   1. KOTAK KARTU — puncak kartu tiap proyek berdiri berurutan abjad, tab
+      indeksnya berselang kiri/tengah/kanan seperti kartu indeks sungguhan,
+      dengan sisa yang belum dibayar. Kartu yang sedang di meja meninggalkan
+      KARTU PENGGANTI bermint ("di meja") di slotnya — kebiasaan arsip
+      sungguhan supaya tempatnya tidak hilang. Muka kotak memuat label
+      berbingkai: banyaknya kartu dan seluruh piutang di dalamnya.
+   2. KARTU di meja — kop (No. KP-KODE, nama studio dari Info Studio, nilai
+      kontrak), identitas klien, BUKU BARIS: tiap pembayaran satu baris
+      berurut waktu dengan SISA BERJALAN dan paraf penerima; baris berikutnya
+      yang sedang DITULIS (jumlah diketik di kolom Diterima, sisanya ikut
+      bergerak); kotak centang tercetak "Pembayaran ini" (DP / Termin /
+      Pelunasan — yang ditebak dicentang PENSIL, yang dipilih staf TINTA) dan
+      "Lewat" (empat metode), diterima oleh + catatan; kaki berisi jumlah
+      diterima, mistar kontrak, sisa, dan cap LUNAS saat kontraknya habis.
 
-   1. Segmented di framenya DUA tombol; `payment_kind` punya tiga nilai, jadi
-      di sini tiga. Lebarnya tetap 757, dibagi rata.
-   2. Kartu "Payment Account" di framenya bisa DIPILIH (satu berlatar mint =
-      rekening yang dipakai). Di sini keduanya cuma angka: nilai kontrak dan
-      yang sudah diterima. Tidak ada yang bisa dipilih, karena uangnya masuk
-      ke studio, bukan ke salah satu dari dua rekening.
-   3. Gambar kartu kredit yang terpotong di tepi kiri tiap kartu diganti ubin
-      56 berikon. Kita tidak punya gambar kartu, dan menggambarnya sendiri
-      berarti mengarang benda yang tidak ada.
+   SATU-SATUNYA gerak 3D: kartu yang diklik di kotak DITARIK keluar — mulai
+   berdiri di tempatnya di kotak, lalu rebah di meja (`rotateX` dari tepi
+   bawah). Jaraknya dibaca SEKALI saat diklik. Sesudah mencatat, baris baru
+   tertulis dari kiri ke kanan dan parafnya tercap (2D); bila kontraknya
+   habis, cap LUNAS dibubuhkan. Semuanya diam bila gerak dikurangi.
 
-   Yang TIDAK ada di form ini, dan sengaja: tanggal. `paid_at` diisi database
-   (`default now()`), dan memberi staf kotak tanggal berarti menjanjikan
-   sesuatu yang endpoint-nya tidak terima — lihat `repository/payments.ts`.
+   Semua fitur versi frame 07 dibawa: metode (empat), jenis yang DITEBAK dari
+   angkanya (aturan lama), `?proyek=` lebih dulu lalu proyek aktif, cari
+   proyek, Saring → Semua Proyek, Proyek Baru, ringkasan kontrak, diterima
+   oleh, catatan, Kosongkan, bukti pembayaran yang terbuka sendiri sesudah
+   mencatat dan dari tiap baris, Lihat semua, menu ⋯. Tetap tanpa isian
+   tanggal: `paid_at` diisi database (lihat `repository/payments.ts`).
    ============================================================================= */
 
 const METODE = [
-  { nilai: "tunai", label: "Tunai", ikon: CoinVertical },
-  { nilai: "transfer", label: "Transfer", ikon: NavCreditCard },
-  { nilai: "qris", label: "QRIS", ikon: VirtualAccount },
-  { nilai: "lainnya", label: "Lainnya", ikon: DotsThree },
+  { nilai: "tunai", label: "Tunai" },
+  { nilai: "transfer", label: "Transfer" },
+  { nilai: "qris", label: "QRIS" },
+  { nilai: "lainnya", label: "Lainnya" },
 ];
 
 const JENIS = [
@@ -75,36 +85,18 @@ const JENIS = [
   { nilai: "pelunasan", label: "Pelunasan" },
 ];
 
-const LABEL_METODE: Record<string, string> = Object.fromEntries(
-  METODE.map((m) => [m.nilai, m.label]),
-);
-const LABEL_JENIS: Record<string, string> = Object.fromEntries(
-  JENIS.map((j) => [j.nilai, j.label]),
-);
+const LABEL_METODE: Record<string, string> = Object.fromEntries(METODE.map((m) => [m.nilai, m.label]));
+const LABEL_JENIS: Record<string, string> = Object.fromEntries(JENIS.map((j) => [j.nilai, j.label]));
 
-/** "Kedai Kopi Ruas" -> "KR". Dipakai sebagai ganti foto di avatar 40. */
-function inisial(judul: string): string {
-  const kata = judul.trim().split(/\s+/).filter(Boolean);
-  if (kata.length === 0) return "?";
-  if (kata.length === 1) return kata[0].slice(0, 2).toUpperCase();
-  return (kata[0][0] + kata[kata.length - 1][0]).toUpperCase();
-}
-
-/** "2026-09-29T..." -> "29 Sep". */
-const BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-function tanggalPendek(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return `${d.getDate()} ${BULAN[d.getMonth()]}`;
-}
+/** Waktu baris baru "ditulis" sebelum bukti dibuka. */
+const TULIS_MS = 1100;
+const TARIK_MS = 640;
 
 /**
  * Jenis DITEBAK dari angkanya, dengan aturan yang sama seperti dialog
- * pembayaran lama (PaymentFlow.tsx, sudah dibuang) — staf yang terbiasa
- * dengan tebakan lama mendapat tebakan yang sama.
- *
- * Kalau sisa tagihan lunas oleh pembayaran ini, itu pelunasan. Kalau ini
- * yang pertama, itu DP. Sisanya termin. Staf tetap bisa mengubahnya.
+ * pembayaran lama — staf yang terbiasa dengan tebakan lama mendapat tebakan
+ * yang sama. Lunas oleh pembayaran ini = pelunasan; yang pertama = DP;
+ * sisanya termin. Staf tetap bisa mengubahnya.
  */
 function tebakJenis(nilai: number, kontrak: number, sudah: number): string {
   if (kontrak > 0 && sudah + nilai >= kontrak) return "pelunasan";
@@ -117,13 +109,137 @@ function keAngka(teks: string): number {
   return bersih ? Number(bersih) : 0;
 }
 
+/** Ditulis ulang dengan titik ribuan saat diketik, seperti di nota. */
+function rapikan(teks: string): string {
+  const n = keAngka(teks);
+  return n ? n.toLocaleString("id-ID") : "";
+}
+
+function tanggalPendek(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return `${d.getDate()} ${BULAN_PENDEK[d.getMonth()]}`;
+}
+
+const tahunDari = (iso: string) => new Date(iso).getFullYear();
+
+/** Angka yang berhitung ke nilai barunya (600 ms); seketika bila gerak
+ *  dikurangi, dan seketika saat `kunci` berganti (kartu lain di meja —
+ *  angka proyek lain bukan "bertambah"). */
+function useHitung(nilai: number, kunci: string): number {
+  const [tampil, setTampil] = useState(nilai);
+  const kini = useRef(nilai);
+  const kunciLama = useRef(kunci);
+  useEffect(() => {
+    const awal = kini.current;
+    if (awal === nilai) {
+      kunciLama.current = kunci;
+      return;
+    }
+    if (kunciLama.current !== kunci || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      kunciLama.current = kunci;
+      kini.current = nilai;
+      setTampil(nilai);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const langkah = (t: number) => {
+      const p = Math.min(1, (t - t0) / 600);
+      const v = Math.round(awal + (nilai - awal) * (1 - Math.pow(1 - p, 3)));
+      kini.current = v;
+      setTampil(v);
+      if (p < 1) raf = requestAnimationFrame(langkah);
+    };
+    raf = requestAnimationFrame(langkah);
+    return () => cancelAnimationFrame(raf);
+  }, [nilai, kunci]);
+  /* Saat kartu berganti, nilai lama tidak boleh tergambar satu frame pun. */
+  return kunciLama.current !== kunci ? nilai : tampil;
+}
+
+const geraknya = () =>
+  typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Centang tangan: tinta untuk pilihan staf, pensil putus untuk tebakan. */
+function Centang() {
+  return (
+    <svg className="kpb__centang" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      <path d="M2.6 8.6 6.2 12.2 13.6 3.2" />
+    </svg>
+  );
+}
+
+function Kotak({
+  pilih,
+  pensil,
+  label,
+  onPilih,
+}: {
+  pilih: boolean;
+  pensil?: boolean;
+  label: string;
+  onPilih: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={pilih}
+      tabIndex={pilih ? 0 : -1}
+      className={`kpb__kotak${pilih ? " is-pilih" : ""}${pilih && pensil ? " is-pensil" : ""}`}
+      onClick={onPilih}
+    >
+      <span className="kpb__kotakbox">{pilih && <Centang />}</span>
+      {label}
+    </button>
+  );
+}
+
+/** Kelompok kotak centang bergaya radio: panah berpindah pilihan. */
+function KelompokKotak({
+  label,
+  opsi,
+  nilai,
+  pensil,
+  onPilih,
+}: {
+  label: string;
+  opsi: { nilai: string; label: string }[];
+  nilai: string;
+  pensil?: boolean;
+  onPilih: (v: string) => void;
+}) {
+  return (
+    <div
+      className="kpb__kelompok"
+      role="radiogroup"
+      aria-label={label}
+      onKeyDown={(e) => {
+        const i = opsi.findIndex((o) => o.nilai === nilai);
+        const geser = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+        if (!geser) return;
+        e.preventDefault();
+        const j = (i + geser + opsi.length) % opsi.length;
+        onPilih(opsi[j].nilai);
+        e.currentTarget.querySelectorAll<HTMLButtonElement>("button")[j]?.focus();
+      }}
+    >
+      <span className="kpb__kelompoklabel">{label}</span>
+      {opsi.map((o) => (
+        <Kotak key={o.nilai} label={o.label} pilih={o.nilai === nilai} pensil={pensil} onPilih={() => onPilih(o.nilai)} />
+      ))}
+    </div>
+  );
+}
+
 function Isi() {
   const toast = useToast();
 
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
-  /* `?proyek=` lebih dulu — dipakai tombol "Terima Bayar" di halaman Semua
-     Proyek, supaya proyek yang sedang dibuka di sana langsung terpilih tanpa
-     mengubah proyek aktif GLOBAL (yang ikut menyaring halaman lain). */
+  /* `?proyek=` lebih dulu — dipakai tombol "Terima Bayar" di Semua Proyek
+     dan menu Satu Proyek, supaya proyek yang sedang dibuka di sana langsung
+     terpilih tanpa mengubah proyek aktif GLOBAL. */
   const [pilih, setPilih] = useState<string | null>(() => {
     try {
       return new URLSearchParams(location.search).get("proyek") ?? proyekAktif();
@@ -140,8 +256,20 @@ function Isi() {
   const [kirim, setKirim] = useState(false);
   const [bayar, setBayar] = useState<Pembayaran[] | null>(null);
   /* Bukti yang sedang dibuka: otomatis sesudah pembayaran tercatat (itu
-     saatnya tautan dikirim ke klien), atau dari baris Pembayaran Terbaru. */
+     saatnya tautan dikirim ke klien), atau dari baris di kartu. */
   const [bukti, setBukti] = useState<Pembayaran | null>(null);
+  /* Nama studio dari Info Studio — kunci `settings` milik halaman itu,
+     di sini cuma dibaca (jebakan #8). */
+  const [studio, setStudio] = useState(() => bacaCache<StudioSettings>("settings")?.studioName || "Studio");
+  /* Gerak: kartu yang sedang ditarik dari kotak, baris yang baru ditulis,
+     dan cap LUNAS yang baru dibubuhkan. */
+  const [tarik, setTarik] = useState<{ id: string; n: number } | null>(null);
+  const [baruId, setBaruId] = useState<string | null>(null);
+  const [lunasBaru, setLunasBaru] = useState(false);
+  const kartuRef = useRef<HTMLElement>(null);
+  const barisRef = useRef<HTMLOListElement>(null);
+  /* Jarak tarik dibaca saat diklik, dipasang sesudah kartu baru terpasang. */
+  const jarak = useRef<{ dx: number; dy: number; sk: number } | null>(null);
 
   useEffect(() => onProyekAktif(setPilih), []);
 
@@ -152,16 +280,22 @@ function Isi() {
         setProyek(d);
       })
       .catch(() => setProyek((l) => l ?? []));
+    ambilSettings()
+      .then((s) => setStudio(s.studioName || "Studio"))
+      .catch(() => {});
   }, []);
 
-  /* Proyek terpilih: yang dipilih staf, kalau tidak ada yang pertama di
-     daftar. Dipilih di sini dan bukan di useState supaya ia ikut berubah
-     begitu daftarnya datang — nilai awal useState dibaca sekali saja. */
-  const aktif = useMemo(() => {
-    const d = proyek ?? [];
-    return d.find((p) => p.id === pilih) ?? d[0] ?? null;
-  }, [proyek, pilih]);
+  /* Kartu urut abjad, seperti kotak kartu sungguhan. Posisi tab indeks
+     (kiri/tengah/kanan) mengikuti urutan itu, dan tab kartu di meja memakai
+     posisi yang SAMA dengan slotnya di kotak. */
+  const urut = useMemo(
+    () => [...(proyek ?? [])].sort((a, b) => a.title.localeCompare(b.title, "id")),
+    [proyek],
+  );
 
+  /* Proyek terpilih: yang dipilih staf, kalau tidak ada yang pertama. */
+  const aktif = useMemo(() => urut.find((p) => p.id === pilih) ?? urut[0] ?? null, [pilih, urut]);
+  const posisiTab = aktif ? urut.indexOf(aktif) % 3 : 0;
 
   useEffect(() => {
     if (!aktif) return;
@@ -181,35 +315,125 @@ function Isi() {
 
   const tersaring = useMemo(() => {
     const q = cari.trim().toLowerCase();
-    const d = proyek ?? [];
-    if (!q) return d;
-    return d.filter(
+    if (!q) return urut;
+    return urut.filter(
       (p) =>
         p.title.toLowerCase().includes(q) ||
         (p.client ?? "").toLowerCase().includes(q) ||
         (p.city ?? "").toLowerCase().includes(q),
     );
-  }, [proyek, cari]);
+  }, [urut, cari]);
+
+  const piutang = useMemo(
+    () => urut.reduce((n, p) => n + Math.max(0, (p.contractValue ?? 0) - (p.paidTotal ?? 0)), 0),
+    [urut],
+  );
 
   const kontrak = aktif?.contractValue ?? 0;
-  const sudah = aktif?.paidTotal ?? 0;
-  const sisa = Math.max(0, kontrak - sudah);
   const angka = keAngka(nominal);
 
-  /* Jenis yang BERLAKU: yang dipilih staf kalau ia sudah menyentuhnya,
-     kalau belum hasil tebakan. Disimpan sebagai null-dan-tebakan, bukan
-     ditulis ke state tiap kali nominalnya berubah — menulis ke state dari
-     dalam render adalah cara tercepat membuat tebakan menimpa pilihan staf
-     satu ketukan setelah ia memilih. */
-  const jenisBerlaku = jenis ?? tebakJenis(angka, kontrak, sudah);
+  /* Baris kartu: berurut waktu, dengan sisa berjalan. "Sudah diterima"
+     diambil dari barisnya sendiri bila sudah ada, supaya jumlah di kaki
+     kartu = jumlah kolom Diterima. */
+  const baris = useMemo(() => {
+    const d = [...(bayar ?? [])].sort((a, b) => a.paidAt.localeCompare(b.paidAt) || a.id.localeCompare(b.id));
+    let kum = 0;
+    return d.map((b, i) => {
+      kum += b.amount;
+      return { b, no: i + 1, sisa: kontrak - kum };
+    });
+  }, [bayar, kontrak]);
+  const sudah = bayar ? baris.reduce((n, r) => n + r.b.amount, 0) : aktif?.paidTotal ?? 0;
+  const sisa = kontrak - sudah;
+  const lunas = kontrak > 0 && sisa <= 0;
+  const sisaSesudah = kontrak - sudah - angka;
 
+  /* Jenis yang BERLAKU: yang dipilih staf kalau ia sudah menyentuhnya,
+     kalau belum hasil tebakan. Disimpan sebagai null-dan-tebakan supaya
+     tebakan tidak menimpa pilihan staf satu ketukan setelah ia memilih. */
+  const jenisBerlaku = jenis ?? tebakJenis(angka, kontrak, sudah);
   const bisaKirim = Boolean(aktif) && angka > 0 && !kirim;
+
+  const sudahTampil = useHitung(sudah, aktif?.id ?? "");
+  const sisaTampil = useHitung(Math.max(0, sisa), aktif?.id ?? "");
+  const persen = kontrak > 0 ? Math.min(100, (sudah / kontrak) * 100) : 0;
+  const persenKetik = kontrak > 0 ? Math.min(100 - persen, (angka / kontrak) * 100) : 0;
+  const tglLunas = lunas ? baris[baris.length - 1]?.b.paidAt : undefined;
+
+  /* Baris yang ditulis selalu tampak: gulungan baris turun ke dasarnya
+     saat kartu berganti atau barisnya bertambah. Dibaca sekali per
+     perubahan, bukan di handler gulir (jebakan #21). */
+  useLayoutEffect(() => {
+    const el = barisRef.current;
+    if (el && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
+  }, [aktif?.id, baris.length]);
+
+  /* Kartu baru terpasang (key = id proyek): pasang jarak tariknya. */
+  useLayoutEffect(() => {
+    const kartu = kartuRef.current;
+    const j = jarak.current;
+    if (!kartu || !j || !tarik) return;
+    kartu.style.setProperty("--kpb-dx", `${j.dx}px`);
+    kartu.style.setProperty("--kpb-dy", `${j.dy}px`);
+    kartu.style.setProperty("--kpb-sk", j.sk.toFixed(3));
+    jarak.current = null;
+  }, [tarik]);
+
+  useEffect(() => {
+    if (!tarik) return;
+    const t = setTimeout(() => setTarik(null), TARIK_MS + 60);
+    return () => clearTimeout(t);
+  }, [tarik]);
+
+  const alasan = !aktif
+    ? "Pilih kartu proyek dulu."
+    : angka <= 0
+      ? "Tulis jumlah yang diterima di baris kartu."
+      : `Siap dicatat — ${formatRupiah(angka)}, ${LABEL_JENIS[jenisBerlaku]} lewat ${LABEL_METODE[metode]}.`;
+
+  function kosongkan() {
+    setNominal("");
+    setPenerima("");
+    setCatatan("");
+    setJenis(null);
+  }
+
+  function pilihProyek(p: Proyek, dari?: HTMLElement) {
+    if (p.id === aktif?.id) return;
+    /* Kartu ditarik dari slotnya: jarak slot → meja dibaca SEKALI di sini. */
+    const kartu = kartuRef.current;
+    if (dari && kartu && geraknya()) {
+      const a = dari.getBoundingClientRect();
+      const b = kartu.getBoundingClientRect();
+      /* Dari tengah-bawah ke tengah-bawah: kartu berporos di tepi bawahnya. */
+      jarak.current = {
+        dx: Math.round(a.left + a.width / 2 - (b.left + b.width / 2)),
+        dy: Math.round(a.bottom - b.bottom),
+        sk: a.width / Math.max(1, b.width),
+      };
+      setTarik((t) => ({ id: p.id, n: (t?.n ?? 0) + 1 }));
+    } else {
+      jarak.current = null;
+      setTarik(null);
+    }
+    /* Baris kartu baru langsung dari cache-nya, di render yang SAMA dengan
+       pergantian kartu — tanpa ini satu frame menggambar baris proyek lama
+       di bawah kop proyek baru. */
+    setBayar(bacaCache<Pembayaran[]>(`bayar:${p.id}`));
+    setProyekAktif(p.id);
+    setPilih(p.id);
+    setJenis(null);
+    setBaruId(null);
+    setLunasBaru(false);
+  }
 
   async function simpan() {
     if (!aktif || angka <= 0) return;
     setKirim(true);
+    const proyekId = aktif.id;
+    const jadiLunas = !lunas && kontrak > 0 && sisaSesudah <= 0;
     try {
-      const baru = await catatPembayaran(aktif.id, {
+      const baru = await catatPembayaran(proyekId, {
         amount: angka,
         kind: jenisBerlaku,
         method: metode,
@@ -221,21 +445,28 @@ function Isi() {
         keterangan: `${formatRupiah(angka)} — ${LABEL_JENIS[jenisBerlaku]} lewat ${LABEL_METODE[metode]}.`,
         nada: "sukses",
       });
+      /* Baris baru langsung tertulis di kartu; daftar segar menggantinya. */
+      if (baru?.id) {
+        setBayar((l) => [...(l ?? []).filter((x) => x.id !== baru.id), baru]);
+        setBaruId(baru.id);
+      }
+      setLunasBaru(jadiLunas);
       setNominal("");
       setCatatan("");
       setJenis(null);
-      /* Daftar proyek ikut disegarkan: `paidTotal` yang tampil di kartu
-         kiri DAN di kartu ringkasan kontrak baru saja berubah, dan
-         membiarkannya basi berarti angka di layar tidak sama dengan yang
-         di database — persis keluhan yang membuat tombol Terbitkan ada. */
-      const [b, d] = await Promise.all([daftarPembayaran(aktif.id), daftarProyek()]);
-      tulisCache(`bayar:${aktif.id}`, b);
+      /* Daftar proyek ikut disegarkan: `paidTotal` di kotak kartu baru saja
+         berubah, dan angka basi di layar persis keluhan yang membuat tombol
+         Terbitkan ada. */
+      const [b, d] = await Promise.all([daftarPembayaran(proyekId), daftarProyek()]);
+      tulisCache(`bayar:${proyekId}`, b);
       tulisCache("proyek", d);
       setBayar(b);
       setProyek(d);
       /* Endpoint membalas baris yang baru dibuat beserta receiptToken-nya;
-         kalau suatu saat tidak, cari di daftar yang baru diambil. */
-      setBukti(baru?.receiptToken ? baru : b.find((x) => x.id === baru?.id) ?? null);
+         kalau suatu saat tidak, cari di daftar yang baru diambil. Bukti
+         dibuka sesudah barisnya selesai ditulis. */
+      const untukBukti = baru?.receiptToken ? baru : b.find((x) => x.id === baru?.id) ?? null;
+      setTimeout(() => setBukti(untukBukti), geraknya() ? TULIS_MS : 0);
     } catch (e) {
       toast({
         judul: "Gagal mencatat",
@@ -247,242 +478,356 @@ function Isi() {
     }
   }
 
-  function pilihProyek(p: Proyek) {
-    setProyekAktif(p.id);
-    setPilih(p.id);
-    setJenis(null);
-  }
+  const kode = aktif ? kodeProyek(aktif.title) : "—";
+  const studioInisial = inisial(studio) || "ST";
+  const kategori = aktif ? CATEGORY_LABELS[aktif.category as ProjectCategory] ?? aktif.category : "";
+  const hariIni = tanggalPendek(new Date().toISOString());
 
   return (
-    <div className="tr">
-      {/* ---- Kolom kiri --------------------------------------------------- */}
-      <section className="tr__kiri">
-        <KelompokTab
-          className="tr__metode"
-          judul="Metode pembayaran"
-          tab={METODE}
-          nilai={metode}
-          onPilih={setMetode}
-        />
-
-        <div className="tr__cari">
-          <Cari
-            ukuran="large"
-            judul="Cari proyek"
-            placeholder="Cari proyek"
-            value={cari}
-            onChange={(e) => setCari(e.currentTarget.value)}
-          />
-          {/* Ikon Sliders, sama seperti di framenya — dan ia MEMBAWA ke tempat
-              penyaringan yang sebenarnya, /admin/proyek. Panel saringan kedua
-              di sini cuma menambah tempat untuk menyaring hal yang sama
-              dengan aturan yang bisa menyimpang. Sempat tanpa aksi sama
-              sekali (audit kontrol mati). */}
-          <TombolBulat ikon={Sliders} judul="Saring di Semua Proyek" onClick={() => navigate("/admin/proyek")} />
-        </div>
-
-        <div className="tr__daftar">
-          <div className="tr__gulir">
-            {tersaring.map((p) => {
-              const sisaP = Math.max(0, (p.contractValue ?? 0) - (p.paidTotal ?? 0));
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="k-transfer tr__proyek"
-                  aria-pressed={aktif?.id === p.id}
-                  onClick={() => pilihProyek(p)}
-                >
-                  <span className="k-transfer__gambar">{inisial(p.title)}</span>
-                  <span className="k-transfer__info">
-                    <span className="k-transfer__nama">{p.title}</span>
-                    <span className="k-transfer__rek">
-                      {p.contractValue ? `sisa ${formatRupiah(sisaP)}` : "belum berkontrak"}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-            {tersaring.length === 0 && (
-              <p className="tr__kosong">
-                {proyek === null ? "Memuat proyek…" : "Tidak ada proyek yang cocok."}
-              </p>
-            )}
-          </div>
-          <span className="tr__tirai" />
-        </div>
-
-        {/* Ke formulir proyek baru, bukan ke daftar Semua Proyek. */}
-        <Tombol ukuran="large" kiri={Plus} onClick={() => navigate("/admin/proyek/baru")}>
-          Proyek Baru
-        </Tombol>
-      </section>
-
-      {/* ---- Kolom kanan -------------------------------------------------- */}
-      <section className="tr__kanan">
-        <article className="tr__kartu tr__baru">
-          <KepalaSeksi
-            judul="Pembayaran Terbaru"
-            kanan={
-              <Tombol ukuran="small" jenis="transparent" onClick={() => navigate("/admin/keuangan/transaksi?jenis=masuk")}>
-                Lihat semua
-              </Tombol>
-            }
-          />
-          <div className="tr__strip">
-            {(bayar ?? []).slice(0, 6).map((b) => (
-              <BarisTransfer
-                key={b.id}
-                gambar={<Ikon ikon={CheckCircle} ukuran={18} />}
-                nama={formatRupiah(b.amount)}
-                rekening={`${LABEL_JENIS[b.kind] ?? b.kind} · ${LABEL_METODE[b.method] ?? b.method}`}
-                kananAtas={tanggalPendek(b.paidAt)}
-                kananBawah={b.receiver || "—"}
-                onClick={() => setBukti(b)}
-                judul={`Bukti pembayaran ${formatRupiah(b.amount)}, ${tanggalPendek(b.paidAt)}`}
-              />
-            ))}
-            {(bayar ?? []).length === 0 && (
-              <p className="tr__kosong">
-                {aktif ? "Proyek ini belum punya pembayaran." : "Pilih proyek dulu."}
-              </p>
-            )}
-          </div>
-        </article>
-
-        <article className="tr__kartu tr__form">
-          <KepalaSeksi
-            judul="Catat Pembayaran"
-            /* Tombol ⋯ di framenya TIDAK punya lingkaran mint — `Button More`
-               di SVG-nya cuma grup ikon tanpa satu pun <rect>, beda dari
-               `Button Icon` di kanan atas halaman yang memang berlingkaran
-               38. Memakai `TombolBulat` di sini menaikkan kepala seksi dari
-               32 jadi 38, dan seluruh isi panel di bawahnya ikut turun 6px. */
-            kanan={
-              /* ⋯ di framenya: sempat hiasan tanpa aksi. Isinya halaman yang
-                 wajar dituju sesudah mencatat — bukan aksi baru. */
-              <DropdownMenu
-                trigger={<TombolIkon ikon={DotsThree} jenis="transparent" judul="Aksi lain" ikonPx={22} />}
-                sections={[
-                  {
-                    label: "Buka",
-                    items: ([["Semua transaksi", NavArrowsLeftRight, "/admin/keuangan/transaksi"], ["Tagihan & termin", NavReceipt, "/admin/keuangan/tagihan"], ["Ringkasan keuangan", ChartBar, "/admin/keuangan"]] as const).map(([label, ikon, ke]) => ({ label, ikon, onSelect: () => navigate(ke) })),
-                  },
-                ]}
-              />
-            }
-          />
-
-          <div className="tr__panel">
-            <Segmen
-              judul="Jenis pembayaran"
-              segmen={JENIS.map((j) => ({ nilai: j.nilai, label: j.label }))}
-              nilai={jenisBerlaku}
-              onPilih={setJenis}
+    <div className="kpb">
+      <div className="kpb__papan">
+        {/* ---- Kotak kartu -------------------------------------------------- */}
+        <section className="kpb__kiri" aria-label="Kotak kartu pembayaran">
+          <p className="kpb__alis">
+            Kotak kartu pembayaran <span>· {urut.length} kartu</span>
+          </p>
+          <div className="kpb__cari">
+            <Cari
+              className="kpb__carikotak"
+              ukuran="small"
+              judul="Cari kartu"
+              placeholder="Cari proyek, klien, kota"
+              value={cari}
+              onChange={(e) => setCari(e.currentTarget.value)}
             />
+            {/* Ke tempat penyaringan yang sebenarnya, Semua Proyek. */}
+            <TombolBulat className="kpb__bulat" ikon={Sliders} judul="Saring di Semua Proyek" onClick={() => navigate("/admin/proyek")} />
+          </div>
 
-            <div className="tr__grup">
-              <p className="tr__label">Ringkasan kontrak</p>
-              <div className="tr__akun">
-                <div className="tr__akunkartu tr__akunkartu--utama">
-                  <span className="tr__akunubin">
-                    <Ikon ikon={NavReceipt} ukuran={24} />
-                  </span>
-                  <div className="tr__akunisi">
-                    <p className="tr__akunlabel">Nilai kontrak</p>
-                    <p className="tr__akunnilai">{formatRupiah(kontrak)}</p>
-                    <p className="tr__akunket">{aktif?.title ?? "belum ada proyek"}</p>
-                  </div>
-                </div>
-                <div className="tr__akunkartu tr__akunkartu--sisa">
-                  <span className="tr__akunubin">
-                    <Ikon ikon={Hourglass} ukuran={24} />
-                  </span>
-                  <div className="tr__akunisi">
-                    <p className="tr__akunlabel">Sudah diterima</p>
-                    <p className="tr__akunnilai">{formatRupiah(sudah)}</p>
-                    <p className="tr__akunket">sisa {formatRupiah(sisa)}</p>
-                  </div>
-                </div>
+          <div className="kpb__kotakkartu">
+            <ol className="kpb__deret">
+              {tersaring.map((p) => {
+                const i = urut.indexOf(p);
+                const k = p.contractValue ?? 0;
+                const s = Math.max(0, k - (p.paidTotal ?? 0));
+                const gaya = { "--kpb-tab": i % 3, zIndex: i + 1 } as CSSProperties;
+                if (aktif?.id === p.id) {
+                  return (
+                    <li key={p.id} className="kpb__slot is-meja" style={gaya} aria-current="true">
+                      <span className="kpb__tab">Di meja</span>
+                      <div className="kpb__puncak">
+                        <span className="kpb__puncaknama">{kodeProyek(p.title)} · {p.title}</span>
+                        <small>kartunya sedang ditulis</small>
+                      </div>
+                    </li>
+                  );
+                }
+                return (
+                  <li key={p.id} className={`kpb__slot${k > 0 && s === 0 ? " is-lunas" : ""}${k ? "" : " is-polos"}`} style={gaya}>
+                    <button type="button" className="kpb__tarik" onClick={(e) => pilihProyek(p, e.currentTarget)}>
+                      <span className="kpb__tab">{kodeProyek(p.title)}</span>
+                      <span className="kpb__puncak">
+                        <span className="kpb__puncaknama">{p.title}</span>
+                        <small>{p.client || p.city || "—"}</small>
+                        <b>
+                          {!k ? (
+                            "tanpa kontrak"
+                          ) : s === 0 ? (
+                            "lunas"
+                          ) : (
+                            <>
+                              <small>sisa</small> {formatRupiah(s)}
+                            </>
+                          )}
+                        </b>
+                        {k > 0 && (
+                          <i className="kpb__puncakmeter" aria-hidden="true">
+                            <i style={{ width: `${Math.min(100, ((k - s) / k) * 100)}%` }} />
+                          </i>
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+              {tersaring.length === 0 && (
+                <li className="kpb__kosong">{proyek === null ? "Memuat kartu…" : "Tidak ada kartu yang cocok."}</li>
+              )}
+            </ol>
+            {/* Muka kotak: label berbingkai logam dengan data sungguhan. */}
+            <div className="kpb__muka">
+              <div className="kpb__label">
+                <span>Pembayaran klien</span>
+                <b>{formatRupiah(piutang)}</b>
+                <small>belum dibayar · {urut.length} kartu</small>
+              </div>
+              <i className="kpb__pegangan" aria-hidden="true" />
+            </div>
+          </div>
+
+          <Tombol ukuran="medium" jenis="secondary" kiri={Plus} onClick={() => navigate("/admin/proyek/baru")}>
+            Proyek Baru
+          </Tombol>
+        </section>
+
+        {/* ---- Meja: kartu yang sedang ditulis -------------------------------- */}
+        <section className="kpb__meja" aria-label="Kartu pembayaran di meja">
+          <article
+            ref={kartuRef}
+            key={aktif?.id ?? "kosong"}
+            className={`kpb__kartu${tarik && tarik.id === aktif?.id ? " is-tarik" : ""}`}
+            style={{ "--kpb-tab": posisiTab } as CSSProperties}
+          >
+            <span className="kpb__tab kpb__tab--kartu" aria-hidden="true">{kode}</span>
+
+            <header className="kpb__kop">
+              <div className="kpb__judul">
+                <h3>Kartu pembayaran</h3>
+                <p>
+                  {studio} · No. <b>KP-{kode}</b>
+                </p>
+              </div>
+              <dl className="kpb__nilai">
+                <dt>Nilai kontrak</dt>
+                <dd>{kontrak ? formatRupiah(kontrak) : "belum berkontrak"}</dd>
+              </dl>
+            </header>
+
+            <div className="kpb__identitas">
+              <div className="kpb__isian kpb__isian--proyek">
+                <span>Proyek</span>
+                <PilihMenu
+                  id="kpb-proyek"
+                  label="Proyek"
+                  nilai={aktif?.id ?? ""}
+                  onUbah={(v) => {
+                    const p = urut.find((x) => x.id === v);
+                    if (p) pilihProyek(p);
+                  }}
+                  opsi={urut.map((p) => ({ nilai: p.id, label: p.title, ket: kodeProyek(p.title) }))}
+                  pemicu={
+                    <button type="button" className="kpb__tulis">
+                      <span>{aktif?.title ?? "Pilih proyek"}</span>
+                      <Ikon ikon={CaretDown} ukuran={12} className="kpb__tuliscaret" />
+                    </button>
+                  }
+                />
+              </div>
+              <div className="kpb__isian">
+                <span>Klien</span>
+                <b>{aktif?.client || "—"}</b>
+              </div>
+              <div className="kpb__isian">
+                <span>Kota · jenis</span>
+                <b>{[aktif?.city, kategori].filter(Boolean).join(" · ") || "—"}</b>
               </div>
             </div>
 
-            <div className="tr__grup">
-              <label className="tr__label" htmlFor="tr-proyek">
-                Proyek
-              </label>
-              <PilihMenu
-                id="tr-proyek"
-                nilai={aktif?.id ?? ""}
-                onUbah={(v) => {
-                  const p = (proyek ?? []).find((x) => x.id === v);
-                  if (p) pilihProyek(p);
-                }}
-                opsi={(proyek ?? []).map((p) => ({ nilai: p.id, label: p.title }))}
-              />
+            <div className="kpb__buku" role="table" aria-label="Pembayaran yang diterima">
+              {/* Garis kolom tercetak: satu lapis di atas seluruh tinggi buku,
+                  jadi baris kosong di bawahnya tetap berkolom. */}
+              <div className="kpb__kolom" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </div>
+              <div className="kpb__bkepala" role="row">
+                <span role="columnheader">No.</span>
+                <span role="columnheader">Tanggal</span>
+                <span role="columnheader">Uraian</span>
+                <span role="columnheader">Diterima (Rp)</span>
+                <span role="columnheader">Sisa (Rp)</span>
+                <span role="columnheader">Paraf</span>
+              </div>
+              <ol className="kpb__baris" ref={barisRef} role="rowgroup">
+                {baris.map(({ b, no, sisa: s }) => (
+                  <li key={b.id} className={`kpb__bbaris${b.id === baruId ? " is-baru" : ""}`} role="row">
+                    <span role="cell" className="kpb__no">{no}</span>
+                    <span role="cell" className="kpb__tgl">
+                      {tanggalPendek(b.paidAt)}
+                      {tahunDari(b.paidAt) !== new Date().getFullYear() && <small>{tahunDari(b.paidAt)}</small>}
+                    </span>
+                    <span role="cell" className="kpb__uraian">
+                      {/* Seluruh baris bisa diklik lewat ::after tombol ini. */}
+                      <button
+                        type="button"
+                        className="kpb__bukabukti"
+                        onClick={() => setBukti(b)}
+                        aria-label={`Bukti pembayaran ke-${no}, ${formatRupiah(b.amount)}, ${tanggalPendek(b.paidAt)}`}
+                      >
+                        {LABEL_JENIS[b.kind] ?? b.kind} · {LABEL_METODE[b.method] ?? b.method}
+                      </button>
+                      {b.note && <small>{b.note}</small>}
+                    </span>
+                    <span role="cell" className="kpb__rp">{b.amount.toLocaleString("id-ID")}</span>
+                    <span role="cell" className="kpb__rp kpb__rp--sisa">
+                      {kontrak ? (s >= 0 ? s.toLocaleString("id-ID") : `lebih ${(-s).toLocaleString("id-ID")}`) : "—"}
+                    </span>
+                    <span role="cell" className="kpb__paraf">
+                      {b.receiver ? (
+                        <i className="kpb__parafcap" data-judul={`Diterima ${b.receiver}`}>{inisial(b.receiver)}</i>
+                      ) : (
+                        <i className="kpb__parafkosong">—</i>
+                      )}
+                    </span>
+                  </li>
+                ))}
+
+                {/* Baris berikutnya — yang sedang DITULIS. */}
+                {aktif && (
+                  <li className="kpb__bbaris kpb__bbaris--tulis" role="row">
+                    <span role="cell" className="kpb__no">{baris.length + 1}</span>
+                    <span role="cell" className="kpb__tgl">{hariIni}</span>
+                    <span role="cell" className="kpb__uraian">
+                      <b>{LABEL_JENIS[jenisBerlaku]} · {LABEL_METODE[metode]}</b>
+                      <small className={catatan.trim() ? "" : "is-kosong"}>{catatan.trim() || "catatan di bawah"}</small>
+                    </span>
+                    <span role="cell" className="kpb__rp kpb__rp--isi">
+                      {/* `inputMode`, bukan `type=number`: type=number menolak
+                          titik pemisah ribuan. */}
+                      <input
+                        id="kpb-nominal"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        aria-label="Jumlah diterima (rupiah)"
+                        placeholder="0"
+                        value={nominal}
+                        onChange={(e) => setNominal(rapikan(e.currentTarget.value))}
+                      />
+                    </span>
+                    <span role="cell" className={`kpb__rp kpb__rp--sisa${angka && kontrak && sisaSesudah < 0 ? " is-lebih" : ""}`}>
+                      {!kontrak
+                        ? "—"
+                        : !angka
+                          ? Math.max(0, sisa).toLocaleString("id-ID")
+                          : sisaSesudah >= 0
+                            ? sisaSesudah.toLocaleString("id-ID")
+                            : `lebih ${(-sisaSesudah).toLocaleString("id-ID")}`}
+                    </span>
+                    <span role="cell" className="kpb__paraf">
+                      {penerima.trim() ? (
+                        <i className="kpb__parafcap is-pensil">{inisial(penerima)}</i>
+                      ) : (
+                        <i className="kpb__paraftunggu" aria-hidden="true" />
+                      )}
+                    </span>
+                  </li>
+                )}
+                <li className="kpb__bkosong" aria-hidden="true" />
+              </ol>
             </div>
 
-            <div className="tr__baris">
-              <div className="tr__grup">
-                <label className="tr__label" htmlFor="tr-nominal">
-                  Nominal
-                </label>
-                {/* `inputMode`, bukan `type=number`: type=number menolak titik
-                    pemisah ribuan dan memunculkan panah naik-turun yang tidak
-                    ada gunanya untuk rupiah. */}
-                <KelompokIsian id="tr-nominal" kiri="Rp" inputMode="numeric" placeholder="0" value={nominal} onChange={(e) => setNominal(e.currentTarget.value)} />
+            <div className="kpb__formulir">
+              <div className="kpb__formbaris">
+                <KelompokKotak
+                  label="Pembayaran ini"
+                  opsi={JENIS}
+                  nilai={jenisBerlaku}
+                  pensil={jenis === null}
+                  onPilih={setJenis}
+                />
+                <KelompokKotak label="Lewat" opsi={METODE} nilai={metode} onPilih={setMetode} />
               </div>
-              <div className="tr__grup">
-                <label className="tr__label" htmlFor="tr-penerima">
-                  Diterima oleh
-                </label>
-                <div className="k-isian__kotak">
+              <div className="kpb__formbaris">
+                <label className="kpb__garis kpb__garis--siapa" htmlFor="kpb-penerima">
+                  <span>Diterima oleh</span>
                   <input
-                    id="tr-penerima"
-                    className="k-isian__input"
-                    placeholder="nama staf yang menerima"
+                    id="kpb-penerima"
+                    autoComplete="off"
+                    placeholder="nama staf"
                     value={penerima}
                     onChange={(e) => setPenerima(e.currentTarget.value)}
                   />
+                </label>
+                <label className="kpb__garis" htmlFor="kpb-catatan">
+                  <span>Catatan</span>
+                  <input
+                    id="kpb-catatan"
+                    autoComplete="off"
+                    placeholder="mis. termin kedua, setelah gambar kerja"
+                    value={catatan}
+                    onChange={(e) => setCatatan(e.currentTarget.value)}
+                  />
+                </label>
+              </div>
+              <p className="kpb__terbilang">
+                <span>Terbilang</span>
+                <i>{angka ? `# ${terbilang(angka)} #` : ""}</i>
+              </p>
+            </div>
+
+            <footer className="kpb__kaki">
+              <div className="kpb__jumlah">
+                <span>Jumlah diterima · {baris.length}×</span>
+                <b>{formatRupiah(sudahTampil)}</b>
+              </div>
+              <div className="kpb__mistar" aria-hidden="true">
+                <div className="kpb__mistarlintas">
+                  <span className="kpb__mistarisi" style={{ width: `${persen}%` }} />
+                  <span className="kpb__mistarketik" style={{ left: `${persen}%`, width: `${persenKetik}%` }} />
+                </div>
+                <div className="kpb__mistarangka">
+                  <span>0</span>
+                  <span>25</span>
+                  <span>50</span>
+                  <span>75</span>
+                  <span>100%</span>
                 </div>
               </div>
-            </div>
-
-            <div className="tr__grup">
-              <label className="tr__label" htmlFor="tr-catatan">
-                Catatan
-              </label>
-              <div className="k-isian__kotak">
-                <input
-                  id="tr-catatan"
-                  className="k-isian__input"
-                  placeholder="mis. termin kedua, setelah gambar kerja"
-                  value={catatan}
-                  onChange={(e) => setCatatan(e.currentTarget.value)}
-                />
+              <div className="kpb__jumlah kpb__jumlah--sisa">
+                <span>Sisa kontrak · {kontrak ? `${Math.round(persen)}% masuk` : "tanpa kontrak"}</span>
+                <b>{kontrak ? formatRupiah(sisaTampil) : "—"}</b>
               </div>
-            </div>
+              <div className={`kpb__capslot${lunasBaru ? " is-baru" : ""}`}>
+                {lunas && tglLunas ? (
+                  <CapLunas tanggal={tglLunas} studio={studioInisial} id={`kpb-${aktif?.id}`} kelas="kpb" ukuran={52} />
+                ) : (
+                  <span className="kpb__capkosong">cap lunas</span>
+                )}
+              </div>
+            </footer>
+            <i className="kpb__lubang" aria-hidden="true" />
+          </article>
 
-            <div className="tr__aksi">
-              <Tombol
-                ukuran="large"
-                jenis="secondary"
-                onClick={() => {
-                  setNominal("");
-                  setPenerima("");
-                  setCatatan("");
-                  setJenis(null);
-                }}
-              >
-                Batal
-              </Tombol>
-              <Tombol memuat={kirim} ukuran="large" disabled={!bisaKirim} onClick={simpan}>
-                {kirim ? "Menyimpan…" : "Catat Pembayaran"}
-              </Tombol>
-            </div>
+          <div className="kpb__aksi">
+            <DropdownMenu
+              /* Tombol polos, bukan TombolBulat: petunjuk (tooltip) di dalam
+                 TombolBulat jadi lapisan teratas, dan Escape pertama menutup
+                 petunjuknya, bukan menunya. */
+              trigger={
+                <button type="button" className="kpb__menu" aria-label="Buka halaman lain">
+                  <Ikon ikon={DotsThree} ukuran={20} />
+                </button>
+              }
+              sections={[
+                {
+                  label: "Buka",
+                  items: (
+                    [
+                      ["Semua transaksi", NavArrowsLeftRight, "/admin/keuangan/transaksi"],
+                      ["Tagihan & termin", NavReceipt, "/admin/keuangan/tagihan"],
+                      ["Ringkasan keuangan", ChartBar, "/admin/keuangan"],
+                    ] as const
+                  ).map(([label, ikon, ke]) => ({ label, ikon, onSelect: () => navigate(ke) })),
+                },
+              ]}
+            />
+            <a className="kpb__semua" href="/admin/keuangan/transaksi?jenis=masuk">
+              Semua uang masuk
+            </a>
+            <p className="kpb__alasan" aria-live="polite">{alasan}</p>
+            <Tombol ukuran="medium" jenis="secondary" onClick={kosongkan}>
+              Kosongkan
+            </Tombol>
+            <Tombol memuat={kirim} ukuran="medium" disabled={!bisaKirim} onClick={simpan}>
+              {kirim ? "Mencatat…" : "Catat pembayaran"}
+            </Tombol>
           </div>
-        </article>
-      </section>
+        </section>
+      </div>
 
       <DialogBukti
         bayar={bukti}
@@ -498,15 +843,17 @@ function Isi() {
 }
 
 export function TerimaKit() {
-  /* ToastProvider dipasang DI SINI, bukan di KitLayout: bawaan konteksnya
-     `() => {}`, jadi tanpa penyedia setiap toast hilang tanpa jejak — staf
-     menekan "Catat Pembayaran" dan tidak ada apa pun yang terjadi di layar
-     meski datanya tersimpan. Pola yang sama dipakai delapan island admin
-     lain. Gayanya hidup di `overlay.css`, yang karena itu ikut dimuat
-     KitLayout — jebakan #5. */
+  /* ToastProvider dipasang DI SINI: bawaan konteksnya `() => {}`, jadi tanpa
+     penyedia setiap toast hilang tanpa jejak. */
   return (
     <ToastProvider>
-      <RequireAuth skeleton={<div className="tr tr--rangka" />}>
+      <RequireAuth
+        skeleton={
+          <div className="kpb kpb--rangka">
+            <div className="kpb__papan" />
+          </div>
+        }
+      >
         <Isi />
       </RequireAuth>
     </ToastProvider>
