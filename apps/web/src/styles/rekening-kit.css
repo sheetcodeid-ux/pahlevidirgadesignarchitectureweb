@@ -87,7 +87,7 @@
   list-style: none;
 }
 .rko__lipatan ol::-webkit-scrollbar { display: none; }
-.rko__lipatan li { display: flex; flex: 1 1 0; min-height: 21px; max-height: 44px; }
+.rko__lipatan li { display: flex; flex: 1 1 0; min-height: 19px; max-height: 44px; }
 /* Tumpukan yang lebih panjang dari tempatnya: tepi atas & bawah memudar,
    tanda masih ada lipatan di luar pandangan (mask berlaku pada kotak
    tampak — jebakan #19). */
@@ -148,6 +148,41 @@
 .rko__lipatbatang i.is-cr { background: color-mix(in srgb, var(--brand-mint) 70%, var(--kas-bidang)); }
 .rko__lipatbatang i.is-db { background: var(--rko-tinta-redup); }
 .rko__lipatsaldo { font-weight: var(--k-bold); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Grafik mutasi per bulan: kredit naik dari garis nol, debet turun.
+   Pendek (62px) supaya tumpukan lipatan tetap muat di atasnya. */
+.rko__grafikwadah { display: flex; flex: none; flex-direction: column; gap: 4px; }
+.rko__grafik {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--rko-n, 12), minmax(0, 1fr));
+  gap: 4px;
+  height: 62px;
+}
+.rko__grafik::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc((100% - 13px) / 2);
+  border-top: 1px solid var(--rko-garis-papan);
+  pointer-events: none;
+}
+.rko__kolom {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) 13px;
+  justify-items: center;
+  min-width: 0;
+  cursor: default;
+  transition: opacity 150ms;
+}
+.rko__kolom i { display: block; width: min(100%, 14px); }
+.rko__cr { align-self: end; min-height: 1px; border-radius: 3px 3px 0 0; background: var(--brand-mint); }
+.rko__db { align-self: start; min-height: 1px; border-radius: 0 0 3px 3px; background: color-mix(in srgb, var(--kas-ink) 45%, transparent); }
+.rko__kolom small { align-self: end; font-size: var(--k-t9); line-height: 1; color: var(--rko-redup); }
+.rko__kolom.is-sorot small { color: var(--kas-nilai); font-weight: var(--k-bold); }
+.rko__kolom.is-sorot .rko__db { background: var(--kas-ink); }
+.rko__kolom.is-redup { opacity: 0.4; }
 
 /* Cari di atas papan. */
 .rko__cari.k-cari {
@@ -452,6 +487,10 @@
 /* Kertas green-bar: pita hijau tiap baris kedua. */
 .rko__isi > .rko__baris:nth-child(odd) { background: var(--rko-pita); }
 .rko__isi > .rko__baris:hover { background: color-mix(in srgb, var(--brand-mint) 60%, var(--kas-nilai)); }
+/* Sorot dari grafik: baris bulan itu bertanda di margin kiri (bukan di
+   belakang tulisan), baris bulan lain meredup. */
+.rko__isi > .rko__baris.is-sorot { box-shadow: inset 3px 0 0 var(--rko-tinta); }
+.rko__isi > .rko__baris.is-redup { color: var(--rko-tinta-redup); }
 /* STABILO: baris yang dicentang ditandai seperti rekening koran yang
    dicocokkan dengan pena penanda — pita mint berujung lembut selebar baris,
    DI BAWAH tulisannya (z-index −1 di dalam konteks tumpuk barisnya), dan
@@ -669,11 +708,13 @@
     grid-template-areas:
       "kop kop"
       "lipatan saringan"
+      "grafik saringan"
       "cari ekspor";
     align-items: start;
     gap: 12px 20px;
   }
   .rko__sampulkop { grid-area: kop; }
+  .rko__grafikwadah { grid-area: grafik; }
   .rko__lipatan { grid-area: lipatan; align-self: stretch; min-height: 0; }
   .rko__lipatan ol { max-height: 220px; }
   .rko__cari.k-cari { grid-area: cari; }
