@@ -1,16 +1,10 @@
 /* =============================================================================
-   Kerangka halaman transaksi — DIPAKAI BERSAMA frame "07. Transfer" dan
-   "10. Payment".
+   Kerangka halaman transaksi frame "07. Transfer" — Terima Pembayaran.
 
-   Kedua frame itu memakai kerangka yang sama sampai ke piksel: kolom kiri
-   303, kolom kanan 868, kartu "terbaru" 837x140 dengan butir 279x67, dan
-   kartu form berpanel mint 805 di dalamnya. Yang berbeda cuma ISI kolom
-   kirinya (kartu penerima lawan akordeon penyedia) dan susunan isian di
-   dalam panelnya.
-
-   Berkas ini ada supaya keduanya tidak jadi dua salinan yang menyimpang —
-   jebakan #32 di CLAUDE.md. Aturan yang HANYA berlaku untuk satu halaman
-   tinggal di `terima-kit.css` atau `keluar-kit.css`, bukan di sini.
+   Dulu dipakai bersama frame "10. Payment" (Catat Pengeluaran). Sejak Okt
+   2026 Catat Pengeluaran punya bentuk sendiri (buku nota + paku nota,
+   `nota-kit.css`), jadi berkas ini tinggal milik Terima Pembayaran. Aturan
+   yang HANYA berlaku untuk halaman itu tinggal di `terima-kit.css`.
 
    Awalan `tr` = transaksi, bukan transfer.
 

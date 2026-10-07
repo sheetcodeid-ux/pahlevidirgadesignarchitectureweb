@@ -1,20 +1,15 @@
 ---
 import KitLayout from "../../../layouts/KitLayout.astro";
 import { KeluarKit } from "../../../components/admin/KeluarKit";
-import "../../../styles/bayar-kit.css";
-import "../../../styles/keluar-kit.css";
+import "../../../styles/nota-kit.css";
 
-/* Halaman KETIGA yang pindah ke kit (P4), mengikuti frame Figma
-   "10. Payment".
+/* Catat Pengeluaran — BUKU NOTA PENGELUARAN dan PAKU NOTA (lihat kepala
+   `KeluarKit.tsx`). Tidak lagi memakai kerangka frame 10 bersama Terima
+   Pembayaran: `bayar-kit.css` kini milik /admin/keuangan/terima saja.
 
-   Kerangkanya sama persis dengan /admin/keuangan/terima — kedua frame itu
-   memakai kolom 303 dan 868 yang sama — jadi CSS-nya dipakai bersama lewat
-   `bayar-kit.css`. Yang khusus halaman ini ada di `keluar-kit.css`.
-
-   Dialog "Catat pengeluaran" yang lama di /admin/keuangan TETAP hidup.
-   Keduanya menulis lewat endpoint `POST /admin/costs` yang sama dengan
-   bentuk isian yang sama, jadi tidak ada angka yang bisa tercatat dua kali;
-   yang bertambah cuma pintu masuknya. */
+   Dialog "Catat pengeluaran" di /admin/keuangan TETAP hidup. Keduanya
+   menulis lewat endpoint `POST /admin/costs` yang sama dengan bentuk isian
+   yang sama, jadi tidak ada angka yang bisa tercatat dua kali. */
 ---
 
 <KitLayout title="Catat Pengeluaran" judul="Catat Pengeluaran">

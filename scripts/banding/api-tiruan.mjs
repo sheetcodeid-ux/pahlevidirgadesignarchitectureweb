@@ -923,7 +923,12 @@ const jawab = (path) => {
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
-  if (path.startsWith("/api/v1/admin/costs")) return [...biayaKeu, ...biayaRiwayat];
+  /* Urutan Worker: tanggal terjadi terbaru dulu, lalu yang terakhir dicatat. */
+  if (path.startsWith("/api/v1/admin/costs"))
+    return [...biayaKeu, ...biayaRiwayat]
+      .map((b, i) => [b, i])
+      .sort(([a, ia], [z, iz]) => z.incurredOn.localeCompare(a.incurredOn) || ia - iz)
+      .map(([b]) => b);
   if (path.startsWith("/api/v1/admin/inquiries")) return pesanAdmin;
   {
     const j = path.match(/^\/api\/v1\/admin\/journal\/([^/?]+)/);
@@ -1068,6 +1073,17 @@ function tulis(metode, path, badan) {
       Object.assign(x, badan);
       return { updated: true };
     }
+  }
+  /* Catat Pengeluaran — bentuk badan dan galatnya sama dengan costs.create. */
+  if (path === "/api/v1/admin/costs" && metode === "POST") {
+    if (!badan.label || String(badan.label).trim().length < 2 || !(badan.amount > 0)) return { galat: 422 };
+    const id = `bn${Date.now()}`;
+    const orang = timAdmin.find((t) => t.id === badan.teamMemberId);
+    biayaKeu.unshift({ id, projectId: badan.projectId, projectTitle: proyekAdmin.find((p) => p.id === badan.projectId)?.title,
+      label: String(badan.label).trim(), category: badan.category ?? "lainnya", amount: badan.amount,
+      incurredOn: badan.incurredOn || new Date().toISOString().slice(0, 10),
+      teamMemberId: orang?.id ?? null, teamMemberName: orang?.name ?? null });
+    return { id };
   }
   if (path === "/api/v1/admin/ledger" && metode === "POST") {
     if (!badan.label || !(badan.amount > 0)) return { galat: 422 };

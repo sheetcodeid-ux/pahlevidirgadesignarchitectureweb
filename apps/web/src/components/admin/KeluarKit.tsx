@@ -1,23 +1,35 @@
-import { KelompokIsian, PilihTanggal, keIso, PilihMenu } from "../kit/Formulir";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { navigate } from "astro:transitions/client";
 import { RequireAuth } from "./RequireAuth";
 import { DialogBiaya } from "./biayaKit";
+import { PilihMenu, PilihTanggal, keIso } from "../kit/Formulir";
 import { DropdownMenu } from "../kit/Overlay";
-import { navigate } from "astro:transitions/client";
-import { KepalaSeksi, BarisTransfer, BarisPenyedia } from "../kit/Item";
-import { KelompokTab } from "../kit/Segmen";
 import { Cari } from "../kit/Isian";
-import { Tombol, TombolIkon } from "../kit/Tombol";
+import { Tombol } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { TombolBulat } from "../kit/Item";
 import { ToastProvider, useToast } from "../kit/Toast";
-import { Users, House, Medal, DotsThree, Sliders, NavReceipt, CoinOut, SpecialHandshake, UserCircleCheck, IdentificationBadge, Ruler, NavArrowsLeftRight, NavCurrencyCircleDollar, Wallet, CaretDown } from "../kit/ikon";
+import {
+  Users,
+  House,
+  Medal,
+  DotsThree,
+  Sliders,
+  CaretDown,
+  SpecialHandshake,
+  UserCircleCheck,
+  IdentificationBadge,
+  NavArrowsLeftRight,
+  NavCurrencyCircleDollar,
+  Wallet,
+} from "../kit/ikon";
 import {
   daftarProyek,
   daftarTim,
   semuaBiaya,
   catatBiaya,
   ambilRingkasanKeuangan,
+  ambilSettings,
   bacaCache,
   tulisCache,
   LABEL_JENIS_ANGGOTA,
@@ -26,60 +38,47 @@ import {
   type JenisAnggota,
   type BiayaProyek,
   type FinanceOverview,
+  type StudioSettings,
 } from "../../lib/admin";
 import { proyekAktif, setProyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
+import { terbilang } from "../../lib/terbilang";
+import { kodeProyek, inisial } from "../../lib/nomorDokumen";
+import { BULAN, BULAN_PENDEK } from "./frame25";
 
 /* =============================================================================
-   Catat Pengeluaran — frame Figma "10. Payment".
+   Catat Pengeluaran — BUKU NOTA PENGELUARAN dan PAKU NOTA.
 
-   Kerangkanya sama persis dengan frame 07 (Terima Pembayaran) dan karena itu
-   CSS-nya dipakai bersama lewat `bayar-kit.css`. Yang berbeda isi kolom
-   kirinya dan susunan isian di panelnya.
+   Benda dunia nyatanya: di meja studio ada buku nota rangkap untuk mencatat
+   uang yang keluar untuk proyek, dan sebatang paku tempat nota yang sudah
+   ditulis ditusukkan. Sengaja berbeda dari tetangganya di Keuangan — Gaji
+   (buku), Fee (kuitansi), Tagihan (papan jepit), Kas (mesin kas), Semua
+   Transaksi (rekening koran).
 
-   Pemetaannya:
+   Satu papan `--kas-bidang` berjahit, tiga kolom:
 
-     Coinest                        Halaman ini
-     ----------------------------   ------------------------------------------
-     4 tab mode kiri                `cost_category`: freelancer / operasional /
-                                    prinsipal / lainnya — PERSIS empat
-     Cari penyedia                  cari orang
-     Akordeon kategori → penyedia   `member_kind`: partner / inti / proyek /
-                                    staf — juga PERSIS empat — berisi orangnya
-     Recent Payments (3 kartu)      biaya terbaru lintas proyek
-     Payment Account (2 kartu)      nilai kontrak / beban sejauh ini
-     Service Provider (2 pemilih)   proyek / dibayar ke
-     Virtual Account                keterangan biaya (`label`)
-     Amount                         nominal (+ tanggal, lihat di bawah)
-     Cancel / Proceed to Payment    Batal / Catat Pengeluaran
+   1. RAK CAP — empat cap karet kategori (`cost_category`, PERSIS empat).
+      Muka cap membawa jumlah dan banyaknya nota bulan ini; cap yang dipilih
+      dibubuhkan di lembar nota. Di bawahnya daftar PENERIMA per jenis anggota
+      (`member_kind`, juga empat) dengan cari — memilih orang mengisi
+      "Dibayar kepada".
+   2. BUKU NOTA — lembar putih teratas buku yang bisa diisi di tempat:
+      nomor nota, tanggal, proyek, penerima, keperluan, jumlah + terbilang,
+      dan ruang tanda tangan. Tumpukan rangkap mengintip di bawahnya.
+   3. PAKU NOTA — biaya terbaru lintas proyek (8), yang terbaru utuh di atas
+      tertusuk paku, yang lebih lama menyembul di bawahnya. Di atasnya
+      KONTROL PROYEK: nilai kontrak, beban yang sudah keluar, dan beban
+      SESUDAH nota yang sedang diketik — bergerak saat jumlahnya diketik.
 
-   Tiga selisih yang DISENGAJA:
+   SATU-SATUNYA gerak: catatan yang tersimpan DISOBEK dari buku lalu
+   DITUSUK ke paku — lembar terangkat dari perforasinya, terbang ke paku, dan
+   mendarat di puncak tumpukan. Hanya saat menyimpan; diam bila gerak
+   dikurangi. Lembar kosong berikutnya sudah ada di buku saat yang lama
+   terbang, seperti buku nota sungguhan.
 
-   1. Baris terakhir di framenya SATU isian selebar 756. Di sini ia dipecah
-      dua sama besar supaya tanggal punya tempat. `incurred_on` adalah
-      "tanggal biaya benar-benar terjadi, bukan kapan diketik" — kolomnya ada
-      justru karena staf mengetik nota lama — jadi halaman pencatat biaya
-      yang tidak bisa mengisinya akan salah mencatat setiap nota yang tidak
-      dimasukkan pada hari yang sama. Bentuk dua-kolomnya bukan karangan:
-      frame 07 memakai baris dua-kolom yang sama persis, jadi ia memang
-      bahasa visual file ini.
-   2. Kartu "Payment Account" di framenya bisa DIPILIH. Di sini keduanya cuma
-      angka proyek terpilih: nilai kontrak dan beban yang sudah keluar.
-      Gambar kartu kreditnya diganti ubin 56 berikon — kita tidak punya
-      gambar kartu, dan menggambarnya sendiri berarti mengarang benda yang
-      tidak ada.
-   3. Kedua pemilih diberi labelnya sendiri; di framenya satu label
-      "Service Provider" memayungi keduanya. "Proyek" dan "Dibayar ke"
-      bukan dua sisi satu hal seperti kategori-dan-penyedia di sana.
-
-   Kenapa tab atasnya kategori dan BUKAN navigasi antar-halaman, seperti
-   Coinest memakainya (Transfer/Payment = frame 07 dan 10): dengan navigasi,
-   `cost_category` tidak punya tempat sama sekali di halaman ini — akordeon
-   kirinya sudah dipakai jenis anggota, dan keempat slot isian di panelnya
-   sudah terisi. Itu satu-satunya susunan yang memberi setiap kolom database
-   sebuah tempat. Kalau pemilik lebih suka tab navigasi, yang harus ikut
-   pindah adalah kategorinya, dan itu berarti satu isian tambahan yang tidak
-   ada slotnya di framenya.
+   Nomor nota `NP-YYMM-NN` diturunkan dari data, bukan nomor karangan: urutan
+   biaya dalam bulan terjadinya, menurut tanggal lalu urutan catat — pola yang
+   sama dengan nomor bukti Kas Studio.
    ============================================================================= */
 
 const KATEGORI: { nilai: string; label: string; ikon: DataIkon }[] = [
@@ -88,13 +87,10 @@ const KATEGORI: { nilai: string; label: string; ikon: DataIkon }[] = [
   { nilai: "prinsipal", label: "Prinsipal", ikon: Medal },
   { nilai: "lainnya", label: "Lainnya", ikon: DotsThree },
 ];
+const LABEL_KATEGORI: Record<string, string> = Object.fromEntries(KATEGORI.map((k) => [k.nilai, k.label]));
+const IKON_KATEGORI: Record<string, DataIkon> = Object.fromEntries(KATEGORI.map((k) => [k.nilai, k.ikon]));
 
-const LABEL_KATEGORI: Record<string, string> = Object.fromEntries(
-  KATEGORI.map((k) => [k.nilai, k.label]),
-);
-
-/* Urutan kelompok akordeon mengikuti kedekatan ke studio, bukan abjad:
-   partner dulu, staf tetap terakhir. */
+/* Urutan kelompok mengikuti kedekatan ke studio, bukan abjad. */
 const JENIS: { nilai: JenisAnggota; ikon: DataIkon }[] = [
   { nilai: "partner", ikon: SpecialHandshake },
   { nilai: "inti", ikon: UserCircleCheck },
@@ -102,17 +98,11 @@ const JENIS: { nilai: JenisAnggota; ikon: DataIkon }[] = [
   { nilai: "staf", ikon: IdentificationBadge },
 ];
 
-const BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-function tanggalPendek(iso: string): string {
-  const d = new Date(iso.length === 10 ? iso + "T00:00:00" : iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return `${d.getDate()} ${BULAN[d.getMonth()]}`;
-}
+const PAKU = 8;
+const TERBANG_MS = 780;
 
 function hariIni(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return keIso(new Date());
 }
 
 /** "12.500.000" / "Rp12.500.000" -> 12500000. */
@@ -121,19 +111,48 @@ function keAngka(teks: string): number {
   return bersih ? Number(bersih) : 0;
 }
 
+/* `incurred_on` kolom date: dipotong dari string, bukan lewat Date, supaya
+   tidak mundur sehari di zona barat GMT. */
+const tglPendek = (iso: string) => {
+  const [, b, h] = iso.slice(0, 10).split("-");
+  return `${Number(h)} ${BULAN_PENDEK[Number(b) - 1] ?? ""}`;
+};
+const kunciBulan = (iso: string) => iso.slice(2, 4) + iso.slice(5, 7);
+
+/** Nomor nota tiap biaya: urutan dalam bulan terjadinya. Daftar dari API
+    terurut tanggal TURUN lalu catat terbaru dulu, jadi dibaca terbalik. */
+function nomorSemua(daftar: BiayaProyek[]): Map<string, string> {
+  const hitung = new Map<string, number>();
+  const hasil = new Map<string, string>();
+  for (let i = daftar.length - 1; i >= 0; i--) {
+    const b = daftar[i]!;
+    const k = kunciBulan(b.incurredOn);
+    const n = (hitung.get(k) ?? 0) + 1;
+    hitung.set(k, n);
+    hasil.set(b.id, `NP-${k}-${String(n).padStart(2, "0")}`);
+  }
+  return hasil;
+}
+
 function Isi() {
   const toast = useToast();
+  const kurangiGerak = useRef(false);
+  useEffect(() => {
+    kurangiGerak.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
 
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [tim, setTim] = useState<AnggotaTim[] | null>(() => bacaCache<AnggotaTim[]>("tim"));
+  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() => bacaCache<BiayaProyek[]>("biaya-semua"));
+  const [ringkas, setRingkas] = useState<FinanceOverview | null>(() => bacaCache<FinanceOverview>("keuangan:semua"));
+  /* Nama studio dari Info Studio — kunci `settings` milik halaman itu, jadi
+     di sini cuma DIBACA (jebakan #8). */
+  const [studio, setStudio] = useState<{ nama: string; kota: string | null }>(() => {
+    const s = bacaCache<StudioSettings>("settings");
+    return { nama: s?.studioName || "Studio", kota: s?.city ?? null };
+  });
   /* Biaya yang sedang dibuka rinciannya (dan bisa dihapus). */
   const [rinci, setRinci] = useState<BiayaProyek | null>(null);
-  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() =>
-    bacaCache<BiayaProyek[]>("biaya-semua"),
-  );
-  const [ringkas, setRingkas] = useState<FinanceOverview | null>(() =>
-    bacaCache<FinanceOverview>("keuangan:semua"),
-  );
 
   const [kategori, setKategori] = useState("freelancer");
   const [buka, setBuka] = useState<JenisAnggota | null>("proyek");
@@ -145,7 +164,23 @@ function Isi() {
   const [tanggal, setTanggal] = useState(hariIni);
   const [kirim, setKirim] = useState(false);
 
+  /* Gerak sobek-dan-tusuk. `terbang` = salinan nota yang sedang terbang
+     beserta jaraknya ke paku (dibaca SEKALI saat menyimpan). `tusuk` = id
+     nota yang baru mendarat. */
+  const [terbang, setTerbang] = useState<{ nota: NotaData; gaya: CSSProperties } | null>(null);
+  const [tusuk, setTusuk] = useState<string | null>(null);
+  const akarRef = useRef<HTMLDivElement>(null);
+  const lembarRef = useRef<HTMLDivElement>(null);
+  const pakuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => onProyekAktif(setPilihProyekId), []);
+
+  async function muatBiaya() {
+    const d = await semuaBiaya();
+    tulisCache("biaya-semua", d);
+    setBiaya(d);
+    return d;
+  }
 
   useEffect(() => {
     daftarProyek()
@@ -160,17 +195,15 @@ function Isi() {
         setTim(d);
       })
       .catch(() => setTim((l) => l ?? []));
-    semuaBiaya()
-      .then((d) => {
-        tulisCache("biaya-semua", d);
-        setBiaya(d);
-      })
-      .catch(() => setBiaya((l) => l ?? []));
+    muatBiaya().catch(() => setBiaya((l) => l ?? []));
     ambilRingkasanKeuangan(null)
       .then((d) => {
         tulisCache("keuangan:semua", d);
         setRingkas(d);
       })
+      .catch(() => {});
+    ambilSettings()
+      .then((d) => setStudio({ nama: d.studioName || "Studio", kota: d.city ?? null }))
       .catch(() => {});
   }, []);
 
@@ -179,49 +212,86 @@ function Isi() {
     return d.find((p) => p.id === pilihProyekId) ?? d[0] ?? null;
   }, [proyek, pilihProyekId]);
 
-  /* Angka beban proyek datang dari ringkasan keuangan, bukan dari daftar
-     proyek: `daftarProyek` memuat nilai kontrak dan uang masuk, tapi TIDAK
-     memuat total biaya. */
+  /* Beban proyek dari ringkasan keuangan: daftar proyek memuat nilai kontrak
+     tapi TIDAK memuat total biaya. */
   const barisKeu = useMemo(
     () => (ringkas?.proyek ?? []).find((p) => p.projectId === aktif?.id) ?? null,
     [ringkas, aktif?.id],
   );
-
   const kontrak = aktif?.contractValue ?? barisKeu?.contractValue ?? 0;
   const beban = barisKeu?.costsTotal ?? 0;
 
-  const orangTersaring = useMemo(() => {
-    const q = cari.trim().toLowerCase();
-    const d = (tim ?? []).filter((a) => a.active);
-    if (!q) return d;
-    return d.filter(
-      (a) => a.name.toLowerCase().includes(q) || (a.role ?? "").toLowerCase().includes(q),
-    );
-  }, [tim, cari]);
+  const timAktif = useMemo(() => (tim ?? []).filter((a) => a.active), [tim]);
+  const orang = timAktif.find((a) => a.id === orangId) ?? null;
 
-  /* Pencarian membuka sendiri kelompok yang punya hasil. Tanpa itu staf
-     mengetik nama yang memang ada dan kolomnya tampak kosong, karena
-     kelompoknya kebetulan tertutup. */
-  const kelompok = useMemo(
-    () =>
-      JENIS.map((j) => ({
-        ...j,
-        orang: orangTersaring.filter((a) => a.kind === j.nilai),
-      })),
-    [orangTersaring],
-  );
+  const kelompok = useMemo(() => {
+    const q = cari.trim().toLowerCase();
+    const d = q
+      ? timAktif.filter((a) => a.name.toLowerCase().includes(q) || (a.role ?? "").toLowerCase().includes(q))
+      : timAktif;
+    return JENIS.map((j) => ({ ...j, orang: d.filter((a) => a.kind === j.nilai) }));
+  }, [timAktif, cari]);
   const mencari = cari.trim().length > 0;
 
+  const semua = biaya ?? [];
+  const nomor = useMemo(() => nomorSemua(semua), [semua]);
+  const bulanIni = hariIni().slice(0, 7);
+  const perKategori = useMemo(() => {
+    const m = new Map<string, { jumlah: number; n: number }>();
+    for (const b of semua) {
+      if (!b.incurredOn.startsWith(bulanIni)) continue;
+      const x = m.get(b.category) ?? { jumlah: 0, n: 0 };
+      x.jumlah += b.amount;
+      x.n += 1;
+      m.set(b.category, x);
+    }
+    return m;
+  }, [semua, bulanIni]);
+  const notaBulanIni = [...perKategori.values()].reduce((a, x) => a + x.n, 0);
+
+  /* Nomor lembar yang sedang ditulis: sesudah semua biaya bulan itu yang
+     tanggalnya tidak lebih baru — nota lama yang diketik belakangan memang
+     terselip di urutannya. */
+  const nomorBaru = useMemo(() => {
+    const k = kunciBulan(tanggal);
+    const n = semua.filter((b) => kunciBulan(b.incurredOn) === k && b.incurredOn <= tanggal).length + 1;
+    return `NP-${k}-${String(n).padStart(2, "0")}`;
+  }, [semua, tanggal]);
+
   const angka = keAngka(nominal);
-  const bisaKirim = Boolean(aktif) && angka > 0 && label.trim().length >= 2 && !kirim;
+  const alasan = !aktif
+    ? "Pilih proyeknya dulu"
+    : label.trim().length < 2
+      ? "Tulis untuk keperluan apa"
+      : angka <= 0
+        ? "Isi jumlahnya"
+        : null;
+  const bisaKirim = alasan === null && !kirim;
+
+  function kosongkan() {
+    setLabel("");
+    setNominal("");
+    setOrangId("");
+    setTanggal(hariIni());
+  }
 
   async function simpan() {
     if (!aktif || !bisaKirim) return;
     setKirim(true);
+    const nota: NotaData = {
+      nomor: nomorBaru,
+      tanggal,
+      proyek: aktif.title,
+      kode: kodeProyek(aktif.title),
+      orang: orang?.name ?? null,
+      label: label.trim(),
+      jumlah: angka,
+      kategori,
+    };
     try {
-      await catatBiaya({
+      const { id } = await catatBiaya({
         projectId: aktif.id,
-        label: label.trim(),
+        label: nota.label,
         category: kategori,
         amount: angka,
         incurredOn: tanggal || undefined,
@@ -229,13 +299,54 @@ function Isi() {
       });
       toast({
         judul: "Pengeluaran tercatat",
-        keterangan: `${formatRupiah(angka)} — ${LABEL_KATEGORI[kategori]} di ${aktif.title}.`,
+        keterangan: `${nota.nomor} · ${formatRupiah(angka)} — ${LABEL_KATEGORI[kategori]} di ${aktif.title}.`,
         nada: "sukses",
       });
+
+      /* Gerak: jarak lembar → puncak paku dibaca sekali, di sini. */
+      const akar = akarRef.current?.getBoundingClientRect();
+      const lb = lembarRef.current?.getBoundingClientRect();
+      const tujuan = pakuRef.current?.getBoundingClientRect();
+      const bergerak = !kurangiGerak.current && akar && lb && tujuan && lb.width > 0;
+      if (bergerak) {
+        const sk = Math.min(1, tujuan.width / lb.width);
+        setTerbang({
+          nota,
+          gaya: {
+            left: lb.left - akar.left,
+            top: lb.top - akar.top,
+            width: lb.width,
+            height: lb.height,
+            /* Titik asal transformasinya tepi atas-tengah, jadi cukup
+               menyamakan tepi atas-tengah lembar dengan tepi atas-tengah
+               puncak paku. */
+            ["--npg-dx" as string]: `${tujuan.left + tujuan.width / 2 - (lb.left + lb.width / 2)}px`,
+            ["--npg-dy" as string]: `${tujuan.top - lb.top}px`,
+            ["--npg-sk" as string]: String(sk),
+          },
+        });
+      }
+
+      /* Nota baru langsung ada di tumpukan (bersembunyi sampai mendarat),
+         lalu daftar segar mengganti salinannya. */
+      const baru: BiayaProyek = {
+        id,
+        projectId: aktif.id,
+        projectTitle: aktif.title,
+        label: nota.label,
+        category: kategori,
+        amount: angka,
+        incurredOn: tanggal,
+        teamMemberId: orangId || null,
+        teamMemberName: orang?.name ?? null,
+      };
+      setBiaya((l) => [baru, ...(l ?? [])].sort((a, z) => z.incurredOn.localeCompare(a.incurredOn)));
+      setTusuk(id);
       setLabel("");
       setNominal("");
-      /* Daftar biaya DAN ringkasan keuangan ikut disegarkan: strip di kanan
-         atas dan kartu "beban sejauh ini" keduanya baru saja berubah. */
+      window.setTimeout(() => setTerbang(null), bergerak ? TERBANG_MS : 0);
+      window.setTimeout(() => setTusuk((t) => (t === id ? null : t)), bergerak ? TERBANG_MS + 420 : 0);
+
       const [b, r] = await Promise.all([semuaBiaya(), ambilRingkasanKeuangan(null)]);
       tulisCache("biaya-semua", b);
       tulisCache("keuangan:semua", r);
@@ -252,284 +363,440 @@ function Isi() {
     }
   }
 
+  const paku = semua.slice(0, PAKU);
+  const [atas, ...bawah] = paku;
+  const menunggu = terbang !== null && atas?.id === tusuk;
+
+  const persen = (n: number) => (kontrak > 0 ? Math.round((n / kontrak) * 100) : 0);
+  const skala = Math.max(kontrak, beban + angka, 1);
+  const lewat = kontrak > 0 && beban + angka > kontrak;
+
   return (
-    <div className="tr">
-      {/* ---- Kolom kiri --------------------------------------------------- */}
-      <section className="tr__kiri">
-        <KelompokTab
-          className="tr__metode"
-          judul="Kategori pengeluaran"
-          tab={KATEGORI}
-          nilai={kategori}
-          onPilih={setKategori}
-        />
-
-        <div className="tr__cari">
-          <Cari
-            ukuran="large"
-            judul="Cari orang"
-            placeholder="Cari orang"
-            value={cari}
-            onChange={(e) => setCari(e.currentTarget.value)}
-          />
-          {/* Membawa ke tempat daftar orangnya diurus — sempat tanpa aksi. */}
-          <TombolBulat ikon={Sliders} judul="Kelola di Tim & Freelancer" onClick={() => navigate("/admin/tim")} />
-        </div>
-
-        <div className="tr__daftar">
-          <div className="tr__gulir">
-            {kelompok.map((k) => {
-              const terbuka = mencari ? k.orang.length > 0 : buka === k.nilai;
+    <div className="npg" ref={akarRef}>
+      <div className="npg__papan">
+        {/* ---- RAK CAP & PENERIMA ------------------------------------------- */}
+        <section className="npg__rak" aria-label="Kategori dan penerima">
+          <p className="npg__alis">Cap kategori</p>
+          <div className="npg__cap-cap" role="group" aria-label="Kategori pengeluaran">
+            {KATEGORI.map((k) => {
+              const s = perKategori.get(k.nilai);
               return (
-                <div key={k.nilai} className={`tr__akor${terbuka ? " is-terbuka" : ""}`}>
-                  <BarisPenyedia
-                    ikon={k.ikon}
-                    nama={LABEL_JENIS_ANGGOTA[k.nilai]}
-                    bentuk="kartu"
-                    aria-expanded={terbuka}
-                    onClick={() => setBuka(terbuka ? null : k.nilai)}
-                  />
-                  {terbuka && (
-                    <ul className="tr__anak">
-                      {k.orang.map((a) => (
-                        <li key={a.id}>
-                          <BarisPenyedia
-                            ikon={k.ikon}
-                            nama={a.name}
-                            bentuk="rinci"
-                            aktif={orangId === a.id}
-                            onClick={() => setOrangId(orangId === a.id ? "" : a.id)}
-                          />
-                        </li>
-                      ))}
-                      {k.orang.length === 0 && (
-                        <li>
-                          <p className="tr__kosongkecil">
-                            {mencari ? "Tidak ada yang cocok." : "Belum ada orang di kelompok ini."}
-                          </p>
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </div>
+                <button
+                  key={k.nilai}
+                  type="button"
+                  className="npg__cap"
+                  aria-pressed={kategori === k.nilai}
+                  onClick={() => setKategori(k.nilai)}
+                >
+                  <span className="npg__gagang" aria-hidden="true" />
+                  <span className="npg__muka">
+                    <span className="npg__capnama">
+                      <Ikon ikon={k.ikon} ukuran={14} />
+                      {k.label}
+                    </span>
+                    <span className="npg__capangka">{s ? formatRupiah(s.jumlah) : "Rp0"}</span>
+                    <small>{s ? `${s.n} nota bulan ini` : "belum ada bulan ini"}</small>
+                  </span>
+                </button>
               );
             })}
-            {tim !== null && tim.length === 0 && (
-              <p className="tr__kosong">Belum ada anggota tim terdaftar.</p>
-            )}
           </div>
-          <span className="tr__tirai" />
+
+          <div className="npg__penerima">
+            <p className="npg__alis">Dibayar kepada</p>
+            <div className="npg__cari">
+              <Cari
+                className="npg__carikotak"
+                judul="Cari orang"
+                placeholder="Cari orang"
+                value={cari}
+                onChange={(e) => setCari(e.currentTarget.value)}
+              />
+              <TombolBulat className="npg__bulat" ikon={Sliders} judul="Kelola di Tim & Freelancer" onClick={() => navigate("/admin/tim")} />
+            </div>
+            <div className="npg__orangwadah">
+              <ul className="npg__orang">
+                {kelompok.map((k) => {
+                  const terbuka = mencari ? k.orang.length > 0 : buka === k.nilai;
+                  return (
+                    <li key={k.nilai} className={terbuka ? "is-terbuka" : undefined}>
+                      <button
+                        type="button"
+                        className="npg__jenis"
+                        aria-expanded={terbuka}
+                        onClick={() => setBuka(terbuka ? null : k.nilai)}
+                      >
+                        <Ikon ikon={k.ikon} ukuran={14} />
+                        <span>{LABEL_JENIS_ANGGOTA[k.nilai]}</span>
+                        <small>{k.orang.length}</small>
+                        <Ikon ikon={CaretDown} ukuran={12} className="npg__caret" />
+                      </button>
+                      {terbuka && (
+                        <ul className="npg__anak">
+                          {k.orang.map((a) => (
+                            <li key={a.id}>
+                              <button
+                                type="button"
+                                className="npg__siapa"
+                                aria-pressed={orangId === a.id}
+                                onClick={() => setOrangId(orangId === a.id ? "" : a.id)}
+                              >
+                                <span className="npg__inisial" aria-hidden="true">{inisial(a.name)}</span>
+                                <span className="npg__siapanama">
+                                  <b>{a.name}</b>
+                                  {a.role && <small>{a.role}</small>}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                          {k.orang.length === 0 && (
+                            <li className="npg__kosongkecil">
+                              {mencari ? "Tidak ada yang cocok." : "Belum ada orang di kelompok ini."}
+                            </li>
+                          )}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              {tim !== null && timAktif.length === 0 && <p className="npg__kosongkecil">Belum ada anggota tim terdaftar.</p>}
+            </div>
+          </div>
+        </section>
+
+        {/* ---- BUKU NOTA ----------------------------------------------------- */}
+        <section className="npg__meja" aria-label="Buku nota pengeluaran">
+          <div className="npg__mejakop">
+            <p className="npg__alis">
+              Buku nota pengeluaran · {BULAN[Number(bulanIni.slice(5, 7)) - 1]} · {notaBulanIni} nota
+            </p>
+            <DropdownMenu
+              trigger={
+                <button type="button" className="npg__menu" aria-label="Buka halaman lain">
+                  <Ikon ikon={DotsThree} ukuran={20} />
+                </button>
+              }
+              sections={[
+                {
+                  label: "Buka",
+                  items: (
+                    [
+                      ["Semua transaksi", NavArrowsLeftRight, "/admin/keuangan/transaksi"],
+                      ["Fee proyek", NavCurrencyCircleDollar, "/admin/fee"],
+                      ["Gaji", Wallet, "/admin/gaji"],
+                    ] as const
+                  ).map(([l, ikon, ke]) => ({ label: l, ikon, onSelect: () => navigate(ke) })),
+                },
+              ]}
+            />
+          </div>
+
+          <div className="npg__buku">
+            <div className="npg__jilid" aria-hidden="true">
+              <span />
+              <span />
+            </div>
+            <div className="npg__lembar" ref={lembarRef}>
+              <header className="npg__kop">
+                <div className="npg__studio">
+                  <b>{studio.nama}</b>
+                  {studio.kota && <small>{studio.kota}</small>}
+                </div>
+                <div className="npg__judul">
+                  <span>Nota pengeluaran</span>
+                  <small>
+                    No. <b>{nomorBaru}</b>
+                  </small>
+                </div>
+              </header>
+
+              <div className="npg__isian">
+                <div className="npg__baris npg__baris--tgl">
+                  <label htmlFor="npg-tanggal">Tanggal</label>
+                  <div className="npg__nilai">
+                    <PilihTanggal id="npg-tanggal" nilai={tanggal} onUbah={setTanggal} bisaKosong={false} maks={hariIni()} />
+                  </div>
+                  <span className="npg__capslot">
+                    <span className="npg__capjejak" aria-label={`Kategori ${LABEL_KATEGORI[kategori]}`}>
+                      <Ikon ikon={IKON_KATEGORI[kategori] ?? DotsThree} ukuran={13} />
+                      {LABEL_KATEGORI[kategori]}
+                    </span>
+                  </span>
+                </div>
+                <div className="npg__baris">
+                  <label htmlFor="npg-proyek">Proyek</label>
+                  <div className="npg__nilai">
+                    <PilihMenu
+                      id="npg-proyek"
+                      label="Proyek"
+                      nilai={aktif?.id ?? ""}
+                      onUbah={(v) => {
+                        setProyekAktif(v);
+                        setPilihProyekId(v);
+                      }}
+                      opsi={(proyek ?? []).map((p) => ({ nilai: p.id, label: p.title, ket: kodeProyek(p.title) }))}
+                      pemicu={
+                        <button type="button" className="npg__tulis">
+                          <span>{aktif?.title ?? "Pilih proyek"}</span>
+                          {aktif && <small>{kodeProyek(aktif.title)}</small>}
+                          <Ikon ikon={CaretDown} ukuran={12} className="npg__tuliscaret" />
+                        </button>
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="npg__baris">
+                  <label htmlFor="npg-orang">Dibayar kepada</label>
+                  <div className="npg__nilai">
+                    {/* Boleh KOSONG: biaya operasional memang bukan milik siapa
+                        pun. Kolomnya `on delete set null` dengan alasan sama. */}
+                    <PilihMenu
+                      id="npg-orang"
+                      label="Dibayar kepada"
+                      nilai={orangId}
+                      onUbah={setOrangId}
+                      opsi={[
+                        { nilai: "", label: "Tanpa orang" },
+                        ...JENIS.flatMap((j) =>
+                          timAktif
+                            .filter((a) => a.kind === j.nilai)
+                            .map((a) => ({ nilai: a.id, label: a.name, kelompok: LABEL_JENIS_ANGGOTA[j.nilai] })),
+                        ),
+                      ]}
+                      pemicu={
+                        <button type="button" className={`npg__tulis${orang ? "" : " is-kosong"}`}>
+                          <span>{orang?.name ?? "tanpa orang"}</span>
+                          {orang?.role && <small>{orang.role}</small>}
+                          <Ikon ikon={CaretDown} ukuran={12} className="npg__tuliscaret" />
+                        </button>
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="npg__baris">
+                  <label htmlFor="npg-label">Untuk keperluan</label>
+                  <div className="npg__nilai">
+                    <input
+                      id="npg-label"
+                      className="npg__ketik"
+                      placeholder="mis. Render eksterior 6 frame"
+                      autoComplete="off"
+                      value={label}
+                      onChange={(e) => setLabel(e.currentTarget.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="npg__jumlah">
+                <label htmlFor="npg-nominal">Jumlah</label>
+                <div className="npg__kotakrp">
+                  <span aria-hidden="true">Rp</span>
+                  {/* `inputMode`, bukan `type=number`: type=number menolak
+                      titik pemisah ribuan dan memunculkan panah naik-turun. */}
+                  <input
+                    id="npg-nominal"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="0"
+                    value={nominal}
+                    onChange={(e) => setNominal(e.currentTarget.value)}
+                  />
+                </div>
+                <p className="npg__terbilang">{angka > 0 ? `# ${terbilang(angka)} #` : "terbilang —"}</p>
+              </div>
+
+              <div className="npg__ttd">
+                <div>
+                  <span>Penerima</span>
+                  <b>{orang?.name ?? "………………"}</b>
+                </div>
+                <div>
+                  <span>Pembayar</span>
+                  <b>{studio.nama}</b>
+                </div>
+              </div>
+            </div>
+            <span className="npg__rangkap" aria-hidden="true" />
+            <span className="npg__rangkap npg__rangkap--2" aria-hidden="true" />
+          </div>
+
+          <div className="npg__aksi">
+            <p className={`npg__alasan${alasan ? "" : " is-siap"}`} aria-live="polite">
+              {alasan ?? `Siap dicatat ke ${aktif ? kodeProyek(aktif.title) : ""}`}
+            </p>
+            <Tombol jenis="secondary" onClick={kosongkan}>
+              Kosongkan
+            </Tombol>
+            <Tombol memuat={kirim} disabled={!bisaKirim} onClick={simpan}>
+              {kirim ? "Menyimpan…" : "Catat pengeluaran"}
+            </Tombol>
+          </div>
+        </section>
+
+        {/* ---- KONTROL PROYEK & PAKU NOTA ------------------------------------ */}
+        <section className="npg__kanan" aria-label="Beban proyek dan nota terbaru">
+          <div className={`npg__kontrol${lewat ? " is-lewat" : ""}`}>
+            <div className="npg__kontrolkop">
+              <span className="npg__alis">Beban {aktif ? kodeProyek(aktif.title) : "proyek"}</span>
+              <b>{kontrak > 0 ? `${persen(beban + angka)}%` : "—"}</b>
+            </div>
+            <div className="npg__meter" aria-hidden="true">
+              <span className="npg__meter-beban" style={{ width: `${(beban / skala) * 100}%` }} />
+              <span className="npg__meter-baru" style={{ width: `${(angka / skala) * 100}%` }} />
+              {kontrak > 0 && kontrak < skala && <i style={{ left: `${(kontrak / skala) * 100}%` }} />}
+            </div>
+            <dl className="npg__angka">
+              <div>
+                <dt>Nilai kontrak</dt>
+                <dd>{kontrak > 0 ? formatRupiah(kontrak) : "belum berkontrak"}</dd>
+              </div>
+              <div>
+                <dt>Sudah keluar</dt>
+                <dd>{formatRupiah(beban)}</dd>
+              </div>
+              <div className={angka > 0 ? "is-baru" : undefined}>
+                <dt>Sesudah nota ini</dt>
+                <dd>{angka > 0 ? formatRupiah(beban + angka) : "—"}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="npg__pakukop">
+            <p className="npg__alis">Paku nota · {paku.length} terakhir</p>
+            <a className="npg__semua" href="/admin/keuangan/transaksi?jenis=keluar">
+              Lihat semua
+            </a>
+          </div>
+          <div className="npg__paku">
+            <span className="npg__ujung" aria-hidden="true" />
+            <div className="npg__tumpuk" ref={pakuRef}>
+              {atas ? (
+                <button
+                  type="button"
+                  key={atas.id}
+                  className={`npg__slip${menunggu ? " is-menunggu" : ""}${!menunggu && tusuk === atas.id ? " is-tusuk" : ""}`}
+                  onClick={() => setRinci(atas)}
+                  aria-label={`Rincian ${atas.label}, ${formatRupiah(atas.amount)}`}
+                >
+                  <span className="npg__lubang" aria-hidden="true" />
+                  <span className="npg__slipkop">
+                    <span>{nomor.get(atas.id) ?? ""}</span>
+                    <span>{tglPendek(atas.incurredOn)}</span>
+                  </span>
+                  <b className="npg__sliplabel">{atas.label}</b>
+                  <span className="npg__slipket">
+                    {atas.projectTitle ?? "tanpa proyek"}
+                    {atas.teamMemberName ? ` · ${atas.teamMemberName}` : ""}
+                  </span>
+                  <span className="npg__slipkaki">
+                    <span className="npg__capkecil">{LABEL_KATEGORI[atas.category] ?? atas.category}</span>
+                    <b>{formatRupiah(atas.amount)}</b>
+                  </span>
+                </button>
+              ) : (
+                <p className="npg__slip npg__slip--kosong">{biaya === null ? "Memuat…" : "Paku masih kosong."}</p>
+              )}
+              <ol className={`npg__sembul${tusuk ? " is-turun" : ""}`}>
+                {bawah.map((b) => (
+                  <li key={b.id}>
+                    <button
+                      type="button"
+                      className="npg__strip"
+                      onClick={() => setRinci(b)}
+                      aria-label={`Rincian ${b.label}, ${formatRupiah(b.amount)}`}
+                    >
+                      <span>{tglPendek(b.incurredOn)}</span>
+                      <span className="npg__stripket">{b.label}</span>
+                      <b>{formatRupiah(b.amount)}</b>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            {/* Batang paku tergambar HANYA di celah antara tumpukan dan alas —
+                tidak pernah di belakang kertas (jebakan #70). */}
+            <span className="npg__batang" aria-hidden="true" />
+            <span className="npg__alas" aria-hidden="true" />
+          </div>
+        </section>
+      </div>
+
+      {terbang && (
+        <div className="npg__terbang" style={terbang.gaya} aria-hidden="true">
+          <NotaTerbang nota={terbang.nota} studio={studio.nama} />
         </div>
-      </section>
+      )}
 
-      {/* ---- Kolom kanan -------------------------------------------------- */}
-      <section className="tr__kanan">
-        <article className="tr__kartu tr__baru">
-          <KepalaSeksi
-            judul="Biaya Terbaru"
-            kanan={
-              <Tombol
-                ukuran="small"
-                jenis="transparent"
-                /* Ke Semua Transaksi yang sudah tersaring ke uang KELUAR — dulu
-                   ke Ringkasan, yang tidak memuat daftar biaya sama sekali. */
-                onClick={() => navigate("/admin/keuangan/transaksi?jenis=keluar")}
-              >
-                Lihat semua
-              </Tombol>
-            }
-          />
-          <div className="tr__strip">
-            {(biaya ?? []).slice(0, 8).map((b) => (
-              <BarisTransfer
-                key={b.id}
-                gambar={<Ikon ikon={CoinOut} ukuran={18} />}
-                nama={formatRupiah(b.amount)}
-                /* Proyek di baris kedua dan kategori di pojok kanan bawah,
-                   bukan keduanya disambung: kartu ini 279 tetap, dan
-                   "Freelancer · Rumah Tropis Sungai Raya" tidak pernah muat
-                   dalam satu baris. */
-                rekening={b.projectTitle ?? "tanpa proyek"}
-                kananAtas={tanggalPendek(b.incurredOn)}
-                kananBawah={LABEL_KATEGORI[b.category] ?? b.category}
-                onClick={() => setRinci(b)}
-                judul={`Rincian biaya ${b.label}, ${formatRupiah(b.amount)}`}
-              />
-            ))}
-            {(biaya ?? []).length === 0 && (
-              <p className="tr__kosong">Belum ada biaya tercatat.</p>
-            )}
-          </div>
-        </article>
-
-        <article className="tr__kartu tr__form">
-          <KepalaSeksi
-            judul="Catat Pengeluaran"
-            kanan={
-              /* ⋯ di framenya: sempat hiasan tanpa aksi. Isinya halaman yang
-                 wajar dituju sesudah mencatat — bukan aksi baru. */
-              <DropdownMenu
-                trigger={<TombolIkon ikon={DotsThree} jenis="transparent" judul="Aksi lain" ikonPx={22} />}
-                sections={[
-                  {
-                    label: "Buka",
-                    items: ([["Semua transaksi", NavArrowsLeftRight, "/admin/keuangan/transaksi"], ["Fee proyek", NavCurrencyCircleDollar, "/admin/fee"], ["Gaji", Wallet, "/admin/gaji"]] as const).map(([label, ikon, ke]) => ({ label, ikon, onSelect: () => navigate(ke) })),
-                  },
-                ]}
-              />
-            }
-          />
-
-          <div className="tr__panel">
-            <div className="tr__grup">
-              <p className="tr__label">Ringkasan proyek</p>
-              <div className="tr__akun">
-                <div className="tr__akunkartu tr__akunkartu--utama">
-                  <span className="tr__akunubin">
-                    <Ikon ikon={NavReceipt} ukuran={24} />
-                  </span>
-                  <div className="tr__akunisi">
-                    <p className="tr__akunlabel">Nilai kontrak</p>
-                    <p className="tr__akunnilai">{formatRupiah(kontrak)}</p>
-                    <p className="tr__akunket">{aktif?.title ?? "belum ada proyek"}</p>
-                  </div>
-                </div>
-                <div className="tr__akunkartu tr__akunkartu--sisa">
-                  <span className="tr__akunubin">
-                    <Ikon ikon={CoinOut} ukuran={24} />
-                  </span>
-                  <div className="tr__akunisi">
-                    <p className="tr__akunlabel">Beban sejauh ini</p>
-                    <p className="tr__akunnilai">{formatRupiah(beban)}</p>
-                    <p className="tr__akunket">
-                      {kontrak > 0
-                        ? `${Math.round((beban / kontrak) * 100)}% dari nilai kontrak`
-                        : "belum berkontrak"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="tr__duaan">
-              <div className="tr__grup">
-                <label className="tr__label" htmlFor="kl-proyek">
-                  Proyek
-                </label>
-                <PilihMenu
-                  id="kl-proyek"
-                  nilai={aktif?.id ?? ""}
-                  onUbah={(v) => {
-                    setProyekAktif(v);
-                    setPilihProyekId(v);
-                  }}
-                  opsi={(proyek ?? []).map((p) => ({ nilai: p.id, label: p.title }))}
-                  pemicu={
-                    <button type="button" className="tr__pilih">
-                      <span className="tr__pilihubin">
-                        <Ikon ikon={Ruler} ukuran={14} />
-                      </span>
-                      <span className="tr__pilihteks">{aktif?.title ?? "Pilih proyek"}</span>
-                      <Ikon ikon={CaretDown} ukuran={14} className="tr__pilihcaret" />
-                    </button>
-                  }
-                />
-              </div>
-              <div className="tr__grup">
-                <label className="tr__label" htmlFor="kl-orang">
-                  Dibayar ke
-                </label>
-                {/* Boleh KOSONG, dan itu disengaja: biaya operasional memang
-                    bukan milik siapa pun. Kolomnya `on delete set null`
-                    dengan alasan yang sama. */}
-                <PilihMenu
-                  id="kl-orang"
-                  nilai={orangId}
-                  onUbah={setOrangId}
-                  opsi={[
-                    { nilai: "", label: "Tanpa orang" },
-                    ...(tim ?? []).filter((a) => a.active).map((a) => ({ nilai: a.id, label: a.name })),
-                  ]}
-                  pemicu={
-                    <button type="button" className="tr__pilih">
-                      <span className="tr__pilihubin">
-                        <Ikon ikon={Users} ukuran={14} />
-                      </span>
-                      <span className="tr__pilihteks">{(tim ?? []).find((a) => a.id === orangId)?.name ?? "Tanpa orang"}</span>
-                      <Ikon ikon={CaretDown} ukuran={14} className="tr__pilihcaret" />
-                    </button>
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="tr__grup">
-              <label className="tr__label" htmlFor="kl-label">
-                Keterangan biaya
-              </label>
-              <div className="k-isian__kotak">
-                <input
-                  id="kl-label"
-                  className="k-isian__input"
-                  placeholder="mis. Render eksterior 6 frame"
-                  value={label}
-                  onChange={(e) => setLabel(e.currentTarget.value)}
-                />
-              </div>
-            </div>
-
-            <div className="tr__duaan">
-              <div className="tr__grup">
-                <label className="tr__label" htmlFor="kl-nominal">
-                  Nominal
-                </label>
-                {/* `inputMode`, bukan `type=number`: type=number menolak titik
-                    pemisah ribuan dan memunculkan panah naik-turun yang tidak
-                    ada gunanya untuk rupiah. */}
-                <KelompokIsian id="kl-nominal" kiri="Rp" inputMode="numeric" placeholder="0" value={nominal} onChange={(e) => setNominal(e.currentTarget.value)} />
-              </div>
-              <div className="tr__grup">
-                <label className="tr__label" htmlFor="kl-tanggal">
-                  Tanggal
-                </label>
-                <PilihTanggal id="kl-tanggal" nilai={tanggal} onUbah={setTanggal} bisaKosong={false} maks={keIso(new Date())} />
-              </div>
-            </div>
-
-            <div className="tr__aksi">
-              <Tombol
-                ukuran="large"
-                jenis="secondary"
-                onClick={() => {
-                  setLabel("");
-                  setNominal("");
-                  setOrangId("");
-                  setTanggal(hariIni());
-                }}
-              >
-                Batal
-              </Tombol>
-              <Tombol memuat={kirim} ukuran="large" disabled={!bisaKirim} onClick={simpan}>
-                {kirim ? "Menyimpan…" : "Catat Pengeluaran"}
-              </Tombol>
-            </div>
-          </div>
-        </article>
-      </section>
       <DialogBiaya
         biaya={rinci}
-        kategori={rinci ? LABEL_KATEGORI[rinci.category] ?? rinci.category : ""}
+        kategori={rinci ? (LABEL_KATEGORI[rinci.category] ?? rinci.category) : ""}
         open={rinci !== null}
         onOpenChange={(b) => !b && setRinci(null)}
-        onDihapus={() =>
-          semuaBiaya()
-            .then((d) => {
-              tulisCache("biaya-semua", d);
-              setBiaya(d);
-            })
-            .catch(() => {})
-        }
+        onDihapus={() => muatBiaya().catch(() => {})}
       />
+    </div>
+  );
+}
+
+interface NotaData {
+  nomor: string;
+  tanggal: string;
+  proyek: string;
+  kode: string;
+  orang: string | null;
+  label: string;
+  jumlah: number;
+  kategori: string;
+}
+
+/** Salinan lembar yang sudah diisi — yang disobek dan terbang ke paku.
+    Bukan isian lagi, cuma tulisan di kertas. */
+function NotaTerbang({ nota, studio }: { nota: NotaData; studio: string }) {
+  const [t, b, h] = nota.tanggal.split("-");
+  return (
+    <div className="npg__lembar npg__lembar--salinan">
+      <header className="npg__kop">
+        <div className="npg__studio">
+          <b>{studio}</b>
+        </div>
+        <div className="npg__judul">
+          <span>Nota pengeluaran</span>
+          <small>
+            No. <b>{nota.nomor}</b>
+          </small>
+        </div>
+      </header>
+      <div className="npg__isian">
+        <div className="npg__baris npg__baris--tgl">
+          <span>Tanggal</span>
+          <span className="npg__tulis">{`${Number(h)} ${BULAN[Number(b) - 1]} ${t}`}</span>
+          <span className="npg__capslot">
+            <span className="npg__capjejak">{LABEL_KATEGORI[nota.kategori]}</span>
+          </span>
+        </div>
+        <div className="npg__baris">
+          <span>Proyek</span>
+          <span className="npg__tulis">{nota.proyek}</span>
+        </div>
+        <div className="npg__baris">
+          <span>Dibayar kepada</span>
+          <span className="npg__tulis">{nota.orang ?? "tanpa orang"}</span>
+        </div>
+        <div className="npg__baris">
+          <span>Untuk keperluan</span>
+          <span className="npg__tulis">{nota.label}</span>
+        </div>
+      </div>
+      <div className="npg__jumlah">
+        <span>Jumlah</span>
+        <div className="npg__kotakrp">
+          <span>Rp</span>
+          <span className="npg__kotakangka">{nota.jumlah.toLocaleString("id-ID")}</span>
+        </div>
+        <p className="npg__terbilang">{`# ${terbilang(nota.jumlah)} #`}</p>
+      </div>
     </div>
   );
 }
@@ -537,7 +804,7 @@ function Isi() {
 export function KeluarKit() {
   return (
     <ToastProvider>
-      <RequireAuth skeleton={<div className="tr tr--rangka" />}>
+      <RequireAuth skeleton={<div className="npg npg--rangka"><div className="npg__papan" /></div>}>
         <Isi />
       </RequireAuth>
     </ToastProvider>
