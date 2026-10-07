@@ -1,5 +1,5 @@
 import { SorotTeks } from "../kit/Tampilan";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider, useToast } from "../kit/Toast";
 import { DialogBukti } from "./buktiKit";
@@ -25,7 +25,7 @@ import {
   type Proyek,
   type StudioSettings,
 } from "../../lib/admin";
-import { formatRupiah } from "../../lib/format";
+import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 
 /* =============================================================================
    Semua Transaksi — REKENING KORAN STUDIO.
@@ -53,9 +53,14 @@ import { formatRupiah } from "../../lib/format";
      dan terlipat ke belakang di perforasi atasnya; mundur = lembar
      sebelumnya terlipat turun menutupinya. Diam bila gerak dikurangi.
 
-   Kiri, di papan: ringkasan mutasi (saldo awal/akhir, kredit, debet),
-   grafik mutasi per bulan yang tersorot dua arah dengan baris lembar, dan
-   saringan (periode, CR/DB, sumber, proyek, cari) + ekspor.
+   Kiri, di papan: TUMPUKAN LIPATAN — seluruh cetakan terlipat zig-zag,
+   satu lipatan per lembar dengan rentang tanggal, batang kredit/debet, dan
+   saldo akhirnya; yang terbuka tertarik keluar ke arah kertas, mengklik
+   lipatan membuka lembarnya — lalu saringan (periode, CR/DB, sumber,
+   proyek, cari) + ekspor. Ringkasan periode DICETAK di kop kertas.
+
+   Mencentang baris = menyapukan STABILO di baris itu (sekali, saat
+   dicentang), seperti menandai rekening koran saat rekonsiliasi.
 
    Nama pembayaran membuka BUKTI pembayarannya, biaya membuka RINCIANNYA
    (hapus ada di sana), kas studio menautkan ke halaman Kas Studio.
@@ -128,17 +133,11 @@ const tglPanjang = (ms: number) => {
   const d = new Date(ms);
   return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
 };
-const kunciBulan = (ms: number) => {
-  const d = new Date(ms);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
-const namaBulan = (k: string) => {
-  const [t, b] = k.split("-").map(Number);
-  return `${BULAN[(b ?? 1) - 1]} ${t}`;
-};
 /** Angka rekening koran: tanpa "Rp" (kolomnya sudah menyebut mata uang). */
 const angka = (n: number) => Math.abs(n).toLocaleString("id-ID");
 const saldoTeks = (n: number) => `${n < 0 ? "−" : ""}${angka(n)}`;
+/** Saldo ringkas di lipatan: "−87 jt", spasi tak-terputus (jebakan #55). */
+const ringkasSaldo = (n: number) => `${n < 0 ? "−" : ""}${formatRupiahRingkas(Math.abs(n))}`;
 const rupiahSaldo = (n: number) => (n < 0 ? `−${formatRupiah(-n)}` : formatRupiah(n));
 
 const pakaiGerak = () =>
@@ -178,8 +177,8 @@ function Isi() {
   const [terpilih, setTerpilih] = useState<string[]>([]);
   const [bukti, setBukti] = useState<Pembayaran | null>(null);
   const [rinci, setRinci] = useState<BiayaProyek | null>(null);
-  /** Bulan yang disorot — dari baris lembar atau dari batang grafik. */
-  const [sorot, setSorot] = useState<string | null>(null);
+  /** Baris yang BARU dicentang — stabilonya disapukan sekali ("*" = semua). */
+  const [coret, setCoret] = useState<string | null>(null);
 
   /* "Lihat semua" dari Terima Pembayaran / Catat Pengeluaran membawa
      ?jenis=masuk|keluar. Dibaca di efek: halaman dirender tanpa URL. */
@@ -329,30 +328,6 @@ function Isi() {
   const awalMs = batas ?? (buku.naik[0]?.hari ?? Date.now());
   const labelPeriode = `${tglPanjang(awalMs)} – ${tglPanjang(Date.now())}`;
 
-  /* ---- Grafik mutasi per bulan (tersaring) ------------------------------------ */
-  const perBulan = useMemo(() => {
-    const kunci: string[] = [];
-    const akhir = new Date();
-    const mulai = new Date(awalMs);
-    const d = new Date(mulai.getFullYear(), mulai.getMonth(), 1);
-    while (d <= akhir) {
-      kunci.push(kunciBulan(d.getTime()));
-      d.setMonth(d.getMonth() + 1);
-    }
-    const bulan = kunci.slice(-12).map((k) => ({ k, cr: 0, db: 0, n: 0 }));
-    const idx = new Map(bulan.map((b, i) => [b.k, i]));
-    for (const m of tersaring) {
-      const i = idx.get(kunciBulan(m.hari));
-      if (i === undefined) continue;
-      const b = bulan[i]!;
-      if (m.kredit) b.cr += m.nominal;
-      else b.db += m.nominal;
-      b.n++;
-    }
-    return bulan;
-  }, [tersaring, awalMs]);
-  const puncak = Math.max(1, ...perBulan.flatMap((b) => [b.cr, b.db]));
-
   /* ---- Lembar ------------------------------------------------------------------ */
   const wadahRef = useRef<HTMLDivElement>(null);
   const siap = bayar !== null && biaya !== null;
@@ -387,6 +362,26 @@ function Isi() {
   };
   const lembarAwal = () => (kronologis ? nLembar - 1 : 0);
 
+  /* Tumpukan lipatan: satu lipatan per lembar, membawa rentang tanggal,
+     kredit/debet, dan saldo akhirnya. Dihitung dari potongan yang SAMA
+     dengan lembarnya, jadi lipatan dan lembar tidak bisa menyimpang. */
+  const lipatan = Array.from({ length: nLembar }, (_, i) => {
+    const isi = potong(i);
+    const cr = isi.filter((m) => m.kredit).reduce((n, m) => n + m.nominal, 0);
+    const db = isi.filter((m) => !m.kredit).reduce((n, m) => n + m.nominal, 0);
+    const hari = isi.map((m) => m.hari);
+    const akhir = isi[isi.length - 1];
+    return {
+      cr,
+      db,
+      n: isi.length,
+      dari: hari.length ? Math.min(...hari) : null,
+      sampai: hari.length ? Math.max(...hari) : null,
+      saldo: kronologis && akhir ? buku.saldo.get(akhir.kunci)! : null,
+    };
+  });
+  const puncakLipat = Math.max(1, ...lipatan.flatMap((l) => [l.cr, l.db]));
+
   const kunciSaring = `${cari}|${arah}|${sumber}|${filterProyek}|${rentang}|${urutan ? `${urutan.kolom}${urutan.arah}` : ""}|${perLembar}|${terurut.length}`;
   const [lembar, setLembar] = useState<{ h: number; kunci: string }>({ h: lembarAwal(), kunci: kunciSaring });
   /* Saringan berubah → kembali ke lembar bawaan. Dibandingkan saat RENDER,
@@ -397,6 +392,18 @@ function Isi() {
     setLembar({ h, kunci: kunciSaring });
   }
   h = Math.min(Math.max(0, h), nLembar - 1);
+
+  /* Tumpukan yang lebih tinggi dari tempatnya menggulir sendiri — lipatan
+     yang terbuka dijaga tetap kelihatan. */
+  const lipatanRef = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const ol = lipatanRef.current;
+    const li = ol?.children[h] as HTMLElement | undefined;
+    if (!ol || !li) return;
+    ol.classList.toggle("is-gulir", ol.scrollHeight > ol.clientHeight + 1);
+    if (li.offsetTop < ol.scrollTop || li.offsetTop + li.offsetHeight > ol.scrollTop + ol.clientHeight)
+      ol.scrollTop = li.offsetTop - (ol.clientHeight - li.offsetHeight) / 2;
+  }, [h, nLembar]);
 
   /** Pergantian lembar yang sedang terlipat. */
   const [lipat, setLipat] = useState<{ dari: number; ke: number } | null>(null);
@@ -501,14 +508,19 @@ function Isi() {
     urutan,
     onUrut: urutKolom,
     terpilih: setTerpilihSet,
-    onCentang: (k: string) =>
-      setTerpilih((t) => (t.includes(k) ? t.filter((x) => x !== k) : [...t, k])),
+    onCentang: (k: string) => {
+      setCoret(terpilih.includes(k) ? null : k);
+      setTerpilih((t) => (t.includes(k) ? t.filter((x) => x !== k) : [...t, k]));
+    },
     semuaTercentang,
     sebagianTercentang,
-    onCentangSemua: () =>
-      setTerpilih(semuaTercentang ? [] : terurut.map((m) => m.kunci)),
-    sorot,
-    onSorot: setSorot,
+    onCentangSemua: () => {
+      setCoret(semuaTercentang ? null : "*");
+      setTerpilih(semuaTercentang ? [] : terurut.map((m) => m.kunci));
+    },
+    coret,
+    onCoretSelesai: () => setCoret(null),
+    ringkas: { saldoAwal, akhirRentang, jmlKredit, jmlDebet, nKredit: kredit.length, nDebet: debet.length },
     onBuka: (m: Mutasi) => {
       if (m.bayar) setBukti(m.bayar);
       else if (m.biaya) setRinci(m.biaya);
@@ -523,71 +535,52 @@ function Isi() {
         {/* ---- Ringkasan + saringan ------------------------------------------ */}
         <section className="rko__sampul" aria-label="Ringkasan dan saringan rekening">
           <header className="rko__sampulkop">
-            <p className="rko__alis">Rekening koran studio</p>
-            <p className="rko__periode">{labelPeriode}</p>
+            <p className="rko__alis">Tumpukan lembar</p>
+            <p className="rko__periode">
+              {nLembar} lembar · {terurut.length} mutasi
+            </p>
           </header>
 
-          <div className="rko__saldo" role="group" aria-label="Ringkasan mutasi">
-            <span className="rko__saldolabel">Saldo akhir</span>
-            <b className={`rko__saldoangka${akhirRentang < 0 ? " is-minus" : ""}`}>{rupiahSaldo(akhirRentang)}</b>
-            <dl className="rko__saldorinci">
-              <div>
-                <dt>Saldo awal</dt>
-                <dd>{rupiahSaldo(saldoAwal)}</dd>
-              </div>
-              <div>
-                <dt>
-                  <i className="is-cr" />
-                  Kredit · {kredit.length}×
-                </dt>
-                <dd className="is-cr">+{formatRupiah(jmlKredit)}</dd>
-              </div>
-              <div>
-                <dt>
-                  <i className="is-db" />
-                  Debet · {debet.length}×
-                </dt>
-                <dd>−{formatRupiah(jmlDebet)}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div
-            className="rko__grafik"
-            role="img"
-            aria-label={`Mutasi per bulan: ${perBulan.map((b) => `${namaBulan(b.k)} kredit ${formatRupiah(b.cr)}, debet ${formatRupiah(b.db)}`).join("; ")}`}
-            style={{ "--rko-n": perBulan.length } as CSSProperties}
-          >
-            {perBulan.map((b) => {
-              const kk = ket(() => ({
-                judul: namaBulan(b.k),
-                baris: [
-                  { label: "Kredit", nilai: `+${formatRupiah(b.cr)}` },
-                  { label: "Debet", nilai: `−${formatRupiah(b.db)}` },
-                  { label: "Mutasi", nilai: `${b.n}×` },
-                ],
-              }));
-              return (
-                <span
-                  key={b.k}
-                  className={`rko__kolom${sorot === b.k ? " is-sorot" : ""}${sorot && sorot !== b.k ? " is-redup" : ""}`}
-                  {...kk}
-                  onPointerEnter={(e) => {
-                    kk.onPointerEnter(e);
-                    if (e.pointerType === "mouse") setSorot(b.k);
-                  }}
-                  onPointerLeave={(e) => {
-                    kk.onPointerLeave(e);
-                    if (e.pointerType === "mouse") setSorot(null);
-                  }}
-                >
-                  <i className="rko__cr" style={{ height: `${(b.cr / puncak) * 100}%` }} />
-                  <i className="rko__db" style={{ height: `${(b.db / puncak) * 100}%` }} />
-                  <small>{BULAN[Number(b.k.slice(5)) - 1]!.slice(0, perBulan.length > 6 ? 1 : 3)}</small>
-                </span>
-              );
-            })}
-          </div>
+          {/* Tumpukan lipatan: seluruh cetakan, satu lipatan per lembar. Yang
+              terbuka tertarik keluar ke arah kertasnya. */}
+          <nav className="rko__lipatan" aria-label="Tumpukan lembar rekening">
+            <ol ref={lipatanRef}>
+              {lipatan.map((l, i) => {
+                const kk = ket(() => ({
+                  judul: `Lembar ${i + 1}${l.dari !== null ? ` · ${tglPanjang(l.dari)} – ${tglPanjang(l.sampai!)}` : ""}`,
+                  baris: [
+                    { label: `Kredit`, nilai: `+${formatRupiah(l.cr)}` },
+                    { label: `Debet`, nilai: `−${formatRupiah(l.db)}` },
+                    ...(l.saldo !== null ? [{ label: "Saldo akhir lembar", nilai: rupiahSaldo(l.saldo) }] : []),
+                  ],
+                }));
+                return (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      {...kk}
+                      className={`rko__lipat${i % 2 ? " is-genap" : ""}${i === h ? " is-aktif" : ""}`}
+                      aria-current={i === h ? "page" : undefined}
+                      aria-label={`Lembar ${i + 1}${l.dari !== null ? `, ${tglPanjang(l.dari)} sampai ${tglPanjang(l.sampai!)}` : ""}, ${l.n} mutasi`}
+                      onClick={() => keLembar(i)}
+                    >
+                      <span className="rko__lipatno">{i + 1}</span>
+                      <span className="rko__lipattgl">
+                        {l.dari !== null ? (l.dari === l.sampai ? tglPendek(l.dari) : `${tglPendek(l.dari)}–${tglPendek(l.sampai!)}`) : "—"}
+                      </span>
+                      <span className="rko__lipatbatang" aria-hidden="true">
+                        <i className="is-cr" style={{ width: `${(l.cr / puncakLipat) * 100}%` }} />
+                        <i className="is-db" style={{ width: `${(l.db / puncakLipat) * 100}%` }} />
+                      </span>
+                      <span className={`rko__lipatsaldo${l.saldo !== null && l.saldo < 0 ? " is-minus" : ""}`}>
+                        {l.saldo !== null ? ringkasSaldo(l.saldo) : `${l.n}×`}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
 
           <Cari
             ukuran="medium"
@@ -694,20 +687,6 @@ function Isi() {
               <Ikon ikon={CaretLeft} ukuran={14} />
               <span className="rko__panjang">Lembar </span>sebelumnya
             </button>
-            <span className="rko__titik" aria-hidden={nLembar > 14}>
-              {nLembar <= 14 ? (
-                Array.from({ length: nLembar }, (_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className={i === h ? "is-aktif" : ""}
-                    aria-label={`Lembar ${i + 1}`}
-                    aria-current={i === h ? "page" : undefined}
-                    onClick={() => keLembar(i)}
-                  />
-                ))
-              ) : null}
-            </span>
             <span className="rko__halaman" aria-live="polite">
               Lembar {h + 1} / {nLembar}
             </span>
@@ -803,8 +782,9 @@ function Lembar({
   semuaTercentang,
   sebagianTercentang,
   onCentangSemua,
-  sorot,
-  onSorot,
+  coret,
+  onCoretSelesai,
+  ringkas,
   onBuka,
   kosong,
   wadahRef,
@@ -828,8 +808,9 @@ function Lembar({
   semuaTercentang: boolean;
   sebagianTercentang: boolean;
   onCentangSemua: () => void;
-  sorot: string | null;
-  onSorot: (k: string | null) => void;
+  coret: string | null;
+  onCoretSelesai: () => void;
+  ringkas: { saldoAwal: number; akhirRentang: number; jmlKredit: number; jmlDebet: number; nKredit: number; nDebet: number };
   onBuka: (m: Mutasi) => void;
   kosong: string;
   wadahRef?: React.RefObject<HTMLDivElement | null>;
@@ -879,6 +860,30 @@ function Lembar({
           </div>
         </dl>
       </header>
+      {/* Kotak ringkasan tercetak, seperti di kepala rekening koran bank.
+          Saldo = seluruh catatan; kredit/debet = mutasi yang tersaring. */}
+      <dl className="rko__ringkas" aria-label="Ringkasan periode">
+        <div>
+          <dt>Saldo awal</dt>
+          <dd>{saldoTeks(ringkas.saldoAwal)}</dd>
+        </div>
+        <div>
+          <dt>Mutasi kredit · {ringkas.nKredit}×</dt>
+          <dd>
+            {angka(ringkas.jmlKredit)} <em className="is-cr">CR</em>
+          </dd>
+        </div>
+        <div>
+          <dt>Mutasi debet · {ringkas.nDebet}×</dt>
+          <dd>
+            {angka(ringkas.jmlDebet)} <em>DB</em>
+          </dd>
+        </div>
+        <div className="rko__ringkasakhir">
+          <dt>Saldo akhir</dt>
+          <dd className={ringkas.akhirRentang < 0 ? "is-minus" : ""}>{saldoTeks(ringkas.akhirRentang)}</dd>
+        </div>
+      </dl>
 
       <div className="rko__tabel" role="table" aria-label={`Rekening koran, lembar ${h + 1} dari ${nLembar}`}>
         <div className="rko__kepala" role="row">
@@ -935,13 +940,12 @@ function Lembar({
             <p className="rko__kosong">{kosong}</p>
           ) : (
             baris.map((m) => {
-              const bulan = kunciBulan(m.hari);
               const saldo = buku.saldo.get(m.kunci)!;
               const kelas = [
                 "rko__baris",
                 m.kredit ? "is-cr" : "is-db",
                 terpilih.has(m.kunci) ? "is-centang" : "",
-                sorot === bulan ? "is-sorot" : sorot ? "is-redup" : "",
+                terpilih.has(m.kunci) && !lipat && (coret === "*" || coret === m.kunci) ? "is-coret" : "",
               ]
                 .filter(Boolean)
                 .join(" ");
@@ -961,8 +965,9 @@ function Lembar({
                   key={m.kunci}
                   className={kelas}
                   role="row"
-                  onPointerEnter={(e) => e.pointerType === "mouse" && onSorot(bulan)}
-                  onPointerLeave={(e) => e.pointerType === "mouse" && onSorot(null)}
+                  onAnimationEnd={(e) => {
+                    if (e.animationName === "rko-stabilo") onCoretSelesai();
+                  }}
                 >
                   <span className="rko__c-centang" role="cell">
                     <input
