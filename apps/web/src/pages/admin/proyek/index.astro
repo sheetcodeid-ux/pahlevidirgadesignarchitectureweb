@@ -1,16 +1,13 @@
 ---
 import KitLayout from "../../../layouts/KitLayout.astro";
 import { ProyekKit } from "../../../components/admin/ProyekKit";
-/* Kelas sel transaksi (`.trx__sel`, `.trx__ubin`, `.trx__masuk`) milik
-   halaman Semua Transaksi dipakai ULANG di tabel transaksi proyek, bukan
-   disalin — dua salinan bentuk yang sama pasti menyimpang (jebakan #32).
-   Aturan akar `.trx` di berkas itu tidak menyentuh halaman ini. */
-import "../../../styles/transaksi-kit.css";
+/* `.pro__pilih` (pemilih teks berpanah) hidup di proyek-kit.css, dipakai
+   bersama Satu Proyek. */
 import "../../../styles/proyek-kit.css";
+import "../../../styles/ordner-kit.css";
 
-/* Halaman KEENAM yang pindah ke kit (P4), mengikuti frame Figma
-   "19. Cards". Menggantikan daftar lama (ProjectList): kartu per proyek di
-   kiri, rincian proyek terpilih di kanan. */
+/* Semua Proyek = RAK ORDNER PROYEK (lihat kepala ProyekKit.tsx). Dulu
+   frame Figma "19. Cards"; sejak Okt 2026 halamannya bendanya sendiri. */
 ---
 
 <KitLayout title="Semua Proyek" judul="Semua Proyek">

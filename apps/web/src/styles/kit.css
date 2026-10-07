@@ -3352,19 +3352,9 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
    diberi tanda barisnya. */
 .k-inbox:has(.pes__buka:hover) { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
 
-/* Kartu proyek di Semua Proyek: kartunya anak tombol, dan latar kartu menutup
-   lapisan apa pun di tombolnya — jadi kartunya sendiri yang terangkat. */
-.pro__kartub .k-kas { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
-.pro__kartub:hover .k-kas { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-
 /* Nama di tabel Fee: teks yang bisa diklik bergaris bawah saat disentuh,
    sama dengan nama transaksi di Semua Transaksi. */
 .fee__sel:hover .k-sel2__atas { text-decoration: underline; text-underline-offset: 3px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .pro__kartub .k-kas { transition: none; }
-  .pro__kartub:hover .k-kas { transform: none; }
-}
 
 /* <select> asli di dalam pembungkus: pembungkusnya yang menanggapi kursor.
    `:not(:focus-within)` — garis fokus (--brand) tidak boleh ditimpa garis
@@ -3409,7 +3399,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   background-color: var(--surface);
   box-shadow: inset 0 0 0 1px var(--border);
 }
-.kl-body :is(.pro__daftar, .sat__stat > .k-statlebar, .pj__kartumint, .situs__catatan, .pf__seret, .pf__sampul--kosong, .keu__skor) {
+.kl-body :is(.sat__stat > .k-statlebar, .pj__kartumint, .situs__catatan, .pf__seret, .pf__sampul--kosong, .keu__skor) {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 14%, transparent);
 }
 /* Tema gelap: ubin yang memakai --bg sebagai bidang dalam kartu jatuh sama

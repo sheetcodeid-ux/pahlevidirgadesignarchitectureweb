@@ -1,27 +1,12 @@
 import { PilihMenu, PilihTombol } from "../kit/Formulir";
 import { navigate } from "astro:transitions/client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { KartuKas } from "../kit/Kartu";
-import { KepalaSeksi } from "../kit/Item";
-import { KelompokTab } from "../kit/Segmen";
-import { BarKemajuan } from "../kit/Ukuran";
 import { KolomGrafik, LabelYGrafik } from "../kit/Grafik";
-import { Tabel, SelDua, useUrutTabel, type KolomTabel } from "../kit/Tabel";
+import { useUrutTabel, type Urutan } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
-import { Tombol, TombolIkon } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
-import {
-  CaretDown,
-  CoinIn,
-  CoinOut,
-  DotsThreeVertical,
-  Eye,
-  Globe,
-  NotePencil,
-  Plus,
-  UserCircle,
-} from "../kit/ikon";
+import { CaretDown, CoinIn, CoinOut, Eye, Globe, NotePencil, Plus, UserCircle } from "../kit/ikon";
 import { ContextMenu } from "../kit/Overlay";
 import {
   daftarProyek,
@@ -39,34 +24,38 @@ import {
 } from "../../lib/admin";
 import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 
+import { kodeProyek } from "../../lib/nomorDokumen";
+
 /* =============================================================================
-   Semua Proyek — frame Figma "19. Cards".
+   Semua Proyek — RAK ORDNER PROYEK.
 
-   Coinest menaruh KARTU KREDIT di kolom kiri dan rincian satu kartu di
-   kanannya. Studio ini tidak punya kartu; yang ia punya dan yang dibuka
-   satu per satu setiap hari adalah PROYEK. Jadi:
+   Benda dunia nyatanya: di studio, tiap proyek punya satu ORDNER (map
+   proyek) di rak — semua proyek berdiri berderet, punggungnya berlabel, dan
+   yang sedang dikerjakan ditarik lalu DIBUKA di meja. Sengaja berbeda dari
+   tetangganya: kotak kartu (Terima Pembayaran), buku (Gaji), papan jepit
+   (Tagihan), lembar gambar (halaman identitas).
 
-     Coinest                    Halaman ini
-     -------------------------  ---------------------------------------------
-     My Cards                   daftar proyek, satu kartu per proyek
-       nama kartu / logo        judul proyek / kategori
-       saldo / Debit-Credit     nilai kontrak / status terbit
-       Card Number, EXP, CVV    klien, tahun, kota
-     Top Up / Transfer / Pay    Buka (Satu Proyek) / Ubah / Terima Bayar
-     Card Number                klien
-     Expiry, CVC, Status        tahap pipeline, fase klien, status terbit
-     Spending Limits            pembayaran: diterima terhadap nilai kontrak
-     Cashflow                   kas masuk (atas) dan biaya (bawah) per bulan
-     Transactions               transaksi proyek terpilih
+   Satu papan `--kas-bidang` berjahit, dua bagian:
 
-   Kartu yang terpilih digambar GELAP, sisanya terang — persis kartu kedua
-   di framenya. Tahap dan fase bisa diubah langsung dari panel rincian,
-   seperti di daftar lama: keduanya yang paling sering disentuh staf, dan
-   memaksanya lewat editor proyek berarti tiga klik untuk satu kata.
+   1. RAK — satu ordner per proyek, terbaru di kiri, PEMBATAS TAHUN di antara
+      tahun yang berbeda. Punggung ordner: kantong label (kode, tahun, tahap
+      pipeline), jendela foto sampul proyek, judul tegak, lubang jari, dan
+      meteran tegak di tepi kiri = bagian kontrak yang sudah dibayar. Rona
+      punggung mengikuti JENIS proyek (tiga rona hijau, bukan warna makna).
+      Ordner yang dibuka TERTARIK keluar dari deret. Slot pertama = ordner
+      kosong "Proyek baru". Klik kanan = pintasan halaman proyek (seperti
+      versi frame 19).
+   2. ORDNER TERBUKA — dua lembar di papan ordner dengan cincin besi di
+      lipatannya. Kiri LEMBAR RINGKASAN: judul + kode, jenis · kota · tahun,
+      Buka / Ubah / Terima bayar, klien, tahap & fase (bisa diubah di
+      tempat), status, nilai kontrak dan pembayaran. Kanan LEMBAR KEUANGAN
+      berlubang di tepi kirinya: arus kas per bulan (6/12) dan transaksi
+      proyek (rentang, urut kolom, enam terbaru).
 
-   Yang TIDAK ikut dari daftar lama, karena framenya tidak punya tempat:
-   pencarian, saringan status/kategori, urutan, dan tampilan tabel. Hapus
-   proyek pindah ke editor proyek.
+   SATU-SATUNYA gerak 3D: ordner yang dipilih DIBUKA — sampulnya (sisi
+   belakang lembar kiri) mula-mula tertutup di atas lembar kanan, lalu
+   berayun ke kiri di cincin dan menjadi lembar ringkasan. Hanya saat
+   pilihan berubah, diam bila gerak dikurangi.
    ============================================================================= */
 
 const KATEGORI: Record<string, string> = {
@@ -220,6 +209,47 @@ export function PilihTeks({
   );
 }
 
+/** Tiga rona punggung menurut JENIS proyek — rona, bukan warna makna. */
+const RONA: Record<string, number> = { residential: 0, commercial: 1, coffeeshop: 2, hospitality: 2, interior: 1, renovation: 0, landscape: 2, masterplan: 1 };
+
+const tahunProyek = (p: Proyek) => p.year ?? (p.publishedAt ? Number(p.publishedAt.slice(0, 4)) : null);
+
+const geraknya = () =>
+  typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Kepala kolom transaksi yang bisa mengurutkan (pola `Tabel` kit). */
+function KepalaUrut({
+  label,
+  i,
+  urutan,
+  onUrut,
+  kanan,
+}: {
+  label: string;
+  i: number;
+  urutan: Urutan | null;
+  onUrut: (u: Urutan | null) => void;
+  kanan?: boolean;
+}) {
+  const arah = urutan?.kolom === i ? urutan.arah : null;
+  return (
+    <span role="columnheader" aria-sort={arah === "naik" ? "ascending" : arah === "turun" ? "descending" : "none"} className={kanan ? "is-kanan" : undefined}>
+      <button
+        type="button"
+        className="ord__urut"
+        data-arah={arah ?? undefined}
+        onClick={() => onUrut(arah === null ? { kolom: i, arah: "naik" } : arah === "naik" ? { kolom: i, arah: "turun" } : null)}
+      >
+        {label}
+        <svg viewBox="0 0 8 12" width="8" height="12" aria-hidden="true">
+          <path className="ord__urutnaik" d="M4 1 7 5H1z" />
+          <path className="ord__urutturun" d="M4 11 1 7h6z" />
+        </svg>
+      </button>
+    </span>
+  );
+}
+
 function Isi() {
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
   const [bayar, setBayar] = useState<Pembayaran[] | null>(() => bacaCache<Pembayaran[]>("bayar-semua"));
@@ -235,6 +265,10 @@ function Isi() {
   const [rentangArus, setRentangArus] = useState(6);
   const [rentangTrx, setRentangTrx] = useState("0");
   const [sorot, setSorot] = useState<number | null>(null);
+  /* Ordner yang sedang dibuka — kuncinya berganti tiap pilihan supaya
+     gerak sampulnya diputar ulang. */
+  const [buka, setBuka] = useState<{ id: string; n: number } | null>(null);
+  const rakRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     daftarProyek()
@@ -257,21 +291,59 @@ function Isi() {
       .catch(() => setBiaya((l) => l ?? []));
   }, []);
 
-  /* Terbaru di atas — sama dengan urutan bawaan daftar lama. */
+  /* Terbaru di kiri: TAHUN dulu (rak arsip dikelompokkan per tahun),
+     lalu urutan bawaan daftar lama di dalamnya. */
   const urut = useMemo(
     () =>
-      [...(proyek ?? [])].sort((a, b) =>
-        (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || (b.year ?? 0) - (a.year ?? 0),
+      [...(proyek ?? [])].sort(
+        (a, b) =>
+          (tahunProyek(b) ?? 0) - (tahunProyek(a) ?? 0) || (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""),
       ),
     [proyek],
   );
+  /* Papan rak di ujung deret: jumlah seluruh kontrak dan yang sudah masuk. */
+  const rekapRak = useMemo(() => {
+    const kontrakSemua = urut.reduce((n, p) => n + (p.contractValue ?? 0), 0);
+    const masukSemua = urut.reduce((n, p) => n + (p.paidTotal ?? 0), 0);
+    const berjalan = urut.filter((p) => p.pipelineStage !== "pelunasan").length;
+    return { kontrakSemua, masukSemua, berjalan };
+  }, [urut]);
   const kini = urut.find((p) => p.id === pilih) ?? urut[0] ?? null;
+
+  /* Isi rak: pembatas tahun sebelum ordner pertama tiap tahun. */
+  const rak = useMemo(() => {
+    const out: ({ jenis: "tahun"; tahun: number | null } | { jenis: "ordner"; p: Proyek })[] = [];
+    let akhir: number | null | undefined;
+    for (const p of urut) {
+      const t = tahunProyek(p);
+      if (t !== akhir) {
+        out.push({ jenis: "tahun", tahun: t });
+        akhir = t;
+      }
+      out.push({ jenis: "ordner", p });
+    }
+    return out;
+  }, [urut]);
+
+  /* Ordner yang dibuka dijaga kelihatan di rak yang menggulir mendatar —
+     sekali per perubahan pilihan, bukan di handler gulir (jebakan #21). */
+  useLayoutEffect(() => {
+    const r = rakRef.current;
+    const o = r?.querySelector<HTMLElement>(".ord__ordner.is-buka");
+    if (!r || !o) return;
+    const kiri = o.offsetLeft - 24;
+    const kanan = o.offsetLeft + o.offsetWidth + 24 - r.clientWidth;
+    if (r.scrollLeft > kiri) r.scrollLeft = kiri;
+    else if (r.scrollLeft < kanan) r.scrollLeft = kanan;
+  }, [kini?.id, rak.length]);
 
   /* Pilihan ikut ke alamat (`?id=`), supaya tombol Kembali dari editor
      proyek mendarat di proyek yang sama, dan tautannya bisa dibagikan. */
   function pilihProyek(id: string) {
+    if (id === kini?.id) return;
     setPilih(id);
     setSorot(null);
+    if (geraknya()) setBuka((b) => ({ id, n: (b?.n ?? 0) + 1 }));
     try {
       const u = new URL(location.href);
       u.searchParams.set("id", id);
@@ -280,6 +352,11 @@ function Isi() {
       /* alamat tidak bisa diubah — pilihannya tetap jalan */
     }
   }
+  useEffect(() => {
+    if (!buka) return;
+    const t = setTimeout(() => setBuka(null), 900);
+    return () => clearTimeout(t);
+  }, [buka]);
 
   const kunciBulan = kini ? `proyek-bulan:${kini.id}:${rentangArus}` : null;
   useEffect(() => {
@@ -312,13 +389,11 @@ function Isi() {
   const persen = kontrak > 0 ? Math.max(0, Math.min(100, (diterima / kontrak) * 100)) : 0;
 
   /* --- Arus kas ------------------------------------------------------------ */
-  /* Dipotong di sini juga, bukan cuma lewat parameter `bulan`: jawaban yang
-     lebih panjang dari yang diminta (cache lama dari rentang 12) tidak
-     boleh menjejalkan 12 kolom ke kisi yang lebarnya dihitung untuk 6. */
   const deret = (bulanan ?? []).slice(-rentangArus);
   const maks = batasSumbu(Math.max(0, ...deret.flatMap((b) => [b.kasMasuk, b.biaya])));
   const iSorot = sorot ?? (deret.length ? deret.length - 1 : null);
   const bSorot = iSorot !== null ? deret[iSorot] : undefined;
+  const TINGGI = 112;
 
   /* --- Transaksi proyek ---------------------------------------------------- */
   const transaksi = useMemo<Transaksi[]>(() => {
@@ -350,355 +425,380 @@ function Isi() {
         nominal: k.amount,
         catatan: "—",
       }));
-    /* Enam — sebanyak baris yang digambar framenya. Sisanya ada di halaman
-       Semua Transaksi, yang tautannya ada di pemilih rentang. */
+    /* Enam terbaru. Sisanya ada di Semua Transaksi. */
     return [...masuk, ...keluar].sort((a, b) => waktuKe(b.waktu) - waktuKe(a.waktu)).slice(0, 6);
   }, [kini, bayar, biaya, rentangTrx]);
 
-  /* Lebar kolom dari jangkar tinta framenya (tabel 539..1396 = 857): centang
-     554,5, nama 587, penerima 778,4, tanggal 889,5, nominal 992,5, catatan
-     1077,7, status 1302 — dikurangi pad sel 15,5.
-
-     Kolom centang framenya TIDAK dipasang: di sini tidak ada satu pun aksi
-     yang memakai pilihan baris, dan kotak centang yang tidak berbuat apa-apa
-     adalah janji palsu. Lebarnya (32,5) diserap kolom pertama, jadi kolom
-     lain tetap di jangkarnya dan cuma ikon baris yang bergeser ke kiri. */
-  const kolom: KolomTabel[] = [
-    { judul: "Transaksi", lebar: 223.9, urut: true },
-    { judul: "Penerima", lebar: 111.1, urut: true },
-    { judul: "Tanggal", lebar: 103, urut: true },
-    { judul: "Nominal", lebar: 85.2, urut: true },
-    { judul: "Catatan", lebar: 224.3, urut: true },
-    { judul: "Status", lebar: 109.5, urut: true },
-  ];
   const tglTrx = (w: string) => new Date(w.length === 10 ? w + "T00:00:00" : w).getTime();
-  /* Nominal diurutkan BERTANDA: uang keluar di bawah nol, seperti yang
-     terbaca di selnya ("−Rp4,2 jt"). */
+  /* Nominal diurutkan BERTANDA: uang keluar di bawah nol. */
   const urutTrx = useUrutTabel(transaksi, [
-    (t) => t.nama,
-    (t) => (t.orang === "—" ? null : t.orang),
     (t) => tglTrx(t.waktu),
+    (t) => t.nama,
     (t) => (t.masuk ? t.nominal : -t.nominal),
-    (t) => (t.catatan === "—" ? null : t.catatan),
     (t) => (t.masuk ? "Masuk" : "Keluar"),
   ]);
-  const baris = urutTrx.terurut.map((t) => {
-    const d = new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu);
-    return [
-      <div className="trx__sel">
-        <span className={`trx__ubin${t.masuk ? "" : " trx__ubin--keluar"}`}>
-          <Ikon ikon={t.masuk ? CoinIn : CoinOut} ukuran={16} />
-        </span>
-        <SelDua atas={t.nama} bawah={t.sub} besar bobotAtas={500} />
-      </div>,
-      t.orang,
-      <SelDua atas={`${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`} bawah={HARI[d.getDay()]} besar bobotAtas={400} />,
-      <span className={t.masuk ? "trx__masuk" : "trx__keluar"} title={formatRupiah(t.nominal)}>
-        {t.masuk ? "+" : "−"}
-        {formatRupiahRingkas(t.nominal)}
-      </span>,
-      <span className="pro__catatan">{t.catatan}</span>,
-      <Lencana bentuk="pejal" nada={t.masuk ? "selesai" : "menunggu"}>
-        {t.masuk ? "Masuk" : "Keluar"}
-      </Lencana>,
-    ];
-  });
+
+  const st = kini ? STATUS[kini.status] ?? { teks: kini.status, nada: "netral" as const } : null;
+  const idK = kini ? encodeURIComponent(kini.id) : "";
+  const tahapKe = kini ? TAHAP.findIndex((t) => t.value === kini.pipelineStage) : -1;
 
   return (
-    <div className="pro">
-      {/* ---- Daftar proyek (slot "My Cards") ---------------------------- */}
-      <section className="pro__daftar" aria-label="Daftar proyek">
-        <div className="pro__daftarkepala">
-          <h2 className="pro__judul">Proyek</h2>
-          <a className="pro__baru" href="/admin/proyek/baru">
-            <Ikon ikon={Plus} ukuran={12} />
-            Baru
-          </a>
-        </div>
-        <div className="pro__kartu">
-          {urut.map((p) => {
-            const st = STATUS[p.status] ?? { teks: p.status, nada: "netral" as const };
-            const aktif = p.id === kini?.id;
-            const id = encodeURIComponent(p.id);
-            /* Klik kanan (tekan lama di layar sentuh) membuka pintasan ke
-               semua halaman milik proyek ini — tanpa harus memilihnya dulu
-               lalu mencari tombolnya di kolom tengah. */
-            return (
-              <ContextMenu
-                key={p.id}
-                sections={[
-                  {
-                    label: p.title,
-                    items: [
-                      { label: "Buka proyek", ikon: Eye, onSelect: () => navigate(`/admin/proyek/satu?id=${id}`) },
-                      { label: "Ubah data", ikon: NotePencil, onSelect: () => navigate(`/admin/proyek/edit?id=${id}`) },
-                      { label: "Terima pembayaran", ikon: CoinIn, onSelect: () => navigate(`/admin/keuangan/terima?proyek=${id}`) },
-                    ],
-                  },
-                  {
-                    items: [
-                      { label: "Portal klien", ikon: UserCircle, onSelect: () => navigate(`/admin/proyek/klien?id=${id}`) },
-                      { label: "Halaman publik", ikon: Globe, onSelect: () => navigate(`/admin/proyek/publik?id=${id}`) },
-                    ],
-                  },
-                ]}
-              >
-              <button
-                type="button"
-                className="pro__kartub"
-                aria-pressed={aktif}
-                onClick={() => pilihProyek(p.id)}
-              >
-                <KartuKas
-                  terang={!aktif}
-                  nama={p.title}
-                  kanan={<span className="pro__kategori">{KATEGORI[p.category] ?? p.category}</span>}
-                  nilai={
-                    <span title={p.contractValue ? formatRupiah(p.contractValue) : undefined}>
-                      {p.contractValue ? formatRupiahRingkas(p.contractValue) : "—"}
-                    </span>
-                  }
-                  label={st.teks}
-                  kaki={[
-                    { judul: "Klien", isi: p.client || "—" },
-                    { judul: "Tahun", isi: p.year ?? "—" },
-                    { judul: "Kota", isi: p.city || "—" },
-                  ]}
-                />
-              </button>
-              </ContextMenu>
-            );
-          })}
-          {proyek !== null && urut.length === 0 && (
-            <p className="pro__kosong">Belum ada proyek. Mulai dari tombol Baru di atas.</p>
-          )}
-        </div>
-      </section>
-
-      <div className="pro__kanan">
-        <div className="pro__atas">
-          <div className="pro__kolomrinci">
-            {/* ---- Rincian proyek terpilih (slot "Card Details") ------------- */}
-            <article className="pro__w pro__rinci" aria-label="Rincian proyek terpilih">
-              <KelompokTab
-                judul="Aksi proyek"
-                className="pro__aksi"
-                tab={
-                  kini
-                    ? [
-                        /* "Buka" ke halaman Satu Proyek (frame 22). Tautan ke
-                           halaman publik pindah ke sana, di kepala daftar
-                           tahapnya. */
-                        { nilai: "buka", label: "Buka", ikon: Eye, href: `/admin/proyek/satu?id=${kini.id}` },
-                        { nilai: "ubah", label: "Ubah", ikon: NotePencil, href: `/admin/proyek/edit?id=${kini.id}` },
-                        { nilai: "terima", label: "Terima Bayar", ikon: CoinIn, href: `/admin/keuangan/terima?proyek=${kini.id}` },
-                      ]
-                    : []
+    <div className="ord">
+      <div className="ord__papan">
+        {/* ---- Rak ordner ------------------------------------------------- */}
+        <section className="ord__rakwadah" aria-label="Rak ordner proyek">
+          <p className="ord__alis">
+            Rak ordner proyek <span>· {urut.length} ordner · terbaru di kiri</span>
+          </p>
+          <div className="ord__rak" ref={rakRef}>
+            <ol className="ord__deret">
+              <li className="ord__slot">
+                <a className="ord__ordner ord__ordner--baru" href="/admin/proyek/baru">
+                  <span className="ord__barutanda">
+                    <Ikon ikon={Plus} ukuran={16} />
+                  </span>
+                  <span className="ord__judultegak">Proyek baru</span>
+                  <i className="ord__lubang" aria-hidden="true" />
+                </a>
+              </li>
+              {rak.map((r) => {
+                if (r.jenis === "tahun") {
+                  return (
+                    <li key={`t-${r.tahun}`} className="ord__slot ord__pembatas" aria-hidden="true">
+                      <span>{r.tahun ?? "—"}</span>
+                    </li>
+                  );
                 }
-              />
-              <p className="pro__label pro__label--atas">Klien</p>
-              <p className="pro__nilai pro__nilai--besar">{kini?.client || "—"}</p>
-              <div className="pro__baris">
-                <div>
-                  <p className="pro__label">Tahap</p>
-                  {kini && (
-                    <PilihTeks
-                      judul={`Tahap pipeline ${kini.title}`}
-                      nilai={kini.pipelineStage ?? ""}
-                      opsi={TAHAP}
-                      onUbah={async (v) => {
-                        await simpanProyek(kini.id, { pipelineStage: v });
-                        gantiSatu(kini.id, { pipelineStage: v });
-                      }}
-                    />
-                  )}
+                const p = r.p;
+                const aktif = p.id === kini?.id;
+                const id = encodeURIComponent(p.id);
+                const k = p.contractValue ?? 0;
+                const isi = k > 0 ? Math.min(100, ((p.paidTotal ?? 0) / k) * 100) : 0;
+                const tahap = TAHAP.find((t) => t.value === p.pipelineStage)?.label ?? "—";
+                return (
+                  <li key={p.id} className="ord__slot">
+                    <ContextMenu
+                      sections={[
+                        {
+                          label: p.title,
+                          items: [
+                            { label: "Buka proyek", ikon: Eye, onSelect: () => navigate(`/admin/proyek/satu?id=${id}`) },
+                            { label: "Ubah data", ikon: NotePencil, onSelect: () => navigate(`/admin/proyek/edit?id=${id}`) },
+                            { label: "Terima pembayaran", ikon: CoinIn, onSelect: () => navigate(`/admin/keuangan/terima?proyek=${id}`) },
+                          ],
+                        },
+                        {
+                          items: [
+                            { label: "Portal klien", ikon: UserCircle, onSelect: () => navigate(`/admin/proyek/klien?id=${id}`) },
+                            { label: "Halaman publik", ikon: Globe, onSelect: () => navigate(`/admin/proyek/publik?id=${id}`) },
+                          ],
+                        },
+                      ]}
+                    >
+                      <button
+                        type="button"
+                        className={`ord__ordner${aktif ? " is-buka" : ""}`}
+                        style={{ "--ord-rona": RONA[p.category] ?? 0, "--ord-isi": (isi / 100).toFixed(3) } as CSSProperties}
+                                                aria-pressed={aktif}
+                        aria-label={`${p.title}, ${p.client || "tanpa klien"}, tahap ${tahap}${k ? `, ${Math.round(isi)}% dibayar` : ""}`}
+                        onClick={() => pilihProyek(p.id)}
+                      >
+                        <span className={`ord__jendela${p.coverImageUrl ? "" : " is-kosong"}`}>
+                          {p.coverImageUrl ? (
+                            <img src={p.coverImageUrl} alt="" loading="lazy" decoding="async" />
+                          ) : (
+                            <span>{(KATEGORI[p.category] ?? p.category).slice(0, 1)}</span>
+                          )}
+                        </span>
+                        <span className="ord__kantong">
+                          <b>{kodeProyek(p.title)}</b>
+                          <span className="ord__judultegak">{p.title}</span>
+                          <small>{tahap}</small>
+                        </span>
+                        <i className="ord__lubang" aria-hidden="true" />
+                        <i className="ord__meter" aria-hidden="true" />
+                      </button>
+                    </ContextMenu>
+                  </li>
+                );
+              })}
+              {proyek !== null && urut.length === 0 && <li className="ord__kosong">Rak masih kosong. Mulai dari ordner "Proyek baru".</li>}
+              {urut.length > 0 && (
+                <li className="ord__slot ord__plang">
+                  <span className="ord__plangisi">
+                    <small>Nilai kontrak di rak</small>
+                    <b>{formatRupiah(rekapRak.kontrakSemua)}</b>
+                    <small>
+                      sudah masuk {formatRupiah(rekapRak.masukSemua)}
+                      {rekapRak.kontrakSemua > 0 && ` · ${Math.round((rekapRak.masukSemua / rekapRak.kontrakSemua) * 100)}%`}
+                    </small>
+                    <small>{rekapRak.berjalan} berjalan · {urut.length - rekapRak.berjalan} lunas</small>
+                  </span>
+                </li>
+              )}
+            </ol>
+          </div>
+          <i className="ord__papanrak" aria-hidden="true" />
+        </section>
+
+        {/* ---- Ordner terbuka ---------------------------------------------- */}
+        <section className="ord__terbuka" aria-label="Ordner proyek terbuka">
+          {/* Lembar ringkasan — juga SAMPUL ordner saat masih tertutup. */}
+          <article key={kini?.id ?? "kosong"} className={`ord__lembar ord__lembar--kiri${buka && buka.id === kini?.id ? " is-buka" : ""}`}>
+            <div className="ord__lembarisi">
+              <header className="ord__kop">
+                <div className="ord__kopjudul">
+                  <p className="ord__eyebrow">Map proyek · {kini ? kodeProyek(kini.title) : "—"}</p>
+                  <h2>{kini?.title ?? "Belum ada proyek"}</h2>
+                  <p className="ord__kopket">
+                    {kini ? [KATEGORI[kini.category] ?? kini.category, kini.city, tahunProyek(kini)].filter(Boolean).join(" · ") : "Buat proyek pertama dari rak."}
+                  </p>
+                </div>
+                {st && (
+                  <Lencana bentuk="pejal" nada={st.nada}>
+                    {st.teks}
+                  </Lencana>
+                )}
+              </header>
+
+              {kini && (
+                <nav className="ord__aksi" aria-label="Aksi proyek">
+                  <a href={`/admin/proyek/satu?id=${idK}`}>
+                    <Ikon ikon={Eye} ukuran={14} />
+                    Buka
+                  </a>
+                  <a href={`/admin/proyek/edit?id=${idK}`}>
+                    <Ikon ikon={NotePencil} ukuran={14} />
+                    Ubah
+                  </a>
+                  <a href={`/admin/keuangan/terima?proyek=${idK}`}>
+                    <Ikon ikon={CoinIn} ukuran={14} />
+                    Terima bayar
+                  </a>
+                </nav>
+              )}
+
+              <dl className="ord__rinci">
+                <div className="ord__rinci--lebar">
+                  <dt>Klien</dt>
+                  <dd className="ord__klien">{kini?.client || "—"}</dd>
                 </div>
                 <div>
-                  <p className="pro__label">Fase klien</p>
-                  {kini && (
-                    <PilihTeks
-                      judul={`Fase klien ${kini.title}`}
-                      nilai={kini.phase ?? ""}
-                      opsi={FASE}
-                      onUbah={async (v) => {
-                        await ubahFaseProgress(kini.id, v);
-                        gantiSatu(kini.id, { phase: v });
-                      }}
-                    />
-                  )}
+                  <dt>Tahap</dt>
+                  <dd>
+                    {kini && (
+                      <PilihTeks
+                        judul={`Tahap pipeline ${kini.title}`}
+                        nilai={kini.pipelineStage ?? ""}
+                        opsi={TAHAP}
+                        onUbah={async (v) => {
+                          await simpanProyek(kini.id, { pipelineStage: v });
+                          gantiSatu(kini.id, { pipelineStage: v });
+                        }}
+                      />
+                    )}
+                  </dd>
                 </div>
                 <div>
-                  <p className="pro__label">Status</p>
-                  {kini && (
-                    <Lencana bentuk="pejal" nada={STATUS[kini.status]?.nada ?? "netral"}>
-                      {STATUS[kini.status]?.teks ?? kini.status}
-                    </Lencana>
+                  <dt>Fase klien</dt>
+                  <dd>
+                    {kini && (
+                      <PilihTeks
+                        judul={`Fase klien ${kini.title}`}
+                        nilai={kini.phase ?? ""}
+                        opsi={FASE}
+                        onUbah={async (v) => {
+                          await ubahFaseProgress(kini.id, v);
+                          gantiSatu(kini.id, { phase: v });
+                        }}
+                      />
+                    )}
+                  </dd>
+                </div>
+              </dl>
+
+              {/* Tangga tahap pipeline: tujuh anak tangga, yang sudah dilewati terisi. */}
+              <ol className="ord__tangga" aria-label={`Tahap ${tahapKe + 1} dari ${TAHAP.length}`}>
+                {TAHAP.map((t, i) => (
+                  <li key={t.value} className={i < tahapKe ? "is-lewat" : i === tahapKe ? "is-kini" : undefined}>
+                    <span>{t.label}</span>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="ord__bayar">
+                <div className="ord__bayarangka">
+                  <span>Pembayaran diterima</span>
+                  <b title={formatRupiah(diterima)}>{formatRupiah(diterima)}</b>
+                  <small>{kontrak > 0 ? `dari ${formatRupiah(kontrak)} · ${Math.round(persen)}%` : "belum berkontrak"}</small>
+                </div>
+                <div className="ord__bayarbar" role="img" aria-label={`Pembayaran diterima ${Math.round(persen)}%`}>
+                  <span style={{ width: `${persen}%` }} />
+                </div>
+              </div>
+            </div>
+            {/* Sisi belakang lembar = sampul ordner yang tertutup. */}
+            <div className="ord__sampul" aria-hidden="true" style={{ "--ord-rona": kini ? RONA[kini.category] ?? 0 : 0 } as CSSProperties}>
+              <span className="ord__sampullabel">
+                <b>{kini ? kodeProyek(kini.title) : ""}</b>
+                {kini?.title}
+              </span>
+            </div>
+          </article>
+
+          {/* Cincin besi di lipatan. */}
+          <div className="ord__cincin" aria-hidden="true">
+            <i />
+            <i />
+          </div>
+
+          {/* Lembar keuangan, berlubang di tepi kirinya. */}
+          <article className="ord__lembar ord__lembar--kanan">
+            <i className="ord__lubangkertas" aria-hidden="true" />
+            <i className="ord__lubangkertas ord__lubangkertas--bawah" aria-hidden="true" />
+            <section className="ord__arus" aria-label="Arus kas proyek">
+              <div className="ord__seksikepala">
+                <h3>Arus kas</h3>
+                <ul className="ord__legenda">
+                  <li>
+                    <span className="ord__kotak ord__kotak--mint" />
+                    Kas masuk
+                  </li>
+                  <li>
+                    <span className="ord__kotak ord__kotak--tua" />
+                    Biaya
+                  </li>
+                </ul>
+                <button type="button" className="ord__teksbutton" onClick={() => setRentangArus((r) => (r === 6 ? 12 : 6))}>
+                  {rentangArus} bulan
+                  <Ikon ikon={CaretDown} ukuran={12} />
+                </button>
+              </div>
+              <div className="ord__grafik">
+                <LabelYGrafik tinggi={TINGGI} nilai={[singkat(maks), "0", singkat(-maks)]} />
+                <div className="ord__kolom" onPointerLeave={() => setSorot(null)}>
+                  {deret.map((b, i) => {
+                    const nyala = i === iSorot;
+                    const atas = 50 - (b.kasMasuk / maks) * 50;
+                    const bawah = 50 + (b.biaya / maks) * 50;
+                    return (
+                      <div
+                        key={b.bulan}
+                        className="ord__kolomb"
+                        tabIndex={0}
+                        aria-label={`${BULAN[Number(b.bulan.slice(5, 7)) - 1]} ${b.bulan.slice(0, 4)}: kas masuk ${formatRupiah(b.kasMasuk)}, biaya ${formatRupiah(b.biaya)}`}
+                        onPointerEnter={() => setSorot(i)}
+                        onFocus={() => setSorot(i)}
+                      >
+                        <KolomGrafik
+                          tinggi={TINGGI}
+                          garis={3}
+                          lebarBatang={rentangArus > 6 ? 14 : 30}
+                          tumpuk
+                          label={BULAN[Number(b.bulan.slice(5, 7)) - 1]}
+                          batang={[
+                            ...(b.kasMasuk > 0
+                              ? [{ atas, bawah: 50, nada: nyala ? ("mint" as const) : ("mintpudar" as const), radiusAtas: 4 }]
+                              : []),
+                            ...(b.biaya > 0
+                              ? [{ atas: 50, bawah, nada: nyala ? ("tua" as const) : ("tuapudar" as const), radiusBawah: 4 }]
+                              : []),
+                          ]}
+                        />
+                      </div>
+                    );
+                  })}
+                  {bSorot && iSorot !== null && (
+                    <div
+                      className="ord__tip"
+                      style={{
+                        left:
+                          iSorot >= deret.length - 1
+                            ? `calc(${(iSorot / deret.length) * 100}% - 122px)`
+                            : `${((iSorot + 1) / deret.length) * 100}%`,
+                      }}
+                      aria-hidden="true"
+                    >
+                      <p className="ord__tipjudul">
+                        {BULAN[Number(bSorot.bulan.slice(5, 7)) - 1]} {bSorot.bulan.slice(0, 4)}
+                      </p>
+                      <p className="ord__tipbaris">
+                        <span>
+                          <i className="ord__tiptitik ord__kotak--mint" />
+                          Masuk
+                        </span>
+                        <b>{formatRupiahRingkas(bSorot.kasMasuk)}</b>
+                      </p>
+                      <p className="ord__tipbaris">
+                        <span>
+                          <i className="ord__tiptitik ord__kotak--tua" />
+                          Biaya
+                        </span>
+                        <b>{formatRupiahRingkas(bSorot.biaya)}</b>
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
-            </article>
+            </section>
 
-            {/* ---- Pembayaran (slot "Spending Limits") ---------------------- */}
-            <article className="pro__w pro__bayar">
-              <KepalaSeksi
-                judul="Pembayaran"
-                kanan={
-                  kini ? (
-                    <TombolIkon
-                      ikon={DotsThreeVertical}
-                      jenis="transparent"
-                      ukuran="xsmall"
-                      judul="Atur termin di editor proyek"
-                      href={`/admin/proyek/edit?id=${kini.id}`}
-                    />
-                  ) : undefined
-                }
-              />
-              <BarKemajuan persen={persen} tinggi={20} celah={6} judul="Pembayaran diterima" />
-              <p className="pro__bayarket">
-                <span>
-                  <b title={formatRupiah(diterima)}>{formatRupiahRingkas(diterima)}</b>{" "}
-                  <small>
-                    {kontrak > 0 ? `diterima dari ${formatRupiahRingkas(kontrak)}` : "diterima · belum berkontrak"}
-                  </small>
-                </span>
-                <b>{Math.round(persen)}%</b>
-              </p>
-            </article>
-          </div>
-
-          {/* ---- Arus kas proyek (slot "Cashflow") -------------------------- */}
-          <article className="pro__w pro__arus">
-            <KepalaSeksi
-              judul="Arus Kas"
-              kanan={
-                <Tombol
-                  ukuran="medium"
-                  jenis="ghost"
-                  kanan={CaretDown}
-                  onClick={() => setRentangArus((r) => (r === 6 ? 12 : 6))}
-                >
-                  {rentangArus} bulan
-                </Tombol>
-              }
-            />
-            <ul className="pro__legenda">
-              <li>
-                <span className="pro__kotak pro__kotak--mint" />
-                Kas masuk
-              </li>
-              <li>
-                <span className="pro__kotak pro__kotak--tua" />
-                Biaya
-              </li>
-            </ul>
-            <div className="pro__grafik">
-              <LabelYGrafik
-                tinggi={211}
-                nilai={[singkat(maks), singkat(maks / 2), "0", singkat(-maks / 2), singkat(-maks)]}
-              />
-              <div className="pro__kolom" onPointerLeave={() => setSorot(null)}>
-                {deret.map((b, i) => {
-                  const nyala = i === iSorot;
-                  const atas = 50 - (b.kasMasuk / maks) * 50;
-                  const bawah = 50 + (b.biaya / maks) * 50;
+            <section className="ord__trx" aria-label="Transaksi proyek">
+              <div className="ord__seksikepala">
+                <h3>Transaksi</h3>
+                <a className="ord__semua" href="/admin/keuangan/transaksi">
+                  Semua transaksi
+                </a>
+                <PilihTombol judul="Rentang transaksi" jenis="ghost" ukuran="small" nilai={rentangTrx} opsi={RENTANG} onPilih={setRentangTrx} />
+              </div>
+              <div className="ord__trxtabel" role="table" aria-label="Transaksi proyek terbaru">
+                <div className="ord__trxkepala" role="row">
+                  <KepalaUrut label="Tanggal" i={0} urutan={urutTrx.urutan} onUrut={urutTrx.onUrut} />
+                  <KepalaUrut label="Transaksi" i={1} urutan={urutTrx.urutan} onUrut={urutTrx.onUrut} />
+                  <KepalaUrut label="Nominal" i={2} urutan={urutTrx.urutan} onUrut={urutTrx.onUrut} kanan />
+                  <KepalaUrut label="Arah" i={3} urutan={urutTrx.urutan} onUrut={urutTrx.onUrut} />
+                </div>
+                {urutTrx.terurut.map((t) => {
+                  const d = new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu);
                   return (
-                    <div
-                      key={b.bulan}
-                      className="pro__kolomb"
-                      tabIndex={0}
-                      aria-label={`${BULAN[Number(b.bulan.slice(5, 7)) - 1]} ${b.bulan.slice(0, 4)}: kas masuk ${formatRupiah(b.kasMasuk)}, biaya ${formatRupiah(b.biaya)}`}
-                      onPointerEnter={() => setSorot(i)}
-                      onFocus={() => setSorot(i)}
-                    >
-                      <KolomGrafik
-                        tinggi={211}
-                        /* 69,7 dari kolom 85,7 di framenya — 81%. Pada 12
-                           bulan kolomnya separuh, batangnya juga. */
-                        lebarBatang={rentangArus > 6 ? 34 : 69.7}
-                        tumpuk
-                        label={BULAN[Number(b.bulan.slice(5, 7)) - 1]}
-                        batang={[
-                          ...(b.kasMasuk > 0
-                            ? [{ atas, bawah: 50, nada: nyala ? ("mint" as const) : ("mintpudar" as const), radiusAtas: 4 }]
-                            : []),
-                          ...(b.biaya > 0
-                            ? [{ atas: 50, bawah, nada: nyala ? ("tua" as const) : ("tuapudar" as const), radiusBawah: 4 }]
-                            : []),
-                        ]}
-                      />
+                    <div key={t.kunci} className="ord__trxbaris" role="row">
+                      <span role="cell" className="ord__trxtgl">
+                        {d.getDate()} {BULAN[d.getMonth()]}
+                        <small>{d.getFullYear()}</small>
+                      </span>
+                      <span role="cell" className="ord__trxnama">
+                        <span className={`ord__trxubin${t.masuk ? "" : " is-keluar"}`}>
+                          <Ikon ikon={t.masuk ? CoinIn : CoinOut} ukuran={14} />
+                        </span>
+                        <span>
+                          <b>{t.nama}</b>
+                          <small>{[t.sub, t.orang !== "—" ? t.orang : null, t.catatan !== "—" ? t.catatan : null].filter(Boolean).join(" · ")}</small>
+                        </span>
+                      </span>
+                      <span role="cell" className={`ord__trxrp${t.masuk ? " is-masuk" : ""}`} title={formatRupiah(t.nominal)}>
+                        {t.masuk ? "+" : "−"}
+                        {formatRupiah(t.nominal)}
+                      </span>
+                      <span role="cell">
+                        <Lencana bentuk="pejal" nada={t.masuk ? "selesai" : "menunggu"}>
+                          {t.masuk ? "Masuk" : "Keluar"}
+                        </Lencana>
+                      </span>
                     </div>
                   );
                 })}
-                {bSorot && iSorot !== null && (
-                  <div
-                    className="pro__tip"
-                    style={{
-                      /* Di kanan kolom yang disorot, seperti framenya; kolom
-                         terakhir membaliknya ke kiri supaya tidak keluar. */
-                      left:
-                        iSorot >= deret.length - 1
-                          ? `calc(${(iSorot / deret.length) * 100}% - 122px)`
-                          : `${((iSorot + 1) / deret.length) * 100}%`,
-                    }}
-                    aria-hidden="true"
-                  >
-                    <p className="pro__tipjudul">
-                      {BULAN[Number(bSorot.bulan.slice(5, 7)) - 1]} {bSorot.bulan.slice(0, 4)}
-                    </p>
-                    <p className="pro__tipbaris">
-                      <span>
-                        <i className="pro__tiptitik pro__kotak--mint" />
-                        Masuk
-                      </span>
-                      <b>{formatRupiahRingkas(bSorot.kasMasuk)}</b>
-                    </p>
-                    <p className="pro__tipbaris">
-                      <span>
-                        <i className="pro__tiptitik pro__kotak--tua" />
-                        Biaya
-                      </span>
-                      <b>{formatRupiahRingkas(bSorot.biaya)}</b>
-                    </p>
-                  </div>
+                {transaksi.length === 0 && (
+                  <p className="ord__kosong">
+                    {bayar === null || biaya === null
+                      ? "Memuat transaksi…"
+                      : kini
+                        ? "Belum ada transaksi proyek ini pada rentang ini."
+                        : "Pilih ordner di rak."}
+                  </p>
                 )}
               </div>
-            </div>
+            </section>
           </article>
-        </div>
-
-        {/* ---- Transaksi proyek (slot "Transactions") ----------------------- */}
-        <article className="pro__w pro__trx">
-          <KepalaSeksi
-            judul="Transaksi"
-            kanan={
-              <PilihTombol judul="Rentang transaksi" jenis="ghost" nilai={rentangTrx} opsi={RENTANG} onPilih={setRentangTrx} />
-            }
-          />
-          {baris.length > 0 ? (
-            <div className="pro__tabel">
-              <Tabel
-                kolom={kolom}
-                baris={baris}
-                urutan={urutTrx.urutan}
-                onUrut={urutTrx.onUrut}
-                kepala="mint"
-                pad={15.5}
-                tinggiKepala={37}
-                tinggiBaris={64}
-                fontBaris={12}
-              />
-            </div>
-          ) : (
-            <p className="pro__kosong">
-              {bayar === null || biaya === null
-                ? "Memuat transaksi…"
-                : kini
-                  ? "Belum ada transaksi proyek ini pada rentang ini."
-                  : "Pilih proyek di kiri."}
-            </p>
-          )}
-        </article>
+        </section>
       </div>
     </div>
   );
@@ -706,7 +806,13 @@ function Isi() {
 
 export function ProyekKit() {
   return (
-    <RequireAuth skeleton={<div className="pro pro--rangka" />}>
+    <RequireAuth
+      skeleton={
+        <div className="ord ord--rangka">
+          <div className="ord__papan" />
+        </div>
+      }
+    >
       <Isi />
     </RequireAuth>
   );

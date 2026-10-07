@@ -2,7 +2,7 @@
    Kerangka daftar kit — components/admin/daftarKit.tsx.
 
    Bentuknya frame "13. Transactions" (angka ukurnya ada di kepala
-   transaksi-kit.css). Berkas ini satu-satunya sumber bilah alat, tabel,
+   transaksi-kit.css, kini dibuang). Berkas ini satu-satunya sumber bilah alat, tabel,
    dan kaki untuk SETIAP halaman daftar kit: Semua Transaksi, Tugas,
    Direktori, Testimoni, dan Tim. Yang milik satu halaman saja — ubin arah
    uang, warna nominal — tetap di berkas halaman itu.
