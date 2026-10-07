@@ -134,22 +134,28 @@ const bulananKeu = Array.from({ length: 24 }, (_, i) => {
   };
 });
 
-/* Seperti Worker (`financeRepo.monthly`): kas masuk sebulan memuat SEMUA
-   tagihan lunas bulan itu dan biaya memuat semua biaya bulan itu. Angka
-   karangan di `bulananKeu` jadi dasar (riwayat yang tidak punya rincian),
-   rinciannya ditambahkan di atasnya — jadi rincian per bulan tidak pernah
-   melebihi catatan bulanannya, sama dengan di produksi. Dihitung tiap
-   permintaan karena tagihan dan biaya tiruan bisa berubah. */
+/* Seperti Worker (`financeRepo.monthly`): kas masuk sebulan = tagihan lunas
+   bulan itu, biaya = biaya bulan itu, dan bulan tanpa keduanya tidak muncul.
+   Dulu angka karangan `bulananKeu` jadi dasar dan rinciannya ditambahkan di
+   atasnya — Kurva S di Ringkasan (yang menggambar dari tagihan) lalu tidak
+   pernah cocok dengan baris kas masuknya. `bulananKeu` kini cuma memberi
+   deret 24 bulannya. Dihitung tiap permintaan karena tagihan dan biaya
+   tiruan bisa berubah. */
 function bulananTiruan() {
-  return bulananKeu.map((b) => {
-    const masuk = tagihanAdmin
-      .filter((t) => t.status === "lunas" && t.paidAt && t.paidAt.slice(0, 7) === b.bulan)
-      .reduce((n, t) => n + t.amount, 0);
-    const keluar = [...biayaKeu, ...biayaRiwayat].filter((c) => c.incurredOn?.slice(0, 7) === b.bulan).reduce((n, c) => n + c.amount, 0);
-    const kasMasuk = b.kasMasuk + masuk;
-    const biaya = b.biaya + keluar;
-    return { ...b, kasMasuk, biaya, labaBersih: kasMasuk - biaya };
-  });
+  return bulananKeu
+    .map((b) => {
+      const kasMasuk = tagihanAdmin
+        .filter((t) => t.status === "lunas" && t.paidAt && t.paidAt.slice(0, 7) === b.bulan)
+        .reduce((n, t) => n + t.amount, 0);
+      const keluar = [...biayaKeu, ...biayaRiwayat].filter((c) => c.incurredOn?.slice(0, 7) === b.bulan);
+      const biaya = keluar.reduce((n, c) => n + c.amount, 0);
+      const proyek = new Set([
+        ...tagihanAdmin.filter((t) => t.status === "lunas" && t.paidAt?.slice(0, 7) === b.bulan).map((t) => t.projectId),
+        ...keluar.map((c) => c.projectId),
+      ]);
+      return { bulan: b.bulan, kasMasuk, biaya, labaBersih: kasMasuk - biaya, proyekAktif: proyek.size };
+    })
+    .filter((b) => b.kasMasuk || b.biaya);
 }
 
 const biayaKeu = [
@@ -547,31 +553,45 @@ const bayarAdmin = Object.fromEntries(
   }),
 );
 
-/* Tagihan (termin) lintas proyek. Sengaja tidak rata: satu proyek punya
-   termin tanpa tenggat (draf yang belum dijadwalkan) dan satu punya termin
-   yang tenggatnya sudah lewat, supaya keempat lencana statusnya ikut
-   tergambar di halaman Tagihan & Termin. */
-const tagihanAdmin = proyekAdmin.flatMap((p, i) => {
-  const n = 3 + (i % 2);
-  const potong = Math.round(p.contractValue / n);
-  return Array.from({ length: n }, (_, j) => {
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() - 1 + j + (i % 2));
-    const tanpaTenggat = j === n - 1 && i % 3 === 0;
+/* Tagihan (termin) lintas proyek, berbentuk seperti data produksi: termin
+   yang lunas tersebar sepanjang tahun (jumlahnya = `received` di ringkasan,
+   jadi Kurva S di Ringkasan dan angka "diterima" bercerita sama), satu
+   termin terbit yang tenggatnya sudah lewat, terbit yang belum jatuh tempo,
+   draf terjadwal, dan satu draf tanpa tenggat — keempat lencana status di
+   Tagihan & Termin tetap tergambar. Bulan ditulis relatif terhadap bulan
+   berjalan: [nama, juta rupiah, status, geser bulan (null = tanpa tenggat),
+   tanggal tenggat]. */
+const RENCANA_TERMIN = [
+  [["Termin 1 — DP", 60, "lunas", -7, 12], ["Termin 2 — gambar kerja", 60, "lunas", -4, 18], ["Termin 3 — konstruksi", 65, "terbit", 0, 20]],
+  [["Termin 1 — DP", 102, "lunas", -8, 10], ["Termin 2 — gambar kerja", 68, "lunas", -3, 22], ["Termin 3 — konstruksi", 102, "terbit", 1, 10], ["Termin 4 — serah terima", 68, "draft", 3, 10]],
+  [["Termin 1 — DP", 48.25, "lunas", -11, 14], ["Termin 2 — gambar kerja", 28.95, "lunas", -7, 25], ["Termin 3 — pelunasan", 19.3, "lunas", -2, 8]],
+  [["Termin 1 — DP", 63, "lunas", -2, 15], ["Termin 2 — gambar kerja", 63, "terbit", -1, 25], ["Termin 3 — konstruksi", 52.5, "draft", 2, 10], ["Termin 4 — serah terima", 31.5, "draft", null, 1]],
+  [["Termin 1 — DP", 82.5, "lunas", -5, 20], ["Termin 2 — gambar kerja", 110, "terbit", 0, 15], ["Termin 3 — konstruksi", 82.5, "draft", 2, 10]],
+];
+const tagihanAdmin = proyekAdmin.flatMap((p, i) =>
+  (RENCANA_TERMIN[i % RENCANA_TERMIN.length] ?? []).map(([label, juta, status, geser, tgl], j) => {
+    let dueDate = null;
+    let paidAt = null;
+    if (geser !== null) {
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() + geser);
+      dueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(tgl).padStart(2, "0")}`;
+      if (status === "lunas") paidAt = `${dueDate.slice(0, 8)}${String(Math.max(1, tgl - 3)).padStart(2, "0")}T09:30:00.000Z`;
+    }
     return {
       id: `${p.id}-tagih-${j + 1}`,
       projectId: p.id,
       projectTitle: p.title,
-      label: ["Termin 1 — DP", "Termin 2 — gambar kerja", "Termin 3 — konstruksi", "Termin 4 — serah terima"][j],
-      amount: j === n - 1 ? p.contractValue - potong * (n - 1) : potong,
-      status: j === 0 ? "lunas" : j === 1 ? "terbit" : "draft",
-      dueDate: tanpaTenggat ? null : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-10`,
-      paidAt: j === 0 ? d.toISOString() : null,
+      label,
+      amount: Math.round(juta * 1_000_000),
+      status,
+      dueDate,
+      paidAt,
       sortOrder: j,
     };
-  });
-});
+  }),
+);
 
 
 /* Tugas per proyek, tersebar di tahap pipeline. Sebagian lewat tenggat dan

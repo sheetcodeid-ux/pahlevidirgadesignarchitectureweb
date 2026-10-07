@@ -1,0 +1,704 @@
+/* =============================================================================
+   Keuangan — Ringkasan (/admin/keuangan) — MEJA GAMBAR: KURVA S + REKAPITULASI.
+
+   Papan hijau berjahit (`--kas-bidang`, serumpun dengan halaman keuangan
+   lain) di sini adalah PAPAN GAMBAR: dua lembar kertas putih tetap ditempel
+   selotip kertas di sudut atasnya — Rekapitulasi (bagian akhir RAB) di kiri,
+   Kurva S (time schedule) di kanan. Di atas lembar Kurva S tergeletak MISTAR
+   akrilik dengan SEGITIGA 30/60 yang berdiri di atasnya.
+
+   Kertas putih di kedua tema, jadi seluruh tintanya dikunci ke token kas
+   yang tidak berbalik (`--kas-bidang` gelap di atas `--kas-nilai` putih);
+   h2 global yang jadi putih di tema gelap ikut dikunci.
+
+   Hiasan yang lewat di atas kertas (kurva, arsiran, segitiga, pena) hanya
+   hidup di BIDANG BULAN, yang tidak memuat tulisan; selotip duduk di margin
+   kertas (jebakan #70).
+   ============================================================================= */
+
+.kvs {
+  --kvs-kertas: var(--kas-nilai);
+  --kvs-tinta: var(--kas-bidang);
+  --kvs-tinta-redup: color-mix(in srgb, var(--kas-bidang) 76%, var(--kas-nilai));
+  --kvs-cetak: color-mix(in srgb, var(--kas-bidang) 72%, var(--brand-mint));
+  --kvs-garis: color-mix(in srgb, var(--kas-bidang) 13%, transparent);
+  --kvs-garis-kuat: color-mix(in srgb, var(--kas-bidang) 34%, transparent);
+  --kvs-pita: color-mix(in srgb, var(--brand-mint) 30%, var(--kas-nilai));
+  --kvs-pita-kuat: color-mix(in srgb, var(--brand-mint) 62%, var(--kas-nilai));
+  --kvs-amber: color-mix(in srgb, var(--warn) 50%, black);
+  --kvs-pensil: color-mix(in srgb, var(--kas-bidang) 36%, var(--kas-nilai));
+  --kvs-selotip: color-mix(in srgb, var(--warn) 22%, var(--kas-nilai));
+  --kvs-redup-papan: color-mix(in srgb, var(--kas-ink) 70%, transparent);
+  --kvs-rekap: 300px;
+  --kvs-no: 22px;
+  --kvs-uraian: 158px;
+  --kvs-bobot: 42px;
+  --kvs-skala: 30px;
+  --kvs-kolom: var(--kvs-no) var(--kvs-uraian) var(--kvs-bobot) repeat(12, minmax(0, 1fr)) var(--kvs-skala);
+  --kvs-baris-min: 28px;
+  position: relative;
+  min-width: 0;
+}
+.kvs p,
+.kvs h2,
+.kvs dl,
+.kvs dd { max-width: none; margin: 0; }
+.kvs ol { margin: 0; padding: 0; list-style: none; }
+.kvs button {
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-rendering: inherit;
+}
+
+/* ---- Papan gambar ------------------------------------------------------------- */
+.kvs__meja {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--kvs-rekap) minmax(0, 1fr);
+  gap: 20px;
+  min-height: 0;
+  padding: 20px 20px 18px;
+  border-radius: 16px;
+  background:
+    radial-gradient(130% 90% at 70% 0%, color-mix(in srgb, var(--kas-ink) 7%, transparent), transparent 62%),
+    var(--kas-bidang);
+  background-color: var(--kas-bidang);
+  color: var(--kas-ink);
+}
+.kvs__meja::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px dashed color-mix(in srgb, var(--kas-ink) 24%, transparent);
+  border-radius: 12px;
+  pointer-events: none;
+}
+.kvs--rangka .kvs__meja { min-height: 600px; }
+
+/* ---- Kertas -------------------------------------------------------------------- */
+.kvs__kertas {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px 12px;
+  border-radius: 2px;
+  background: var(--kvs-kertas);
+  color: var(--kvs-tinta);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, black 18%, transparent),
+    0 14px 22px -14px color-mix(in srgb, black 70%, transparent);
+  --text-strong: var(--kvs-tinta);
+  --text: var(--kvs-tinta);
+  --text-muted: var(--kvs-tinta-redup);
+  --border: var(--kvs-garis-kuat);
+  --surface: var(--kvs-kertas);
+}
+.kvs__kertas h2 { color: var(--kvs-tinta); }
+/* Selotip kertas di kedua sudut atas, menyilang tepi kertas ke papan. */
+.kvs__selotip {
+  position: absolute;
+  top: -3px;
+  width: 52px;
+  height: 17px;
+  background: color-mix(in srgb, var(--kvs-selotip) 86%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, black 22%, transparent);
+  pointer-events: none;
+  z-index: 3;
+}
+.kvs__selotip--kiri { left: -17px; transform: rotate(-34deg); }
+.kvs__selotip--kanan { right: -17px; transform: rotate(34deg); }
+
+.kvs__alis {
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--kvs-tinta-redup);
+}
+
+/* ---- Rekapitulasi -------------------------------------------------------------- */
+.kvs__rekapkop { display: flex; flex-direction: column; gap: 2px; padding-bottom: 10px; }
+.kvs__rekapkop h2 {
+  font-size: var(--k-t18);
+  font-weight: var(--k-bold);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.kvs__rekapket { font-size: var(--k-t10); color: var(--kvs-tinta-redup); }
+
+.kvs__rab {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--kvs-garis-kuat);
+  font-size: var(--k-t11);
+  font-variant-numeric: tabular-nums;
+}
+.kvs__rab > div {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 98px;
+  min-height: 21px;
+  border-top: 1px solid var(--kvs-garis);
+}
+.kvs__rab > div:first-child { border-top: 0; }
+.kvs__rab > div > span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 6px;
+  border-left: 1px solid var(--kvs-garis);
+}
+.kvs__rab > div > span:first-child { justify-content: center; padding: 0; border-left: 0; }
+.kvs__rab > div > span:last-child { justify-content: flex-end; }
+.kvs__rab > div > span:nth-child(2) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; line-height: 21px; }
+.kvs__rabkepala {
+  background: var(--kvs-pita);
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.kvs__rabkepala > span:last-child { justify-content: flex-end; }
+.kvs__rabbagian { font-weight: var(--k-bold); }
+.kvs__rabbagian > span:nth-child(2) { font-size: var(--k-t10); letter-spacing: 0.06em; text-transform: uppercase; }
+.kvs__rabbaris a { color: inherit; text-decoration: none; }
+.kvs__rabbaris a:hover { text-decoration: underline; }
+.kvs__rabbaris.is-sorot { background: var(--kvs-pita); }
+.kvs__rabbaris.is-nol { color: var(--kvs-tinta-redup); }
+.kvs__rabbaris--kosong { color: var(--kvs-tinta-redup); font-style: italic; }
+.kvs__rabjumlah { border-top-color: var(--kvs-garis-kuat) !important; font-weight: var(--k-semi); }
+.kvs__rabjumlah > span:nth-child(2) { text-align: right; }
+.kvs__rablaba {
+  min-height: 34px !important;
+  border-top: 2px solid var(--kvs-tinta) !important;
+  background: var(--kvs-pita-kuat);
+  font-size: var(--k-t12);
+  font-weight: var(--k-bold);
+}
+.kvs__rablaba > span:nth-child(2) { line-height: 34px !important; }
+.kvs__rablaba > span:last-child {
+  font-size: var(--k-t16);
+  text-decoration: underline double;
+  text-underline-offset: 3px;
+}
+.kvs__rablaba.is-rugi > span:last-child { color: var(--kvs-amber); }
+
+.kvs__terbilang {
+  padding: 8px 0 0;
+  font-size: var(--k-t10);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--kvs-tinta);
+  text-wrap: balance;
+}
+.kvs__terbilang span {
+  display: block;
+  font-style: normal;
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kvs-tinta-redup);
+}
+.kvs__catatan {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  border: 1px solid var(--kvs-garis-kuat);
+}
+.kvs__catatan > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 4px 7px;
+}
+.kvs__catatan > div + div { border-top: 1px solid var(--kvs-garis); }
+.kvs__catatan dt {
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--kvs-tinta-redup);
+}
+.kvs__catatan dd {
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kvs__catatan .is-telat dd,
+.kvs__catatan .is-telat dt { color: var(--kvs-amber); }
+.kvs__tandatangan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 18px;
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: var(--k-t10);
+  color: var(--kvs-tinta-redup);
+}
+.kvs__tandatangan b {
+  min-width: 150px;
+  padding-top: 3px;
+  border-top: 1px solid var(--kvs-garis-kuat);
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  text-align: center;
+  color: var(--kvs-tinta);
+}
+
+/* ---- Kurva S: kop -------------------------------------------------------------- */
+.kvs__kop {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px 18px;
+  padding-bottom: 10px;
+}
+.kvs__judul { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.kvs__judul h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 1.75rem;
+  font-weight: var(--k-bold);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.kvs__judul h2 span { font-weight: var(--k-semi); color: var(--kvs-cetak); }
+.kvs__judulket { font-size: var(--k-t10); color: var(--kvs-tinta-redup); white-space: nowrap; }
+.kvs__tahunpicu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px 0 0;
+  border: 0;
+  border-bottom: 2px dashed color-mix(in srgb, var(--kvs-cetak) 55%, transparent);
+  background: transparent;
+  color: var(--kvs-cetak);
+  font-size: inherit;
+  font-weight: var(--k-semi);
+  line-height: 1.05;
+  cursor: pointer;
+}
+.kvs__tahunpicu svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.kvs__tahunpicu:hover { color: var(--kvs-tinta); border-bottom-color: var(--kvs-tinta); }
+.kvs__tahunpicu:focus-visible { outline: 2px solid var(--kvs-tinta); outline-offset: 2px; box-shadow: none; }
+.kvs__progres { display: flex; align-items: flex-end; justify-self: end; }
+.kvs__progres > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 14px;
+  border-left: 1px solid var(--kvs-garis-kuat);
+}
+.kvs__progres > div:first-child { padding-left: 0; border-left: 0; }
+.kvs__progres > div:last-child { padding-right: 0; }
+.kvs__progres dt {
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kvs-tinta-redup);
+}
+.kvs__progres dd {
+  font-size: 1.375rem;
+  font-weight: var(--k-semi);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--kvs-cetak);
+}
+.kvs__progres dd small { margin-left: 1px; font-size: var(--k-t12); }
+.kvs__progres .is-utama dd { font-size: 1.75rem; font-weight: var(--k-bold); color: var(--kvs-tinta); }
+.kvs__progres .is-telat dd,
+.kvs__progres .is-telat dt { color: var(--kvs-amber); }
+.kvs__kopisi {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.95fr) minmax(0, 1.35fr);
+  border: 1px solid var(--kvs-garis-kuat);
+}
+.kvs__kopisi > div { display: flex; align-items: stretch; min-width: 0; min-height: 21px; }
+.kvs__kopisi > div + div { border-left: 1px solid var(--kvs-garis); }
+.kvs__kopisi dt {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  border-right: 1px solid var(--kvs-garis);
+  background: var(--kvs-pita);
+  font-size: var(--k-t8);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.kvs__kopisi dd {
+  align-self: center;
+  overflow: hidden;
+  min-width: 0;
+  padding: 0 7px;
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---- Kurva S: tabel ------------------------------------------------------------ */
+.kvs__geser { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+.kvs__tabel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--kvs-garis-kuat);
+  font-variant-numeric: tabular-nums;
+}
+.kvs__kepala,
+.kvs__baris,
+.kvs__ringkas {
+  display: grid;
+  grid-template-columns: var(--kvs-kolom);
+  min-width: 0;
+}
+.kvs__kepala {
+  flex: none;
+  height: 26px;
+  border-bottom: 1px solid var(--kvs-garis-kuat);
+  background: var(--kvs-pita);
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.kvs__kepala > * {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border-left: 1px solid var(--kvs-garis);
+}
+.kvs__kepala > :first-child { border-left: 0; }
+.kvs__kepala > :nth-child(2) { justify-content: flex-start; padding-left: 7px; }
+.kvs__kepala > .is-kanan { justify-content: flex-end; padding-right: 6px; }
+.kvs__bln {
+  position: relative;
+  height: 100%;
+  padding: 0;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  color: var(--kvs-tinta);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.kvs__bln.is-depan { color: var(--kvs-tinta-redup); }
+.kvs__bln.is-kolom { background: var(--kvs-pita-kuat); }
+.kvs__bln.is-laporan { font-weight: var(--k-bold); }
+.kvs__bln.is-laporan::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--kvs-tinta);
+}
+.kvs__bln:focus-visible { outline: 2px solid var(--kvs-tinta); outline-offset: -3px; box-shadow: none; }
+
+/* Baris butir pekerjaan. Bidang bulan menumpang di atasnya. */
+.kvs__isi { position: relative; display: flex; flex: 1 1 auto; flex-direction: column; min-height: calc(var(--kvs-n) * var(--kvs-baris-min)); }
+.kvs__baris {
+  flex: 1 1 0;
+  min-height: var(--kvs-baris-min);
+  border-bottom: 1px solid var(--kvs-garis);
+}
+.kvs__baris > * { min-width: 0; border-left: 1px solid var(--kvs-garis); }
+.kvs__baris > :first-child { border-left: 0; }
+.kvs__baris.is-sorot { background: color-mix(in srgb, var(--brand-mint) 18%, var(--kvs-kertas)); }
+.kvs__no {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--k-t10);
+  color: var(--kvs-tinta-redup);
+}
+.kvs__uraian {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 7px;
+  overflow: hidden;
+}
+.kvs__uraian a,
+.kvs__uraian b {
+  overflow: hidden;
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--kvs-tinta);
+  text-decoration: none;
+}
+.kvs__uraian a:hover { text-decoration: underline; }
+.kvs__uraian small {
+  overflow: hidden;
+  font-size: var(--k-t9);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--kvs-tinta-redup);
+}
+.kvs__bobot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  font-size: var(--k-t11);
+  font-weight: var(--k-semi);
+}
+.kvs__blnsel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.kvs__blnsel.is-kolom { background: color-mix(in srgb, var(--brand-mint) 14%, transparent); }
+.kvs__batang { display: block; height: 5px; border-radius: 1px; }
+.kvs__batang--rencana { border: 1px solid var(--kvs-cetak); background: var(--kvs-kertas); }
+.kvs__batang--nyata { background: var(--kvs-tinta); }
+.kvs__batang--nyata.is-pensil { background: var(--kvs-pensil); }
+.kvs__kosong {
+  position: absolute;
+  inset: 0 var(--kvs-skala) 0 calc(var(--kvs-no) + var(--kvs-uraian) + var(--kvs-bobot));
+  display: grid;
+  place-items: center;
+  font-size: var(--k-t11);
+  font-style: italic;
+  color: var(--kvs-tinta-redup);
+}
+
+/* ---- Bidang bulan: kurva, arsiran, segitiga, pena -------------------------------- */
+.kvs__bidang {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--kvs-no) + var(--kvs-uraian) + var(--kvs-bobot));
+  right: var(--kvs-skala);
+  pointer-events: none;
+}
+.kvs__svg { position: absolute; inset: 0; overflow: hidden; }
+.kvs__kisi { stroke: var(--kvs-garis-kuat); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.7; }
+.kvs__kisi--100 { stroke-dasharray: none; opacity: 0.55; }
+.kvs__arsirgaris { stroke: var(--kvs-amber); stroke-width: 1.3; opacity: 0.6; }
+.kvs__maju { fill: color-mix(in srgb, var(--brand-mint) 55%, transparent); }
+.kvs__rencana { fill: none; stroke: var(--kvs-cetak); stroke-width: 1.6; stroke-dasharray: 6 4; stroke-linejoin: round; }
+.kvs__titikrencana { fill: var(--kvs-kertas); stroke: var(--kvs-cetak); stroke-width: 1.3; }
+.kvs__pensil { fill: none; stroke: var(--kvs-pensil); stroke-width: 1.5; stroke-dasharray: 2 3; stroke-linejoin: round; }
+.kvs__tinta { fill: none; stroke: var(--kvs-tinta); stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+.kvs__titik { fill: var(--kvs-tinta); }
+.kvs__titik--laporan { fill: var(--brand-mint); stroke: var(--kvs-tinta); stroke-width: 2; }
+.kvs__segitiga {
+  fill: color-mix(in srgb, var(--brand-mint) 24%, transparent);
+  stroke: color-mix(in srgb, var(--kvs-tinta) 42%, transparent);
+  stroke-width: 1;
+  transition: transform 260ms var(--ease);
+}
+.kvs__segitiga.is-sorot { fill: color-mix(in srgb, var(--brand-mint) 34%, transparent); }
+.kvs__segitigatepi { stroke: var(--kvs-tinta); stroke-width: 1.4; }
+.kvs__baca { fill: var(--brand-mint); stroke: var(--kvs-tinta); stroke-width: 1.5; }
+.kvs__baca--rencana { fill: var(--kvs-kertas); stroke: var(--kvs-cetak); }
+.kvs__pena { transition: opacity 180ms ease; }
+.kvs__pena-jarum { stroke: var(--kvs-tinta); stroke-width: 1.1; }
+.kvs__pena-kerucut { fill: color-mix(in srgb, var(--kvs-tinta) 55%, var(--kvs-kertas)); }
+.kvs__pena-cincin { fill: var(--brand-mint); }
+.kvs__pena-badan { fill: var(--kas-dalam); }
+.kvs__pena-kilap { stroke: color-mix(in srgb, var(--kas-ink) 45%, transparent); stroke-width: 1.3; stroke-linecap: round; }
+
+.kvs__lajur {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  pointer-events: auto;
+}
+.kvs__lajur li { cursor: pointer; }
+.kvs__skala {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: var(--kvs-skala);
+}
+.kvs__skala li {
+  position: absolute;
+  right: 5px;
+  transform: translateY(-50%);
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  color: var(--kvs-tinta-redup);
+}
+
+/* Mistar akrilik: pita tembus dengan garis milimeter di tepi atasnya — di
+   pitanya sendiri, di antara baris pekerjaan dan baris rekap. */
+.kvs__mistar {
+  position: relative;
+  flex: none;
+  height: 16px;
+  border-bottom: 1px solid var(--kvs-garis-kuat);
+}
+.kvs__mistar i {
+  position: absolute;
+  inset: 2px 0 2px calc(var(--kvs-no) + var(--kvs-uraian) + var(--kvs-bobot) - 10px);
+  border: 1px solid color-mix(in srgb, var(--kvs-tinta) 28%, transparent);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--kvs-tinta) 60%, transparent) 0 1px, transparent 1px 30px) 0 0 / 100% 7px no-repeat,
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--kvs-tinta) 40%, transparent) 0 1px, transparent 1px 6px) 0 0 / 100% 4px no-repeat,
+    color-mix(in srgb, var(--brand-mint) 30%, transparent);
+}
+
+/* Baris rekap per bulan. */
+.kvs__ringkas {
+  flex: none;
+  height: 19px;
+  border-bottom: 1px solid var(--kvs-garis);
+  font-size: var(--k-t10);
+}
+.kvs__ringkas:last-child { height: 22px; border-top: 1px solid var(--kvs-garis-kuat); border-bottom: 0; }
+.kvs__ringkas > * {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border-left: 1px solid var(--kvs-garis);
+  white-space: nowrap;
+}
+.kvs__ringkas > [role="rowheader"] {
+  grid-column: 1 / 4;
+  justify-content: flex-start;
+  padding-left: 7px;
+  border-left: 0;
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kvs-tinta-redup);
+}
+.kvs__sel.is-kolom { background: color-mix(in srgb, var(--brand-mint) 18%, transparent); }
+.kvs__sel.is-laporan { font-weight: var(--k-bold); }
+.kvs__sel.is-depan { color: var(--kvs-tinta-redup); font-style: italic; font-weight: var(--k-normal, 400); }
+.kvs__sel.is-tinta { font-weight: var(--k-semi); }
+.kvs__sel.is-telat { color: var(--kvs-amber); }
+.kvs__sel.is-maju { color: var(--kvs-cetak); }
+.kvs__sel.is-tebal { font-weight: var(--k-semi); }
+.kvs__satuan { font-size: var(--k-t9); color: var(--kvs-tinta-redup); }
+
+.kvs__kaki {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  padding-top: 8px;
+  font-size: var(--k-t10);
+  color: var(--kvs-tinta-redup);
+}
+.kvs__legenda { display: inline-flex; align-items: center; gap: 6px; }
+.kvs__legenda.is-catatan { margin-left: auto; color: var(--kvs-amber); }
+.kvs__legenda i { display: inline-block; width: 22px; height: 0; }
+.kvs__legenda i.is-rencana { border-top: 2px dashed var(--kvs-cetak); }
+.kvs__legenda i.is-tinta { border-top: 3px solid var(--kvs-tinta); border-radius: 2px; }
+.kvs__legenda i.is-pensil { border-top: 2px dotted var(--kvs-pensil); }
+.kvs__legenda i.is-arsir {
+  width: 16px;
+  height: 10px;
+  border: 1px solid color-mix(in srgb, var(--kvs-amber) 50%, transparent);
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--kvs-amber) 60%, transparent) 0 1px, transparent 1px 4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kvs__segitiga,
+  .kvs__pena { transition: none; }
+}
+
+/* ---- Lebar --------------------------------------------------------------------- */
+@media (min-width: 1288.02px) and (max-width: 1408px) {
+  .kvs { --kvs-rekap: 268px; --kvs-uraian: 138px; --kvs-bobot: 38px; }
+  .kvs__kertas { padding-inline: 14px; }
+  .kvs__meja { gap: 18px; padding-inline: 18px; }
+  .kvs__rab > div { grid-template-columns: 20px minmax(0, 1fr) 92px; }
+}
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .kvs { height: 100%; }
+  .kvs__meja { height: 100%; }
+}
+/* Layar lebar tapi pendek (≤780): kop dan baris rekap dirapatkan. */
+@media (min-width: 1288.02px) and (min-height: 600px) and (max-height: 780px) {
+  .kvs__ringkas { height: 17px; }
+  .kvs__ringkas:last-child { height: 20px; }
+  .kvs__kop { padding-bottom: 8px; }
+  .kvs__judul h2 { font-size: 1.5rem; }
+  .kvs__progres .is-utama dd { font-size: 1.5rem; }
+  .kvs__progres dd { font-size: 1.125rem; }
+}
+@media (max-width: 1288px) {
+  .kvs__meja { grid-template-columns: minmax(0, 1fr); }
+  .kvs__lembar { order: -1; }
+  .kvs { --kvs-baris-min: 42px; }
+  .kvs__geser { overflow-x: auto; }
+  .kvs__tabel { min-width: 640px; }
+  .kvs__rekap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: 24px; align-content: start; }
+  .kvs__rekapkop,
+  .kvs__rab { grid-column: 1; }
+  .kvs__rekapkop { grid-row: 1; }
+  .kvs__rab { grid-row: 2 / span 3; }
+  .kvs__terbilang,
+  .kvs__catatan,
+  .kvs__tandatangan { grid-column: 2; }
+  .kvs__terbilang { grid-row: 2; }
+  .kvs__catatan { grid-row: 3; align-self: start; }
+  .kvs__tandatangan { grid-row: 4; }
+}
+@media (max-width: 1000px) {
+  .kvs__kop { grid-template-columns: minmax(0, 1fr) auto; }
+  .kvs__kopisi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kvs__kopisi > div:nth-child(3) { border-left: 0; }
+  .kvs__kopisi > div:nth-child(n + 3) { border-top: 1px solid var(--kvs-garis); }
+}
+@media (max-width: 40rem) {
+  .kvs__meja { padding: 14px 10px 12px; }
+  .kvs__kertas { padding: 14px 12px 10px; }
+  .kvs__selotip { width: 40px; height: 14px; }
+  .kvs__selotip--kiri { left: -12px; }
+  .kvs__selotip--kanan { right: -12px; }
+  .kvs__rekap { display: flex; }
+  .kvs__kop { grid-template-columns: minmax(0, 1fr); }
+  .kvs__progres { justify-self: start; }
+  .kvs__kopisi { grid-template-columns: minmax(0, 1fr); }
+  .kvs__kopisi > div + div { border-left: 0; border-top: 1px solid var(--kvs-garis); }
+  .kvs__judulket { white-space: normal; }
+  .kvs__legenda.is-catatan { margin-left: 0; }
+}
+
+/* Wilayah toast Radix ikut jadi butir flex halaman satu-layar (jebakan #69). */
+.kl__isi > astro-island:has(> .kvs) > [role="region"] { flex: none; }
