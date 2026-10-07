@@ -1,0 +1,494 @@
+/* =============================================================================
+   Keuangan — Ringkasan (/admin/keuangan) — PAPAN BURSA STUDIO.
+
+   Papan kurs split-flap di dalam papan hijau berjahit (`--kas-bidang`, serumpun
+   dengan halaman keuangan lain). Papannya sendiri hitam kehijauan TETAP di
+   kedua tema, seperti benda aslinya; seluruh warnanya diturunkan dari token
+   kas yang tidak berbalik tema.
+
+   Bagian: kepala (merek, periode, status data), INDEKS laba bersih + empat
+   sub-indeks, GRAFIK LILIN saldo kas kumulatif, KURS PROYEK, dan PAPAN
+   JADWAL (transaksi / jatuh tempo).
+
+   Keping: dua daun (atas & bawah) yang masing-masing memotong separuh huruf.
+   Garis belah di tengah keping adalah bagian huruf papan split-flap itu
+   sendiri — celah engsel antara dua daun — bukan hiasan yang lewat di
+   belakang tulisan.
+   ============================================================================= */
+
+.bsr {
+  --bsr-hitam: color-mix(in srgb, black 62%, var(--kas-dalam));
+  --bsr-papan: color-mix(in srgb, black 40%, var(--kas-dalam));
+  --bsr-panel: color-mix(in srgb, var(--kas-ink) 4%, var(--bsr-papan));
+  --bsr-keping-a: color-mix(in srgb, var(--kas-ink) 15%, var(--bsr-hitam));
+  --bsr-keping-b: color-mix(in srgb, var(--kas-ink) 9%, var(--bsr-hitam));
+  --bsr-keping-c: color-mix(in srgb, var(--kas-ink) 7%, var(--bsr-hitam));
+  --bsr-keping-d: color-mix(in srgb, var(--kas-ink) 3%, var(--bsr-hitam));
+  --bsr-tinta: var(--kas-nilai);
+  --bsr-naik: var(--brand-mint);
+  --bsr-turun: var(--warn);
+  --bsr-redup: color-mix(in srgb, var(--kas-ink) 66%, var(--bsr-hitam));
+  --bsr-label: color-mix(in srgb, var(--kas-ink) 62%, transparent);
+  --bsr-garis: color-mix(in srgb, var(--kas-ink) 10%, transparent);
+  --bsr-kiri: 432px;
+  --bsr-tengah: 190px;
+  --bsr-langkah: 74ms;
+  position: relative;
+  min-width: 0;
+}
+.bsr p { max-width: none; margin: 0; }
+.bsr ol { margin: 0; padding: 0; list-style: none; }
+.bsr button {
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-rendering: inherit;
+}
+
+/* ---- Papan hijau berjahit dan papan bursa di dalamnya ------------------------- */
+.bsr__papan {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--kas-bidang);
+  color: var(--kas-ink);
+}
+.bsr__papan::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed color-mix(in srgb, var(--kas-ink) 22%, transparent);
+  border-radius: 13px;
+  pointer-events: none;
+}
+.bsr--rangka .bsr__papan { min-height: 600px; }
+.bsr__bursa {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: var(--bsr-kiri) var(--bsr-tengah) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 0.95fr) minmax(0, 1.25fr);
+  grid-template-areas:
+    "kepala kepala kepala"
+    "indeks grafik grafik"
+    "kurs kurs jadwal";
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background:
+    radial-gradient(120% 80% at 30% 0%, color-mix(in srgb, var(--kas-ink) 6%, transparent), transparent 60%),
+    var(--bsr-papan);
+  background-color: var(--bsr-papan);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--kas-ink) 12%, transparent),
+    inset 0 2px 0 color-mix(in srgb, var(--kas-ink) 8%, transparent),
+    0 14px 24px -14px black;
+}
+/* Paku di keempat sudut papan, di dalam padding — jauh dari tulisan. */
+.bsr__paku {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--kas-ink) 70%, var(--bsr-hitam)), color-mix(in srgb, var(--kas-ink) 22%, var(--bsr-hitam)));
+  box-shadow: 0 1px 0 color-mix(in srgb, black 60%, transparent);
+}
+.bsr__paku--1 { left: 5px; top: 5px; }
+.bsr__paku--2 { right: 5px; top: 5px; }
+.bsr__paku--3 { left: 5px; bottom: 5px; }
+.bsr__paku--4 { right: 5px; bottom: 5px; }
+
+.bsr__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: var(--bsr-label);
+}
+.bsr__label span { letter-spacing: 0.02em; text-transform: none; font-weight: var(--k-semi); }
+.bsr__label .is-naik { color: var(--bsr-naik); }
+.bsr__label .is-turun { color: var(--bsr-turun); }
+.bsr__tombol {
+  flex: none;
+  height: 22px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--kas-ink) 22%, transparent);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--kas-ink);
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  cursor: pointer;
+}
+.bsr__tombol:hover { border-color: var(--bsr-naik); color: var(--bsr-naik); }
+
+/* ---- Kepala papan --------------------------------------------------------------- */
+.bsr__kepala {
+  grid-area: kepala;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--bsr-garis);
+}
+.bsr__merek { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bsr__merek b {
+  font-size: var(--k-t16);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.32em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--bsr-naik);
+}
+.bsr__merek span { overflow: hidden; font-size: var(--k-t10); text-overflow: ellipsis; white-space: nowrap; color: var(--bsr-label); }
+.bsr__periode { display: flex; align-items: center; gap: 10px; }
+.bsr__kepalakanan { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; }
+.bsr__hidup { display: inline-flex; align-items: center; gap: 6px; font-size: var(--k-t10); white-space: nowrap; color: var(--bsr-label); }
+.bsr__hidup i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bsr-naik);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bsr-naik) 22%, transparent);
+}
+
+/* ---- Panel ------------------------------------------------------------------------ */
+.bsr__indeks,
+.bsr__grafik,
+.bsr__kurs,
+.bsr__jadwal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bsr-panel);
+  box-shadow:
+    inset 0 0 0 1px var(--bsr-garis),
+    inset 0 3px 10px color-mix(in srgb, black 30%, transparent);
+}
+.bsr__indeks { grid-area: indeks; justify-content: space-between; }
+.bsr__grafik { grid-area: grafik; }
+.bsr__kurs { grid-area: kurs; }
+.bsr__jadwal { grid-area: jadwal; }
+.bsr__panelkepala { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 22px; }
+.bsr__panelkepala > .bsr__label:first-child { flex: 1 1 auto; min-width: 0; }
+.bsr__marjin b { font-size: var(--k-t12); letter-spacing: 0; color: var(--bsr-tinta); }
+
+/* ---- Keping split-flap ---------------------------------------------------------- */
+.bsr__deret {
+  --kw: 9px;
+  --kh: 18px;
+  --kf: 11px;
+  position: relative;
+  display: inline-flex;
+  color: var(--bsr-tinta);
+}
+.bsr__keping { display: inline-flex; gap: 1px; }
+.bsr__k {
+  position: relative;
+  flex: none;
+  width: var(--kw);
+  height: var(--kh);
+  perspective: calc(var(--kh) * 9);
+}
+.bsr__kd {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+}
+.bsr__kd i {
+  display: block;
+  height: var(--kh);
+  font-size: var(--kf);
+  font-style: normal;
+  font-weight: var(--k-semi);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--kh);
+  text-align: center;
+  white-space: pre;
+}
+.bsr__kd--a {
+  top: 0;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(180deg, var(--bsr-keping-a), var(--bsr-keping-b));
+  background-color: var(--bsr-keping-b);
+  transform-origin: 50% 100%;
+}
+.bsr__kd--b {
+  bottom: 0;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(180deg, var(--bsr-keping-c), var(--bsr-keping-d));
+  background-color: var(--bsr-keping-c);
+  transform-origin: 50% 0;
+}
+.bsr__kd--b i { margin-top: calc(var(--kh) / -2); }
+/* Celah engsel antara dua daun. */
+.bsr__k::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 0.5px);
+  z-index: 3;
+  height: 1px;
+  background: color-mix(in srgb, black 55%, transparent);
+}
+.bsr__daun-a,
+.bsr__daun-b { z-index: 2; }
+/* Daun yang sedang jatuh sedikit lebih gelap — terbaca sebagai bayangan. */
+.bsr__daun-a { background: linear-gradient(180deg, var(--bsr-keping-b), var(--bsr-keping-d)); }
+
+/* Ukuran keping. */
+.bsr__deret--besar { --kw: 28px; --kh: 46px; --kf: 32px; }
+.bsr__deret--besar .bsr__keping { gap: 2px; }
+.bsr__deret--besar .bsr__kd--a { border-radius: 4px 4px 0 0; }
+.bsr__deret--besar .bsr__kd--b { border-radius: 0 0 4px 4px; }
+.bsr__deret--sedang { --kw: 13px; --kh: 22px; --kf: 14px; }
+.bsr__deret--kata { display: flex; width: 100%; }
+.bsr__deret--kata .bsr__keping { flex: 1 1 auto; min-width: 0; }
+.bsr__k--kata { flex: 1 1 auto; width: auto; min-width: 0; }
+.bsr__k--kata i { overflow: hidden; padding: 0 7px; font-weight: var(--k-semi); text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.bsr__deret--periode { --kh: 24px; --kf: 12px; width: 196px; letter-spacing: 0.14em; }
+.bsr__deret--periode .bsr__k--kata i { text-align: center; }
+
+/* Warna isi keping. */
+.bsr__deret.is-naik { color: var(--bsr-naik); }
+.bsr__deret.is-turun { color: var(--bsr-turun); }
+.bsr__deret--redup { color: var(--bsr-redup); }
+.bsr__deret--kode { color: var(--kas-ink); }
+.bsr__deret--kode i { font-weight: var(--k-bold); }
+
+/* ---- Indeks ----------------------------------------------------------------------- */
+.bsr__sub {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+.bsr__subkotak {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 4px 0;
+  border-top: 1px solid var(--bsr-garis);
+}
+
+/* ---- Grafik lilin ----------------------------------------------------------------- */
+.bsr__legenda { display: flex; flex: none; align-items: center; gap: 10px; font-size: var(--k-t9); color: var(--bsr-label); }
+.bsr__legenda span { display: flex; align-items: center; gap: 4px; }
+.bsr__legenda i { display: block; width: 7px; height: 11px; border-radius: 1.5px; }
+.bsr__legenda .is-naik { background: var(--bsr-naik); }
+.bsr__legenda .is-turun { background: var(--bsr-turun); }
+.bsr__lilin { position: relative; flex: 1 1 auto; min-height: 0; }
+.bsr__lilin svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.bsr__lilinkisi { stroke: var(--bsr-garis); stroke-width: 1; }
+.bsr__lilinnol { stroke: color-mix(in srgb, var(--kas-ink) 34%, transparent); stroke-width: 1; stroke-dasharray: 3 3; }
+.bsr__lilinsumbu,
+.bsr__lilinbulan { color: var(--bsr-redup); fill: currentColor; font-size: 10px; font-variant-numeric: tabular-nums; }
+.bsr__lilinbulan.is-pilih { color: var(--bsr-naik); font-weight: var(--k-bold); }
+.bsr__batang line { stroke-width: 1.5; }
+.bsr__batang.is-naik line { stroke: var(--bsr-naik); }
+.bsr__batang.is-naik rect { fill: var(--bsr-naik); }
+.bsr__batang.is-turun line { stroke: var(--bsr-turun); }
+.bsr__batang.is-turun rect { fill: var(--bsr-turun); }
+.bsr__batang.is-pilih rect { stroke: var(--bsr-tinta); stroke-width: 1.5; }
+.bsr__silang line { stroke: var(--bsr-naik); stroke-width: 1; stroke-dasharray: 4 3; }
+.bsr__silangkolom { fill: color-mix(in srgb, var(--bsr-naik) 9%, transparent); }
+.bsr__silangtag { fill: var(--bsr-naik); }
+.bsr__silangteks { color: var(--kas-bidang); fill: currentColor; font-size: 10px; font-weight: var(--k-bold); font-variant-numeric: tabular-nums; }
+.bsr__silang.is-sorot line { stroke: color-mix(in srgb, var(--kas-ink) 55%, transparent); }
+.bsr__silang.is-sorot .bsr__silangkolom { fill: color-mix(in srgb, var(--kas-ink) 6%, transparent); }
+.bsr__silang.is-sorot .bsr__silangtag { fill: var(--kas-ink); }
+.bsr__lilintombol {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--bsr-n, 12), minmax(0, 1fr));
+}
+.bsr__lilintombol li { display: flex; min-width: 0; }
+.bsr__lilinb {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.bsr__lilinb:focus-visible { outline: 2px solid var(--bsr-naik); outline-offset: -2px; }
+
+/* ---- Tabel papan (kurs & jadwal) ---------------------------------------------- */
+.bsr__tabel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bsr-garis) transparent;
+}
+.bsr__kursbaris,
+.bsr__jadwalbaris {
+  display: grid;
+  align-items: center;
+  column-gap: 6px;
+  min-height: 24px;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.bsr__kursbaris { grid-template-columns: 9px 29px minmax(0, 1fr) 129px 129px 139px; }
+.bsr__jadwalbaris { grid-template-columns: 59px 29px minmax(0, 1fr) 139px; }
+.bsr__jadwalbaris--tempo { grid-template-columns: 84px 29px minmax(0, 1fr) 129px; }
+.bsr__kursbaris--kepala,
+.bsr__jadwalbaris--kepala {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  min-height: 20px;
+  margin-bottom: 2px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--bsr-garis);
+  background: var(--bsr-panel);
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bsr-label);
+}
+.bsr__kursbaris .is-kanan,
+.bsr__jadwalbaris .is-kanan { display: flex; justify-content: flex-end; text-align: right; }
+.bsr__kursbaris:not(.bsr__kursbaris--kepala):not(.is-kosong):hover,
+.bsr__jadwalbaris:not(.bsr__jadwalbaris--kepala):hover { background: color-mix(in srgb, var(--kas-ink) 6%, transparent); }
+.bsr__kursbaris.is-kosong { opacity: 0.5; }
+.bsr__sel-kata { display: flex; min-width: 0; }
+.bsr__kurstaut { display: flex; flex: 1 1 auto; min-width: 0; border-radius: 3px; color: inherit; text-decoration: none; }
+.bsr__kurstaut:hover .bsr__deret--kata { color: var(--bsr-naik); }
+.bsr__kurstaut:focus-visible { outline: 2px solid var(--bsr-naik); outline-offset: 1px; }
+.bsr__urut {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.bsr__urut path { fill: color-mix(in srgb, var(--kas-ink) 22%, transparent); }
+.bsr__urut[data-arah="naik"] .bsr__urutnaik,
+.bsr__urut[data-arah="turun"] .bsr__urutturun { fill: var(--bsr-naik); }
+.bsr__kosong { padding: 12px 4px; font-size: var(--k-t11); color: var(--bsr-label); }
+
+/* ---- Papan jadwal: kontrol kit di atas papan gelap ------------------------------ */
+.bsr__segmen { flex: 1 1 auto; width: auto; height: 26px; }
+.bsr__rentang { flex: none; }
+.bsr__ikontaut,
+.bsr__taut { flex: none; color: var(--kas-ink); }
+.bsr__ikontaut {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kas-ink) 22%, transparent);
+}
+.bsr__ikontaut:hover { color: var(--bsr-naik); box-shadow: inset 0 0 0 1px var(--bsr-naik); }
+.bsr__taut { font-size: var(--k-t11); font-weight: var(--k-semi); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--kas-ink) 30%, transparent); text-underline-offset: 3px; }
+.bsr__taut:hover { color: var(--bsr-naik); }
+/* Segmen dan tombol hantu kit dikunci ke token papan yang tidak berbalik tema
+   (jebakan #37). */
+.bsr .bsr__jadwal .k-segmen { background: color-mix(in srgb, var(--kas-ink) 8%, transparent); box-shadow: none; }
+.bsr .bsr__jadwal .k-segmen .k-segmen__b { min-width: 0; overflow: hidden; font-size: var(--k-t11); text-overflow: ellipsis; white-space: nowrap; color: color-mix(in srgb, var(--kas-ink) 80%, transparent); }
+.bsr .bsr__jadwal .k-segmen .k-segmen__b[aria-selected="true"] { background: var(--bsr-naik); color: var(--kas-bidang); }
+.bsr .bsr__jadwal .k-tombol--ghost,
+.bsr .bsr__jadwal .k-tombol--ghost svg { color: var(--kas-ink); }
+.bsr .bsr__jadwal .k-tombol--ghost { border-color: color-mix(in srgb, var(--kas-ink) 22%, transparent); background: transparent; }
+
+/* ---- Gerak ------------------------------------------------------------------------- */
+/* SATU-SATUNYA gerak 3D — daun keping berputar di engselnya — dijalankan
+   Web Animations dari RingkasanKit (hanya saat gerak tidak dikurangi). Saat
+   diam, daun atas gerak terlipat (tak tampak) dan daun bawah gerak menutup
+   daun bawah diam dengan isi yang sama. */
+.bsr__daun-a { opacity: 0; }
+
+/* ---- Lebar ------------------------------------------------------------------------- */
+@media (min-width: 1288.02px) and (max-width: 1408px) {
+  /* Kolom beban kurs disembunyikan (ada di kartu keterangan barisnya) —
+     tanpa itu nama proyek tinggal beberapa huruf. */
+  .bsr { --bsr-kiri: 392px; --bsr-tengah: 120px; }
+  .bsr__deret--besar { --kw: 24px; --kh: 42px; --kf: 28px; }
+  .bsr__deret--sedang { --kw: 11px; --kf: 13px; }
+  .bsr__kursbaris { grid-template-columns: 9px 29px minmax(0, 1fr) 129px 139px; }
+  .bsr__kursbaris > :nth-child(5) { display: none; }
+}
+@media (min-width: 1288.02px) and (min-height: 600px) {
+  .bsr { height: 100%; }
+  .bsr__papan { height: 100%; }
+}
+@media (max-width: 1288px) {
+  .bsr__merek span { white-space: normal; }
+  .bsr__bursa {
+    grid-template-columns: var(--bsr-kiri) minmax(0, 1fr);
+    grid-template-rows: auto 250px auto auto;
+    grid-template-areas:
+      "kepala kepala"
+      "indeks grafik"
+      "kurs kurs"
+      "jadwal jadwal";
+  }
+  .bsr__tabel { overflow: visible; }
+}
+@media (max-width: 1000px) {
+  .bsr__bursa {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 240px auto auto;
+    grid-template-areas: "kepala" "indeks" "grafik" "kurs" "jadwal";
+  }
+  .bsr__kepala { grid-template-columns: minmax(0, 1fr) auto; }
+  .bsr__periode { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 40rem) {
+  .bsr__papan { padding: 8px; }
+  .bsr__bursa { padding: 12px 10px; gap: 10px; }
+  /* Padding papan ponsel terlalu sempit untuk paku tanpa menyentuh merek. */
+  .bsr__paku { display: none; }
+  .bsr__deret--besar { --kw: 19px; --kh: 32px; --kf: 21px; }
+  .bsr__deret--besar .bsr__keping { gap: 1px; }
+  .bsr__deret--sedang { --kw: 10px; --kh: 18px; --kf: 11px; }
+  .bsr__sub { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .bsr__deret--periode { width: 170px; }
+  /* Baris papan dua tingkat: nama selebar baris, angkanya di bawah kanan. */
+  .bsr__kursbaris { grid-template-columns: 9px 29px minmax(0, 1fr); row-gap: 3px; padding-block: 3px; }
+  .bsr__kursbaris > :nth-child(4),
+  .bsr__kursbaris > :nth-child(5) { display: none; }
+  .bsr__kursbaris > :nth-child(6) { grid-column: 2 / -1; }
+  .bsr__jadwalbaris,
+  .bsr__jadwalbaris--tempo { grid-template-columns: 59px 29px minmax(0, 1fr); row-gap: 3px; padding-block: 3px; }
+  .bsr__jadwalbaris--tempo { grid-template-columns: 84px 29px minmax(0, 1fr); }
+  .bsr__jadwalbaris > :nth-child(4) { grid-column: 1 / -1; }
+  .bsr__jadwal .bsr__panelkepala { flex-wrap: wrap; }
+  .bsr__segmen { flex: 1 1 100%; }
+  .bsr__legenda { display: none; }
+}
+
+/* Wilayah toast Radix ikut jadi butir flex halaman satu-layar (jebakan #69). */
+.kl__isi > astro-island:has(> .bsr) > [role="region"] { flex: none; }
