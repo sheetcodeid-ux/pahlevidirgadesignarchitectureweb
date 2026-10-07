@@ -1,22 +1,16 @@
 ---
 import KitLayout from "../../layouts/KitLayout.astro";
 import { DashboardKit } from "../../components/admin/DashboardKit";
-/* Pemilih teks (`PilihTeks`) milik frame 25 hidup di fee-kit.css. Dimuat
-   LEBIH DULU supaya penyesuaian halaman ini (.dsb__pilihteks, satu kelas
-   juga) menang karena urutan. */
-import "../../styles/fee-kit.css";
-import "../../styles/dash-kit.css";
-/* Kartu Target Semester (.tgt) bersama Kas Studio. */
-import "../../styles/kas-kit.css";
+import "../../styles/tampak-kit.css";
 
-/* Frame Figma "01. Dashboard (v1)" — halaman keempat belas, yang terakhir
-   pindah ke kerangka kit.
+/* Dashboard = TAMPAK KAWASAN STUDIO (lihat kepala DashboardKit.tsx).
+   Dulu frame Figma "01. Dashboard (v1)"; sejak Okt 2026 gambar tampak
+   proyek berjalan di papan hijau berjahit.
 
    Judulnya "Dashboard", bukan "Hari Ini" seperti di kerangka lama: rel
    samping sudah lama menyebutnya "Dashboard" (lib/navAdmin.ts), dan satu
    halaman dengan dua nama membuat orang ragu apakah ia sampai di tempat
-   yang dimaksud. Isinya tetap antrean hari ini — kolom kanannya daftar
-   yang belum ditangani. */
+   yang dimaksud. */
 ---
 
 <KitLayout title="Dashboard" judul="Dashboard">
