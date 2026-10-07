@@ -1,9 +1,10 @@
 /* =============================================================================
    Kas Studio (/admin/keuangan/kas) + kartu target semester.
 
-   Daftarnya kerangka daftar bersama (`.kd`, daftar-kit.css). Kartu target
-   (`.tgt`) juga dipakai Dashboard — dash-kit.css TIDAK memuatnya, jadi
-   halaman Dashboard mengimpor berkas ini juga (jebakan #5).
+   Sejak Kas Studio jadi mesin kas, tata letak halamannya hidup di
+   kasir-kit.css; di sini tinggal kartu target (`.tgt`, juga dipakai
+   Dashboard — dash-kit.css TIDAK memuatnya, jebakan #5) dan isian dialog
+   bukti kas (`.kas__form`).
    ============================================================================= */
 
 /* --- Kartu target (bersama) ---------------------------------------------- */
@@ -33,75 +34,6 @@
 .dsb__laba .tgt { gap: 6px; }
 .tgt__dialog { display: flex; flex-direction: column; gap: 14px; }
 
-/* --- Halaman --------------------------------------------------------------- */
-.kas { display: grid; grid-template-columns: minmax(0, 1fr); gap: 17px; }
-.kas--rangka { min-height: 560px; }
-.kas__samping { display: flex; flex-direction: column; gap: 17px; min-width: 0; }
-.kas__kartu {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 15px;
-  border: 1px solid var(--border);
-  border-radius: 15.5px;
-  background: var(--surface);
-}
-.kas__semester { margin: -6px 0 0; font-size: var(--k-t12); color: var(--text-muted); }
-.kas__semester span { color: var(--warn-ink); }
-.kas__tautan {
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: inherit;
-  font-size: var(--k-t12);
-  font-weight: var(--k-semi);
-  line-height: inherit;
-  color: var(--brand);
-  cursor: pointer;
-}
-.kas__tautan:hover { text-decoration: underline; }
-.kas__tautan--bawah { align-self: flex-start; margin-top: 2px; }
-.kas__ketkepala { font-size: var(--k-t12); color: var(--text-muted); }
-
-.kas__rinci,
-.kas__bulan { display: flex; flex-direction: column; gap: 6px; margin: 0; }
-.kas__rinci div,
-.kas__bulan div { display: flex; justify-content: space-between; gap: 12px; }
-.kas__rinci dt,
-.kas__bulan dt { font-size: var(--k-t12); color: var(--text-muted); }
-.kas__rinci dd,
-.kas__bulan dd { margin: 0; font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--text-strong); white-space: nowrap; }
-.kas__bulan dd { font-size: var(--k-t14); }
-.kas__bulan .kas__bersih { padding-top: 8px; border-top: 1px solid var(--border); }
-.kas__catatan { margin: 0; font-size: var(--k-t11); line-height: 1.5; color: var(--text-muted); }
-.kas__catatan a { color: var(--brand); }
-
-/* Sel tabel */
-.kas__tgl { white-space: nowrap; color: var(--text-strong); }
-.kas__ket {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: inherit;
-  line-height: inherit;
-  letter-spacing: inherit;
-  text-align: left;
-  color: inherit;
-  cursor: pointer;
-}
-.kas__ket b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--k-semi); color: var(--text-strong); }
-.kas__ket:hover b { text-decoration: underline; }
-.kas__ket small { font-size: var(--k-t11); color: var(--text-muted); }
-.kas__redup { color: var(--text-muted); }
-.kas__masuk { color: var(--brand); white-space: nowrap; }
-.kas__keluar { color: var(--danger); white-space: nowrap; }
-/* Di tema gelap --brand adalah mint — terbaca di atas kartu gelap. */
-
 /* Dialog */
 .kas__form { display: flex; flex-direction: column; gap: 14px; }
 .kas__form .k-segmen { align-self: flex-start; }
@@ -110,16 +42,6 @@
 .kas__info--bahaya { color: var(--danger); }
 .kas__hapus { margin-right: auto; }
 
-@media (min-width: 63rem) {
-  .kas { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
-}
 @media (max-width: 40rem) {
   .kas__dua { grid-template-columns: minmax(0, 1fr); }
-}
-
-/* Satu layar: daftar setinggi area isi, tabelnya menggulir sendiri. */
-@media (min-width: 1288.02px) and (min-height: 600px) {
-  .kas { height: 100%; align-items: stretch; }
-  .kas__daftar { min-height: 0; }
-  .kas__samping { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 }
