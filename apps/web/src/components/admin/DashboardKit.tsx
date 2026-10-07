@@ -16,6 +16,7 @@ import { PilihTombol, PilihTeks } from "./frame25";
 import {
   CheckCircle,
   Clock,
+  X,
   CoinIn,
   CoinOut,
   DotsThreeVertical,
@@ -51,6 +52,7 @@ import {
 import { ambilNotifikasi, type IsiNotifikasi, type BarisNotifikasi } from "../../lib/notifikasi";
 import { kepalaHari, waktuButir, ikonButir } from "./linimasaNotif";
 import { formatRupiah } from "../../lib/format";
+import { Hitung, geraknya } from "./hitung";
 
 /* =============================================================================
    Dashboard — frame Figma "01. Dashboard (v1)" (node 3:1069), di kerangka kit.
@@ -213,14 +215,54 @@ function KartuKas({
   profil,
   keu,
   jumlahJalan,
+  hidup,
 }: {
   nama: string | null;
   profil: Profil | null;
   keu: FinanceOverview | null;
   jumlahJalan: number | null;
+  hidup: boolean;
 }) {
+  /* Satu-satunya benda yang "disentuh" di halaman ini: kartu kas MIRING
+     mengikuti tetikus (±7°) dan bayangannya bergeser ke arah sebaliknya,
+     seperti kartu yang diangkat dari meja. Tetikus saja (jebakan #9), diam
+     bila gerak dikurangi. Sudutnya ditulis ke variabel CSS lewat ref, bukan
+     state — tidak ada render ulang per gerakan. Kotaknya dibaca sekali saat
+     kursor masuk. */
+  const ref = useRef<HTMLElement>(null);
+  const kotak = useRef<DOMRect | null>(null);
+  const miring = (rx: number, ry: number) => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty("--kas-rx", `${rx.toFixed(2)}deg`);
+    el.style.setProperty("--kas-ry", `${ry.toFixed(2)}deg`);
+  };
+  const masuk = keu?.kasMasuk ?? 0;
+  const piutang = keu?.piutang ?? 0;
+  const pctMasuk = masuk + piutang > 0 ? (masuk / (masuk + piutang)) * 100 : 0;
   return (
-    <article className="dsb__kas" aria-label="Kas studio">
+    <article
+      ref={ref}
+      className="dsb__kas"
+      aria-label="Kas studio"
+      onPointerEnter={(e) => {
+        if (e.pointerType !== "mouse" || !geraknya()) return;
+        kotak.current = e.currentTarget.getBoundingClientRect();
+        e.currentTarget.classList.add("is-angkat");
+      }}
+      onPointerMove={(e) => {
+        const k = kotak.current;
+        if (e.pointerType !== "mouse" || !k) return;
+        const fx = (e.clientX - k.left) / k.width - 0.5;
+        const fy = (e.clientY - k.top) / k.height - 0.5;
+        miring(-fy * 14, fx * 14);
+      }}
+      onPointerLeave={(e) => {
+        kotak.current = null;
+        e.currentTarget.classList.remove("is-angkat");
+        miring(0, 0);
+      }}
+    >
       <div className="dsb__kasatas">
         <TandaStudio />
         {/* Slot "Union" (lambang nirkontak) di framenya. Dengan dua akun
@@ -231,9 +273,12 @@ function KartuKas({
       <p className="dsb__kasnama">{nama ?? "—"}</p>
       <div className="dsb__kaskaki">
         <div className="dsb__kasblok">
-          <p className="dsb__kasket">Kas masuk</p>
+          <p className="dsb__kasket">
+            <i className="dsb__kastitik" aria-hidden="true" />
+            Kas masuk
+          </p>
           <p className="dsb__kasnilai">
-            {keu ? formatRupiah(keu.kasMasuk) : "—"}
+            {keu ? <Hitung nilai={keu.kasMasuk} hidup={hidup} format={formatRupiah} /> : "—"}
           </p>
         </div>
         <div className="dsb__kaskanan">
@@ -242,13 +287,24 @@ function KartuKas({
             <p className="dsb__kasisi">{jumlahJalan ?? "—"}</p>
           </div>
           <div className="dsb__kasblok">
-            <p className="dsb__kasket">Piutang</p>
+            <p className="dsb__kasket">
+              <i className="dsb__kastitik dsb__kastitik--piutang" aria-hidden="true" />
+              Piutang
+            </p>
             <p className="dsb__kasisi">
               {keu ? formatRupiah(keu.piutang) : "—"}
             </p>
           </div>
         </div>
       </div>
+      {/* Meteran: dari seluruh tagihan yang sudah diterbitkan dan lunas,
+          bagian yang sudah jadi uang. */}
+      {keu && masuk + piutang > 0 && (
+        <div className="dsb__kasmeter" role="img" aria-label={`${pctMasuk.toFixed(0)}% tagihan sudah masuk`}>
+          <i style={{ width: `${pctMasuk}%` }} />
+          <span>{Math.round(pctMasuk)}% tagihan sudah masuk</span>
+        </div>
+      )}
     </article>
   );
 }
@@ -297,6 +353,20 @@ function Isi() {
   const [tabStat, setTabStat] = useState<"masuk" | "beban">("beban");
   const [urutLaba, setUrutLaba] = useState("laba");
   const [sorot, setSorot] = useState<number | null>(null);
+  /* Bulan yang sedang DIBACA: diklik di Arus Kas, dibaca ketiga kartu
+     statistik. Null = bulan berjalan. */
+  const [pilih, setPilih] = useState<string | null>(null);
+  const [hidup, setHidup] = useState(false);
+  const lengkap = keu !== null && bulanan !== null;
+  useEffect(() => {
+    if (!lengkap || hidup) return;
+    let b2 = 0;
+    const b1 = requestAnimationFrame(() => (b2 = requestAnimationFrame(() => setHidup(true))));
+    return () => {
+      cancelAnimationFrame(b1);
+      cancelAnimationFrame(b2);
+    };
+  }, [lengkap, hidup]);
 
   useEffect(() => {
     setProfil(profilTersimpan());
@@ -344,8 +414,14 @@ function Isi() {
   /* ---- Angka bulanan -------------------------------------------------------- */
 
   const perBulan = useMemo(() => new Map((bulanan ?? []).map((b) => [b.bulan, b])), [bulanan]);
-  const bulanIni = perBulan.get(kunciBulan(0));
-  const bulanLalu = perBulan.get(kunciBulan(1));
+  const kunciBaca = pilih ?? kunciBulan(0);
+  const geserBulan = (k: string, n: number) => {
+    const d = new Date(Number(k.slice(0, 4)), Number(k.slice(5, 7)) - 1 - n, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+  const namaBaca = pilih ? `${BULAN[Number(pilih.slice(5, 7)) - 1]}` : "bulan ini";
+  const bulanIni = perBulan.get(kunciBaca);
+  const bulanLalu = perBulan.get(geserBulan(kunciBaca, 1));
   const kasKini = bulanIni?.kasMasuk ?? 0;
   const bebanKini = bulanIni?.biaya ?? 0;
   const labaKini = bulanIni?.labaBersih ?? kasKini - bebanKini;
@@ -359,13 +435,14 @@ function Isi() {
      uang", bukan "belum dimuat". */
   const enam = useMemo(() => {
     if (!bulanan) return null;
-    const b = Array.from({ length: 6 }, (_, i) => perBulan.get(kunciBulan(5 - i)));
+    const b = Array.from({ length: 6 }, (_, i) => perBulan.get(geserBulan(kunciBaca, 5 - i)));
     return {
       kas: b.map((x) => x?.kasMasuk ?? 0),
       beban: b.map((x) => x?.biaya ?? 0),
       laba: b.map((x) => x?.labaBersih ?? (x ? x.kasMasuk - x.biaya : 0)),
     };
-  }, [bulanan, perBulan]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bulanan, perBulan, kunciBaca]);
   const kilau = (titik: number[] | undefined, buruk: boolean) =>
     titik ? (
       <Kilau
@@ -373,8 +450,9 @@ function Isi() {
         turun={buruk}
         lebar={76}
         tinggi={34}
+        tandaAkhir
         keterangan={(i) => {
-          const k = kunciBulan(5 - i);
+          const k = geserBulan(kunciBaca, 5 - i);
           return { judul: `${BULAN_PENDEK[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}`, nilai: formatRupiah(titik[i] ?? 0) };
         }}
       />
@@ -434,12 +512,27 @@ function Isi() {
   }, [deret]);
 
   const kasBersih = deret.reduce((a, b) => a + b.kasMasuk - b.biaya, 0);
+  /* Garis LABA BERSIH per bulan di atas batang: titik di tengah kolom, pada
+     skala sumbu yang sama. Persen bidang plot (x dari lebar kolom-kolom,
+     y dari atas). */
+  const garisLaba = deret.map((b, i) => ({
+    i,
+    x: ((i + 0.5) / deret.length) * 100,
+    y: sumbu.nol - ((b.kasMasuk - b.biaya) / sumbu.total) * 100,
+    laba: b.kasMasuk - b.biaya,
+    depan: b.depan,
+  }));
+  const titikGaris = garisLaba.filter((t) => !t.depan);
+  /* Garisnya DIGAMBAR ulang saat rentang berganti — tidak saat dimuat. */
+  const rentangAwal = useRef(rentangArus);
+  const gambarUlang = hidup && rentangAwal.current !== rentangArus;
   /* Kartu keterangan cuma muncul saat sebuah kolom disentuh atau difokus —
      bukan menyala sejak awal seperti di framenya. Framenya menaruhnya di
      Juni, di tengah grafik; di sini kolom yang wajar dinyalakan adalah
      bulan INI, yang selalu di ujung kanan, dan di sana kartunya menutupi
      legenda. Angka bulan ini sudah dibawa tiga kartu statistik di atasnya. */
   const iSorot = sorot;
+  const iPilih = pilih ? deret.findIndex((b) => b.kunci === pilih) : -1;
   const bSorot = iSorot !== null ? deret[iSorot] : undefined;
 
   /* Lebar batang = 60% kolomnya, persis framenya (Bar Chart inset 20% kiri
@@ -551,6 +644,11 @@ function Isi() {
       </span>,
       <span className="dsb__nominal">
         {formatRupiah(r.received)}
+        {r.contractValue ? (
+          <i className="dsb__terima" aria-hidden="true">
+            <i style={{ width: `${Math.min(100, (r.received / r.contractValue) * 100)}%` }} />
+          </i>
+        ) : null}
       </span>,
       <span className="dsb__catatan">
         Biaya {formatRupiah(r.costsTotal)}, {catatan}
@@ -654,7 +752,7 @@ function Isi() {
     <div className="dsb">
       {/* ---- Kolom kiri ------------------------------------------------------ */}
       <div className="dsb__kol dsb__kol--kiri">
-        <KartuKas nama={nama} profil={profil} keu={keu} jumlahJalan={notif ? jalan.length : null} />
+        <KartuKas nama={nama} profil={profil} keu={keu} jumlahJalan={notif ? jalan.length : null} hidup={hidup} />
 
         <KelompokTab
           judul="Aksi cepat"
@@ -732,18 +830,18 @@ function Isi() {
         <div className="dsb__stat">
           <KartuStatistik
             ikon={CoinIn}
-            judul="Kas masuk bulan ini"
+            judul={`Kas masuk ${namaBaca}`}
             grafik={kilau(enam?.kas, Boolean(tKas && !tKas.naik))}
-            nilai={<span>{formatRupiah(kasKini)}</span>}
+            nilai={<Hitung nilai={kasKini} hidup={hidup} format={formatRupiah} />}
             tren={tKas ? <Tren naik={tKas.naik}>{tKas.teks}</Tren> : <span className="k-tren dsb__trenkosong" />}
             menuHref="/admin/keuangan/transaksi"
             menuJudul="Lihat uang masuk di Semua Transaksi"
           />
           <KartuStatistik
             ikon={CoinOut}
-            judul="Beban bulan ini"
+            judul={`Beban ${namaBaca}`}
             grafik={kilau(enam?.beban, Boolean(tBeban?.naik))}
-            nilai={<span>{formatRupiah(bebanKini)}</span>}
+            nilai={<Hitung nilai={bebanKini} hidup={hidup} format={formatRupiah} />}
             /* Beban yang naik bukan kabar baik — arah dan penilaian dipisah. */
             tren={
               tBeban ? (
@@ -759,9 +857,9 @@ function Isi() {
           />
           <KartuStatistik
             ikon={Wallet}
-            judul="Laba bersih bulan ini"
+            judul={`Laba bersih ${namaBaca}`}
             grafik={kilau(enam?.laba, Boolean(tLaba && !tLaba.naik))}
-            nilai={<span>{formatRupiah(labaKini)}</span>}
+            nilai={<Hitung nilai={labaKini} hidup={hidup} format={formatRupiah} className={labaKini < 0 ? "dsb__minus" : undefined} />}
             tren={tLaba ? <Tren naik={tLaba.naik}>{tLaba.teks}</Tren> : <span className="k-tren dsb__trenkosong" />}
             menuHref="/admin/keuangan"
             menuJudul="Buka ringkasan Keuangan"
@@ -771,7 +869,17 @@ function Isi() {
         <article className="dsb__kartu dsb__arus">
           <KepalaSeksi
             judul="Arus Kas"
-            kanan={<PilihTombol judul="Rentang arus kas" nilai={rentangArus} opsi={RENTANG_ARUS} onUbah={setRentangArus} />}
+            kanan={
+              <>
+                {pilih && (
+                  <button type="button" className="dsb__baca" onClick={() => setPilih(null)} title="Kembali ke bulan ini">
+                    Membaca {BULAN_PENDEK[Number(pilih.slice(5, 7)) - 1]} {pilih.slice(0, 4)}
+                    <Ikon ikon={X} ukuran={12} />
+                  </button>
+                )}
+                <PilihTombol judul="Rentang arus kas" nilai={rentangArus} opsi={RENTANG_ARUS} onUbah={setRentangArus} />
+              </>
+            }
           />
           <div className="dsb__arusinfo">
             <div>
@@ -779,7 +887,7 @@ function Isi() {
                 Kas bersih {rentangArus === "tahun" ? "tahun ini" : "12 bulan terakhir"}
               </p>
               <p className={`dsb__totalnilai${kasBersih < 0 ? " dsb__minus" : ""}`}>
-                {bulanan ? formatRupiah(kasBersih) : "—"}
+                {bulanan ? <Hitung nilai={kasBersih} hidup={hidup} format={formatRupiah} /> : "—"}
               </p>
             </div>
             <ul className="dsb__legenda">
@@ -790,6 +898,10 @@ function Isi() {
               <li>
                 <span className="dsb__kotak dsb__kotak--mint" />
                 Beban
+              </li>
+              <li>
+                <span className="dsb__kotak dsb__kotak--garis" />
+                Laba bersih
               </li>
             </ul>
           </div>
@@ -818,8 +930,17 @@ function Isi() {
                 return (
                   <div
                     key={b.kunci}
-                    className={`dsb__kolom${nyala ? " is-sorot" : ""}`}
+                    className={`dsb__kolom${nyala ? " is-sorot" : ""}${i === iPilih ? " is-pilih" : ""}`}
                     tabIndex={b.depan ? -1 : 0}
+                    role="button"
+                    aria-pressed={i === iPilih}
+                    onClick={() => !b.depan && setPilih((l) => (l === b.kunci || b.kunci === kunciBulan(0) ? null : b.kunci))}
+                    onKeyDown={(e) => {
+                      if ((e.key === "Enter" || e.key === " ") && !b.depan) {
+                        e.preventDefault();
+                        setPilih((l) => (l === b.kunci || b.kunci === kunciBulan(0) ? null : b.kunci));
+                      }
+                    }}
                     aria-label={
                       b.depan
                         ? `${bln} ${b.kunci.slice(0, 4)}: belum berjalan`
@@ -842,6 +963,25 @@ function Isi() {
                   </div>
                 );
               })}
+              {bulanan && titikGaris.length > 1 && (
+                <div className="dsb__labagaris" aria-hidden="true">
+                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" key={rentangArus}>
+                    <polyline className="dsb__labagaris-alas" points={titikGaris.map((t) => `${t.x},${t.y}`).join(" ")} />
+                    <polyline
+                      className={`dsb__labagaris-garis${gambarUlang ? " is-gambar" : ""}`}
+                      points={titikGaris.map((t) => `${t.x},${t.y}`).join(" ")}
+                      pathLength={1}
+                    />
+                  </svg>
+                  {titikGaris.map((t, j) => (
+                    <i
+                      key={j}
+                      className={`dsb__labatitik${t.laba < 0 ? " is-rugi" : ""}${t.i === iPilih ? " is-pilih" : ""}`}
+                      style={{ left: `${t.x}%`, top: `${t.y}%` }}
+                    />
+                  ))}
+                </div>
+              )}
               {bSorot && iSorot !== null && !bSorot.depan && (
                 <div
                   className={`dsb__tip${iSorot === 0 ? " dsb__tip--kiri" : iSorot === deret.length - 1 ? " dsb__tip--kanan" : ""}`}
@@ -865,6 +1005,10 @@ function Isi() {
                   <p className="dsb__tipbaris">
                     <span>Beban</span>
                     <b>{formatRupiah(bSorot.biaya)}</b>
+                  </p>
+                  <p className="dsb__tipbaris">
+                    <span>Laba bersih</span>
+                    <b className={bSorot.kasMasuk - bSorot.biaya < 0 ? "dsb__minus" : undefined}>{formatRupiah(bSorot.kasMasuk - bSorot.biaya)}</b>
                   </p>
                 </div>
               )}

@@ -215,9 +215,12 @@ export function Kilau({
   lebar = 89.26,
   tinggi = 61.68,
   keterangan,
+  tandaAkhir,
   className,
 }: {
   titik: number[];
+  /** Titik terakhir ditandai tetap (mis. bulan yang sedang dibaca). */
+  tandaAkhir?: boolean;
   /**
    * Letak tiap titik pada sumbu-X, 0..1. Kalau tidak diisi, titiknya dibagi
    * rata.
@@ -335,6 +338,9 @@ export function Kilau({
       </defs>
       <path d={`${d} L${lebar} ${tinggi} L0 ${tinggi} Z`} fill={`url(#${id})`} />
       <path d={d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {tandaAkhir && arah === null && n > 0 && (
+        <circle className="k-kilau__titik k-kilau__titik--akhir" cx={Math.min(xs[n - 1]!, lebar - 3.5)} cy={ys[n - 1]} r="3.5" />
+      )}
       {arah !== null && (
         <circle className="k-kilau__titik" cx={xs[arah]} cy={ys[arah]} r="3.5" />
       )}

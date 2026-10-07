@@ -560,3 +560,160 @@
 /* Catatan tabel: tiga baris, bukan dua — "Biaya Rp98.750.000, sisa
    Rp170.000.000 belum diterima" terpotong di baris kedua. */
 .dsb__catatan { -webkit-line-clamp: 3; }
+
+/* =============================================================================
+   Putaran "10000000000x" (pemilik: "jangan biasa aja"). Susunan frame 01
+   TIDAK berubah — pilihan pemilik; yang dinaikkan tampilan pertama dan gerak.
+   ============================================================================= */
+
+/* --- Kartu kas: diangkat dari meja ---------------------------------------
+   Miring mengikuti tetikus (--kas-rx/ry ditulis lewat ref), bayangannya
+   bergeser ke arah sebaliknya. Pijar mint di pojok kanan bawah, di ruang
+   tanpa tulisan. */
+.dsb__kas {
+  --kas-rx: 0deg;
+  --kas-ry: 0deg;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transform: perspective(900px) rotateX(var(--kas-rx)) rotateY(var(--kas-ry));
+  transition: transform 420ms var(--ease), box-shadow 420ms var(--ease);
+  background:
+    radial-gradient(120% 90% at 100% 100%, color-mix(in srgb, var(--brand-mint) 20%, transparent), transparent 55%),
+    radial-gradient(80% 70% at 0% 0%, color-mix(in srgb, var(--kas-ink) 8%, transparent), transparent 60%),
+    var(--kas-bidang);
+  background-color: var(--kas-bidang);
+  box-shadow: 0 1px 0 color-mix(in srgb, black 10%, transparent);
+}
+.dsb__kas.is-angkat {
+  transition: transform 120ms linear, box-shadow 200ms var(--ease);
+  box-shadow:
+    calc(var(--kas-ry) * -1.2) calc(14px + var(--kas-rx) * 1.2) 26px -12px color-mix(in srgb, var(--kas-bidang) 70%, black);
+}
+.dsb__kasket { display: inline-flex; align-items: center; gap: 5px; }
+.dsb__kastitik {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--brand-mint);
+}
+.dsb__kastitik--piutang { background: color-mix(in srgb, var(--kas-ink) 35%, var(--kas-bidang)); }
+.dsb__kasmeter {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: -4px;
+}
+.dsb__kasmeter::before {
+  content: "";
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--kas-ink) 35%, var(--kas-bidang));
+}
+.dsb__kasmeter i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--brand-mint);
+  transition: width 520ms var(--ease);
+}
+.dsb__kasmeter span { font-size: var(--k-t10); line-height: 1.2; color: color-mix(in srgb, var(--kas-ink) 80%, transparent); }
+
+/* --- Bulan yang sedang dibaca --------------------------------------------- */
+/* Keping "Membaca Agu 2026 ×" di kepala Arus Kas — hanya saat ada bulan
+   terpilih; klik = kembali ke bulan berjalan. */
+.dsb__baca {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px 0 10px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--brand-mint);
+  color: var(--kas-bidang);
+  font-family: inherit;
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  line-height: 1;
+  letter-spacing: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dsb__baca:hover { background-image: linear-gradient(var(--k-hover-tint), var(--k-hover-tint)); }
+.dsb__kolom { position: relative; cursor: pointer; }
+.dsb__kolom[tabindex="-1"] { cursor: default; }
+/* Pita bulan terpilih: setinggi bidang plot saja — label bulan di bawahnya
+   tidak duduk di atas pita. */
+.dsb__kolom.is-pilih::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 2px;
+  right: 2px;
+  height: var(--dsb-plot-h);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--brand-mint) 26%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 30%, transparent);
+  pointer-events: none;
+}
+.dsb__kolom.is-pilih .k-kolom__label { color: var(--text-strong); font-weight: var(--k-bold); }
+/* Batang meluncur ke tinggi barunya saat rentang berganti. */
+.dsb .dsb__kolom .k-kolom__b { transition: top 460ms var(--ease), height 460ms var(--ease); }
+
+/* --- Garis laba bersih ------------------------------------------------------ */
+.dsb__labagaris {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: var(--dsb-plot-h);
+  pointer-events: none;
+  z-index: 1;
+}
+.dsb__labagaris svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.dsb__labagaris polyline { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.dsb__labagaris-alas { stroke: var(--surface); stroke-width: 5; }
+.dsb__labagaris-garis { stroke: var(--text-strong); stroke-width: 1.8; }
+.dsb__labagaris-garis.is-gambar { stroke-dasharray: 1; animation: dsb-gambar 700ms var(--ease) both; }
+@keyframes dsb-gambar { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.dsb__labatitik {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--text-strong);
+  transform: translate(-50%, -50%);
+  transition: top 460ms var(--ease), width 200ms ease, height 200ms ease;
+}
+.dsb__labatitik.is-rugi { background: var(--danger); }
+.dsb__labatitik.is-pilih { width: 12px; height: 12px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-mint) 55%, transparent); }
+.dsb__kotak--garis { width: 14px !important; height: 2px !important; border-radius: 1px; background: var(--text-strong); }
+.dsb__tip { z-index: 3; }
+
+/* --- Tabel: meteran diterima dari kontrak, di bawah angkanya --------------- */
+.dsb__nominal { display: inline-flex; flex-direction: column; gap: 4px; }
+.dsb__terima {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.dsb__terima i { position: absolute; inset: 0 auto 0 0; border-radius: 2px; background: var(--brand); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dsb__kas,
+  .dsb__kas.is-angkat,
+  .dsb .dsb__kolom .k-kolom__b,
+  .dsb__labatitik,
+  .dsb__kasmeter i { transition: none; }
+  .dsb__labagaris-garis.is-gambar { animation: none; }
+}

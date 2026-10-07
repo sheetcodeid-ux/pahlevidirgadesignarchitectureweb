@@ -3590,6 +3590,7 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 /* Garis mungil di kartu statistik. */
 .k-kilau__wadah { position: relative; display: inline-flex; cursor: crosshair; }
 .k-kilau__titik { fill: var(--surface); stroke: currentColor; stroke-width: 2; }
+.k-kilau__titik--akhir { fill: currentColor; stroke: var(--surface); }
 
 /* Kolom grafik: kartu muncul di SAMPING kolom, di atas bidang plotnya,
    tanpa JavaScript — :hover dan :focus-visible saja. */
