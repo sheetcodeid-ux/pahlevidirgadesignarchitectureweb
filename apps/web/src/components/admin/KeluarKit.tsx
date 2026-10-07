@@ -99,7 +99,12 @@ const JENIS: { nilai: JenisAnggota; ikon: DataIkon }[] = [
 ];
 
 const PAKU = 8;
-const TERBANG_MS = 780;
+const TERBANG_MS = 1000;
+/** Isi satu buku nota kontan. */
+const ISI_BUKU = 50;
+/** Kemiringan nota lama di paku — tetap per urutan, bukan acak, supaya
+    tumpukannya tidak "bergoyang" tiap digambar ulang. */
+const MIRING = [-1.6, 1.3, -0.9, 1.6, -1.3, 0.8, -1.5];
 
 function hariIni(): string {
   return keIso(new Date());
@@ -132,6 +137,34 @@ function nomorSemua(daftar: BiayaProyek[]): Map<string, string> {
     hasil.set(b.id, `NP-${k}-${String(n).padStart(2, "0")}`);
   }
   return hasil;
+}
+
+/** Angka pelat BERHITUNG ke nilai barunya (600 ms) — hanya saat berubah,
+    tidak saat pertama tampil; seketika bila gerak dikurangi. */
+function useHitung(nilai: number): number {
+  const [tampil, setTampil] = useState(nilai);
+  const kini = useRef(nilai);
+  useEffect(() => {
+    const awal = kini.current;
+    if (awal === nilai) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      kini.current = nilai;
+      setTampil(nilai);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const langkah = (t: number) => {
+      const p = Math.min(1, (t - t0) / 600);
+      const v = Math.round(awal + (nilai - awal) * (1 - Math.pow(1 - p, 3)));
+      kini.current = v;
+      setTampil(v);
+      if (p < 1) raf = requestAnimationFrame(langkah);
+    };
+    raf = requestAnimationFrame(langkah);
+    return () => cancelAnimationFrame(raf);
+  }, [nilai]);
+  return tampil;
 }
 
 function Isi() {
@@ -250,6 +283,18 @@ function Isi() {
     return m;
   }, [semua, bulanIni]);
   const notaBulanIni = [...perKategori.values()].reduce((a, x) => a + x.n, 0);
+  /* Pelat paku baru bertambah saat notanya MENANCAP, bukan saat disobek —
+     selama terbang, nota baru belum dihitung di pelat. */
+  const terbangId = terbang ? tusuk : null;
+  const totalBulanIni = semua.reduce(
+    (a, b) => (b.incurredOn.startsWith(bulanIni) && b.id !== terbangId ? a + b.amount : a),
+    0,
+  );
+  const notaDiPaku = semua.filter((b) => b.incurredOn.startsWith(bulanIni) && b.id !== terbangId).length;
+  const totalTampil = useHitung(totalBulanIni);
+  /* Buku nota per bulan: lembar yang sedang ditulis, dan sisa lembarnya. */
+  const lembarKe = Math.min(notaBulanIni + 1, ISI_BUKU);
+  const sisaLembar = Math.max(ISI_BUKU - lembarKe, 0);
 
   /* Nomor lembar yang sedang ditulis: sesudah semua biaya bulan itu yang
      tanggalnya tidak lebih baru — nota lama yang diketik belakangan memang
@@ -324,6 +369,8 @@ function Isi() {
                puncak paku. */
             ["--npg-dx" as string]: `${tujuan.left + tujuan.width / 2 - (lb.left + lb.width / 2)}px`,
             ["--npg-dy" as string]: `${tujuan.top - lb.top}px`,
+            /* Melayang dulu di atas ujung paku, baru ditusuk turun. */
+            ["--npg-dy-atas" as string]: `${tujuan.top - lb.top - 96}px`,
             ["--npg-sk" as string]: String(sk),
           },
         });
@@ -394,7 +441,12 @@ function Isi() {
                     setCapBaru(k.nilai);
                   }}
                 >
-                  <span className="npg__gagang" aria-hidden="true" />
+                  {/* Gagang cap karet: kenop, leher, balok kayu. */}
+                  <span className="npg__gagang" aria-hidden="true">
+                    <i className="npg__kenop" />
+                    <i className="npg__leher" />
+                    <i className="npg__balok" />
+                  </span>
                   <span className="npg__muka">
                     <span className="npg__capnama">
                       <Ikon ikon={k.ikon} ukuran={14} />
@@ -498,14 +550,17 @@ function Isi() {
             />
           </div>
 
-          <div className="npg__buku">
-            <div className="npg__jilid" aria-hidden="true">
-              <span />
-              <span />
+          <div className="npg__buku" style={{ ["--npg-sisa" as string]: sisaLembar } as CSSProperties}>
+            <div className="npg__jilid">
+              <span aria-hidden="true" />
+              <span className="npg__jilidteks">
+                Buku {BULAN[Number(bulanIni.slice(5, 7)) - 1]} · lembar {lembarKe} dari {ISI_BUKU}
+              </span>
+              <span aria-hidden="true" />
             </div>
             {/* Sisa sobekan di bawah jilid: satu lapis per nota bulan ini
                 (paling banyak enam), seperti buku nota sungguhan. */}
-            <div className="npg__sisa" aria-hidden="true">
+            <div className={`npg__sisa${tusuk ? " is-baru" : ""}`} aria-hidden="true">
               {Array.from({ length: Math.min(notaBulanIni, 6) }, (_, i) => (
                 <span key={i} style={{ ["--i" as string]: i } as CSSProperties} />
               ))}
@@ -648,8 +703,8 @@ function Isi() {
                 </div>
               </div>
             </div>
-            <span className="npg__rangkap" aria-hidden="true" />
-            <span className="npg__rangkap npg__rangkap--2" aria-hidden="true" />
+            {/* Tebal buku = sisa lembar yang belum dipakai bulan ini. */}
+            <span className="npg__tebal" aria-hidden="true" />
           </div>
 
           <div className="npg__aksi">
@@ -728,17 +783,29 @@ function Isi() {
               ) : (
                 <p className="npg__slip npg__slip--kosong">{biaya === null ? "Memuat…" : "Paku masih kosong."}</p>
               )}
+              {/* Nota yang lebih lama: tiap lembar tertusuk paku di tengahnya.
+                  Kolom tengah sengaja kosong — batang paku lewat di situ,
+                  tidak pernah di belakang tulisan (jebakan #70). */}
               <ol className={`npg__sembul${tusuk ? " is-turun" : ""}`}>
-                {bawah.map((b) => (
-                  <li key={b.id}>
+                {bawah.map((b, i) => (
+                  <li
+                    key={b.id}
+                    /* Yang lebih baru menutupi yang lebih lama, seperti di paku sungguhan. */
+                    style={{ ["--r" as string]: `${MIRING[i % MIRING.length]}deg`, zIndex: 20 - i } as CSSProperties}
+                  >
                     <button
                       type="button"
                       className="npg__strip"
                       onClick={() => setRinci(b)}
                       aria-label={`Rincian ${b.label}, ${formatRupiah(b.amount)}`}
                     >
-                      <span>{tglPendek(b.incurredOn)}</span>
-                      <span className="npg__stripket">{b.label}</span>
+                      <span className="npg__stripkiri">
+                        <small>
+                          {tglPendek(b.incurredOn)} · {nomor.get(b.id) ?? ""}
+                        </small>
+                        <span className="npg__stripket">{b.label}</span>
+                      </span>
+                      <span className="npg__tembus" aria-hidden="true" />
                       <b>{formatRupiah(b.amount)}</b>
                     </button>
                   </li>
@@ -748,7 +815,16 @@ function Isi() {
             {/* Batang paku tergambar HANYA di celah antara tumpukan dan alas —
                 tidak pernah di belakang kertas (jebakan #70). */}
             <span className="npg__batang" aria-hidden="true" />
-            <span className="npg__alas" aria-hidden="true" />
+            {/* Alas paku berpelat: total yang sudah ditusuk bulan ini. */}
+            <div className="npg__alas">
+              <span className="npg__cakram" aria-hidden="true" />
+              <p className="npg__pelat">
+                <small>
+                  {BULAN[Number(bulanIni.slice(5, 7)) - 1]} · {notaDiPaku} nota
+                </small>
+                <b>{formatRupiah(totalTampil)}</b>
+              </p>
+            </div>
           </div>
         </section>
       </div>
