@@ -17,11 +17,13 @@
    ============================================================================= */
 
 .ksr {
-  --ksr-mesin: 336px;
+  --ksr-mesin: 352px;
   --ksr-target: 316px;
   --ksr-redup: color-mix(in srgb, var(--kas-ink) 70%, transparent);
   --ksr-garis-papan: color-mix(in srgb, var(--kas-ink) 18%, transparent);
   --ksr-tuts: color-mix(in srgb, var(--kas-ink) 9%, var(--kas-bidang));
+  /* Muka tuts: sedikit lebih terang di atas, seperti tuts plastik cekung. */
+  --ksr-muka: linear-gradient(180deg, color-mix(in srgb, var(--kas-ink) 15%, var(--kas-bidang)), var(--ksr-tuts) 60%);
   /* Kertas struk: putih tetap, tinta hijau tua. */
   --ksr-putih: var(--kas-nilai);
   --ksr-tinta: var(--kas-bidang);
@@ -62,41 +64,87 @@
   color: var(--ksr-redup);
 }
 
-/* ---- Mesin: layar ------------------------------------------------------------- */
-.ksr__mesin { position: relative; display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; }
-.ksr__layar {
+/* ---- Mesin: badan + layar ------------------------------------------------------
+   Badan mesin: bidang sedikit lebih terang dari papan, sudut besar, sisi
+   bawah lebih gelap — benda yang BERDIRI di papan, bukan kolom di papan. */
+.ksr__mesin {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-height: 104px;
-  padding: 13px 16px 12px;
-  border: 1px solid color-mix(in srgb, var(--kas-ink) 14%, transparent);
-  border-radius: 12px;
-  background: var(--kas-dalam);
-  box-shadow: inset 0 2px 8px color-mix(in srgb, var(--kas-dalam) 80%, transparent);
+  gap: 11px;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px 10px 0;
+  border: 1px solid color-mix(in srgb, var(--kas-ink) 16%, transparent);
+  border-bottom: 0;
+  border-radius: 18px 18px 10px 10px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--kas-ink) 11%, var(--kas-bidang)),
+    color-mix(in srgb, var(--kas-ink) 6%, var(--kas-bidang)) 70%
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--kas-ink) 20%, transparent);
 }
+/* LAYAR VFD: kaca gelap terbenam, angka tujuh-segmen berpijar. */
+.ksr__layar {
+  --ksr-vfd: var(--brand-mint);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px 14px 10px;
+  border: 1px solid color-mix(in srgb, var(--kas-dalam) 70%, var(--kas-ink));
+  border-radius: 12px;
+  background:
+    linear-gradient(170deg, color-mix(in srgb, var(--kas-ink) 7%, transparent), transparent 45%),
+    var(--kas-dalam);
+  box-shadow:
+    inset 0 3px 10px color-mix(in srgb, var(--kas-dalam) 85%, transparent),
+    0 1px 0 color-mix(in srgb, var(--kas-ink) 18%, transparent);
+}
+.ksr__layar.is-minus { --ksr-vfd: var(--warn); }
+.ksr__layarkop { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .ksr__layarlabel {
+  overflow: hidden;
   font-size: var(--k-t10);
   font-weight: var(--k-semi);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ksr-vfd);
+}
+.ksr__layarrp {
+  flex: none;
+  padding: 0 5px;
+  border: 1px solid var(--ksr-vfd);
+  border-radius: 4px;
+  font-size: var(--k-t9);
+  font-weight: var(--k-bold);
+  line-height: 14px;
+  color: var(--ksr-vfd);
+}
+.ksr__7 { display: block; width: 100%; height: auto; overflow: visible; }
+.ksr__7mati { fill: color-mix(in srgb, var(--ksr-vfd) 9%, transparent); }
+.ksr__7nyala {
+  fill: var(--ksr-vfd);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--ksr-vfd) 65%, transparent));
+}
+/* Penanda layar: yang menyala = apa yang sedang ditampilkan. */
+.ksr__penanda {
+  display: flex;
+  gap: 4px 10px;
+  font-size: var(--k-t9);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--ksr-redup);
 }
-.ksr__saldo {
-  font-size: 28px;
-  font-weight: var(--k-bold);
-  line-height: 1.05;
-  letter-spacing: 0.01em;
-  color: var(--brand-mint);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.ksr__saldo.is-minus { color: var(--warn); }
+.ksr__penanda .is-nyala { color: var(--ksr-vfd); text-shadow: 0 0 6px color-mix(in srgb, var(--ksr-vfd) 55%, transparent); }
+.ksr__penandarentang { margin-left: auto; }
 .ksr__layarbaris {
   display: flex;
   flex-wrap: wrap;
   gap: 2px 10px;
-  margin-top: 2px;
   padding-top: 7px;
   border-top: 1px dashed var(--ksr-garis-papan);
   font-size: var(--k-t11);
@@ -128,14 +176,16 @@
 .ksr__tuts--masuk {
   border-color: var(--brand-mint);
   border-bottom-color: color-mix(in srgb, var(--brand-mint) 55%, var(--kas-dalam));
-  background: var(--brand-mint);
+  /* Warna dasar ikut ditulis: alat kontras membaca background-color. */
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kas-nilai) 30%, var(--brand-mint)), var(--brand-mint) 60%) var(--brand-mint);
   color: var(--kas-bidang);
 }
 .ksr__tuts--masuk:hover { background: var(--brand-mint-hover); }
 .ksr__tuts--keluar {
   border-color: color-mix(in srgb, var(--kas-ink) 30%, transparent);
   border-bottom-color: var(--kas-dalam);
-  background: var(--ksr-tuts);
+  background: var(--ksr-muka) var(--ksr-tuts);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--kas-ink) 22%, transparent);
   color: var(--kas-ink);
 }
 .ksr__tuts--keluar:hover { background: color-mix(in srgb, var(--kas-ink) 14%, var(--kas-bidang)); }
@@ -161,7 +211,11 @@
 .ksr__kelompokjudul:hover,
 .ksr__kelompokjudul.is-aktif { color: var(--brand-mint); }
 .ksr__tutskecil { display: grid; grid-template-columns: repeat(var(--ksr-kolom, 2), minmax(0, 1fr)); gap: 7px; }
-.ksr__kelompok--masuk .ksr__tutskecil { --ksr-kolom: 3; }
+/* Tiga tuts masuk sebaris: lebar tiap tuts mengikuti isinya (label atau
+   nominal terpanjang), sisa ruang dibagi — dibagi rata, "Penjualan
+   material" terpotong sementara "Lainnya" kosong melompong. */
+.ksr__kelompok--masuk .ksr__tutskecil { display: flex; }
+.ksr__kelompok--masuk .ksr__tutskat { flex: 1 1 auto; }
 .ksr__tutskat {
   display: flex;
   flex-direction: column;
@@ -171,7 +225,8 @@
   border: 1px solid var(--ksr-garis-papan);
   border-bottom: 3px solid var(--kas-dalam);
   border-radius: 9px;
-  background: var(--ksr-tuts);
+  background: var(--ksr-muka) var(--ksr-tuts);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--kas-ink) 22%, transparent);
   color: var(--kas-ink);
   text-align: left;
   line-height: 1.15;
@@ -192,7 +247,6 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
-  margin-top: auto;
 }
 .ksr__tutsrentang {
   height: 30px;
@@ -200,7 +254,8 @@
   border: 1px solid var(--ksr-garis-papan);
   border-bottom: 3px solid var(--kas-dalam);
   border-radius: 8px;
-  background: var(--ksr-tuts);
+  background: var(--ksr-muka) var(--ksr-tuts);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--kas-ink) 22%, transparent);
   color: var(--kas-ink);
   font-size: var(--k-t11);
   font-weight: var(--k-semi);
@@ -222,24 +277,166 @@
   box-shadow: none;
 }
 
+/* ---- Laci kas ------------------------------------------------------------------
+   Muka laci di dasar badan mesin, di bawahnya kaki mesin (ruang tempuh
+   laci). Saat terbuka mukanya turun 30px dan sedikit membesar — mendekat
+   ke mata — dan BAKI berisi sekat uang tampak di celah di atasnya. Tidak
+   ada tulisan di baki maupun di kaki, jadi tidak ada yang tertimpa. */
+.ksr__laci {
+  --ksr-tempuh: 30px;
+  position: relative;
+  flex: none;
+  height: calc(58px + var(--ksr-tempuh));
+  margin: auto -10px 0;
+}
+.ksr__laci::after {
+  /* Kaki mesin: alas gelap selebar badan, dua kaki karet di ujungnya. */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--ksr-tempuh);
+  border-radius: 0 0 10px 10px;
+  background:
+    radial-gradient(circle at 18px 100%, var(--kas-dalam) 7px, transparent 7.5px),
+    radial-gradient(circle at calc(100% - 18px) 100%, var(--kas-dalam) 7px, transparent 7.5px),
+    linear-gradient(180deg, color-mix(in srgb, var(--kas-dalam) 70%, var(--kas-bidang)), color-mix(in srgb, var(--kas-dalam) 40%, var(--kas-bidang)));
+}
+.ksr__lacibaki,
+.ksr__lacidepan { position: absolute; left: 10px; right: 10px; top: 0; height: 58px; }
+.ksr__lacibaki {
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 0.8fr;
+  gap: 5px;
+  padding: 0 6px;
+  border-radius: 8px 8px 0 0;
+  background: var(--kas-dalam);
+  overflow: clip;
+}
+.ksr__lacisekat {
+  position: relative;
+  border-inline: 1px solid color-mix(in srgb, var(--kas-ink) 16%, transparent);
+  background: color-mix(in srgb, var(--kas-ink) 5%, var(--kas-dalam));
+}
+/* Lembar uang berdiri di sekatnya: tepi atasnya yang terlihat dari depan. */
+.ksr__lacisekat i {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: calc(26px + var(--i) * 3px);
+  height: 5px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--brand-mint) calc(55% + var(--i) * 9%), var(--kas-dalam));
+}
+.ksr__lacisekat--koin { display: flex; align-items: end; justify-content: center; gap: 3px; padding-bottom: 26px; }
+.ksr__lacisekat--koin i {
+  position: static;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--warn) 70%, var(--kas-dalam));
+}
+.ksr__lacidepan {
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--kas-ink) 18%, transparent);
+  border-bottom: 4px solid var(--kas-dalam);
+  border-radius: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kas-ink) 15%, var(--kas-bidang)), color-mix(in srgb, var(--kas-ink) 8%, var(--kas-bidang)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--kas-ink) 24%, transparent);
+  transform-origin: 50% 100%;
+}
+.ksr__lacinama {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--k-t10);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.12em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--kas-ink);
+}
+.ksr__lacinama small { font-size: var(--k-t9); font-weight: var(--k-med); letter-spacing: 0.02em; text-transform: none; color: var(--ksr-redup); }
+/* Pegangan: alur cekung memanjang; kunci: lingkaran berlubang. */
+.ksr__lacipegangan {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--kas-dalam);
+  box-shadow: inset 0 2px 3px color-mix(in srgb, var(--kas-dalam) 90%, transparent), 0 1px 0 color-mix(in srgb, var(--kas-ink) 22%, transparent);
+}
+.ksr__lacikunci {
+  width: 18px;
+  height: 18px;
+  border: 2px solid color-mix(in srgb, var(--kas-ink) 40%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--kas-dalam) 0 2px, transparent 2.5px), color-mix(in srgb, var(--kas-ink) 12%, var(--kas-bidang));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ksr__lacidepan { transition: transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+  .ksr__laci.is-buka .ksr__lacidepan { transform: translateY(var(--ksr-tempuh)) scale(1.035); transition-duration: 240ms; }
+  /* Sentuhan tetikus: laci sedikit bergeser, seperti dicoba ditarik. */
+  @media (hover: hover) and (pointer: fine) {
+    .ksr__laci:not(.is-buka):hover .ksr__lacidepan { transform: translateY(3px); }
+  }
+  /* Ka-ching: badan mesin tersentak sekali saat laci lepas. */
+  .ksr__mesin:has(.ksr__laci.is-buka) { animation: ksr-sentak 260ms ease-out; }
+}
+@keyframes ksr-sentak {
+  0%, 100% { transform: none; }
+  30% { transform: translateY(1px); }
+  60% { transform: translateY(-1px); }
+}
+
 /* ---- Rol struk ---------------------------------------------------------------- */
 .ksr__rol { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-/* Mulut printer: bilah gelap selebar kertas + 12px, celah di tengahnya. */
+/* Printer: rumah gelap dengan JENDELA tempat gulungan kertas terlihat,
+   lampu siap mint, dan celah tempat struk keluar. */
 .ksr__printer {
   position: relative;
   z-index: 2;
   flex: none;
-  height: 22px;
-  border: 1px solid color-mix(in srgb, var(--kas-ink) 14%, transparent);
-  border-radius: 10px 10px 5px 5px;
-  background: color-mix(in srgb, var(--kas-ink) 12%, var(--kas-dalam));
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--kas-ink) 16%, transparent);
+  border-radius: 14px 14px 6px 6px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kas-ink) 16%, var(--kas-dalam)), color-mix(in srgb, var(--kas-ink) 6%, var(--kas-dalam)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--kas-ink) 20%, transparent);
+}
+.ksr__gulung {
+  position: absolute;
+  top: 6px;
+  left: 44px;
+  right: 44px;
+  height: 17px;
+  border-radius: 9px;
+  /* Silinder kertas: terang di tengah, menggelap ke tepi atas & bawah. */
+  background:
+    repeating-linear-gradient(90deg, transparent 0 22px, color-mix(in srgb, var(--kas-dalam) 10%, transparent) 22px 23px),
+    linear-gradient(180deg, color-mix(in srgb, var(--kas-nilai) 55%, var(--kas-dalam)), var(--kas-nilai) 42%, color-mix(in srgb, var(--kas-nilai) 62%, var(--kas-dalam)));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kas-dalam) 80%, transparent);
+}
+.ksr__lampu {
+  position: absolute;
+  top: 12px;
+  left: 18px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand-mint);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--brand-mint) 80%, transparent);
 }
 .ksr__printer i {
   position: absolute;
   left: 14px;
   right: 14px;
-  bottom: 6px;
-  height: 3px;
+  bottom: 5px;
+  height: 4px;
   border-radius: 2px;
   background: var(--kas-dalam);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--kas-ink) 16%, transparent);
@@ -468,6 +665,18 @@
   border-radius: 2px;
   background: color-mix(in srgb, var(--kas-ink) 34%, transparent);
 }
+.ksr__tabung::after {
+  /* Kilau kaca: satu pita terang tegak di sisi kiri dalam tabung. */
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 14px;
+  left: 9px;
+  width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kas-nilai) 30%, transparent), color-mix(in srgb, var(--kas-nilai) 8%, transparent));
+  pointer-events: none;
+}
 .ksr__isi { position: absolute; inset: 0; overflow: clip; border-radius: 0 0 18px 18px; }
 .ksr__isi i { position: absolute; left: 0; right: 0; display: block; }
 .ksr__isiklien { bottom: 0; height: var(--p-klien); background: color-mix(in srgb, var(--kas-ink) 70%, var(--kas-bidang)); }
@@ -526,8 +735,7 @@
 
 /* ---- Lebar -------------------------------------------------------------------- */
 @media (min-width: 1288.02px) and (max-width: 1408px) {
-  .ksr { --ksr-mesin: 304px; --ksr-target: 280px; }
-  .ksr__saldo { font-size: 25px; }
+  .ksr { --ksr-mesin: 340px; --ksr-target: 262px; }
   .ksr__papan { gap: 14px; }
 }
 @media (min-width: 1288.02px) and (min-height: 600px) {
@@ -548,7 +756,6 @@
      gulir kedua di dalamnya. */
   .ksr__rol { max-height: none; }
   .ksr__struk { margin-inline: 8px; padding-inline: 12px; overflow: visible; }
-  .ksr__saldo { font-size: 24px; }
   .ksr__tutskat > span { white-space: normal; }
   .ksr__targetrinci { grid-template-columns: minmax(0, 1fr); }
 }

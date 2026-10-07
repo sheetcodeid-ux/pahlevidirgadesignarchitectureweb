@@ -107,6 +107,192 @@ const rupiahSaldo = (n: number) => (n < 0 ? `−${formatRupiah(-n)}` : formatRup
 const pakaiGerak = () =>
   typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* ---- Layar tujuh-segmen --------------------------------------------------------
+   Angka layar digambar sebagai sel tujuh-segmen seperti layar VFD mesin kas:
+   tiap sel menggambar SEMUA segmennya — yang mati sebagai "8" hantu, yang
+   menyala berpijar. Titik ribuan rupiah jatuh tepat di titik desimal sel
+   sebelumnya, persis seperti mesin kas sungguhan. Dua <path> saja (mati,
+   nyala), jadi menghitung tiap frame tetap murah. */
+const SEG7: Record<string, string> = {
+  "0": "abcdef",
+  "1": "bc",
+  "2": "abged",
+  "3": "abgcd",
+  "4": "fgbc",
+  "5": "afgcd",
+  "6": "afgedc",
+  "7": "abc",
+  "8": "abcdefg",
+  "9": "abcdfg",
+  "-": "g",
+};
+const S7 = { w: 20, h: 38, t: 3.8, g: 0.9, langkah: 27 };
+
+function segmen(k: string, ox: number): string {
+  const { w, h, t, g } = S7;
+  const m = t / 2;
+  const kiri = ox + m;
+  const kanan = ox + w - m;
+  const datar = (x0: number, x1: number, y: number) =>
+    `M${x0} ${y}L${x0 + m} ${y - m}L${x1 - m} ${y - m}L${x1} ${y}L${x1 - m} ${y + m}L${x0 + m} ${y + m}Z`;
+  const tegak = (x: number, y0: number, y1: number) =>
+    `M${x} ${y0}L${x + m} ${y0 + m}L${x + m} ${y1 - m}L${x} ${y1}L${x - m} ${y1 - m}L${x - m} ${y0 + m}Z`;
+  switch (k) {
+    case "a": return datar(kiri + g, kanan - g, m);
+    case "g": return datar(kiri + g, kanan - g, h / 2);
+    case "d": return datar(kiri + g, kanan - g, h - m);
+    case "f": return tegak(kiri, m + g, h / 2 - g);
+    case "b": return tegak(kanan, m + g, h / 2 - g);
+    case "e": return tegak(kiri, h / 2 + g, h - m - g);
+    default: return tegak(kanan, h / 2 + g, h - m - g);
+  }
+}
+
+function Angka7({ teks, sel = 10 }: { teks: string; sel?: number }) {
+  const isi: { c: string; titik: boolean }[] = [];
+  for (const c of teks) {
+    if (c === ".") {
+      const akhir = isi[isi.length - 1];
+      if (akhir) akhir.titik = true;
+    } else isi.push({ c, titik: false });
+  }
+  const n = Math.max(sel, isi.length);
+  const semua = [...Array.from({ length: n - isi.length }, () => ({ c: " ", titik: false })), ...isi];
+  let nyala = "";
+  let mati = "";
+  semua.forEach((s, i) => {
+    const ox = i * S7.langkah;
+    const lit = SEG7[s.c] ?? "";
+    for (const k of "abcdefg") {
+      if (lit.includes(k)) nyala += segmen(k, ox);
+      else mati += segmen(k, ox);
+    }
+    const x = ox + S7.w + 2.2;
+    const y = S7.h - S7.t;
+    const titik = `M${x} ${y}h${S7.t}v${S7.t}h${-S7.t}Z`;
+    if (s.titik) nyala += titik;
+    else mati += titik;
+  });
+  return (
+    <svg className="ksr__7" viewBox={`0 -1 ${n * S7.langkah + 4} ${S7.h + 2}`} aria-hidden="true" focusable="false">
+      {/* Miring 6° seperti huruf layar VFD; digeser 4 supaya kaki sel
+          pertama tidak keluar kotak. */}
+      <g transform="translate(4 0) skewX(-6)">
+        <path className="ksr__7mati" d={mati} />
+        <path className="ksr__7nyala" d={nyala} />
+      </g>
+    </svg>
+  );
+}
+
+/** Angka layar BERHITUNG ke nilai barunya (520 ms) — hanya saat nilainya
+    berubah, tidak saat pertama tampil; seketika bila gerak dikurangi. */
+function useHitung(nilai: number): number {
+  const [tampil, setTampil] = useState(nilai);
+  const kini = useRef(nilai);
+  useEffect(() => {
+    const awal = kini.current;
+    if (awal === nilai) return;
+    if (!pakaiGerak()) {
+      kini.current = nilai;
+      setTampil(nilai);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const langkah = (t: number) => {
+      const p = Math.min(1, (t - t0) / 520);
+      const v = Math.round(awal + (nilai - awal) * (1 - Math.pow(1 - p, 3)));
+      kini.current = v;
+      setTampil(v);
+      if (p < 1) raf = requestAnimationFrame(langkah);
+    };
+    raf = requestAnimationFrame(langkah);
+    return () => cancelAnimationFrame(raf);
+  }, [nilai]);
+  return tampil;
+}
+
+type ModeLayar = "saldo" | ArusKas;
+
+function Layar({
+  label,
+  nilai,
+  mode,
+  rentang,
+  bulan,
+  masuk,
+  keluar,
+}: {
+  label: string;
+  nilai: number;
+  mode: ModeLayar;
+  rentang: string;
+  bulan: string;
+  masuk: number;
+  keluar: number;
+}) {
+  const tampil = useHitung(nilai);
+  const minus = mode === "saldo" && nilai < 0;
+  const teks = `${tampil < 0 ? "-" : ""}${Math.abs(tampil).toLocaleString("id-ID")}`;
+  return (
+    <div className={`ksr__layar${minus ? " is-minus" : ""}`} role="status" aria-live="polite">
+      <span className="ksr__layarkop">
+        <span className="ksr__layarlabel">{label}</span>
+        <span className="ksr__layarrp">Rp</span>
+      </span>
+      <Angka7 teks={teks} />
+      <b className={`ksr__saldo sr-only${minus ? " is-minus" : ""}`}>
+        {label}: {mode === "saldo" ? rupiahSaldo(nilai) : formatRupiah(nilai)}
+      </b>
+      <span className="ksr__penanda" aria-hidden="true">
+        <span className={mode === "saldo" ? "is-nyala" : ""}>Saldo</span>
+        <span className={mode === "masuk" ? "is-nyala" : ""}>Masuk</span>
+        <span className={mode === "keluar" ? "is-nyala" : ""}>Keluar</span>
+        <span className="ksr__penandarentang is-nyala">{rentang}</span>
+      </span>
+      <span className="ksr__layarbaris">
+        <span>{bulan}</span>
+        <span className="ksr__layarmasuk">{bertanda("masuk", masuk)}</span>
+        <span className="ksr__layarkeluar">{bertanda("keluar", keluar)}</span>
+      </span>
+    </div>
+  );
+}
+
+/* Laci kas: tertutup di dasar mesin; TERBUKA sekali saat catatan baru
+   dicetak (bersama struk dan layar yang berhitung), lalu menutup sendiri.
+   Isi bakinya data sungguhan: satu sekat per kategori uang masuk pada
+   rentang terpilih, tumpukan lembarnya = banyaknya catatan (paling banyak 5). */
+function Laci({ buka, sekat, bukti }: { buka: boolean; sekat: { label: string; n: number }[]; bukti: number }) {
+  return (
+    <div className={`ksr__laci${buka ? " is-buka" : ""}`} aria-hidden="true">
+      <div className="ksr__lacibaki">
+        {sekat.map((s) => (
+          <span key={s.label} className="ksr__lacisekat">
+            {Array.from({ length: Math.min(5, s.n) }, (_, i) => (
+              <i key={i} style={{ "--i": i } as CSSProperties} />
+            ))}
+          </span>
+        ))}
+        <span className="ksr__lacisekat ksr__lacisekat--koin">
+          <i />
+          <i />
+          <i />
+        </span>
+      </div>
+      <div className="ksr__lacidepan">
+        <span className="ksr__lacinama">
+          Laci kas
+          <small>{bukti} bukti bulan ini</small>
+        </span>
+        <i className="ksr__lacipegangan" />
+        <i className="ksr__lacikunci" />
+      </div>
+    </div>
+  );
+}
+
 /** Satu tuts kategori: arah + kategorinya (lainnya ada di kedua arah). */
 type Tuts = `${ArusKas}:${KategoriKas}`;
 
@@ -132,6 +318,9 @@ function Isi() {
   const [cetak, setCetak] = useState<string | null>(null);
   const [target, muatTarget] = useKemajuanTarget();
   const strukRef = useRef<HTMLDivElement>(null);
+  const [laci, setLaci] = useState(false);
+  const laciTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(laciTimer.current), []);
 
   function muat() {
     return daftarKas()
@@ -235,9 +424,33 @@ function Isi() {
   const keluarBulan = bulanan.filter((k) => k.direction === "keluar").reduce((n, k) => n + k.amount, 0);
   const adaSaring = Boolean(saring.arus || saring.tuts || cari.trim());
 
+  /* Layar menampilkan yang sedang "ditekan", seperti mesin kas: tuts
+     kategori = jumlah kategori itu, judul kelompok = jumlah satu arah,
+     tanpa tuts = saldo. */
+  const layar: { label: string; nilai: number; mode: ModeLayar } = saring.tuts
+    ? {
+        label: `${LABEL_KATEGORI_KAS[saring.tuts.split(":")[1] as KategoriKas]} · ${perTuts.get(saring.tuts)?.n ?? 0}×`,
+        nilai: perTuts.get(saring.tuts)?.rp ?? 0,
+        mode: saring.tuts.split(":")[0] as ArusKas,
+      }
+    : saring.arus
+      ? {
+          label: `Semua uang ${saring.arus}`,
+          nilai: dalamRentang.filter((k) => k.direction === saring.arus).reduce((n, k) => n + k.amount, 0),
+          mode: saring.arus,
+        }
+      : { label: "Saldo kas studio", nilai: buku.total, mode: "saldo" };
+
   async function sesudahSimpan(id: string | null) {
     await muat();
     muatTarget();
+    if (id && pakaiGerak()) {
+      /* Ka-ching: laci terbuka bersamaan dengan struk yang tercetak, lalu
+         menutup sendiri. */
+      window.clearTimeout(laciTimer.current);
+      setLaci(true);
+      laciTimer.current = window.setTimeout(() => setLaci(false), 1300);
+    }
     if (id) {
       /* Struk digulung ke mulut printer supaya baris barunya terlihat
          keluar. Saringan yang menyembunyikannya dilepas. */
@@ -258,17 +471,13 @@ function Isi() {
       <div className="ksr__papan">
         {/* ---- Mesin: layar + tuts ------------------------------------- */}
         <section className="ksr__mesin" aria-label="Mesin kas">
-          <div className="ksr__layar" role="status" aria-live="polite">
-            <span className="ksr__layarlabel">Saldo kas studio</span>
-            <b className={`ksr__saldo${buku.total < 0 ? " is-minus" : ""}`}>
-              {rupiahSaldo(buku.total)}
-            </b>
-            <span className="ksr__layarbaris">
-              <span>{namaBulan(bln)}</span>
-              <span className="ksr__layarmasuk">{bertanda("masuk", masukBulan)}</span>
-              <span className="ksr__layarkeluar">{bertanda("keluar", keluarBulan)}</span>
-            </span>
-          </div>
+          <Layar
+            {...layar}
+            rentang={RENTANG.find((r) => r.nilai === rentang)!.label}
+            bulan={namaBulan(bln)}
+            masuk={masukBulan}
+            keluar={keluarBulan}
+          />
 
           <div className="ksr__tutsbesar">
             <button type="button" className="ksr__tuts ksr__tuts--masuk" onClick={() => setUbah({ baru: "masuk" })}>
@@ -339,11 +548,22 @@ function Isi() {
               </button>
             ))}
           </div>
+
+          <Laci
+            buka={laci}
+            bukti={bulanan.length}
+            sekat={KATEGORI_KAS.masuk.map((kat) => ({
+              label: kat,
+              n: perTuts.get(`masuk:${kat}` as Tuts)?.n ?? 0,
+            }))}
+          />
         </section>
 
         {/* ---- Rol struk ------------------------------------------------- */}
         <section className="ksr__rol" aria-label="Struk kas">
           <div className="ksr__printer" aria-hidden="true">
+            <span className="ksr__gulung" />
+            <span className="ksr__lampu" />
             <i />
           </div>
           <div className={`ksr__struk${cetak ? " is-umpan" : ""}`} ref={strukRef}>
