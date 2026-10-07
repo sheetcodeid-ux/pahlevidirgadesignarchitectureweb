@@ -3,20 +3,23 @@
 
    Serumpun dengan halaman keuangan lain: PAPAN hijau berjahit
    (`--kas-bidang`, tidak berbalik tema) dan KERTAS putih tetap. Bendanya
-   timbangan dua piringan:
+   timbangan presisi dua piringan:
 
-   - TIMBANGAN: tiang di atas alas, poros, lengan yang miring ke sisi yang
-     lebih berat, jarum marjin di kepala tiang, dan papan LABA BERSIH sebagai
-     dudukan di kaki tiang. Tiap piringan digantung kuk mendatar dan dua tali
-     TEGAK di tepinya — tali tidak pernah melintas di depan atau belakang
-     anak timbangan (jebakan #70).
-   - LEMBAR NERACA: bentuk T akuntansi di kertas putih tetap.
-   - CATATAN TIMBANG: tiket per bulan di bidang terbenam.
+   - TIMBANGAN: alas bertingkat dengan bayangan lantai, tiang beralur yang
+     terputus oleh MUKA JARUM bundar (marjin kas) dan bertumpu pada PELAT
+     LABA BERSIH, medali studio di puncak poros, lengan tirus. Tiap piringan
+     = mangkuk bersanggurdi melengkung; anak timbangan SILINDER bertumpuk,
+     makin ke atas makin ramping, yang teratas bertangkai. Sanggurdi berdiri
+     di tepi piringan dan lengkungnya di atas tumpukan tertinggi — tidak
+     pernah melintas di anak timbangan (jebakan #70).
+   - LEMBAR NERACA: bentuk T akuntansi di kertas putih tetap, cap marjin
+     kontrak di kop.
+   - PITA PENCATAT: kertas milimeter di antara dua gulungan, batang kas
+     masuk/beban, jejak tinta laba, pena di bulan berjalan.
    - TRANSAKSI & TENGGAT: kertas kedua dengan segmen kit.
 
-   Satu-satunya gerak besar: anak timbangan JATUH ke piringan dan lengannya
-   berayun sampai seimbang saat satu bulan ditimbang (2D). Diam bila gerak
-   dikurangi.
+   Gerak lengan dan piringan milik pegas di RingkasanKit (transform ditulis
+   dari JS); CSS cuma memegang jatuhnya anak timbangan dan jarum.
    ============================================================================= */
 
 .nrc {
@@ -31,9 +34,14 @@
   --nrc-logam-terang: color-mix(in srgb, var(--kas-ink) 82%, var(--kas-bidang));
   --nrc-logam-gelap: color-mix(in srgb, var(--kas-ink) 30%, var(--kas-bidang));
   --nrc-beban: color-mix(in srgb, var(--kas-ink) 84%, var(--kas-bidang));
-  /* Letak poros dari atas alat timbang. */
-  --nrc-poros: 104px;
-  --nrc-piring: 176px;
+  --nrc-masuk: var(--brand-mint);
+  --nrc-batang: color-mix(in srgb, var(--brand-mint) 62%, var(--kas-bidang));
+  /* Geometri alat timbang (dari atas alat): poros, muka jarum, lengan. */
+  --nrc-poros: 52px;
+  --nrc-dial: 132px;
+  --nrc-dial-y: 98px;
+  --nrc-lengan: 70%;
+  --nrc-piring: 200px;
   --nrc-bawah: 206px;
   --nrc-lembar: 336px;
   position: relative;
@@ -126,106 +134,132 @@
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  isolation: isolate;
 }
-
-/* Kepala tiang: jarum marjin. Grid tiga kolom supaya busurnya tepat di
-   atas tiang dan tulisannya di kiri, jauh dari lintasan lengan. */
-.nrc__dial {
+/* Sorot lampu di belakang timbangan — diam, dilukis sekali. */
+.nrc__alat::before {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr);
-  align-items: end;
-  column-gap: 12px;
+  inset: -8px 6% 0;
+  z-index: -1;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--kas-ink) 9%, transparent), transparent);
+  pointer-events: none;
 }
-.nrc__dial svg { grid-column: 2; grid-row: 1; display: block; overflow: visible; }
-.nrc__dial p {
-  grid-column: 1;
-  grid-row: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  padding-bottom: 2px;
-  text-align: right;
-  line-height: 1.15;
-}
-.nrc__dial p span { font-size: var(--k-t10); color: var(--nrc-redup); }
-.nrc__dial p b { font-size: 24px; font-weight: var(--k-bold); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.nrc__dial p small { font-size: var(--k-t10); font-weight: var(--k-semi); letter-spacing: 0.08em; text-transform: uppercase; }
-.nrc__dial.is-sehat p small { color: var(--brand-mint); }
-.nrc__dial.is-cukup p small { color: var(--kas-ink); }
-.nrc__dial.is-tipis p small { color: var(--warn); }
-.nrc__dial.is-kosong p small { color: var(--nrc-redup); }
-.nrc__dialjalur,
-.nrc__dialzona { fill: none; stroke-width: 7; stroke-linecap: butt; }
-.nrc__dialjalur { stroke: var(--kas-dalam); stroke-width: 9; }
-.nrc__dialzona--tipis { stroke: color-mix(in srgb, var(--warn) 70%, var(--kas-dalam)); }
-.nrc__dialzona--sehat { stroke: color-mix(in srgb, var(--brand-mint) 75%, var(--kas-dalam)); }
-.nrc__jarum { transform-box: view-box; transform-origin: 60px 60px; }
-.nrc__jarum line { stroke: var(--kas-ink); stroke-width: 2.5; stroke-linecap: round; }
-.nrc__jarumporos { fill: var(--nrc-logam-terang); stroke: var(--kas-bidang); stroke-width: 2; }
 
-/* Tiang, poros, alas. Tiang berhenti di atas papan laba (dudukan). */
-.nrc__tiang {
+/* Alas bertingkat dan bayangan lantainya. */
+.nrc__bayang {
   position: absolute;
   left: 50%;
-  top: var(--nrc-poros);
-  bottom: 74px;
-  width: 10px;
+  bottom: -7px;
+  width: 380px;
+  height: 18px;
   transform: translateX(-50%);
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--nrc-logam-gelap), var(--nrc-logam-terang) 40%, var(--nrc-logam) 70%, var(--nrc-logam-gelap));
-  background-color: var(--nrc-logam);
+  background: radial-gradient(closest-side, color-mix(in srgb, black 45%, transparent), transparent);
 }
 .nrc__alas {
   position: absolute;
   left: 50%;
   bottom: 0;
-  width: 236px;
-  height: 12px;
+  width: 304px;
+  height: 10px;
   transform: translateX(-50%);
-  border-radius: 6px 6px 3px 3px;
-  background: linear-gradient(180deg, var(--nrc-logam-terang), var(--nrc-logam) 50%, var(--nrc-logam-gelap));
+  border-radius: 4px 4px 3px 3px;
+  background: linear-gradient(180deg, var(--nrc-logam-terang), var(--nrc-logam) 45%, var(--nrc-logam-gelap));
   background-color: var(--nrc-logam);
-  box-shadow: 0 10px 16px -10px black;
 }
-.nrc__poros {
+.nrc__alas::before {
+  content: "";
   position: absolute;
-  left: 50%;
-  top: var(--nrc-poros);
-  width: 18px;
-  height: 18px;
-  transform: translate(-50%, -50%);
-  border: 3px solid var(--nrc-logam-gelap);
-  border-radius: 50%;
-  background: var(--nrc-logam-terang);
-  z-index: 3;
+  left: 20px;
+  right: 20px;
+  bottom: 10px;
+  height: 9px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--nrc-logam-terang), var(--nrc-logam) 60%, var(--nrc-logam-gelap));
 }
 
-/* Papan laba bersih: dudukan di kaki tiang. */
+/* Tiang beralur, terputus oleh muka jarum. */
+.nrc__tiang {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 3px, color-mix(in srgb, black 18%, transparent) 3px 4px),
+    linear-gradient(90deg, var(--nrc-logam-gelap), var(--nrc-logam-terang) 38%, var(--nrc-logam) 66%, var(--nrc-logam-gelap));
+  background-color: var(--nrc-logam);
+}
+.nrc__tiang--atas { top: var(--nrc-poros); height: calc(var(--nrc-dial-y) - var(--nrc-poros) + 4px); width: 12px; }
+.nrc__tiang--bawah { top: calc(var(--nrc-dial-y) + var(--nrc-dial) - 4px); bottom: 82px; width: 20px; }
+
+/* Muka jarum: kertas skala bundar berbingkai logam. */
+.nrc__dial {
+  position: absolute;
+  left: 50%;
+  top: var(--nrc-dial-y);
+  width: var(--nrc-dial);
+  height: var(--nrc-dial);
+  transform: translateX(-50%);
+  border: 5px solid var(--nrc-logam);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, var(--nrc-kertas), color-mix(in srgb, var(--brand-mint) 12%, var(--nrc-kertas)));
+  background-color: var(--nrc-kertas);
+  color: var(--nrc-tinta);
+  box-shadow:
+    0 0 0 1px var(--nrc-logam-gelap),
+    inset 0 3px 7px color-mix(in srgb, black 22%, transparent),
+    0 10px 18px -8px black;
+  z-index: 2;
+}
+.nrc__dial svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.nrc__dialzona { fill: none; stroke-width: 5; }
+.nrc__dialzona--tipis { stroke: var(--warn); }
+.nrc__dialzona--sehat { stroke: var(--nrc-batang); }
+.nrc__dialgaris { stroke: var(--nrc-tinta); stroke-width: 1; }
+.nrc__dialgaris.is-besar { stroke-width: 1.8; }
+.nrc__dialangka { fill: currentColor; font-size: 8.5px; font-weight: var(--k-semi); font-variant-numeric: tabular-nums; }
+.nrc__jarum { transform-box: view-box; transform-origin: 70px 70px; }
+.nrc__jarum path { fill: var(--nrc-tinta); }
+.nrc__jarumporos { fill: var(--nrc-logam-terang); stroke: var(--nrc-tinta); stroke-width: 2; }
+.nrc__dialbaca {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 63%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  pointer-events: none;
+}
+.nrc__dialbaca b { font-size: var(--k-t16); font-weight: var(--k-bold); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.nrc__dialbaca span { margin-top: 2px; font-size: var(--k-t8); font-weight: var(--k-semi); letter-spacing: 0.08em; text-transform: uppercase; color: var(--nrc-pensil); }
+.nrc__dial.is-sehat .nrc__dialbaca span { color: var(--nrc-cetak); }
+
+/* Pelat laba bersih: dudukan di kaki tiang. */
 .nrc__laba {
   position: absolute;
   left: 50%;
-  bottom: 12px;
+  bottom: 19px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 212px;
-  height: 62px;
+  width: 236px;
+  height: 64px;
   transform: translateX(-50%);
+  border: 3px solid var(--nrc-logam);
   border-radius: 8px 8px 2px 2px;
-  background: var(--kas-dalam);
-  box-shadow: inset 0 0 0 1px var(--nrc-garis-papan);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--kas-ink) 6%, var(--kas-dalam)), var(--kas-dalam));
+  background-color: var(--kas-dalam);
+  box-shadow: inset 0 0 0 1px var(--nrc-logam-gelap), 0 8px 14px -8px black;
   line-height: 1.15;
+  z-index: 2;
 }
 .nrc__laba > span {
   display: flex;
   align-items: center;
   gap: 6px;
-  max-width: 196px;
+  max-width: 214px;
   overflow: hidden;
   font-size: var(--k-t9);
   font-weight: var(--k-semi);
@@ -237,40 +271,90 @@
 }
 .nrc__laba b {
   margin-top: 4px;
-  font-size: var(--k-t18);
+  font-size: 21px;
   font-weight: var(--k-bold);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
   color: var(--brand-mint);
 }
 .nrc__laba.is-rugi b { color: var(--warn); }
 
-/* Lengan: 64% lebar alat, pusat piringan di 18% dan 82%. */
+/* Lengan tirus: tebal di poros, tipis di ujung. Bentuknya di ::before
+   supaya kepala ujungnya tidak ikut terpotong `clip-path`. */
 .nrc__lengan {
   position: absolute;
   left: 50%;
-  top: calc(var(--nrc-poros) - 3px);
-  width: 64%;
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--nrc-logam-terang), var(--nrc-logam) 60%, var(--nrc-logam-gelap));
-  background-color: var(--nrc-logam);
+  top: calc(var(--nrc-poros) - 7px);
+  width: var(--nrc-lengan);
+  height: 14px;
+  transform: translateX(-50%);
   transform-origin: 50% 50%;
-  z-index: 2;
+  z-index: 3;
+}
+.nrc__lengan::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 32%, 50% 0, 100% 32%, 100% 68%, 50% 100%, 0 68%);
+  background: linear-gradient(180deg, var(--nrc-logam-terang), var(--nrc-logam) 55%, var(--nrc-logam-gelap));
+  background-color: var(--nrc-logam);
 }
 .nrc__lenganujung {
   position: absolute;
-  left: -5px;
-  top: -3px;
+  left: -6px;
+  top: 1px;
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--nrc-logam-terang);
-  box-shadow: inset 0 0 0 2px var(--nrc-logam-gelap);
+  background: radial-gradient(circle at 35% 35%, var(--nrc-logam-terang), var(--nrc-logam) 60%, var(--nrc-logam-gelap));
+  box-shadow: 0 0 0 1.5px var(--nrc-logam-gelap);
 }
-.nrc__lenganujung--kanan { left: auto; right: -5px; }
+.nrc__lenganujung--kanan { left: auto; right: -6px; }
+.nrc__poros {
+  position: absolute;
+  left: 50%;
+  top: var(--nrc-poros);
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, var(--nrc-logam-terang), var(--nrc-logam) 55%, var(--nrc-logam-gelap));
+  box-shadow: 0 0 0 3px var(--kas-bidang), 0 0 0 4.5px var(--nrc-logam-gelap);
+  z-index: 4;
+}
+/* Medali studio di puncak poros. */
+.nrc__medali {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--nrc-poros) - 48px);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  transform: translateX(-50%);
+  border: 2px solid var(--nrc-logam-terang);
+  border-radius: 50%;
+  background: var(--kas-dalam);
+  color: var(--brand-mint);
+  font-size: var(--k-t10);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  z-index: 4;
+}
+.nrc__medali::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 4px;
+  height: 8px;
+  margin-top: 2px;
+  transform: translateX(-50%);
+  background: var(--nrc-logam-terang);
+}
 
-/* Piringan: kuk mendatar di atas, tali tegak di kedua tepi, pinggan di
-   bawah. Pusatnya di ujung lengan (18% / 82%). */
+/* Piringan: berporos di kaitnya di ujung lengan. */
 .nrc__piring {
   position: absolute;
   top: var(--nrc-poros);
@@ -280,58 +364,52 @@
   width: var(--nrc-piring);
   z-index: 1;
 }
-.nrc__piring--masuk { left: calc(18% - var(--nrc-piring) / 2); }
-.nrc__piring--keluar { left: calc(82% - var(--nrc-piring) / 2); }
-.nrc__kait {
+.nrc__piring--masuk { left: calc((100% - var(--nrc-lengan)) / 2 - var(--nrc-piring) / 2); }
+.nrc__piring--keluar { right: calc((100% - var(--nrc-lengan)) / 2 - var(--nrc-piring) / 2); }
+.nrc__gantung {
   position: relative;
-  display: block;
-  height: 20px;
+  display: flex;
+  flex-direction: column;
+  padding-top: 42px;
+  transform-origin: 50% 0;
 }
-/* Kait: batang pendek dari ujung lengan ke kuk. */
-.nrc__kait::before {
-  content: "";
+.nrc__kait {
   position: absolute;
   left: 50%;
-  top: 0;
-  width: 2px;
-  height: 14px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
   transform: translateX(-50%);
-  background: var(--nrc-logam-terang);
+  border: 2.5px solid var(--nrc-logam-terang);
+  border-radius: 50%;
 }
-/* Kuk mendatar selebar piringan. */
-.nrc__kait::after {
-  content: "";
+/* Sanggurdi: lengkung di atas tumpukan, tegak di tepi piringan. */
+.nrc__busur {
   position: absolute;
-  left: 4px;
-  right: 4px;
-  top: 14px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--nrc-logam-terang);
+  left: 0;
+  right: 0;
+  top: 5px;
+  bottom: 9px;
+  border: 2.5px solid var(--nrc-logam-terang);
+  border-bottom: 0;
+  border-radius: 50% 50% 0 0 / 36px 36px 0 0;
 }
-.nrc__tumpuk {
+.nrc ol.nrc__tumpuk {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
-  gap: 2px;
-  height: 148px;
-  padding: 0 12px 0;
+  height: 152px;
+  padding: 0 12px;
+  /* Anak timbangan yang jatuh muncul dari bawah lengkung sanggurdi, tidak
+     melintasinya. Klipnya ikut berayun bersama piringan. */
+  clip-path: inset(-18px -6px -10px -6px);
 }
-/* Dua tali tegak di tepi — di luar lebar anak timbangan. */
-.nrc__tumpuk::before,
-.nrc__tumpuk::after {
-  content: "";
-  position: absolute;
-  top: -3px;
-  bottom: 0;
-  width: 1.5px;
-  background: color-mix(in srgb, var(--kas-ink) 55%, transparent);
-}
-.nrc__tumpuk::before { left: 5px; }
-.nrc__tumpuk::after { right: 5px; }
 
+/* Anak timbangan: silinder logam — muka atas elips, alas melengkung. */
 .nrc__anak {
+  --nrc-dasar: var(--nrc-masuk);
   position: relative;
   display: flex;
   flex: none;
@@ -339,19 +417,47 @@
   justify-content: space-between;
   gap: 6px;
   width: 100%;
-  min-height: 22px;
-  padding: 0 8px;
-  border-radius: 6px 6px 3px 3px;
+  min-height: 24px;
+  padding: 4px 9px 0;
+  border-radius: 3px 3px 50% 50% / 3px 3px 7px 7px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--kas-bidang) 34%, var(--nrc-dasar)), color-mix(in srgb, white 42%, var(--nrc-dasar)) 20%, var(--nrc-dasar) 46%, color-mix(in srgb, var(--kas-bidang) 28%, var(--nrc-dasar)));
+  background-color: var(--nrc-dasar);
+  color: var(--kas-bidang);
   font-size: var(--k-t10);
   line-height: 1;
   cursor: default;
   transition: opacity 160ms var(--ease);
 }
-/* Anak timbangan makin ke atas makin ramping — seperti set timbangan. */
-.nrc__anak:nth-child(2) { width: 92%; }
-.nrc__anak:nth-child(3) { width: 84%; }
-.nrc__anak:nth-child(4) { width: 76%; }
+.nrc__anak::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  height: 9px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, color-mix(in srgb, white 55%, var(--nrc-dasar)), var(--nrc-dasar));
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--kas-bidang) 25%, transparent);
+}
+/* Tangkai di anak timbangan teratas. */
+.nrc__anak:last-child::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -15px;
+  width: 12px;
+  height: 13px;
+  transform: translateX(-50%);
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--kas-bidang) 30%, var(--nrc-dasar)), color-mix(in srgb, white 45%, var(--nrc-dasar)) 35%, var(--nrc-dasar));
+}
+/* Makin ke atas makin ramping — seperti satu set anak timbangan. */
+.nrc__anak:nth-child(2) { width: 95%; }
+.nrc__anak:nth-child(3) { width: 90%; }
+.nrc__anak:nth-child(4) { width: 85%; }
+.nrc__anak--keluar { --nrc-dasar: var(--nrc-beban); }
 .nrc__anak b {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   font-weight: var(--k-bold);
@@ -359,22 +465,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.nrc__anak span { flex: none; font-weight: var(--k-semi); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.nrc__anak--masuk {
-  background: linear-gradient(180deg, color-mix(in srgb, white 22%, var(--brand-mint)), var(--brand-mint) 40%, color-mix(in srgb, var(--kas-bidang) 14%, var(--brand-mint)));
-  background-color: var(--brand-mint);
-  color: var(--kas-bidang);
+.nrc__anak span { position: relative; flex: none; font-weight: var(--k-semi); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nrc__anak.is-sisa {
+  border-radius: 4px;
+  background: transparent;
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
 }
-.nrc__anak--keluar {
-  background: linear-gradient(180deg, color-mix(in srgb, white 30%, var(--nrc-beban)), var(--nrc-beban) 40%, color-mix(in srgb, var(--kas-bidang) 16%, var(--nrc-beban)));
-  background-color: var(--nrc-beban);
-  color: var(--kas-bidang);
-}
-.nrc__anak.is-sisa { background: transparent; background-color: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
-.nrc__anak--masuk.is-sisa { color: var(--brand-mint); }
+.nrc__anak.is-sisa::before,
+.nrc__anak.is-sisa::after { display: none; }
+.nrc__anak--masuk.is-sisa { color: var(--nrc-masuk); }
 .nrc__anak--keluar.is-sisa { color: var(--nrc-beban); }
 /* Disentuh = neraca TANPA anak timbangan ini. */
-.nrc__anak.is-redup { opacity: 0.22; }
+.nrc__anak.is-redup { opacity: 0.2; }
 .nrc__anakkosong {
   align-self: stretch;
   padding: 6px 0;
@@ -382,22 +485,36 @@
   text-align: center;
   color: var(--nrc-redup);
 }
+/* Mangkuk piringan. */
 .nrc__pinggan {
+  position: relative;
   display: block;
-  height: 9px;
-  border-radius: 2px 2px 50% 50% / 2px 2px 100% 100%;
-  background: linear-gradient(180deg, var(--nrc-logam-terang), var(--nrc-logam) 55%, var(--nrc-logam-gelap));
+  height: 16px;
+  margin: -2px -6px 0;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: linear-gradient(180deg, var(--nrc-logam), var(--nrc-logam-gelap));
   background-color: var(--nrc-logam);
+  box-shadow: 0 8px 12px -8px black;
+}
+.nrc__pinggan::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -3px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--nrc-logam-terang), var(--nrc-logam));
 }
 .nrc__piringlabel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 8px;
   line-height: 1.2;
 }
 .nrc__piringlabel > span { display: flex; align-items: center; gap: 6px; font-size: var(--k-t9); font-weight: var(--k-semi); letter-spacing: 0.08em; text-transform: uppercase; color: var(--nrc-redup); }
-.nrc__piringlabel b { font-size: var(--k-t14); font-weight: var(--k-bold); font-variant-numeric: tabular-nums; }
+.nrc__piringlabel b { font-size: var(--k-t16); font-weight: var(--k-bold); font-variant-numeric: tabular-nums; }
 
 /* ---- Kertas (lembar neraca & daftar) ------------------------------------------- */
 .nrc__lembar,
@@ -429,12 +546,13 @@
 }
 .nrc__lembarkop {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   padding-bottom: 5px;
   border-bottom: 1px solid var(--nrc-garis);
 }
+.nrc__lembarjudul { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .nrc__lembarkop h3 {
   font-size: var(--k-t18);
   font-weight: var(--k-bold);
@@ -443,7 +561,29 @@
   text-transform: uppercase;
   color: var(--nrc-cetak);
 }
-.nrc__lembarkop p { min-width: 0; overflow: hidden; font-size: var(--k-t11); text-overflow: ellipsis; white-space: nowrap; color: var(--nrc-pensil); }
+.nrc__lembarjudul p { min-width: 0; overflow: hidden; font-size: var(--k-t11); text-overflow: ellipsis; white-space: nowrap; color: var(--nrc-pensil); }
+
+/* Cap karet marjin kontrak di kop. */
+.nrc__cap {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  margin: 3px 4px 3px 0 !important;
+  padding: 2px 7px 1px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  color: var(--nrc-cetak);
+  line-height: 1.05;
+  transform: rotate(-4deg);
+}
+.nrc__cap span { font-size: var(--k-t8); font-weight: var(--k-bold); letter-spacing: 0.1em; text-transform: uppercase; }
+.nrc__cap b { font-size: var(--k-t14); font-weight: var(--k-bold); font-variant-numeric: tabular-nums; }
+.nrc__cap.is-cukup,
+.nrc__cap.is-tipis { color: var(--nrc-tinta); }
+.nrc__cap.is-tipis { border-color: var(--warn); outline-color: var(--warn); }
 
 /* Bentuk T: garis datar di bawah judul kedua sisi + garis tegak di tengah. */
 .nrc__t {
@@ -543,63 +683,192 @@
 .nrc__belumkaki a { color: var(--nrc-tinta); font-weight: var(--k-semi); text-decoration: underline; text-decoration-color: var(--nrc-garis); text-underline-offset: 3px; }
 .nrc__belumkaki a:hover { text-decoration-color: var(--nrc-cetak); }
 
-/* ---- Catatan timbang ------------------------------------------------------------ */
+/* ---- Pita pencatat ---------------------------------------------------------------- */
 .nrc__catatan {
   grid-area: catatan;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   min-height: 0;
 }
-.nrc__tiket {
-  display: grid;
-  grid-template-columns: repeat(var(--nrc-n, 12), minmax(0, 1fr));
-  gap: 4px;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 8px;
-  border-radius: 10px;
-  background: var(--kas-dalam);
-  box-shadow: inset 0 2px 6px color-mix(in srgb, black 30%, transparent);
-}
-.nrc__tiket li { display: flex; min-width: 0; min-height: 0; }
-.nrc__tiketb {
-  position: relative;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 6px 3px 4px;
-  border: 0;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--kas-ink) 5%, transparent);
-  color: var(--kas-ink);
-  cursor: pointer;
-}
-.nrc__tiketb:hover { background: color-mix(in srgb, var(--kas-ink) 11%, transparent); }
-.nrc__tiketb.is-pilih { background: color-mix(in srgb, var(--brand-mint) 16%, transparent); box-shadow: inset 0 0 0 1.5px var(--brand-mint); }
-.nrc__tiketatas,
-.nrc__tiketbawah { position: relative; display: flex; justify-content: center; min-height: 0; }
-.nrc__tiketatas { align-items: flex-end; border-bottom: 1px solid var(--nrc-garis-papan); }
-.nrc__tiketbawah { align-items: flex-start; }
-.nrc__tiketatas i,
-.nrc__tiketbawah i { display: block; width: min(14px, 60%); }
-.nrc__tiketatas i { border-radius: 3px 3px 0 0; background: var(--brand-mint); }
-.nrc__tiketbawah i { border-radius: 0 0 3px 3px; background: var(--nrc-beban); }
-.nrc__tiketb small {
-  margin-top: 4px;
-  overflow: hidden;
+.nrc__legenda {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto !important;
   font-size: var(--k-t9);
-  font-weight: var(--k-semi);
-  line-height: 1;
-  text-align: center;
-  text-overflow: clip;
-  white-space: nowrap;
   color: var(--nrc-redup);
 }
-.nrc__tiketb.is-pilih small { color: var(--brand-mint); }
+.nrc__legenda span { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.nrc__legenda i { display: block; width: 10px; height: 8px; border-radius: 1px; }
+.nrc__legenda .is-masuk { background: var(--nrc-batang); }
+.nrc__legenda .is-beban { background: repeating-linear-gradient(-45deg, var(--kas-ink) 0 1px, transparent 1px 3px); box-shadow: inset 0 0 0 1px var(--kas-ink); }
+.nrc__legenda .is-laba { width: 14px; height: 2px; border-radius: 1px; background: var(--kas-ink); }
+.nrc__catatan .nrc__kepala .nrc__alis { flex: 0 1 auto; }
+
+.nrc__pita {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* Gulungan di kedua ujung pita. */
+.nrc__rol {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 16px;
+  border-radius: 8px / 5px;
+  background: linear-gradient(90deg, var(--nrc-logam-gelap), var(--nrc-logam-terang) 36%, var(--nrc-logam) 62%, var(--nrc-logam-gelap));
+  background-color: var(--nrc-logam);
+  box-shadow: 0 6px 10px -6px black;
+}
+.nrc__rol::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--nrc-logam-gelap);
+}
+.nrc__grafik {
+  --pk-l: 10px;
+  --pk-r: 48px;
+  --pk-t: 10px;
+  --pk-b: 24px;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 5px -3px;
+  background: var(--nrc-kertas);
+  color: var(--nrc-tinta);
+  box-shadow:
+    inset 10px 0 8px -8px color-mix(in srgb, black 40%, transparent),
+    inset -10px 0 8px -8px color-mix(in srgb, black 40%, transparent);
+}
+/* Kertas milimeter: garis 1 mm dan 5 mm, plus garis nol. */
+.nrc__kisi {
+  position: absolute;
+  left: var(--pk-l);
+  right: var(--pk-r);
+  top: var(--pk-t);
+  bottom: var(--pk-b);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--nrc-cetak) 30%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--nrc-cetak) 30%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--nrc-cetak) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--nrc-cetak) 12%, transparent) 1px, transparent 1px);
+  background-size: 25px 25px, 25px 25px, 5px 5px, 5px 5px;
+  background-position: 0 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nrc-cetak) 30%, transparent);
+}
+.nrc__kisi::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: color-mix(in srgb, var(--nrc-tinta) 55%, transparent);
+}
+.nrc__bulan {
+  position: absolute;
+  left: var(--pk-l);
+  right: var(--pk-r);
+  top: var(--pk-t);
+  bottom: 4px;
+  display: grid;
+  grid-template-columns: repeat(var(--nrc-n, 12), minmax(0, 1fr));
+}
+.nrc__bulan li { display: flex; min-width: 0; min-height: 0; }
+.nrc__tiketb {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) 20px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--nrc-tinta);
+  cursor: pointer;
+}
+.nrc__tiketb:hover { background: color-mix(in srgb, var(--kas-bidang) 7%, transparent); }
+.nrc__tiketb.is-pilih { background: color-mix(in srgb, var(--brand-mint) 42%, transparent); }
+.nrc__tiketatas,
+.nrc__tiketbawah { position: relative; display: flex; justify-content: center; min-height: 0; }
+.nrc__tiketatas { align-items: flex-end; }
+.nrc__tiketbawah { align-items: flex-start; }
+.nrc__tiketatas i,
+.nrc__tiketbawah i { display: block; width: min(12px, 46%); }
+.nrc__tiketatas i { border-radius: 2px 2px 0 0; background: var(--nrc-batang); }
+.nrc__tiketbawah i {
+  border-radius: 0 0 2px 2px;
+  background: repeating-linear-gradient(-45deg, var(--nrc-tinta) 0 1px, transparent 1px 3.5px);
+  box-shadow: inset 0 0 0 1px var(--nrc-tinta);
+}
+.nrc__tiketb small {
+  align-self: center;
+  justify-self: center;
+  overflow: hidden;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  line-height: 1.2;
+  text-overflow: clip;
+  white-space: nowrap;
+  color: var(--nrc-pensil);
+}
+.nrc__tiketb.is-kini small { color: var(--nrc-tinta); font-weight: var(--k-bold); }
+.nrc__tiketb.is-pilih small { background: var(--kas-bidang); color: var(--kas-ink); }
 .nrc__tiketb.is-kosong small { opacity: 0.6; }
+
+/* Jejak tinta laba dan pena pencatat. */
+.nrc__jejak {
+  position: absolute;
+  left: var(--pk-l);
+  right: var(--pk-r);
+  top: var(--pk-t);
+  bottom: var(--pk-b);
+  pointer-events: none;
+}
+.nrc__jejak svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.nrc__jejak polyline {
+  fill: none;
+  stroke: var(--nrc-tinta);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.nrc__jejaktitik {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid var(--nrc-tinta);
+  border-radius: 50%;
+  background: var(--nrc-kertas);
+}
+.nrc__jejaktitik.is-rugi { background: var(--warn); }
+.nrc__jejaktitik.is-pilih { width: 10px; height: 10px; background: var(--brand-mint); }
+.nrc__pena {
+  position: absolute;
+  display: block;
+  width: 40px;
+  height: 12px;
+  margin-left: 4px;
+  transform: translateY(-50%);
+}
+.nrc__pena svg { display: block; }
+.nrc__penaujung { fill: var(--nrc-logam-gelap); }
+.nrc__penabatang { fill: var(--kas-bidang); }
 
 /* ---- Daftar --------------------------------------------------------------------- */
 .nrc__daftar {
@@ -737,33 +1006,25 @@
 
 /* ---- Gerak ----------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
-  /* Lengan berayun lewat seimbang lalu kembali — kurva yang melampaui. */
-  .nrc__alat.is-siap .nrc__lengan,
-  .nrc__alat.is-siap .nrc__piring { transition: transform 1100ms cubic-bezier(0.34, 1.45, 0.45, 1); }
-  .nrc__alat.is-siap .nrc__jarum { transition: transform 900ms cubic-bezier(0.34, 1.35, 0.5, 1); }
-  /* Menimbang bulan: lengan baru berayun sesudah anak timbangan terbawah
-     mendarat (jatuhnya 70% dari 520 ms). */
-  .nrc__alat.is-menimbang .nrc__lengan,
-  .nrc__alat.is-menimbang .nrc__piring,
-  .nrc__alat.is-menimbang .nrc__jarum { transition-delay: 340ms; }
-  /* Anak timbangan JATUH ke piringan, yang terbawah lebih dulu. */
-  .nrc__anak.is-jatuh { animation: nrc-jatuh 520ms cubic-bezier(0.5, 0, 0.75, 0) both; }
-  .nrc__anak.is-jatuh:nth-child(2) { animation-delay: 110ms; }
-  .nrc__anak.is-jatuh:nth-child(3) { animation-delay: 220ms; }
-  .nrc__anak.is-jatuh:nth-child(4) { animation-delay: 330ms; }
+  .nrc__jarum { transition: transform 700ms cubic-bezier(0.34, 1.45, 0.5, 1); }
+  /* Anak timbangan JATUH ke piringan; tundanya dipasang per anak dari JS
+     (terbesar dulu), sama dengan saat pegas lengan menerima hentakannya. */
+  .nrc__anak.is-jatuh { animation: nrc-jatuh 560ms cubic-bezier(0.5, 0, 0.75, 0) both; }
 }
 @keyframes nrc-jatuh {
-  0% { transform: translateY(-64px); opacity: 0; }
-  20% { opacity: 1; }
-  70% { transform: translateY(0); }
-  82% { transform: translateY(-7px); animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1); }
+  0% { transform: translateY(-72px); opacity: 0; }
+  22% { opacity: 1; }
+  72% { transform: translateY(0); }
+  84% { transform: translateY(-6px); animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1); }
   100% { transform: translateY(0); }
 }
 
 /* ---- Lebar ----------------------------------------------------------------------- */
 @media (min-width: 1288.02px) and (max-width: 1408px) {
-  .nrc { --nrc-piring: 164px; --nrc-lembar: 316px; }
+  .nrc { --nrc-piring: 188px; --nrc-lembar: 316px; --nrc-dial: 124px; }
   .nrc__tjumlah b { font-size: var(--k-t12); }
+  .nrc__laba { width: 220px; }
+  .nrc__lembar { gap: 6px; padding: 12px 16px 10px; }
 }
 @media (min-width: 1288.02px) and (max-height: 780px) {
   .nrc { --nrc-bawah: 192px; }
@@ -775,7 +1036,7 @@
 @media (max-width: 1288px) {
   .nrc__papan {
     --nrc-lembar: 316px;
-    grid-template-rows: 430px var(--nrc-bawah) 300px;
+    grid-template-rows: 440px var(--nrc-bawah) 300px;
     grid-template-areas:
       "timbang timbang lembar"
       "catatan catatan catatan"
@@ -791,22 +1052,23 @@
   }
 }
 @media (max-width: 40rem) {
-  .nrc { --nrc-piring: 128px; --nrc-poros: 118px; }
-  .nrc__papan { padding: 14px 10px 13px; grid-template-rows: 500px auto 180px auto; }
-  .nrc__dial { grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr); }
-  .nrc__dial svg { width: 96px; height: 53px; }
-  .nrc__dial p b { font-size: var(--k-t18); }
-  .nrc__lengan { width: 60%; }
-  .nrc__piring--masuk { left: calc(20% - var(--nrc-piring) / 2); }
-  .nrc__piring--keluar { left: calc(80% - var(--nrc-piring) / 2); }
-  .nrc__anak { justify-content: center; padding: 0 4px; }
+  .nrc { --nrc-piring: 112px; --nrc-poros: 58px; --nrc-dial: 92px; --nrc-dial-y: 104px; --nrc-lengan: 64%; }
+  .nrc__papan { padding: 14px 10px 13px; grid-template-rows: 470px auto 190px auto; }
+  /* Muka jarum 92px: angka skala tak terbaca — bacaannya di tengah cukup. */
+  .nrc__dialangka { display: none; }
+  .nrc__dialbaca b { font-size: var(--k-t12); }
+  .nrc__dialbaca span { display: none; }
+  .nrc__tumpuk { padding: 0 10px; }
+  .nrc__anak { justify-content: center; padding: 4px 4px 0; }
   .nrc__anak span { font-size: var(--k-t9); }
   .nrc__anak b { display: none; }
-  .nrc__laba { width: 180px; }
-  .nrc__alas { width: 200px; }
-  .nrc__tiket { gap: 2px; padding: 6px 4px; }
-  .nrc__tiketb { padding: 4px 1px 3px; }
-  .nrc__tiketb small { font-size: 8px; }
+  .nrc__laba { width: 176px; }
+  .nrc__laba b { font-size: var(--k-t16); }
+  .nrc__alas { width: 220px; }
+  .nrc__bayang { width: 280px; }
+  .nrc__legenda { display: none; }
+  .nrc__grafik { --pk-l: 6px; --pk-r: 40px; }
+  .nrc__tiketb small { padding: 1px; font-size: 8px; }
   .nrc__trx { overflow: visible; }
   .nrc__trxnama > span:last-child { flex-direction: column; align-items: stretch; gap: 0; }
   .nrc__trxnama small { flex: none; }

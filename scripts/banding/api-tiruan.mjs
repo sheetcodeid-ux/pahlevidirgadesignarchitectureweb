@@ -134,6 +134,24 @@ const bulananKeu = Array.from({ length: 24 }, (_, i) => {
   };
 });
 
+/* Seperti Worker (`financeRepo.monthly`): kas masuk sebulan memuat SEMUA
+   tagihan lunas bulan itu dan biaya memuat semua biaya bulan itu. Angka
+   karangan di `bulananKeu` jadi dasar (riwayat yang tidak punya rincian),
+   rinciannya ditambahkan di atasnya — jadi rincian per bulan tidak pernah
+   melebihi catatan bulanannya, sama dengan di produksi. Dihitung tiap
+   permintaan karena tagihan dan biaya tiruan bisa berubah. */
+function bulananTiruan() {
+  return bulananKeu.map((b) => {
+    const masuk = tagihanAdmin
+      .filter((t) => t.status === "lunas" && t.paidAt && t.paidAt.slice(0, 7) === b.bulan)
+      .reduce((n, t) => n + t.amount, 0);
+    const keluar = [...biayaKeu, ...biayaRiwayat].filter((c) => c.incurredOn?.slice(0, 7) === b.bulan).reduce((n, c) => n + c.amount, 0);
+    const kasMasuk = b.kasMasuk + masuk;
+    const biaya = b.biaya + keluar;
+    return { ...b, kasMasuk, biaya, labaBersih: kasMasuk - biaya };
+  });
+}
+
 const biayaKeu = [
   ["Render eksterior 6 frame", "freelancer", 8_500_000, 0, "Kedai Kopi Ruas"],
   ["Sewa kantor September", "operasional", 4_200_000, 0, null],
@@ -922,7 +940,7 @@ const jawab = (path) => {
   }
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
-  if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananKeu;
+  if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananTiruan();
   /* Urutan Worker: tanggal terjadi terbaru dulu, lalu yang terakhir dicatat. */
   if (path.startsWith("/api/v1/admin/costs"))
     return [...biayaKeu, ...biayaRiwayat]

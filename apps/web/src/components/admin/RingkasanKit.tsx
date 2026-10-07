@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { PilihTombol } from "../kit/Formulir";
 import { Segmen } from "../kit/Segmen";
@@ -10,6 +10,7 @@ import { CoinIn, CoinOut, HourglassHigh, NavCalendarDots, Sliders } from "../kit
 import {
   ambilRingkasanKeuangan,
   ambilBulanan,
+  ambilSettings,
   semuaBiaya,
   semuaPembayaran,
   semuaTagihan,
@@ -20,42 +21,49 @@ import {
   type BiayaProyek,
   type Pembayaran,
   type Invoice,
+  type StudioSettings,
 } from "../../lib/admin";
 import { proyekAktif, onProyekAktif } from "../../lib/proyekAktif";
 import { formatRupiah } from "../../lib/format";
-import { kodeProyek } from "../../lib/nomorDokumen";
+import { kodeProyek, inisial } from "../../lib/nomorDokumen";
 
 /* =============================================================================
    Keuangan — Ringkasan = NERACA STUDIO.
 
    "Neraca" dalam bahasa Indonesia berarti dua hal sekaligus: laporan
    keuangan yang menimbang yang masuk lawan yang keluar, dan TIMBANGAN. Halaman
-   ini memakai keduanya secara harfiah, dan berperilaku seperti timbangan:
+   ini memakai keduanya secara harfiah, dan BERPERILAKU seperti timbangan:
 
-   1. TIMBANGAN — piringan kiri memuat KAS MASUK (satu anak timbangan per
-      proyek, sebesar tagihan lunasnya), piringan kanan BEBAN (satu anak
-      timbangan per kategori biaya). Lengan miring ke sisi yang lebih berat;
-      di atas poros JARUM MARJIN (kontrak untuk "Semua", kas untuk satu
-      bulan), di tiang PAPAN LABA BERSIH. Menyentuh satu anak timbangan
-      (tetikus saja) memperlihatkan neraca TANPA anak timbangan itu: lengan
-      bergeser dan papan laba ikut berhitung ulang.
-   2. LEMBAR NERACA — bentuk T akuntansi: kiri masuk, kanan keluar, jumlah
-      kedua sisi, lalu SALDO (laba bersih) bergaris ganda; di bawahnya
-      piutang yang "belum ditimbang" per proyek dengan bagian kontrak yang
-      sudah masuk.
-   3. CATATAN TIMBANG — satu tiket per bulan (12/24), kas masuk ke atas,
-      beban ke bawah. Mengklik satu bulan MENIMBANG bulan itu: anak
-      timbangannya jatuh ke piringan dan lengannya berayun sampai seimbang.
-      Itu satu-satunya gerak besar halaman ini, 2D.
-   4. Transaksi terbaru (urut kolom, rentang) dan tenggat tagihan dalam satu
-      kartu bersegmen.
+   1. TIMBANGAN PRESISI — alas bertingkat, tiang berpelat LABA BERSIH, medali
+      studio di puncak poros, lengan tirus, dan MUKA JARUM bundar di tiang
+      yang membaca MARJIN KAS (laba ÷ kas masuk) dari yang sedang ditimbang.
+      Piringan kiri memuat KAS MASUK (satu anak timbangan silinder per
+      proyek), piringan kanan BEBAN (satu per kategori), masing-masing di
+      mangkuk bersanggurdi. Lengan miring ke sisi yang lebih berat.
+      Menyentuh satu anak timbangan (tetikus saja) memperlihatkan neraca
+      TANPA dia.
+   2. LEMBAR NERACA — bentuk T akuntansi, saldo bergaris ganda, cap marjin
+      KONTRAK, dan piutang yang "belum ditimbang".
+   3. PITA PENCATAT — kertas milimeter di antara dua gulungan: per bulan kas
+      masuk ke atas, beban ke bawah, jejak tinta LABA, pena di bulan
+      berjalan. Mengklik bulan = MENIMBANG bulan itu.
+   4. Transaksi terbaru dan tenggat tagihan.
+
+   SATU-SATUNYA gerak besar (2D, fisika): saat menimbang, piringan
+   dikosongkan dan lengan kembali datar; anak timbangan jatuh satu per satu
+   (terbesar dulu), tiap hentakan membuat piringannya memantul dan berayun,
+   dan lengan miring SEBANYAK yang sudah mendarat, lalu berayun teredam
+   sampai diam. Angka laba, label piringan, dan jarum marjin ikut berhitung.
+   Lengan dan piringan digerakkan pegas teredam di rAF (transform langsung ke
+   DOM, bukan state React per frame) yang berhenti sendiri begitu diam —
+   tidak ada animasi abadi (jebakan #22). Gerak dikurangi = seketika.
 
    Datanya tidak berubah: `kasMasuk` = jumlah `received` per proyek (tagihan
    lunas) dan beban per kategori = `totalBiaya`, jadi jumlah anak timbangan
    pasti sama dengan angka di lembar. Untuk satu bulan, pecahannya dihitung
    dari tagihan lunas & biaya bulan itu; selisih terhadap angka bulanan API
-   (mis. daftar biaya yang terpotong) jadi anak timbangan "tak terinci",
-   supaya jumlahnya tetap sama dengan catatan bulanannya.
+   jadi anak timbangan "tak terinci", supaya jumlahnya tetap sama dengan
+   catatan bulanannya.
    ============================================================================= */
 
 const BULAN_PENDEK = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -78,10 +86,22 @@ const RENTANG = [
 ];
 
 /** Sudut lengan paling miring. */
-const SUDUT_MAKS = 9;
+const SUDUT_MAKS = 10;
 /** Tinggi tumpukan anak timbangan untuk sisi yang lebih berat. */
-const TUMPUK_MAKS = 132;
-const ANAK_MIN = 22;
+const TUMPUK_MAKS = 140;
+const ANAK_MIN = 24;
+/** Jatuhnya satu anak timbangan; ia menyentuh piringan di 72%. */
+const JATUH_MS = 560;
+const JEDA_ANAK = 140;
+const MENDARAT_MS = Math.round(JATUH_MS * 0.72);
+
+/* Pegas teredam lengan (sudut, derajat), ayun piringan, dan pantul piringan. */
+const PEGAS = { k: 40, c: 4, kAyun: 52, cAyun: 3.3, kPantul: 260, cPantul: 15 };
+
+/* Skala muka jarum: marjin −40%..80% pada busur 240°. */
+const JARUM_MIN = -40;
+const JARUM_MAKS = 80;
+const sudutJarum = (v: number) => -120 + ((Math.max(JARUM_MIN, Math.min(JARUM_MAKS, v)) - JARUM_MIN) / (JARUM_MAKS - JARUM_MIN)) * 240;
 
 function batasRentang(bulan: number): number | null {
   if (bulan <= 0) return null;
@@ -160,8 +180,151 @@ function tren(kini?: number, lalu?: number) {
   return { naik: p >= 0, teks: `${Math.abs(p).toFixed(1).replace(".", ",")} %` };
 }
 
+/** Sudut lengan untuk dua beban: miring ke yang lebih berat. */
+function sudutUntuk(masuk: number, keluar: number): number {
+  const berat = Math.max(masuk, keluar);
+  if (berat <= 0) return 0;
+  return Math.max(-SUDUT_MAKS, Math.min(SUDUT_MAKS, ((keluar - masuk) / berat) * SUDUT_MAKS));
+}
+
 const geraknya = () =>
   typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Angka yang berhitung ke nilai barunya; seketika saat pertama tampil dan
+ *  bila gerak dikurangi. */
+function useHitung(nilai: number, ms = 420): number {
+  const [tampil, setTampil] = useState(nilai);
+  const kini = useRef(nilai);
+  useEffect(() => {
+    const awal = kini.current;
+    if (awal === nilai) return;
+    if (!geraknya()) {
+      kini.current = nilai;
+      setTampil(nilai);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const langkah = (t: number) => {
+      const p = Math.min(1, (t - t0) / ms);
+      const v = Math.round(awal + (nilai - awal) * (1 - Math.pow(1 - p, 3)));
+      kini.current = v;
+      setTampil(v);
+      if (p < 1) raf = requestAnimationFrame(langkah);
+    };
+    raf = requestAnimationFrame(langkah);
+    return () => cancelAnimationFrame(raf);
+  }, [nilai, ms]);
+  return tampil;
+}
+
+/* -----------------------------------------------------------------------------
+   Fisika timbangan. Satu pegas teredam untuk sudut lengan, satu bandul untuk
+   ayun tiap piringan (berporos di kaitnya), satu pegas untuk pantul piringan
+   saat anak timbangan mendarat. Transform ditulis langsung ke DOM; React
+   tidak pernah menulis `transform` ketiga jenis elemen itu, jadi keduanya
+   tidak berebut. Lingkarannya berhenti sendiri begitu semuanya diam.
+   -------------------------------------------------------------------------- */
+interface Keadaan {
+  th: number;
+  w: number;
+  ph: [number, number];
+  pw: [number, number];
+  y: [number, number];
+  yv: [number, number];
+}
+
+const diamPada = (th: number): Keadaan => ({ th, w: 0, ph: [0, 0], pw: [0, 0], y: [0, 0], yv: [0, 0] });
+
+function useTimbangan(target: number, setengah: number, siap: boolean) {
+  const lengan = useRef<HTMLDivElement | null>(null);
+  const piring = useRef<(HTMLDivElement | null)[]>([null, null]);
+  const gantung = useRef<(HTMLDivElement | null)[]>([null, null]);
+  const s = useRef<Keadaan>(diamPada(target));
+  const tgt = useRef(target);
+  const pjg = useRef(setengah);
+  const raf = useRef(0);
+
+  const pasang = useCallback(() => {
+    const k = s.current;
+    const dy = pjg.current * Math.sin((k.th * Math.PI) / 180);
+    if (lengan.current) lengan.current.style.transform = `translateX(-50%) rotate(${k.th.toFixed(3)}deg)`;
+    for (const i of [0, 1] as const) {
+      const p = piring.current[i];
+      const g = gantung.current[i];
+      if (p) p.style.transform = `translateY(${((i === 0 ? -dy : dy) + k.y[i]).toFixed(2)}px)`;
+      if (g) g.style.transform = `rotate(${k.ph[i].toFixed(3)}deg)`;
+    }
+  }, []);
+
+  const jalan = useCallback(() => {
+    if (raf.current) return;
+    let lalu = performance.now();
+    const langkah = (t: number) => {
+      const dt = Math.max(0, Math.min(1 / 30, (t - lalu) / 1000));
+      lalu = t;
+      const k = s.current;
+      for (let n = 0; n < 4; n++) {
+        const h = dt / 4;
+        const a = -PEGAS.k * (k.th - tgt.current) - PEGAS.c * k.w;
+        k.w += a * h;
+        k.th += k.w * h;
+        for (const i of [0, 1] as const) {
+          k.pw[i] += (-PEGAS.kAyun * k.ph[i] - PEGAS.cAyun * k.pw[i]) * h;
+          k.ph[i] += k.pw[i] * h;
+          k.yv[i] += (-PEGAS.kPantul * k.y[i] - PEGAS.cPantul * k.yv[i]) * h;
+          k.y[i] += k.yv[i] * h;
+        }
+      }
+      const diam =
+        /* Di bawah ambang ini getarannya kurang dari sepersepuluh piksel. */
+        Math.abs(k.th - tgt.current) < 0.03 &&
+        Math.abs(k.w) < 0.08 &&
+        ([0, 1] as const).every((i) => Math.abs(k.ph[i]) < 0.03 && Math.abs(k.pw[i]) < 0.1 && Math.abs(k.y[i]) < 0.08 && Math.abs(k.yv[i]) < 0.4);
+      if (diam) {
+        s.current = diamPada(tgt.current);
+        pasang();
+        raf.current = 0;
+        return;
+      }
+      pasang();
+      raf.current = requestAnimationFrame(langkah);
+    };
+    raf.current = requestAnimationFrame(langkah);
+  }, [pasang]);
+
+  useLayoutEffect(() => {
+    tgt.current = target;
+    pjg.current = setengah;
+    if (!siap || !geraknya()) {
+      cancelAnimationFrame(raf.current);
+      raf.current = 0;
+      s.current = diamPada(target);
+      pasang();
+    } else if (raf.current === 0 && Math.abs(s.current.th - target) < 0.03) {
+      pasang();
+    } else {
+      jalan();
+    }
+  }, [target, setengah, siap, jalan, pasang]);
+
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+
+  /** Hentakan anak timbangan yang mendarat di piringan `sisi` (0 kiri). */
+  const hentak = useCallback(
+    (sisi: 0 | 1, kuat: number) => {
+      if (!geraknya()) return;
+      const k = s.current;
+      k.yv[sisi] += 70 + 110 * kuat;
+      k.pw[sisi] += (sisi === 0 ? -1 : 1) * (9 + 15 * kuat);
+      k.w += (sisi === 0 ? -1 : 1) * (8 + 16 * kuat);
+      jalan();
+    },
+    [jalan],
+  );
+
+  return { lengan, piring, gantung, hentak };
+}
 
 /** Kepala kolom yang bisa mengurutkan (pola Tabel kit). */
 function KepalaUrut({ label, i, urutan, onUrut, kanan }: { label: string; i: number; urutan: Urutan | null; onUrut: (u: Urutan | null) => void; kanan?: boolean }) {
@@ -184,7 +347,7 @@ function KepalaUrut({ label, i, urutan, onUrut, kanan }: { label: string; i: num
   );
 }
 
-/** Anak timbangan di piringan. */
+/** Anak timbangan silinder di piringan. */
 function AnakTimbangan({
   a,
   sisi,
@@ -211,7 +374,7 @@ function AnakTimbangan({
   return (
     <li
       className={`nrc__anak nrc__anak--${sisi}${jatuh ? " is-jatuh" : ""}${redup ? " is-redup" : ""}${a.sisa ? " is-sisa" : ""}`}
-      style={{ height: tinggi, "--nrc-urutan": urutan } as CSSProperties}
+      style={{ height: tinggi, animationDelay: jatuh ? `${urutan * JEDA_ANAK}ms` : undefined }}
       {...sentuh}
       onPointerEnter={(e) => {
         sentuh.onPointerEnter(e);
@@ -228,6 +391,55 @@ function AnakTimbangan({
   );
 }
 
+/** Muka jarum marjin kas: busur 240°, −40..80%. */
+function MukaJarum({ marjin }: { marjin: number | null }) {
+  const nada = marjin === null ? "kosong" : marjin >= 30 ? "sehat" : marjin >= 15 ? "cukup" : "tipis";
+  const kata = marjin === null ? "" : marjin >= 30 ? "sehat" : marjin >= 15 ? "cukup" : "tipis";
+  const garis: { v: number; besar: boolean }[] = [];
+  for (let v = JARUM_MIN; v <= JARUM_MAKS; v += 10) garis.push({ v, besar: v % 20 === 0 });
+  const titik = (v: number, r: number) => {
+    const rad = (sudutJarum(v) * Math.PI) / 180;
+    return [70 + r * Math.sin(rad), 70 - r * Math.cos(rad)] as const;
+  };
+  const busur = (dari: number, ke: number, r: number) => {
+    const [x1, y1] = titik(dari, r);
+    const [x2, y2] = titik(ke, r);
+    const besar = sudutJarum(ke) - sudutJarum(dari) > 180 ? 1 : 0;
+    return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${besar} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  };
+  return (
+    <div className={`nrc__dial is-${nada}`}>
+      <svg viewBox="0 0 140 140" aria-hidden="true">
+        <path className="nrc__dialzona nrc__dialzona--tipis" d={busur(JARUM_MIN, 15, 42)} />
+        <path className="nrc__dialzona nrc__dialzona--sehat" d={busur(30, JARUM_MAKS, 42)} />
+        {garis.map(({ v, besar }) => {
+          const [x1, y1] = titik(v, 46);
+          const [x2, y2] = titik(v, besar ? 53 : 50);
+          return <line key={v} className={besar ? "nrc__dialgaris is-besar" : "nrc__dialgaris"} x1={x1} y1={y1} x2={x2} y2={y2} />;
+        })}
+        {garis
+          .filter((g) => g.besar)
+          .map(({ v }) => {
+            const [x, y] = titik(v, 64.5);
+            return (
+              <text key={v} x={x} y={y} className="nrc__dialangka" textAnchor="middle" dominantBaseline="central">
+                {v}
+              </text>
+            );
+          })}
+        <g className="nrc__jarum" style={{ transform: `rotate(${marjin === null ? -128 : sudutJarum(marjin)}deg)` }}>
+          <path d="M70 24 L72.4 68 L70 79 L67.6 68 Z" />
+        </g>
+        <circle cx="70" cy="70" r="6.5" className="nrc__jarumporos" />
+      </svg>
+      <p className="nrc__dialbaca">
+        <b>{marjin === null ? "—" : `${Math.round(marjin)}%`}</b>
+        <span>{marjin === null ? "marjin kas" : `marjin kas · ${kata}`}</span>
+      </p>
+    </div>
+  );
+}
+
 function Isi() {
   const [proyekId, setProyekId] = useState<string | null>(() => proyekAktif());
   const [rentang, setRentang] = useState(12);
@@ -239,26 +451,30 @@ function Isi() {
   const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() => bacaCache<BiayaProyek[]>("biaya-semua"));
   const [bayar, setBayar] = useState<Pembayaran[] | null>(() => bacaCache<Pembayaran[]>("bayar-semua"));
   const [tagihan, setTagihan] = useState<Invoice[] | null>(() => bacaCache<Invoice[]>("tagihan-semua"));
+  /* Nama studio dari Info Studio — kunci `settings` milik halaman itu, di
+     sini cuma dibaca (jebakan #8). */
+  const [studio, setStudio] = useState(() => bacaCache<StudioSettings>("settings")?.studioName || "Studio");
   const [rentangTrx, setRentangTrx] = useState("1");
   const [daftarAktif, setDaftarAktif] = useState<"trx" | "tenggat">("trx");
   /* Yang ditimbang: seluruh catatan, atau satu bulan (YYYY-MM). */
   const [periode, setPeriode] = useState<string>("semua");
-  /* Kunci gerak: berganti tiap periode berganti, supaya anak timbangan jatuh lagi. */
+  /* Kunci gerak: berganti tiap menimbang, supaya anak timbangan jatuh lagi. */
   const [timbang, setTimbang] = useState(0);
+  /* Banyaknya anak timbangan per sisi (dari yang terbesar) yang sudah
+     mendarat. Tak hingga = semuanya, keadaan diam. */
+  const [mendarat, setMendarat] = useState(Number.POSITIVE_INFINITY);
+  const pewaktu = useRef<number[]>([]);
   const [tanpa, setTanpa] = useState<string | null>(null);
-  /* Selama anak timbangan jatuh, lengan menunggu mereka mendarat dulu. */
-  const [menimbang, setMenimbang] = useState(false);
-  const jedaTimbang = useRef(0);
-  useEffect(() => () => clearTimeout(jedaTimbang.current), []);
   const kabar: KabarKartu = useRef(null);
   const ket = pemberiKet(kabar);
-  const lenganRef = useRef<HTMLDivElement>(null);
+  const lenganUkur = useRef<HTMLDivElement | null>(null);
   const [lebarLengan, setLebarLengan] = useState(400);
   /* Lengan baru boleh berayun SESUDAH lebarnya terukur — tanpa ini ia
-     berayun dari tebakan 620 ke lebar sebenarnya tiap halaman dibuka. */
+     berayun dari tebakan ke lebar sebenarnya tiap halaman dibuka. */
   const [siap, setSiap] = useState(false);
 
   useEffect(() => onProyekAktif(setProyekId), []);
+  useEffect(() => () => pewaktu.current.forEach(clearTimeout), []);
 
   useEffect(() => {
     semuaBiaya()
@@ -279,6 +495,9 @@ function Isi() {
         setTagihan(d);
       })
       .catch(() => setTagihan((l) => l ?? []));
+    ambilSettings()
+      .then((s) => setStudio(s.studioName || "Studio"))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -308,9 +527,9 @@ function Isi() {
 
   /* Panjang lengan (lebar tata letaknya, sebelum diputar) — turun-naiknya
      piringan dihitung darinya. Diukur saat ukurannya berubah, bukan saat
-     menggulir (jebakan #21). Persennya milik CSS (64%, 60% di ponsel). */
+     menggulir (jebakan #21). Persennya milik CSS. */
   useEffect(() => {
-    const el = lenganRef.current;
+    const el = lenganUkur.current;
     if (!el) return;
     let bingkai = 0;
     const ro = new ResizeObserver(([e]) => {
@@ -324,9 +543,9 @@ function Isi() {
     };
   }, []);
 
-  /* --- Catatan bulanan (tiket timbang) ------------------------------------ */
+  /* --- Catatan bulanan (pita pencatat) -------------------------------------- */
   const petaBulan = useMemo(() => new Map((bulanan ?? []).map((b) => [b.bulan, b])), [bulanan]);
-  const tiket = useMemo(
+  const pita = useMemo(
     () =>
       deretBulan(rentang).map((k) => {
         const b = petaBulan.get(k);
@@ -334,18 +553,9 @@ function Isi() {
       }),
     [rentang, petaBulan],
   );
-  const puncakTiket = Math.max(1, ...tiket.flatMap((t) => [t.kasMasuk, t.biaya]));
-
-  function pilihPeriode(p: string) {
-    if (p === periode) return;
-    setPeriode(p);
-    setTanpa(null);
-    if (!geraknya()) return;
-    setTimbang((n) => n + 1);
-    setMenimbang(true);
-    clearTimeout(jedaTimbang.current);
-    jedaTimbang.current = window.setTimeout(() => setMenimbang(false), 1500);
-  }
+  const puncakPita = Math.max(1, ...pita.flatMap((t) => [t.kasMasuk, t.biaya, Math.abs(t.labaBersih)]));
+  /* Jejak laba: titik per bulan dalam persen bidang plot (garis nol di 50). */
+  const jejak = pita.map((t, i) => ({ x: ((i + 0.5) / pita.length) * 100, y: 50 - (t.labaBersih / puncakPita) * 50, rugi: t.labaBersih < 0 }));
 
   /* --- Anak timbangan --------------------------------------------------------- */
   const { masuk, keluar } = useMemo(() => {
@@ -383,38 +593,61 @@ function Isi() {
     const m = [...perProyek.values()];
     const k = [...perKategori.values()];
     /* Selisih terhadap angka bulanan API jadi "tak terinci" — jumlahnya
-       harus sama dengan tiket bulan itu. */
+       harus sama dengan catatan bulan itu. */
     const sm = (b?.kasMasuk ?? 0) - m.reduce((n, a) => n + a.nilai, 0);
     const sk = (b?.biaya ?? 0) - k.reduce((n, a) => n + a.nilai, 0);
     if (sm > 0) m.push({ kunci: "tak-masuk", kode: "Tak terinci", label: "Tak terinci", nilai: sm, sisa: true });
     if (sk > 0) k.push({ kunci: "tak-keluar", kode: "Tak terinci", label: "Tak terinci", nilai: sk, sisa: true });
     return { masuk: ringkasAnak(m, "Proyek lain"), keluar: ringkasAnak(k, "Kategori lain") };
   }, [periode, ringkas, petaBulan, tagihan, biaya, proyekId]);
+  const anakRef = useRef({ masuk, keluar });
+  anakRef.current = { masuk, keluar };
 
   const totalMasuk = masuk.reduce((n, a) => n + a.nilai, 0);
   const totalKeluar = keluar.reduce((n, a) => n + a.nilai, 0);
-  /* Neraca yang sedang tampak — tanpa anak timbangan yang disentuh. */
-  const tampakMasuk = totalMasuk - (masuk.find((a) => a.kunci === tanpa)?.nilai ?? 0);
-  const tampakKeluar = totalKeluar - (keluar.find((a) => a.kunci === tanpa)?.nilai ?? 0);
+  /* Yang sedang di piringan: yang sudah mendarat, tanpa yang disentuh. */
+  const diPiring = (daftar: Anak[]) => daftar.reduce((n, a, i) => (i < mendarat && a.kunci !== tanpa ? n + a.nilai : n), 0);
+  const tampakMasuk = diPiring(masuk);
+  const tampakKeluar = diPiring(keluar);
   const laba = tampakMasuk - tampakKeluar;
-  const berat = Math.max(tampakMasuk, tampakKeluar, 1);
-  const sudut = Math.max(-SUDUT_MAKS, Math.min(SUDUT_MAKS, ((tampakKeluar - tampakMasuk) / berat) * SUDUT_MAKS));
-  const setengahLengan = lebarLengan / 2;
-  const turun = setengahLengan * Math.sin((sudut * Math.PI) / 180);
+  const { lengan, piring, gantung, hentak } = useTimbangan(sudutUntuk(tampakMasuk, tampakKeluar), lebarLengan / 2, siap);
+  const hitMasuk = useHitung(tampakMasuk);
+  const hitKeluar = useHitung(tampakKeluar);
+  const hitLaba = useHitung(laba);
 
   const skala = TUMPUK_MAKS / Math.max(totalMasuk, totalKeluar, 1);
   const tinggiAnak = (a: Anak) => Math.max(ANAK_MIN, Math.round(a.nilai * skala));
 
-  /* Marjin: kontrak untuk seluruh catatan, kas untuk satu bulan. */
-  const marjin =
-    periode === "semua"
-      ? ringkas?.marginRataRata ?? null
-      : tampakMasuk > 0
-        ? (laba / tampakMasuk) * 100
-        : null;
-  const sudutJarum = marjin === null ? -90 : -90 + (Math.max(-20, Math.min(60, marjin)) + 20) * (180 / 80);
-  const nadaMarjin = marjin === null ? "kosong" : marjin >= 30 ? "sehat" : marjin >= 15 ? "cukup" : "tipis";
-  const kataMarjin = marjin === null ? "Belum ada" : marjin >= 30 ? "Sehat" : marjin >= 15 ? "Cukup" : "Tipis";
+  /* Marjin kas dari yang sedang ditimbang; marjin KONTRAK di cap lembar. */
+  const marjinKas = tampakMasuk > 0 ? (laba / tampakMasuk) * 100 : null;
+  const marjinKontrak = ringkas?.marginRataRata ?? null;
+
+  function pilihPeriode(p: string) {
+    if (p === periode) return;
+    setPeriode(p);
+    setTanpa(null);
+    pewaktu.current.forEach(clearTimeout);
+    pewaktu.current = [];
+    if (!geraknya()) {
+      setMendarat(Number.POSITIVE_INFINITY);
+      return;
+    }
+    /* Piringan dikosongkan, lalu anak timbangan mendarat satu per satu. */
+    setTimbang((n) => n + 1);
+    setMendarat(0);
+    for (let i = 0; i < 4; i++) {
+      pewaktu.current.push(
+        window.setTimeout(() => {
+          setMendarat(i + 1);
+          const { masuk: m, keluar: k } = anakRef.current;
+          const puncak = Math.max(1, ...m.map((a) => a.nilai), ...k.map((a) => a.nilai));
+          if (m[i]) hentak(0, m[i]!.nilai / puncak);
+          if (k[i]) hentak(1, k[i]!.nilai / puncak);
+        }, MENDARAT_MS + i * JEDA_ANAK),
+      );
+    }
+    pewaktu.current.push(window.setTimeout(() => setMendarat(Number.POSITIVE_INFINITY), MENDARAT_MS + 4 * JEDA_ANAK));
+  }
 
   /* Tren: bulan yang ditimbang (atau bulan terakhir) lawan sebelumnya. */
   const kunciKini = periode === "semua" ? kunciBulanDari(new Date()) : periode;
@@ -489,9 +722,11 @@ function Isi() {
 
   const judulPeriode = periode === "semua" ? "Seluruh catatan" : namaBulan(periode);
   /* Kode, bukan nama: kode itulah yang tertulis di anak timbangan yang
-     disentuh, dan nama proyek terpotong di papan laba. */
+     disentuh, dan nama proyek terpotong di pelat laba. */
   const nTanpa = tanpa ? [...masuk, ...keluar].find((a) => a.kunci === tanpa)?.kode : null;
   const kosong = totalMasuk === 0 && totalKeluar === 0;
+  const bulanKini = kunciBulanDari(new Date());
+  const ujung = jejak[jejak.length - 1];
 
   return (
     <div className="nrc">
@@ -515,30 +750,14 @@ function Isi() {
             )}
           </header>
 
-          <div className={`nrc__alat${siap ? " is-siap" : ""}${menimbang ? " is-menimbang" : ""}`} aria-describedby="nrc-ringkas">
-            {/* Jarum marjin di atas poros. */}
-            <div className={`nrc__dial is-${nadaMarjin}`}>
-              <svg viewBox="0 0 120 66" width="120" height="66" aria-hidden="true">
-                <path className="nrc__dialjalur" d="M10 60 A50 50 0 0 1 110 60" />
-                {/* Zona: tipis < 15, cukup 15–30, sehat ≥ 30 (skala −20..60). */}
-                <path className="nrc__dialzona nrc__dialzona--tipis" d="M10 60 A50 50 0 0 1 65.6 10.3" />
-                <path className="nrc__dialzona nrc__dialzona--sehat" d="M89 15.4 A50 50 0 0 1 110 60" />
-                <g style={{ transform: `rotate(${sudutJarum}deg)` }} className="nrc__jarum">
-                  <line x1="60" y1="60" x2="60" y2="18" />
-                </g>
-                <circle cx="60" cy="60" r="5" className="nrc__jarumporos" />
-              </svg>
-              <p>
-                <span>{periode === "semua" ? "Marjin kontrak" : "Marjin kas"}</span>
-                <b>{marjin === null ? "—" : `${Math.round(marjin)}%`}</b>
-                <small>{kataMarjin}</small>
-              </p>
-            </div>
-
-            {/* Tiang dan alas. */}
-            <i className="nrc__tiang" aria-hidden="true" />
+          <div className="nrc__alat" aria-describedby="nrc-ringkas">
+            {/* Alas bertingkat, tiang, muka jarum, pelat laba. */}
+            <i className="nrc__bayang" aria-hidden="true" />
             <i className="nrc__alas" aria-hidden="true" />
-            <div className={`nrc__laba${laba < 0 ? " is-rugi" : ""}`}>
+            <i className="nrc__tiang nrc__tiang--atas" aria-hidden="true" />
+            <i className="nrc__tiang nrc__tiang--bawah" aria-hidden="true" />
+            <MukaJarum marjin={marjinKas} />
+            <div className={`nrc__laba${hitLaba < 0 ? " is-rugi" : ""}`}>
               <span>
                 {nTanpa ? `Laba tanpa ${nTanpa}` : "Laba bersih"}
                 {!nTanpa && tLaba && (
@@ -547,42 +766,65 @@ function Isi() {
                   </LencanaTren>
                 )}
               </span>
-              <b>{formatRupiah(laba)}</b>
+              <b>{formatRupiah(hitLaba)}</b>
             </div>
 
-            {/* Lengan. */}
-            <div className="nrc__lengan" ref={lenganRef} style={{ transform: `translateX(-50%) rotate(${sudut}deg)` }} aria-hidden="true">
+            {/* Lengan, poros, medali studio. */}
+            <div
+              className="nrc__lengan"
+              ref={(el) => {
+                lengan.current = el;
+                lenganUkur.current = el;
+              }}
+              aria-hidden="true"
+            >
               <i className="nrc__lenganujung" />
               <i className="nrc__lenganujung nrc__lenganujung--kanan" />
             </div>
             <i className="nrc__poros" aria-hidden="true" />
+            <span className="nrc__medali" aria-label={studio}>
+              {inisial(studio) || "S"}
+            </span>
 
             {/* Piringan. */}
-            {(["masuk", "keluar"] as const).map((sisi) => {
+            {(["masuk", "keluar"] as const).map((sisi, si) => {
               const anak = sisi === "masuk" ? masuk : keluar;
-              const dy = sisi === "masuk" ? -turun : turun;
-              const total = sisi === "masuk" ? tampakMasuk : tampakKeluar;
+              const total = sisi === "masuk" ? hitMasuk : hitKeluar;
               const t = sisi === "masuk" ? tKas : tBeban;
               return (
-                <div key={sisi} className={`nrc__piring nrc__piring--${sisi}`} style={{ transform: `translateY(${dy}px)` }}>
-                  <i className="nrc__kait" aria-hidden="true" />
-                  <ol className="nrc__tumpuk" key={`${sisi}-${timbang}`} aria-label={sisi === "masuk" ? "Kas masuk per proyek" : "Beban per kategori"}>
-                    {anak.length === 0 && <li className="nrc__anakkosong">{kosong ? "belum ada catatan" : "kosong"}</li>}
-                    {anak.map((a, i) => (
-                      <AnakTimbangan
-                        key={a.kunci}
-                        a={a}
-                        sisi={sisi}
-                        tinggi={tinggiAnak(a)}
-                        urutan={anak.length - i}
-                        jatuh={timbang > 0}
-                        redup={tanpa === a.kunci}
-                        ket={ket}
-                        onSentuh={setTanpa}
-                      />
-                    ))}
-                  </ol>
-                  <i className="nrc__pinggan" aria-hidden="true" />
+                <div
+                  key={sisi}
+                  className={`nrc__piring nrc__piring--${sisi}`}
+                  ref={(el) => {
+                    piring.current[si] = el;
+                  }}
+                >
+                  <div
+                    className="nrc__gantung"
+                    ref={(el) => {
+                      gantung.current[si] = el;
+                    }}
+                  >
+                    <i className="nrc__kait" aria-hidden="true" />
+                    <i className="nrc__busur" aria-hidden="true" />
+                    <ol className="nrc__tumpuk" key={`${sisi}-${timbang}`} aria-label={sisi === "masuk" ? "Kas masuk per proyek" : "Beban per kategori"}>
+                      {anak.length === 0 && <li className="nrc__anakkosong">{kosong ? "belum ada catatan" : "kosong"}</li>}
+                      {anak.map((a, i) => (
+                        <AnakTimbangan
+                          key={a.kunci}
+                          a={a}
+                          sisi={sisi}
+                          tinggi={tinggiAnak(a)}
+                          urutan={i}
+                          jatuh={timbang > 0}
+                          redup={tanpa === a.kunci}
+                          ket={ket}
+                          onSentuh={setTanpa}
+                        />
+                      ))}
+                    </ol>
+                    <i className="nrc__pinggan" aria-hidden="true" />
+                  </div>
                   <p className="nrc__piringlabel">
                     <span>
                       {sisi === "masuk" ? "Kas masuk" : "Beban"}
@@ -598,7 +840,7 @@ function Isi() {
               );
             })}
             <p id="nrc-ringkas" className="sr-only">
-              {`${judulPeriode}: kas masuk ${formatRupiah(tampakMasuk)}, beban ${formatRupiah(tampakKeluar)}, laba bersih ${formatRupiah(laba)}.`}
+              {`${judulPeriode}: kas masuk ${formatRupiah(tampakMasuk)}, beban ${formatRupiah(tampakKeluar)}, laba bersih ${formatRupiah(laba)}${marjinKas === null ? "" : `, marjin kas ${Math.round(marjinKas)}%`}.`}
             </p>
           </div>
         </section>
@@ -606,8 +848,16 @@ function Isi() {
         {/* ---- Lembar neraca (bentuk T) --------------------------------------- */}
         <section className="nrc__lembar" aria-label="Lembar neraca">
           <header className="nrc__lembarkop">
-            <h3>Neraca</h3>
-            <p>{judulPeriode}</p>
+            <div className="nrc__lembarjudul">
+              <h3>Neraca</h3>
+              <p>{judulPeriode}</p>
+            </div>
+            {marjinKontrak !== null && (
+              <p className={`nrc__cap is-${marjinKontrak >= 30 ? "sehat" : marjinKontrak >= 15 ? "cukup" : "tipis"}`}>
+                <span>Marjin kontrak</span>
+                <b>{Math.round(marjinKontrak)}%</b>
+              </p>
+            )}
           </header>
           <div className="nrc__t">
             <div className="nrc__tsisi">
@@ -674,49 +924,91 @@ function Isi() {
           </div>
         </section>
 
-        {/* ---- Catatan timbang bulanan ------------------------------------------ */}
-        <section className="nrc__catatan" aria-label="Catatan timbang per bulan">
+        {/* ---- Pita pencatat bulanan --------------------------------------------- */}
+        <section className="nrc__catatan" aria-label="Pita pencatat per bulan">
           <header className="nrc__kepala">
             <p className="nrc__alis">
-              Catatan timbang <span>· klik bulan untuk menimbangnya</span>
+              Pita pencatat <span>· klik bulan untuk menimbangnya</span>
+            </p>
+            <p className="nrc__legenda" aria-hidden="true">
+              <span>
+                <i className="is-masuk" />
+                kas masuk
+              </span>
+              <span>
+                <i className="is-beban" />
+                beban
+              </span>
+              <span>
+                <i className="is-laba" />
+                laba
+              </span>
             </p>
             <button type="button" className="nrc__kembali" onClick={() => setRentang((r) => (r === 12 ? 24 : 12))}>
               {rentang} bulan
             </button>
           </header>
-          <ol className="nrc__tiket" style={{ "--nrc-n": tiket.length } as CSSProperties}>
-            {tiket.map((t) => {
-              const pilih = periode === t.bulan;
-              const kosongT = !t.kasMasuk && !t.biaya;
-              return (
-                <li key={t.bulan}>
-                  <button
-                    type="button"
-                    className={`nrc__tiketb${pilih ? " is-pilih" : ""}${kosongT ? " is-kosong" : ""}`}
-                    aria-pressed={pilih}
-                    aria-label={`${namaBulan(t.bulan)}: kas masuk ${formatRupiah(t.kasMasuk)}, beban ${formatRupiah(t.biaya)}`}
-                    onClick={() => pilihPeriode(pilih ? "semua" : t.bulan)}
-                    {...ket(() => ({
-                      judul: namaBulan(t.bulan),
-                      baris: [
-                        { label: "Kas masuk", nilai: formatRupiah(t.kasMasuk) },
-                        { label: "Beban", nilai: formatRupiah(t.biaya) },
-                        { label: "Laba", nilai: formatRupiah(t.labaBersih) },
-                      ],
-                    }))}
-                  >
-                    <span className="nrc__tiketatas">
-                      <i style={{ height: `${(t.kasMasuk / puncakTiket) * 100}%` }} />
-                    </span>
-                    <span className="nrc__tiketbawah">
-                      <i style={{ height: `${(t.biaya / puncakTiket) * 100}%` }} />
-                    </span>
-                    <small>{pendekBulan(t.bulan)}</small>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
+          <div className="nrc__pita">
+            <i className="nrc__rol nrc__rol--kiri" aria-hidden="true" />
+            <div className="nrc__grafik">
+              <i className="nrc__kisi" aria-hidden="true" />
+              <ol className="nrc__bulan" style={{ "--nrc-n": pita.length } as CSSProperties}>
+                {pita.map((t) => {
+                  const pilih = periode === t.bulan;
+                  const kosongT = !t.kasMasuk && !t.biaya;
+                  return (
+                    <li key={t.bulan}>
+                      <button
+                        type="button"
+                        className={`nrc__tiketb${pilih ? " is-pilih" : ""}${kosongT ? " is-kosong" : ""}${t.bulan === bulanKini ? " is-kini" : ""}`}
+                        aria-pressed={pilih}
+                        aria-label={`${namaBulan(t.bulan)}: kas masuk ${formatRupiah(t.kasMasuk)}, beban ${formatRupiah(t.biaya)}`}
+                        onClick={() => pilihPeriode(pilih ? "semua" : t.bulan)}
+                        {...ket(() => ({
+                          judul: namaBulan(t.bulan),
+                          baris: [
+                            { label: "Kas masuk", nilai: formatRupiah(t.kasMasuk) },
+                            { label: "Beban", nilai: formatRupiah(t.biaya) },
+                            { label: "Laba", nilai: formatRupiah(t.labaBersih) },
+                          ],
+                        }))}
+                      >
+                        <span className="nrc__tiketatas">
+                          <i style={{ height: `${(t.kasMasuk / puncakPita) * 100}%` }} />
+                        </span>
+                        <span className="nrc__tiketbawah">
+                          <i style={{ height: `${(t.biaya / puncakPita) * 100}%` }} />
+                        </span>
+                        <small>{pendekBulan(t.bulan)}</small>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              {/* Jejak tinta laba + pena di bulan berjalan. */}
+              <div className="nrc__jejak" aria-hidden="true">
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <polyline points={jejak.map((j) => `${j.x.toFixed(2)},${j.y.toFixed(2)}`).join(" ")} />
+                </svg>
+                {jejak.map((j, i) => (
+                  <i
+                    key={pita[i]!.bulan}
+                    className={`nrc__jejaktitik${j.rugi ? " is-rugi" : ""}${periode === pita[i]!.bulan ? " is-pilih" : ""}`}
+                    style={{ left: `${j.x}%`, top: `${j.y}%` }}
+                  />
+                ))}
+                {ujung && (
+                  <span className="nrc__pena" style={{ left: `${ujung.x}%`, top: `${ujung.y}%` }}>
+                    <svg viewBox="0 0 40 12" width="40" height="12">
+                      <path className="nrc__penaujung" d="M0 6 L10 2.5 L10 9.5 Z" />
+                      <rect className="nrc__penabatang" x="10" y="2.5" width="30" height="7" rx="1.5" />
+                    </svg>
+                  </span>
+                )}
+              </div>
+            </div>
+            <i className="nrc__rol nrc__rol--kanan" aria-hidden="true" />
+          </div>
         </section>
 
         {/* ---- Transaksi & tenggat ---------------------------------------------- */}
