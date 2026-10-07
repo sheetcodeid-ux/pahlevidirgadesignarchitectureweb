@@ -14,6 +14,7 @@ import { DotsThree, Sliders, Plus, CaretDown, NavReceipt, NavArrowsLeftRight, Ch
 import {
   daftarProyek,
   daftarPembayaran,
+  semuaPembayaran,
   catatPembayaran,
   ambilSettings,
   bacaCache,
@@ -90,7 +91,7 @@ const LABEL_JENIS: Record<string, string> = Object.fromEntries(JENIS.map((j) => 
 
 /** Waktu baris baru "ditulis" sebelum bukti dibuka. */
 const TULIS_MS = 1100;
-const TARIK_MS = 640;
+const TARIK_MS = 860;
 
 /**
  * Jenis DITEBAK dari angkanya, dengan aturan yang sama seperti dialog
@@ -258,6 +259,10 @@ function Isi() {
   /* Bukti yang sedang dibuka: otomatis sesudah pembayaran tercatat (itu
      saatnya tautan dikirim ke klien), atau dari baris di kartu. */
   const [bukti, setBukti] = useState<Pembayaran | null>(null);
+  /* Pembayaran lintas proyek — untuk baris "terakhir dibayar" yang tampak
+     saat puncak kartu di kotak diangkat. Kunci `bayar-semua` milik
+     halaman lain; di sini cuma dibaca (jebakan #8). */
+  const [semua, setSemua] = useState<Pembayaran[] | null>(() => bacaCache<Pembayaran[]>("bayar-semua"));
   /* Nama studio dari Info Studio — kunci `settings` milik halaman itu,
      di sini cuma dibaca (jebakan #8). */
   const [studio, setStudio] = useState(() => bacaCache<StudioSettings>("settings")?.studioName || "Studio");
@@ -268,6 +273,10 @@ function Isi() {
   const [lunasBaru, setLunasBaru] = useState(false);
   const kartuRef = useRef<HTMLElement>(null);
   const barisRef = useRef<HTMLOListElement>(null);
+  /* Lapisan tempat salinan kartu lama dikembalikan ke kotak. React tidak
+     pernah merender anak di sini, jadi salinan DOM-nya aman ditempel. */
+  const lapisRef = useRef<HTMLDivElement>(null);
+  const deretRef = useRef<HTMLOListElement>(null);
   /* Jarak tarik dibaca saat diklik, dipasang sesudah kartu baru terpasang. */
   const jarak = useRef<{ dx: number; dy: number; sk: number } | null>(null);
 
@@ -282,6 +291,9 @@ function Isi() {
       .catch(() => setProyek((l) => l ?? []));
     ambilSettings()
       .then((s) => setStudio(s.studioName || "Studio"))
+      .catch(() => {});
+    semuaPembayaran()
+      .then(setSemua)
       .catch(() => {});
   }, []);
 
@@ -323,6 +335,36 @@ function Isi() {
         (p.city ?? "").toLowerCase().includes(q),
     );
   }, [urut, cari]);
+
+  /* Pembayaran terakhir dan banyaknya per proyek. */
+  const riwayat = useMemo(() => {
+    const m = new Map<string, { akhir: Pembayaran; n: number }>();
+    for (const b of semua ?? []) {
+      const l = m.get(b.projectId);
+      if (!l) m.set(b.projectId, { akhir: b, n: 1 });
+      else {
+        l.n += 1;
+        if (b.paidAt > l.akhir.paidAt) l.akhir = b;
+      }
+    }
+    return m;
+  }, [semua]);
+
+  /* Isi kotak: kartu pemisah huruf (seperti kotak kartu indeks sungguhan)
+     sebelum kartu pertama tiap huruf awal — hanya saat tidak mencari. */
+  const deret = useMemo(() => {
+    const out: ({ jenis: "huruf"; huruf: string } | { jenis: "kartu"; p: Proyek })[] = [];
+    let akhir = "";
+    for (const p of tersaring) {
+      const h = (p.title.trim()[0] ?? "#").toUpperCase();
+      if (!cari.trim() && h !== akhir) {
+        out.push({ jenis: "huruf", huruf: h });
+        akhir = h;
+      }
+      out.push({ jenis: "kartu", p });
+    }
+    return out;
+  }, [tersaring, cari]);
 
   const piutang = useMemo(
     () => urut.reduce((n, p) => n + Math.max(0, (p.contractValue ?? 0) - (p.paidTotal ?? 0)), 0),
@@ -368,6 +410,18 @@ function Isi() {
     if (el && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
   }, [aktif?.id, baris.length]);
 
+  /* Kotak dilihat dari DEPAN: kalau kartunya lebih banyak dari tingginya,
+     yang tampak kartu paling depan (dasar deret), bukan yang paling
+     belakang — tanpa ini kartu depan tertutup muka kotak. Kartu pengganti
+     "Di meja" tetap dijaga kelihatan. Sekali per perubahan isi kotak. */
+  useLayoutEffect(() => {
+    const el = deretRef.current;
+    if (!el || el.scrollHeight <= el.clientHeight) return;
+    el.scrollTop = el.scrollHeight;
+    const meja = el.querySelector<HTMLElement>(".is-meja");
+    if (meja && meja.offsetTop - 18 < el.scrollTop) el.scrollTop = meja.offsetTop - 18;
+  }, [deret.length]);
+
   /* Kartu baru terpasang (key = id proyek): pasang jarak tariknya. */
   useLayoutEffect(() => {
     const kartu = kartuRef.current;
@@ -405,6 +459,7 @@ function Isi() {
     if (dari && kartu && geraknya()) {
       const a = dari.getBoundingClientRect();
       const b = kartu.getBoundingClientRect();
+      kembalikan(kartu, b);
       /* Dari tengah-bawah ke tengah-bawah: kartu berporos di tepi bawahnya. */
       jarak.current = {
         dx: Math.round(a.left + a.width / 2 - (b.left + b.width / 2)),
@@ -425,6 +480,34 @@ function Isi() {
     setJenis(null);
     setBaruId(null);
     setLunasBaru(false);
+  }
+
+  /* Kartu lama DIKEMBALIKAN ke slotnya (kartu pengganti "Di meja") sambil
+     kartu baru ditarik keluar: salinan DOM-nya terbang ke slot itu, berdiri,
+     lalu hilang di baliknya. Dibaca sekali, saat diklik. */
+  function kembalikan(kartu: HTMLElement, b: DOMRect) {
+    const lapis = lapisRef.current;
+    const slot = document.querySelector<HTMLElement>(".kpb__slot.is-meja .kpb__puncak");
+    if (!lapis || !slot) return;
+    const l = lapis.getBoundingClientRect();
+    const t = slot.getBoundingClientRect();
+    const klon = kartu.cloneNode(true) as HTMLElement;
+    klon.classList.remove("is-tarik");
+    klon.classList.add("kpb__kartu--kembali");
+    klon.setAttribute("inert", "");
+    klon.setAttribute("aria-hidden", "true");
+    klon.querySelectorAll("[id]").forEach((e) => e.removeAttribute("id"));
+    klon.style.left = `${b.left - l.left}px`;
+    klon.style.top = `${b.top - l.top}px`;
+    klon.style.width = `${b.width}px`;
+    klon.style.height = `${b.height}px`;
+    klon.style.setProperty("--kpb-dx", `${Math.round(t.left + t.width / 2 - (b.left + b.width / 2))}px`);
+    klon.style.setProperty("--kpb-dy", `${Math.round(t.bottom - b.bottom)}px`);
+    klon.style.setProperty("--kpb-sk", (t.width / Math.max(1, b.width)).toFixed(3));
+    lapis.replaceChildren(klon);
+    const buang = () => klon.remove();
+    klon.addEventListener("animationend", buang, { once: true });
+    setTimeout(buang, 700);
   }
 
   async function simpan() {
@@ -457,6 +540,9 @@ function Isi() {
       /* Daftar proyek ikut disegarkan: `paidTotal` di kotak kartu baru saja
          berubah, dan angka basi di layar persis keluhan yang membuat tombol
          Terbitkan ada. */
+      semuaPembayaran()
+        .then(setSemua)
+        .catch(() => {});
       const [b, d] = await Promise.all([daftarPembayaran(proyekId), daftarProyek()]);
       tulisCache(`bayar:${proyekId}`, b);
       tulisCache("proyek", d);
@@ -505,12 +591,31 @@ function Isi() {
           </div>
 
           <div className="kpb__kotakkartu">
-            <ol className="kpb__deret">
-              {tersaring.map((p) => {
+            {/* Dinding samping kotak — makin dekat makin lebar. */}
+            <i className="kpb__dinding kpb__dinding--kiri" aria-hidden="true" />
+            <i className="kpb__dinding kpb__dinding--kanan" aria-hidden="true" />
+            <ol className="kpb__deret" ref={deretRef}>
+              {deret.map((d, j) => {
+                /* Kedalaman: kartu paling depan 0; yang di belakang sedikit
+                   lebih sempit dan lebih gelap (dibatasi 6). */
+                const dalam = Math.min(6, deret.length - 1 - j);
+                if (d.jenis === "huruf") {
+                  return (
+                    <li
+                      key={`huruf-${d.huruf}`}
+                      className="kpb__slot kpb__pemisah"
+                      style={{ "--kpb-dalam": dalam, zIndex: j + 1 } as CSSProperties}
+                      aria-hidden="true"
+                    >
+                      <span className="kpb__tab">{d.huruf}</span>
+                    </li>
+                  );
+                }
+                const p = d.p;
                 const i = urut.indexOf(p);
                 const k = p.contractValue ?? 0;
                 const s = Math.max(0, k - (p.paidTotal ?? 0));
-                const gaya = { "--kpb-tab": i % 3, zIndex: i + 1 } as CSSProperties;
+                const gaya = { "--kpb-tab": i % 3, "--kpb-dalam": dalam, zIndex: j + 1 } as CSSProperties;
                 if (aktif?.id === p.id) {
                   return (
                     <li key={p.id} className="kpb__slot is-meja" style={gaya} aria-current="true">
@@ -522,6 +627,7 @@ function Isi() {
                     </li>
                   );
                 }
+                const r = riwayat.get(p.id);
                 return (
                   <li key={p.id} className={`kpb__slot${k > 0 && s === 0 ? " is-lunas" : ""}${k ? "" : " is-polos"}`} style={gaya}>
                     <button type="button" className="kpb__tarik" onClick={(e) => pilihProyek(p, e.currentTarget)}>
@@ -546,6 +652,16 @@ function Isi() {
                           </i>
                         )}
                       </span>
+                      {/* Badan kartu yang tampak saat puncaknya diangkat. */}
+                      <span className="kpb__intip">
+                        {r ? (
+                          <>
+                            terakhir <b>{tanggalPendek(r.akhir.paidAt)}</b> · {formatRupiah(r.akhir.amount)} · {r.n}× bayar
+                          </>
+                        ) : (
+                          "belum ada pembayaran"
+                        )}
+                      </span>
                     </button>
                   </li>
                 );
@@ -557,6 +673,8 @@ function Isi() {
             {/* Muka kotak: label berbingkai logam dengan data sungguhan. */}
             <div className="kpb__muka">
               <div className="kpb__label">
+                <i className="kpb__sekrup" aria-hidden="true" />
+                <i className="kpb__sekrup kpb__sekrup--kanan" aria-hidden="true" />
                 <span>Pembayaran klien</span>
                 <b>{formatRupiah(piutang)}</b>
                 <small>belum dibayar · {urut.length} kartu</small>
@@ -572,6 +690,7 @@ function Isi() {
 
         {/* ---- Meja: kartu yang sedang ditulis -------------------------------- */}
         <section className="kpb__meja" aria-label="Kartu pembayaran di meja">
+          <div className="kpb__lapis" ref={lapisRef} aria-hidden="true" />
           <article
             ref={kartuRef}
             key={aktif?.id ?? "kosong"}
@@ -583,10 +702,12 @@ function Isi() {
             <header className="kpb__kop">
               <div className="kpb__judul">
                 <h3>Kartu pembayaran</h3>
-                <p>
-                  {studio} · No. <b>KP-{kode}</b>
-                </p>
+                <p>{studio} · kartu klien, disimpan di kotak kartu</p>
               </div>
+              <dl className="kpb__nilai kpb__nomor">
+                <dt>No. kartu</dt>
+                <dd>KP-{kode}</dd>
+              </dl>
               <dl className="kpb__nilai">
                 <dt>Nilai kontrak</dt>
                 <dd>{kontrak ? formatRupiah(kontrak) : "belum berkontrak"}</dd>
@@ -765,10 +886,16 @@ function Isi() {
                 <b>{formatRupiah(sudahTampil)}</b>
               </div>
               <div className="kpb__mistar" aria-hidden="true">
+                {kontrak > 0 && (
+                  <span className="kpb__penanda" style={{ "--kpb-pos": `${persen + persenKetik}%` } as CSSProperties}>
+                    {Math.round(persen + persenKetik)}%{persenKetik > 0 && <small> sesudah ini</small>}
+                  </span>
+                )}
                 <div className="kpb__mistarlintas">
                   <span className="kpb__mistarisi" style={{ width: `${persen}%` }} />
                   <span className="kpb__mistarketik" style={{ left: `${persen}%`, width: `${persenKetik}%` }} />
                 </div>
+                <i className="kpb__gerigi" />
                 <div className="kpb__mistarangka">
                   <span>0</span>
                   <span>25</span>
@@ -778,12 +905,12 @@ function Isi() {
                 </div>
               </div>
               <div className="kpb__jumlah kpb__jumlah--sisa">
-                <span>Sisa kontrak · {kontrak ? `${Math.round(persen)}% masuk` : "tanpa kontrak"}</span>
+                <span>Sisa kontrak{kontrak ? "" : " · tanpa kontrak"}</span>
                 <b>{kontrak ? formatRupiah(sisaTampil) : "—"}</b>
               </div>
               <div className={`kpb__capslot${lunasBaru ? " is-baru" : ""}`}>
                 {lunas && tglLunas ? (
-                  <CapLunas tanggal={tglLunas} studio={studioInisial} id={`kpb-${aktif?.id}`} kelas="kpb" ukuran={52} />
+                  <CapLunas tanggal={tglLunas} studio={studioInisial} id={`kpb-${aktif?.id}`} kelas="kpb" ukuran={60} />
                 ) : (
                   <span className="kpb__capkosong">cap lunas</span>
                 )}
