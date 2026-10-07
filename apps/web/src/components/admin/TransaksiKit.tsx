@@ -1,18 +1,17 @@
 import { SorotTeks } from "../kit/Tampilan";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider, useToast } from "../kit/Toast";
-import { KelompokTombol } from "../kit/Formulir";
 import { DialogBukti } from "./buktiKit";
 import { DialogBiaya } from "./biayaKit";
-import { SelDua, useUrutTabel, type KolomTabel } from "../kit/Tabel";
-import { Lencana } from "../kit/Lencana";
+import { urutkan, type Urutan } from "../kit/Tabel";
 import { Cari } from "../kit/Isian";
-import { Tombol } from "../kit/Tombol";
+import { PilihMenu } from "../kit/Formulir";
 import { Ikon } from "../kit/Ikon";
-import { CalendarBlank, DownloadSimple, CoinIn, CoinOut, Ruler, CopySimple } from "../kit/ikon";
-import { DaftarKit, PilihTombol } from "./daftarKit";
+import { Keterangan, pemberiKet, type KabarKartu } from "../kit/kartuGrafik";
+import { CaretDown, CaretLeft, CaretRight, CopySimple, DownloadSimple } from "../kit/ikon";
 import {
+  ambilSettings,
   semuaPembayaran,
   semuaBiaya,
   daftarProyek,
@@ -24,99 +23,88 @@ import {
   type Pembayaran,
   type BiayaProyek,
   type Proyek,
+  type StudioSettings,
 } from "../../lib/admin";
 import { formatRupiah } from "../../lib/format";
 
 /* =============================================================================
-   Semua Transaksi — frame Figma "13. Transactions".
+   Semua Transaksi — REKENING KORAN STUDIO.
 
-   Halaman ini menggabungkan TIGA tabel database jadi satu daftar berurut
-   waktu: `project_payments` (uang masuk), `project_costs` (uang keluar),
-   dan `studio_ledger` (kas studio di luar proyek, dua arah — fase 4).
-   Itu persis yang digambar framenya — kolom Amount di sana memuat angka
-   bertanda plus DAN minus dalam satu tabel.
+   Halaman ini menggabungkan TIGA tabel jadi satu daftar berurut waktu:
+   `project_payments` (pembayaran klien, uang masuk), `project_costs` (biaya
+   proyek, uang keluar), dan `studio_ledger` (kas studio di luar proyek, dua
+   arah). Benda dunia nyata untuk "semua uang yang keluar-masuk, berurut,
+   dengan saldonya" adalah REKENING KORAN: cetakan printer dot-matrix di
+   kertas continuous form bergaris hijau, berlubang traktor di kedua tepi,
+   terlipat zig-zag per lembar. Halamannya berperilaku seperti benda itu:
 
-   Pemetaannya:
+   - SALDO BERJALAN di tiap baris (seluruh catatan, ketiga sumber), saldo
+     awal periode di puncak lembar pertama dan SALDO AKHIR bergaris ganda
+     di dasar lembar terakhir. Mutasi ditulis seperti bank: angka + CR/DB.
+   - Urutannya KRONOLOGIS naik seperti rekening koran sungguhan, dipotong
+     per lembar DARI BELAKANG supaya lembar terbaru selalu penuh, dan yang
+     dibuka lembar terbaru. Lembar sebelumnya terlipat di atas (ujungnya
+     mengintip), lembar sesudahnya bertumpuk di bawah.
+   - Banyaknya baris per lembar = ruang yang ada (diukur sekali per
+     perubahan ukuran), bukan angka tetap — satu layar tetap satu layar.
+   - Kolom CENTANG di tepi kiri = centang pena saat rekonsiliasi. Yang
+     memakainya tombol Unduh/Salin: kosong = semua baris tersaring.
+   - SATU-SATUNYA gerak 3D: berganti lembar. Maju = lembar ini terangkat
+     dan terlipat ke belakang di perforasi atasnya; mundur = lembar
+     sebelumnya terlipat turun menutupinya. Diam bila gerak dikurangi.
 
-     Coinest             Halaman ini
-     -----------------   ----------------------------------------------------
-     Transaction Name    keterangan + jenis/kategori di bawahnya
-     Account             proyek
-     Transaction ID      penerima (`receiver`) / dibayar ke (`team_member`)
-     Date & Time         tanggal + nama hari
-     Amount              +rupiah hijau / -rupiah merah
-     Note                catatan (`note`) — biaya tidak punya, jadi "—"
-     Status              Masuk / Keluar
-     All Category        jenis: semua / masuk / keluar
-     All Account         proyek
-     Rentang tanggal     bulan ini / 3 bulan / 12 bulan / semua
-     Download            unduh CSV
+   Kiri, di papan: ringkasan mutasi (saldo awal/akhir, kredit, debet),
+   grafik mutasi per bulan yang tersorot dua arah dengan baris lembar, dan
+   saringan (periode, CR/DB, sumber, proyek, cari) + ekspor.
 
-   Kolom "Transaction ID" TIDAK diisi id barisnya. Id di sini uuid 36 huruf
-   yang tidak pernah dibacakan siapa pun, sementara "siapa yang menerima
-   atau dibayar" adalah pertanyaan yang memang ditanyakan tentang satu baris
-   transaksi — dan tidak dijawab kolom lain di halaman ini.
-
-   Kotak centangnya MEMILIH, dan yang memakai pilihan itu tombol Unduh:
-   kosong berarti seluruh baris tersaring, terisi berarti yang tercentang
-   saja. Ia sengaja TIDAK dipasangi aksi hapus massal — menghapus catatan
-   uang dalam jumlah banyak dengan satu klik adalah perbuatan yang paling
-   bikin panik kalau salah, dan tidak ada satu pun permintaan untuk itu.
+   Nama pembayaran membuka BUKTI pembayarannya, biaya membuka RINCIANNYA
+   (hapus ada di sana), kas studio menautkan ke halaman Kas Studio.
+   Kunci cache `kas-studio` dan `settings` milik halaman lain — di sini
+   cuma DIBACA (jebakan #8).
    ============================================================================= */
 
-interface Transaksi {
+type Sumber = "klien" | "biaya" | "kas";
+
+interface Mutasi {
   kunci: string;
-  masuk: boolean;
+  sumber: Sumber;
+  kredit: boolean;
   nama: string;
   sub: string;
-  proyek: string;
-  orang: string;
+  proyek: string | null;
+  orang: string | null;
   waktu: string;
+  /** Milidetik untuk MENGURUTKAN — tanggal tanpa jam dianggap akhir hari,
+      supaya ia tidak selalu kalah dari stempel waktu di hari yang sama. */
+  ms: number;
+  /** Milidetik awal hari — untuk menyaring rentang dan mengelompokkan. */
+  hari: number;
   nominal: number;
-  catatan: string;
-  /** Baris pembayaran aslinya — namanya membuka bukti pembayaran. */
+  catatan: string | null;
   bayar?: Pembayaran;
-  /** Baris biaya aslinya — namanya membuka rinciannya (dan hapus). */
   biaya?: BiayaProyek;
-  /** Catatan kas studio di luar proyek — diubah di halaman Kas Studio. */
   kas?: EntriKas;
 }
 
-const LABEL_JENIS: Record<string, string> = {
-  dp: "DP",
-  termin: "Termin",
-  pelunasan: "Pelunasan",
-};
-const LABEL_METODE: Record<string, string> = {
-  tunai: "Tunai",
-  transfer: "Transfer",
-  qris: "QRIS",
-  lainnya: "Lainnya",
-};
+const LABEL_JENIS: Record<string, string> = { dp: "DP", termin: "Termin", pelunasan: "Pelunasan" };
+const LABEL_METODE: Record<string, string> = { tunai: "Tunai", transfer: "Transfer", qris: "QRIS", lainnya: "Lainnya" };
 const LABEL_KATEGORI: Record<string, string> = {
   freelancer: "Freelancer",
   operasional: "Operasional",
   prinsipal: "Prinsipal",
   lainnya: "Lainnya",
 };
+const SANDI: Record<Sumber, string> = { klien: "KLIEN", biaya: "BIAYA", kas: "KAS" };
+const LABEL_SUMBER: Record<Sumber, string> = { klien: "Pembayaran klien", biaya: "Biaya proyek", kas: "Kas studio" };
 
-const HARI = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 const BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-
-function tanggalBaris(iso: string): { atas: string; bawah: string } {
-  const d = new Date(iso.length === 10 ? iso + "T00:00:00" : iso);
-  if (Number.isNaN(d.getTime())) return { atas: "—", bawah: "" };
-  return {
-    atas: `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`,
-    bawah: HARI[d.getDay()]!,
-  };
-}
 
 const RENTANG = [
   { nilai: "1", label: "Bulan ini" },
-  { nilai: "3", label: "3 bulan terakhir" },
-  { nilai: "12", label: "12 bulan terakhir" },
-  { nilai: "0", label: "Semua waktu" },
+  { nilai: "3", label: "3 bulan" },
+  { nilai: "12", label: "12 bulan" },
+  { nilai: "0", label: "Semua" },
 ];
 
 /** Batas bawah rentang, atau null untuk "semua waktu". */
@@ -129,49 +117,84 @@ function batasRentang(bulan: number): number | null {
   return d.getTime();
 }
 
+function keMs(iso: string, akhirHari: boolean): number {
+  return new Date(iso.length === 10 ? iso + (akhirHari ? "T23:59:59" : "T00:00:00") : iso).getTime();
+}
+const tglPendek = (ms: number) => {
+  const d = new Date(ms);
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+const tglPanjang = (ms: number) => {
+  const d = new Date(ms);
+  return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+};
+const kunciBulan = (ms: number) => {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+const namaBulan = (k: string) => {
+  const [t, b] = k.split("-").map(Number);
+  return `${BULAN[(b ?? 1) - 1]} ${t}`;
+};
+/** Angka rekening koran: tanpa "Rp" (kolomnya sudah menyebut mata uang). */
+const angka = (n: number) => Math.abs(n).toLocaleString("id-ID");
+const saldoTeks = (n: number) => `${n < 0 ? "−" : ""}${angka(n)}`;
+const rupiahSaldo = (n: number) => (n < 0 ? `−${formatRupiah(-n)}` : formatRupiah(n));
+
+const pakaiGerak = () =>
+  typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 /**
- * Satu baris CSV.
- *
- * Tanda kutip DIGANDAKAN, bukan dibuang: nama proyek studio ini memuat
- * tanda kutip sesekali ("Rumah 'Tropis' Sungai Raya"), dan membuangnya
- * mengubah data yang diunduh. Pemisahnya titik koma karena Excel
- * berlokal Indonesia membaca koma sebagai desimal dan menaruh seluruh
- * baris di satu sel.
+ * Satu sel CSV. Tanda kutip DIGANDAKAN, bukan dibuang (nama proyek memuat
+ * tanda kutip sesekali); pemisahnya titik koma karena Excel berlokal
+ * Indonesia membaca koma sebagai desimal.
  */
 function selCsv(v: string | number): string {
   const t = String(v);
   return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
 }
 
+/** Lembar diukur hanya saat kerangka satu-layar berlaku; di bawahnya isi
+    halaman menggulir, dan tinggi wadah baris mengikuti isinya sendiri. */
+const SATU_LAYAR = "(min-width: 1288.02px) and (min-height: 600px)";
+const BARIS_TETAP = 12;
+
 function Isi() {
   const toast = useToast();
-  const [bayar, setBayar] = useState<Pembayaran[] | null>(() =>
-    bacaCache<Pembayaran[]>("bayar-semua"),
-  );
-  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() =>
-    bacaCache<BiayaProyek[]>("biaya-semua"),
-  );
+  const kabar: KabarKartu = useRef(null);
+  const ket = pemberiKet(kabar);
+  const [bayar, setBayar] = useState<Pembayaran[] | null>(() => bacaCache<Pembayaran[]>("bayar-semua"));
+  const [biaya, setBiaya] = useState<BiayaProyek[] | null>(() => bacaCache<BiayaProyek[]>("biaya-semua"));
   const [proyek, setProyek] = useState<Proyek[] | null>(() => bacaCache<Proyek[]>("proyek"));
-  /* Kas studio cuma DIBACA di sini: kunci cache-nya milik halaman Kas Studio
-     (jebakan #8 — yang menulis cache satu kunci hanya pemilik daftarnya). */
   const [kas, setKas] = useState<EntriKas[] | null>(() => bacaCache<EntriKas[]>("kas-studio"));
+  const [studio, setStudio] = useState(() => bacaCache<StudioSettings>("settings")?.studioName || "Studio");
 
   const [cari, setCari] = useState("");
-  const [jenis, setJenis] = useState<"semua" | "masuk" | "keluar">("semua");
+  const [arah, setArah] = useState<"semua" | "masuk" | "keluar">("semua");
+  const [sumber, setSumber] = useState<"semua" | Sumber>("semua");
   const [filterProyek, setFilterProyek] = useState("semua");
   const [rentang, setRentang] = useState("12");
+  const [urutan, setUrutan] = useState<Urutan | null>(null);
   const [terpilih, setTerpilih] = useState<string[]>([]);
   const [bukti, setBukti] = useState<Pembayaran | null>(null);
   const [rinci, setRinci] = useState<BiayaProyek | null>(null);
+  /** Bulan yang disorot — dari baris lembar atau dari batang grafik. */
+  const [sorot, setSorot] = useState<string | null>(null);
 
-  /* "Lihat semua" dari Terima Pembayaran dan Catat Pengeluaran membawa
-     ?jenis=masuk|keluar. Dibaca di efek, bukan di useState: halaman ini
-     dirender di server tanpa URL, dan membacanya saat render memecah
-     hidrasi. */
+  /* "Lihat semua" dari Terima Pembayaran / Catat Pengeluaran membawa
+     ?jenis=masuk|keluar. Dibaca di efek: halaman dirender tanpa URL. */
   useEffect(() => {
     const j = new URLSearchParams(window.location.search).get("jenis");
-    if (j === "masuk" || j === "keluar") setJenis(j);
+    if (j === "masuk" || j === "keluar") setArah(j);
   }, []);
+
+  const muatBiaya = () =>
+    semuaBiaya()
+      .then((d) => {
+        tulisCache("biaya-semua", d);
+        setBiaya(d);
+      })
+      .catch(() => setBiaya((l) => l ?? []));
 
   useEffect(() => {
     semuaPembayaran()
@@ -180,12 +203,7 @@ function Isi() {
         setBayar(d);
       })
       .catch(() => setBayar((l) => l ?? []));
-    semuaBiaya()
-      .then((d) => {
-        tulisCache("biaya-semua", d);
-        setBiaya(d);
-      })
-      .catch(() => setBiaya((l) => l ?? []));
+    muatBiaya();
     daftarProyek()
       .then((d) => {
         tulisCache("proyek", d);
@@ -195,97 +213,243 @@ function Isi() {
     daftarKas()
       .then(setKas)
       .catch(() => setKas((l) => l ?? []));
+    ambilSettings()
+      .then((s) => setStudio(s.studioName || "Studio"))
+      .catch(() => {});
   }, []);
 
-  const semua = useMemo<Transaksi[]>(() => {
-    const masuk = (bayar ?? []).map<Transaksi>((b) => ({
-      kunci: `p:${b.id}`,
-      masuk: true,
-      nama: `Pembayaran ${LABEL_JENIS[b.kind] ?? b.kind}`,
-      sub: LABEL_METODE[b.method] ?? b.method,
-      proyek: b.projectTitle ?? "—",
-      orang: b.receiver || "—",
-      waktu: b.paidAt,
-      nominal: b.amount,
-      catatan: b.note || "—",
-      bayar: b,
-    }));
-    const keluar = (biaya ?? []).map<Transaksi>((k) => ({
-      kunci: `b:${k.id}`,
-      masuk: false,
-      nama: k.label,
-      sub: LABEL_KATEGORI[k.category] ?? k.category,
-      proyek: k.projectTitle ?? "—",
-      orang: k.teamMemberName || "—",
-      waktu: k.incurredOn,
-      nominal: k.amount,
-      /* Biaya tidak punya kolom catatan — keterangannya sudah jadi nama
-         barisnya. Mengisi kolom ini dengan keterangan yang sama berarti
-         satu kalimat dicetak dua kali dalam satu baris. */
-      catatan: "—",
-      biaya: k,
-    }));
-    /* Dibandingkan sebagai ANGKA, bukan sebagai string. `paid_at` timestamptz
-       ("2026-09-29T02:17:36.031Z") dan `incurred_on` date ("2026-09-29")
-       tidak bisa diurutkan bersama secara leksikografis: yang kedua selalu
-       kalah dari yang pertama pada tanggal yang sama, dan lebih buruk, "Z"
-       lawan tanpa-Z membuat urutannya tidak berarti lintas tahun. */
-    const waktuKe = (t: Transaksi) =>
-      new Date(t.waktu.length === 10 ? t.waktu + "T23:59:59" : t.waktu).getTime();
-    /* Kas studio (sheet KELUAR MASUK): uang di luar proyek desain. Yang
-       tidak terkait proyek dikelompokkan sebagai "Kas studio" di kolom
-       Proyek, supaya saringan proyek bisa memisahkannya. */
-    const studio = (kas ?? []).map<Transaksi>((k) => ({
-      kunci: `k:${k.id}`,
-      masuk: k.direction === "masuk",
-      nama: k.label,
-      sub: LABEL_KATEGORI_KAS[k.category],
-      proyek: k.projectTitle ?? "Kas studio",
-      orang: k.counterparty || "—",
-      waktu: k.occurredOn,
-      nominal: k.amount,
-      catatan: k.note || "—",
-      kas: k,
-    }));
-    return [...masuk, ...keluar, ...studio].sort((a, b) => waktuKe(b) - waktuKe(a));
+  /* ---- Seluruh mutasi, kronologis naik, dengan saldo berjalan --------------- */
+  const buku = useMemo(() => {
+    const semua: Mutasi[] = [
+      ...(bayar ?? []).map<Mutasi>((b) => ({
+        kunci: `p:${b.id}`,
+        sumber: "klien",
+        kredit: true,
+        nama: `Pembayaran ${LABEL_JENIS[b.kind] ?? b.kind}`,
+        sub: LABEL_METODE[b.method] ?? b.method,
+        proyek: b.projectTitle ?? null,
+        orang: b.receiver || null,
+        waktu: b.paidAt,
+        ms: keMs(b.paidAt, true),
+        hari: keMs(b.paidAt.slice(0, 10), false),
+        nominal: b.amount,
+        catatan: b.note || null,
+        bayar: b,
+      })),
+      ...(biaya ?? []).map<Mutasi>((k) => ({
+        kunci: `b:${k.id}`,
+        sumber: "biaya",
+        kredit: false,
+        nama: k.label,
+        sub: LABEL_KATEGORI[k.category] ?? k.category,
+        proyek: k.projectTitle ?? null,
+        orang: k.teamMemberName || null,
+        waktu: k.incurredOn,
+        ms: keMs(k.incurredOn, true),
+        hari: keMs(k.incurredOn, false),
+        nominal: k.amount,
+        catatan: null,
+        biaya: k,
+      })),
+      ...(kas ?? []).map<Mutasi>((k) => ({
+        kunci: `k:${k.id}`,
+        sumber: "kas",
+        kredit: k.direction === "masuk",
+        nama: k.label,
+        sub: LABEL_KATEGORI_KAS[k.category],
+        /* Yang tidak terkait proyek dikelompokkan sebagai "Kas studio",
+           supaya saringan proyek bisa memisahkannya. */
+        proyek: k.projectTitle ?? "Kas studio",
+        orang: k.counterparty || null,
+        waktu: k.occurredOn,
+        ms: keMs(k.occurredOn, true),
+        hari: keMs(k.occurredOn, false),
+        nominal: k.amount,
+        catatan: k.note || null,
+        kas: k,
+      })),
+    ];
+    /* Dibandingkan sebagai ANGKA: `paid_at` timestamptz dan `incurred_on`
+       date tidak bisa diurutkan bersama sebagai teks. Seri = kunci, supaya
+       urutannya stabil antarmuat. */
+    const naik = semua.sort((a, b) => a.ms - b.ms || a.kunci.localeCompare(b.kunci));
+    const saldo = new Map<string, number>();
+    let s = 0;
+    for (const m of naik) {
+      s += m.kredit ? m.nominal : -m.nominal;
+      saldo.set(m.kunci, s);
+    }
+    return { naik, saldo, total: s };
   }, [bayar, biaya, kas]);
+
+  const batas = batasRentang(Number(rentang));
+  const dalamRentang = useMemo(
+    () => buku.naik.filter((m) => batas === null || !Number.isFinite(m.hari) || m.hari >= batas),
+    [buku, batas],
+  );
+  /** Saldo seluruh catatan sebelum periode dibuka. */
+  const saldoAwal = useMemo(() => {
+    if (batas === null) return 0;
+    let s = 0;
+    for (const m of buku.naik) if (m.hari < batas) s = buku.saldo.get(m.kunci)!;
+    return s;
+  }, [buku, batas]);
 
   const tersaring = useMemo(() => {
     const q = cari.trim().toLowerCase();
-    const batas = batasRentang(Number(rentang));
-    return semua.filter((t) => {
-      if (jenis === "masuk" && !t.masuk) return false;
-      if (jenis === "keluar" && t.masuk) return false;
-      if (filterProyek !== "semua" && t.proyek !== filterProyek) return false;
-      if (batas !== null) {
-        const w = new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu).getTime();
-        if (Number.isFinite(w) && w < batas) return false;
-      }
+    return dalamRentang.filter((m) => {
+      if (arah === "masuk" && !m.kredit) return false;
+      if (arah === "keluar" && m.kredit) return false;
+      if (sumber !== "semua" && m.sumber !== sumber) return false;
+      if (filterProyek !== "semua" && m.proyek !== filterProyek) return false;
       if (!q) return true;
-      return (
-        t.nama.toLowerCase().includes(q) ||
-        t.proyek.toLowerCase().includes(q) ||
-        t.orang.toLowerCase().includes(q) ||
-        t.catatan.toLowerCase().includes(q)
-      );
+      return [m.nama, m.sub, m.proyek, m.orang, m.catatan, SANDI[m.sumber]].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [semua, cari, jenis, filterProyek, rentang]);
+  }, [dalamRentang, cari, arah, sumber, filterProyek]);
 
-  /** Baris yang diekspor: yang dicentang, atau semua yang lolos saringan. */
+  /* Urutan klik-judul berlaku pada SELURUH hasil saringan sebelum dipotong
+     per lembar. Tanpa urutan: kronologis naik, seperti rekening koran. */
+  const terurut = useMemo(
+    () =>
+      urutkan(tersaring, urutan, [
+        (m) => m.ms,
+        (m) => SANDI[m.sumber],
+        (m) => m.nama,
+        (m) => m.proyek,
+        (m) => (m.kredit ? m.nominal : -m.nominal),
+      ]),
+    [tersaring, urutan],
+  );
+
+  const kredit = tersaring.filter((m) => m.kredit);
+  const debet = tersaring.filter((m) => !m.kredit);
+  const jmlKredit = kredit.reduce((n, m) => n + m.nominal, 0);
+  const jmlDebet = debet.reduce((n, m) => n + m.nominal, 0);
+  const akhirRentang = dalamRentang.length ? buku.saldo.get(dalamRentang[dalamRentang.length - 1]!.kunci)! : saldoAwal;
+  const awalMs = batas ?? (buku.naik[0]?.hari ?? Date.now());
+  const labelPeriode = `${tglPanjang(awalMs)} – ${tglPanjang(Date.now())}`;
+
+  /* ---- Grafik mutasi per bulan (tersaring) ------------------------------------ */
+  const perBulan = useMemo(() => {
+    const kunci: string[] = [];
+    const akhir = new Date();
+    const mulai = new Date(awalMs);
+    const d = new Date(mulai.getFullYear(), mulai.getMonth(), 1);
+    while (d <= akhir) {
+      kunci.push(kunciBulan(d.getTime()));
+      d.setMonth(d.getMonth() + 1);
+    }
+    const bulan = kunci.slice(-12).map((k) => ({ k, cr: 0, db: 0, n: 0 }));
+    const idx = new Map(bulan.map((b, i) => [b.k, i]));
+    for (const m of tersaring) {
+      const i = idx.get(kunciBulan(m.hari));
+      if (i === undefined) continue;
+      const b = bulan[i]!;
+      if (m.kredit) b.cr += m.nominal;
+      else b.db += m.nominal;
+      b.n++;
+    }
+    return bulan;
+  }, [tersaring, awalMs]);
+  const puncak = Math.max(1, ...perBulan.flatMap((b) => [b.cr, b.db]));
+
+  /* ---- Lembar ------------------------------------------------------------------ */
+  const wadahRef = useRef<HTMLDivElement>(null);
+  const siap = bayar !== null && biaya !== null;
+  const [perLembar, setPerLembar] = useState(BARIS_TETAP);
+  useLayoutEffect(() => {
+    const el = wadahRef.current;
+    if (!el) return;
+    const mq = window.matchMedia(SATU_LAYAR);
+    const ukur = () => {
+      if (!mq.matches) return setPerLembar(BARIS_TETAP);
+      const tinggiBaris = parseFloat(getComputedStyle(el).getPropertyValue("--rko-baris")) || 40;
+      setPerLembar(Math.max(4, Math.floor(el.clientHeight / tinggiBaris)));
+    };
+    ukur();
+    const ro = new ResizeObserver(ukur);
+    ro.observe(el);
+    mq.addEventListener("change", ukur);
+    return () => {
+      ro.disconnect();
+      mq.removeEventListener("change", ukur);
+    };
+  }, [siap]);
+
+  const kronologis = urutan === null;
+  const nLembar = Math.max(1, Math.ceil(terurut.length / perLembar));
+  /** Potongan lembar ke-h (0-based). Kronologis: dipotong dari BELAKANG,
+      jadi lembar terbaru penuh dan yang pertama memuat sisanya. */
+  const potong = (h: number) => {
+    if (!kronologis) return terurut.slice(h * perLembar, (h + 1) * perLembar);
+    const akhir = terurut.length - (nLembar - 1 - h) * perLembar;
+    return terurut.slice(Math.max(0, akhir - perLembar), Math.max(0, akhir));
+  };
+  const lembarAwal = () => (kronologis ? nLembar - 1 : 0);
+
+  const kunciSaring = `${cari}|${arah}|${sumber}|${filterProyek}|${rentang}|${urutan ? `${urutan.kolom}${urutan.arah}` : ""}|${perLembar}|${terurut.length}`;
+  const [lembar, setLembar] = useState<{ h: number; kunci: string }>({ h: lembarAwal(), kunci: kunciSaring });
+  /* Saringan berubah → kembali ke lembar bawaan. Dibandingkan saat RENDER,
+     bukan di efek, supaya tidak ada satu frame lembar yang salah. */
+  let h = lembar.h;
+  if (lembar.kunci !== kunciSaring) {
+    h = lembarAwal();
+    setLembar({ h, kunci: kunciSaring });
+  }
+  h = Math.min(Math.max(0, h), nLembar - 1);
+
+  /** Pergantian lembar yang sedang terlipat. */
+  const [lipat, setLipat] = useState<{ dari: number; ke: number } | null>(null);
+  function keLembar(ke: number) {
+    if (ke < 0 || ke >= nLembar || ke === h) return;
+    if (pakaiGerak()) setLipat({ dari: lipat ? lipat.ke : h, ke });
+    setLembar({ h: ke, kunci: kunciSaring });
+  }
+  const maju = lipat ? lipat.ke > lipat.dari : false;
+  /* Maju: lembar baru di dasar, lembar lama terlipat ke atas-belakang.
+     Mundur: lembar lama tetap di dasar sampai lembar sebelumnya selesai
+     terlipat turun menutupinya. */
+  const hDasar = lipat && !maju ? lipat.dari : h;
+
+  const langkah = useRef<(a: -1 | 1) => void>(() => {});
+  langkah.current = (a) => keLembar(h + a);
+  useEffect(() => {
+    const tekan = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const a = e.key === "PageUp" ? -1 : e.key === "PageDown" ? 1 : 0;
+      if (!a) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]')) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      e.preventDefault();
+      langkah.current(a);
+    };
+    document.addEventListener("keydown", tekan);
+    return () => document.removeEventListener("keydown", tekan);
+  }, []);
+
+  /* ---- Ekspor ------------------------------------------------------------------ */
   function barisEkspor(): (string | number)[][] {
     const set = new Set(terpilih);
-    const isi = terpilih.length ? tersaring.filter((t) => set.has(t.kunci)) : tersaring;
+    const isi = terpilih.length ? terurut.filter((m) => set.has(m.kunci)) : terurut;
     return [
       ["Tanggal", "Arah", "Keterangan", "Jenis", "Proyek", "Orang", "Nominal", "Catatan"],
-      ...isi.map((t) => [t.waktu.slice(0, 10), t.masuk ? "Masuk" : "Keluar", t.nama, t.sub, t.proyek, t.orang, t.masuk ? t.nominal : -t.nominal, t.catatan]),
+      ...isi.map((m) => [
+        m.waktu.slice(0, 10),
+        m.kredit ? "Masuk" : "Keluar",
+        m.nama,
+        m.sub,
+        m.proyek ?? "—",
+        m.orang ?? "—",
+        m.kredit ? m.nominal : -m.nominal,
+        m.catatan ?? "—",
+      ]),
     ];
   }
-
   function unduh() {
     const baris = barisEkspor().map((b) => b.map(selCsv).join(";"));
-    /* BOM di depan. Tanpa itu Excel membaca berkasnya sebagai Windows-1252
-       dan setiap nama berhuruf non-ASCII tergambar rusak. */
-    const teks = "\ufeff" + baris.join("\r\n");
+    /* BOM di depan: tanpa itu Excel membaca berkasnya sebagai Windows-1252. */
+    const teks = "﻿" + baris.join("\r\n");
     const url = URL.createObjectURL(new Blob([teks], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
@@ -293,9 +457,6 @@ function Isi() {
     a.click();
     URL.revokeObjectURL(url);
   }
-
-  /* Salin sebagai teks bertab: ditempel di Excel atau Google Sheets, tiap
-     kolom langsung jatuh ke selnya sendiri — tanpa mengunduh berkas. */
   async function salin() {
     const teks = barisEkspor()
       .map((b) => b.map((v) => String(v).replace(/[\t\n]/g, " ")).join("\t"))
@@ -308,177 +469,592 @@ function Isi() {
     }
   }
 
-  const kolom: KolomTabel[] = [
-    { judul: "Transaksi", lebar: 202, urut: true },
-    { judul: "Proyek", lebar: 242, urut: true },
-    { judul: "Penerima", lebar: 121, urut: true },
-    { judul: "Tanggal", lebar: 113, urut: true },
-    /* 124, bukan 94 milik frame: "−Rp15.000.000" tebal butuh ~110 dan dulu
-       meluber ke kolom Catatan — tanda "—"-nya menempel seperti coretan.
-       Diambil dari Catatan, jadi jumlah lebarnya tetap. */
-    { judul: "Nominal", lebar: 124, urut: true, kanan: true },
-    { judul: "Catatan", lebar: 207, redup: true },
-    { judul: "Status", lebar: 119, urut: true },
-  ];
-
-  /* Urutan klik-judul-kolom berlaku pada SELURUH hasil saringan sebelum
-     DaftarKit memotongnya per halaman. Kunci baris ikut urutan yang sama. */
-  const urut = useUrutTabel(tersaring, [
-    (t) => t.nama,
-    (t) => (t.proyek === "—" ? null : t.proyek),
-    (t) => (t.orang === "—" ? null : t.orang),
-    (t) => new Date(t.waktu.length === 10 ? t.waktu + "T00:00:00" : t.waktu).getTime(),
-    (t) => (t.masuk ? t.nominal : -t.nominal),
-    null,
-    (t) => (t.masuk ? "Masuk" : "Keluar"),
-  ]);
-  const baris = urut.terurut.map((t) => {
-    const tgl = tanggalBaris(t.waktu);
-    return [
-      <div className="trx__sel">
-        <span className={`trx__ubin${t.masuk ? "" : " trx__ubin--keluar"}`}>
-          <Ikon ikon={t.masuk ? CoinIn : CoinOut} ukuran={16} />
-        </span>
-        {/* Nama pembayaran membuka buktinya — pola yang sama dengan nama
-            orang di Gaji. Biaya keluar tidak punya bukti untuk klien. */}
-        {t.bayar ? (
-          <button
-            type="button"
-            className="trx__bukti"
-            title={`Bukti pembayaran ${formatRupiah(t.nominal)}`}
-            onClick={() => setBukti(t.bayar!)}
-          >
-            <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
-          </button>
-        ) : t.biaya ? (
-          <button
-            type="button"
-            className="trx__bukti"
-            title={`Rincian biaya ${formatRupiah(t.nominal)}`}
-            onClick={() => setRinci(t.biaya!)}
-          >
-            <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
-          </button>
-        ) : t.kas ? (
-          <a className="trx__bukti" href="/admin/keuangan/kas" title="Ubah di Kas Studio">
-            <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
-          </a>
-        ) : (
-          <SelDua atas={<SorotTeks teks={t.nama} cari={cari} />} bawah={t.sub} />
-        )}
-      </div>,
-      <div className="trx__sel">
-        <span className="trx__ubinkecil">
-          <Ikon ikon={Ruler} ukuran={10} />
-        </span>
-        <span className="trx__nama">{t.proyek}</span>
-      </div>,
-      t.orang,
-      <SelDua atas={tgl.atas} bawah={tgl.bawah} />,
-      <span className={t.masuk ? "trx__masuk" : "trx__keluar"}>
-        {t.masuk ? "+" : "−"}
-        {formatRupiah(t.nominal)}
-      </span>,
-      t.catatan,
-      <Lencana bentuk="pejal" nada={t.masuk ? "selesai" : "menunggu"}>
-        {t.masuk ? "Masuk" : "Keluar"}
-      </Lencana>,
-    ];
-  });
-
   const judulProyek = useMemo(() => {
     const dari = new Set((proyek ?? []).map((p) => p.title));
-    for (const t of semua) if (t.proyek !== "—") dari.add(t.proyek);
+    for (const m of buku.naik) if (m.proyek) dari.add(m.proyek);
     return [...dari].sort((a, b) => a.localeCompare(b, "id"));
-  }, [proyek, semua]);
+  }, [proyek, buku]);
 
-  const memuat = bayar === null || biaya === null;
+  const nSumber = (s: Sumber) => dalamRentang.filter((m) => m.sumber === s).length;
+  const setTerpilihSet = new Set(terpilih);
+  const semuaTercentang = terurut.length > 0 && terurut.every((m) => setTerpilihSet.has(m.kunci));
+  const sebagianTercentang = !semuaTercentang && terurut.some((m) => setTerpilihSet.has(m.kunci));
+  const adaSaring = Boolean(cari.trim() || arah !== "semua" || sumber !== "semua" || filterProyek !== "semua");
+
+  function urutKolom(i: number) {
+    setUrutan((u) =>
+      !u || u.kolom !== i ? { kolom: i, arah: "naik" } : u.arah === "naik" ? { kolom: i, arah: "turun" } : null,
+    );
+  }
+
+  if (bayar === null || biaya === null) return <Kerangka />;
+
+  const lembarProps = {
+    nLembar,
+    kronologis,
+    studio,
+    labelPeriode,
+    saldoAwal,
+    akhirRentang,
+    buku,
+    cari,
+    urutan,
+    onUrut: urutKolom,
+    terpilih: setTerpilihSet,
+    onCentang: (k: string) =>
+      setTerpilih((t) => (t.includes(k) ? t.filter((x) => x !== k) : [...t, k])),
+    semuaTercentang,
+    sebagianTercentang,
+    onCentangSemua: () =>
+      setTerpilih(semuaTercentang ? [] : terurut.map((m) => m.kunci)),
+    sorot,
+    onSorot: setSorot,
+    onBuka: (m: Mutasi) => {
+      if (m.bayar) setBukti(m.bayar);
+      else if (m.biaya) setRinci(m.biaya);
+    },
+    kosong: semuaCatatanKosong(buku.naik.length, adaSaring),
+  };
 
   return (
-    <>
-    <DaftarKit
-      className="trx"
-      kunciSaring={`${cari}|${jenis}|${filterProyek}|${rentang}|${urut.urutan ? `${urut.urutan.kolom}${urut.urutan.arah}` : ""}`}
-      urutan={urut.urutan}
-      onUrut={urut.onUrut}
-      kiri={
-        <>
+    <div className="rko">
+      <Keterangan kabar={kabar} />
+      <div className="rko__papan">
+        {/* ---- Ringkasan + saringan ------------------------------------------ */}
+        <section className="rko__sampul" aria-label="Ringkasan dan saringan rekening">
+          <header className="rko__sampulkop">
+            <p className="rko__alis">Rekening koran studio</p>
+            <p className="rko__periode">{labelPeriode}</p>
+          </header>
+
+          <div className="rko__saldo" role="group" aria-label="Ringkasan mutasi">
+            <span className="rko__saldolabel">Saldo akhir</span>
+            <b className={`rko__saldoangka${akhirRentang < 0 ? " is-minus" : ""}`}>{rupiahSaldo(akhirRentang)}</b>
+            <dl className="rko__saldorinci">
+              <div>
+                <dt>Saldo awal</dt>
+                <dd>{rupiahSaldo(saldoAwal)}</dd>
+              </div>
+              <div>
+                <dt>
+                  <i className="is-cr" />
+                  Kredit · {kredit.length}×
+                </dt>
+                <dd className="is-cr">+{formatRupiah(jmlKredit)}</dd>
+              </div>
+              <div>
+                <dt>
+                  <i className="is-db" />
+                  Debet · {debet.length}×
+                </dt>
+                <dd>−{formatRupiah(jmlDebet)}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div
+            className="rko__grafik"
+            role="img"
+            aria-label={`Mutasi per bulan: ${perBulan.map((b) => `${namaBulan(b.k)} kredit ${formatRupiah(b.cr)}, debet ${formatRupiah(b.db)}`).join("; ")}`}
+            style={{ "--rko-n": perBulan.length } as CSSProperties}
+          >
+            {perBulan.map((b) => {
+              const kk = ket(() => ({
+                judul: namaBulan(b.k),
+                baris: [
+                  { label: "Kredit", nilai: `+${formatRupiah(b.cr)}` },
+                  { label: "Debet", nilai: `−${formatRupiah(b.db)}` },
+                  { label: "Mutasi", nilai: `${b.n}×` },
+                ],
+              }));
+              return (
+                <span
+                  key={b.k}
+                  className={`rko__kolom${sorot === b.k ? " is-sorot" : ""}${sorot && sorot !== b.k ? " is-redup" : ""}`}
+                  {...kk}
+                  onPointerEnter={(e) => {
+                    kk.onPointerEnter(e);
+                    if (e.pointerType === "mouse") setSorot(b.k);
+                  }}
+                  onPointerLeave={(e) => {
+                    kk.onPointerLeave(e);
+                    if (e.pointerType === "mouse") setSorot(null);
+                  }}
+                >
+                  <i className="rko__cr" style={{ height: `${(b.cr / puncak) * 100}%` }} />
+                  <i className="rko__db" style={{ height: `${(b.db / puncak) * 100}%` }} />
+                  <small>{BULAN[Number(b.k.slice(5)) - 1]!.slice(0, perBulan.length > 6 ? 1 : 3)}</small>
+                </span>
+              );
+            })}
+          </div>
+
           <Cari
             ukuran="medium"
-            judul="Cari transaksi"
-            placeholder="Cari transaksi"
+            judul="Cari di rekening"
+            placeholder="Cari di rekening"
+            className="rko__cari"
             value={cari}
             onChange={(e) => setCari(e.currentTarget.value)}
           />
-          <PilihTombol
-            judul="Saring jenis transaksi"
-            nilai={jenis}
-            onPilih={(v) => setJenis(v as typeof jenis)}
-            opsi={[
-              { nilai: "semua", label: "Semua jenis" },
-              { nilai: "masuk", label: "Uang masuk" },
-              { nilai: "keluar", label: "Uang keluar" },
-            ]}
-          />
-          <PilihTombol
-            judul="Saring proyek"
-            nilai={filterProyek}
-            onPilih={setFilterProyek}
-            opsi={[{ nilai: "semua", label: "Semua proyek" }, ...judulProyek.map((j) => ({ nilai: j, label: j }))]}
-          />
-        </>
-      }
-      kanan={
-        <>
-          <PilihTombol judul="Rentang waktu" kiri={CalendarBlank} nilai={rentang} onPilih={setRentang} opsi={RENTANG} />
-          <KelompokTombol label="Ekspor transaksi">
-            <Tombol ukuran="medium" kiri={DownloadSimple} onClick={unduh} disabled={tersaring.length === 0}>
-              Unduh
-            </Tombol>
-            <Tombol ukuran="medium" kiri={CopySimple} onClick={salin} disabled={tersaring.length === 0}>
+
+          <div className="rko__saringan">
+            <BarisPil
+              judul="Periode"
+              nilai={rentang}
+              onPilih={setRentang}
+              opsi={RENTANG}
+            />
+            <BarisPil
+              judul="Mutasi"
+              nilai={arah}
+              onPilih={(v) => setArah(v as typeof arah)}
+              opsi={[
+                { nilai: "semua", label: "Semua" },
+                { nilai: "masuk", label: "Kredit · CR" },
+                { nilai: "keluar", label: "Debet · DB" },
+              ]}
+            />
+            <BarisPil
+              judul="Sumber"
+              nilai={sumber}
+              onPilih={(v) => setSumber(v as typeof sumber)}
+              opsi={[
+                { nilai: "semua", label: "Semua" },
+                ...(["klien", "biaya", "kas"] as Sumber[]).map((s) => ({
+                  nilai: s,
+                  label: `${SANDI[s][0]}${SANDI[s].slice(1).toLowerCase()} ${nSumber(s)}`,
+                  judul: `${LABEL_SUMBER[s]} — ${nSumber(s)} mutasi pada periode ini`,
+                })),
+              ]}
+            />
+            <div className="rko__pilbaris">
+              <span className="rko__piljudul">Proyek</span>
+              <PilihMenu
+                label="Saring proyek"
+                nilai={filterProyek}
+                onUbah={setFilterProyek}
+                opsi={[{ nilai: "semua", label: "Semua proyek" }, ...judulProyek.map((j) => ({ nilai: j, label: j }))]}
+                pemicu={
+                  <button type="button" className="rko__proyek">
+                    <span>{filterProyek === "semua" ? "Semua proyek" : filterProyek}</span>
+                    <Ikon ikon={CaretDown} ukuran={12} />
+                  </button>
+                }
+              />
+            </div>
+          </div>
+
+          <div className="rko__ekspor">
+            <span className="rko__eksporket" aria-live="polite">
+              {terpilih.length ? (
+                <>
+                  {terpilih.length} dicentang ·{" "}
+                  <button type="button" onClick={() => setTerpilih([])}>
+                    lepas
+                  </button>
+                </>
+              ) : (
+                `${terurut.length} mutasi`
+              )}
+            </span>
+            <button type="button" className="rko__tombol" onClick={unduh} disabled={terurut.length === 0}>
+              <Ikon ikon={DownloadSimple} ukuran={14} />
+              Unduh CSV
+            </button>
+            <button type="button" className="rko__tombol" onClick={salin} disabled={terurut.length === 0}>
+              <Ikon ikon={CopySimple} ukuran={14} />
               Salin
-            </Tombol>
-          </KelompokTombol>
-        </>
-      }
-      kolom={kolom}
-      baris={baris}
-      kunci={urut.terurut.map((t) => t.kunci)}
-      pilih={{ terpilih, onPilih: setTerpilih }}
-      memuat={memuat}
-      teksMemuat="Memuat transaksi…"
-      kosong="Tidak ada transaksi pada saringan ini."
-    />
-    <DialogBukti
-      bayar={bukti}
-      judulProyek={bukti?.projectTitle ?? ""}
-      whatsapp={(proyek ?? []).find((p) => p.id === bukti?.projectId)?.clientWhatsapp}
-      jenis={bukti ? LABEL_JENIS[bukti.kind] ?? bukti.kind : ""}
-      metode={bukti ? LABEL_METODE[bukti.method] ?? bukti.method : ""}
-      open={bukti !== null}
-      onOpenChange={(b) => !b && setBukti(null)}
-    />
-    <DialogBiaya
-      biaya={rinci}
-      kategori={rinci ? LABEL_KATEGORI[rinci.category] ?? rinci.category : ""}
-      open={rinci !== null}
-      onOpenChange={(b) => !b && setRinci(null)}
-      onDihapus={() =>
-        semuaBiaya()
-          .then((d) => {
-            tulisCache("biaya-semua", d);
-            setBiaya(d);
-          })
-          .catch(() => {})
-      }
-    />
-    </>
+            </button>
+          </div>
+        </section>
+
+        {/* ---- Kertas continuous form ---------------------------------------- */}
+        <section className="rko__rol" aria-label="Rekening koran">
+          <div className={`rko__intipatas${hDasar > 0 ? "" : " is-kosong"}`} aria-hidden="true" />
+          <div className="rko__tumpuk">
+            <Lembar {...lembarProps} h={hDasar} baris={potong(hDasar)} wadahRef={wadahRef} />
+            {lipat && (
+              <Lembar
+                key={`${lipat.dari}-${lipat.ke}`}
+                {...lembarProps}
+                h={maju ? lipat.dari : lipat.ke}
+                baris={potong(maju ? lipat.dari : lipat.ke)}
+                lipat={maju ? "naik" : "turun"}
+                onSelesaiLipat={() => setLipat(null)}
+              />
+            )}
+          </div>
+          <div className={`rko__intipbawah${hDasar < nLembar - 1 ? "" : " is-kosong"}`} aria-hidden="true">
+            <i />
+            <i />
+          </div>
+          <nav className="rko__umpan" aria-label="Lembar rekening">
+            <button type="button" className="rko__umpantombol" onClick={() => keLembar(h - 1)} disabled={h === 0}>
+              <Ikon ikon={CaretLeft} ukuran={14} />
+              <span className="rko__panjang">Lembar </span>sebelumnya
+            </button>
+            <span className="rko__titik" aria-hidden={nLembar > 14}>
+              {nLembar <= 14 ? (
+                Array.from({ length: nLembar }, (_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={i === h ? "is-aktif" : ""}
+                    aria-label={`Lembar ${i + 1}`}
+                    aria-current={i === h ? "page" : undefined}
+                    onClick={() => keLembar(i)}
+                  />
+                ))
+              ) : null}
+            </span>
+            <span className="rko__halaman" aria-live="polite">
+              Lembar {h + 1} / {nLembar}
+            </span>
+            <button type="button" className="rko__umpantombol" onClick={() => keLembar(h + 1)} disabled={h >= nLembar - 1}>
+              <span className="rko__panjang">Lembar </span>berikutnya
+              <Ikon ikon={CaretRight} ukuran={14} />
+            </button>
+          </nav>
+        </section>
+      </div>
+
+      <DialogBukti
+        bayar={bukti}
+        judulProyek={bukti?.projectTitle ?? ""}
+        whatsapp={(proyek ?? []).find((p) => p.id === bukti?.projectId)?.clientWhatsapp}
+        jenis={bukti ? LABEL_JENIS[bukti.kind] ?? bukti.kind : ""}
+        metode={bukti ? LABEL_METODE[bukti.method] ?? bukti.method : ""}
+        open={bukti !== null}
+        onOpenChange={(b) => !b && setBukti(null)}
+      />
+      <DialogBiaya
+        biaya={rinci}
+        kategori={rinci ? LABEL_KATEGORI[rinci.category] ?? rinci.category : ""}
+        open={rinci !== null}
+        onOpenChange={(b) => !b && setRinci(null)}
+        onDihapus={muatBiaya}
+      />
+    </div>
+  );
+}
+
+function semuaCatatanKosong(n: number, adaSaring: boolean) {
+  return n === 0 ? "*** belum ada mutasi tercatat ***" : adaSaring ? "*** tidak ada mutasi pada saringan ini ***" : "*** tidak ada mutasi pada periode ini ***";
+}
+
+/* Satu baris pilihan bertombol di papan (periode, mutasi, sumber). */
+function BarisPil({
+  judul,
+  nilai,
+  onPilih,
+  opsi,
+}: {
+  judul: string;
+  nilai: string;
+  onPilih: (v: string) => void;
+  opsi: { nilai: string; label: string; judul?: string }[];
+}) {
+  return (
+    <div className="rko__pilbaris" role="group" aria-label={judul}>
+      <span className="rko__piljudul">{judul}</span>
+      <span className="rko__pil">
+        {opsi.map((o) => (
+          <button
+            key={o.nilai}
+            type="button"
+            className={nilai === o.nilai ? "is-aktif" : ""}
+            aria-pressed={nilai === o.nilai}
+            title={o.judul}
+            onClick={() => onPilih(o.nilai)}
+          >
+            {o.label}
+          </button>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+const KOLOM: { judul: string; kelas: string; urut: boolean }[] = [
+  { judul: "Tgl", kelas: "tgl", urut: true },
+  { judul: "Sandi", kelas: "sandi", urut: true },
+  { judul: "Keterangan", kelas: "ket", urut: true },
+  { judul: "Proyek", kelas: "proyek", urut: true },
+  { judul: "Mutasi (Rp)", kelas: "mutasi", urut: true },
+  { judul: "Saldo (Rp)", kelas: "saldo", urut: false },
+];
+
+function Lembar({
+  h,
+  nLembar,
+  baris,
+  kronologis,
+  studio,
+  labelPeriode,
+  saldoAwal,
+  akhirRentang,
+  buku,
+  cari,
+  urutan,
+  onUrut,
+  terpilih,
+  onCentang,
+  semuaTercentang,
+  sebagianTercentang,
+  onCentangSemua,
+  sorot,
+  onSorot,
+  onBuka,
+  kosong,
+  wadahRef,
+  lipat,
+  onSelesaiLipat,
+}: {
+  h: number;
+  nLembar: number;
+  baris: Mutasi[];
+  kronologis: boolean;
+  studio: string;
+  labelPeriode: string;
+  saldoAwal: number;
+  akhirRentang: number;
+  buku: { saldo: Map<string, number> };
+  cari: string;
+  urutan: Urutan | null;
+  onUrut: (i: number) => void;
+  terpilih: Set<string>;
+  onCentang: (k: string) => void;
+  semuaTercentang: boolean;
+  sebagianTercentang: boolean;
+  onCentangSemua: () => void;
+  sorot: string | null;
+  onSorot: (k: string | null) => void;
+  onBuka: (m: Mutasi) => void;
+  kosong: string;
+  wadahRef?: React.RefObject<HTMLDivElement | null>;
+  lipat?: "naik" | "turun";
+  onSelesaiLipat?: () => void;
+}) {
+  const semuaRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (semuaRef.current) semuaRef.current.indeterminate = sebagianTercentang;
+  }, [sebagianTercentang]);
+  const pertama = h === 0;
+  const terakhir = h === nLembar - 1;
+  /* Saldo pindahan = saldo baris sebelum baris pertama lembar ini. */
+  const awalLembar = baris[0];
+  const pindahan = awalLembar ? buku.saldo.get(awalLembar.kunci)! - (awalLembar.kredit ? awalLembar.nominal : -awalLembar.nominal) : saldoAwal;
+  const cr = baris.filter((m) => m.kredit).reduce((n, m) => n + m.nominal, 0);
+  const db = baris.filter((m) => !m.kredit).reduce((n, m) => n + m.nominal, 0);
+
+  return (
+    <article
+      className={`rko__lembar${lipat ? ` is-lipat is-lipat--${lipat}` : ""}`}
+      aria-hidden={lipat ? true : undefined}
+      inert={lipat ? true : undefined}
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget) onSelesaiLipat?.();
+      }}
+    >
+      <header className="rko__kop">
+        <div className="rko__kopkiri">
+          <span className="rko__kopstudio">{studio}</span>
+          <h2 className="rko__kopjudul">Rekening koran</h2>
+        </div>
+        <dl className="rko__kopinfo">
+          <div>
+            <dt>Periode</dt>
+            <dd>{labelPeriode}</dd>
+          </div>
+          <div>
+            <dt>Lembar</dt>
+            <dd>
+              {h + 1} dari {nLembar}
+            </dd>
+          </div>
+          <div>
+            <dt>Mata uang</dt>
+            <dd>IDR</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div className="rko__tabel" role="table" aria-label={`Rekening koran, lembar ${h + 1} dari ${nLembar}`}>
+        <div className="rko__kepala" role="row">
+          <span className="rko__c-centang" role="columnheader">
+            <input
+              ref={semuaRef}
+              type="checkbox"
+              className="k-centang rko__centang"
+              checked={semuaTercentang}
+              onChange={onCentangSemua}
+              aria-label="Centang semua mutasi tersaring"
+            />
+          </span>
+          {KOLOM.map((k, i) => {
+            const aktif = urutan?.kolom === i ? urutan.arah : null;
+            return (
+              <span
+                key={k.kelas}
+                role="columnheader"
+                className={`rko__c-${k.kelas}`}
+                aria-sort={aktif === "naik" ? "ascending" : aktif === "turun" ? "descending" : undefined}
+              >
+                {k.urut ? (
+                  <button type="button" className={`rko__urut${aktif ? ` is-${aktif}` : ""}`} onClick={() => onUrut(i)}>
+                    {k.judul}
+                    <i aria-hidden="true" />
+                  </button>
+                ) : (
+                  k.judul
+                )}
+              </span>
+            );
+          })}
+        </div>
+
+        {/* Baris pembuka ada di SETIAP lembar dengan tinggi yang sama —
+            saldo awal, saldo pindahan, atau urutan yang berlaku — supaya
+            ruang baris yang diukur sama di lembar mana pun. */}
+        <div className="rko__baris rko__baris--saldo" role="row">
+          <span className="rko__c-centang" role="cell" />
+          <span className="rko__c-tgl" role="cell" />
+          <span className="rko__c-sandi" role="cell" />
+          <span className="rko__c-ket" role="cell">
+            <b>{kronologis ? (pertama ? "Saldo awal" : `Pindahan dari lembar ${h}`) : `Diurutkan menurut ${KOLOM[urutan!.kolom]!.judul.replace(" (Rp)", "").toLowerCase()}`}</b>
+          </span>
+          <span className="rko__c-mutasi" role="cell" />
+          <span className="rko__c-saldo" role="cell">
+            {kronologis ? saldoTeks(pertama ? saldoAwal : pindahan) : ""}
+          </span>
+        </div>
+
+        <div className="rko__isi" ref={wadahRef} role="rowgroup">
+          {baris.length === 0 ? (
+            <p className="rko__kosong">{kosong}</p>
+          ) : (
+            baris.map((m) => {
+              const bulan = kunciBulan(m.hari);
+              const saldo = buku.saldo.get(m.kunci)!;
+              const kelas = [
+                "rko__baris",
+                m.kredit ? "is-cr" : "is-db",
+                terpilih.has(m.kunci) ? "is-centang" : "",
+                sorot === bulan ? "is-sorot" : sorot ? "is-redup" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const label = `${tglPanjang(m.hari)}, ${m.nama}, ${m.kredit ? "kredit" : "debet"} ${formatRupiah(m.nominal)}, saldo ${rupiahSaldo(saldo)}`;
+              const isiKet = (
+                <>
+                  <b>
+                    <SorotTeks teks={m.nama} cari={cari} />
+                  </b>
+                  <small>
+                    <SorotTeks teks={[m.sub, m.orang, m.catatan].filter(Boolean).join(" · ")} cari={cari} />
+                  </small>
+                </>
+              );
+              return (
+                <div
+                  key={m.kunci}
+                  className={kelas}
+                  role="row"
+                  onPointerEnter={(e) => e.pointerType === "mouse" && onSorot(bulan)}
+                  onPointerLeave={(e) => e.pointerType === "mouse" && onSorot(null)}
+                >
+                  <span className="rko__c-centang" role="cell">
+                    <input
+                      type="checkbox"
+                      className="k-centang rko__centang"
+                      checked={terpilih.has(m.kunci)}
+                      onChange={() => onCentang(m.kunci)}
+                      aria-label={`Centang ${m.nama} ${tglPanjang(m.hari)}`}
+                    />
+                  </span>
+                  <span className="rko__c-tgl" role="cell">
+                    <b>{tglPendek(m.hari)}</b>
+                    <small>{HARI[new Date(m.hari).getDay()]}</small>
+                  </span>
+                  <span className="rko__c-sandi" role="cell">
+                    <span className={`rko__sandi is-${m.sumber}`}>{SANDI[m.sumber]}</span>
+                  </span>
+                  <span className="rko__c-ket" role="cell">
+                    {m.bayar || m.biaya ? (
+                      <button
+                        type="button"
+                        className="rko__buka"
+                        aria-label={`${label}. ${m.bayar ? "Buka bukti pembayaran" : "Buka rincian biaya"}`}
+                        onClick={() => onBuka(m)}
+                      >
+                        {isiKet}
+                      </button>
+                    ) : m.kas ? (
+                      <a className="rko__buka" href="/admin/keuangan/kas" aria-label={`${label}. Ubah di Kas Studio`}>
+                        {isiKet}
+                      </a>
+                    ) : (
+                      isiKet
+                    )}
+                  </span>
+                  <span className="rko__c-proyek" role="cell">
+                    <SorotTeks teks={m.proyek ?? "—"} cari={cari} />
+                  </span>
+                  <span className="rko__c-mutasi" role="cell">
+                    {angka(m.nominal)}
+                    <em>{m.kredit ? "CR" : "DB"}</em>
+                  </span>
+                  <span className={`rko__c-saldo${saldo < 0 ? " is-minus" : ""}`} role="cell">
+                    {saldoTeks(saldo)}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <footer className="rko__kaki">
+        <span className="rko__kakimutasi">
+          Lembar ini · CR +{angka(cr)} · DB −{angka(db)}
+        </span>
+        {kronologis && terakhir ? (
+          <span className="rko__saldoakhir">
+            Saldo akhir <b>{saldoTeks(akhirRentang)}</b>
+          </span>
+        ) : (
+          <span className="rko__bersambung">{terakhir ? "*** akhir rekening ***" : `bersambung ke lembar ${h + 2}`}</span>
+        )}
+      </footer>
+    </article>
+  );
+}
+
+function Kerangka() {
+  return (
+    <div className="rko rko--rangka" aria-busy="true">
+      <div className="rko__papan">
+        <section className="rko__sampul">
+          <span className="rk" style={{ height: 30 }} />
+          <span className="rk" style={{ height: 120 }} />
+          <span className="rk" style={{ height: 96 }} />
+          <span className="rk" style={{ flex: 1 }} />
+        </section>
+        <section className="rko__rol">
+          <div className="rko__intipatas is-kosong" />
+          <div className="rko__tumpuk">
+            <article className="rko__lembar" />
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
 
 export function TransaksiKit() {
   return (
-    <RequireAuth skeleton={<div className="kd trx trx--rangka" />}>
+    <RequireAuth skeleton={<Kerangka />}>
       <ToastProvider>
         <Isi />
       </ToastProvider>
