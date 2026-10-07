@@ -169,6 +169,8 @@ function Isi() {
      nota yang baru mendarat. */
   const [terbang, setTerbang] = useState<{ nota: NotaData; gaya: CSSProperties } | null>(null);
   const [tusuk, setTusuk] = useState<string | null>(null);
+  /** Cap yang baru dibubuhkan — "tercap" sekali, hanya saat dipilih. */
+  const [capBaru, setCapBaru] = useState<string | null>(null);
   const akarRef = useRef<HTMLDivElement>(null);
   const lembarRef = useRef<HTMLDivElement>(null);
   const pakuRef = useRef<HTMLDivElement>(null);
@@ -386,7 +388,11 @@ function Isi() {
                   type="button"
                   className="npg__cap"
                   aria-pressed={kategori === k.nilai}
-                  onClick={() => setKategori(k.nilai)}
+                  onClick={() => {
+                    if (k.nilai === kategori) return;
+                    setKategori(k.nilai);
+                    setCapBaru(k.nilai);
+                  }}
                 >
                   <span className="npg__gagang" aria-hidden="true" />
                   <span className="npg__muka">
@@ -497,6 +503,13 @@ function Isi() {
               <span />
               <span />
             </div>
+            {/* Sisa sobekan di bawah jilid: satu lapis per nota bulan ini
+                (paling banyak enam), seperti buku nota sungguhan. */}
+            <div className="npg__sisa" aria-hidden="true">
+              {Array.from({ length: Math.min(notaBulanIni, 6) }, (_, i) => (
+                <span key={i} style={{ ["--i" as string]: i } as CSSProperties} />
+              ))}
+            </div>
             <div className="npg__lembar" ref={lembarRef}>
               <header className="npg__kop">
                 <div className="npg__studio">
@@ -504,9 +517,9 @@ function Isi() {
                   {studio.kota && <small>{studio.kota}</small>}
                 </div>
                 <div className="npg__judul">
-                  <span>Nota pengeluaran</span>
+                  <span>Nota</span>
                   <small>
-                    No. <b>{nomorBaru}</b>
+                    pengeluaran proyek · No. <b>{nomorBaru}</b>
                   </small>
                 </div>
               </header>
@@ -518,7 +531,11 @@ function Isi() {
                     <PilihTanggal id="npg-tanggal" nilai={tanggal} onUbah={setTanggal} bisaKosong={false} maks={hariIni()} />
                   </div>
                   <span className="npg__capslot">
-                    <span className="npg__capjejak" aria-label={`Kategori ${LABEL_KATEGORI[kategori]}`}>
+                    <span
+                      key={kategori}
+                      className={`npg__capjejak${capBaru === kategori ? " is-tercap" : ""}`}
+                      aria-label={`Kategori ${LABEL_KATEGORI[kategori]}`}
+                    >
                       <Ikon ikon={IKON_KATEGORI[kategori] ?? DotsThree} ukuran={13} />
                       {LABEL_KATEGORI[kategori]}
                     </span>
@@ -574,29 +591,31 @@ function Isi() {
                     />
                   </div>
                 </div>
-                <div className="npg__baris">
-                  <label htmlFor="npg-label">Untuk keperluan</label>
-                  <div className="npg__nilai">
-                    <input
-                      id="npg-label"
-                      className="npg__ketik"
-                      placeholder="mis. Render eksterior 6 frame"
-                      autoComplete="off"
-                      value={label}
-                      onChange={(e) => setLabel(e.currentTarget.value)}
-                    />
-                  </div>
-                </div>
               </div>
 
-              <div className="npg__jumlah">
-                <label htmlFor="npg-nominal">Jumlah</label>
-                <div className="npg__kotakrp">
-                  <span aria-hidden="true">Rp</span>
+              {/* Tabel tercetak nota kontan: satu baris diisi, sisanya baris
+                  kosong yang memang tercetak di formulirnya. */}
+              <div className="npg__tabel">
+                <div className="npg__tkepala" aria-hidden="true">
+                  <span>Keterangan</span>
+                  <span>Jumlah (Rp)</span>
+                </div>
+                <div className="npg__tbaris">
+                  <input
+                    id="npg-label"
+                    className="npg__ketik"
+                    aria-label="Untuk keperluan"
+                    placeholder="mis. Render eksterior 6 frame"
+                    autoComplete="off"
+                    value={label}
+                    onChange={(e) => setLabel(e.currentTarget.value)}
+                  />
                   {/* `inputMode`, bukan `type=number`: type=number menolak
                       titik pemisah ribuan dan memunculkan panah naik-turun. */}
                   <input
                     id="npg-nominal"
+                    className="npg__ketik npg__ketik--rp"
+                    aria-label="Jumlah"
                     inputMode="numeric"
                     autoComplete="off"
                     placeholder="0"
@@ -604,8 +623,19 @@ function Isi() {
                     onChange={(e) => setNominal(e.currentTarget.value)}
                   />
                 </div>
-                <p className="npg__terbilang">{angka > 0 ? `# ${terbilang(angka)} #` : "terbilang —"}</p>
+                <div className="npg__tkosong" aria-hidden="true">
+                  <span />
+                  <span />
+                </div>
+                <div className="npg__ttotal">
+                  <span>Jumlah Rp</span>
+                  <b>{angka > 0 ? angka.toLocaleString("id-ID") : "—"}</b>
+                </div>
               </div>
+              <p className="npg__terbilang">
+                <span>Terbilang</span>
+                <i>{angka > 0 ? `# ${terbilang(angka)} #` : ""}</i>
+              </p>
 
               <div className="npg__ttd">
                 <div>
@@ -613,7 +643,7 @@ function Isi() {
                   <b>{orang?.name ?? "………………"}</b>
                 </div>
                 <div>
-                  <span>Pembayar</span>
+                  <span>Hormat kami</span>
                   <b>{studio.nama}</b>
                 </div>
               </div>
@@ -669,7 +699,7 @@ function Isi() {
               Lihat semua
             </a>
           </div>
-          <div className="npg__paku">
+          <div className={`npg__paku${tusuk && !menunggu ? " is-guncang" : ""}`}>
             <span className="npg__ujung" aria-hidden="true" />
             <div className="npg__tumpuk" ref={pakuRef}>
               {atas ? (
@@ -755,6 +785,7 @@ interface NotaData {
     Bukan isian lagi, cuma tulisan di kertas. */
 function NotaTerbang({ nota, studio }: { nota: NotaData; studio: string }) {
   const [t, b, h] = nota.tanggal.split("-");
+  const rp = nota.jumlah.toLocaleString("id-ID");
   return (
     <div className="npg__lembar npg__lembar--salinan">
       <header className="npg__kop">
@@ -762,9 +793,9 @@ function NotaTerbang({ nota, studio }: { nota: NotaData; studio: string }) {
           <b>{studio}</b>
         </div>
         <div className="npg__judul">
-          <span>Nota pengeluaran</span>
+          <span>Nota</span>
           <small>
-            No. <b>{nota.nomor}</b>
+            pengeluaran proyek · No. <b>{nota.nomor}</b>
           </small>
         </div>
       </header>
@@ -784,19 +815,29 @@ function NotaTerbang({ nota, studio }: { nota: NotaData; studio: string }) {
           <span>Dibayar kepada</span>
           <span className="npg__tulis">{nota.orang ?? "tanpa orang"}</span>
         </div>
-        <div className="npg__baris">
-          <span>Untuk keperluan</span>
-          <span className="npg__tulis">{nota.label}</span>
+      </div>
+      <div className="npg__tabel">
+        <div className="npg__tkepala">
+          <span>Keterangan</span>
+          <span>Jumlah (Rp)</span>
+        </div>
+        <div className="npg__tbaris">
+          <span className="npg__ketik">{nota.label}</span>
+          <span className="npg__ketik npg__ketik--rp">{rp}</span>
+        </div>
+        <div className="npg__tkosong">
+          <span />
+          <span />
+        </div>
+        <div className="npg__ttotal">
+          <span>Jumlah Rp</span>
+          <b>{rp}</b>
         </div>
       </div>
-      <div className="npg__jumlah">
-        <span>Jumlah</span>
-        <div className="npg__kotakrp">
-          <span>Rp</span>
-          <span className="npg__kotakangka">{nota.jumlah.toLocaleString("id-ID")}</span>
-        </div>
-        <p className="npg__terbilang">{`# ${terbilang(nota.jumlah)} #`}</p>
-      </div>
+      <p className="npg__terbilang">
+        <span>Terbilang</span>
+        <i>{`# ${terbilang(nota.jumlah)} #`}</i>
+      </p>
     </div>
   );
 }
