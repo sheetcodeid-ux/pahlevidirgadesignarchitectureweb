@@ -2,9 +2,11 @@
    Keuangan — Ringkasan (/admin/keuangan) — MEJA GAMBAR: KURVA S + REKAPITULASI.
 
    Papan hijau berjahit (`--kas-bidang`, serumpun dengan halaman keuangan
-   lain) di sini adalah PAPAN GAMBAR: dua lembar kertas putih tetap ditempel
-   selotip kertas di sudut atasnya — Rekapitulasi (bagian akhir RAB) di kiri,
-   Kurva S (time schedule) di kanan. Di atas lembar Kurva S tergeletak MISTAR
+   lain) di sini adalah PAPAN GAMBAR: dua lembar kertas putih tetap berbingkai
+   cetak ganda, masing-masing di atas tumpukan lembar laporan sebelumnya —
+   Rekapitulasi (bagian akhir RAB) di kiri, Kurva S (time schedule) di kanan.
+   (Selotip di sudut sempat dipakai lalu dibuang atas permintaan pemilik:
+   "jangan ada tape … buat jadi berantakan".) Di atas lembar Kurva S tergeletak MISTAR
    akrilik dengan SEGITIGA 30/60 yang berdiri di atasnya.
 
    Kertas putih di kedua tema, jadi seluruh tintanya dikunci ke token kas
@@ -12,8 +14,8 @@
    h2 global yang jadi putih di tema gelap ikut dikunci.
 
    Hiasan yang lewat di atas kertas (kurva, arsiran, segitiga, pena) hanya
-   hidup di BIDANG BULAN, yang tidak memuat tulisan; selotip duduk di margin
-   kertas (jebakan #70).
+   hidup di BIDANG BULAN, yang tidak memuat tulisan; bingkai cetak duduk di
+   margin kertas (jebakan #70).
    ============================================================================= */
 
 .kvs {
@@ -27,7 +29,9 @@
   --kvs-pita-kuat: color-mix(in srgb, var(--brand-mint) 62%, var(--kas-nilai));
   --kvs-amber: color-mix(in srgb, var(--warn) 50%, black);
   --kvs-pensil: color-mix(in srgb, var(--kas-bidang) 36%, var(--kas-nilai));
-  --kvs-selotip: color-mix(in srgb, var(--warn) 22%, var(--kas-nilai));
+  --kvs-lembar-2: color-mix(in srgb, var(--kas-bidang) 9%, var(--kas-nilai));
+  --kvs-lembar-3: color-mix(in srgb, var(--kas-bidang) 20%, var(--kas-nilai));
+  --kvs-mint-tinta: color-mix(in srgb, var(--brand-mint) 55%, var(--kas-bidang));
   --kvs-redup-papan: color-mix(in srgb, var(--kas-ink) 70%, transparent);
   --kvs-rekap: 300px;
   --kvs-no: 22px;
@@ -83,13 +87,21 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding: 16px 18px 12px;
+  padding: 16px 18px 15px;
   border-radius: 2px;
   background: var(--kvs-kertas);
   color: var(--kvs-tinta);
+  /* Bingkai cetak ganda di margin kertas (6–10px dari tepi; tulisan mulai
+     di 14px), lalu dua lembar laporan sebelumnya mengintip di bawahnya. */
   box-shadow:
-    0 1px 0 color-mix(in srgb, black 18%, transparent),
-    0 14px 22px -14px color-mix(in srgb, black 70%, transparent);
+    inset 0 0 0 6px var(--kvs-kertas),
+    inset 0 0 0 7px var(--kvs-garis-kuat),
+    inset 0 0 0 9px var(--kvs-kertas),
+    inset 0 0 0 10px var(--kvs-garis),
+    0 4px 0 -1px var(--kvs-lembar-2),
+    0 4px 0 0 color-mix(in srgb, black 10%, transparent),
+    0 8px 0 -2px var(--kvs-lembar-3),
+    0 18px 24px -14px color-mix(in srgb, black 75%, transparent);
   --text-strong: var(--kvs-tinta);
   --text: var(--kvs-tinta);
   --text-muted: var(--kvs-tinta-redup);
@@ -97,20 +109,6 @@
   --surface: var(--kvs-kertas);
 }
 .kvs__kertas h2 { color: var(--kvs-tinta); }
-/* Selotip kertas di kedua sudut atas, menyilang tepi kertas ke papan. */
-.kvs__selotip {
-  position: absolute;
-  top: -3px;
-  width: 52px;
-  height: 17px;
-  background: color-mix(in srgb, var(--kvs-selotip) 86%, transparent);
-  box-shadow: 0 1px 2px color-mix(in srgb, black 22%, transparent);
-  pointer-events: none;
-  z-index: 3;
-}
-.kvs__selotip--kiri { left: -17px; transform: rotate(-34deg); }
-.kvs__selotip--kanan { right: -17px; transform: rotate(34deg); }
-
 .kvs__alis {
   font-size: var(--k-t9);
   font-weight: var(--k-semi);
@@ -121,7 +119,7 @@
 }
 
 /* ---- Rekapitulasi -------------------------------------------------------------- */
-.kvs__rekapkop { display: flex; flex-direction: column; gap: 2px; padding-bottom: 10px; }
+.kvs__rekapkop { display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px; }
 .kvs__rekapkop h2 {
   font-size: var(--k-t18);
   font-weight: var(--k-bold);
@@ -140,7 +138,7 @@
 .kvs__rab > div {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) 98px;
-  min-height: 21px;
+  min-height: 20px;
   border-top: 1px solid var(--kvs-garis);
 }
 .kvs__rab > div:first-child { border-top: 0; }
@@ -153,7 +151,23 @@
 }
 .kvs__rab > div > span:first-child { justify-content: center; padding: 0; border-left: 0; }
 .kvs__rab > div > span:last-child { justify-content: flex-end; }
-.kvs__rab > div > span:nth-child(2) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; line-height: 21px; }
+.kvs__rab > div > span:nth-child(2) { position: relative; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; line-height: 20px; }
+/* Garis PORSI: bagian butir itu dari jumlah kelompoknya, di dasar selnya —
+   di bawah tulisan, tidak di belakangnya. */
+.kvs__rabbaris > span:nth-child(2) {
+  background: linear-gradient(var(--kvs-garis), var(--kvs-garis)) no-repeat left 6px bottom 2px / calc(100% - 12px) 2px;
+}
+.kvs__porsi {
+  position: absolute;
+  left: 6px;
+  bottom: 2px;
+  max-width: calc(100% - 12px);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--kvs-mint-tinta);
+  transition: width 420ms var(--ease);
+}
+.kvs__porsi--b { background: color-mix(in srgb, var(--kvs-tinta) 50%, transparent); }
 .kvs__rabkepala {
   background: var(--kvs-pita);
   font-size: var(--k-t9);
@@ -171,20 +185,82 @@
 .kvs__rabbaris--kosong { color: var(--kvs-tinta-redup); font-style: italic; }
 .kvs__rabjumlah { border-top-color: var(--kvs-garis-kuat) !important; font-weight: var(--k-semi); }
 .kvs__rabjumlah > span:nth-child(2) { text-align: right; }
-.kvs__rablaba {
-  min-height: 34px !important;
-  border-top: 2px solid var(--kvs-tinta) !important;
-  background: var(--kvs-pita-kuat);
-  font-size: var(--k-t12);
+/* ---- C: laba bersih ------------------------------------------------------------ */
+.kvs__laba {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--kvs-garis-kuat);
+  border-top: 2px solid var(--kvs-tinta);
+  background: linear-gradient(180deg, var(--kvs-pita) 0%, var(--kvs-kertas) 100%);
+  background-color: var(--kvs-pita);
+}
+.kvs__labakop { display: flex; align-items: baseline; gap: 8px; font-size: var(--k-t10); }
+.kvs__labakop b {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--kvs-tinta);
+  color: var(--kvs-kertas);
+  font-size: var(--k-t9);
   font-weight: var(--k-bold);
 }
-.kvs__rablaba > span:nth-child(2) { line-height: 34px !important; }
-.kvs__rablaba > span:last-child {
-  font-size: var(--k-t16);
-  text-decoration: underline double;
-  text-underline-offset: 3px;
+.kvs__labakop span {
+  font-size: var(--k-t9);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
-.kvs__rablaba.is-rugi > span:last-child { color: var(--kvs-amber); }
+.kvs__labakop em { margin-left: auto; font-style: normal; color: var(--kvs-tinta-redup); }
+.kvs__labaangka {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 1.5rem;
+  font-weight: var(--k-bold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  text-decoration: underline double;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  text-decoration-color: var(--kvs-garis-kuat);
+}
+.kvs__labaangka small { font-size: var(--k-t12); font-weight: var(--k-semi); color: var(--kvs-tinta-redup); }
+.kvs__laba.is-rugi .kvs__labaangka { color: var(--kvs-amber); }
+.kvs__neraca { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+.kvs__neracabatang {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--kvs-tinta) 8%, transparent);
+}
+.kvs__neracabatang i { display: block; height: 100%; transition: width 460ms var(--ease); }
+.kvs__neracabatang .is-beban,
+.kvs__neracaket i.is-beban { background: color-mix(in srgb, var(--kvs-tinta) 42%, var(--kvs-kertas)); }
+.kvs__neracabatang .is-untung,
+.kvs__neracaket i.is-untung { background: var(--kvs-mint-tinta); }
+.kvs__neracabatang .is-rugi,
+.kvs__neracaket i.is-rugi {
+  background: repeating-linear-gradient(45deg, var(--kvs-amber) 0 2px, color-mix(in srgb, var(--warn) 40%, var(--kvs-kertas)) 2px 5px);
+  background-color: var(--kvs-amber);
+}
+.kvs__neracaket {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  font-variant-numeric: tabular-nums;
+}
+.kvs__neracaket span { display: inline-flex; align-items: center; gap: 5px; }
+.kvs__neracaket i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.kvs__laba .kvs__terbilang { padding-top: 2px; }
 
 .kvs__terbilang {
   padding: 8px 0 0;
@@ -204,20 +280,19 @@
   color: var(--kvs-tinta-redup);
 }
 .kvs__catatan {
-  display: flex;
-  flex-direction: column;
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 8px;
   border: 1px solid var(--kvs-garis-kuat);
 }
 .kvs__catatan > div {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
   padding: 4px 7px;
 }
-.kvs__catatan > div + div { border-top: 1px solid var(--kvs-garis); }
+.kvs__catatan > div + div { border-left: 1px solid var(--kvs-garis); }
 .kvs__catatan dt {
   font-size: var(--k-t9);
   font-weight: var(--k-semi);
@@ -233,23 +308,29 @@
 }
 .kvs__catatan .is-telat dd,
 .kvs__catatan .is-telat dt { color: var(--kvs-amber); }
+/* Tanda tangan sebaris: tempat & tanggal di kiri, studio di atas garis kanan. */
 .kvs__tandatangan {
   display: flex;
-  flex-direction: column;
   align-items: flex-end;
-  gap: 18px;
+  justify-content: space-between;
+  gap: 10px;
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 6px;
   font-size: var(--k-t10);
   color: var(--kvs-tinta-redup);
 }
+.kvs__tandatangan span { flex: none; padding-bottom: 3px; white-space: nowrap; }
 .kvs__tandatangan b {
-  min-width: 150px;
-  padding-top: 3px;
-  border-top: 1px solid var(--kvs-garis-kuat);
-  font-size: var(--k-t11);
+  overflow: hidden;
+  min-width: 0;
+  flex: 0 1 auto;
+  padding-top: 12px;
+  border-bottom: 1px solid var(--kvs-garis-kuat);
+  font-size: var(--k-t10);
   font-weight: var(--k-semi);
   text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--kvs-tinta);
 }
 
@@ -325,7 +406,8 @@
 .kvs__kopisi {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.95fr) minmax(0, 1.35fr);
+  /* Tiga yang pertama selebar isinya; nama studio yang mengalah. */
+  grid-template-columns: auto auto auto minmax(0, 1fr);
   border: 1px solid var(--kvs-garis-kuat);
 }
 .kvs__kopisi > div { display: flex; align-items: stretch; min-width: 0; min-height: 21px; }
@@ -511,6 +593,29 @@
 .kvs__kisi--100 { stroke-dasharray: none; opacity: 0.55; }
 .kvs__arsirgaris { stroke: var(--kvs-amber); stroke-width: 1.3; opacity: 0.6; }
 .kvs__maju { fill: color-mix(in srgb, var(--brand-mint) 55%, transparent); }
+/* Basuhan di bawah kurva realisasi: bidang yang sudah benar-benar masuk. */
+.kvs__basuh-atas { stop-color: var(--brand-mint); stop-opacity: 0.62; }
+.kvs__basuh-bawah { stop-color: var(--brand-mint); stop-opacity: 0.06; }
+.kvs__penunjuk { stroke: var(--kvs-tinta); stroke-width: 1; stroke-dasharray: 1 3; opacity: 0.7; }
+.kvs__halo { fill: color-mix(in srgb, var(--brand-mint) 45%, transparent); stroke: color-mix(in srgb, var(--kvs-tinta) 35%, transparent); stroke-width: 1; }
+/* Butir yang disentuh: kurva S miliknya, di atas kurva gabungan yang meredup. */
+.kvs__svg .kvs__utama,
+.kvs__svg .kvs__rencana,
+.kvs__svg .kvs__titikrencana,
+.kvs__svg .kvs__tinta,
+.kvs__svg .kvs__pensil,
+.kvs__svg .kvs__halo,
+.kvs__svg .kvs__titik { transition: opacity 180ms ease; }
+.kvs__svg.is-redup .kvs__utama,
+.kvs__svg.is-redup .kvs__rencana,
+.kvs__svg.is-redup .kvs__titikrencana,
+.kvs__svg.is-redup .kvs__pensil,
+.kvs__svg.is-redup .kvs__halo { opacity: 0.28; }
+.kvs__svg.is-redup .kvs__tinta,
+.kvs__svg.is-redup .kvs__titik { opacity: 0.4; }
+.kvs__proyek-rencana { fill: none; stroke: var(--kvs-tinta); stroke-width: 1.4; stroke-dasharray: 2 3; stroke-linejoin: round; }
+.kvs__proyek-alas { fill: none; stroke: var(--kvs-tinta); stroke-width: 5.5; stroke-linejoin: round; stroke-linecap: round; }
+.kvs__proyek-nyata { fill: none; stroke: var(--brand-mint); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
 .kvs__rencana { fill: none; stroke: var(--kvs-cetak); stroke-width: 1.6; stroke-dasharray: 6 4; stroke-linejoin: round; }
 .kvs__titikrencana { fill: var(--kvs-kertas); stroke: var(--kvs-cetak); stroke-width: 1.3; }
 .kvs__pensil { fill: none; stroke: var(--kvs-pensil); stroke-width: 1.5; stroke-dasharray: 2 3; stroke-linejoin: round; }
@@ -549,6 +654,24 @@
   left: 100%;
   width: var(--kvs-skala);
 }
+.kvs__skala li.is-sembunyi { visibility: hidden; }
+/* Angka baca di sumbu: realisasi (pejal) dan rencana (garis), tanggal laporan. */
+.kvs__skala li.kvs__tag {
+  right: 2px;
+  min-width: 24px;
+  padding: 2px 3px;
+  border-radius: 3px;
+  background: var(--kvs-tinta);
+  color: var(--kvs-kertas);
+  font-size: var(--k-t9);
+  font-weight: var(--k-bold);
+  text-align: center;
+}
+.kvs__skala li.kvs__tag--rencana {
+  border: 1px solid var(--kvs-cetak);
+  background: var(--kvs-kertas);
+  color: var(--kvs-tinta);
+}
 .kvs__skala li {
   position: absolute;
   right: 5px;
@@ -577,6 +700,67 @@
     repeating-linear-gradient(90deg, color-mix(in srgb, var(--kvs-tinta) 40%, transparent) 0 1px, transparent 1px 6px) 0 0 / 100% 4px no-repeat,
     color-mix(in srgb, var(--brand-mint) 30%, transparent);
 }
+
+/* Arus kas per bulan: kas masuk naik dari garis tengah, beban turun. Selnya
+   tanpa tulisan; angkanya di kartu keterangan dan di baris rekap. */
+.kvs__arus {
+  display: grid;
+  grid-template-columns: var(--kvs-kolom);
+  flex: none;
+  height: 40px;
+  border-bottom: 1px solid var(--kvs-garis-kuat);
+}
+.kvs__arus > * { min-width: 0; border-left: 1px solid var(--kvs-garis); }
+.kvs__arus > [role="rowheader"] {
+  grid-column: 1 / 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding-left: 7px;
+  border-left: 0;
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kvs-tinta-redup);
+}
+.kvs__arus small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--k-t9);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.kvs__arus small i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; }
+.kvs__arus small i + i,
+.kvs__arus small i:not(:first-child) { margin-left: 4px; }
+.kvs__arus small .is-masuk,
+.kvs__arusmasuk { background: var(--kvs-mint-tinta); }
+.kvs__arus small .is-beban,
+.kvs__arusbeban { background: color-mix(in srgb, var(--kvs-tinta) 42%, var(--kvs-kertas)); }
+.kvs__aruskol { position: relative; }
+.kvs__aruskol::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 50%;
+  height: 1px;
+  background: var(--kvs-garis-kuat);
+}
+.kvs__aruskol.is-kolom { background: color-mix(in srgb, var(--brand-mint) 18%, transparent); }
+.kvs__arusmasuk,
+.kvs__arusbeban {
+  position: absolute;
+  left: 50%;
+  width: 46%;
+  max-width: 18px;
+  transform: translateX(-50%);
+}
+.kvs__arusmasuk { bottom: 50%; border-radius: 2px 2px 0 0; }
+.kvs__arusbeban { top: calc(50% + 1px); border-radius: 0 0 2px 2px; }
 
 /* Baris rekap per bulan. */
 .kvs__ringkas {
@@ -659,6 +843,9 @@
   .kvs__kop { padding-bottom: 8px; }
   .kvs__judul h2 { font-size: 1.5rem; }
   .kvs__progres .is-utama dd { font-size: 1.5rem; }
+  .kvs__labaangka { font-size: 1.3rem; }
+  .kvs__rekapkop h2 { font-size: var(--k-t16); }
+  .kvs__laba { gap: 4px; padding-block: 6px; }
   .kvs__progres dd { font-size: 1.125rem; }
 }
 @media (max-width: 1288px) {
@@ -672,10 +859,10 @@
   .kvs__rab { grid-column: 1; }
   .kvs__rekapkop { grid-row: 1; }
   .kvs__rab { grid-row: 2 / span 3; }
-  .kvs__terbilang,
+  .kvs__laba,
   .kvs__catatan,
   .kvs__tandatangan { grid-column: 2; }
-  .kvs__terbilang { grid-row: 2; }
+  .kvs__laba { grid-row: 2; margin-top: 0; }
   .kvs__catatan { grid-row: 3; align-self: start; }
   .kvs__tandatangan { grid-row: 4; }
 }
@@ -688,10 +875,8 @@
 @media (max-width: 40rem) {
   .kvs__meja { padding: 14px 10px 12px; }
   .kvs__kertas { padding: 14px 12px 10px; }
-  .kvs__selotip { width: 40px; height: 14px; }
-  .kvs__selotip--kiri { left: -12px; }
-  .kvs__selotip--kanan { right: -12px; }
   .kvs__rekap { display: flex; }
+  .kvs__catatan { align-self: stretch; }
   .kvs__kop { grid-template-columns: minmax(0, 1fr); }
   .kvs__progres { justify-self: start; }
   .kvs__kopisi { grid-template-columns: minmax(0, 1fr); }

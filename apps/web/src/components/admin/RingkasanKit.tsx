@@ -29,7 +29,8 @@ import { terbilang } from "../../lib/terbilang";
    schedule: tiap butir pekerjaan satu baris berbobot, batang per bulan, dan
    kurva kumulatif RENCANA lawan REALISASI yang membentuk huruf S) dan
    REKAPITULASI anggaran (bagian akhir RAB: A, B, jumlah, terbilang).
-   Halaman ini kedua lembar itu, ditempel di papan gambar hijau:
+   Halaman ini kedua lembar itu — kertas berbingkai cetak ganda di atas
+   tumpukan lembar laporan sebelumnya — di papan gambar hijau:
 
    1. KURVA S — butirnya PROYEK (atau TERMIN, kalau satu proyek dipilih).
       Bobot = nilai kontrak ÷ jumlah kontrak di lembar. Rencana = tagihan
@@ -47,13 +48,24 @@ import { terbilang } from "../../lib/terbilang";
       bulan itu.
    3. REKAPITULASI — A penerimaan (per proyek), B pengeluaran (per kategori
       biaya, selisih terhadap catatan bulanan jadi "tanpa rincian"), C laba
-      bersih bergaris ganda + terbilang, lalu marjin, tertunggak, piutang.
+      bersih (angka besar, NERACA BATANG: penerimaan terbagi jadi beban dan
+      laba) + terbilang, lalu tertunggak dan piutang. Tiap butir A/B membawa
+      garis PORSI-nya dari jumlah kelompoknya.
+   4. ARUS KAS — pita batang per bulan di bawah mistar: kas masuk naik dari
+      garis tengah, beban turun.
+
+   Menyentuh satu butir (baris kurva atau butir A rekap) menggambar KURVA S
+   MILIK BUTIR ITU SENDIRI (0–100% nilainya) di atas kurva gabungan yang
+   meredup. Angka laporan terbaca juga di SUMBU (tag realisasi pejal,
+   rencana bergaris) dengan garis penunjuk dari titiknya.
 
    Benda yang disentuh: SEGITIGA (penggaris 30/60) yang berdiri di atas
    MISTAR dan meluncur ke bulan yang ditunjuk tetikus; tepi tegaknya adalah
    garis baca bulan itu. Gerak: PENA RAPIDO menarik garis realisasi sampai
    tanggal laporan yang baru — hanya saat tanggal laporan maju atau tahun
-   berganti, tidak saat dimuat, seketika bila gerak dikurangi. Pena dan
+   berganti, tidak saat dimuat, seketika bila gerak dikurangi. Bersamaan,
+   angka progres dan rekapitulasi BERHITUNG ke nilai barunya (`Hitung`) dan
+   neraca batang serta garis porsi bergeser. Pena dan
    segitiga hidup di dalam bidang bulan, yang tidak memuat satu tulisan pun
    (jebakan #70); keduanya dipotong tepi bidang itu.
    ============================================================================= */
@@ -83,7 +95,7 @@ const juta = (v: number) => {
   return Math.abs(j) >= 1000 ? desimal(j, 0) : desimal(j, 1);
 };
 const persen = (v: number) => desimal(v, 1);
-const tanggalPanjang = (d: Date) => `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+const tanggalPendek = (d: Date) => `${d.getDate()} ${BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`;
 
 interface Baris {
   kunci: string;
@@ -252,12 +264,15 @@ function BidangKurva({
   onSorot,
   onPilih,
   ket,
+  proyek,
 }: {
   lembar: Lembar;
   laporan: number;
   sorot: number | null;
   tahun: number;
   hidup: boolean;
+  /** Butir yang sedang disentuh: kurva S miliknya sendiri digambar di atas. */
+  proyek: Baris | null;
   onSorot: (i: number | null) => void;
   onPilih: (i: number) => void;
   ket: ReturnType<typeof pemberiKet>;
@@ -405,13 +420,44 @@ function BidangKurva({
   const garisSkala: number[] = [];
   for (let v = 0; v <= skala; v += 25) garisSkala.push(v);
 
+  /* Kurva S satu butir, dalam persen nilai butir itu sendiri (0–100). */
+  const kurvaProyek = (() => {
+    if (!proyek || !proyek.nilai) return null;
+    const n = proyek.nilai;
+    let r = proyek.sebelumRencana;
+    let q = proyek.sebelumRealisasi;
+    const rencana: [number, number][] = [[0, y((r / n) * 100)]];
+    const nyataP: [number, number][] = nyata < 0 ? [] : [[0, y((q / n) * 100)]];
+    for (let i = 0; i < 12; i++) {
+      r += proyek.rencana[i]!;
+      q += proyek.realisasi[i]!;
+      rencana.push([x(i), y(Math.min(skala, (r / n) * 100))]);
+      if (i <= nyata) nyataP.push([x(i), y(Math.min(skala, (q / n) * 100))]);
+    }
+    return { rencana, nyata: nyataP };
+  })();
+
+  /* Angka di sumbu: realisasi dan rencana pada tanggal laporan, ditulis di
+     kolom skala (bukan di bidang). Label skala yang terlalu dekat disembunyikan. */
+  const kLap = Math.min(laporan, nyata);
+  const tagNyata = kLap >= 0 ? lembar.kumRealisasi[kLap]! : null;
+  const tagRencana = lembar.kumRencana[laporan]!;
+  const tampilRencana = tagNyata === null || Math.abs(y(tagRencana) - y(tagNyata)) >= 15;
+  const dekat = (v: number) =>
+    (tagNyata !== null && Math.abs(y(v) - y(tagNyata)) < 12) || (tampilRencana && Math.abs(y(v) - y(tagRencana)) < 12);
+  const titikLap = kLap >= 0 ? titikNyata[kLap + 1] : undefined;
+
   return (
     <div className="kvs__bidang" ref={ref}>
-      <svg className="kvs__svg" width={w} height={h} aria-hidden="true">
+      <svg className={proyek ? "kvs__svg is-redup" : "kvs__svg"} width={w} height={h} aria-hidden="true">
         <defs>
           <pattern id={`${id}-arsir`} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="6" className="kvs__arsirgaris" />
           </pattern>
+          <linearGradient id={`${id}-basuh`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" className="kvs__basuh-atas" />
+            <stop offset="1" className="kvs__basuh-bawah" />
+          </linearGradient>
           <clipPath id={`${id}-tinta`}>
             <rect ref={potong} x="0" y="0" width="0" height={h} />
           </clipPath>
@@ -429,11 +475,13 @@ function BidangKurva({
           <line key={v} className={v === 100 ? "kvs__kisi kvs__kisi--100" : "kvs__kisi"} x1={0} x2={w} y1={y(v)} y2={y(v)} />
         ))}
         {/* Arsiran deviasi s.d. tanggal laporan. */}
-        <g clipPath={`url(#${id}-tinta)`}>
+        <g clipPath={`url(#${id}-tinta)`} className="kvs__utama">
+          {bawahNyata && <polygon className="kvs__basuh" points={bawahNyata} fill={`url(#${id}-basuh)`} />}
           <polygon className="kvs__telat" points={bawahRencana} mask={`url(#${id}-telat)`} fill={`url(#${id}-arsir)`} />
           {bawahNyata && <polygon className="kvs__maju" points={bawahNyata} mask={`url(#${id}-maju)`} />}
         </g>
         {/* Rencana: garis cetak putus. */}
+        {titikLap && <line className="kvs__penunjuk" x1={titikLap[0]} x2={w} y1={titikLap[1]} y2={titikLap[1]} />}
         <polyline className="kvs__rencana" points={garis(titikRencana)} />
         {titikRencana.slice(1).map(([a, b], i) => (
           <circle key={i} className="kvs__titikrencana" cx={a} cy={b} r={2.2} />
@@ -444,11 +492,23 @@ function BidangKurva({
             <polyline className="kvs__pensil" points={garis(titikNyata)} />
             <polyline ref={tinta} className="kvs__tinta" points={garis(titikNyata)} strokeDasharray="0 100000" />
             <g clipPath={`url(#${id}-tinta)`}>
+              {titikLap && <circle className="kvs__halo" cx={titikLap[0]} cy={titikLap[1]} r={11} />}
               {titikNyata.slice(1).map(([a, b], i) => (
                 <circle key={i} className={i === Math.min(laporan, nyata) ? "kvs__titik kvs__titik--laporan" : "kvs__titik"} cx={a} cy={b} r={i === Math.min(laporan, nyata) ? 4.5 : 2.6} />
               ))}
             </g>
           </>
+        )}
+        {kurvaProyek && (
+          <g className="kvs__proyek">
+            <polyline className="kvs__proyek-rencana" points={garis(kurvaProyek.rencana)} />
+            {kurvaProyek.nyata.length > 1 && (
+              <>
+                <polyline className="kvs__proyek-alas" points={garis(kurvaProyek.nyata)} />
+                <polyline className="kvs__proyek-nyata" points={garis(kurvaProyek.nyata)} />
+              </>
+            )}
+          </g>
         )}
         {/* Segitiga di atas mistar, meluncur ke bulan yang ditunjuk. */}
         <g className={sorot !== null && sorot !== laporan ? "kvs__segitiga is-sorot" : "kvs__segitiga"} style={{ transform: `translate(${xs}px, ${h}px) scaleX(${balik ? -1 : 1})` }}>
@@ -505,14 +565,69 @@ function BidangKurva({
       </ol>
       <ol className="kvs__skala" aria-hidden="true">
         {garisSkala.map((v) => (
-          <li key={v} style={{ top: y(v) }}>
+          <li key={v} style={{ top: y(v) }} className={dekat(v) ? "is-sembunyi" : undefined}>
             {v}
           </li>
         ))}
+        {tampilRencana && (
+          <li className="kvs__tag kvs__tag--rencana" style={{ top: y(tagRencana) }}>
+            {Math.round(tagRencana)}
+          </li>
+        )}
+        {tagNyata !== null && (
+          <li className="kvs__tag" style={{ top: y(tagNyata) }}>
+            {Math.round(tagNyata)}
+          </li>
+        )}
       </ol>
     </div>
   );
 }
+
+/* -----------------------------------------------------------------------------
+   Angka yang BERHITUNG ke nilai barunya saat tanggal laporan berganti (560 ms).
+   Teksnya ditulis langsung ke DOM per bingkai, jadi halaman tidak dirender
+   ulang. Tidak berhitung saat pertama tampil, seketika bila gerak dikurangi.
+   -------------------------------------------------------------------------- */
+function Hitung({ nilai, hidup, format, className }: { nilai: number; hidup: boolean; format: (v: number) => string; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const kini = useRef<number | null>(null);
+  const fmt = useRef(format);
+  fmt.current = format;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const tulis = (v: number) => {
+      const t = fmt.current(v);
+      if (el.textContent !== t) el.textContent = t;
+    };
+    const dari = kini.current;
+    if (dari === null || !hidup || !geraknya() || Math.abs(nilai - dari) < 0.005) {
+      kini.current = nilai;
+      tulis(nilai);
+      return;
+    }
+    const mulai = performance.now();
+    let r = 0;
+    const f = (t: number) => {
+      const p = Math.min(1, (t - mulai) / 560);
+      const v = p < 1 ? dari + (nilai - dari) * (1 - Math.pow(1 - p, 3)) : nilai;
+      kini.current = v;
+      tulis(v);
+      if (p < 1) r = requestAnimationFrame(f);
+    };
+    r = requestAnimationFrame(f);
+    return () => {
+      cancelAnimationFrame(r);
+      kini.current = nilai;
+      tulis(nilai);
+    };
+  }, [nilai, hidup]);
+  return <span ref={ref} className={className} />;
+}
+
+const ribuan = (v: number) => Math.round(v).toLocaleString("id-ID");
+const ribuanBertanda = (v: number) => `${Math.round(v) < 0 ? "−" : ""}${Math.abs(Math.round(v)).toLocaleString("id-ID")}`;
 
 function Isi() {
   const kini = useMemo(() => new Date(), []);
@@ -713,6 +828,8 @@ function Isi() {
     },
   ];
 
+  const maksArus = Math.max(1, ...lembar.masuk.map((m, i) => (i <= lembar.akhirNyata ? Math.max(m, lembar.beban[i]!) : 0)));
+  const butirSorot = sorotBaris ? lembar.baris.find((b) => b.kunci === sorotBaris) ?? null : null;
   const kota = studio?.city?.trim();
   const nama = studio?.studioName || "Studio";
 
@@ -721,8 +838,6 @@ function Isi() {
       <div className="kvs__meja">
         {/* ---- REKAPITULASI ---------------------------------------------- */}
         <section className="kvs__kertas kvs__rekap" aria-label="Rekapitulasi arus kas">
-          <i className="kvs__selotip kvs__selotip--kiri" aria-hidden="true" />
-          <i className="kvs__selotip kvs__selotip--kanan" aria-hidden="true" />
           <header className="kvs__rekapkop">
             <p className="kvs__alis">Daftar rekapitulasi</p>
             <h2>Arus kas studio</h2>
@@ -753,6 +868,7 @@ function Isi() {
                 <span role="cell">{i + 1}</span>
                 <span role="cell" title={r.judul}>
                   {r.href ? <a href={r.href}>{r.judul}</a> : r.judul}
+                  <i className="kvs__porsi" style={{ width: `${(r.jumlah / (rekap.jumlahA || 1)) * 100}%` }} aria-hidden="true" />
                 </span>
                 <span role="cell">{r.jumlah.toLocaleString("id-ID")}</span>
               </div>
@@ -767,7 +883,9 @@ function Isi() {
             <div className="kvs__rabjumlah" role="row">
               <span role="cell" />
               <span role="cell">Jumlah A</span>
-              <span role="cell">{rekap.jumlahA.toLocaleString("id-ID")}</span>
+              <span role="cell">
+                <Hitung nilai={rekap.jumlahA} hidup={hidup} format={ribuan} />
+              </span>
             </div>
             <div className="kvs__rabbagian" role="row">
               <span role="cell">B</span>
@@ -777,32 +895,60 @@ function Isi() {
             {rekap.b.map((r, i) => (
               <div key={r.kunci} role="row" className={`kvs__rabbaris${r.jumlah ? "" : " is-nol"}`}>
                 <span role="cell">{i + 1}</span>
-                <span role="cell">{r.judul}</span>
+                <span role="cell">
+                  {r.judul}
+                  <i className="kvs__porsi kvs__porsi--b" style={{ width: `${(r.jumlah / (rekap.jumlahB || 1)) * 100}%` }} aria-hidden="true" />
+                </span>
                 <span role="cell">{r.jumlah ? r.jumlah.toLocaleString("id-ID") : "–"}</span>
               </div>
             ))}
             <div className="kvs__rabjumlah" role="row">
               <span role="cell" />
               <span role="cell">Jumlah B</span>
-              <span role="cell">{rekap.jumlahB.toLocaleString("id-ID")}</span>
-            </div>
-            <div className={`kvs__rablaba${rekap.laba < 0 ? " is-rugi" : ""}`} role="row">
-              <span role="cell">C</span>
-              <span role="cell">Laba bersih (A − B)</span>
               <span role="cell">
-                {rekap.laba < 0 ? "−" : ""}
-                {Math.abs(rekap.laba).toLocaleString("id-ID")}
+                <Hitung nilai={rekap.jumlahB} hidup={hidup} format={ribuan} />
               </span>
             </div>
           </div>
-          <p className="kvs__terbilang">
-            <span>Terbilang</span># {sebutTerbilang(rekap.laba)} #
-          </p>
+
+          {/* C — laba bersih: angka akhir rekapitulasi, dengan neraca batang
+              penerimaan yang terbagi jadi beban dan laba. */}
+          <section className={`kvs__laba${rekap.laba < 0 ? " is-rugi" : ""}`} aria-label="Laba bersih">
+            <p className="kvs__labakop">
+              <b>C</b>
+              <span>Laba bersih (A − B)</span>
+              <em>s.d. {BULAN_PENDEK[laporan]} {tahun}</em>
+            </p>
+            <p className="kvs__labaangka">
+              <small>Rp</small>
+              <Hitung nilai={rekap.laba} hidup={hidup} format={ribuanBertanda} />
+            </p>
+            {rekap.jumlahA + rekap.jumlahB > 0 && (
+              <div className="kvs__neraca">
+                <div className="kvs__neracabatang" aria-hidden="true">
+                  <i className="is-beban" style={{ width: `${(Math.min(rekap.jumlahA, rekap.jumlahB) / Math.max(rekap.jumlahA, rekap.jumlahB)) * 100}%` }} />
+                  <i
+                    className={rekap.laba >= 0 ? "is-untung" : "is-rugi"}
+                    style={{ width: `${(Math.abs(rekap.laba) / Math.max(rekap.jumlahA, rekap.jumlahB)) * 100}%` }}
+                  />
+                </div>
+                <p className="kvs__neracaket">
+                  <span>
+                    <i className="is-beban" aria-hidden="true" />
+                    Beban {rekap.jumlahA > 0 ? `${persen((rekap.jumlahB / rekap.jumlahA) * 100)}%` : "—"}
+                  </span>
+                  <span>
+                    <i className={rekap.laba >= 0 ? "is-untung" : "is-rugi"} aria-hidden="true" />
+                    {rekap.laba >= 0 ? "Laba" : "Rugi"} {rekap.marjin === null ? "—" : `${persen(Math.abs(rekap.marjin))}%`}
+                  </span>
+                </p>
+              </div>
+            )}
+            <p className="kvs__terbilang">
+              <span>Terbilang</span># {sebutTerbilang(rekap.laba)} #
+            </p>
+          </section>
           <dl className="kvs__catatan">
-            <div>
-              <dt>Marjin kas</dt>
-              <dd>{rekap.marjin === null ? "—" : `${persen(rekap.marjin)}%`}</dd>
-            </div>
             <div className={rekap.tertunggak > 0 ? "is-telat" : undefined}>
               <dt>Tertunggak</dt>
               <dd>{formatRupiah(rekap.tertunggak)}</dd>
@@ -815,7 +961,7 @@ function Isi() {
           <p className="kvs__tandatangan">
             <span>
               {kota ? `${kota}, ` : ""}
-              {tanggalPanjang(kini)}
+              {tanggalPendek(kini)}
             </span>
             <b>{nama}</b>
           </p>
@@ -823,8 +969,6 @@ function Isi() {
 
         {/* ---- KURVA S --------------------------------------------------- */}
         <section className="kvs__kertas kvs__lembar" aria-label={`Kurva S tahun ${tahun}`}>
-          <i className="kvs__selotip kvs__selotip--kiri" aria-hidden="true" />
-          <i className="kvs__selotip kvs__selotip--kanan" aria-hidden="true" />
           <header className="kvs__kop">
             <div className="kvs__judul">
               <p className="kvs__alis">Time schedule</p>
@@ -855,14 +999,14 @@ function Isi() {
               <div className="is-utama">
                 <dt>Realisasi</dt>
                 <dd>
-                  {nyataLaporan < 0 ? "—" : persen(lembar.kumRealisasi[nyataLaporan]!)}
+                  {nyataLaporan < 0 ? "—" : <Hitung nilai={lembar.kumRealisasi[nyataLaporan]!} hidup={hidup} format={persen} />}
                   <small>%</small>
                 </dd>
               </div>
               <div>
                 <dt>Rencana</dt>
                 <dd>
-                  {persen(lembar.kumRencana[laporan]!)}
+                  <Hitung nilai={lembar.kumRencana[laporan]!} hidup={hidup} format={persen} />
                   <small>%</small>
                 </dd>
               </div>
@@ -889,7 +1033,7 @@ function Isi() {
               </div>
               <div>
                 <dt>Perencana</dt>
-                <dd>{nama}</dd>
+                <dd title={nama}>{nama}</dd>
               </div>
             </dl>
           </header>
@@ -980,11 +1124,51 @@ function Isi() {
                 onSorot={setSorot}
                 onPilih={pilihBulan}
                 ket={ket}
+                proyek={butirSorot}
               />
             </div>
 
             <div className="kvs__mistar" aria-hidden="true">
               <i />
+            </div>
+
+            <div role="row" className="kvs__arus">
+              <span role="rowheader">
+                Arus kas
+                <small>
+                  <i className="is-masuk" aria-hidden="true" />
+                  masuk
+                  <i className="is-beban" aria-hidden="true" />
+                  beban
+                </small>
+              </span>
+              {BULAN_PENDEK.map((_, i) => {
+                const ada = i <= lembar.akhirNyata;
+                const m = lembar.masuk[i]!;
+                const b = lembar.beban[i]!;
+                return (
+                  <span
+                    key={i}
+                    role="cell"
+                    className={`kvs__aruskol${i === kolomAktif ? " is-kolom" : ""}${i === laporan ? " is-laporan" : ""}`}
+                    {...(ada
+                      ? ket(() => ({
+                          judul: `${BULAN[i]} ${tahun}`,
+                          baris: [
+                            { label: "Kas masuk", nilai: formatRupiah(m) },
+                            { label: "Beban", nilai: formatRupiah(b) },
+                            { label: m - b < 0 ? "Rugi" : "Laba", nilai: formatRupiah(m - b) },
+                          ],
+                        }))
+                      : {})}
+                  >
+                    {ada && m > 0 && <i className="kvs__arusmasuk" style={{ height: `${(m / maksArus) * 46}%` }} />}
+                    {ada && b > 0 && <i className="kvs__arusbeban" style={{ height: `${(b / maksArus) * 46}%` }} />}
+                    <span className="sr-only">{ada ? `masuk ${formatRupiah(m)}, beban ${formatRupiah(b)}` : "belum tiba"}</span>
+                  </span>
+                );
+              })}
+              <span role="cell" className="kvs__satuan" />
             </div>
 
             {ringkasan.map((r) => (
