@@ -1,19 +1,11 @@
 ---
 import KitLayout from "../../layouts/KitLayout.astro";
 import { RingkasanKit } from "../../components/admin/RingkasanKit";
-import "../../styles/keuangan-kit.css";
+import "../../styles/neraca-kit.css";
 
-/* Halaman PERTAMA yang dipindah ke kit (P4), mengikuti frame Figma
-   "04. Dashboard (v2)".
-
-   Kerangkanya KitLayout, bukan AdminLayout: frame Coinest memuat rel samping
-   192 dan kolom konten 1192, dan itu ukuran yang tidak bisa dicapai di
-   kerangka lama. Keduanya hidup berdampingan sampai keempat belas halaman
-   pindah — rencana yang sudah ditulis di CLAUDE.md sejak awalan `k-` dipilih.
-
-   Yang BELUM pindah dan masih di halaman lama: tiga tab lain (Proyek, Biaya,
-   Tagihan). Masing-masing punya framenya sendiri — Transactions frame 13,
-   Tagihan frame 16 — dan dikerjakan waktu frame itu digarap. */
+/* Keuangan — Ringkasan = NERACA STUDIO: timbangan dua piringan (kas masuk
+   per proyek lawan beban per kategori), lembar neraca bentuk T, catatan
+   timbang per bulan, dan transaksi & tenggat. Lihat kepala RingkasanKit. */
 ---
 
 <KitLayout title="Keuangan" judul="Keuangan">

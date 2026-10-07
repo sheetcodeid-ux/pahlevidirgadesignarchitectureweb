@@ -3399,13 +3399,12 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
   background-color: var(--surface);
   box-shadow: inset 0 0 0 1px var(--border);
 }
-.kl-body :is(.sat__stat > .k-statlebar, .pj__kartumint, .situs__catatan, .pf__seret, .pf__sampul--kosong, .keu__skor) {
+.kl-body :is(.sat__stat > .k-statlebar, .pj__kartumint, .situs__catatan, .pf__seret, .pf__sampul--kosong) {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 14%, transparent);
 }
 /* Tema gelap: ubin yang memakai --bg sebagai bidang dalam kartu jatuh sama
    persis dengan latar halaman (#171D1C) begitu ia duduk di luar kartu. */
 :root[data-theme="dark"] .kl-body :is(
-  .keu__stat > .k-statkecil,
   .is-logo__kotak
 ) {
   background-color: var(--surface);
