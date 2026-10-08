@@ -27,6 +27,12 @@ for (const tema of ["light", "dark"]) {
     }, tema);
     await p.goto("http://127.0.0.1:4399" + h, { waitUntil: "networkidle" });
     await p.waitForTimeout(700);
+    /* KLIK="sel1;sel2": selain keadaan awal, pindai lagi sesudah tiap klik
+       (tab, lampiran, potret) — keadaan yang baru tergambar sesudah
+       perbuatan tidak pernah dilihat pindaian awal. */
+    const klik = (process.env.KLIK ?? "").split(";").map((x) => x.trim()).filter(Boolean);
+    for (const langkah of [null, ...klik]) {
+    if (langkah) { await p.click(langkah, { force: true }); await p.waitForTimeout(700); await p.mouse.move(1, 1); }
     const hasil = await p.evaluate(() => {
       /* Dua bentuk yang dikembalikan getComputedStyle: `rgb(r, g, b[, a])`
          berskala 0–255, dan `color(srgb r g b[ / a])` — hasil color-mix() —
@@ -93,7 +99,8 @@ for (const tema of ["light", "dark"]) {
       }
       return out;
     });
-    for (const c of hasil) { cacat++; console.log(`${tema} ${h} → ${JSON.stringify(c)}`); }
+    for (const c of hasil) { cacat++; console.log(`${tema} ${h}${langkah ? ` [${langkah}]` : ""} → ${JSON.stringify(c)}`); }
+    }
     await p.close();
   }
 }

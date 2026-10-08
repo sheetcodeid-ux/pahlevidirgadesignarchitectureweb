@@ -557,10 +557,45 @@ export interface KpiStrategi {
     proyek: number;
     dibawah: { projectId: string; title: string; kontrak: number; biaya: number; margin: number }[];
   };
-  lead: { kuartalIni: number; ditindaklanjuti: number };
+  lead: {
+    kuartalIni: number;
+    ditindaklanjuti: number;
+    status: { new: number; contacted: number; qualified: number; closed: number };
+    perBulan: { bulan: string; jumlah: number }[];
+  };
   signature: { jumlah: number; proyek: { projectId: string; title: string; tier: string }[] };
-  cadangan: { saldo: number; keluarPerBulan: number | null; bulanBerdata: number; bulan: number | null };
+  cadangan: {
+    saldo: number;
+    keluarPerBulan: number | null;
+    bulanBerdata: number;
+    bulan: number | null;
+    bulanan: { bulan: string; keluar: number }[];
+  };
   segmen: { kategori: string; proyek: number; diterima: number; biaya: number; laba: number }[];
+  proyek: {
+    projectId: string;
+    title: string;
+    kategori: string;
+    tier: string | null;
+    signature: boolean;
+    kontrak: number;
+    biaya: number;
+    margin: number;
+    dibuat: string;
+  }[];
+  paket: { nama: string; kelompok: string; urutan: number; jumlah: number }[];
+  /** Potret lima angka per akhir tiga kuartal sebelumnya, tertua dulu. */
+  jejak: KpiJejak[];
+}
+export interface KpiJejak {
+  tanggal: string;
+  tahun: number;
+  kuartal: number;
+  rataKontrak: number | null;
+  margin: number | null;
+  lead: number;
+  signature: number;
+  cadangan: number | null;
 }
 export const ambilKpi = () => panggil<KpiStrategi>("/admin/kpi");
 

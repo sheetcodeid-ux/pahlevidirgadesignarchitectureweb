@@ -336,6 +336,48 @@ it.skipIf(!adaPostgres)("tim, bayaran, kas, dan target jalan dengan setelan kone
   cek("pembayaran rumah menaikkan segmen residential 1 jt",
     (k.segmen.find((g) => g.kategori === "residential")?.diterima ?? 0) === segAde0 + 1_000_000, k.segmen);
 
+  console.log("\n── KPI: jejak per akhir kuartal + rincian lampiran ──");
+  cek("akhir kuartal sebelum 8 Okt = 30 Sep", kpi.akhirKuartalSebelum("2026-10-08") === "2026-09-30");
+  cek("akhir kuartal sebelum 1 Jan = 31 Des tahun lalu", kpi.akhirKuartalSebelum("2026-01-01") === "2025-12-31");
+  cek("akhir kuartal sebelum 15 Mei = 31 Mar", kpi.akhirKuartalSebelum("2026-05-15") === "2026-03-31");
+  cek("jejak tiga kuartal, tertua dulu, berurut",
+    k.jejak.length === 3 && k.jejak[0].tanggal < k.jejak[1].tanggal && k.jejak[1].tanggal < k.jejak[2].tanggal &&
+    k.jejak[2].tanggal === kpi.akhirKuartalSebelum(k.hariIni), k.jejak.map((j) => j.tanggal));
+
+  // Proyek yang dibuat SESUDAH akhir kuartal lalu tidak boleh ikut jejaknya.
+  const kini0 = k.rataKontrak.proyek;
+  const lalu = k.jejak[2];
+  const [baru] = await sql<{ id: string }[]>`
+    insert into public.projects (slug, title, category, contract_value, created_at)
+    values ('baru-kini', 'Proyek Baru Kini', 'residential', 99000000, now()) returning id`;
+  k = await kpi.hitung(sql);
+  cek("proyek baru menambah KINI tapi tidak mengubah jejak kuartal lalu",
+    k.rataKontrak.proyek === kini0 + 1 && k.jejak[2].rataKontrak === lalu.rataKontrak, { kini: k.rataKontrak, lalu: k.jejak[2] });
+  cek("daftar proyek lampiran memuat proyek baru dengan margin 100%",
+    k.proyek.some((p) => p.projectId === baru.id && p.margin === 100 && p.kategori === "residential"), k.proyek.length);
+  cek("daftar proyek = jumlah proyek berkontrak", k.proyek.length === k.rataKontrak.proyek, { d: k.proyek.length, r: k.rataKontrak.proyek });
+  cek("signature lampiran = jumlah signature", k.signature.proyek.length === k.signature.jumlah, k.signature);
+  cek("tangga paket memuat semua paket aktif, jumlahnya = proyek berpaket tahun ini",
+    k.paket.reduce((n, t) => n + t.jumlah, 0) === k.proyek.filter((p) => p.tier !== null).length, k.paket);
+
+  // Biaya bertanggal sesudah akhir kuartal lalu tidak boleh menurunkan margin jejak.
+  const margin0 = k.jejak[2].margin;
+  await costs.create(sql, baru.id, { label: "Biaya kini", category: "operasional", amount: 9_000_000, incurredOn: k.hariIni });
+  k = await kpi.hitung(sql);
+  cek("biaya hari ini mengubah margin kini, bukan margin jejak", k.jejak[2].margin === margin0, { j: k.jejak[2].margin, m0: margin0 });
+
+  cek("lead per status berjumlah = lead kuartal ini",
+    k.lead.status.new + k.lead.status.contacted + k.lead.status.qualified + k.lead.status.closed === k.lead.kuartalIni, k.lead);
+  cek("lead per bulan berjumlah = lead kuartal ini, bulan kuartal yang sudah tiba",
+    k.lead.perBulan.reduce((n, b) => n + b.jumlah, 0) === k.lead.kuartalIni && k.lead.perBulan.length >= 1 && k.lead.perBulan.length <= 3,
+    k.lead.perBulan);
+  cek("keluar bulanan: enam bulan, jumlahnya = rata-rata × bulan berdata",
+    k.cadangan.bulanan.length === 6 &&
+      Math.abs(k.cadangan.bulanan.reduce((n, b) => n + b.keluar, 0) - (k.cadangan.keluarPerBulan ?? 0) * k.cadangan.bulanBerdata) <= k.cadangan.bulanBerdata,
+    k.cadangan);
+  cek("bulan berdata = bulan bulanan yang tidak nol",
+    k.cadangan.bulanan.filter((b) => b.keluar > 0).length === k.cadangan.bulanBerdata, k.cadangan.bulanan);
+
   await sql.end();
   expect(gagal, `gagal: ${gagal.join("; ")}`).toEqual([]);
 });

@@ -1245,11 +1245,53 @@ export interface KpiStrategi {
     dibawah: { projectId: string; title: string; kontrak: number; biaya: number; margin: number }[];
   };
   /** Pesan masuk kuartal ini; `ditindaklanjuti` = berstatus dihubungi/berpotensi. */
-  lead: { kuartalIni: number; ditindaklanjuti: number };
+  lead: {
+    kuartalIni: number;
+    ditindaklanjuti: number;
+    /** Status SEKARANG pesan-pesan kuartal ini (tidak ada riwayat status). */
+    status: { new: number; contacted: number; qualified: number; closed: number };
+    /** Bulan-bulan kuartal berjalan yang sudah tiba, termasuk yang kosong. */
+    perBulan: { bulan: string; jumlah: number }[];
+  };
   /** Proyek tahun ini berpaket urutan 2 ke atas (Signature, Flagship, Standar, Premium). */
   signature: { jumlah: number; proyek: { projectId: string; title: string; tier: string }[] };
   /** Saldo dari catatan panel ÷ rata-rata uang keluar per bulan (enam bulan penuh terakhir). */
-  cadangan: { saldo: number; keluarPerBulan: number | null; bulanBerdata: number; bulan: number | null };
+  cadangan: {
+    saldo: number;
+    keluarPerBulan: number | null;
+    bulanBerdata: number;
+    bulan: number | null;
+    /** Uang keluar enam bulan penuh terakhir (yang dibagi), termasuk bulan kosong. */
+    bulanan: { bulan: string; keluar: number }[];
+  };
   /** Laba kas per kategori proyek, tahun ini. */
   segmen: { kategori: string; proyek: number; diterima: number; biaya: number; laba: number }[];
+  /** Proyek berkontrak tahun ini — sumber §8.1, §8.2, dan §8.4. */
+  proyek: {
+    projectId: string;
+    title: string;
+    kategori: string;
+    tier: string | null;
+    signature: boolean;
+    kontrak: number;
+    biaya: number;
+    margin: number;
+    dibuat: string;
+  }[];
+  /** Semua paket aktif + berapa proyek tahun ini memakainya. */
+  paket: { nama: string; kelompok: string; urutan: number; jumlah: number }[];
+  /** Lima angka yang sama per akhir tiga kuartal sebelumnya, tertua dulu. */
+  jejak: KpiJejak[];
+}
+
+/** Potret KPI di satu akhir kuartal. */
+export interface KpiJejak {
+  tanggal: string;
+  tahun: number;
+  kuartal: number;
+  rataKontrak: number | null;
+  margin: number | null;
+  lead: number;
+  signature: number;
+  cadangan: number | null;
 }

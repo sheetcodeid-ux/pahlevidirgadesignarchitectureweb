@@ -892,8 +892,29 @@ function kpiTiruan() {
   const masuk = bayar.reduce((n, b) => n + b.amount, 0) + kasAdmin.filter((k) => k.direction === "masuk").reduce((n, k) => n + k.amount, 0);
   const keluar = semuaBiaya.reduce((n, b) => n + b.amount, 0) + kasAdmin.filter((k) => k.direction === "keluar").reduce((n, k) => n + k.amount, 0)
     + gajiAdmin.filter((g) => g.paidOn).reduce((n, g) => n + g.amount, 0);
-  const keluarPerBulan = Math.round(keluar / 6);
-  const saldo = masuk - keluar + 1_250_000_000; // saldo awal tiruan supaya angkanya masuk akal
+  /* Keluar per bulan untuk enam bulan PENUH terakhir, seperti Worker. */
+  const bln = (t) => String(t).slice(0, 7);
+  const bulanKe = (geser) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + geser); return d.toISOString().slice(0, 7); };
+  const bulanan = [-6, -5, -4, -3, -2, -1].map((g) => {
+    const b = bulanKe(g);
+    const keluarB = semuaBiaya.filter((x) => bln(x.incurredOn) === b).reduce((n, x) => n + x.amount, 0)
+      + kasAdmin.filter((k) => k.direction === "keluar" && bln(k.occurredOn) === b).reduce((n, k) => n + k.amount, 0)
+      + gajiAdmin.filter((g2) => g2.paidOn && bln(g2.period) === b).reduce((n, g2) => n + g2.amount, 0);
+    return { bulan: b, keluar: keluarB };
+  });
+  const bulanBerdata = bulanan.filter((b) => b.keluar > 0).length;
+  const keluarPerBulan = bulanBerdata ? Math.round(bulanan.reduce((n, b) => n + b.keluar, 0) / bulanBerdata) : Math.round(keluar / 6);
+  const saldo = masuk - keluar + 705_000_000; // saldo awal tiruan: ±4,6 bulan, supaya keadaan "belum" ikut tergambar
+  const kuartalIni = Math.floor(new Date().getMonth() / 3);
+  const awalK = new Date(new Date().getFullYear(), kuartalIni * 3, 1);
+  const perBulan = [0, 1, 2].map((i) => { const d = new Date(awalK); d.setMonth(d.getMonth() + i); return d; })
+    .filter((d) => d <= new Date())
+    .map((d) => ({ bulan: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, jumlah: 0 }));
+  for (const x of pesanAdmin) {
+    const b = perBulan.find((m) => m.bulan === bln(x.createdAt)) ?? perBulan[perBulan.length - 1];
+    b.jumlah += 1;
+  }
+  const tierDari = (p) => paketAdmin.find((t) => t.id === p.tierId);
   const kategori = [...new Set(proyekAdmin.map((p) => p.category))];
   const sig = proyekAdmin.filter((p) => (paketAdmin.find((t) => t.id === p.tierId)?.sortOrder ?? 0) >= 2);
   return {
@@ -903,9 +924,27 @@ function kpiTiruan() {
     margin: { rata: tk ? ((tk - tb) / tk) * 100 : null, proyek: margins.length,
       dibawah: [...margins, { projectId: "k6", title: "Renovasi Dapur Bu Ratna", kontrak: 18_000_000, biaya: 13_500_000, margin: 25 }]
         .filter((m) => m.margin < 35).sort((a, b) => a.margin - b.margin) },
-    lead: { kuartalIni: pesanAdmin.length, ditindaklanjuti: pesanAdmin.filter((x) => ["contacted", "qualified"].includes(x.status)).length },
+    lead: { kuartalIni: pesanAdmin.length, ditindaklanjuti: pesanAdmin.filter((x) => ["contacted", "qualified"].includes(x.status)).length,
+      status: Object.fromEntries(["new", "contacted", "qualified", "closed"].map((st) => [st, pesanAdmin.filter((x) => x.status === st).length])),
+      perBulan },
     signature: { jumlah: sig.length, proyek: sig.map((p) => ({ projectId: p.id, title: p.title, tier: paketAdmin.find((t) => t.id === p.tierId).name })) },
-    cadangan: { saldo, keluarPerBulan, bulanBerdata: 6, bulan: saldo / keluarPerBulan },
+    cadangan: { saldo, keluarPerBulan, bulanBerdata, bulan: saldo / keluarPerBulan, bulanan },
+    proyek: berkontrak.map((p, i) => {
+      const m = margins.find((x) => x.projectId === p.id);
+      const t = tierDari(p);
+      return { projectId: p.id, title: p.title, kategori: p.category, tier: t?.name ?? null, signature: (t?.sortOrder ?? 0) >= 2,
+        kontrak: m.kontrak, biaya: m.biaya, margin: m.margin, dibuat: kasHariLalu(40 + i * 37) };
+    }),
+    paket: paketAdmin.map((t) => ({ nama: t.name, kelompok: t.group, urutan: t.sortOrder,
+      jumlah: proyekAdmin.filter((p) => p.tierId === t.id && p.contractValue > 0).length })),
+    /* Jejak tiga akhir kuartal sebelumnya — angka karangan yang masuk akal,
+       karena data tiruan tidak punya riwayat bertanggal untuk semuanya. */
+    jejak: [3, 2, 1].map((mundur, i) => {
+      const d = new Date(awalK); d.setMonth(d.getMonth() - 3 * (mundur - 1)); d.setDate(0);
+      return { tanggal: d.toISOString().slice(0, 10), tahun: d.getFullYear(), kuartal: Math.floor(d.getMonth() / 3) + 1,
+        rataKontrak: [168_000_000, 196_000_000, 205_000_000][i], margin: [52.4, 47.1, 41.6][i], lead: [7, 12, 9][i],
+        signature: [1, 2, 3][i], cadangan: [5.4, 5.1, 4.4][i] };
+    }),
     segmen: kategori.map((kat) => {
       const ids = proyekAdmin.filter((p) => p.category === kat).map((p) => p.id);
       const diterima = bayar.filter((b) => ids.includes(b.projectId)).reduce((n, b) => n + b.amount, 0);
