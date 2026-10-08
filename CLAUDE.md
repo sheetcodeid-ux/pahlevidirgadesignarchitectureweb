@@ -1328,6 +1328,20 @@ Lima hal ini pernah memakan berjam-jam. Baca sebelum menyalahkan CSS:
     Halaman tagihan akun tidak terjangkau dari sesi ini (403, sesi terikat
     ke repo).
 
+    **Kalimat "payments have failed" itu MENYESATKAN.** Dari tangkapan layar
+    tagihan pemilik (8 Okt 2026): tidak ada pembayaran yang gagal — metode
+    pembayarannya memang KOSONG. Penyebab sebenarnya: kuota gratis 2.000
+    menit/bulan (dihitung bersama untuk SEMUA repo privat akun) habis, dan
+    kelima anggaran akun — termasuk Actions — $0 dengan "Stop usage: Yes".
+    Pemakai kuotanya hampir seluruhnya repo LAIN di akun yang sama:
+    `Membership-Good-Will-Grow` $11,39 dari $12,04 (±1.900 menit dalam
+    delapan hari); repo ini cuma $0,54. Tarifnya terukur dari repo ini
+    sendiri: 90 menit tertagih (tiap job dibulatkan ke atas per menit) =
+    $0,54, jadi $0,006/menit, dan satu deploy ±3 menit ≈ $0,02. Kuotanya
+    direset tiap tanggal 1. Membuka blokir sebelum itu butuh dua hal
+    sekaligus di akun `sheetcodeid-ux`: metode pembayaran terisi DAN
+    anggaran Actions di atas $0 — dan anggaran itu ikut dimakan repo lain.
+
 74. **Gerak yang dipicu "nilai berubah" ikut menyala saat DATA datang, bukan
     cuma saat pengguna berbuat.** Nomor lembar di kop rel menggulung saat
     berganti — dan di Info Studio serta UI Component ia menggulung SAAT
