@@ -111,16 +111,22 @@ export function KepalaHalaman({
   ikonKembali,
   kiri,
   kanan,
+  label,
   subjudul,
+  lambang,
   className,
 }: {
   judul: ReactNode;
-  /** Baris kecil di bawah judul — mis. tanggal hari ini di navbar panel. */
+  /** Baris kecil DI ATAS judul — jalur kategori di kepala panel. */
+  label?: ReactNode;
+  /** Baris kecil di bawah judul. */
   subjudul?: ReactNode;
   onKembali?: () => void;
   ikonKembali?: DataIkon;
   /** Sebelum tombol kembali dan judul — tombol menu geser di ponsel. */
   kiri?: ReactNode;
+  /** Sesudah tombol kembali, tepat di depan judul — kotak nomor lembar. */
+  lambang?: ReactNode;
   kanan?: ReactNode;
   className?: string;
 }) {
@@ -133,10 +139,12 @@ export function KepalaHalaman({
             <Ikon ikon={ikonKembali} ukuran={12} />
           </button>
         )}
-        {subjudul !== undefined ? (
+        {lambang}
+        {label !== undefined || subjudul !== undefined ? (
           <div className="k-kepalahal__teks">
+            {label !== undefined && <p className="k-kepalahal__label">{label}</p>}
             <h1 className="k-kepalahal__judul">{judul}</h1>
-            <p className="k-kepalahal__sub">{subjudul}</p>
+            {subjudul !== undefined && <p className="k-kepalahal__sub">{subjudul}</p>}
           </div>
         ) : (
           <h1 className="k-kepalahal__judul">{judul}</h1>
@@ -155,15 +163,13 @@ export function KepalaHalaman({
 export const TombolBulat = forwardRef<
   HTMLButtonElement,
   {
-    ikon: DataIkon;
+    ikon?: DataIkon;
+    /** Isi sendiri sebagai ganti ikon — mis. segitiga revisi berangka. */
+    isi?: ReactNode;
     ukuran?: number;
     judul: string;
-    /** Titik 8px di sudut kanan atas — mis. ada notifikasi belum dibaca. */
-    tanda?: boolean;
-    /** Warna titiknya: merah (bawaan, butuh tindakan) atau amber (terbatas). */
-    nadaTanda?: "merah" | "amber";
   } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children">
->(function TombolBulat({ ikon, ukuran = 14, judul, tanda, nadaTanda = "merah", className, ...sisa }, ref) {
+>(function TombolBulat({ ikon, isi, ukuran = 14, judul, className, ...sisa }, ref) {
   /* Petunjuk kit membawa namanya: tombol bulat di kepala halaman ikon saja,
      dan "bola dunia" atau "gelembung" tidak menjelaskan dirinya sendiri. */
   return (
@@ -175,8 +181,7 @@ export const TombolBulat = forwardRef<
         aria-label={judul}
         {...sisa}
       >
-        <Ikon ikon={ikon} ukuran={ukuran} />
-        {tanda && <span className={nadaTanda === "amber" ? "k-bulat__tanda k-bulat__tanda--amber" : "k-bulat__tanda"} />}
+        {isi ?? (ikon && <Ikon ikon={ikon} ukuran={ukuran} />)}
       </button>
     </Petunjuk>
   );

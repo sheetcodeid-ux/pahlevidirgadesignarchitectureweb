@@ -344,11 +344,39 @@ export const ArsStempel = ikon(
   H("M6 19.5h12"),
 );
 
+/* --- Kepala halaman ------------------------------------------------------ */
+
+/** Tema terang/gelap — lampu meja gambar berlengan engsel yang dijepit di
+    tepi meja. Lengan atas, kap, dan CAHAYANYA satu kelompok `lengan` yang
+    berayun di engselnya (9,3 10,4); cahayanya berkelas `cahaya` dan hanya
+    menyala di tema gelap — malam, lampu meja dinyalakan. */
+export const ArsLampuMeja = ikon(
+  T("M2.5 20.5h19"),
+  T("M4.2 20.5v-2.4h3.4v2.4"),
+  T("M5.9 18.1l3-6.9"),
+  H(ling(9.3, 10.4, 0.9)),
+  `<g class="lengan">${[
+    F("M20.2 8.3L17.6 9.7L13.6 20.5H21.4Z").replace('class="isi"', 'class="isi cahaya"'),
+    T("M10 9.9l4.6-3.1"),
+    T("M15.6 3.9l4.6 4.4-2.6 1.4-3.2-3z"),
+  ].join("")}</g>`,
+);
+
+/** Menu geser di ponsel — set gambar: lembar depan berkop di atas dua lembar
+    di belakangnya. Yang dibuka memang daftar gambar satu set. */
+export const ArsSetGambar = ikon(
+  H("M7.5 4.5V3h13v13.5H19"),
+  H("M5.5 6.5V5h13v13.5H17"),
+  T(kotak(3.5, 7, 13, 14, 1)),
+  H("M10 17.5h6.5M10 17.5V21"),
+  H("M6.5 10.5h6M6.5 13h4"),
+);
+
 /** Seluruh ikon arsitektur, untuk galeri UI Component. */
 export const IKON_ARSITEKTUR: [string, DataIkon][] = Object.entries({
   ArsLembar, ArsPeil, ArsDaftarPeriksa, ArsSuratPengantar, ArsArahUtara, ArsTampakRumah, ArsKurvaS, ArsKartuIndeks,
   ArsSkalaManusia, ArsAwanRevisi, ArsBukuSketsa, ArsFasad, ArsMejaGambar, ArsJangka, ArsAkun, ArsMal, ArsPintu,
   ArsOrdner, ArsKunciRumah, ArsBingkaiFoto, ArsRekap, ArsKartuBayar, ArsNotaPaku, ArsKertasLubang, ArsMesinKas,
   ArsTermin, ArsKuitansi, ArsBukuGaji, ArsAmplopGaji, ArsLantai, ArsLencanaKlien, ArsTimStudio, ArsSebelumSesudah,
-  ArsGarisUkur, ArsGembok, ArsStempel,
+  ArsGarisUkur, ArsGembok, ArsStempel, ArsLampuMeja, ArsSetGambar,
 });

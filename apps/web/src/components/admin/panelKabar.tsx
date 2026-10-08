@@ -3,7 +3,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { navigate } from "astro:transitions/client";
 import { TombolBulat } from "../kit/Item";
 import { Ikon } from "../kit/Ikon";
-import { ArrowRight, Bell, ChatTeardropDots, CheckCircle, NavEnvelope } from "../kit/ikon";
+import { ArrowRight, ArsSuratPengantar, CheckCircle, NavEnvelope } from "../kit/ikon";
+import { Revisi } from "../kit/Nav";
+import type { DataIkon } from "../kit/Ikon";
 import { daftarPesan, bacaCache, type Pesan } from "../../lib/admin";
 import { AreaGulir, Avatar, Kosong as KosongKit, RangkaBaris } from "../kit/Tampilan";
 import type { BarisNotifikasi } from "../../lib/notifikasi";
@@ -85,7 +87,7 @@ function Panel({
   );
 }
 
-function Kosong({ ikon, judul, ket }: { ikon: typeof Bell; judul: string; ket: string }) {
+function Kosong({ ikon, judul, ket }: { ikon: DataIkon; judul: string; ket: string }) {
   return (
     <KosongKit ikon={ikon} judul={judul} ringkas>
       {ket}
@@ -140,10 +142,17 @@ export function PanelPesan({ belumDibaca }: { belumDibaca: number }) {
       keterangan={belumDibaca > 0 ? `${belumDibaca} belum dibaca` : "Semua sudah dibaca"}
       kaki={{ label: "Buka Pesan Masuk", ke: "/admin/pesan" }}
       pemicu={
+        /* Surat pengantar — ikon baris Pesan Masuk di rel — dengan angka
+           pesan yang belum dibaca di sudutnya. */
         <TombolBulat
-          ikon={ChatTeardropDots}
+          className="kl__kabar"
+          isi={
+            <>
+              <Ikon ikon={ArsSuratPengantar} ukuran={18} />
+              {belumDibaca > 0 && <b className="kl__angka" aria-hidden="true">{belumDibaca > 9 ? "9+" : belumDibaca}</b>}
+            </>
+          }
           judul={belumDibaca > 0 ? `Pesan Masuk, ${belumDibaca} belum dibaca` : "Pesan Masuk"}
-          tanda={belumDibaca > 0}
           aria-haspopup="dialog"
           aria-expanded={buka}
         />
@@ -216,10 +225,12 @@ export function PanelNotifikasi({ baris }: { baris: BarisNotifikasi[] | null }) 
       keterangan={jumlah > 0 ? `${jumlah} perlu ditangani` : "Tidak ada yang menunggu"}
       kaki={{ label: "Lihat semua notifikasi", ke: "/admin/notifikasi" }}
       pemicu={
+        /* Segitiga REVISI berangka — butir yang sama dengan kolom REV rel
+           samping, dijumlahkan. Kosong = segitiga tanpa angka. */
         <TombolBulat
-          ikon={Bell}
+          className="kl__kabar"
+          isi={<Revisi jumlah={jumlah} judul="Notifikasi" className="kl__revisi" />}
           judul={jumlah > 0 ? `Notifikasi, ${jumlah} perlu ditangani` : "Notifikasi"}
-          tanda={jumlah > 0}
           aria-haspopup="dialog"
           aria-expanded={buka}
         />

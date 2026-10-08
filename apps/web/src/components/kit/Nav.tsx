@@ -75,13 +75,13 @@ const useEfekTataLetak = typeof window === "undefined" ? useEffect : useLayoutEf
 
 /* Segitiga REVISI — delta bernomor gambar kerja. Angkanya di sepertiga
    bawah (titik berat segitiga), jadi dua digit masih muat. */
-function Revisi({ jumlah, judul }: { jumlah: number; judul: string }) {
+export function Revisi({ jumlah, judul, className }: { jumlah: number; judul: string; className?: string }) {
   return (
-    <span className="k-sisi__revisi" role="img" aria-label={`${judul}: ${jumlah}`}>
+    <span className={gabung("k-sisi__revisi", className)} role="img" aria-label={jumlah > 0 ? `${judul}: ${jumlah}` : `${judul}: tidak ada`}>
       <svg viewBox="0 0 24 21" aria-hidden="true">
         <path d="M12 1.8 22.4 19.4H1.6Z" />
       </svg>
-      <b aria-hidden="true">{jumlah > 9 ? "9+" : jumlah}</b>
+      {jumlah > 0 && <b aria-hidden="true">{jumlah > 9 ? "9+" : jumlah}</b>}
     </span>
   );
 }

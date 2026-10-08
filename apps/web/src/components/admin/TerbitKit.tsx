@@ -1,29 +1,52 @@
 import { Sembul } from "../kit/Overlay";
 import { Peringatan, Putar } from "../kit/Tampilan";
-import { useEffect, useState } from "react";
-import { TombolBulat } from "../kit/Item";
+import { useEffect, useRef, useState } from "react";
 import { Tombol } from "../kit/Tombol";
 import { Ikon } from "../kit/Ikon";
 import { Globe, NotePencil, CheckCircle, HourglassHigh } from "../kit/ikon";
 import { ambilSettings } from "../../lib/admin";
 import { useTerbit, sejak, jamTanggal } from "./useTerbit";
+import { tanggalRevisi } from "./jamStudio";
 
 /* =============================================================================
-   Tombol Terbitkan di kepala halaman kit.
+   Tombol Terbitkan di kepala halaman kit — STEMPEL REVISI.
 
-   Halaman yang sudah pindah ke kerangka kit (KitLayout) tidak memuat bilah
-   atas lama, jadi tombolnya ikut hilang — padahal toast di halaman Jurnal dan
-   Paket menyuruh "tekan Terbitkan di bilah atas". Yang ini tampilannya kit
-   (tombol bulat 38 seperti lonceng di sebelahnya, panel r16), keadaannya dari
-   useTerbit yang sama dengan bilah atas lama.
+   Menerbitkan situs publik = menerbitkan revisi baru set gambar: rel samping
+   menulis "REV dd.mm.yy" di sampulnya, dan stempel ini menulis tanggal yang
+   sama di kepala halaman, ditambah keadaannya (sudah tayang / ada perubahan /
+   sedang terbit). Bentuknya cap karet bercincin rangkap, bukan tombol bulat:
+   ia satu-satunya tombol di kepala yang membawa DATA, dan data itu harus
+   terbaca tanpa membukanya.
 
-   Ikonnya bola dunia: yang diterbitkan situs publik, dan pustaka ikon Coinest
-   tidak punya panah unggah. Menggambarnya sendiri berarti menjiplak — aturan
-   yang sama dengan ikon lain di panel ini.
+   Keadaannya dari useTerbit yang sama dengan bilah atas lama. Gerak hanya
+   karena perbuatan: menekan "Terbitkan sekarang" MENCAP stempelnya, dan
+   tanggalnya menggulung ke revisi baru begitu build itu tayang — bukan saat
+   halaman dimuat (jebakan #74).
    ============================================================================= */
 
 export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
   const t = useTerbit(dibangunPada);
+  /* Dicap sekali tiap kali staf menekan Terbitkan. Pengatur waktunya di ref:
+     render ulang selama build berjalan tidak boleh membatalkannya. */
+  const [tercap, setTercap] = useState(0);
+  const waktuCap = useRef(0);
+  const terbitkan = () => {
+    setTercap((n) => n + 1);
+    window.clearTimeout(waktuCap.current);
+    waktuCap.current = window.setTimeout(() => setTercap(0), 700);
+    void t.terbitkan();
+  };
+  useEffect(() => () => window.clearTimeout(waktuCap.current), []);
+  /* Tanggal revisi menggulung hanya saat build yang DIPICU DI SINI tayang. */
+  const rev = tanggalRevisi(t.capBuild) ?? "—";
+  const gulung = t.kirim === "tayang";
+  const keadaan =
+    t.kirim === "kirim" ? { ket: "Mengirim…", nada: "jalan" }
+      : t.kirim === "jalan" ? { ket: `Terbit ${t.jamMundur}`, nada: "jalan" }
+      : t.kirim === "tayang" ? { ket: "Sudah tayang", nada: "tayang" }
+      : t.berubahPada === undefined ? { ket: "Memeriksa", nada: "diam" }
+      : t.menyala ? { ket: "Ada perubahan", nada: "belum" }
+      : { ket: "Sudah tayang", nada: "tayang" };
   /* undefined = settings belum sampai; false = Worker tidak punya tokennya. */
   const [aktif, setAktif] = useState<boolean | undefined>(undefined);
   const [zona, setZona] = useState("Asia/Jakarta");
@@ -42,12 +65,19 @@ export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
       align="end"
       className="kterbit"
       pemicu={
-        <TombolBulat
-          ikon={Globe}
-          judul={t.menyala ? "Terbitkan perubahan yang belum tayang" : "Terbitkan situs"}
-          tanda={t.menyala}
-          nadaTanda="amber"
-        />
+        <button
+          type="button"
+          className={`kl__stempel is-${keadaan.nada}${tercap ? " is-tercap" : ""}`}
+          aria-label={`Revisi situs ${rev} — ${keadaan.ket.toLowerCase()}. ${t.menyala ? "Terbitkan perubahan yang belum tayang" : "Terbitkan situs"}`}
+        >
+          <span className="kl__stempelrev">
+            Rev{" "}
+            <span className="kl__stempeljendela">
+              <b key={rev} className={gulung ? "is-gulung" : undefined}>{rev}</b>
+            </span>
+          </span>
+          <span className="kl__stempelket">{keadaan.ket}</span>
+        </button>
       }
     >
           <p className="kterbit__judul">Terbitkan perubahan</p>
@@ -105,7 +135,7 @@ export function TerbitKit({ dibangunPada }: { dibangunPada: string }) {
               ukuran="large"
               jenis="primary"
               className="kterbit__aksi"
-              onClick={t.terbitkan}
+              onClick={terbitkan}
               disabled={t.kirim === "kirim" || t.kirim === "jalan" || aktif === undefined}
             >
               {t.labelTombol}

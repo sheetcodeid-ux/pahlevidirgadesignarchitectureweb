@@ -144,7 +144,7 @@ const path = Astro.url.pathname;
             (status build, polling). Stempel build dipanggang ke HTML di sini,
             sama seperti AdminLayout — panel ini hasil build yang sama dengan
             situs publiknya, jadi ia satu-satunya yang tahu umur dirinya. */}
-        <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} />
+        <KepalaKit client:load judul={judul ?? title} kembali={kembali} dibangunPada={CAP_BUILD} path={path} />
 
         {remah && <Remah jalur={remah} className="kl__remah" />}
 
@@ -423,10 +423,12 @@ const path = Astro.url.pathname;
        ponsel dan datang belakangan, jadi yang selalu berlaku 22/20 — dan
        itulah yang sudah di-ACC dan tayang. Aturan yang tidak pernah menyala
        lebih menyesatkan daripada tidak ada. */
-    /* Kepala: baris kedua (cari + tombol bulat) selebar layar, kotak cari
-       yang mengalah — 237 + tiga tombol 38 tidak muat di 358. */
-    .kl-body .k-kepalahal__kanan { flex: 1 1 100%; gap: 10px; }
-    .kl-body .k-kepalahal__kanan > .k-cari { flex: 1 1 auto; width: auto; min-width: 0; }
+    /* Kepala: baris kedua (cari bulat + stempel + tiga tombol) selebar
+       layar. Kotak cari sudah jadi tombol bulat di bawah 78rem (kit.css,
+       KEPALA LEMBAR), jadi barisnya muat tanpa ada yang mengalah. Judul
+       18 supaya muat di samping kotak nomor lembar. */
+    .kl-body .k-kepalahal__kanan { flex: 1 1 100%; justify-content: space-between; gap: 10px; }
+    .kl-body .kl__kepala .k-kepalahal__judul { font-size: var(--k-t18); }
   }
   @media (prefers-reduced-motion: reduce) {
     .kl #kl-rel { transition: none; }

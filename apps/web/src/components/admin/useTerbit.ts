@@ -179,5 +179,5 @@ export function useTerbit(dibangunPada: string) {
       : kirim === "tayang" ? "Sudah tayang"
       : "Terbitkan sekarang";
 
-  return { berubahPada, kirim, galat, kini, menyala, terbitkan, jamMundur, kalimat, labelTombol };
+  return { berubahPada, capBuild, kirim, galat, kini, menyala, terbitkan, jamMundur, kalimat, labelTombol };
 }

@@ -1,9 +1,12 @@
 import { KepalaHalaman, TombolBulat } from "../kit/Item";
 import { Cari } from "../kit/Isian";
+import { Ikon } from "../kit/Ikon";
 import { useEffect, useLayoutEffect, useState } from "react";
-import { ArrowLeft, List, SpecialMoonStars } from "../kit/ikon";
+import { ArrowLeft, ArsLampuMeja, ArsLembar, ArsSetGambar } from "../kit/ikon";
 import { gantiTema, temaGelap, PERISTIWA_TEMA } from "../../lib/tema";
-import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_REVISI, ID_REL } from "./RelKit";
+import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_REVISI, ID_REL, ikonNav } from "./RelKit";
+import { daftarLembar, lembarTampil, lembarUntuk, posisiLembar } from "../../lib/navAdmin";
+import { PERISTIWA_PROFIL, profilTersimpan, type Profil } from "../../lib/admin";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 /* Palet dimuat LANGSUNG, bukan malas: versi malasnya terukur kehilangan
@@ -14,19 +17,89 @@ import { ambilBarisNotifikasi, barisNotifikasiTerakhir, revisiPerHalaman, type B
 import { PanelPesan, PanelNotifikasi } from "./panelKabar";
 import { TitipanToast } from "../kit/Toast";
 
-/* Kepala halaman panel admin — `KepalaHalaman` kit dengan isi kanan yang
-   sama di seluruh halaman.
+/* =============================================================================
+   Kepala halaman panel admin = KEPALA LEMBAR set gambar kerja.
+
+   Rel samping adalah daftar gambar satu set; tiap halaman satu LEMBAR di
+   set itu. Jadi kepalanya kepala lembar: kotak nomor lembar (ikon lembarnya
+   + "P-22"), jalur kategori di atas judul, lalu peralatan meja gambar —
+   cari lembar (Ctrl/Cmd+K), STEMPEL REV untuk Terbitkan, LAMPU MEJA untuk
+   tema, surat pengantar untuk Pesan, dan segitiga REVISI untuk notifikasi.
+   Nomor, ikon, dan jalurnya dari `daftarLembar()` — sumber yang sama dengan
+   rel dan palet perintah (jebakan #32).
+
+   Tinggi tetap 38 di y22 (frame 01): jalur 12 + judul 26, jadi badan
+   halaman tetap mulai di y80 dan ke-32 halaman tetap satu layar.
+
+   Gerak hanya karena perbuatan (jebakan #74): pindah halaman lewat router
+   menggulung nomor lembar dan menggambar ikonnya dengan pena; menekan
+   lampu mengayunkan lengannya; Terbitkan mencap stempelnya.
 
    Dibungkus jadi komponen React sendiri, bukan dirangkai di berkas .astro,
    karena JSX di dalam .astro menghasilkan fragmen ASTRO — bukan elemen
    React — jadi ia tidak bisa dioper sebagai prop ke komponen React. Yang
-   dioper dari .astro cuma string. */
-export function KepalaKit({ judul, kembali, dibangunPada }: {
+   dioper dari .astro cuma string.
+   ============================================================================= */
+
+/* PINDAH LEMBAR. Kepala ini dipasang ulang tiap halaman, jadi ia tidak
+   bisa membandingkan nomor lembar lama dengan yang baru sendiri — dan
+   menyalakan gerak sesudah hidrasi berarti nomor barunya sempat tergambar
+   diam satu bingkai lalu meloncat. Yang menandainya peristiwa router,
+   SEBELUM dokumen baru dipasang: kalau nomornya berganti, <html> dokumen
+   baru diberi `data-kl-pindah`, dan CSS menggulung nomornya serta
+   menggambar ikonnya sejak bingkai pertama. Muat penuh tidak melewati
+   peristiwa ini, jadi tidak ada gerak saat dimuat. Atributnya dilepas
+   sesudah geraknya selesai. Modul ini hidup selama sesi router, jadi
+   pendengarnya cukup dipasang sekali. */
+const PINDAH = "data-kl-pindah";
+let waktuPindah = 0;
+if (typeof document !== "undefined") {
+  document.addEventListener("astro:before-swap", (e) => {
+    const baru = (e as unknown as { newDocument: Document }).newDocument;
+    const lama = document.querySelector(".kl__lembarno b")?.textContent;
+    const kini = baru.querySelector(".kl__lembarno b")?.textContent;
+    if (lama && kini && lama !== kini) baru.documentElement.setAttribute(PINDAH, "");
+  });
+  document.addEventListener("astro:after-swap", () => {
+    window.clearTimeout(waktuPindah);
+    if (!document.documentElement.hasAttribute(PINDAH)) return;
+    waktuPindah = window.setTimeout(() => document.documentElement.removeAttribute(PINDAH), 1300);
+  });
+}
+
+const LEMBAR = daftarLembar().halaman;
+
+export function KepalaKit({ judul, kembali, dibangunPada, path }: {
   judul: string;
   kembali?: string;
   /** Stempel build yang dipanggang ke HTML — lihat useTerbit. */
   dibangunPada: string;
+  /** Path halaman ini — nomor lembar dan jalur kategorinya. */
+  path: string;
 }) {
+  /* Nomor, ikon, dan jalur cuma bergantung pada path, jadi sama di server
+     dan klien. "10 / 32" bergantung pada peran (staf tidak menghitung lembar
+     master) dan baru ditulis sesudah peran terbaca — sama dengan kop rel. */
+  const dibuka = lembarUntuk(path, LEMBAR);
+  const [master, setMaster] = useState<boolean | undefined>(undefined);
+  useEffect(() => {
+    setMaster(profilTersimpan()?.isMasterAdmin);
+    const dengar = (e: Event) => {
+      const q = (e as CustomEvent<Profil>).detail;
+      if (q) setMaster(q.isMasterAdmin);
+    };
+    window.addEventListener(PERISTIWA_PROFIL, dengar);
+    return () => window.removeEventListener(PERISTIWA_PROFIL, dengar);
+  }, []);
+  const keterangan = master === undefined ? null : posisiLembar(path, lembarTampil(master)).keterangan;
+
+  /* Pintasan palet ditulis menurut mesinnya — sesudah dipasang, karena
+     server tidak tahu mesin pengunjung. */
+  const [tuts, setTuts] = useState("Ctrl K");
+  useEffect(() => {
+    if (/Mac|iPhone|iPad/.test(navigator.userAgent)) setTuts("⌘ K");
+  }, []);
+
   /* Keadaan menu geser milik RelKit; di sini cuma cerminnya untuk
      aria-expanded. Kepala ini dipasang ulang tiap halaman, jadi ia bertanya
      sekali saat dipasang. */
@@ -84,6 +157,31 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
     window.addEventListener(PERISTIWA_TEMA, dengar);
     return () => window.removeEventListener(PERISTIWA_TEMA, dengar);
   }, []);
+  /* Lengan lampu berayun dan cahayanya menyala/padam hanya karena DITEKAN —
+     bukan saat tema terbaca sesudah hidrasi (jebakan #74). Lewat Web
+     Animations dari penangan klik, bukan kelas: tiap tekanan memulai
+     ayunannya dari awal, dan tidak ada keadaan yang bisa tertinggal. Tanpa
+     `fill` sesudahnya, jadi tidak ada animasi yang menumpuk (jebakan #72);
+     keadaan diamnya milik CSS (`.is-nyala`). */
+  const tekanLampu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const nyalaLama = temaGelap();
+    const svg = e.currentTarget.querySelector("svg");
+    gantiTema();
+    if (!svg || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    svg.querySelector(".lengan")?.animate(
+      [{ transform: "none" }, { transform: "rotate(-16deg)" }, { transform: "rotate(7deg)" }, { transform: "rotate(-2deg)" }, { transform: "none" }],
+      { duration: 860, easing: "cubic-bezier(0.3, 0.6, 0.4, 1)" },
+    );
+    svg.querySelector(".cahaya")?.animate([{ opacity: nyalaLama ? 1 : 0 }, { opacity: nyalaLama ? 0 : 1 }], {
+      duration: 320,
+      delay: 160,
+      easing: "ease-out",
+      fill: "backwards",
+    });
+  };
+
+  const kelompok = dibuka?.lembar.kelompok;
+  const induk = dibuka?.lembar.induk;
 
   return (
     <KepalaHalaman
@@ -92,12 +190,40 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
          pernah cocok (jebakan #1). */
       className="kl__kepala"
       judul={judul}
+      /* Kotak nomor lembar — ikon lembar di sel kiri, nomornya di sel kanan,
+         seperti sel LEMBAR di kop kaki rel. */
+      lambang={
+        <span className="kl__lembar">
+          <span className="kl__lembarikon" aria-hidden="true">
+            <Ikon ikon={dibuka ? ikonNav(dibuka.lembar.ikon, dibuka.lembar.label) : ArsLembar} ukuran={18} />
+          </span>
+          <span className="kl__lembarno">
+            <small>Lembar</small>
+            <span className="kl__lembarjendela">
+              <b>{dibuka?.lembar.kode ?? "—"}</b>
+            </span>
+          </span>
+        </span>
+      }
+      label={
+        <span className="kl__jalur">
+          {kelompok ?? "Set gambar"}
+          {induk && (
+            <>
+              {" "}
+              <i aria-hidden="true">›</i> {induk}
+            </>
+          )}
+          {keterangan && <span className="kl__jalurket"> · {keterangan}</span>}
+        </span>
+      }
       /* Hanya tampil di ponsel (CSS .kl__menu). Bulat, bukan kotak seperti
          tombol kembali: di kit, yang bulat membuka panel. */
       kiri={
         <TombolBulat
           className="kl__menu"
-          ikon={List}
+          ikon={ArsSetGambar}
+          ukuran={18}
           judul={menuBuka ? "Tutup menu" : "Buka menu"}
           aria-controls={ID_REL}
           aria-expanded={menuBuka}
@@ -120,8 +246,11 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
               onFocus akan langsung membukanya lagi. */}
           <Cari
             ukuran="medium"
-            judul="Cari halaman atau proyek"
-            placeholder="Cari di panel"
+            className="kl__cari"
+            judul="Cari lembar atau proyek"
+            placeholder="Cari lembar atau proyek"
+            tuts={tuts}
+            aria-keyshortcuts="Control+K Meta+K"
             readOnly
             aria-haspopup="dialog"
             onClick={() => setCariBuka(true)}
@@ -147,15 +276,15 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
           <TitipanToast />
           <span className="k-kepalahal__grup">
             <TerbitKit dibangunPada={dibangunPada} />
-            {/* Tema terang/gelap — dulu cuma bisa lewat palet perintah. Ikon
-                bulan dari pustaka Coinest; pustaka itu tidak punya matahari,
-                jadi keadaannya dibawa aria-pressed dan bidangnya. */}
+            {/* Tema terang/gelap = LAMPU MEJA GAMBAR: di tema gelap lampunya
+                menyala (malam, lampu meja dinyalakan), di terang padam. */}
             <TombolBulat
-              ikon={SpecialMoonStars}
+              ikon={ArsLampuMeja}
+              ukuran={20}
               judul={gelap ? "Ganti ke tema terang" : "Ganti ke tema gelap"}
               aria-pressed={gelap}
-              className="kl__tema"
-              onClick={gantiTema}
+              className={gelap ? "kl__tema is-nyala" : "kl__tema"}
+              onClick={tekanLampu}
             />
             {/* Panel pratinjau, bukan pindah halaman — lihat panelKabar. */}
             <PanelPesan belumDibaca={pesanBaru} />

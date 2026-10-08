@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 /* =============================================================================
    Jam STUDIO — tanggal dan jam menurut zona Info Studio, bukan zona peramban.
 
-   Dipakai kotak judul Dashboard dan kop gambar di kaki rel samping. Satu
-   modul, supaya dua tempat yang menulis jam di layar yang sama tidak pernah
-   berbeda menit atau berbeda zona (jebakan #32).
+   Dipakai kotak judul Dashboard, kop gambar di kaki rel samping, dan stempel
+   REV di kepala halaman. Satu modul, supaya dua tempat yang menulis jam atau
+   tanggal di layar yang sama tidak pernah berbeda (jebakan #32).
    ============================================================================= */
 
 const ZONA: Record<string, string> = { "Asia/Jakarta": "WIB", "Asia/Makassar": "WITA", "Asia/Jayapura": "WIT" };
@@ -48,6 +48,24 @@ export function jamStudio(d: Date, zona?: string | null): Jam {
       tanggalPendek: pendek,
       jam: `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`,
     };
+  }
+}
+
+/** "2026-10-08T03:31:19Z" → "08.10.26" — tanggal REVISI set gambar (sampul
+    rel dan stempel Terbitkan di kepala halaman). Zona bawaan (WIB) yang TETAP,
+    bukan zona Info Studio: HTML server dan render klien harus sama persis
+    (jebakan #8), dan zona studio baru diketahui sesudah datanya tiba. */
+export function tanggalRevisi(iso?: string | null): string | null {
+  if (!iso) return null;
+  try {
+    const b = Object.fromEntries(
+      new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "2-digit", month: "2-digit", year: "2-digit" })
+        .formatToParts(new Date(iso))
+        .map((p) => [p.type, p.value]),
+    );
+    return `${b.day}.${b.month}.${b.year}`;
+  } catch {
+    return null;
   }
 }
 

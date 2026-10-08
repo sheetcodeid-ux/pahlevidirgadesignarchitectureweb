@@ -1574,20 +1574,6 @@
   color: var(--brand-isi);
   cursor: pointer;
 }
-/* Titik 8px — posisinya dari framenya: 21 dari kiri, 9 dari atas pada tombol
-   38px. Itu BUKAN sudut kanan atas; ia duduk agak ke dalam, menempel pada
-   lonceng di baliknya. */
-.k-bulat__tanda {
-  position: absolute;
-  left: 21px;
-  top: 9px;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--danger);
-}
-/* Amber = terbatas (aturan warna #1): ada yang belum tayang, bukan kerusakan. */
-.k-bulat__tanda--amber { background: var(--warn); }
 .k-bulat:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .k-bulat[data-state="open"] { background: var(--brand-line, var(--brand-soft)); }
 
@@ -3778,13 +3764,29 @@ button.k-nav { font-family: inherit; letter-spacing: inherit; text-rendering: in
 }
 
 /* =============================================================================
-   NAVBAR — bilah diam (permintaan pemilik: "navbar tidak ketahan … minta
-   upgrade"). Bidangnya permukaan putih bergaris bawah (KitLayout), jadi
-   kontrolnya kembali ke bentuk kit-nya sendiri: kotak cari abu, tombol bulat
-   mint pucat — bukan perlakuan "di atas latar abu" yang dulu mereka butuhkan.
-   Judul membawa tanggal hari ini di bawahnya.
+   KEPALA LEMBAR — navbar panel (KepalaKit). Rel samping adalah daftar gambar
+   satu set gambar kerja; tiap halaman satu lembarnya, jadi kepalanya kepala
+   lembar: kotak nomor lembar, jalur kategori di atas judul, lalu peralatan
+   meja gambar — cari lembar, STEMPEL REV (Terbitkan), lampu meja (tema),
+   surat pengantar (Pesan), segitiga revisi (notifikasi).
+
+   Tinggi TETAP 38 (frame 01): jalur 12 + 1 + judul 25. Badan halaman tetap
+   mulai di y80, jadi ke-32 halaman tetap satu layar. Tidak ada garis atau
+   bidang yang lewat di belakang tulisan (jebakan #70).
    ============================================================================= */
-.k-kepalahal__teks { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.k-kepalahal__teks { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.k-kepalahal__label {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  line-height: 12px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
 .k-kepalahal__sub {
   margin: 0;
   min-height: 1.3em;
@@ -3795,8 +3797,263 @@ button.k-nav { font-family: inherit; letter-spacing: inherit; text-rendering: in
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.kl__kepala .k-cari { width: 282px; }
+.kl__kepala .k-kepalahal__judul { line-height: 25px; }
+.kl__jalur i { font-style: normal; }
+.kl__jalurket { letter-spacing: 0.06em; }
+
+/* Kotak nomor lembar — sel ikon | sel nomor, bingkai tinta judul, seperti
+   sel LEMBAR di kop kaki rel. Nomornya di dalam jendela sebaris supaya
+   gulungannya tidak lewat di atas label "LEMBAR". */
+.kl__lembar {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  height: 38px;
+  border: 1.5px solid var(--judul-ink);
+  border-radius: 7px;
+  color: var(--judul-ink);
+}
+.kl__lembarikon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  border-right: 1px solid var(--judul-ink);
+  border-radius: 5.5px 0 0 5.5px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.kl__lembarno {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 50px;
+  padding: 0 9px 0 8px;
+}
+.kl__lembarno small {
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  line-height: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.kl__lembarjendela { display: block; height: 18px; overflow: clip; }
+.kl__lembarno b {
+  display: block;
+  font-size: var(--k-t14);
+  font-weight: var(--k-bold);
+  line-height: 18px;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cari lembar — kotak cari kit + tuts pintasan. */
+.kl__kepala .kl__cari { width: 282px; }
+.k-cari__tuts {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  line-height: 14px;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+/* STEMPEL REV — cap karet bercincin rangkap. Tintanya membawa keadaannya:
+   hijau (brand) = situs sama dengan panel, amber = ada perubahan / sedang
+   terbit (aturan warna #1: terbatas, bukan rusak). */
+.kl__stempel {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1px;
+  width: 116px;
+  height: 38px;
+  padding: 0 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px var(--k-panel), inset 0 0 0 2.75px currentColor;
+  background: var(--k-panel);
+  color: var(--brand);
+  /* <button> tidak mewarisi font (jebakan #43). */
+  font-family: inherit;
+  letter-spacing: inherit;
+  text-rendering: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.kl__stempel.is-belum,
+.kl__stempel.is-jalan { color: var(--warn-ink); }
+.kl__stempel:hover,
+.kl__stempel[data-state="open"] { background: color-mix(in srgb, currentColor 7%, var(--k-panel)); }
+.kl__stempel:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.kl__stempelrev {
+  font-size: var(--k-t11);
+  font-weight: var(--k-bold);
+  line-height: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.kl__stempeljendela { display: inline-block; height: 13px; overflow: clip; vertical-align: bottom; }
+.kl__stempeljendela b { display: block; font-variant-numeric: tabular-nums; }
+.kl__stempelket {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  line-height: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.kl__stempel.is-belum .kl__stempelket,
+.kl__stempel.is-jalan .kl__stempelket { color: inherit; }
+.kl__stempel.is-belum .kl__stempelket::before,
+.kl__stempel.is-jalan .kl__stempelket::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+/* Lampu meja — cahayanya hanya di tema gelap. Tinta campuran lewat `fill`
+   CSS (menimpa atribut fill ikonnya), jadi gerak lampunya cukup opacity. */
 .kl__tema[aria-pressed="true"] { background: var(--brand-mint); color: var(--brand-mint-ink); }
+.kl__tema svg .lengan { transform-box: view-box; transform-origin: 9.3px 10.4px; }
+.kl__tema svg .cahaya { opacity: 0; fill: color-mix(in srgb, currentColor 38%, transparent); }
+.kl__tema.is-nyala svg .cahaya { opacity: 1; }
+
+/* Pesan & notifikasi: angka di tag kecil / di dalam segitiga revisi. */
+/* Tag angka di LUAR kotak ikonnya (ikon 18 di tengah tombol 38 = 10..28):
+   tag 16 mulai di x28 dan berakhir di y12, jadi tidak ada tinta ikon di
+   belakang angkanya (jebakan #70). Menonjol 6px ke celah 10px antartombol. */
+.kl__kabar .kl__angka {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 1.5px solid var(--k-panel);
+  border-radius: 999px;
+  background: var(--danger);
+  font-size: var(--k-t9);
+  font-weight: var(--k-bold);
+  line-height: 13px;
+  text-align: center;
+  color: var(--surface);
+}
+.kl__kabar .kl__revisi { width: 24px; height: 21px; }
+.kl__kabar .kl__revisi svg { stroke-width: 1.5; }
+.kl__kabar .kl__revisi b { margin-top: 6px; font-size: var(--k-t10); }
+/* Tanpa angka: segitiganya garis tinta biasa, bukan merah. */
+.kl__kabar .kl__revisi:not(:has(b)) svg { stroke: currentColor; fill: none; }
+
+/* Laptop sempit & ponsel: kotak cari jadi tombol bulat berkaca pembesar —
+   isiannya tetap ada (tak tampak, menutup tombolnya), jadi klik dan papan
+   ketik masih membuka palet yang sama. */
+@media (max-width: 78rem) {
+  .kl__kepala .kl__cari {
+    position: relative;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-color: transparent;
+    background: var(--brand-soft);
+  }
+  .kl__kepala .kl__cari:focus-within { border-color: var(--brand); }
+  .kl__kepala .kl__cari .k-cari__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .kl__kepala .kl__cari .k-cari__tuts { display: none; }
+}
+
+/* Ponsel: "· 10 / 32" sudah ada di kop laci menu, dan jalur kategori yang
+   panjang ("KONTEN SITUS › SITUS PUBLIK") butuh tempatnya. Halaman detail
+   yang punya tombol kembali juga melepas sel ikon kotak lembarnya. */
+@media (max-width: 40rem) {
+  .kl__kepala .kl__jalurket { display: none; }
+  .kl__kepala .k-kepalahal__kiri:has(.k-kepalahal__kembali) .kl__lembarikon { display: none; }
+}
+
+/* --- Gerak kepala lembar -------------------------------------------------
+   Pindah lembar (router): `html[data-kl-pindah]` dipasang KepalaKit pada
+   dokumen baru sebelum ia dipasang — nomornya menggulung masuk, ikonnya
+   digambar pena. Jeda per garis berkekhususan DI ATAS aturan animasinya
+   (jebakan #75). Disentuh tetikus: ikon tombol digambar ulang.
+
+   TANPA `[pathLength]` di selektor (jebakan #77): Chrome tidak menghitung
+   ulang gaya <path> saat atribut di <html> berganti kalau selektornya
+   memuat nama atribut SVG ber-huruf-besar itu — animasinya tertinggal
+   menempel sesudah atributnya dilepas, dan memasang atributnya tidak
+   menyalakan apa pun. Ikon di sini semuanya ikon arsitektur (berpathLength),
+   dan segitiga revisi dikecualikan lewat `> svg` (ia terbungkus <span>). */
+html[data-kl-pindah] .kl__lembarno b { animation: kl-gulung 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+html[data-kl-pindah] .kl__lembarikon svg path:not(.isi) {
+  stroke-dasharray: 1 1;
+  animation: k-tarik 720ms cubic-bezier(0.3, 0.5, 0.2, 1) both;
+}
+html[data-kl-pindah] .kl__lembarikon svg path.isi { animation: k-isi 240ms 640ms both; }
+html[data-kl-pindah] .kl__lembarikon svg g > :nth-child(2):not(.isi) { animation-delay: 70ms; }
+html[data-kl-pindah] .kl__lembarikon svg g > :nth-child(3):not(.isi) { animation-delay: 140ms; }
+html[data-kl-pindah] .kl__lembarikon svg g > :nth-child(4):not(.isi) { animation-delay: 210ms; }
+html[data-kl-pindah] .kl__lembarikon svg g > :nth-child(n + 5):not(.isi) { animation-delay: 280ms; }
+@media (hover: hover) and (pointer: fine) {
+  .kl__kepala .k-bulat:hover > svg path:not(.isi),
+  .kl__kepala .kl__lembar:hover .kl__lembarikon > svg path:not(.isi) {
+    stroke-dasharray: 1 1;
+    animation: k-tarik-sentuh 560ms cubic-bezier(0.3, 0.5, 0.2, 1) both;
+  }
+  .kl__kepala .k-bulat:hover > svg g > :nth-child(2):not(.isi),
+  .kl__kepala .kl__lembar:hover .kl__lembarikon > svg g > :nth-child(2):not(.isi) { animation-delay: 50ms; }
+  .kl__kepala .k-bulat:hover > svg g > :nth-child(3):not(.isi),
+  .kl__kepala .kl__lembar:hover .kl__lembarikon > svg g > :nth-child(3):not(.isi) { animation-delay: 100ms; }
+  .kl__kepala .k-bulat:hover > svg g > :nth-child(n + 4):not(.isi),
+  .kl__kepala .kl__lembar:hover .kl__lembarikon > svg g > :nth-child(n + 4):not(.isi) { animation-delay: 150ms; }
+}
+/* Stempel dicap: ditekan, sedikit miring, lalu kembali; cincin tintanya
+   melebar dan pudar. Tanggalnya menggulung saat revisi barunya tayang. */
+.kl__stempel.is-tercap { animation: kl-cap 520ms cubic-bezier(0.3, 1.4, 0.5, 1); }
+.kl__stempel.is-tercap::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 2px solid currentColor;
+  border-radius: 9px;
+  pointer-events: none;
+  animation: kl-tinta 520ms ease-out both;
+}
+.kl__stempeljendela b.is-gulung { animation: kl-gulung 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes kl-cap {
+  0% { transform: none; }
+  30% { transform: scale(0.92) rotate(-3deg); }
+  65% { transform: scale(1.03) rotate(-1deg); }
+  100% { transform: none; }
+}
+@keyframes kl-tinta {
+  from { opacity: 0.55; transform: scale(0.94); }
+  to { opacity: 0; transform: scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-kl-pindah] .kl__lembarno b,
+  html[data-kl-pindah] .kl__lembarikon svg path,
+  .kl__kepala svg path,
+  .kl__stempel.is-tercap,
+  .kl__stempel.is-tercap::after,
+  .kl__stempeljendela b.is-gulung { animation: none !important; }
+}
 /* =============================================================================
    Keterangan grafik saat disentuh kursor (kartuGrafik.tsx)
    Satu bentuk kartu untuk Busur, Donat, Cincin, Kilau, dan KolomGrafik.

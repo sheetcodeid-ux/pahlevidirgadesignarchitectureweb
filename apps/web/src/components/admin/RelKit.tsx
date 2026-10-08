@@ -10,13 +10,13 @@ import {
 import type { DataIkon } from "../kit/Ikon";
 import { Avatar } from "../kit/Tampilan";
 import { TombolIkon } from "../kit/Tombol";
-import { daftarLembar, KODE_KELOMPOK, lembarUntuk, NAV, rapiPath } from "../../lib/navAdmin";
+import { daftarLembar, KODE_KELOMPOK, lembarTampil, lembarUntuk, NAV, posisiLembar, rapiPath } from "../../lib/navAdmin";
 import {
   ambilSettings, bacaCache, keluar, namaTampilan, PERISTIWA_PROFIL, profilTersimpan, type Profil, type StudioSettings,
 } from "../../lib/admin";
 import { barisNotifikasiTerakhir, revisiPerHalaman } from "../../lib/notifikasi";
 import { inisial } from "../../lib/nomorDokumen";
-import { jamStudio, useJam } from "./jamStudio";
+import { jamStudio, tanggalRevisi, useJam } from "./jamStudio";
 
 /* =============================================================================
    Rel samping panel admin — DAFTAR GAMBAR satu set gambar kerja.
@@ -47,7 +47,8 @@ export const IKON_NAV = {
 export type NamaIkonNav = keyof typeof IKON_NAV;
 const PETA = new Map<string, DataIkon>(Object.entries(IKON_NAV));
 
-function ikon(nama: string, konteks: string): DataIkon {
+/** Data ikon menu menurut namanya — rel dan kepala halaman. */
+export function ikonNav(nama: string, konteks: string): DataIkon {
   const d = PETA.get(nama);
   if (!d) {
     /* Bukan lempar: satu nama yang salah ketik tidak boleh menjatuhkan
@@ -91,22 +92,6 @@ const useEfekTataLetak = typeof window === "undefined" ? useEffect : useLayoutEf
 const LEMBAR = daftarLembar();
 const KODE_HALAMAN = new Map(LEMBAR.halaman.map((l) => [rapi(l.href), l.kode]));
 const KELOMPOK = [...new Set(NAV.map((n) => n.group))];
-
-/** "2026-10-08T03:31:19Z" → "08.10.26", di zona studio bawaan (WIB) — tetap,
-    supaya HTML server dan render klien sama persis (jebakan #8). */
-function tanggalRevisi(iso?: string): string | null {
-  if (!iso) return null;
-  try {
-    const b = Object.fromEntries(
-      new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "2-digit", month: "2-digit", year: "2-digit" })
-        .formatToParts(new Date(iso))
-        .map((p) => [p.type, p.value]),
-    );
-    return `${b.day}.${b.month}.${b.year}`;
-  } catch {
-    return null;
-  }
-}
 
 const gerakBoleh = () => typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -232,7 +217,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
   const lipat = (label: string) => setTerbuka((t) => (t.includes(label) ? t.filter((x) => x !== label) : [...t, label]));
 
   /* Lembar yang TAMPIL untuk peran ini; nomornya tetap dari NAV lengkap. */
-  const tampil = LEMBAR.halaman.filter((l) => !l.masterOnly || master);
+  const tampil = lembarTampil(master);
   const perKelompok = new Map<string, number>();
   for (const l of tampil) perKelompok.set(l.kelompok, (perKelompok.get(l.kelompok) ?? 0) + 1);
 
@@ -249,7 +234,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
     const anak = n.children?.map((c) => {
       const kode = KODE_HALAMAN.get(rapi(c.href));
       return {
-        ikon: ikon(c.ikonKit, c.label),
+        ikon: ikonNav(c.ikonKit, c.label),
         label: c.label,
         href: c.href,
         aktif: cocok(c.href),
@@ -261,7 +246,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
     const terbukaIni = anak ? terbuka.includes(n.label) : undefined;
     const kode = n.href ? KODE_HALAMAN.get(rapi(n.href)) : LEMBAR.induk.get(n.label);
     return {
-      ikon: ikon(n.ikonKit, n.label),
+      ikon: ikonNav(n.ikonKit, n.label),
       label: n.label,
       href: n.href,
       aktif: n.href ? cocok(n.href) : false,
@@ -281,8 +266,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
   });
 
   /* Lembar yang dibuka — kop dan kunci denah. */
-  const dibuka = lembarUntuk(kini, tampil);
-  const urutDibuka = dibuka ? tampil.indexOf(dibuka.lembar) + 1 : 0;
+  const { dibuka, keterangan } = posisiLembar(kini, tampil);
   const jam = useJam(true);
   const [studio, setStudio] = useState<Pick<StudioSettings, "timezone" | "logoUrl" | "studioName"> | null>(null);
   useEffect(() => {
@@ -450,7 +434,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
                       {dibuka?.lembar.kode ?? "—"}
                     </span>
                   </b>
-                  <small>{dibuka ? (dibuka.turunan ? "lampiran" : `${urutDibuka} / ${tampil.length}`) : "di luar daftar"}</small>
+                  <small>{keterangan}</small>
                 </dd>
               </div>
               <div>

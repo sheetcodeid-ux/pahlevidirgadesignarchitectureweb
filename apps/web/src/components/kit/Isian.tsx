@@ -19,6 +19,10 @@ export interface PropCari extends Omit<InputHTMLAttributes<HTMLInputElement>, "s
   ukuran?: UkuranCari;
   /** Wajib: kotak cari tanpa nama tidak bisa dibacakan pembaca layar. */
   judul: string;
+  /** Pintasan papan ketik yang membuka kotak ini — "Ctrl K". Ditulis sebagai
+      tuts sebelum kaca pembesar; nama ARIA-nya (`aria-keyshortcuts`) dioper
+      pemanggil, karena hanya ia yang tahu tuts sebenarnya. */
+  tuts?: string;
 }
 
 /**
@@ -40,11 +44,12 @@ function pisahData<T extends Record<string, unknown>>(prop: T) {
 }
 
 /** Ikonnya di KANAN, seperti di Figma — bukan di kiri seperti kebiasaan umum. */
-export function Cari({ ukuran = "medium", judul, className, ...prop }: PropCari) {
+export function Cari({ ukuran = "medium", judul, tuts, className, ...prop }: PropCari) {
   const { data, sisa } = pisahData(prop);
   return (
     <div className={["k-cari", `k-cari--${ukuran}`, className].filter(Boolean).join(" ")} {...data}>
       <input type="search" className="k-cari__input" aria-label={judul} {...sisa} />
+      {tuts && <kbd className="k-cari__tuts" aria-hidden="true">{tuts}</kbd>}
       <Ikon ikon={MagnifyingGlass} ukuran={IKON_CARI[ukuran]} />
     </div>
   );

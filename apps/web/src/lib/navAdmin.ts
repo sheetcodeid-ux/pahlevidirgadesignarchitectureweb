@@ -213,6 +213,8 @@ export interface Lembar {
   label: string;
   href: string;
   kelompok: string;
+  /** Ikon arsitekturnya — sama dengan barisnya di rel. */
+  ikon: NamaIkonNav;
   masterOnly?: boolean;
   /** Label induknya kalau lembar ini anak submenu. */
   induk?: string;
@@ -227,7 +229,15 @@ export interface DaftarLembar {
 
 const dua = (n: number) => String(n).padStart(2, "0");
 
+/* Dihitung sekali: NAV tidak berubah selama halaman hidup, dan rel, kepala
+   halaman, serta palet perintah semuanya memintanya. */
+let daftarTersimpan: DaftarLembar | null = null;
+
 export function daftarLembar(): DaftarLembar {
+  return (daftarTersimpan ??= hitungLembar());
+}
+
+function hitungLembar(): DaftarLembar {
   const halaman: Lembar[] = [];
   const induk = new Map<string, string>();
   const urutan = new Map<string, number>();
@@ -242,11 +252,11 @@ export function daftarLembar(): DaftarLembar {
       if (n.children.length > 9) console.warn(`[navAdmin] ${n.label} punya ${n.children.length} anak — nomor lembarnya bertabrakan`);
       induk.set(n.label, `${huruf}-${ke}0`);
       n.children.forEach((c, j) =>
-        halaman.push({ kode: `${huruf}-${ke}${j + 1}`, label: c.label, href: c.href, kelompok: n.group, induk: n.label }),
+        halaman.push({ kode: `${huruf}-${ke}${j + 1}`, label: c.label, href: c.href, kelompok: n.group, ikon: c.ikonKit, induk: n.label }),
       );
     } else {
       const kode = berseri.has(n.group) ? `${huruf}-${ke}0` : `${huruf}-${dua(ke)}`;
-      halaman.push({ kode, label: n.label, href: n.href!, kelompok: n.group, masterOnly: n.masterOnly });
+      halaman.push({ kode, label: n.label, href: n.href!, kelompok: n.group, ikon: n.ikonKit, masterOnly: n.masterOnly });
     }
   }
   return { halaman, induk };
@@ -274,6 +284,33 @@ export function lembarUntuk(path: string, daftar: Lembar[]): { lembar: Lembar; t
     if (!terbaik || h.length > rapiPath(terbaik.href).length) terbaik = l;
   }
   return terbaik ? { lembar: terbaik, turunan: true } : null;
+}
+
+/** Lembar yang TAMPIL untuk peran ini — staf tidak menghitung lembar master. */
+export const lembarTampil = (master: boolean | undefined): Lembar[] =>
+  daftarLembar().halaman.filter((l) => !l.masterOnly || master);
+
+export interface PosisiLembar {
+  dibuka: { lembar: Lembar; turunan: boolean } | null;
+  /** Urutan lembar yang dibuka di antara yang tampil, mulai 1 (0 = tidak ada). */
+  urut: number;
+  jumlah: number;
+  /** "10 / 32", "lampiran", atau "di luar daftar" — kop rel dan kepala halaman. */
+  keterangan: string;
+}
+
+/** Letak satu path di set gambar — SATU rumusan untuk kop di kaki rel dan
+    jalur di kepala halaman, supaya dua tempat yang menulis "10 / 32" di layar
+    yang sama tidak bisa berbeda (jebakan #32). */
+export function posisiLembar(path: string, tampil: Lembar[]): PosisiLembar {
+  const dibuka = lembarUntuk(path, tampil);
+  const urut = dibuka ? tampil.indexOf(dibuka.lembar) + 1 : 0;
+  return {
+    dibuka,
+    urut,
+    jumlah: tampil.length,
+    keterangan: dibuka ? (dibuka.turunan ? "lampiran" : `${urut} / ${tampil.length}`) : "di luar daftar",
+  };
 }
 
 /**
