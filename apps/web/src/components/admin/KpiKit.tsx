@@ -1,4 +1,15 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent as PointerEventReact,
+  type ReactNode,
+} from "react";
 import { RequireAuth } from "./RequireAuth";
 import { Keterangan, pemberiKet, type KabarKartu } from "../kit/kartuGrafik";
 import {
@@ -16,30 +27,36 @@ import { daftarLembar, lembarUntuk } from "../../lib/navAdmin";
 import { Hitung, geraknya } from "./hitung";
 
 /* =============================================================================
-   KPI Strategi = TABEL KESESUAIAN — dokumen STRATEGI_BISNIS §8.
+   KPI Strategi = MAWAR STRATEGI — dokumen STRATEGI_BISNIS §8.
 
-   Di dunia arsitektur, rencana selalu diperiksa terhadap KETENTUAN: tabel
-   intensitas di gambar izin bangunan menulis ketentuan KRK (KDB maks, KDH
-   min, garis sempadan) di sebelah angka rencananya, lalu satu kolom
-   "Memenuhi / Tidak". Halaman ini tabel yang sama untuk studionya sendiri:
-   ketentuannya lima target dokumen strategi §8, rencananya angka studio yang
-   dihitung API dari catatan panel.
+   Sebelum menggambar, arsitek menganalisis tapaknya: MAWAR ANGIN (seberapa
+   kuat tiap arah) dan LINTASAN MATAHARI (letak matahari sepanjang tahun).
+   Halaman ini lembar analisis yang sama untuk STRATEGI studio:
 
-   1. TABEL — satu baris per PASAL (§8.1–8.5): uraian + ketentuan, GARIS
-      UKUR (mistar berskala dengan ZONA ketentuan berarsir — seperti garis
-      sempadan — penanda realisasi, dan TAKIK potret sebelumnya), angka
-      realisasi + selisihnya, dan CAP MEMENUHI / MELAMPAUI / BELUM.
-   2. DIPERIKSA PER — potret akhir K1/K2/K3 dan hari ini (`jejak` API: angka
-      yang SAMA dengan yang terbaca di halaman ini pada hari itu). Memilih
-      potret menggeser penanda, menghitung angka, dan mengecap ulang pasal
-      yang keadaannya berubah.
-   3. LAMPIRAN — rincian pasal yang dipilih (tab), dari data yang sama:
-      sebaran kontrak, biaya per proyek, status pesan, tangga paket, landasan
-      kas; dengan tautan ke LEMBAR SUMBERNYA (nomor set gambar rel).
+   1. MAWAR — satu kelopak per pasal §8.1–8.5. Panjang kelopak = realisasi ÷
+      ketentuan minimum (cincin putus-putus = 100%, tepi = 200%), jadi
+      kelopak yang belum keluar dari cincin ketentuan langsung terbaca, dan
+      kekurangannya diarsir amber sampai cincin itu. Rentang ketentuan
+      (kontrak, pesan) diarsir mint di sektornya; KONTUR titik-titik = letak
+      kelopak di kuartal-kuartal sebelumnya. Pusatnya hitungan pasal yang
+      memenuhi.
+   2. CATATAN — balon detail (nomor pasal / nomor lembar sumbernya di set
+      gambar rel) dengan GARIS PENUNJUK ke kelopaknya: angka realisasi,
+      ketentuan, persen, dan selisih dari kuartal sebelumnya. Satu catatan =
+      satu tab; lampirannya di kertas kanan.
+   3. LINTASAN KUARTAL — busur matahari dengan stasiun potret akhir K1/K2/K3
+      dan hari ini (`jejak` API: angka yang SAMA dengan yang terbaca di
+      halaman ini pada hari itu). Matahari diseret atau diklik: kelopak
+      BERUBAH BENTUK mengikuti letaknya di antara dua potret, dan saat
+      melompat jauh mawar melewati bentuk kuartal-kuartal di antaranya.
+   4. LAMPIRAN — rincian pasal terpilih dari data yang sama, dengan cap
+      pemeriksaan dan tautan ke LEMBAR SUMBER-nya.
 
-   Gerak hanya karena perbuatan, tidak saat dimuat, diam bila gerak
-   dikurangi. Warna: hijau = memenuhi, amber = belum. Merah tidak dipakai —
-   angka di bawah target bukan perbuatan destruktif.
+   Gerak hanya karena perbuatan (seret, klik, papan ketik) — tidak saat
+   dimuat, seketika bila gerak dikurangi. Warna: hijau = memenuhi, amber =
+   belum. Merah tidak dipakai: angka di bawah target bukan perbuatan
+   destruktif. Tidak ada tulisan di dalam mawar selain label skala di celah
+   puncaknya, dan cincinnya terputus tepat di label itu (jebakan #70).
    ============================================================================= */
 
 type Kunci = "kontrak" | "margin" | "lead" | "signature" | "cadangan";
@@ -58,19 +75,21 @@ interface Pasal {
   kunci: Kunci;
   no: string;
   judul: string;
+  /** Ketentuan lengkap (kop lampiran). */
   ketentuan: (k: KpiStrategi) => string;
+  /** Ketentuan ringkas (catatan, keterangan kelopak). */
+  pendek: string;
   min: number;
   maks: number | null;
   /** Bilangan bulat (lead, proyek): skala bertangga 1. */
   bulat?: boolean;
   besar: (v: number) => string;
   selisih: (d: number) => string;
-  skala: (v: number) => string;
   sumber: string;
 }
 
 const koma = (v: number, d = 1) => v.toLocaleString("id-ID", { maximumFractionDigits: d });
-const jt = (v: number) => `${koma(v / 1e6, 0)} jt`;
+const jt = (v: number) => `${koma(v / 1e6, 0)} jt`;
 
 function pasalDari(k: KpiStrategi): Pasal[] {
   const t = k.target;
@@ -80,11 +99,11 @@ function pasalDari(k: KpiStrategi): Pasal[] {
       no: "8.1",
       judul: "Rata-rata nilai kontrak",
       ketentuan: (x) => `Rp${koma(t.rataKontrakMin / 1e6, 0)}–${koma(t.rataKontrakMaks / 1e6, 0)} jt per proyek · ${x.rataKontrak.proyek} proyek`,
+      pendek: `Rp${koma(t.rataKontrakMin / 1e6, 0)}–${koma(t.rataKontrakMaks / 1e6, 0)} jt`,
       min: t.rataKontrakMin,
       maks: t.rataKontrakMaks,
       besar: (v) => formatRupiahRingkas(v),
       selisih: (d) => formatRupiahRingkas(Math.abs(d)),
-      skala: (v) => (v === 0 ? "0" : jt(v)),
       sumber: "/admin/proyek",
     },
     {
@@ -92,11 +111,11 @@ function pasalDari(k: KpiStrategi): Pasal[] {
       no: "8.2",
       judul: "Margin kontrak",
       ketentuan: () => `≥${t.marginMin}% sesudah biaya proyek, tertimbang`,
+      pendek: `≥${t.marginMin}%`,
       min: t.marginMin,
       maks: null,
       besar: (v) => `${koma(v)}%`,
       selisih: (d) => `${koma(Math.abs(d))} poin`,
-      skala: (v) => `${koma(v, 0)}%`,
       sumber: "/admin/keuangan/keluar",
     },
     {
@@ -104,12 +123,12 @@ function pasalDari(k: KpiStrategi): Pasal[] {
       no: "8.3",
       judul: "Pesan masuk per kuartal",
       ketentuan: (x) => `${t.leadKuartalMin}–${t.leadKuartalMaks} pesan · ${x.lead.ditindaklanjuti} ditindaklanjuti`,
+      pendek: `${t.leadKuartalMin}–${t.leadKuartalMaks} pesan`,
       min: t.leadKuartalMin,
       maks: t.leadKuartalMaks,
       bulat: true,
       besar: (v) => `${koma(v, 0)} pesan`,
       selisih: (d) => `${koma(Math.abs(d), 0)} pesan`,
-      skala: (v) => koma(v, 0),
       sumber: "/admin/pesan",
     },
     {
@@ -117,12 +136,12 @@ function pasalDari(k: KpiStrategi): Pasal[] {
       no: "8.4",
       judul: "Proyek Signature ke atas",
       ketentuan: () => `≥${t.signatureMin} proyek setahun, paket urutan 2 ke atas`,
+      pendek: `≥${t.signatureMin} proyek`,
       min: t.signatureMin,
       maks: null,
       bulat: true,
       besar: (v) => `${koma(v, 0)} proyek`,
       selisih: (d) => `${koma(Math.abs(d), 0)} proyek`,
-      skala: (v) => koma(v, 0),
       sumber: "/admin/paket",
     },
     {
@@ -130,11 +149,11 @@ function pasalDari(k: KpiStrategi): Pasal[] {
       no: "8.5",
       judul: "Cadangan kas",
       ketentuan: () => `≥${t.cadanganBulan} bulan pengeluaran studio`,
+      pendek: `≥${t.cadanganBulan} bulan`,
       min: t.cadanganBulan,
       maks: null,
       besar: (v) => `${koma(v)} bulan`,
       selisih: (d) => `${koma(Math.abs(d))} bulan`,
-      skala: (v) => `${koma(v, 0)} bln`,
       sumber: "/admin/keuangan/kas",
     },
   ];
@@ -199,13 +218,11 @@ function langkah(rentang: number, bulat: boolean): number {
 interface Skala {
   bawah: number;
   atas: number;
-  langkah: number;
   pos: (v: number) => number;
-  dari: (persen: number) => number;
 }
 
-/** Satu skala per pasal, cukup lebar untuk SEMUA potret dan ketentuannya —
-    jadi penanda tidak pernah keluar mistar saat potret berganti. */
+/** Satu skala per pasal untuk jejak dan sebaran di lampiran, cukup lebar
+    untuk SEMUA potret dan ketentuannya. */
 function skalaDari(p: Pasal, nilai: (number | null)[]): Skala {
   const ada = nilai.filter((v): v is number => v !== null);
   const puncak = Math.max(...ada, (p.maks ?? p.min) * 1.25);
@@ -214,13 +231,7 @@ function skalaDari(p: Pasal, nilai: (number | null)[]): Skala {
   const atas = Math.ceil(puncak / l) * l;
   const bawah = Math.floor(dasar / l) * l;
   const rentang = atas - bawah || 1;
-  return {
-    bawah,
-    atas,
-    langkah: l,
-    pos: (v) => Math.min(100, Math.max(0, ((v - bawah) / rentang) * 100)),
-    dari: (persen) => bawah + (persen / 100) * rentang,
-  };
+  return { bawah, atas, pos: (v) => Math.min(100, Math.max(0, ((v - bawah) / rentang) * 100)) };
 }
 
 const TGL = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -230,119 +241,114 @@ const tglPendek = (t: string) => TGL.format(new Date(`${t}T00:00:00Z`));
 const tglPanjang = (t: string) => TGL_PANJANG.format(new Date(`${t}T00:00:00Z`));
 const blnPendek = (b: string) => BLN.format(new Date(`${b}-01T00:00:00Z`));
 
-/* ---- Garis ukur --------------------------------------------------------------
-   Mistar berskala: zona ketentuan berarsir di dalam rel, garis batasnya
-   putus-putus, takik potret sebelumnya, penanda realisasi, dan — untuk
-   pasal yang sedang diperiksa — GARIS UKUR yang ditarik dari nol ke
-   penanda. Tulisan skala hanya di pita bawah; pita atas milik pembacaan
-   tetikus. Tidak ada tulisan di dalam rel (jebakan #70). */
-function GarisUkur({
-  pasal,
-  skala,
-  nilai,
-  takik,
-  takikKode,
-  diukur,
-  ket,
-}: {
-  pasal: Pasal;
-  skala: Skala;
-  nilai: number | null;
-  takik: number | null;
-  takikKode: string | null;
-  diukur: boolean;
-  ket: ReturnType<typeof pemberiKet>;
-}) {
-  const baca = useRef<HTMLSpanElement>(null);
-  const bacaTeks = useRef<HTMLElement>(null);
-  const kotak = useRef<DOMRect | null>(null);
-  const nol = skala.pos(Math.max(0, skala.bawah));
-  const zonaA = skala.pos(pasal.min);
-  const zonaB = pasal.maks === null ? 100 : skala.pos(pasal.maks);
-  const ticks: number[] = [];
-  for (let v = skala.bawah; v <= skala.atas + skala.langkah / 1000; v += skala.langkah) ticks.push(Math.round(v * 1000) / 1000);
-  const x = nilai === null ? null : skala.pos(nilai);
-  const isiDari = Math.min(nol, x ?? nol);
-  const isiLebar = x === null ? 0 : Math.abs(x - nol);
+/* ---- Geometri mawar (satuan viewBox 0–400) ------------------------------------
+   Kelopak ke-i berpusat di 36° + 72°·i (searah jarum jam dari atas), jadi
+   CELAH di puncak — tempat label skala — tidak pernah ditumpangi kelopak. */
+const PUSAT = 200;
+const HUB = 38;
+const R200 = 168; // jari-jari 200% ketentuan
+const RIM = 182; // cincin pinggir
+const UJUNG_PENUNJUK = 196;
+const LEBAR = 22; // setengah lebar kelopak, derajat
+const sudut = (i: number) => 36 + 72 * i;
+const jari = (q: number) => HUB + ((R200 - HUB) * Math.min(2, Math.max(0, q))) / 2;
+const bulat2 = (n: number) => Math.round(n * 100) / 100;
+function titik(r: number, deg: number): [number, number] {
+  const a = (deg * Math.PI) / 180;
+  return [PUSAT + r * Math.sin(a), PUSAT - r * Math.cos(a)];
+}
+function busur(r: number, a1: number, a2: number): string {
+  const [x1, y1] = titik(r, a1);
+  const [x2, y2] = titik(r, a2);
+  return `M${bulat2(x1)} ${bulat2(y1)}A${bulat2(r)} ${bulat2(r)} 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${bulat2(x2)} ${bulat2(y2)}`;
+}
+function sektor(r1: number, r2: number, a1: number, a2: number): string {
+  if (r2 - r1 < 0.05) return "";
+  const [x1, y1] = titik(r2, a1);
+  const [x2, y2] = titik(r2, a2);
+  const [x3, y3] = titik(r1, a2);
+  const [x4, y4] = titik(r1, a1);
+  const b = a2 - a1 > 180 ? 1 : 0;
+  return `M${bulat2(x1)} ${bulat2(y1)}A${bulat2(r2)} ${bulat2(r2)} 0 ${b} 1 ${bulat2(x2)} ${bulat2(y2)}L${bulat2(x3)} ${bulat2(y3)}A${bulat2(r1)} ${bulat2(r1)} 0 ${b} 0 ${bulat2(x4)} ${bulat2(y4)}Z`;
+}
+/** Panah kecil di luar 200% untuk kelopak yang melewati tepi skala. */
+function panahLebih(i: number): string {
+  const s = sudut(i);
+  const [ax, ay] = titik(R200 + 3, s - 4);
+  const [bx, by] = titik(R200 + 11, s);
+  const [cx, cy] = titik(R200 + 3, s + 4);
+  return `M${bulat2(ax)} ${bulat2(ay)}L${bulat2(bx)} ${bulat2(by)}L${bulat2(cx)} ${bulat2(cy)}Z`;
+}
 
-  /* Pembacaan skala mengikuti TETIKUS (jebakan #9): kotak mistar dibaca
-     sekali saat masuk, lalu tiap gerak cuma menulis transform + teks lewat
-     ref — tanpa render ulang, tanpa membaca geometri di tengah gerak. */
-  const masuk = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse") return;
-    kotak.current = e.currentTarget.getBoundingClientRect();
-    gerak(e);
-  };
-  const gerak = (e: React.PointerEvent<HTMLDivElement>) => {
-    const k = kotak.current;
-    if (e.pointerType !== "mouse" || !k || !baca.current || !bacaTeks.current) return;
-    const persen = Math.min(100, Math.max(0, ((e.clientX - k.left) / k.width) * 100));
-    baca.current.style.setProperty("--tks-baca", `${persen}%`);
-    baca.current.dataset.tampak = "";
-    bacaTeks.current.textContent = pasal.skala(skala.dari(persen));
-  };
-  const keluar = () => {
-    kotak.current = null;
-    if (baca.current) delete baca.current.dataset.tampak;
-  };
+/** Label skala di celah puncak; cincinnya terputus selebar labelnya. */
+const CINCIN: { q: number; label: string; celah: number }[] = [
+  { q: 0.5, label: "50%", celah: 13 },
+  { q: 1, label: "100%", celah: 11 },
+  { q: 1.5, label: "150%", celah: 8 },
+  { q: 2, label: "200%", celah: 6.5 },
+];
 
-  return (
-    <div className="tks__mistar" onPointerEnter={masuk} onPointerMove={gerak} onPointerLeave={keluar} aria-hidden="true">
-      <span ref={baca} className="tks__baca">
-        <b ref={bacaTeks} />
-      </span>
-      <div className="tks__rel">
-        <i className="tks__zona" style={{ left: `${zonaA}%`, width: `${zonaB - zonaA}%` }} />
-        <i className="tks__batas" style={{ left: `${zonaA}%` }} />
-        {pasal.maks !== null && <i className="tks__batas" style={{ left: `${zonaB}%` }} />}
-        {x !== null && (
-          <i
-            className={diukur ? "tks__isi is-diukur" : "tks__isi"}
-            style={{ left: `${isiDari}%`, width: `${isiLebar}%`, transformOrigin: x >= nol ? "left" : "right" }}
-          />
-        )}
-        {takik !== null && (
-          <i
-            className="tks__takik"
-            style={{ left: `${skala.pos(takik)}%` }}
-            {...ket(() => ({ judul: `Potret ${takikKode}`, baris: [{ label: pasal.judul, nilai: pasal.besar(takik) }] }))}
-          />
-        )}
-        {x !== null && nilai !== null && (
-          <b
-            className="tks__penanda"
-            style={{ left: `${x}%` }}
-            {...ket(() => ({ judul: "Realisasi", baris: [{ label: pasal.judul, nilai: pasal.besar(nilai) }] }))}
-          />
-        )}
-      </div>
-      <div className="tks__skala">
-        {ticks.map((v, i) => {
-          const pos = skala.pos(v);
-          /* Takik tetap ada, tulisannya mengalah: label tengah yang terlalu
-             dekat ke label ujung (rata kiri/kanan) akan bertindih di mistar
-             yang sempit. */
-          const ujung = i === 0 || i === ticks.length - 1;
-          const bisu = !ujung && (pos < 14 || pos > 78);
-          return (
-            <span
-              key={v}
-              className={i === 0 ? "is-awal" : i === ticks.length - 1 ? "is-akhir" : bisu ? "is-bisu" : undefined}
-              style={{ left: `${pos}%` }}
-            >
-              {bisu ? "" : pasal.skala(v)}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
+/* ---- Lintasan kuartal (satuan 1000 × 100, direntang selebar lajurnya) -------- */
+const LX0 = 110;
+const LX1 = 890;
+const LTINGGI = 74;
+const lintasX = (t: number) => LX0 + (LX1 - LX0) * t;
+const lintasY = (x: number) => 100 - LTINGGI * Math.sqrt(Math.max(0, 1 - Math.pow((x - 500) / 500, 2)));
+function jalurLintas(t0: number, t1: number): string {
+  const n = Math.max(2, Math.round(Math.abs(t1 - t0) * 48));
+  let d = "";
+  for (let j = 0; j <= n; j++) {
+    const x = lintasX(t0 + ((t1 - t0) * j) / n);
+    d += `${j ? "L" : "M"}${bulat2(x)} ${bulat2(lintasY(x))}`;
+  }
+  return d;
+}
+const BUSUR_LANGIT = (() => {
+  let d = "";
+  for (let j = 0; j <= 60; j++) {
+    const x = (1000 * j) / 60;
+    d += `${j ? "L" : "M"}${bulat2(x)} ${bulat2(lintasY(x))}`;
+  }
+  return d;
+})();
+
+/** Letak catatan di kiri/kanan mawar, mengikuti arah kelopaknya. */
+const LETAK: Record<Kunci, { sisi: "kiri" | "kanan"; baris: number; rata: "start" | "center" | "end" }> = {
+  kontrak: { sisi: "kanan", baris: 2, rata: "start" },
+  margin: { sisi: "kanan", baris: 3, rata: "center" },
+  lead: { sisi: "kanan", baris: 4, rata: "end" },
+  signature: { sisi: "kiri", baris: 4, rata: "start" },
+  cadangan: { sisi: "kiri", baris: 2, rata: "start" },
+};
+
+/** Kalimat pemeriksa: seberapa jauh realisasi dari ketentuannya, dengan
+    hitungan sisa waktu / uang untuk potret hari ini. */
+function catatanPemeriksa(p: Pasal, v: number | null, k: KpiStrategi, kini: boolean): { teks: string; kurang: boolean } {
+  if (v === null) return { teks: "Belum ada data untuk potret ini.", kurang: false };
+  const hari = (sampai: string) =>
+    Math.max(0, Math.round((Date.parse(`${sampai}T00:00:00Z`) - Date.parse(`${k.hariIni}T00:00:00Z`)) / 86_400_000));
+  if (v < p.min) {
+    let tambah = "";
+    if (kini && p.kunci === "lead") {
+      const akhir = new Date(Date.UTC(k.tahun, k.kuartal * 3, 0)).toISOString().slice(0, 10);
+      tambah = ` Sisa ${hari(akhir)} hari di kuartal ${k.kuartal}.`;
+    } else if (kini && p.kunci === "signature") {
+      tambah = ` Sisa ${hari(`${k.tahun}-12-31`)} hari di ${k.tahun}.`;
+    } else if (kini && p.kunci === "cadangan" && k.cadangan.keluarPerBulan !== null) {
+      tambah = ` Setara ±${formatRupiahRingkas((p.min - v) * k.cadangan.keluarPerBulan)} kas lagi.`;
+    }
+    return { teks: `Kurang ${p.selisih(p.min - v)} dari ketentuan minimum.${tambah}`, kurang: true };
+  }
+  if (p.maks !== null && v > p.maks) return { teks: `${p.selisih(v - p.maks)} di atas batas atas rentang ketentuan.`, kurang: false };
+  if (v === p.min) return { teks: p.maks !== null ? "Tepat di batas bawah rentang ketentuan." : "Tepat di ketentuan minimum.", kurang: false };
+  if (p.maks !== null) return { teks: `Di dalam rentang — ${p.selisih(p.maks - v)} lagi sampai batas atasnya.`, kurang: false };
+  return { teks: `${p.selisih(v - p.min)} di atas ketentuan minimum.`, kurang: false };
 }
 
 /* ---- Cap pemeriksaan -------------------------------------------------------- */
 function Cap({ keadaan, no, kode, tercap }: { keadaan: Keadaan; no: string; kode: string; tercap: boolean }) {
   return (
-    <span className={`tks__cap is-${keadaan}${tercap ? " is-tercap" : ""}`}>
+    <span className={`mws__cap is-${keadaan}${tercap ? " is-tercap" : ""}`}>
       <b>{TEKS_CAP[keadaan]}</b>
       <small>
         §{no} · {kode}
@@ -369,9 +375,9 @@ function Jejak({
   const zonaB = pasal.maks === null ? 100 : skala.pos(pasal.maks);
   const nol = skala.pos(Math.max(0, skala.bawah));
   return (
-    <div className="tks__jejak">
-      <div className="tks__jejakbidang" aria-hidden="true">
-        <i className="tks__jejakzona" style={{ bottom: `${zonaA}%`, height: `${zonaB - zonaA}%` }} />
+    <div className="mws__jejak">
+      <div className="mws__jejakbidang" aria-hidden="true">
+        <i className="mws__jejakzona" style={{ bottom: `${zonaA}%`, height: `${zonaB - zonaA}%` }} />
       </div>
       {potret.map((p, i) => {
         const v = p.nilai[pasal.kunci];
@@ -380,13 +386,16 @@ function Jejak({
           <button
             key={p.kode}
             type="button"
-            className={i === pilih ? "tks__jejakkolom is-pilih" : "tks__jejakkolom"}
+            className={i === pilih ? "mws__jejakkolom is-pilih" : "mws__jejakkolom"}
             aria-pressed={i === pilih}
             aria-label={`${p.kode} ${tglPendek(p.tanggal)}: ${v === null ? "belum ada data" : pasal.besar(v)}`}
             onClick={() => onPilih(i)}
           >
-            <span className="tks__jejaktiang" aria-hidden="true">
-              <i style={{ bottom: `${Math.min(nol, y)}%`, height: `${Math.abs(y - nol)}%` }} />
+            <span className="mws__jejaktiang" aria-hidden="true">
+              <i
+                className={keadaanDari(pasal, v) === "belum" ? "is-belum" : undefined}
+                style={{ bottom: `${Math.min(nol, y)}%`, height: `${Math.abs(y - nol)}%` }}
+              />
             </span>
             <b>{v === null ? "—" : pasal.besar(v)}</b>
             <small>{p.kini ? `Kini · ${tglPendek(p.tanggal)}` : `${p.kode} · ${tglPendek(p.tanggal)}`}</small>
@@ -407,33 +416,36 @@ function LampiranKontrak({ k, skala, ket }: { k: KpiStrategi; skala: Skala; ket:
   const urut = [...k.proyek].sort((a, b) => b.kontrak - a.kontrak);
   return (
     <>
-      <h4 className="tks__sub">Sebaran kontrak {k.tahun}</h4>
-      <div className="tks__sebaran" aria-hidden="true">
-        <i className="tks__zona" style={{ left: `${skala.pos(t.rataKontrakMin)}%`, width: `${skala.pos(t.rataKontrakMaks) - skala.pos(t.rataKontrakMin)}%` }} />
+      <h4 className="mws__sub">Sebaran kontrak {k.tahun}</h4>
+      <div className="mws__sebaran" aria-hidden="true">
+        <i
+          className="mws__sebaranzona"
+          style={{ left: `${skala.pos(t.rataKontrakMin)}%`, width: `${skala.pos(t.rataKontrakMaks) - skala.pos(t.rataKontrakMin)}%` }}
+        />
         {urut.map((p) => (
           <i
             key={p.projectId}
-            className="tks__titik"
+            className="mws__titik"
             style={{ left: `${skala.pos(p.kontrak)}%` }}
             {...ket(() => ({ judul: p.title, baris: [{ label: "Nilai kontrak", nilai: formatRupiah(p.kontrak) }] }))}
           />
         ))}
-        {k.rataKontrak.nilai !== null && <b className="tks__penanda" style={{ left: `${skala.pos(k.rataKontrak.nilai)}%` }} />}
+        {k.rataKontrak.nilai !== null && <b className="mws__sebaranrata" style={{ left: `${skala.pos(k.rataKontrak.nilai)}%` }} />}
       </div>
-      <div className="tks__sebaranskala" aria-hidden="true">
+      <div className="mws__sebaranskala" aria-hidden="true">
         <span>{skala.bawah === 0 ? "0" : jt(skala.bawah)}</span>
         <span>{jt(skala.atas)}</span>
       </div>
-      <ol className="tks__daftar">
+      <ol className="mws__daftar">
         {urut.map((p) => (
           <li key={p.projectId}>
-            <span className="tks__kode">{kodeProyek(p.title)}</span>
+            <span className="mws__kode">{kodeProyek(p.title)}</span>
             <a href={`/admin/proyek/satu?id=${encodeURIComponent(p.projectId)}`}>{p.title}</a>
             <small>{p.tier ?? "Tanpa paket"}</small>
             <b className={p.kontrak < t.rataKontrakMin ? "is-belum" : undefined}>{formatRupiahRingkas(p.kontrak)}</b>
           </li>
         ))}
-        {!urut.length && <li className="tks__kosong">Belum ada proyek berkontrak tahun ini.</li>}
+        {!urut.length && <li className="mws__kosong">Belum ada proyek berkontrak tahun ini.</li>}
       </ol>
     </>
   );
@@ -444,10 +456,10 @@ function LampiranMargin({ k, ket }: { k: KpiStrategi; ket: ReturnType<typeof pem
   const urut = [...k.proyek].sort((a, b) => a.margin - b.margin);
   return (
     <>
-      <h4 className="tks__sub">
+      <h4 className="mws__sub">
         Biaya terhadap kontrak <span>batas biaya {100 - min}%</span>
       </h4>
-      <ol className="tks__daftar tks__daftar--batang">
+      <ol className="mws__daftar mws__daftar--batang">
         {urut.map((p) => {
           const biaya = Math.min(100, (p.biaya / p.kontrak) * 100);
           return (
@@ -455,8 +467,8 @@ function LampiranMargin({ k, ket }: { k: KpiStrategi; ket: ReturnType<typeof pem
               <a href={`/admin/proyek/satu?id=${encodeURIComponent(p.projectId)}`}>{p.title}</a>
               <b className={p.margin < min ? "is-belum" : undefined}>{koma(p.margin)}%</b>
               <span
-                className={p.biaya > p.kontrak ? "tks__batangbiaya is-lebih" : "tks__batangbiaya"}
-                style={{ "--tks-biaya": `${biaya}%`, "--tks-garisbatas": `${100 - min}%` } as CSSProperties}
+                className={p.biaya > p.kontrak ? "mws__batangbiaya is-lebih" : "mws__batangbiaya"}
+                style={{ "--mws-biaya": `${biaya}%`, "--mws-garisbatas": `${100 - min}%` } as CSSProperties}
                 {...ket(() => ({
                   judul: p.title,
                   baris: [
@@ -469,12 +481,12 @@ function LampiranMargin({ k, ket }: { k: KpiStrategi; ket: ReturnType<typeof pem
             </li>
           );
         })}
-        {!urut.length && <li className="tks__kosong">Belum ada proyek berkontrak tahun ini.</li>}
+        {!urut.length && <li className="mws__kosong">Belum ada proyek berkontrak tahun ini.</li>}
       </ol>
       {k.segmen.length > 0 && (
         <>
-          <h4 className="tks__sub">Laba kas per segmen</h4>
-          <dl className="tks__segmen">
+          <h4 className="mws__sub">Laba kas per segmen</h4>
+          <dl className="mws__segmen">
             {[...k.segmen]
               .sort((a, b) => b.laba - a.laba)
               .map((g) => (
@@ -508,12 +520,12 @@ function LampiranLead({ k }: { k: KpiStrategi }) {
   const puncak = Math.max(perBulanMaks * 1.25, ...k.lead.perBulan.map((b) => b.jumlah));
   return (
     <>
-      <h4 className="tks__sub">Status pesan kuartal {k.kuartal}</h4>
-      <ol className="tks__daftar tks__daftar--status">
+      <h4 className="mws__sub">Status pesan kuartal {k.kuartal}</h4>
+      <ol className="mws__daftar mws__daftar--status">
         {STATUS_LEAD.map((s) => (
           <li key={s.kunci}>
             <span>{s.label}</span>
-            <span className="tks__batangpenuh" aria-hidden="true">
+            <span className="mws__batangpenuh" aria-hidden="true">
               <i
                 className={s.kunci === "contacted" || s.kunci === "qualified" ? "is-lanjut" : undefined}
                 style={{ width: `${(k.lead.status[s.kunci] / total) * 100}%` }}
@@ -523,16 +535,19 @@ function LampiranLead({ k }: { k: KpiStrategi }) {
           </li>
         ))}
       </ol>
-      <h4 className="tks__sub">
+      <h4 className="mws__sub">
         Per bulan <span>laju ketentuan {koma(perBulanMin)}–{koma(perBulanMaks)}</span>
       </h4>
-      <div className="tks__bulan" aria-label="Pesan masuk per bulan kuartal ini">
-        <div className="tks__bidangtiang" aria-hidden="true">
-          <i className="tks__bulanzona" style={{ bottom: `${(perBulanMin / puncak) * 100}%`, height: `${((perBulanMaks - perBulanMin) / puncak) * 100}%` }} />
+      <div className="mws__bulan" aria-label="Pesan masuk per bulan kuartal ini">
+        <div className="mws__bidangtiang" aria-hidden="true">
+          <i
+            className="mws__bulanzona"
+            style={{ bottom: `${(perBulanMin / puncak) * 100}%`, height: `${((perBulanMaks - perBulanMin) / puncak) * 100}%` }}
+          />
         </div>
         {k.lead.perBulan.map((b) => (
-          <div key={b.bulan} className="tks__bulankolom">
-            <span className="tks__bulantiang" aria-hidden="true">
+          <div key={b.bulan} className="mws__bulankolom">
+            <span className="mws__bulantiang" aria-hidden="true">
               <i style={{ height: `${(b.jumlah / puncak) * 100}%` }} />
             </span>
             <b>{b.jumlah}</b>
@@ -551,24 +566,24 @@ function LampiranSignature({ k }: { k: KpiStrategi }) {
   ].map((g) => ({ ...g, anak: k.paket.filter((t) => t.kelompok === g.kunci).sort((a, b) => a.urutan - b.urutan) }));
   return (
     <>
-      <h4 className="tks__sub">
+      <h4 className="mws__sub">
         Tangga paket {k.tahun} <span>arsir = Signature ke atas</span>
       </h4>
-      <div className="tks__tangga">
+      <div className="mws__tangga">
         {kelompok
           .filter((g) => g.anak.length)
           .map((g) => (
-            <div key={g.kunci} className="tks__tanggakelompok">
+            <div key={g.kunci} className="mws__tanggakelompok">
               <p>{g.label}</p>
               <ol>
                 {g.anak.map((t, i) => (
                   <li
                     key={t.nama}
                     className={t.urutan >= 2 ? "is-atas" : undefined}
-                    style={{ "--tks-anak": i + 1, "--tks-anak-n": g.anak.length } as CSSProperties}
+                    style={{ "--mws-anak": i + 1, "--mws-anak-n": g.anak.length } as CSSProperties}
                   >
-                    <span className="tks__tanggajumlah">{t.jumlah}</span>
-                    <span className="tks__tanggaanak" aria-hidden="true" />
+                    <span className="mws__tanggajumlah">{t.jumlah}</span>
+                    <span className="mws__tanggaanak" aria-hidden="true" />
                     <small>{t.nama}</small>
                   </li>
                 ))}
@@ -576,15 +591,15 @@ function LampiranSignature({ k }: { k: KpiStrategi }) {
             </div>
           ))}
       </div>
-      <ol className="tks__daftar">
+      <ol className="mws__daftar">
         {k.signature.proyek.map((p) => (
           <li key={p.projectId}>
-            <span className="tks__kode">{kodeProyek(p.title)}</span>
+            <span className="mws__kode">{kodeProyek(p.title)}</span>
             <a href={`/admin/proyek/satu?id=${encodeURIComponent(p.projectId)}`}>{p.title}</a>
             <small>{p.tier}</small>
           </li>
         ))}
-        {!k.signature.proyek.length && <li className="tks__kosong">Belum ada proyek Signature ke atas tahun ini.</li>}
+        {!k.signature.proyek.length && <li className="mws__kosong">Belum ada proyek Signature ke atas tahun ini.</li>}
       </ol>
     </>
   );
@@ -598,44 +613,35 @@ function LampiranCadangan({ k, ket }: { k: KpiStrategi; ket: ReturnType<typeof p
   const puncak = Math.max(1, ...bulanan.map((b) => b.keluar));
   return (
     <>
-      <p className="tks__hasil">
-        <b className={c.bulan !== null && c.bulan < target ? "is-belum" : undefined}>
-          {c.bulan === null ? "—" : c.saldo <= 0 ? "Saldo minus" : `${koma(c.bulan)} bulan`}
-        </b>
-        <span>dari {target} bulan ketentuan</span>
-      </p>
-      <p className="tks__rumus">
+      <p className="mws__rumus">
         {formatRupiah(c.saldo)} <em>÷</em> {c.keluarPerBulan === null ? "—" : `${formatRupiah(c.keluarPerBulan)}/bln`}
       </p>
-      <p className="tks__rumusket">Saldo catatan panel ÷ rata-rata keluar {c.bulanBerdata} bulan berdata</p>
-      <div className="tks__landasan" aria-label={`Cadangan ${c.bulan === null ? "belum ada data" : koma(c.bulan)} dari ${target} bulan`}>
+      <p className="mws__rumusket">Saldo catatan panel ÷ rata-rata keluar {c.bulanBerdata} bulan berdata</p>
+      <div className="mws__landasan" aria-label={`Cadangan ${c.bulan === null ? "belum ada data" : koma(c.bulan)} dari ${target} bulan`}>
         {Array.from({ length: n }, (_, i) => {
           const isi = c.bulan === null ? 0 : Math.min(1, Math.max(0, c.bulan - i));
           return (
-            <span
-              key={i}
-              className={`tks__landasanbulan${i < target ? " is-wajib" : ""}${i + 1 === target ? " is-batas" : ""}`}
-            >
+            <span key={i} className={`mws__landasanbulan${i < target ? " is-wajib" : ""}${i + 1 === target ? " is-batas" : ""}`}>
               <i style={{ width: `${isi * 100}%` }} />
               <small>{i + 1}</small>
             </span>
           );
         })}
       </div>
-      <h4 className="tks__sub">
+      <h4 className="mws__sub">
         Keluar per bulan <span>putus = rata-rata</span>
       </h4>
-      <div className="tks__keluar">
-        <div className="tks__bidangtiang" aria-hidden="true">
-          {c.keluarPerBulan !== null && <i className="tks__rata" style={{ bottom: `${(c.keluarPerBulan / puncak) * 100}%` }} />}
+      <div className="mws__keluar">
+        <div className="mws__bidangtiang" aria-hidden="true">
+          {c.keluarPerBulan !== null && <i className="mws__rata" style={{ bottom: `${(c.keluarPerBulan / puncak) * 100}%` }} />}
         </div>
         {bulanan.map((b) => (
           <div
             key={b.bulan}
-            className="tks__keluarkolom"
+            className="mws__keluarkolom"
             {...ket(() => ({ judul: blnPendek(b.bulan), baris: [{ label: "Uang keluar", nilai: formatRupiah(b.keluar) }] }))}
           >
-            <span className="tks__bulantiang" aria-hidden="true">
+            <span className="mws__bulantiang" aria-hidden="true">
               <i style={{ height: `${(b.keluar / puncak) * 100}%` }} />
             </span>
             <small>{blnPendek(b.bulan)}</small>
@@ -668,8 +674,8 @@ function Isi() {
 
   if (!k) {
     return galat ? (
-      <div className="tks">
-        <div className="tks__papan tks__papan--galat">
+      <div className="mws">
+        <div className="mws__papan mws__papan--galat">
           <p>KPI tidak bisa dimuat: {galat}</p>
         </div>
       </div>
@@ -677,45 +683,168 @@ function Isi() {
       <Rangka />
     );
   }
-  return <Tabel k={k} studio={studio} />;
+  return <Mawar k={k} studio={studio} />;
 }
 
 function Rangka() {
   return (
-    <div className="tks" aria-busy="true">
-      <div className="tks__papan">
-        <div className="tks__kertas tks__kertas--rangka" />
-        <div className="tks__kertas tks__kertas--rangka tks__lampiran" />
+    <div className="mws" aria-busy="true">
+      <div className="mws__papan">
+        <div className="mws__panggung mws__panggung--rangka">
+          <div className="mws__sel">
+            <div className="mws__mawar">
+              <i className="mws__rangkacincin" />
+            </div>
+          </div>
+        </div>
+        <div className="mws__kertas mws__lampiran mws__kertas--rangka" />
       </div>
     </div>
   );
 }
 
-function Tabel({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null }) {
+interface Elemen {
+  bayang: SVGPathElement | null;
+  cahaya: SVGPathElement | null;
+  isi: SVGPathElement | null;
+  kurang: SVGPathElement | null;
+  ujung: SVGPathElement | null;
+  garis: SVGPathElement | null;
+  lebih: SVGPathElement | null;
+  kosong: SVGPathElement | null;
+}
+interface Penunjuk {
+  kunci: Kunci;
+  d: string;
+  x: number;
+  y: number;
+}
+
+function Mawar({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null }) {
   const pasal = useMemo(() => pasalDari(k), [k]);
   const potret = useMemo(() => potretDari(k), [k]);
   const skala = useMemo(
     () => Object.fromEntries(pasal.map((p) => [p.kunci, skalaDari(p, potret.map((x) => x.nilai[p.kunci]))])) as Record<Kunci, Skala>,
     [pasal, potret],
   );
-  const kini = potret.length - 1;
+  /* q = realisasi ÷ ketentuan minimum, per potret per pasal. */
+  const q = useMemo(
+    () =>
+      potret.map((s) =>
+        pasal.map((p) => {
+          const v = s.nilai[p.kunci];
+          return v === null ? null : v / p.min;
+        }),
+      ),
+    [potret, pasal],
+  );
+  const n = potret.length;
+  const kini = n - 1;
+  const tDari = (i: number) => (n > 1 ? i / (n - 1) : 0);
+
   const [pilihPotret, setPilihPotret] = useState(kini);
+  const pilihRef = useRef(kini);
   /* Bawaan: pasal pertama yang BELUM memenuhi — halaman membuka yang perlu
      diperhatikan. */
   const [pilihPasal, setPilihPasal] = useState<Kunci>(
     () => pasal.find((p) => keadaanDari(p, potret[kini]!.nilai[p.kunci]) === "belum")?.kunci ?? "kontrak",
   );
+  const [sorot, setSorot] = useState<Kunci | null>(null);
   /* Gerak hanya sesudah perbuatan (jebakan #74): `hidup` menyala sesudah
-     bingkai pertama, `diukur` dan `tercap` hanya dipasang oleh klik. */
+     bingkai pertama; `ditarik` dan `tercap` hanya dipasang oleh perbuatan. */
   const [hidup, setHidup] = useState(false);
-  const [diukur, setDiukur] = useState<Kunci | null>(null);
-  const [tercap, setTercap] = useState<{ kunci: Set<Kunci>; putaran: number }>({ kunci: new Set(), putaran: 0 });
+  const [ditarik, setDitarik] = useState<Kunci | null>(null);
+  const [tercap, setTercap] = useState({ n: 0, nyala: false });
   const [lampiranBaru, setLampiranBaru] = useState(0);
+  const [penunjuk, setPenunjuk] = useState<Penunjuk[]>([]);
   const waktu = useRef<number[]>([]);
   const kabar: KabarKartu = useRef(null);
   const ket = pemberiKet(kabar);
   const idLampiran = useId();
-  const tabRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const idPola = `mws${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const tabRef = useRef<Partial<Record<Kunci, HTMLButtonElement | null>>>({});
+  const balonRef = useRef<Partial<Record<Kunci, HTMLSpanElement | null>>>({});
+  const panggungRef = useRef<HTMLElement>(null);
+  const mawarRef = useRef<HTMLDivElement>(null);
+  const lapisRef = useRef<SVGSVGElement>(null);
+  const el = useRef<Elemen[]>(pasal.map(() => ({ bayang: null, cahaya: null, isi: null, kurang: null, ujung: null, garis: null, lebih: null, kosong: null })));
+  const matahariRef = useRef<HTMLSpanElement>(null);
+  const bayangRef = useRef<SVGGElement>(null);
+  const jalurRef = useRef<SVGPathElement>(null);
+  const tKini = useRef(tDari(kini));
+  const raf = useRef(0);
+  const seret = useRef<{ kiri: number; lebar: number; x0: number; geser: boolean } | null>(null);
+
+  /* Bentuk kelopak di letak t (0 = potret pertama, 1 = hari ini): di antara
+     dua stasiun, kelopak ditarik lurus dari bentuk yang satu ke yang lain. */
+  const qPada = (t: number): (number | null)[] => {
+    if (n === 1) return q[0]!;
+    const f = Math.min(n - 1, Math.max(0, t * (n - 1)));
+    const i0 = Math.min(n - 2, Math.floor(f));
+    const u = f - i0;
+    return pasal.map((_, j) => {
+      const a = q[i0]![j]!;
+      const b = q[i0 + 1]![j]!;
+      if (a === null || b === null) return u < 0.5 ? a : b;
+      return a + (b - a) * u;
+    });
+  };
+
+  /* Seluruh bagian mawar yang bergerak ditulis LANGSUNG ke DOM: seret dan
+     perjalanan matahari tidak menggambar ulang halaman. React tidak pernah
+     memegang atribut `d` elemen-elemen ini. */
+  const gambar = (qs: (number | null)[]) => {
+    const tulis = (x: SVGPathElement | null, d: string) => {
+      if (x && x.getAttribute("d") !== d) x.setAttribute("d", d);
+    };
+    qs.forEach((v, i) => {
+      const e = el.current[i];
+      if (!e) return;
+      const a1 = sudut(i) - LEBAR;
+      const a2 = sudut(i) + LEBAR;
+      if (v === null) {
+        tulis(e.bayang, "");
+        tulis(e.cahaya, "");
+        tulis(e.isi, "");
+        tulis(e.garis, "");
+        tulis(e.kurang, "");
+        tulis(e.ujung, "");
+        tulis(e.lebih, "");
+        tulis(e.kosong, sektor(HUB, jari(1), a1, a2));
+        return;
+      }
+      const r = jari(v);
+      tulis(e.kosong, "");
+      tulis(e.bayang, sektor(HUB, r, a1, a2));
+      tulis(e.isi, sektor(HUB, r, a1, a2));
+      tulis(e.cahaya, sektor(Math.max(HUB, r - 16), r, a1, a2));
+      tulis(e.garis, sektor(HUB, r, a1, a2));
+      tulis(e.kurang, v < 1 ? sektor(r, jari(1), a1, a2) : "");
+      tulis(e.ujung, busur(r, a1, a2));
+      e.ujung?.classList.toggle("is-kurang", v < 1);
+      tulis(e.lebih, v > 2 ? panahLebih(i) : "");
+    });
+  };
+
+  const taruh = (t: number) => {
+    const x = lintasX(t);
+    /* Bayangan kelopak jatuh berlawanan dengan matahari, dan memendek saat
+       matahari tinggi — studi bayangan, cuma lewat satu transform. */
+    const tinggi = (100 - lintasY(x)) / LTINGGI;
+    bayangRef.current?.setAttribute("transform", `translate(${bulat2((-(x - 500) / 390) * 7)} ${bulat2(3 + (1 - tinggi) * 10)})`);
+    const m = matahariRef.current;
+    if (m) {
+      m.style.left = `${x / 10}%`;
+      m.style.top = `${lintasY(x)}%`;
+    }
+    jalurRef.current?.setAttribute("d", t > 0.001 ? jalurLintas(0, t) : "");
+  };
+
+  useLayoutEffect(() => {
+    gambar(qPada(tKini.current));
+    taruh(tKini.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   useEffect(() => {
     let b2 = 0;
@@ -723,54 +852,172 @@ function Tabel({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null })
     return () => {
       cancelAnimationFrame(b1);
       cancelAnimationFrame(b2);
+      cancelAnimationFrame(raf.current);
       waktu.current.forEach((w) => window.clearTimeout(w));
     };
   }, []);
+
+  /* Garis penunjuk: dibaca dari kotak balon dan kotak mawar HANYA saat
+     ukurannya berubah (ResizeObserver), tidak pernah saat menggeser. */
+  useLayoutEffect(() => {
+    const pg = panggungRef.current;
+    const sq = mawarRef.current;
+    const lapis = lapisRef.current;
+    if (!pg || !sq || !lapis) return;
+    const hitung = () => {
+      if (getComputedStyle(lapis).display === "none") {
+        setPenunjuk((s) => (s.length ? [] : s));
+        return;
+      }
+      const P = pg.getBoundingClientRect();
+      const S = sq.getBoundingClientRect();
+      const sk = S.width / 400;
+      const baru = pasal.map((p, i): Penunjuk => {
+        const b = balonRef.current[p.kunci]!.getBoundingClientRect();
+        const kanan = LETAK[p.kunci].sisi === "kanan";
+        const ax = Math.round((kanan ? b.left : b.right) - P.left) + (kanan ? -0.5 : 0.5);
+        const ay = Math.round(b.top + b.height / 2 - P.top) + 0.5;
+        const bahu = ax + (kanan ? -12 : 12);
+        const [ux, uy] = titik(UJUNG_PENUNJUK, sudut(i));
+        const x = bulat2(S.left - P.left + ux * sk);
+        const y = bulat2(S.top - P.top + uy * sk);
+        return { kunci: p.kunci, d: `M${ax} ${ay}H${bahu}L${x} ${y}`, x, y };
+      });
+      setPenunjuk((s) => (JSON.stringify(s) === JSON.stringify(baru) ? s : baru));
+    };
+    hitung();
+    const ro = new ResizeObserver(hitung);
+    ro.observe(pg);
+    ro.observe(sq);
+    Object.values(tabRef.current).forEach((t) => t && ro.observe(t));
+    return () => ro.disconnect();
+  }, [pasal]);
 
   const tunda = (f: () => void, ms: number) => {
     waktu.current.push(window.setTimeout(f, ms));
   };
 
-  const pilihSnap = (i: number) => {
-    if (i === pilihPotret) return;
-    const berubah = new Set(
-      pasal.filter((p) => keadaanDari(p, potret[i]!.nilai[p.kunci]) !== keadaanDari(p, potret[pilihPotret]!.nilai[p.kunci])).map((p) => p.kunci),
-    );
-    setPilihPotret(i);
-    if (geraknya() && berubah.size) {
-      setTercap((c) => ({ kunci: berubah, putaran: c.putaran + 1 }));
-      tunda(() => setTercap((c) => ({ kunci: new Set(), putaran: c.putaran })), 700);
+  /* Matahari berjalan sepanjang busurnya; kelopak ikut berubah bentuk
+     melewati potret-potret di antaranya. */
+  const jalan = (ke: number) => {
+    cancelAnimationFrame(raf.current);
+    const t0 = tKini.current;
+    const t1 = tDari(ke);
+    if (!geraknya() || Math.abs(t1 - t0) < 1e-4) {
+      tKini.current = t1;
+      gambar(qPada(t1));
+      taruh(t1);
+      return;
     }
+    const lama = 360 + 420 * Math.abs(t1 - t0);
+    const mulai = performance.now();
+    const langkahi = (sekarang: number) => {
+      const p = Math.min(1, (sekarang - mulai) / lama);
+      const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      const t = p < 1 ? t0 + (t1 - t0) * e : t1;
+      tKini.current = t;
+      gambar(qPada(t));
+      taruh(t);
+      if (p < 1) raf.current = requestAnimationFrame(langkahi);
+    };
+    raf.current = requestAnimationFrame(langkahi);
+  };
+
+  const pilihSnap = (i: number, berjalan = true) => {
+    const lama = pilihRef.current;
+    if (i !== lama) {
+      pilihRef.current = i;
+      setPilihPotret(i);
+      /* Cap lampiran dibubuhkan ulang hanya kalau keadaan pasal yang sedang
+         diperiksa memang berubah. */
+      const p = pasal.find((x) => x.kunci === pilihPasal)!;
+      if (geraknya() && keadaanDari(p, potret[i]!.nilai[p.kunci]) !== keadaanDari(p, potret[lama]!.nilai[p.kunci])) {
+        setTercap((c) => ({ n: c.n + 1, nyala: true }));
+        tunda(() => setTercap((c) => ({ ...c, nyala: false })), 700);
+      }
+    }
+    if (berjalan) jalan(i);
   };
 
   const pilihP = (kunci: Kunci) => {
     if (kunci === pilihPasal) return;
     setPilihPasal(kunci);
     if (geraknya()) {
-      setDiukur(kunci);
-      setLampiranBaru((n) => n + 1);
-      tunda(() => setDiukur((d) => (d === kunci ? null : d)), 800);
+      setDitarik(kunci);
+      setLampiranBaru((x) => x + 1);
+      tunda(() => setDitarik((d) => (d === kunci ? null : d)), 900);
     }
   };
 
-  const tombolTab = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
-    const n = pasal.length;
-    const ke =
-      e.key === "ArrowDown" ? (i + 1) % n : e.key === "ArrowUp" ? (i - 1 + n) % n : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : null;
-    if (ke === null) return;
-    e.preventDefault();
-    pilihP(pasal[ke]!.kunci);
-    tabRef.current[ke]?.focus();
+  /* ---- Lintasan: seret, klik, papan ketik ---- */
+  const tDariX = (clientX: number, kiri: number, lebar: number) => {
+    const x = ((clientX - kiri) / lebar) * 1000;
+    return Math.min(1, Math.max(0, (x - LX0) / (LX1 - LX0)));
   };
-
-  const tombolSnap = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
-    const n = potret.length;
+  const tekan = (e: PointerEventReact<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const kotak = e.currentTarget.getBoundingClientRect();
+    seret.current = { kiri: kotak.left, lebar: kotak.width, x0: e.clientX, geser: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const geser = (e: PointerEventReact<HTMLDivElement>) => {
+    const s = seret.current;
+    if (!s) return;
+    if (!s.geser && Math.abs(e.clientX - s.x0) < 4) return;
+    s.geser = true;
+    cancelAnimationFrame(raf.current);
+    const t = tDariX(e.clientX, s.kiri, s.lebar);
+    tKini.current = t;
+    gambar(qPada(t));
+    taruh(t);
+    const i = Math.round(t * (n - 1));
+    if (i !== pilihRef.current) pilihSnap(i, false);
+  };
+  const lepas = (e: PointerEventReact<HTMLDivElement>) => {
+    const s = seret.current;
+    seret.current = null;
+    if (!s) return;
+    const t = s.geser ? tKini.current : tDariX(e.clientX, s.kiri, s.lebar);
+    pilihSnap(Math.round(t * (n - 1)));
+  };
+  const batal = () => {
+    if (!seret.current) return;
+    seret.current = null;
+    jalan(pilihRef.current);
+  };
+  const tombolLintas = (e: KeyboardEvent<HTMLDivElement>) => {
+    const i = pilihRef.current;
     const ke =
-      e.key === "ArrowRight" ? Math.min(n - 1, i + 1) : e.key === "ArrowLeft" ? Math.max(0, i - 1) : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : null;
+      e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "PageUp"
+        ? Math.min(n - 1, i + 1)
+        : e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "PageDown"
+          ? Math.max(0, i - 1)
+          : e.key === "Home"
+            ? 0
+            : e.key === "End"
+              ? n - 1
+              : null;
     if (ke === null) return;
     e.preventDefault();
     pilihSnap(ke);
-    (e.currentTarget.parentElement?.children[ke] as HTMLElement | undefined)?.focus();
+  };
+
+  const tombolTab = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    const m = pasal.length;
+    const ke =
+      e.key === "ArrowDown" || e.key === "ArrowRight"
+        ? (i + 1) % m
+        : e.key === "ArrowUp" || e.key === "ArrowLeft"
+          ? (i - 1 + m) % m
+          : e.key === "Home"
+            ? 0
+            : e.key === "End"
+              ? m - 1
+              : null;
+    if (ke === null) return;
+    e.preventDefault();
+    pilihP(pasal[ke]!.kunci);
+    tabRef.current[pasal[ke]!.kunci]?.focus();
   };
 
   const snap = potret[pilihPotret]!;
@@ -780,6 +1027,7 @@ function Tabel({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null })
   const daftar = daftarLembar().halaman;
   const aktif = pasal.find((p) => p.kunci === pilihPasal)!;
   const sumber = lembarUntuk(aktif.sumber, daftar)?.lembar ?? null;
+  const kodeSnap = snap.kini ? `K${snap.kuartal}` : snap.kode;
 
   let lampiran: ReactNode;
   switch (aktif.kunci) {
@@ -800,162 +1048,433 @@ function Tabel({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null })
       break;
   }
 
+  /* Kelopak menjawab "berapa" di tiap kuartal, dan menyorot catatannya —
+     tetikus saja (jebakan #9). */
+  const keteranganKelopak = (p: Pasal) => {
+    const h = ket(() => ({
+      judul: `§${p.no} ${p.judul}`,
+      baris: [
+        ...potret.map((s) => {
+          const v = s.nilai[p.kunci];
+          return { label: s.kini ? `Kini · ${tglPendek(s.tanggal)}` : `${s.kode} · ${tglPendek(s.tanggal)}`, nilai: v === null ? "—" : p.besar(v) };
+        }),
+        { label: "Ketentuan", nilai: p.pendek },
+      ],
+    }));
+    return {
+      ...h,
+      onPointerEnter: (e: PointerEventReact) => {
+        h.onPointerEnter(e);
+        if (e.pointerType === "mouse") setSorot(p.kunci);
+      },
+      onPointerLeave: (e: PointerEventReact) => {
+        h.onPointerLeave(e);
+        if (e.pointerType === "mouse") setSorot(null);
+      },
+    };
+  };
+
+  const adaZona = pasal.some((p) => p.maks !== null);
+  const kelasPilih = (p: Pasal) => `${p.kunci === pilihPasal ? " is-pilih" : ""}${sorot === p.kunci ? " is-sorot" : ""}`;
+
   return (
-    <div className={hidup ? "tks is-hidup" : "tks"}>
-      <div className="tks__papan">
-        <section className="tks__kertas tks__tabel" aria-labelledby="tks-judul">
-          <header className="tks__kop">
-            <div className="tks__kopjudul">
-              <p>Dokumen strategi bisnis · Pasal 8</p>
-              <h2 id="tks-judul">Tabel kesesuaian</h2>
-              <p className="tks__kopsub">Ketentuan strategi studio terhadap realisasi {snap.tahun}</p>
+    <div className={hidup ? "mws is-hidup" : "mws"}>
+      <div className="mws__papan">
+        <section ref={panggungRef} className="mws__panggung" aria-labelledby="mws-judul">
+          <header className="mws__kop">
+            <div className="mws__kopjudul">
+              <p>Dokumen strategi bisnis · Pasal 8 · {snap.tahun}</p>
+              <h2 id="mws-judul">Mawar strategi</h2>
             </div>
-            <div className="tks__periksa">
-              <p id="tks-periksa">Diperiksa per</p>
-              <div className="tks__potret" role="radiogroup" aria-labelledby="tks-periksa">
-                {potret.map((p, i) => (
-                  <button
-                    key={p.kode}
-                    type="button"
-                    role="radio"
-                    aria-checked={i === pilihPotret}
-                    tabIndex={i === pilihPotret ? 0 : -1}
-                    className={i === pilihPotret ? "is-pilih" : undefined}
-                    onClick={() => pilihSnap(i)}
-                    onKeyDown={(e) => tombolSnap(e, i)}
-                  >
-                    <b>{p.kini ? "Kini" : `${p.kode} ${String(p.tahun).slice(2)}`}</b>
-                    <small>{tglPendek(p.tanggal)}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="tks__tally" aria-label={`${memenuhi} dari ${pasal.length} pasal memenuhi`}>
-              <span>
-                <Hitung nilai={memenuhi} hidup={hidup} format={(v) => koma(Math.round(v), 0)} />
-                <em>/{pasal.length}</em>
-              </span>
-              <small>pasal memenuhi</small>
-            </div>
+            <ul className="mws__legenda" aria-hidden="true">
+              <li>
+                <i className="mws__lg-isi" /> realisasi
+              </li>
+              <li>
+                <i className="mws__lg-batas" /> ketentuan minimum
+              </li>
+              {adaZona && (
+                <li>
+                  <i className="mws__lg-zona" /> rentang ketentuan
+                </li>
+              )}
+              <li>
+                <i className="mws__lg-kurang" /> kekurangan
+              </li>
+              {sebelum && (
+                <li>
+                  <i className="mws__lg-kontur" /> kuartal lalu
+                </li>
+              )}
+            </ul>
           </header>
 
-          <div className="tks__kepala" aria-hidden="true">
-            <span>Pasal</span>
-            <span>Uraian &amp; ketentuan</span>
-            <span>Garis ukur</span>
-            <span>Realisasi</span>
-            <span>Pemeriksaan</span>
+          <div className="mws__sel">
+            <div ref={mawarRef} className="mws__mawar">
+              <svg className="mws__gambar" viewBox="0 0 400 400" aria-hidden="true">
+                <defs>
+                  <radialGradient id={`${idPola}-isi`} gradientUnits="userSpaceOnUse" cx={PUSAT} cy={PUSAT} r={R200}>
+                    <stop offset={HUB / R200} className="mws__henti-a" />
+                    <stop offset={jari(1) / R200} className="mws__henti-b" />
+                    <stop offset="1" className="mws__henti-c" />
+                  </radialGradient>
+                  <radialGradient id={`${idPola}-pijar`} gradientUnits="userSpaceOnUse" cx={PUSAT} cy={PUSAT} r={RIM}>
+                    <stop offset="0" className="mws__pijar-a" />
+                    <stop offset="1" className="mws__pijar-b" />
+                  </radialGradient>
+                  <pattern id={`${idPola}-kurang`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+                    <rect width="2.2" height="6" className="mws__arsir-amber" />
+                  </pattern>
+                  {/* Bayangan hanya jatuh di lajur kelopak, tidak pernah ke celah
+                      puncak tempat label skala. */}
+                  <clipPath id={`${idPola}-lajur`}>
+                    {pasal.map((p, i) => (
+                      <path key={p.kunci} d={sektor(HUB, RIM - 2, sudut(i) - LEBAR - 3, sudut(i) + LEBAR + 3)} />
+                    ))}
+                  </clipPath>
+                  <pattern id={`${idPola}-zona`} patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(-45)">
+                    <rect width="1.6" height="5" className="mws__arsir-mint" />
+                  </pattern>
+                </defs>
+
+                <circle className="mws__pijar" cx={PUSAT} cy={PUSAT} r={RIM} fill={`url(#${idPola}-pijar)`} />
+
+                {/* Lajur kelopak: sektor 0–200% tiap pasal. */}
+                {pasal.map((p, i) => (
+                  <path key={`lajur-${p.kunci}`} className={`mws__lajur${kelasPilih(p)}`} d={sektor(HUB, R200, sudut(i) - LEBAR, sudut(i) + LEBAR)} />
+                ))}
+
+                <g clipPath={`url(#${idPola}-lajur)`}>
+                  <g ref={bayangRef} className="mws__bayang">
+                    {pasal.map((p, i) => (
+                      <path
+                        key={p.kunci}
+                        ref={(x) => {
+                          el.current[i]!.bayang = x;
+                        }}
+                      />
+                    ))}
+                  </g>
+                </g>
+
+                {/* Rentang ketentuan (kontrak, pesan). */}
+                {pasal.map((p, i) =>
+                  p.maks === null ? null : (
+                    <g key={`zona-${p.kunci}`}>
+                      <path
+                        className="mws__zona"
+                        fill={`url(#${idPola}-zona)`}
+                        d={sektor(jari(1), jari(p.maks / p.min), sudut(i) - LEBAR, sudut(i) + LEBAR)}
+                      />
+                      <path className="mws__zonabatas" d={busur(jari(p.maks / p.min), sudut(i) - LEBAR, sudut(i) + LEBAR)} />
+                    </g>
+                  ),
+                )}
+
+                {/* Cincin skala, terputus di celah puncak tempat labelnya. */}
+                {CINCIN.map((c) => (
+                  <path key={c.q} className={c.q === 1 ? "mws__cincin is-batas" : "mws__cincin"} d={busur(jari(c.q), c.celah, 360 - c.celah)} />
+                ))}
+
+                {/* Kelopak: isi bergradasi, kekurangan berarsir amber, garis
+                    tepi (kelopak terpilih), ujung, panah lewat 200%. */}
+                {pasal.map((p, i) => (
+                  <g key={`kelopak-${p.kunci}`} className={`mws__kelopak${kelasPilih(p)}`}>
+                    <path
+                      ref={(x) => {
+                        el.current[i]!.isi = x;
+                      }}
+                      className="mws__isi"
+                      fill={`url(#${idPola}-isi)`}
+                    />
+                    <path
+                      ref={(x) => {
+                        el.current[i]!.cahaya = x;
+                      }}
+                      className="mws__cahaya"
+                    />
+                    <path
+                      ref={(x) => {
+                        el.current[i]!.kurang = x;
+                      }}
+                      className="mws__kurang"
+                      fill={`url(#${idPola}-kurang)`}
+                    />
+                    <path
+                      ref={(x) => {
+                        el.current[i]!.kosong = x;
+                      }}
+                      className="mws__kosongkelopak"
+                    />
+                    <path
+                      ref={(x) => {
+                        el.current[i]!.garis = x;
+                      }}
+                      className="mws__garistepi"
+                    />
+                    <path
+                      ref={(x) => {
+                        el.current[i]!.ujung = x;
+                      }}
+                      className="mws__ujung"
+                    />
+                    <path
+                      ref={(x) => {
+                        el.current[i]!.lebih = x;
+                      }}
+                      className="mws__lebih"
+                    />
+                  </g>
+                ))}
+
+                {/* Kontur kuartal-kuartal sebelum potret terpilih. */}
+                {pasal.map((p, i) =>
+                  potret.slice(0, pilihPotret).map((s, j) => {
+                    const v = q[j]![i];
+                    if (v === null || v === undefined) return null;
+                    return (
+                      <path
+                        key={`kontur-${p.kunci}-${s.kode}`}
+                        className={j === pilihPotret - 1 ? "mws__kontur is-dekat" : "mws__kontur"}
+                        d={busur(jari(v), sudut(i) - LEBAR + 3, sudut(i) + LEBAR - 3)}
+                      />
+                    );
+                  }),
+                )}
+
+                {/* Cincin pinggir bertakik: tiap 6°, panjang di sumbu kelopak. */}
+                <circle className="mws__rim" cx={PUSAT} cy={PUSAT} r={RIM} />
+                <path
+                  className="mws__takik"
+                  d={Array.from({ length: 60 }, (_, j) => {
+                    const deg = j * 6;
+                    const sumbu = (deg - 36) % 72 === 0;
+                    const celah = deg % 72 === 0;
+                    const [x1, y1] = titik(RIM, deg);
+                    const [x2, y2] = titik(RIM + (sumbu ? 10 : celah ? 6 : 3.5), deg);
+                    return `M${bulat2(x1)} ${bulat2(y1)}L${bulat2(x2)} ${bulat2(y2)}`;
+                  }).join("")}
+                />
+
+                <circle className="mws__hub" cx={PUSAT} cy={PUSAT} r={HUB} />
+
+                {/* Bidang sentuh: seluruh lajur sampai cincin pinggir. */}
+                {pasal.map((p, i) => (
+                  <path
+                    key={`sentuh-${p.kunci}`}
+                    className="mws__sentuh"
+                    d={sektor(HUB, RIM, sudut(i) - LEBAR - 4, sudut(i) + LEBAR + 4)}
+                    onClick={() => pilihP(p.kunci)}
+                    {...keteranganKelopak(p)}
+                  />
+                ))}
+              </svg>
+
+              {CINCIN.map((c) => (
+                <span
+                  key={c.q}
+                  className={c.q === 1 ? "mws__skala is-batas" : "mws__skala"}
+                  style={{ top: `${((PUSAT - jari(c.q)) / 400) * 100}%` }}
+                  aria-hidden="true"
+                >
+                  {c.label}
+                </span>
+              ))}
+
+              <span className="mws__pusat" aria-hidden="true">
+                <b>
+                  <Hitung nilai={memenuhi} hidup={hidup} format={(v) => koma(Math.round(v), 0)} />
+                  <em>/{pasal.length}</em>
+                </b>
+                <small>memenuhi</small>
+              </span>
+            </div>
           </div>
 
-          <div className="tks__pasal" role="tablist" aria-orientation="vertical" aria-label="Pasal KPI">
+          <div className="mws__catatandaftar" role="tablist" aria-label="Pasal KPI" aria-orientation="vertical">
             {pasal.map((p, i) => {
               const v = snap.nilai[p.kunci];
               const lalu = sebelum?.nilai[p.kunci] ?? null;
               const beda = v !== null && lalu !== null ? v - lalu : null;
               const dipilih = p.kunci === pilihPasal;
+              const letak = LETAK[p.kunci];
+              const lembar = lembarUntuk(p.sumber, daftar)?.lembar.kode ?? "";
               return (
-                <div key={p.kunci} className={`tks__baris is-${keadaan[p.kunci]}${dipilih ? " is-pilih" : ""}`}>
-                  <button
-                    ref={(el) => {
-                      tabRef.current[i] = el;
+                <button
+                  key={p.kunci}
+                  ref={(x) => {
+                    tabRef.current[p.kunci] = x;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={`mws-tab-${p.kunci}`}
+                  aria-selected={dipilih}
+                  aria-controls={idLampiran}
+                  tabIndex={dipilih ? 0 : -1}
+                  className={`mws__catatan is-${letak.sisi} is-${keadaan[p.kunci]}${kelasPilih(p)}`}
+                  data-baris={letak.baris}
+                  data-rata={letak.rata}
+                  onClick={() => pilihP(p.kunci)}
+                  onKeyDown={(e) => tombolTab(e, i)}
+                  onPointerEnter={(e) => e.pointerType === "mouse" && setSorot(p.kunci)}
+                  onPointerLeave={(e) => e.pointerType === "mouse" && setSorot(null)}
+                >
+                  <span
+                    ref={(x) => {
+                      balonRef.current[p.kunci] = x;
                     }}
-                    type="button"
-                    role="tab"
-                    id={`tks-tab-${p.kunci}`}
-                    aria-selected={dipilih}
-                    aria-controls={idLampiran}
-                    tabIndex={dipilih ? 0 : -1}
-                    className="tks__pilih"
-                    onClick={() => pilihP(p.kunci)}
-                    onKeyDown={(e) => tombolTab(e, i)}
+                    className="mws__balon"
+                    aria-hidden="true"
                   >
-                    <span className="sr-only">
-                      §{p.no} {p.judul}: {v === null ? "belum ada data" : p.besar(v)}, {TEKS_CAP[keadaan[p.kunci]]}
+                    <b>{p.no}</b>
+                    <small>{lembar}</small>
+                  </span>
+                  <span className="mws__catatanisi">
+                    <span className="mws__cjudul">{p.judul}</span>
+                    {v === null ? <b className="mws__cangka">—</b> : <Hitung nilai={v} hidup={hidup} format={p.besar} className="mws__cangka" />}
+                    <span className="mws__cket">ketentuan {p.pendek}</span>
+                    <span className="mws__cpersen">
+                      {v === null ? (
+                        "belum ada data"
+                      ) : (
+                        <>
+                          <Hitung nilai={(v / p.min) * 100} hidup={hidup} format={(x) => `${koma(Math.round(x), 0)}%`} className="mws__cpersenangka" />
+                          {" dari ketentuan"}
+                        </>
+                      )}
                     </span>
-                  </button>
-                  <span className="tks__no" aria-hidden="true">
-                    <b>§{p.no}</b>
-                    <small>{lembarUntuk(p.sumber, daftar)?.lembar.kode ?? ""}</small>
-                  </span>
-                  <span className="tks__uraian" aria-hidden="true">
-                    <b>{p.judul}</b>
-                    <small>{p.ketentuan(k)}</small>
-                  </span>
-                  <div className="tks__ukur" onClick={() => pilihP(p.kunci)}>
-                    <GarisUkur
-                      pasal={p}
-                      skala={skala[p.kunci]}
-                      nilai={v}
-                      takik={lalu}
-                      takikKode={sebelum?.kode ?? null}
-                      diukur={diukur === p.kunci}
-                      ket={ket}
-                    />
-                  </div>
-                  <span className="tks__nilai" aria-hidden="true">
-                    {v === null ? <b>—</b> : <Hitung nilai={v} hidup={hidup} format={p.besar} className="tks__angka" />}
-                    <small className={beda === null ? undefined : beda > 0 ? "is-naik" : beda < 0 ? "is-turun" : undefined}>
+                    <span className={`mws__cbeda${beda === null ? "" : beda > 0 ? " is-naik" : beda < 0 ? " is-turun" : ""}`}>
                       {beda === null
                         ? sebelum
-                          ? `—`
-                          : `per ${tglPendek(snap.tanggal)}`
+                          ? "—"
+                          : `potret pertama · ${tglPendek(snap.tanggal)}`
                         : beda === 0
                           ? `tetap dari ${sebelum!.kode}`
                           : `${beda > 0 ? "▲" : "▼"} ${p.selisih(beda)} dari ${sebelum!.kode}`}
-                    </small>
+                    </span>
+                    <span className="sr-only">, {TEKS_CAP[keadaan[p.kunci]]}</span>
                   </span>
-                  <span className="tks__periksasel" aria-hidden="true">
-                    <Cap
-                      key={`${keadaan[p.kunci]}-${tercap.kunci.has(p.kunci) ? tercap.putaran : 0}`}
-                      keadaan={keadaan[p.kunci]}
-                      no={p.no}
-                      kode={snap.kini ? `K${snap.kuartal}` : snap.kode}
-                      tercap={tercap.kunci.has(p.kunci)}
-                    />
-                  </span>
-                </div>
+                </button>
               );
             })}
           </div>
 
-          <footer className="tks__kaki">
-            <span className="tks__legenda">
-              <i className="tks__lg-zona" /> zona ketentuan
-            </span>
-            <span className="tks__legenda">
-              <i className="tks__lg-penanda" /> realisasi
-            </span>
-            {sebelum && (
-              <span className="tks__legenda">
-                <i className="tks__lg-takik" /> potret {sebelum.kode}
+          <svg ref={lapisRef} className="mws__penunjuklapis" aria-hidden="true">
+            {penunjuk.map((g) => (
+              <g key={g.kunci} className={`mws__penunjuk is-${keadaan[g.kunci]}${kelasPilih(pasal.find((p) => p.kunci === g.kunci)!)}`}>
+                <path
+                  key={ditarik === g.kunci ? "tarik" : "diam"}
+                  className={ditarik === g.kunci ? "mws__penunjukgaris is-ditarik" : "mws__penunjukgaris"}
+                  d={g.d}
+                  pathLength={1}
+                />
+                <circle cx={g.x} cy={g.y} r={2.5} />
+              </g>
+            ))}
+          </svg>
+
+          <div className="mws__lintasanket">
+            <p>Lintasan kuartal</p>
+            <small>Seret matahari, atau ← →</small>
+          </div>
+
+          <div
+            className="mws__lintasan"
+            role="slider"
+            tabIndex={0}
+            aria-label="Potret kuartal"
+            aria-valuemin={0}
+            aria-valuemax={n - 1}
+            aria-valuenow={pilihPotret}
+            aria-valuetext={`${snap.kini ? "Kini" : `${snap.kode} ${snap.tahun}`}, ${tglPanjang(snap.tanggal)}: ${memenuhi} dari ${pasal.length} pasal memenuhi`}
+            onPointerDown={tekan}
+            onPointerMove={geser}
+            onPointerUp={lepas}
+            onPointerCancel={batal}
+            onKeyDown={tombolLintas}
+          >
+            <div className="mws__langit">
+              <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                <path className="mws__busurlangit" d={BUSUR_LANGIT} />
+                {potret.map((s, i) => {
+                  const x = lintasX(tDari(i));
+                  return <path key={s.kode} className="mws__tegak" d={`M${bulat2(x)} ${bulat2(lintasY(x))}V100`} />;
+                })}
+                <path ref={jalurRef} className="mws__jalur" />
+                <path className="mws__cakrawalagaris" d="M0 99.5H1000" />
+              </svg>
+              {potret.map((s, i) => {
+                const x = lintasX(tDari(i));
+                return (
+                  <i
+                    key={s.kode}
+                    className={`mws__stasiun${i <= pilihPotret ? " is-lewat" : ""}${i === pilihPotret ? " is-pilih" : ""}`}
+                    style={{ left: `${x / 10}%`, top: `${lintasY(x)}%` }}
+                  />
+                );
+              })}
+              <span ref={matahariRef} className="mws__matahari" aria-hidden="true">
+                <svg viewBox="-14 -14 28 28">
+                  <path
+                    className="mws__sinar"
+                    d={Array.from({ length: 8 }, (_, j) => {
+                      const a = (j * Math.PI) / 4;
+                      return `M${bulat2(Math.cos(a) * 9)} ${bulat2(Math.sin(a) * 9)}L${bulat2(Math.cos(a) * 13)} ${bulat2(Math.sin(a) * 13)}`;
+                    }).join("")}
+                  />
+                  <circle className="mws__inti" r="6.5" />
+                </svg>
               </span>
-            )}
-            <span className="tks__diperiksa">
-              Diperiksa {studio?.studioName ?? "studio"} · {tglPanjang(snap.tanggal)}
-            </span>
-          </footer>
+            </div>
+            <div className="mws__cakrawala" aria-hidden="true">
+              {potret.map((s, i) => (
+                <span key={s.kode} className={i === pilihPotret ? "is-pilih" : undefined} style={{ left: `${lintasX(tDari(i)) / 10}%` }}>
+                  <b>{s.kini ? "Kini" : `${s.kode} ’${String(s.tahun).slice(2)}`}</b>
+                  <small>{tglPendek(s.tanggal)}</small>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="mws__periksa">
+            <p>Diperiksa per</p>
+            <b>{tglPanjang(snap.tanggal)}</b>
+            <small>{snap.kini ? `hari ini · kuartal ${snap.kuartal}` : `akhir ${snap.kode} ${snap.tahun}`}</small>
+          </div>
         </section>
 
-        <section
-          className="tks__kertas tks__lampiran"
-          id={idLampiran}
-          role="tabpanel"
-          aria-labelledby={`tks-tab-${aktif.kunci}`}
-        >
-          <header className="tks__lampirankop">
-            <p>Lampiran §{aktif.no}</p>
-            <h3>{aktif.judul}</h3>
-            {sumber && (
-              <a className="tks__sumber" href={sumber.href}>
-                Sumber · <b>{sumber.kode}</b> {sumber.label}
-              </a>
-            )}
+        <section className="mws__kertas mws__lampiran" id={idLampiran} role="tabpanel" aria-labelledby={`mws-tab-${aktif.kunci}`}>
+          <header className="mws__lampirankop">
+            <div>
+              <p>Lampiran §{aktif.no}</p>
+              <h3>{aktif.judul}</h3>
+              <small>{aktif.ketentuan(k)}</small>
+            </div>
+            <Cap key={`${aktif.kunci}-${tercap.n}`} keadaan={keadaan[aktif.kunci]} no={aktif.no} kode={kodeSnap} tercap={tercap.nyala} />
           </header>
-          <Jejak pasal={aktif} skala={skala[aktif.kunci]} potret={potret} pilih={pilihPotret} onPilih={pilihSnap} />
-          <div key={`${aktif.kunci}-${lampiranBaru}`} className={lampiranBaru ? "tks__lampiranisi is-baru" : "tks__lampiranisi"}>
+          {sumber && (
+            <a className="mws__sumber" href={sumber.href}>
+              Sumber · <b>{sumber.kode}</b> {sumber.label}
+            </a>
+          )}
+          <Jejak pasal={aktif} skala={skala[aktif.kunci]} potret={potret} pilih={pilihPotret} onPilih={(i) => pilihSnap(i)} />
+          <div key={`${aktif.kunci}-${lampiranBaru}`} className={lampiranBaru ? "mws__lampiranisi is-baru" : "mws__lampiranisi"}>
             {lampiran}
           </div>
-          <p className="tks__lampirankaki">Rincian per {tglPanjang(k.hariIni)}</p>
+          {(() => {
+            const c = catatanPemeriksa(aktif, snap.nilai[aktif.kunci], k, snap.kini);
+            return (
+              <div className={c.kurang ? "mws__pemeriksa is-kurang" : "mws__pemeriksa"}>
+                <p>
+                  Catatan pemeriksa · {kodeSnap} {snap.tahun}
+                </p>
+                <span>{c.teks}</span>
+              </div>
+            );
+          })()}
+          <p className="mws__lampirankaki">
+            Diperiksa {studio?.studioName ?? "studio"} · rincian per {tglPanjang(k.hariIni)}
+          </p>
         </section>
       </div>
       <Keterangan kabar={kabar} />
