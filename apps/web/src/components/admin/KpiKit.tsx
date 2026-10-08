@@ -1642,6 +1642,9 @@ function Panel({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null })
                   Lembar sumber · <b>{sumber.kode}</b> {sumber.label} →
                 </a>
               )}
+              {/* Lampiran selalu data hari ini; potret lama cuma menggeser
+                  jarum, cap, dan catatan pemeriksa. */}
+              {!snap.kini && <small>Lampiran per {tglPendek(k.hariIni)} · potret {snap.kode} di meter</small>}
             </footer>
           </section>
         </div>

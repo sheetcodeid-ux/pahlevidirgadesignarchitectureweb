@@ -1039,6 +1039,7 @@
 }
 .pkk__rinciankaki { display: flex; flex-direction: column; gap: 2px; flex: none; padding-top: 6px; border-top: 1px solid var(--pkk-kgaris); }
 .pkk__rinciankaki .pkk__sumber { margin-top: 0; font-size: 11px; }
+.pkk__rinciankaki small { font-size: 10px; font-style: italic; color: var(--pkk-tinta-redup); }
 
 /* ---- Kerangka memuat ---------------------------------------------------------- */
 .pkk--rangka .pkk__papannama { min-height: 64px; }
