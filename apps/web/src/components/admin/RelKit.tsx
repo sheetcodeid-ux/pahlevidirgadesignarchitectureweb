@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SisiNav, type ItemNav } from "../kit/Nav";
 import {
   ArrowsLeftRight, ChartBar, ChatTeardropDots, CircleDashed, CoinIn, CoinOut, CoinVertical, FileText, GearSix, Globe, House,
@@ -9,8 +9,11 @@ import {
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { Avatar } from "../kit/Tampilan";
 import { TombolIkon } from "../kit/Tombol";
-import { NAV } from "../../lib/navAdmin";
-import { keluar, namaTampilan, PERISTIWA_PROFIL, profilTersimpan, type Profil } from "../../lib/admin";
+import { daftarLembar, KODE_KELOMPOK, lembarUntuk, NAV, rapiPath } from "../../lib/navAdmin";
+import {
+  ambilSettings, bacaCache, keluar, namaTampilan, PERISTIWA_PROFIL, profilTersimpan, type Profil, type StudioSettings,
+} from "../../lib/admin";
+import { jamStudio, useJam } from "./jamStudio";
 
 /* =============================================================================
    Rel samping panel admin, versi kit.
@@ -95,9 +98,13 @@ export interface PropRelKit {
    ada baris yang menyala dan submenu tidak pernah terbuka. Tanpa satu pun
    galat, dan tidak kelihatan dari membaca komponennya; yang menjawab
    menghitung "is-aktif" di HTML hasil build. */
-function rapi(p: string): string {
-  return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
-}
+const rapi = rapiPath;
+/* Efek tata letak tanpa peringatan saat dirender di server. */
+const useEfekTataLetak = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+/* Nomor lembar dihitung sekali — NAV tidak berubah selama halaman hidup. */
+const LEMBAR = daftarLembar();
+const KODE_HALAMAN = new Map(LEMBAR.halaman.map((l) => [rapi(l.href), l.kode]));
 
 export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio }: PropRelKit) {
   const kini = rapi(path);
@@ -170,6 +177,13 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
   const lipat = (label: string) =>
     setTerbuka((t) => (t.includes(label) ? t.filter((x) => x !== label) : [...t, label]));
 
+  /* Lembar yang TAMPIL untuk peran ini — jumlah per kategori, "i dari N" di
+     kop, dan jumlah di kepala rel menghitung yang bisa dibuka, bukan yang
+     tersembunyi. Nomornya sendiri tetap dari NAV lengkap. */
+  const tampil = LEMBAR.halaman.filter((l) => !l.masterOnly || master);
+  const perKelompok = new Map<string, number>();
+  for (const l of tampil) perKelompok.set(l.kelompok, (perKelompok.get(l.kelompok) ?? 0) + 1);
+
   const item: ItemNav[] = NAV.filter((n) => !n.masterOnly || master).map((n) => {
     const anak = n.children?.map((c) => ({
       ikon: ikon(c.ikonKit, c.label),
@@ -179,22 +193,74 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
          dari "/admin/pengaturan/akun", jadi startsWith menyalakan dua baris
          sekaligus dan yang terbaca aktif jadi dua halaman berbeda. */
       aktif: cocok(c.href),
+      kode: KODE_HALAMAN.get(rapi(c.href)),
     }));
+    const terbukaIni = anak ? terbuka.includes(n.label) : undefined;
     return {
       ikon: ikon(n.ikonKit, n.label),
       label: n.label,
       href: n.href,
       aktif: n.href ? cocok(n.href) : false,
       anak,
-      terbuka: anak ? terbuka.includes(n.label) : undefined,
+      terbuka: terbukaIni,
       onLipat: anak ? () => lipat(n.label) : undefined,
       /* 0 disembunyikan: angka merah "0" berarti "ada yang perlu dilihat"
          padahal tidak ada. */
       jumlah: n.lencana === "pesan" && pesan ? pesan : undefined,
       jumlahJudul: n.lencana === "pesan" ? "pesan belum dibaca" : undefined,
       kelompok: n.group || undefined,
+      kode: n.href ? KODE_HALAMAN.get(rapi(n.href)) : LEMBAR.induk.get(n.label),
+      kelompokKode: KODE_KELOMPOK[n.group],
+      kelompokJumlah: perKelompok.get(n.group) ?? 0,
+      /* Submenu halaman yang sedang dibuka DITUTUP staf: penanda potongan
+         menunjuk induknya, bukan menghilang. */
+      indukAktif: Boolean(anak?.some((a) => a.aktif)) && !terbukaIni,
     };
   });
+
+  /* KOP GAMBAR di kaki rel: lembar yang sedang dibuka, urutannya di daftar,
+     dan tanggal + jam STUDIO. */
+  const dibuka = lembarUntuk(kini, tampil);
+  const urutDibuka = dibuka ? tampil.indexOf(dibuka.lembar) + 1 : 0;
+  const jam = useJam(true);
+  const [studio, setStudio] = useState<Pick<StudioSettings, "timezone" | "logoUrl"> | null>(null);
+  useEffect(() => {
+    /* Zona dan logo studio dari Info Studio. Kunci `settings` milik Info
+       Studio, jadi di sini cuma DIBACA (jebakan #8); kalau belum ada, diambil
+       sekali — rel ini hidup lintas halaman, jadi sekali per muat penuh. */
+    const tersimpan = bacaCache<StudioSettings>("settings");
+    if (tersimpan) {
+      setStudio(tersimpan);
+      return;
+    }
+    let hidup = true;
+    ambilSettings()
+      .then((st) => hidup && setStudio(st))
+      .catch(() => {});
+    return () => {
+      hidup = false;
+    };
+  }, []);
+  const waktu = jam ? jamStudio(jam, studio?.timezone) : null;
+  /* Logo yang gagal dimuat tidak meninggalkan kotak gambar rusak. */
+  const [logoGagal, setLogoGagal] = useState(false);
+  /* Nomor lembar yang BERGANTI menggulung masuk — hanya saat berganti,
+     tidak saat rel pertama kali tergambar. Disetel di efek tata letak,
+     sebelum dicat: kalau sesudahnya, nomor barunya sempat tergambar diam satu
+     bingkai lalu menghilang untuk mulai menggulung. */
+  /* Yang menggulung hanya PINDAH HALAMAN. Nomor juga bisa berganti di
+     halaman yang sama — Info Studio dan UI Component baru punya baris
+     sesudah peran master terbaca, jadi nomornya berganti dari "—" ke G-01
+     sesaat sesudah dimuat — dan itu bukan gerak yang boleh terlihat. */
+  const kodeDibuka = dibuka?.lembar.kode ?? "-";
+  const lalu = useRef({ path: kini, kode: kodeDibuka });
+  const [gulung, setGulung] = useState<string | null>(null);
+  useEfekTataLetak(() => {
+    const l = lalu.current;
+    if (l.kode === kodeDibuka) return;
+    lalu.current = { path: kini, kode: kodeDibuka };
+    if (l.path !== kini) setGulung(kodeDibuka);
+  }, [kodeDibuka, kini]);
 
   const [buka, setBuka] = useState(false);
 
@@ -250,8 +316,21 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
     <>
       <SisiNav
         id={ID_REL}
+        varian="gambar"
         className={buka ? "is-buka" : undefined}
-        logo={namaStudio ? <span className="kl__logo">{namaStudio}</span> : undefined}
+        logo={
+          namaStudio ? (
+            <span className="kl__kepalarel">
+              {studio?.logoUrl && !logoGagal && (
+                <img className="kl__logostudio" src={studio.logoUrl} alt="" decoding="async" onError={() => setLogoGagal(true)} />
+              )}
+              <span>
+                <span className="kl__logo">{namaStudio}</span>
+                <span className="kl__logosub">Daftar gambar · {tampil.length} lembar</span>
+              </span>
+            </span>
+          ) : undefined
+        }
         item={item}
         /* Keluar tinggal di kaki rel — slot yang di Coinest berisi banner
            promo, dengan ikon Nav-SignOut dari pustaka ikon Coinest sendiri.
@@ -261,6 +340,7 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
            dengan tombol lama: sesi DAN cache data dibuang (hapusSesi),
            lalu ganti riwayat supaya tombol Kembali tidak membuka panel. */
         kaki={
+          <div className="kl__kop">
           <div className="kl__akun">
             {/* Avatar baru tergambar sesudah profil terbaca; sebelum itu
                 tempatnya dijaga supaya kartunya tidak melompat. */}
@@ -284,6 +364,29 @@ export function RelKit({ path, pesanBelumDibaca, master: masterProp, namaStudio 
                 window.location.replace("/admin/masuk");
               }}
             />
+          </div>
+          {/* Sel kop gambar: LEMBAR yang sedang dibuka (nomor + urutan di
+              daftar) dan TANGGAL menurut jam studio. Jam baru tergambar
+              sesudah dipasang — waktu build bukan waktu pengunjung
+              (jebakan #8). */}
+          <dl className="kl__kopsel">
+            <div>
+              <dt>Lembar</dt>
+              <dd>
+                <b key={kodeDibuka} className={gulung === kodeDibuka ? "is-gulung" : undefined}>
+                  {dibuka?.lembar.kode ?? "—"}
+                </b>
+                <small>{dibuka ? (dibuka.turunan ? "lampiran" : `${urutDibuka} / ${tampil.length}`) : "di luar daftar"}</small>
+              </dd>
+            </div>
+            <div>
+              <dt>Tanggal</dt>
+              <dd>
+                <b>{waktu?.tanggalPendek ?? "\u00a0"}</b>
+                <small>{waktu?.jam ?? "\u00a0"}</small>
+              </dd>
+            </div>
+          </dl>
           </div>
         }
       />

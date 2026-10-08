@@ -24,6 +24,7 @@ import { kepalaHari, waktuButir, ikonButir } from "./linimasaNotif";
 import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 import { kodeProyek } from "../../lib/nomorDokumen";
 import { Hitung, geraknya } from "./hitung";
+import { jamStudio, useJam } from "./jamStudio";
 
 /* =============================================================================
    Dashboard = RUANG KENDALI STUDIO.
@@ -1033,58 +1034,6 @@ function BusurTarget({ hidup }: { hidup: boolean }) {
       </p>
     </section>
   );
-}
-
-/* Jam studio yang berdetak per menit — tanggal & jam di kotak judul kop.
-   Pengatur waktunya disetel ke pergantian menit berikutnya, bukan interval
-   tetap, supaya angkanya berganti tepat saat menitnya berganti. */
-function useJam() {
-  const [kini, setKini] = useState(() => new Date());
-  useEffect(() => {
-    let t = 0;
-    const jadwal = () => {
-      const d = new Date();
-      t = window.setTimeout(
-        () => {
-          setKini(new Date());
-          jadwal();
-        },
-        60_000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 40,
-      );
-    };
-    jadwal();
-    return () => window.clearTimeout(t);
-  }, []);
-  return kini;
-}
-
-const ZONA: Record<string, string> = { "Asia/Jakarta": "WIB", "Asia/Makassar": "WITA", "Asia/Jayapura": "WIT" };
-/** Tanggal & jam MENURUT ZONA STUDIO (Info Studio), bukan zona peramban —
-    sama dengan jam studio di Info Studio dan tanggal di PDF. */
-function jamStudio(d: Date, zona?: string | null) {
-  const tz = zona && ZONA[zona] ? zona : "Asia/Jakarta";
-  try {
-    const bagian = Object.fromEntries(
-      new Intl.DateTimeFormat("id-ID", {
-        timeZone: tz,
-        weekday: "long",
-        day: "numeric",
-        month: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
-        .formatToParts(d)
-        .map((p) => [p.type, p.value]),
-    );
-    return { tanggal: `${bagian.weekday}, ${bagian.day} ${BULAN_PENDEK[Number(bagian.month) - 1]} ${bagian.year}`, jam: `${bagian.hour}.${bagian.minute} ${ZONA[tz]}` };
-  } catch {
-    return {
-      tanggal: `${HARI[d.getDay()]}, ${d.getDate()} ${BULAN_PENDEK[d.getMonth()]} ${d.getFullYear()}`,
-      jam: `${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")}`,
-    };
-  }
 }
 
 /** "2026-08" + d bulan → "2026-07" (d = −1). */

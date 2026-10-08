@@ -114,7 +114,7 @@ export const KATALOG: Folder[] = [
     ket: "Berpindah tempat.",
     ikon: SidebarSimple,
     isi: [
-      { id: "sidebar", nama: "Sidebar", kit: "SisiNav", modul: "kit/Nav", ekspor: ["SisiNav"], ket: "Rel samping panel — bisa dilipat per kelompok.", Demo: B.DemoSisiNav },
+      { id: "sidebar", nama: "Sidebar", kit: "SisiNav", modul: "kit/Nav", ekspor: ["SisiNav"], ket: "Rel samping panel — daftar gambar bernomor lembar, penanda potongan meluncur, bisa dilipat per kelompok.", Demo: B.DemoSisiNav },
       { id: "navigation-menubar", nama: "Navigation Menubar", kit: "MenuNavigasi", modul: "kit/Overlay", ekspor: ["MenuNavigasi"], ket: "Bilah tautan dengan panel turun berisi tautan anak.", Demo: B.DemoMenuNavigasi },
       { id: "menubar", nama: "Menubar", kit: "Menubar", modul: "kit/Overlay", ekspor: ["Menubar"], ket: "Bilah menu ala aplikasi desktop: Proyek, Keuangan, Dokumen.", Demo: B.DemoBilahMenu },
       { id: "breadcrumb", nama: "Breadcrumb", kit: "Remah", modul: "kit/Remah", ekspor: ["Remah"], ket: "Jejak letak halaman.", Demo: B.DemoRemah },

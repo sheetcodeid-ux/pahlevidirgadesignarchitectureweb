@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Ikon, type DataIkon } from "./Ikon";
 import { CaretDown } from "./ikon";
 import { Angka, Titik } from "./Lencana";
@@ -52,6 +52,22 @@ export interface ItemNav {
    * yang tergambar cuma garisnya — teksnya tidak muat di 72px.
    */
   kelompok?: string;
+  /**
+   * Varian `gambar`: nomor lembar baris ini (U-01, P-22) — rel dibaca
+   * sebagai DAFTAR GAMBAR sebuah set gambar kerja. Induk submenu membawa
+   * nomor serinya (P-20).
+   */
+  kode?: string;
+  /** Varian `gambar`: kode disiplin kategori (U, P, …) di kepala kategori. */
+  kelompokKode?: string;
+  /** Varian `gambar`: banyaknya lembar di kategori ini. */
+  kelompokJumlah?: number;
+  /**
+   * Halaman yang sedang dibuka ada di submenu baris ini, dan submenunya
+   * TERTUTUP. Penanda potongan lalu menunjuk induknya — tanpa ini, menutup
+   * submenu halaman yang sedang dibuka membuat rel tidak menunjuk apa pun.
+   */
+  indukAktif?: boolean;
 }
 
 export interface PropSisiNav {
@@ -65,21 +81,89 @@ export interface PropSisiNav {
   className?: string;
   /** Untuk `aria-controls` tombol menu geser di ponsel. */
   id?: string;
+  /**
+   * `gambar`: rel sebagai DAFTAR GAMBAR — kolom nomor lembar, kepala
+   * kategori berkode disiplin dan berjumlah lembar, angka sebagai segitiga
+   * REVISI, dan PENANDA POTONGAN yang meluncur ke lembar yang dibuka.
+   */
+  varian?: "gambar";
+}
+
+/* Efek tata letak yang tidak memperingatkan saat dirender di server — rel
+   ini dirender statis lalu dihidrasi. */
+const useEfekTataLetak = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+/* Segitiga REVISI — tanda delta bernomor di gambar kerja, menggantikan pil
+   angka di varian gambar. Angkanya di dalam segitiga, di sepertiga bawah
+   (titik berat segitiga), jadi dua digit masih muat. */
+function Revisi({ jumlah, judul }: { jumlah: number; judul: string }) {
+  return (
+    <span className="k-sisi__revisi" role="img" aria-label={`${judul}: ${jumlah}`}>
+      <svg viewBox="0 0 24 21" aria-hidden="true">
+        <path d="M12 1.8 22.4 19.4H1.6Z" />
+      </svg>
+      <b aria-hidden="true">{jumlah > 9 ? "9+" : jumlah}</b>
+    </span>
+  );
+}
+
+/* PENANDA POTONGAN — garis potong di tepi rel + segitiga arah pandang,
+   menunjuk lembar yang sedang dibuka. Satu elemen yang MELUNCUR ke baris
+   baru tiap pindah halaman (rel ini `transition:persist`, jadi elemennya
+   hidup lintas halaman), bukan garis per baris yang muncul-hilang: dua garis
+   yang memudar bersamaan terbaca sebagai dua halaman aktif (jebakan #45).
+   Letaknya diukur sesudah tiap render — tidak pernah di handler gulir
+   (jebakan #21) — relatif terhadap daftarnya, jadi ia ikut tergulir. */
+function usePenanda(daftar: RefObject<HTMLUListElement | null>, hidup: boolean) {
+  const [letak, setLetak] = useState<{ y: number; h: number } | null>(null);
+  const [siap, setSiap] = useState(false);
+  useEfekTataLetak(() => {
+    if (!hidup) return;
+    const ul = daftar.current;
+    if (!ul) return;
+    const t = ul.querySelector<HTMLElement>('.k-nav[aria-current="page"], .k-nav.is-aktif, .k-nav.is-indukaktif');
+    if (!t) {
+      setLetak((l) => (l ? null : l));
+      return;
+    }
+    const a = ul.getBoundingClientRect();
+    const r = t.getBoundingClientRect();
+    const y = r.top - a.top + ul.scrollTop;
+    setLetak((l) => (l && Math.abs(l.y - y) < 0.5 && Math.abs(l.h - r.height) < 0.5 ? l : { y, h: r.height }));
+  });
+  /* Transisi baru dinyalakan SESUDAH letak pertama tergambar: tanpa itu
+     penandanya meluncur dari puncak daftar tiap kali halaman dimuat. */
+  useEffect(() => {
+    if (!letak || siap) return;
+    const f = requestAnimationFrame(() => requestAnimationFrame(() => setSiap(true)));
+    return () => cancelAnimationFrame(f);
+  }, [letak, siap]);
+  return { letak, siap };
 }
 
 /* Kategori pertama tanpa garis di atasnya — garis batas memisahkan dua
    kategori, bukan memisahkan logo dari kategori pertama. */
 const kelasKepala = (pertama: boolean) => (pertama ? "k-sisi__kelompok k-sisi__kelompok--awal" : "k-sisi__kelompok");
 
-export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav) {
+export function SisiNav({ logo, item, kaki, sempit, className, id, varian }: PropSisiNav) {
+  const gambar = varian === "gambar" && !sempit;
+  const daftar = useRef<HTMLUListElement>(null);
+  const { letak, siap } = usePenanda(daftar, gambar);
   return (
     <nav
       id={id}
-      className={["k-sisi", sempit && "k-sisi--sempit", className].filter(Boolean).join(" ")}
+      className={["k-sisi", sempit && "k-sisi--sempit", gambar && "k-sisi--gambar", className].filter(Boolean).join(" ")}
       aria-label="Menu utama"
     >
       <div className="k-sisi__kepala">{logo}</div>
-      <ul className="k-sisi__daftar">
+      <ul className="k-sisi__daftar" ref={daftar}>
+        {gambar && (
+          <li
+            className={["k-sisi__penanda", letak && "is-tampak", siap && "is-siap"].filter(Boolean).join(" ")}
+            aria-hidden="true"
+            style={letak ? { transform: `translateY(${letak.y}px)`, height: `${letak.h}px` } : undefined}
+          />
+        )}
         {item.map((it, i) => {
           const kepala = it.kelompok && it.kelompok !== item[i - 1]?.kelompok ? it.kelompok : null;
           const idAnak = it.anak ? `${id ?? "k-sisi"}-anak-${it.label.replace(/[^A-Za-z0-9]+/g, "-").toLowerCase()}` : undefined;
@@ -88,18 +172,26 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
           <Fragment key={it.label}>
           {kepala && (
             <li className={kelasKepala(i === 0)} aria-hidden={sempit || undefined}>
+              {gambar && it.kelompokKode && (
+                <span className="k-sisi__disiplin" aria-hidden="true">
+                  {it.kelompokKode}
+                </span>
+              )}
               <span className="k-sisi__kelompokteks">{kepala}</span>
+              {gambar && it.kelompokJumlah !== undefined && (
+                <span className="k-sisi__kelompokjml">{it.kelompokJumlah} lbr</span>
+              )}
             </li>
           )}
           <li>
             <Akar
-              className={["k-nav", it.aktif && "is-aktif"].filter(Boolean).join(" ")}
+              className={["k-nav", it.aktif && "is-aktif", gambar && it.indukAktif && "is-indukaktif"].filter(Boolean).join(" ")}
               {...(it.onLipat
                 ? { type: "button" as const, onClick: it.onLipat, "aria-controls": it.terbuka ? idAnak : undefined }
                 : { href: it.href ?? "#", "aria-current": it.aktif ? ("page" as const) : undefined })}
               aria-expanded={it.anak ? Boolean(it.terbuka) : undefined}
             >
-              <Ikon ikon={it.ikon} ukuran={24} />
+              <Ikon ikon={it.ikon} ukuran={gambar ? 20 : 24} />
               {/* Label disembunyikan di rel sempit lewat CSS, bukan dibuang
                   dari DOM: pembaca layar tetap butuh namanya, dan tooltip
                   title-nya diambil dari teks yang sama. */}
@@ -108,6 +200,10 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
                   daripada 91,6px yang tersisa setelah ikon dan padding. Yang
                   terpotong tetap bisa dibaca dengan menunjuknya. */}
               <span className="k-sisi__label" title={typeof it.label === "string" ? it.label : undefined}>{it.label}</span>
+              {/* Garis penghubung label → nomor lembar, seperti daftar isi.
+                  Di lembar yang dibuka ia jadi GARIS POTONG pejal yang
+                  tergambar dari kiri saat halaman berpindah. */}
+              {gambar && it.kode && <span className="k-sisi__titik" aria-hidden="true" />}
               {/* Di rel sempit angkanya tidak muat, dan Figma memang
                   menggantinya dengan TITIK 8px di sudut ikon — bukan
                   menyembunyikannya. Angka yang hilang sama saja dengan
@@ -115,6 +211,8 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
               {it.jumlah !== undefined &&
                 (sempit ? (
                   <Titik kecil judul={it.jumlahJudul ?? it.label} />
+                ) : gambar ? (
+                  <Revisi jumlah={it.jumlah} judul={it.jumlahJudul ?? it.label} />
                 ) : (
                   <Angka jumlah={it.jumlah} judul={it.jumlahJudul ?? it.label} />
                 ))}
@@ -127,6 +225,7 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
                     .join(" ")}
                 />
               )}
+              {gambar && it.kode && <span className="k-sisi__kode">{it.kode}</span>}
             </Akar>
             {/* Submenu HANYA dirender kalau terbuka — bukan disembunyikan
                 dengan CSS. Baris menu yang ada di DOM tapi tidak tergambar
@@ -144,7 +243,12 @@ export function SisiNav({ logo, item, kaki, sempit, className, id }: PropSisiNav
                       href={a.href ?? "#"}
                       aria-current={a.aktif ? "page" : undefined}
                     >
+                      {gambar && a.kode && <span className="k-sisi__kode">{a.kode}</span>}
                       <span className="k-sisi__label" title={typeof a.label === "string" ? a.label : undefined}>{a.label}</span>
+                      {/* Anak tidak punya nomor di kanan, jadi garisnya tidak
+                          bertitik — yang tergambar cuma garis potong saat
+                          lembar ini yang dibuka. */}
+                      {gambar && a.kode && <span className="k-sisi__titik k-sisi__titik--anak" aria-hidden="true" />}
                     </a>
                   </li>
                 ))}

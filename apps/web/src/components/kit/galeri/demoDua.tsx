@@ -58,25 +58,46 @@ import { PROYEK } from "./demoSatu";
 
 export function DemoSisiNav() {
   const [buka, setBuka] = useState(true);
+  /* Baris aktif berpindah saat diklik — tanpa pindah halaman — supaya
+     penanda potongannya bisa dilihat meluncur di galeri. */
+  const [aktif, setAktif] = useState("U-01");
   return (
-    <div className="gal-rel">
+    <div
+      className="gal-rel"
+      onClick={(e) => {
+        const a = (e.target as HTMLElement).closest("a.k-nav");
+        const kode = a?.querySelector(".k-sisi__kode")?.textContent;
+        if (!a || !kode) return;
+        e.preventDefault();
+        setAktif(kode);
+      }}
+    >
+      {/* Varian `gambar` — bentuk yang dipakai rel panel: daftar gambar
+          bernomor lembar, kepala disiplin, segitiga revisi, dan penanda
+          potongan yang meluncur ke baris aktif (klik baris untuk melihatnya). */}
       <SisiNav
+        varian="gambar"
         logo={<b className="gal-logo">Dirga Pahlevi</b>}
         item={[
-          { ikon: NavSquaresFour, label: "Dashboard", aktif: true, href: "#navigasi/sidebar" },
+          { ikon: NavSquaresFour, label: "Dashboard", aktif: aktif === "U-01", kode: "U-01", href: "#navigasi/sidebar", kelompok: "Utama", kelompokKode: "U", kelompokJumlah: 2 },
+          { ikon: NavEnvelope, label: "Pesan Masuk", aktif: aktif === "U-02", kode: "U-02", jumlah: 3, jumlahJudul: "3 belum dibaca", href: "#navigasi/sidebar", kelompok: "Utama", kelompokKode: "U", kelompokJumlah: 2 },
           {
             ikon: NavCoins,
             label: "Keuangan",
+            kode: "P-10",
             lipat: true,
             terbuka: buka,
             onLipat: () => setBuka(!buka),
+            indukAktif: !buka && aktif.startsWith("P-1"),
+            kelompok: "Pekerjaan",
+            kelompokKode: "P",
+            kelompokJumlah: 2,
             anak: [
-              { ikon: ChartBar, label: "Ringkasan", href: "#navigasi/sidebar" },
-              { ikon: CoinIn, label: "Terima Pembayaran", href: "#navigasi/sidebar" },
+              { ikon: ChartBar, label: "Ringkasan", kode: "P-11", aktif: aktif === "P-11", href: "#navigasi/sidebar" },
+              { ikon: CoinIn, label: "Terima Pembayaran", kode: "P-12", aktif: aktif === "P-12", href: "#navigasi/sidebar" },
             ],
           },
-          { ikon: NavEnvelope, label: "Pesan Masuk", jumlah: 3, jumlahJudul: "3 belum dibaca", href: "#navigasi/sidebar" },
-          { ikon: Users, label: "Tim & Freelancer", href: "#navigasi/sidebar" },
+          { ikon: Users, label: "Tim & Freelancer", aktif: aktif === "R-01", kode: "R-01", href: "#navigasi/sidebar", kelompok: "Relasi", kelompokKode: "R", kelompokJumlah: 1 },
         ]}
       />
     </div>

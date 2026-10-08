@@ -3,10 +3,13 @@ import { gantiTema } from "../../lib/tema";
 import { navigate } from "astro:transitions/client";
 import { Palet, type KelompokPerintah } from "../kit/Palet";
 import { Bell, Plus, Ruler, Sliders } from "../kit/ikon";
-import { NAV } from "../../lib/navAdmin";
+import { daftarLembar, NAV } from "../../lib/navAdmin";
 import { IKON_NAV } from "./RelKit";
 import { daftarProyek, bacaCache, profilTersimpan, type Proyek } from "../../lib/admin";
 import { CATEGORY_LABELS } from "../../lib/api";
+
+/* Nomor lembar tiap halaman — sumber yang sama dengan rel samping. */
+const KODE = new Map(daftarLembar().halaman.map((l) => [l.href, l.kode]));
 
 /* =============================================================================
    Palet perintah panel (Ctrl/Cmd+K, dan kotak "Cari di panel" di kepala).
@@ -46,10 +49,15 @@ export function PaletPanel({ buka, onBuka }: { buka: boolean; onBuka: (b: boolea
     navigate(ke);
   };
 
+  /* Nomor lembar sama dengan rel (daftar gambar) — tampil di keterangan dan
+     ikut dicari, jadi "P-22" menemukan Terima Pembayaran. */
   const halaman = NAV.filter((n) => master || !n.masterOnly).flatMap((n) =>
     n.children
-      ? n.children.map((c) => ({ label: c.label, ket: n.label, ikon: IKON_NAV[c.ikonKit], kata: n.label, onPilih: pergi(c.href) }))
-      : [{ label: n.label, ikon: IKON_NAV[n.ikonKit], onPilih: pergi(n.href!) }],
+      ? n.children.map((c) => {
+          const kode = KODE.get(c.href);
+          return { label: c.label, ket: kode ? `${kode} · ${n.label}` : n.label, ikon: IKON_NAV[c.ikonKit], kata: `${n.label} ${kode ?? ""}`, onPilih: pergi(c.href) };
+        })
+      : [{ label: n.label, ket: KODE.get(n.href!), ikon: IKON_NAV[n.ikonKit], kata: KODE.get(n.href!), onPilih: pergi(n.href!) }],
   );
 
   const kelompok: KelompokPerintah[] = [

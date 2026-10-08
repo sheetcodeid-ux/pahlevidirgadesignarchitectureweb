@@ -180,6 +180,102 @@ export const NAV: NavItem[] = [
   { label: "UI Component", href: "/admin/kit", icon: "component", ikonKit: "SpecialCube", group: "Pengaturan", masterOnly: true },
 ];
 
+/* =============================================================================
+   NOMOR LEMBAR — rel samping adalah DAFTAR GAMBAR sebuah set gambar kerja.
+
+   Tiap halaman bernomor seperti lembar gambar (U-01, P-22): huruf depannya
+   kode disiplin = kategori, angkanya urutan di kategori itu. Kategori yang
+   punya submenu memakai SERI PULUHAN seperti seri gambar kerja (A-100 denah,
+   A-200 tampak): induk ke-n bernomor n0, anaknya n1, n2, … — jadi Keuangan
+   P-20 dan Terima Pembayaran P-22. Kategori tanpa submenu bernomor urut
+   biasa (U-01 … U-05).
+
+   Dihitung dari NAV LENGKAP, bukan dari baris yang tampil untuk satu peran,
+   supaya satu halaman bernomor sama di akun mana pun — staf yang tidak melihat
+   Info Studio tetap menyebut Akun "G-03", sama dengan master.
+
+   Satu fungsi, dua pemakai: baris rel (kolom nomor) dan kop gambar di kaki
+   rel (lembar yang sedang dibuka). Dua tempat yang menghitung sendiri pasti
+   suatu saat tidak sepakat (jebakan #32).
+   ============================================================================= */
+
+/** Kode disiplin tiap kategori — huruf depan nomor lembar. */
+export const KODE_KELOMPOK: Record<string, string> = {
+  Utama: "U",
+  Pekerjaan: "P",
+  Relasi: "R",
+  "Konten Situs": "K",
+  Pengaturan: "G",
+};
+
+export interface Lembar {
+  kode: string;
+  label: string;
+  href: string;
+  kelompok: string;
+  masterOnly?: boolean;
+  /** Label induknya kalau lembar ini anak submenu. */
+  induk?: string;
+}
+
+export interface DaftarLembar {
+  /** Semua halaman, urut rel. */
+  halaman: Lembar[];
+  /** Nomor seri induk submenu, menurut labelnya (Keuangan → "P-20"). */
+  induk: Map<string, string>;
+}
+
+const dua = (n: number) => String(n).padStart(2, "0");
+
+export function daftarLembar(): DaftarLembar {
+  const halaman: Lembar[] = [];
+  const induk = new Map<string, string>();
+  const urutan = new Map<string, number>();
+  const berseri = new Set(NAV.filter((n) => n.children).map((n) => n.group));
+  for (const n of NAV) {
+    const huruf = KODE_KELOMPOK[n.group] ?? n.group.slice(0, 1).toUpperCase();
+    const ke = (urutan.get(n.group) ?? 0) + 1;
+    urutan.set(n.group, ke);
+    if (n.children) {
+      /* Lebih dari sembilan anak akan menabrak seri berikutnya (P-20 + 10 =
+         P-30). Dilaporkan, bukan diam-diam salah nomor. */
+      if (n.children.length > 9) console.warn(`[navAdmin] ${n.label} punya ${n.children.length} anak — nomor lembarnya bertabrakan`);
+      induk.set(n.label, `${huruf}-${ke}0`);
+      n.children.forEach((c, j) =>
+        halaman.push({ kode: `${huruf}-${ke}${j + 1}`, label: c.label, href: c.href, kelompok: n.group, induk: n.label }),
+      );
+    } else {
+      const kode = berseri.has(n.group) ? `${huruf}-${ke}0` : `${huruf}-${dua(ke)}`;
+      halaman.push({ kode, label: n.label, href: n.href!, kelompok: n.group, masterOnly: n.masterOnly });
+    }
+  }
+  return { halaman, induk };
+}
+
+/** Path tanpa garis miring di ujung — `Astro.url.pathname` statis berakhir
+    dengan "/", navAdmin menulisnya tanpa. */
+export const rapiPath = (p: string): string => (p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p);
+
+/**
+ * Lembar milik sebuah path. Persis, atau `<daftar>/satu` (Satu Proyek,
+ * Detail Paket, Detail Tulisan) — sama dengan baris yang menyala di rel.
+ * Halaman turunan tanpa baris sendiri (Proyek Baru) memakai lembar dengan
+ * awalan path TERPANJANG, ditandai `turunan`; "/admin" sendiri tidak
+ * dihitung sebagai awalan, supaya Notifikasi tidak mengaku Dashboard.
+ */
+export function lembarUntuk(path: string, daftar: Lembar[]): { lembar: Lembar; turunan: boolean } | null {
+  const kini = rapiPath(path);
+  const persis = daftar.find((l) => rapiPath(l.href) === kini || `${rapiPath(l.href)}/satu` === kini);
+  if (persis) return { lembar: persis, turunan: false };
+  let terbaik: Lembar | null = null;
+  for (const l of daftar) {
+    const h = rapiPath(l.href);
+    if (h === "/admin" || !kini.startsWith(h + "/")) continue;
+    if (!terbaik || h.length > rapiPath(terbaik.href).length) terbaik = l;
+  }
+  return terbaik ? { lembar: terbaik, turunan: true } : null;
+}
+
 /**
  * Semua halaman yang bisa dituju, rata — dipakai command palette.
  *

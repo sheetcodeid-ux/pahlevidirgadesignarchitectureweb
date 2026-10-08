@@ -3,6 +3,7 @@
  *     node scripts/banding/potong.mjs /admin/ /admin/keuangan/
  *     KARTU=".rks__sel, .rks__jadwal" node scripts/banding/potong.mjs /admin/
  *     RUSAK=".x{white-space:nowrap}" node scripts/banding/potong.mjs /admin/
+ *     AKAR="#kl-rel" BUKA="[data-kl-rel-tombol]" node scripts/banding/potong.mjs /admin/
  *
  * Butuh `dist` yang sudah disajikan di 127.0.0.1:4399 dan API tiruan di
  * 127.0.0.1:8787 (scripts/banding/sajikan.sh, api-tiruan.mjs).
@@ -37,6 +38,11 @@ if (!halaman.length) {
   process.exit(2);
 }
 const KARTU = process.env.KARTU || ".k-kartu, .k-sisi, [class*='__papan'], [class*='__kartu']";
+/* AKAR: batasi pemindaian ke satu bagian (mis. rel samping). BUKA: tombol
+   yang diklik dulu kalau bagian itu tersembunyi di ukuran tertentu (laci
+   menu di ponsel/tablet) — diklik hanya kalau tampak. */
+const AKAR = process.env.AKAR || ".kl";
+const BUKA = process.env.BUKA || "";
 const UKURAN = [[1440, 790], [1366, 768], [1300, 760], [1024, 768], [390, 844]];
 
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
@@ -52,10 +58,14 @@ for (const h of halaman) {
     await p.goto("http://127.0.0.1:4399" + h, { waitUntil: "networkidle" });
     if (process.env.RUSAK) await p.addStyleTag({ content: process.env.RUSAK });
     await p.waitForTimeout(700);
-    const temuan = await p.evaluate((kartuSel) => {
+    if (BUKA) {
+      const t = await p.$(BUKA);
+      if (t && (await t.isVisible())) { await t.click(); await p.waitForTimeout(450); }
+    }
+    const temuan = await p.evaluate(([kartuSel, akarSel]) => {
       const out = new Set();
       const nama = (e) => (e.className || e.tagName).toString().split(" ")[0] || e.tagName;
-      const akar = document.querySelector(".kl") || document.body;
+      const akar = document.querySelector(akarSel) || document.body;
       const w = document.createTreeWalker(akar, NodeFilter.SHOW_TEXT);
       for (let n = w.nextNode(); n; n = w.nextNode()) {
         if (!n.textContent.trim()) continue;
@@ -92,7 +102,7 @@ for (const h of halaman) {
         }
       }
       return [...out];
-    }, KARTU);
+    }, [KARTU, AKAR]);
     total += temuan.length;
     console.log(`${h} ${w}x${t}`, temuan.length ? temuan : "bersih");
     await p.close();

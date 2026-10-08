@@ -3481,6 +3481,326 @@ button.k-nav { border: 0; font-family: inherit; line-height: inherit; letter-spa
 .kl__keluar:hover { color: var(--danger); }
 
 /* =============================================================================
+   SISI NAV VARIAN "GAMBAR" — rel samping sebagai DAFTAR GAMBAR
+   Permintaan pemilik: sidebar "sesuai dengan architecture"; rancangannya
+   dipilih dari dua sketsa (Daftar Gambar + Kop, bukan papan petunjuk gedung).
+
+   Bendanya daftar gambar di lembar sampul satu set gambar kerja:
+   - tiap halaman = satu LEMBAR bernomor (U-01, P-22) — kolom nomor di kanan
+     baris induk, di kiri baris anak (seperti kolom NO. GAMBAR);
+   - kategori = DISIPLIN: huruf kode dalam kotak + banyaknya lembar;
+   - angka pesan = SEGITIGA REVISI bernomor;
+   - lembar yang dibuka ditunjuk PENANDA POTONGAN di tepi rel yang meluncur
+     ke baris baru tiap pindah halaman;
+   - kartu akun di kaki = KOP GAMBAR (lembar dibuka, tanggal, jam studio).
+
+   Semua hiasan tinggal di TALANG 16px kiri rel atau di kolom nomor — tidak
+   ada yang lewat di belakang tulisan (jebakan #70). Lebar rel tetap 240
+   (jebakan #41): ikon 24→20 dan jarak 12,4→10 memberi kolom nomor 28px tanpa
+   memotong label terpanjang ("Tim & Freelancer" 106px di slot 118).
+   ============================================================================= */
+/* Daftar melebar sampai tepi rel supaya talang kirinya milik daftar — tempat
+   penanda potongan. Isinya tetap mulai di 16. */
+.k-sisi--gambar .k-sisi__daftar { position: relative; margin-inline: -16px; padding-inline: 16px; }
+.k-sisi--gambar .k-nav {
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px 0 14px;
+}
+/* Label mulai di x60 — sejajar nama kategori di kepalanya. */
+.k-sisi--gambar .k-nav > svg { margin-right: 2px; }
+.k-sisi--gambar .k-nav > .k-sisi__label { flex: 0 1 auto; min-width: 0; }
+
+/* Garis penghubung: titik-titik tipis yang mengisi sisa baris. Menyusut
+   sampai 0 sebelum label harus memendek. */
+.k-sisi__titik {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 0;
+  /* Margin negatif menelan separuh jarak flex di kedua sisinya: baris yang
+     sempit (Pesan Masuk + segitiga revisi) tidak kehilangan ruang label
+     karena garis yang lebarnya nol. */
+  margin: 2px -4px 0;
+  border-bottom: 1px dotted var(--k-garis-pohon);
+}
+/* Anak tidak punya nomor di kanan — titiknya tidak menuju apa pun, jadi
+   tidak digambar. Dua kelas: aturan dasar di atas memakai shorthand
+   `border-bottom` dan datang lebih dulu, sempat menang lewat urutan. */
+.k-sisi__titik.k-sisi__titik--anak { border-bottom-color: transparent; margin-right: 0; }
+/* Garis potong di lembar yang dibuka. Transisinya HANYA di keadaan aktif:
+   baris yang baru dibuka menggambar garisnya (sesudah penanda mulai
+   meluncur), baris yang ditinggalkan langsung bersih — bukan dua garis yang
+   memudar bersamaan (jebakan #45). Saat rel pertama tergambar tidak ada
+   transisi sama sekali: elemennya lahir sudah aktif. */
+.k-sisi__titik::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.6;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.k-sisi--gambar .k-nav[aria-current="page"] .k-sisi__titik,
+.k-sisi--gambar .k-nav.is-aktif .k-sisi__titik,
+.k-sisi--gambar .k-nav.is-indukaktif .k-sisi__titik { border-bottom-color: transparent; }
+.k-sisi--gambar .k-nav[aria-current="page"] .k-sisi__titik::after,
+.k-sisi--gambar .k-nav.is-aktif .k-sisi__titik::after,
+.k-sisi--gambar .k-nav.is-indukaktif .k-sisi__titik::after {
+  transform: scaleX(1);
+  transition: transform 420ms 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.k-sisi--gambar .k-sisi__lipat,
+.k-sisi--gambar .k-nav .k-sisi__revisi { margin-left: 0; }
+.k-sisi--gambar .k-nav--sub { gap: 6px; padding-left: 32px; font-size: 0.8125rem; }
+
+/* Nomor lembar. */
+.k-sisi__kode {
+  flex: none;
+  font-size: var(--k-t10);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.04em;
+  line-height: 16px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.k-nav--sub > .k-sisi__kode { min-width: 26px; text-align: left; }
+/* Lembar yang dibuka: nomornya berbingkai, seperti kotak NO. LEMBAR di kop.
+   Bingkainya `currentColor`, jadi ikut tinta pil di kedua tema. */
+.k-sisi--gambar .k-nav[aria-current="page"] .k-sisi__kode,
+.k-sisi--gambar .k-nav.is-aktif .k-sisi__kode,
+.k-sisi--gambar .k-nav.is-indukaktif .k-sisi__kode {
+  min-width: 0;
+  padding: 0 4px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px currentColor;
+  color: inherit;
+}
+.k-nav--sub[aria-current="page"] > .k-sisi__kode { margin-left: -4px; }
+.k-sisi--gambar .k-nav.is-indukaktif { color: var(--text-strong); }
+
+/* Kepala kategori = disiplin: kotak huruf di poros ikon (x40), nama sejajar
+   label, jumlah lembar sejajar kolom nomor. */
+.k-sisi--gambar .k-sisi__kelompok {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 0;
+  padding: 7px 10px 2px 16px;
+}
+.k-sisi--gambar .k-sisi__kelompok--awal { margin-top: 0; padding-top: 0; }
+.k-sisi__disiplin {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px var(--brand);
+  font-size: var(--k-t10);
+  font-weight: var(--k-bold);
+  line-height: 1;
+  color: var(--brand);
+}
+.k-sisi__kelompokjml {
+  margin-left: auto;
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+/* Segitiga revisi: delta bernomor gambar kerja. */
+.k-sisi__revisi {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 19px;
+}
+.k-sisi__revisi svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: var(--surface);
+  stroke: var(--danger);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.k-sisi__revisi b {
+  position: relative;
+  margin-top: 5px;
+  font-size: var(--k-t9);
+  font-weight: var(--k-bold);
+  line-height: 1;
+  color: var(--danger);
+}
+
+/* Penanda potongan: garis potong di tepi rel + segitiga arah pandang. */
+.k-sisi__penanda {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 13px;
+  height: 30px;
+  list-style: none;
+  pointer-events: none;
+  opacity: 0;
+}
+.k-sisi__penanda.is-tampak { opacity: 1; }
+.k-sisi__penanda.is-siap {
+  transition: transform 460ms cubic-bezier(0.2, 0.8, 0.2, 1), height 460ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms var(--ease);
+}
+.k-sisi__penanda::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand);
+}
+.k-sisi__penanda::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  margin-top: -5px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid var(--brand);
+}
+/* Garis tepi lama per baris tidak dipakai: penandanya satu elemen yang
+   meluncur. */
+.k-sisi--gambar .k-nav[aria-current="page"]::before,
+.k-sisi--gambar .k-nav.is-aktif::before { content: none; }
+
+/* Pratinjau potongan: menyentuh baris (tetikus saja) memunculkan segitiga
+   tipis di talang — ke sinilah penandanya akan meluncur. */
+@media (hover: hover) and (pointer: fine) {
+  .k-sisi--gambar .k-nav:not([aria-current="page"]):not(.is-aktif):not(.is-indukaktif):hover::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -11px;
+    width: 0;
+    height: 0;
+    margin-top: -4px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid color-mix(in srgb, var(--brand) 45%, transparent);
+    border-radius: 0;
+    background: none;
+  }
+}
+
+/* Garis pohon anak: dari poros ikon induk (x40 di rel), dengan takik ke
+   nomor tiap anak — "├ P-21". Garisnya berhenti di tengah anak terakhir
+   ("└"). Takik baris aktif tergambar di atas pilnya dengan tinta pil. */
+.k-sisi--gambar .k-sisi__anak::before { left: 23.5px; top: -2px; bottom: 15px; }
+.k-sisi--gambar .k-nav--sub::after,
+.k-sisi--gambar .k-nav--sub[aria-current="page"]::after,
+.k-sisi--gambar .k-nav--sub.is-aktif::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  width: 5px;
+  height: 1px;
+  border-radius: 0;
+  background: var(--k-garis-pohon);
+}
+.k-sisi--gambar .k-nav--sub[aria-current="page"]::after,
+.k-sisi--gambar .k-nav--sub.is-aktif::after { background: currentColor; }
+
+@media (prefers-reduced-motion: reduce) {
+  .k-sisi__penanda.is-siap,
+  .k-sisi--gambar .k-nav .k-sisi__titik::after { transition: none; }
+}
+
+/* Kepala rel: [logo studio] nama studio + "Daftar gambar · N lembar". */
+.kl__kepalarel { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.kl__kepalarel > span { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kl__logostudio { flex: none; width: 30px; height: 30px; max-width: none; border-radius: 8px; object-fit: contain; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+.kl__logosub {
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+/* KOP GAMBAR — kartu akun + dua sel kop. */
+.kl__kop {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: clip;
+}
+.kl__kop > .kl__akun { padding-block: 7px; border: 0; border-radius: 0; background: none; }
+/* Kaki rel dirapatkan: kop gambar lebih tinggi dari kartu akun lama, dan
+   tiap piksel di sini diambil dari daftar lembar yang harus muat. */
+.kl #kl-rel.k-sisi--gambar .k-sisi__kaki { padding: 8px 0 12px; }
+.kl__kopsel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  margin: 0;
+  border-top: 1px solid var(--border);
+}
+.kl__kopsel > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 5px 10px 6px; }
+.kl__kopsel > div + div { border-left: 1px solid var(--border); }
+.kl__kopsel dt {
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.kl__kopsel dd { display: flex; flex-direction: column; margin: 0; min-width: 0; overflow: clip; }
+.kl__kopsel b {
+  display: block;
+  font-size: var(--k-t14);
+  font-weight: var(--k-bold);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+.kl__kopsel > div + div b { font-size: var(--k-t12); line-height: 1.45; }
+.kl__kopsel small {
+  font-size: var(--k-t10);
+  line-height: 1.3;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+/* Nomor lembar yang berganti menggulung masuk dari bawah — sekali, saat
+   pindah halaman. */
+.kl__kopsel b.is-gulung { animation: kl-gulung 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes kl-gulung {
+  from { opacity: 0; transform: translateY(80%); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kl__kopsel b.is-gulung { animation: none; }
+}
+
+/* =============================================================================
    NAVBAR — bilah diam (permintaan pemilik: "navbar tidak ketahan … minta
    upgrade"). Bidangnya permukaan putih bergaris bawah (KitLayout), jadi
    kontrolnya kembali ke bentuk kit-nya sendiri: kotak cari abu, tombol bulat
