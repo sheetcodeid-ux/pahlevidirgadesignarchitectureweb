@@ -10,7 +10,7 @@ import {
 import type { DataIkon } from "../kit/Ikon";
 import { Avatar } from "../kit/Tampilan";
 import { TombolIkon } from "../kit/Tombol";
-import { daftarLembar, KODE_KELOMPOK, lembarTampil, lembarUntuk, NAV, posisiLembar, rapiPath } from "../../lib/navAdmin";
+import { daftarLembar, KODE_KELOMPOK, lembarTampil, NAV, posisiLembar, rapiPath, revisiPerLembar, type Lembar } from "../../lib/navAdmin";
 import {
   ambilSettings, bacaCache, keluar, namaTampilan, PERISTIWA_PROFIL, profilTersimpan, type Profil, type StudioSettings,
 } from "../../lib/admin";
@@ -95,22 +95,35 @@ const KELOMPOK = [...new Set(NAV.map((n) => n.group))];
 
 const gerakBoleh = () => typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/** Ruang kunci denah: satu per kategori yang punya lembar TAMPIL, urut rel. */
+export function zonaDenah(tampil: Lembar[]): { nama: string; kode: string; jumlah: number }[] {
+  const per = new Map<string, number>();
+  for (const l of tampil) per.set(l.kelompok, (per.get(l.kelompok) ?? 0) + 1);
+  return KELOMPOK.map((g) => ({ nama: g, kode: KODE_KELOMPOK[g] ?? g.slice(0, 1), jumlah: per.get(g) ?? 0 })).filter((z) => z.jumlah > 0);
+}
+
 /* KUNCI DENAH — denah kecil di sampul: satu ruang per kategori, lebarnya
    sebanding banyaknya lembar, ruang lembar yang dibuka diarsir. Arsirnya
    satu elemen yang BERPINDAH ruang saat kategori berganti. Tulisan huruf
-   ruang ada DI BAWAH denah, tidak pernah di atas arsir (jebakan #70). */
-function KunciDenah({
+   ruang ada DI BAWAH denah, tidak pernah di atas arsir (jebakan #70).
+
+   Dipakai juga pratinjau palet perintah (letak lembar yang sedang dipilih
+   di set gambar) — di sana DIAM: tanpa `onPilih` ruangnya bukan tombol,
+   dan `className` memberinya tinta kertas, bukan tinta sampul. */
+export function KunciDenah({
   zona,
   aktif,
-  sorot,
+  sorot = null,
   onSorot,
   onPilih,
+  className,
 }: {
   zona: { nama: string; kode: string; jumlah: number }[];
   aktif: string | null;
-  sorot: string | null;
-  onSorot: (n: string | null) => void;
-  onPilih: (n: string) => void;
+  sorot?: string | null;
+  onSorot?: (n: string | null) => void;
+  onPilih?: (n: string) => void;
+  className?: string;
 }) {
   const total = zona.reduce((s, z) => s + z.jumlah, 0) || 1;
   let kiri = 0;
@@ -120,25 +133,35 @@ function KunciDenah({
     return l;
   });
   const i = zona.findIndex((z) => z.nama === aktif);
+  const kelasRuang = (z: { nama: string }) =>
+    ["kl__ruang", z.nama === aktif && "is-aktif", z.nama === sorot && "is-sorot"].filter(Boolean).join(" ");
   return (
-    <div className="kl__denah">
-      <div className="kl__denahruang" role="group" aria-label="Kunci denah — lompat ke kategori">
-        {zona.map((z) => (
-          <button
-            key={z.nama}
-            type="button"
-            className={["kl__ruang", z.nama === aktif && "is-aktif", z.nama === sorot && "is-sorot"].filter(Boolean).join(" ")}
-            style={{ flexGrow: z.jumlah }}
-            aria-label={`${z.nama}, ${z.jumlah} lembar`}
-            aria-current={z.nama === aktif ? "true" : undefined}
-            title={`${z.nama} · ${z.jumlah} lembar`}
-            onClick={() => onPilih(z.nama)}
-            onPointerEnter={(e) => e.pointerType === "mouse" && onSorot(z.nama)}
-            onPointerLeave={(e) => e.pointerType === "mouse" && onSorot(null)}
-            onFocus={() => onSorot(z.nama)}
-            onBlur={() => onSorot(null)}
-          />
-        ))}
+    <div className={className ? `kl__denah ${className}` : "kl__denah"}>
+      <div
+        className="kl__denahruang"
+        role={onPilih ? "group" : "img"}
+        aria-label={onPilih ? "Kunci denah — lompat ke kategori" : `Kunci denah — ${aktif ?? "di luar daftar"}`}
+      >
+        {zona.map((z) =>
+          onPilih ? (
+            <button
+              key={z.nama}
+              type="button"
+              className={kelasRuang(z)}
+              style={{ flexGrow: z.jumlah }}
+              aria-label={`${z.nama}, ${z.jumlah} lembar`}
+              aria-current={z.nama === aktif ? "true" : undefined}
+              title={`${z.nama} · ${z.jumlah} lembar`}
+              onClick={() => onPilih(z.nama)}
+              onPointerEnter={(e) => e.pointerType === "mouse" && onSorot?.(z.nama)}
+              onPointerLeave={(e) => e.pointerType === "mouse" && onSorot?.(null)}
+              onFocus={() => onSorot?.(z.nama)}
+              onBlur={() => onSorot?.(null)}
+            />
+          ) : (
+            <span key={z.nama} className={kelasRuang(z)} style={{ flexGrow: z.jumlah }} />
+          ),
+        )}
         {i >= 0 && (
           <span
             className="kl__arsir"
@@ -224,11 +247,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
   /* REV per nomor lembar: halaman tujuan tiap butir notifikasi dipetakan ke
      lembarnya (persis, atau awalan terpanjang — "/admin/proyek/edit" milik
      Semua Proyek). */
-  const revKode = new Map<string, number>();
-  for (const [jalur, n] of Object.entries(revisi)) {
-    const l = lembarUntuk(jalur, LEMBAR.halaman);
-    if (l) revKode.set(l.lembar.kode, (revKode.get(l.lembar.kode) ?? 0) + n);
-  }
+  const revKode = revisiPerLembar(revisi);
 
   const item: ItemNav[] = NAV.filter((n) => !n.masterOnly || master).map((n) => {
     const anak = n.children?.map((c) => {
@@ -323,7 +342,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
     kedipWaktu.current = window.setTimeout(() => setKedip(null), 1200);
   };
   useEffect(() => () => window.clearTimeout(kedipWaktu.current), []);
-  const zona = KELOMPOK.map((g) => ({ nama: g, kode: KODE_KELOMPOK[g] ?? g.slice(0, 1), jumlah: perKelompok.get(g) ?? 0 })).filter((z) => z.jumlah > 0);
+  const zona = zonaDenah(tampil);
 
   const [buka, setBuka] = useState(false);
   useEffect(() => {

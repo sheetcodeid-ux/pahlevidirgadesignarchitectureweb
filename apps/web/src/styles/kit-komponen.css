@@ -77,12 +77,17 @@
 @keyframes k-timbul-tengah { from { opacity: 0; transform: translate(-50%, calc(-50% + 6px)); } }
 .k-dialog--kecil { width: min(420px, calc(100vw - 32px)); }
 .k-dialog--lebar { width: min(640px, calc(100vw - 32px)); }
+/* Palet: tinggi TETAP, bukan mengikuti hasil — tanpa itu dialognya
+   mengerut dan memanjang tiap huruf diketik, dan pratinjau di kanannya ikut
+   meloncat. Daftarnya yang menggulir. */
 .k-dialog--palet {
-  top: 12vh;
-  width: min(580px, calc(100vw - 32px));
-  max-height: 76vh;
+  top: 9vh;
+  width: min(600px, calc(100vw - 32px));
+  height: min(600px, 84vh);
+  max-height: none;
   transform: translateX(-50%);
 }
+.k-dialog--palet.has-pratinjau { width: min(840px, calc(100vw - 32px)); }
 .k-dialog--palet[data-state="open"] { animation-name: k-timbul-atas; }
 @keyframes k-timbul-atas { from { opacity: 0; transform: translate(-50%, -6px); } }
 
@@ -811,21 +816,196 @@
 .k-kuesioner__opsi:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .k-kuesioner__kaki { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
 
-/* Palet (Command). */
-.k-palet { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+/* Palet (Command) — DAFTAR GAMBAR yang bisa dicari (kit/Palet.tsx).
+   Bahasa set gambar kerja yang sama dengan rel samping: kop bersel,
+   kepala tabel bergaris bawah rangkap, kepala kelompok berkotak huruf
+   disiplin, baris bergaris tipis, baris terpilih bergaris potong. Kolomnya
+   SATU definisi (`--k-palet-kolom`) untuk kepala tabel dan baris, jadi
+   keduanya tidak bisa menyimpang. */
+.k-palet {
+  --k-palet-kolom: 58px minmax(0, 1fr) 112px 36px;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  background: var(--surface);
+}
 .k-palet-wadah { overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
-.k-palet__cari { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--brand); }
+.k-palet-wadah .k-palet__daftar { height: 340px; }
+
+.k-palet__kop {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  border-bottom: 1.5px solid var(--judul-ink);
+}
+.k-palet__kopjudul {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px 16px;
+  font-size: var(--k-t12);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--judul-ink);
+}
+.k-palet__kopjudul > svg { color: var(--brand); }
+.k-palet__kopsel {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px 14px;
+  border-left: 1px solid var(--k-garis-pohon);
+  white-space: nowrap;
+}
+.k-palet__kopsel small {
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  line-height: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.k-palet__kopsel b {
+  font-size: var(--k-t12);
+  font-weight: var(--k-bold);
+  line-height: 15px;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+.k-palet__cari { display: flex; flex: none; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--brand); }
 .k-palet__input { flex: 1; min-width: 0; height: 26px; border: 0; background: none; color: var(--text-strong); font: inherit; font-size: var(--k-t16); }
 .k-palet__input:focus { outline: none; box-shadow: none; }
 .k-palet__input::placeholder { color: var(--text-muted); }
-.k-palet__daftar { max-height: min(420px, 56vh); padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
-.k-palet__kelompok [cmdk-group-heading] { padding: 10px 10px 4px; color: var(--text-muted); font-size: var(--k-t11); font-weight: var(--k-semi); }
-.k-palet__butir { min-height: 40px; }
-.k-palet__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.k-palet__ket { color: var(--text-muted); font-size: var(--k-t12); }
-.k-palet__kosong { padding: 32px 12px; color: var(--text-muted); font-size: var(--k-t14); text-align: center; }
-.k-palet__kaki { display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--border); background: var(--bg); color: var(--text-muted); font-size: var(--k-t11); }
+
+.k-palet__badan { display: flex; flex: 1 1 auto; min-height: 0; }
+.k-palet__tabel { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+.k-palet__kepalatabel {
+  display: grid;
+  flex: none;
+  grid-template-columns: var(--k-palet-kolom);
+  column-gap: 10px;
+  padding: 8px 16px 4px;
+  border-bottom: 3px double var(--k-garis-pohon);
+  font-size: var(--k-t9);
+  font-weight: var(--k-semi);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.k-palet__kepalatabel > :last-child { text-align: center; }
+.k-palet__daftar { flex: 1 1 auto; min-height: 0; padding: 0 8px 10px; overflow-y: auto; overscroll-behavior: contain; }
+
+/* Kepala kelompok — kotak huruf disiplin + nama + jumlah, bergaris atas
+   kecuali kelompok TAMPAK pertama. Kelompok tanpa hasil ditandai `hidden`
+   oleh cmdk tapi tetap saudara di DOM, jadi garisnya diturunkan lewat `~`
+   dari kelompok yang tampil — `+` akan ikut lewat yang tersembunyi
+   (jebakan #29). */
+.k-palet__kelompok [cmdk-group-heading] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 7px 8px 4px;
+}
+.k-palet__kelompok:not([hidden]) ~ .k-palet__kelompok [cmdk-group-heading] { margin-top: 8px; border-top: 1px solid var(--k-garis-pohon); }
+
+.k-palet__butir {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--k-palet-kolom);
+  column-gap: 10px;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--k-garis-pohon) 55%, transparent);
+  color: var(--text-body);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  transition: background-color 120ms, color 120ms;
+}
+.k-palet__butir[data-selected="true"] { background: var(--brand-soft); color: var(--text-strong); }
+/* Garis potong di tepi kiri baris terpilih — tanda yang sama dengan
+   lembar yang dibuka di rel. Di talang 8px, tidak di belakang tulisan. */
+.k-palet__butir[data-selected="true"]::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 1px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+.k-palet__kode {
+  overflow: hidden;
+  font-size: var(--k-t11);
+  font-weight: var(--k-bold);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.k-palet__butir[data-selected="true"] .k-palet__kode { color: var(--brand); }
+.k-palet__judul { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.k-palet__judul > svg { color: var(--brand); }
+.k-palet__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.k-palet__butir[data-selected="true"] .k-palet__label { font-weight: var(--k-semi); }
+.k-palet__ket { min-width: 0; overflow: hidden; color: var(--text-muted); font-size: var(--k-t12); text-overflow: ellipsis; white-space: nowrap; }
+.k-palet__ekor { display: flex; justify-content: center; align-items: center; }
+
+.k-palet__kosong { padding: 40px 12px; color: var(--text-muted); font-size: var(--k-t14); text-align: center; }
+
+.k-palet__pratinjau {
+  flex: none;
+  width: 256px;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--k-garis-pohon);
+  background: var(--k-panel);
+}
+.k-palet__pratinjauisi { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 14px 16px 16px; }
+
+.k-palet__kaki {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: var(--k-t11);
+}
 .k-palet__kaki span { display: inline-flex; align-items: center; gap: 4px; }
+.k-palet__hitung { margin-left: auto; font-variant-numeric: tabular-nums; }
+.k-palet__hitung b { font-weight: var(--k-bold); color: var(--text-strong); }
+
+/* Di bawah 44rem pratinjau dilepas (tabelnya butuh lebarnya); di ponsel
+   kolom kategori dan sel data kop ikut dilepas. */
+@media (max-width: 44rem) {
+  .k-palet__pratinjau { display: none; }
+  .k-dialog--palet.has-pratinjau { width: min(600px, calc(100vw - 32px)); }
+}
+@media (max-width: 40rem) {
+  .k-palet { --k-palet-kolom: 50px minmax(0, 1fr) 34px; }
+  .k-palet__ket,
+  .k-palet__kepalatabel > :nth-child(3),
+  .k-palet__kopsel:not(:last-child) { display: none; }
+  .k-palet__kaki > span:not(.k-palet__hitung) { display: none; }
+  .k-dialog--palet { top: 12px; height: calc(100dvh - 24px); }
+}
 
 /* Bagi (Resizable). */
 .k-bagi { min-height: 220px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }

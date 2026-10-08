@@ -3,6 +3,7 @@ import { Peringatan } from "../kit/Tampilan";
 import { GagalMuat } from "./gagalMuat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RequireAuth } from "./RequireAuth";
+import { CATEGORY_LABELS } from "../../lib/api";
 import { ToastProvider, useToast } from "../kit/Toast";
 import { BarisInbox, BarisBeban } from "../kit/Item";
 import { Cari, Centang } from "../kit/Isian";
@@ -29,8 +30,7 @@ import {
   ambilSettings,
   bacaCache,
   tulisCache,
-  type Pesan,
-} from "../../lib/admin";
+  type Pesan, STATUS_PESAN } from "../../lib/admin";
 
 /* =============================================================================
    Pesan Masuk, mengikuti frame Figma "28. Inbox".
@@ -62,22 +62,11 @@ import {
    bukan pesan ini — judulnya menyebut itu.
    ============================================================================= */
 
-const STATUS: Record<string, string> = {
-  new: "Baru",
-  contacted: "Dihubungi",
-  qualified: "Prospek",
-  closed: "Selesai",
-};
-
-const JENIS: Record<string, string> = {
-  residential: "Hunian",
-  commercial: "Komersial",
-  coffeeshop: "Coffee shop",
-  interior: "Interior",
-  landscape: "Lanskap",
-  masterplan: "Masterplan",
-  renovation: "Renovasi",
-};
+/* Label status dan jenis dari lib — panel Pesan di kepala halaman memakai
+   yang sama, dan dua salinan pasti menyimpang (jebakan #32): salinan lama
+   di panel itu tidak mengenal "renovation", jadi jenisnya hilang di sana. */
+const STATUS = STATUS_PESAN;
+const JENIS: Record<string, string> = CATEGORY_LABELS;
 
 const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
   "September", "Oktober", "November", "Desember"];

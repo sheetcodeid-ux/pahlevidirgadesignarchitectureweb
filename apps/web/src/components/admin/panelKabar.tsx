@@ -1,29 +1,35 @@
 import * as RPopover from "@radix-ui/react-popover";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { navigate } from "astro:transitions/client";
 import { TombolBulat } from "../kit/Item";
 import { Ikon } from "../kit/Ikon";
-import { ArrowRight, ArsSuratPengantar, CheckCircle, NavEnvelope } from "../kit/ikon";
+import { ArrowRight, ArsRevisi, ArsSuratPengantar } from "../kit/ikon";
 import { Revisi } from "../kit/Nav";
+import { KopBersel, type KopPalet } from "../kit/Palet";
 import type { DataIkon } from "../kit/Ikon";
-import { daftarPesan, bacaCache, type Pesan } from "../../lib/admin";
-import { AreaGulir, Avatar, Kosong as KosongKit, RangkaBaris } from "../kit/Tampilan";
+import { daftarPesan, bacaCache, STATUS_PESAN, type Pesan } from "../../lib/admin";
+import { CATEGORY_LABELS } from "../../lib/api";
+import { daftarLembar, lembarUntuk } from "../../lib/navAdmin";
+import { AreaGulir, Kosong as KosongKit, RangkaBaris } from "../kit/Tampilan";
 import type { BarisNotifikasi } from "../../lib/notifikasi";
-import { ikonButir, kepalaHari, waktuButir } from "./linimasaNotif";
+import { kepalaHari, waktuButir } from "./linimasaNotif";
 
 /* =============================================================================
-   Panel pratinjau di kepala halaman — tombol Pesan dan lonceng.
+   Panel di kepala halaman — tombol Pesan (surat pengantar) dan notifikasi
+   (segitiga revisi). Keduanya bahasa set gambar kerja yang sama dengan rel
+   dan palet: kop bersel, lalu benda yang memang dipakai kantor arsitek
+   untuk urusan itu. Rancangan dipilih pemilik dari sketsa:
 
-   Dulu keduanya langsung melempar ke halaman lain. Itu memaksa satu muat
-   halaman hanya untuk menjawab "ada apa?", dan pertanyaan itu yang paling
-   sering diajukan. Sekarang klik membuka panel kecil berisi yang terbaru;
-   satu klik lagi membuka butirnya, dan "Buka semua" ada di kakinya.
+   - NOTIFIKASI = DAFTAR REVISI seperti tabel revisi di kop gambar: segitiga
+     bernomor · waktu · uraian · LEMBAR tujuan, per hari, terbaru di atas.
+   - PESAN = SURAT PENGANTAR di atas tumpukan: surat terpilih tampil utuh
+     bernomor agenda, surat lain bertumpuk di bawahnya; mengambil satu dari
+     tumpukan menariknya ke atas, dan "Buka surat" membukanya.
 
-   Isi lonceng dioper dari KepalaKit (sumber yang sama dengan angkanya, jadi
-   angka dan isi tidak bisa menyimpang). Daftar pesan diambil saat panel
-   DIBUKA, bukan saat halaman dimuat — kepala ini dipasang di setiap halaman,
-   dan pesan lengkap tidak dibutuhkan kecuali panelnya dibuka. Nilai awalnya
-   dibaca dari cache halaman Pesan Masuk kalau ada (membaca saja, jebakan #8).
+   Isi notifikasi dioper dari KepalaKit (sumber yang sama dengan angkanya).
+   Daftar pesan diambil saat panel DIBUKA, bukan saat halaman dimuat;
+   nilai awalnya dibaca dari cache halaman Pesan Masuk kalau ada (membaca
+   saja, jebakan #8).
    ============================================================================= */
 
 /** "Baru saja" / "12 menit lalu" / "3 jam lalu" / "Kemarin" / "3 Okt". */
@@ -37,50 +43,48 @@ export function waktuRelatif(iso: string): string {
   return hari === "Hari ini" ? `${Math.floor(detik / 3600)} jam lalu` : hari;
 }
 
-const JENIS: Record<string, string> = { residential: "Hunian", commercial: "Komersial", interior: "Interior" };
+const LEMBAR = daftarLembar().halaman;
 
-/* Kerangka panel: kepala (judul + keterangan), isi yang bergulir sendiri,
-   kaki berisi satu tautan. Keduanya memakainya supaya bentuknya satu. */
+/* Kerangka panel: kop bersel, isi milik tiap panel, kaki berisi ringkasan
+   dan satu tautan. Keduanya memakainya supaya bentuknya satu. */
 function Panel({
   pemicu,
-  judul,
-  keterangan,
+  kop,
   buka,
   onBuka,
   kaki,
+  className,
   children,
 }: {
   pemicu: ReactNode;
-  judul: string;
-  keterangan: string;
+  kop: KopPalet;
   buka: boolean;
   onBuka: (b: boolean) => void;
-  kaki: { label: string; ke: string };
+  kaki: { label: string; ke: string; ringkas?: ReactNode };
+  className: string;
   children: ReactNode;
 }) {
   return (
     <RPopover.Root open={buka} onOpenChange={onBuka}>
       <RPopover.Trigger asChild>{pemicu}</RPopover.Trigger>
       <RPopover.Portal>
-        <RPopover.Content className="kp" align="end" sideOffset={10} collisionPadding={12}>
-          <div className="kp__kepala">
-            <p className="kp__judul">{judul}</p>
-            <p className="kp__ket">{keterangan}</p>
+        <RPopover.Content className={`kp ${className}`} align="end" sideOffset={10} collisionPadding={12} aria-label={kop.judul}>
+          <KopBersel kop={kop} />
+          {children}
+          <div className="kp__kaki">
+            {kaki.ringkas && <span className="kp__ringkas">{kaki.ringkas}</span>}
+            <button
+              type="button"
+              className="kp__kakibuka"
+              onClick={() => {
+                onBuka(false);
+                navigate(kaki.ke);
+              }}
+            >
+              {kaki.label}
+              <Ikon ikon={ArrowRight} ukuran={14} />
+            </button>
           </div>
-          {/* Area Gulir kit: batang tipis yang sama di Windows kantor dan Mac —
-              batang klasik 17px di Windows memotong cuplikan pesan. */}
-          <AreaGulir className="kp__isi">{children}</AreaGulir>
-          <button
-            type="button"
-            className="kp__kaki"
-            onClick={() => {
-              onBuka(false);
-              navigate(kaki.ke);
-            }}
-          >
-            {kaki.label}
-            <Ikon ikon={ArrowRight} ukuran={14} />
-          </button>
         </RPopover.Content>
       </RPopover.Portal>
     </RPopover.Root>
@@ -103,7 +107,44 @@ function Rangka() {
   );
 }
 
-/* --- Pesan ---------------------------------------------------------------- */
+/* --- Pesan: SURAT PENGANTAR DI ATAS TUMPUKAN ------------------------------ */
+
+const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+/** Nomor agenda surat masuk SM-YYMM-NN: urutan surat itu di antara SEMUA
+    pesan yang masuk pada bulan yang sama, menurut waktu masuknya — nomor
+    yang diturunkan dari data, seperti BKM/BKK di Kas Studio, bukan nomor
+    karangan. Dihitung dari daftar lengkap, jadi surat yang sudah dibaca ikut
+    memakan nomornya. */
+function nomorAgenda(semua: Pesan[]): Map<string, string> {
+  const hasil = new Map<string, string>();
+  const perBulan = new Map<string, Pesan[]>();
+  for (const p of semua) {
+    const d = new Date(p.createdAt);
+    const k = `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}`;
+    perBulan.set(k, [...(perBulan.get(k) ?? []), p]);
+  }
+  for (const [k, isi] of perBulan) {
+    isi
+      .slice()
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .forEach((p, i) => hasil.set(p.id, `SM-${k}-${String(i + 1).padStart(2, "0")}`));
+  }
+  return hasil;
+}
+
+const jenisPesan = (p: Pesan) => (p.projectType ? (CATEGORY_LABELS as Record<string, string>)[p.projectType] ?? p.projectType : null);
+
+function diterima(iso: string) {
+  const d = new Date(iso);
+  const jam = d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  return `${d.getDate()} ${BULAN[d.getMonth()]!.slice(0, 3)} ${d.getFullYear()} · ${jam}`;
+}
+
+function Cap({ p }: { p: Pesan }) {
+  const baru = p.status === "new";
+  return <span className={baru ? "kp__cap is-baru" : "kp__cap"}>{STATUS_PESAN[p.status] ?? p.status}</span>;
+}
 
 export function PanelPesan({ belumDibaca }: { belumDibaca: number }) {
   const [buka, setBuka] = useState(false);
@@ -113,9 +154,19 @@ export function PanelPesan({ belumDibaca }: { belumDibaca: number }) {
      panel dibuka. */
   const [pesan, setPesan] = useState<Pesan[] | null>(null);
   const [galat, setGalat] = useState(false);
+  /* Surat yang sedang di atas tumpukan — null = bawaan (terbaru yang belum
+     dibaca, atau terbaru). `ditarik` hanya menyala sesudah staf mengambil
+     surat dari tumpukan: gerak karena perbuatan, bukan saat panel dibuka. */
+  const [atas, setAtas] = useState<string | null>(null);
+  const [ditarik, setDitarik] = useState(false);
+  const tombolBuka = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!buka) return;
+    if (!buka) {
+      setAtas(null);
+      setDitarik(false);
+      return;
+    }
     let hidup = true;
     setGalat(false);
     setPesan((kini) => kini ?? bacaCache<Pesan[]>("pesan:"));
@@ -127,20 +178,51 @@ export function PanelPesan({ belumDibaca }: { belumDibaca: number }) {
     };
   }, [buka]);
 
+  const semua = pesan ?? [];
+  const nomor = nomorAgenda(semua);
   /* Yang belum dibaca lebih dulu, lalu yang terbaru. Lima saja — panel ini
      menjawab "ada yang baru?", daftar lengkapnya di halamannya. */
-  const tampil = (pesan ?? [])
+  const tampil = semua
     .slice()
     .sort((a, b) => Number(b.status === "new") - Number(a.status === "new") || b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
+  const surat = tampil.find((p) => p.id === atas) ?? tampil[0];
+  const tumpukan = tampil.filter((p) => p !== surat);
+  const bulanIni = (() => {
+    const k = new Date();
+    return semua.filter((p) => {
+      const d = new Date(p.createdAt);
+      return d.getFullYear() === k.getFullYear() && d.getMonth() === k.getMonth();
+    }).length;
+  })();
+
+  const bukaSurat = (p: Pesan) => {
+    setBuka(false);
+    navigate(`/admin/pesan?id=${encodeURIComponent(p.id)}`);
+  };
+  /* Tepi surat yang diambil HILANG dari tumpukan (ia naik ke atas), jadi
+     fokus papan ketik dipindah ke "Buka surat" — kalau tidak, fokusnya jatuh
+     ke <body> (jebakan #39). */
+  const tarik = (p: Pesan) => {
+    setAtas(p.id);
+    setDitarik(true);
+    requestAnimationFrame(() => tombolBuka.current?.focus());
+  };
 
   return (
     <Panel
       buka={buka}
       onBuka={setBuka}
-      judul="Pesan Masuk"
-      keterangan={belumDibaca > 0 ? `${belumDibaca} belum dibaca` : "Semua sudah dibaca"}
-      kaki={{ label: "Buka Pesan Masuk", ke: "/admin/pesan" }}
+      className="kp--surat"
+      kop={{
+        ikon: ArsSuratPengantar,
+        judul: "Surat masuk",
+        sel: [
+          { label: "Belum dibaca", nilai: belumDibaca },
+          { label: BULAN[new Date().getMonth()]!, nilai: pesan ? `${bulanIni} surat` : "—" },
+        ],
+      }}
+      kaki={{ label: "Buka Pesan Masuk", ke: "/admin/pesan", ringkas: pesan ? `${semua.length} surat di agenda` : undefined }}
       pemicu={
         /* Surat pengantar — ikon baris Pesan Masuk di rel — dengan angka
            pesan yang belum dibaca di sudutnya. */
@@ -158,57 +240,89 @@ export function PanelPesan({ belumDibaca }: { belumDibaca: number }) {
         />
       }
     >
-      {galat && !pesan ? (
-        <Kosong ikon={NavEnvelope} judul="Pesan tidak bisa dimuat" ket="Periksa koneksi, lalu buka lagi." />
-      ) : !pesan ? (
-        <Rangka />
-      ) : tampil.length === 0 ? (
-        <Kosong ikon={NavEnvelope} judul="Belum ada pesan" ket="Pesan dari form kontak situs muncul di sini." />
-      ) : (
-        <ul className="kp__daftar">
-          {tampil.map((p) => {
-            const baru = p.status === "new";
-            return (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  className={baru ? "kp__butir is-baru" : "kp__butir"}
-                  onClick={() => {
-                    setBuka(false);
-                    navigate(`/admin/pesan?id=${encodeURIComponent(p.id)}`);
-                  }}
-                >
-                  <Avatar nama={p.name} hiasan className={baru ? undefined : "kp__avatar--lama"} />
-                  <span className="kp__teks">
-                    <span className="kp__baris1">
+      <div className="kps__wadah">
+        {galat && !pesan ? (
+          <Kosong ikon={ArsSuratPengantar} judul="Surat tidak bisa dimuat" ket="Periksa koneksi, lalu buka lagi." />
+        ) : !pesan ? (
+          <Rangka />
+        ) : !surat ? (
+          <Kosong ikon={ArsSuratPengantar} judul="Belum ada surat" ket="Pesan dari form kontak situs masuk ke sini." />
+        ) : (
+          <>
+            <article key={surat.id} className={ditarik ? "kps is-ditarik" : "kps"} aria-label={`Surat dari ${surat.name}`}>
+              <header className="kps__kepala">
+                <span className="kps__jenis">Surat pengantar</span>
+                <span className="kps__no">No. {nomor.get(surat.id)}</span>
+                <Cap p={surat} />
+              </header>
+              <dl className="kps__isian">
+                <div>
+                  <dt>Dari</dt>
+                  <dd>{surat.name}</dd>
+                </div>
+                <div>
+                  <dt>Perihal</dt>
+                  <dd>{[jenisPesan(surat), surat.budgetRange].filter(Boolean).join(" · ") || "Tanpa jenis proyek"}</dd>
+                </div>
+                <div>
+                  <dt>Diterima</dt>
+                  <dd>
+                    <time dateTime={surat.createdAt}>{diterima(surat.createdAt)}</time>
+                    <span className="kps__relatif">{waktuRelatif(surat.createdAt)}</span>
+                  </dd>
+                </div>
+              </dl>
+              <blockquote className="kps__cuplik">{surat.message}</blockquote>
+              <button ref={tombolBuka} type="button" className="kps__buka" onClick={() => bukaSurat(surat)}>
+                Buka surat
+                <Ikon ikon={ArrowRight} ukuran={14} />
+              </button>
+            </article>
+            {tumpukan.length > 0 && (
+              <ul className="kps__tumpukan" aria-label="Surat lain di tumpukan">
+                {tumpukan.map((p, i) => (
+                  <li key={p.id} style={{ ["--kps-ke" as string]: i }}>
+                    <button
+                      type="button"
+                      className={p.status === "new" ? "kps__tepi is-baru" : "kps__tepi"}
+                      aria-label={`Ambil surat dari ${p.name} ke atas tumpukan`}
+                      onClick={() => tarik(p)}
+                    >
                       <b>{p.name}</b>
-                      <time dateTime={p.createdAt}>{waktuRelatif(p.createdAt)}</time>
-                    </span>
-                    <span className="kp__baris2">
-                      {[p.projectType && JENIS[p.projectType], p.budgetRange].filter(Boolean).join(" · ") || "Tanpa jenis proyek"}
-                    </span>
-                    <span className="kp__cuplik">{p.message}</span>
-                  </span>
-                  {baru && <span className="kp__titik" aria-label="Belum dibaca" />}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                      <span className="kps__tepiket">
+                        {[jenisPesan(p), waktuRelatif(p.createdAt)].filter(Boolean).join(" · ")}
+                      </span>
+                      <Cap p={p} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
     </Panel>
   );
 }
 
-/* --- Notifikasi ----------------------------------------------------------- */
+/* --- Notifikasi: DAFTAR REVISI -------------------------------------------- */
+
+const SUMBER: [string, string][] = [
+  ["pesan-", "Pesan"],
+  ["testimoni-", "Testimoni"],
+  ["tugas-", "Tenggat"],
+];
 
 export function PanelNotifikasi({ baris }: { baris: BarisNotifikasi[] | null }) {
   const [buka, setBuka] = useState(false);
-  const jumlah = baris?.length ?? 0;
+  const semua = baris ?? [];
+  const jumlah = semua.length;
 
-  /* Dikelompokkan per hari seperti linimasa Dashboard, terbaru di atas.
-     Butir tanpa tanggal (tidak ada di sumber saat ini) masuk "Lainnya". */
-  const urut = (baris ?? []).slice().sort((a, b) => (b.tanggal ?? "").localeCompare(a.tanggal ?? "")).slice(0, 8);
+  /* Nomor revisi menurut urutan waktu: yang tertua revisi 1, seperti tabel
+     revisi di kop gambar — tampil terbaru di atas, jadi nomornya menurun. */
+  const naik = semua.slice().sort((a, b) => (a.tanggal ?? "").localeCompare(b.tanggal ?? ""));
+  const nomor = new Map(naik.map((n, i) => [n.id, i + 1]));
+  const urut = naik.slice().reverse();
   const kelompok: [string, BarisNotifikasi[]][] = [];
   for (const n of urut) {
     const k = n.tanggal ? kepalaHari(n.tanggal) : "Lainnya";
@@ -216,14 +330,29 @@ export function PanelNotifikasi({ baris }: { baris: BarisNotifikasi[] | null }) 
     if (ada) ada[1].push(n);
     else kelompok.push([k, [n]]);
   }
+  const lembarTujuan = (n: BarisNotifikasi) => lembarUntuk(n.ke.split(/[?#]/)[0]!, LEMBAR)?.lembar ?? null;
+  const banyakLembar = new Set(semua.map((n) => lembarTujuan(n)?.kode ?? n.ke)).size;
 
   return (
     <Panel
       buka={buka}
       onBuka={setBuka}
-      judul="Notifikasi"
-      keterangan={jumlah > 0 ? `${jumlah} perlu ditangani` : "Tidak ada yang menunggu"}
-      kaki={{ label: "Lihat semua notifikasi", ke: "/admin/notifikasi" }}
+      className="kp--revisi"
+      kop={{
+        ikon: ArsRevisi,
+        judul: "Daftar revisi",
+        sel: [
+          { label: "Terbuka", nilai: baris ? jumlah : "—" },
+          { label: "Lembar", nilai: baris ? banyakLembar : "—" },
+        ],
+      }}
+      kaki={{
+        label: "Semua revisi",
+        ke: "/admin/notifikasi",
+        ringkas: baris
+          ? SUMBER.map(([awal, nama]) => `${nama} ${semua.filter((n) => n.id.startsWith(awal)).length}`).join(" · ")
+          : undefined,
+      }}
       pemicu={
         /* Segitiga REVISI berangka — butir yang sama dengan kolom REV rel
            samping, dijumlahkan. Kosong = segitiga tanpa angka. */
@@ -239,38 +368,58 @@ export function PanelNotifikasi({ baris }: { baris: BarisNotifikasi[] | null }) 
       {baris === null ? (
         <Rangka />
       ) : jumlah === 0 ? (
-        <Kosong ikon={CheckCircle} judul="Semua sudah ditangani" ket="Pesan baru, tenggat lewat, dan testimoni yang menunggu akan muncul di sini." />
+        <Kosong ikon={ArsRevisi} judul="Tidak ada revisi terbuka" ket="Pesan baru, tenggat lewat, dan testimoni yang menunggu muncul di sini." />
       ) : (
-        kelompok.map(([hari, isi]) => (
-          <section key={hari} className="kp__kelompok">
-            <h3 className="kp__hari">{hari}</h3>
-            <ul className="kp__daftar">
-              {isi.map((n) => (
-                <li key={n.id}>
-                  <button
-                    type="button"
-                    className="kp__butir"
-                    onClick={() => {
-                      setBuka(false);
-                      navigate(n.ke);
-                    }}
-                  >
-                    <span className="kp__ubin" aria-hidden="true"><Ikon ikon={ikonButir(n)} ukuran={16} /></span>
-                    <span className="kp__teks">
-                      <span className="kp__baris1">
-                        <b>{n.judul}</b>
-                        <time>{waktuButir(n)}</time>
-                      </span>
-                      <span className="kp__baris2">{n.detail}</span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
+        <>
+          <div className="kpr__kepalatabel" aria-hidden="true">
+            <span>Rev</span>
+            <span>Waktu</span>
+            <span>Uraian</span>
+            <span>Lembar</span>
+          </div>
+          <AreaGulir className="kp__isi">
+            {kelompok.map(([hari, isi]) => (
+              <section key={hari} className="kpr__hari" aria-label={hari}>
+                <h3 className="kpr__harijudul">
+                  {hari}
+                  <span>{isi.length} revisi</span>
+                </h3>
+                <ul className="kpr__daftar">
+                  {isi.map((n) => {
+                    const l = lembarTujuan(n);
+                    const berjam = Boolean(n.tanggal && n.tanggal.length > 10);
+                    const no = nomor.get(n.id) ?? 0;
+                    return (
+                      <li key={n.id}>
+                        <button
+                          type="button"
+                          className="kpr__baris"
+                          aria-label={`Revisi ${no}: ${n.judul}, ${n.detail}${l ? ` — buka lembar ${l.kode} ${l.label}` : ""}`}
+                          onClick={() => {
+                            setBuka(false);
+                            navigate(n.ke);
+                          }}
+                        >
+                          <Revisi jumlah={no} judul={`Revisi ${no}`} batas={99} className="kpr__no" />
+                          <span className={berjam ? "kpr__waktu" : "kpr__waktu is-tenggat"}>{berjam ? waktuButir(n) : "Tenggat"}</span>
+                          <span className="kpr__uraian">
+                            <b>{n.judul}</b>
+                            <span>{berjam ? n.detail : `${n.detail} · ${waktuButir(n)}`}</span>
+                          </span>
+                          <span className="kpr__lembar">
+                            <b>{l?.kode ?? "—"}</b>
+                            <Ikon ikon={ArrowRight} ukuran={12} />
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </AreaGulir>
+        </>
       )}
     </Panel>
   );
 }
-

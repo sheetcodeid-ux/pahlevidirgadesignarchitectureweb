@@ -23,6 +23,7 @@ import {
 import { Dialog, AlertDialog, Sheet, Sembul, KartuMelayang, Petunjuk, DropdownMenu, ContextMenu } from "../Overlay";
 import { ToastProvider, useToast } from "../Toast";
 import { DaftarPerintah } from "../Palet";
+import { daftarLembar } from "../../../lib/navAdmin";
 import { Avatar, Tuts } from "../Tampilan";
 import { Lencana } from "../Lencana";
 import {
@@ -623,27 +624,36 @@ export function DemoMenuKonteks() {
 export function DemoPerintah() {
   const [pilih, setPilih] = useState("");
   const ke = (s: string) => () => setPilih(s);
+  /* Nomor lembar sungguhan dari daftar gambar panel, bukan karangan. */
+  const kode = (label: string) => daftarLembar().halaman.find((l) => l.label === label)?.kode;
   return (
     <div className="gal-tumpuk">
       <DaftarPerintah
+        kolom={["No.", "Judul", "Keterangan", ""]}
         kelompok={[
           {
             judul: "Halaman",
+            huruf: "H",
+            satuan: "lbr",
             butir: [
-              { label: "Dashboard", ikon: House, onPilih: ke("Dashboard") },
-              { label: "Terima Pembayaran", ikon: CoinIn, kata: "bayar uang masuk", onPilih: ke("Terima Pembayaran") },
-              { label: "Semua Transaksi", ikon: ArrowsLeftRight, onPilih: ke("Semua Transaksi") },
-              { label: "Ringkasan Keuangan", ikon: ChartBar, onPilih: ke("Ringkasan") },
-              { label: "Gaji", ikon: Wallet, onPilih: ke("Gaji") },
-              { label: "Tim & Freelancer", ikon: Users, onPilih: ke("Tim") },
+              { label: "Dashboard", kode: kode("Dashboard"), ket: "Utama", ikon: House, onPilih: ke("Dashboard") },
+              { label: "Terima Pembayaran", kode: kode("Terima Pembayaran"), ket: "Keuangan", ikon: CoinIn, kata: "bayar uang masuk", onPilih: ke("Terima Pembayaran") },
+              { label: "Semua Transaksi", kode: kode("Semua Transaksi"), ket: "Keuangan", ikon: ArrowsLeftRight, onPilih: ke("Semua Transaksi") },
+              { label: "Ringkasan", kode: kode("Ringkasan"), ket: "Keuangan", ikon: ChartBar, onPilih: ke("Ringkasan") },
+              { label: "Gaji", kode: kode("Gaji"), ket: "Keuangan", ikon: Wallet, onPilih: ke("Gaji") },
+              { label: "Tim & Freelancer", kode: kode("Tim & Freelancer"), ket: "Relasi", ikon: Users, onPilih: ke("Tim") },
             ],
           },
           {
             judul: "Proyek",
+            huruf: "M",
+            satuan: "map",
             butir: PROYEK.map((p) => ({ label: p.label, ikon: Ruler, ket: p.ket, onPilih: ke(p.label) })),
           },
           {
             judul: "Aksi",
+            huruf: "A",
+            satuan: "aksi",
             butir: [
               { label: "Proyek baru", ikon: Plus, tuts: "N", onPilih: ke("Proyek baru") },
               { label: "Cari di panel", ikon: MagnifyingGlass, tuts: "Ctrl K", onPilih: ke("Cari") },

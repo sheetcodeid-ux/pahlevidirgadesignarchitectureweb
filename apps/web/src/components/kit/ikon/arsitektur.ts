@@ -372,11 +372,20 @@ export const ArsSetGambar = ikon(
   H("M6.5 10.5h6M6.5 13h4"),
 );
 
+/** Notifikasi — segitiga REVISI bernomor, simbol revisi di kop gambar.
+    Bentuk yang sama dengan tombol notifikasi di kepala halaman dan kolom REV
+    rel; di sini sebagai ikon baris palet perintah. */
+export const ArsRevisi = ikon(
+  T("M12 3.5L21 19.5H3Z"),
+  H("M10.9 11.4l1.4-1.2v6.1"),
+  H("M10.6 16.3h3.4"),
+);
+
 /** Seluruh ikon arsitektur, untuk galeri UI Component. */
 export const IKON_ARSITEKTUR: [string, DataIkon][] = Object.entries({
   ArsLembar, ArsPeil, ArsDaftarPeriksa, ArsSuratPengantar, ArsArahUtara, ArsTampakRumah, ArsKurvaS, ArsKartuIndeks,
   ArsSkalaManusia, ArsAwanRevisi, ArsBukuSketsa, ArsFasad, ArsMejaGambar, ArsJangka, ArsAkun, ArsMal, ArsPintu,
   ArsOrdner, ArsKunciRumah, ArsBingkaiFoto, ArsRekap, ArsKartuBayar, ArsNotaPaku, ArsKertasLubang, ArsMesinKas,
   ArsTermin, ArsKuitansi, ArsBukuGaji, ArsAmplopGaji, ArsLantai, ArsLencanaKlien, ArsTimStudio, ArsSebelumSesudah,
-  ArsGarisUkur, ArsGembok, ArsStempel, ArsLampuMeja, ArsSetGambar,
+  ArsGarisUkur, ArsGembok, ArsStempel, ArsLampuMeja, ArsSetGambar, ArsRevisi,
 });

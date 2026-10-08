@@ -482,6 +482,15 @@ export interface Pesan {
   createdAt: string;
 }
 
+/** Label status pesan (enum `inquiry_status`) — halaman Pesan Masuk dan
+    panel Pesan di kepala halaman membaca yang sama. */
+export const STATUS_PESAN: Record<string, string> = {
+  new: "Baru",
+  contacted: "Dihubungi",
+  qualified: "Prospek",
+  closed: "Selesai",
+};
+
 export const daftarPesan = (status = "") =>
   panggil<Pesan[]>(`/admin/inquiries${status ? `?status=${status}` : ""}`);
 

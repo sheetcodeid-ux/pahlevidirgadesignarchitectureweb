@@ -314,6 +314,22 @@ export function posisiLembar(path: string, tampil: Lembar[]): PosisiLembar {
 }
 
 /**
+ * Butir per NOMOR LEMBAR dari butir per path (`revisiPerHalaman`). Halaman
+ * tujuan tiap butir dipetakan ke lembarnya — persis, atau awalan terpanjang
+ * ("/admin/proyek/edit" milik Semua Proyek). Satu rumusan untuk kolom REV
+ * rel samping dan kolom REV palet perintah (jebakan #32).
+ */
+export function revisiPerLembar(perHalaman: Record<string, number>): Map<string, number> {
+  const hasil = new Map<string, number>();
+  const semua = daftarLembar().halaman;
+  for (const [jalur, n] of Object.entries(perHalaman)) {
+    const l = lembarUntuk(jalur, semua);
+    if (l) hasil.set(l.lembar.kode, (hasil.get(l.lembar.kode) ?? 0) + n);
+  }
+  return hasil;
+}
+
+/**
  * Semua halaman yang bisa dituju, rata — dipakai command palette.
  *
  * Induk yang punya anak TIDAK ikut: ia tombol pembuka menu, bukan halaman.

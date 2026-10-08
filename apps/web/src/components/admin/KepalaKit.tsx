@@ -263,6 +263,8 @@ export function KepalaKit({ judul, kembali, dibangunPada, path }: {
           />
           <PaletPanel
             buka={cariBuka}
+            baris={baris}
+            dibangunPada={dibangunPada}
             onBuka={(b) => {
               setCariBuka(b);
               /* Palet ini tidak punya pemicu Radix, jadi saat ditutup Radix
