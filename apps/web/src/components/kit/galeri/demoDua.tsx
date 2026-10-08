@@ -35,7 +35,6 @@ import { Arah } from "../Arah";
 import { Cari } from "../Isian";
 import { DaftarKit, PilihTombol } from "../../admin/daftarKit";
 import {
-  ChartBar,
   ChatTeardropDots,
   CoinIn,
   CoinOut,
@@ -44,13 +43,15 @@ import {
   FileText,
   ImageSquare,
   MagnifyingGlass,
-  NavCoins,
   NavCreditCard,
-  NavEnvelope,
-  NavSquaresFour,
-  Users,
   VirtualAccount,
   Wallet,
+  ArsKartuBayar,
+  ArsKurvaS,
+  ArsLembar,
+  ArsRekap,
+  ArsSkalaManusia,
+  ArsSuratPengantar,
 } from "../ikon";
 import { PROYEK } from "./demoSatu";
 
@@ -59,7 +60,8 @@ import { PROYEK } from "./demoSatu";
 export function DemoSisiNav() {
   const [buka, setBuka] = useState(true);
   /* Baris aktif berpindah saat diklik — tanpa pindah halaman — supaya
-     penanda potongannya bisa dilihat meluncur di galeri. */
+     penanda potongan, garis potong, dan ikon yang digambar pena bisa
+     dilihat di galeri. */
   const [aktif, setAktif] = useState("U-01");
   return (
     <div
@@ -72,20 +74,15 @@ export function DemoSisiNav() {
         setAktif(kode);
       }}
     >
-      {/* Varian `gambar` — bentuk yang dipakai rel panel: daftar gambar
-          bernomor lembar, kepala disiplin, segitiga revisi, dan penanda
-          potongan yang meluncur ke baris aktif (klik baris untuk melihatnya). */}
       <SisiNav
-        varian="gambar"
-        logo={<b className="gal-logo">Dirga Pahlevi</b>}
+        sampul={<b className="gal-logo">Dirga Pahlevi</b>}
         item={[
-          { ikon: NavSquaresFour, label: "Dashboard", aktif: aktif === "U-01", kode: "U-01", href: "#navigasi/sidebar", kelompok: "Utama", kelompokKode: "U", kelompokJumlah: 2 },
-          { ikon: NavEnvelope, label: "Pesan Masuk", aktif: aktif === "U-02", kode: "U-02", jumlah: 3, jumlahJudul: "3 belum dibaca", href: "#navigasi/sidebar", kelompok: "Utama", kelompokKode: "U", kelompokJumlah: 2 },
+          { ikon: ArsLembar, label: "Dashboard", aktif: aktif === "U-01", kode: "U-01", href: "#navigasi/sidebar", kelompok: "Utama", kelompokKode: "U", kelompokJumlah: 2 },
+          { ikon: ArsSuratPengantar, label: "Pesan Masuk", aktif: aktif === "U-02", kode: "U-02", jumlah: 3, jumlahJudul: "belum dibaca", href: "#navigasi/sidebar", kelompok: "Utama", kelompokKode: "U", kelompokJumlah: 2 },
           {
-            ikon: NavCoins,
+            ikon: ArsKurvaS,
             label: "Keuangan",
             kode: "P-10",
-            lipat: true,
             terbuka: buka,
             onLipat: () => setBuka(!buka),
             indukAktif: !buka && aktif.startsWith("P-1"),
@@ -93,11 +90,11 @@ export function DemoSisiNav() {
             kelompokKode: "P",
             kelompokJumlah: 2,
             anak: [
-              { ikon: ChartBar, label: "Ringkasan", kode: "P-11", aktif: aktif === "P-11", href: "#navigasi/sidebar" },
-              { ikon: CoinIn, label: "Terima Pembayaran", kode: "P-12", aktif: aktif === "P-12", href: "#navigasi/sidebar" },
+              { ikon: ArsRekap, label: "Ringkasan", kode: "P-11", aktif: aktif === "P-11", href: "#navigasi/sidebar" },
+              { ikon: ArsKartuBayar, label: "Terima Pembayaran", kode: "P-12", aktif: aktif === "P-12", href: "#navigasi/sidebar" },
             ],
           },
-          { ikon: Users, label: "Tim & Freelancer", aktif: aktif === "R-01", kode: "R-01", href: "#navigasi/sidebar", kelompok: "Relasi", kelompokKode: "R", kelompokJumlah: 1 },
+          { ikon: ArsSkalaManusia, label: "Tim & Freelancer", aktif: aktif === "R-01", kode: "R-01", href: "#navigasi/sidebar", kelompok: "Relasi", kelompokKode: "R", kelompokJumlah: 1 },
         ]}
       />
     </div>

@@ -3,14 +3,14 @@ import { Cari } from "../kit/Isian";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { ArrowLeft, List, SpecialMoonStars } from "../kit/ikon";
 import { gantiTema, temaGelap, PERISTIWA_TEMA } from "../../lib/tema";
-import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_PESAN, ID_REL } from "./RelKit";
+import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_REVISI, ID_REL } from "./RelKit";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 /* Palet dimuat LANGSUNG, bukan malas: versi malasnya terukur kehilangan
    huruf yang diketik tepat sesudah Ctrl/Cmd+K (paletnya belum terpasang
    saat huruf itu tiba) — demi hemat ±17 KB. */
 import { PaletPanel } from "./PaletPanel";
-import { ambilBarisNotifikasi, barisNotifikasiTerakhir, type BarisNotifikasi } from "../../lib/notifikasi";
+import { ambilBarisNotifikasi, barisNotifikasiTerakhir, revisiPerHalaman, type BarisNotifikasi } from "../../lib/notifikasi";
 import { PanelPesan, PanelNotifikasi } from "./panelKabar";
 import { TitipanToast } from "../kit/Toast";
 
@@ -66,9 +66,8 @@ export function KepalaKit({ judul, kembali, dibangunPada }: {
       .then((d) => {
         if (!hidup) return;
         setBaris(d);
-        window.dispatchEvent(
-          new CustomEvent(PERISTIWA_PESAN, { detail: d.filter((b) => b.id.startsWith("pesan-")).length }),
-        );
+        /* Kolom REV rel samping: butir yang sama, dihitung per halaman tujuan. */
+        window.dispatchEvent(new CustomEvent(PERISTIWA_REVISI, { detail: revisiPerHalaman(d) }));
       })
       .catch(() => hidup && setBaris([]));
     return () => {

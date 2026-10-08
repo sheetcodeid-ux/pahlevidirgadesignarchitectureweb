@@ -137,7 +137,7 @@ const path = Astro.url.pathname;
           halaman. Ia tidak punya keadaan internal, tapi memasang ulang 12
           baris ikon SVG di tiap klik menu adalah kerja yang tidak menghasilkan
           apa-apa. */}
-      <RelKit client:load transition:persist path={path} namaStudio="Dirga Pahlevi" />
+      <RelKit client:load transition:persist path={path} namaStudio="Dirga Pahlevi" revisi={CAP_BUILD} />
 
       <div class="kl__utama">
         {/* Selalu dihidrasi: tombol Terbitkan di dalamnya hidup dari JavaScript
@@ -238,13 +238,6 @@ const path = Astro.url.pathname;
     scrollbar-width: none;
   }
   .kl #kl-rel::-webkit-scrollbar { display: none; }
-  .kl__logo {
-    display: block;
-    padding-top: 30px;
-    font-size: var(--k-t16);
-    font-weight: var(--k-bold);
-    color: var(--brand);
-  }
 
   .kl__utama {
     display: flex;

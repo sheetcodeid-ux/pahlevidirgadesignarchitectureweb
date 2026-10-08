@@ -2,3 +2,5 @@
    suatu saat ada ikon buatan sendiri (yang bukan dari Figma) tempatnya sudah
    jelas: di sini, bukan di berkas hasil generate. */
 export * from "./daftar";
+/* Ikon buatan sendiri — benda dunia arsitektur, untuk rel dan palet. */
+export * from "./arsitektur";

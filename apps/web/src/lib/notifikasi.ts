@@ -99,6 +99,21 @@ export function barisNotifikasiTerakhir(): BarisNotifikasi[] | null {
   return terakhir?.baris ?? null;
 }
 
+/**
+ * Banyaknya butir per HALAMAN tujuan (path tanpa query, tanpa garis miring
+ * di ujung) — kolom REV di rel samping. Satu fungsi untuk kepala halaman
+ * (yang mengambil notifikasi) dan rel (yang menggambar angkanya), supaya
+ * angka lonceng dan angka REV tidak pernah dihitung dengan dua cara.
+ */
+export function revisiPerHalaman(baris: BarisNotifikasi[]): Record<string, number> {
+  const hasil: Record<string, number> = {};
+  for (const b of baris) {
+    const jalur = b.ke.split(/[?#]/)[0]!.replace(/(.)\/$/, "$1");
+    hasil[jalur] = (hasil[jalur] ?? 0) + 1;
+  }
+  return hasil;
+}
+
 if (typeof window !== "undefined") {
   window.addEventListener(PERISTIWA_TULIS, () => {
     terakhir = null;

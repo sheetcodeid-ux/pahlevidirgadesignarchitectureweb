@@ -1,7 +1,10 @@
 import type { DataIkon } from "./ikon/daftar";
 
 /* =============================================================================
-   Ikon — 179 bentuk asli dari file Figma Coinest, bukan pustaka pihak ketiga.
+   Ikon — 179 bentuk asli dari file Figma Coinest, bukan pustaka pihak ketiga,
+   ditambah 36 bentuk ARSITEKTUR buatan studio sendiri (`ikon/arsitektur.ts`,
+   dipakai rel samping dan palet perintah) — digambar dari benda studio,
+   bukan jiplakan ikon siapa pun.
 
    Ukuran BAWAAN 24, karena itu ukuran instance yang dipakai Coinest di
    halaman. Bingkai masternya 32 (lihat assets/figma/DAFTAR.md); yang disetel

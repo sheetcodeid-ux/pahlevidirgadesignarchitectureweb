@@ -95,27 +95,27 @@ export const NAV: NavItem[] = [
      tidak punya; bentrok dengan frame itu disebutkan terbuka ke pemilik.
      Urutannya tetap lingkaran bisnis di atas: yang dikerjakan tiap hari di
      atas, setelan paling bawah. */
-  { label: "Dashboard", href: "/admin", icon: "dashboard", ikonKit: "NavSquaresFour", group: "Utama" },
+  { label: "Dashboard", href: "/admin", icon: "dashboard", ikonKit: "ArsLembar", group: "Utama" },
   /* Lima angka target dokumen strategi §8 — fase 4. */
-  { label: "KPI Strategi", href: "/admin/kpi", icon: "finance", ikonKit: "Medal", group: "Utama" },
-  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", ikonKit: "SpecialCheckSquare", group: "Utama" },
+  { label: "KPI Strategi", href: "/admin/kpi", icon: "finance", ikonKit: "ArsPeil", group: "Utama" },
+  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", ikonKit: "ArsDaftarPeriksa", group: "Utama" },
   /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
      satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */
-  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", ikonKit: "NavEnvelope", group: "Utama", lencana: "pesan" },
+  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", ikonKit: "ArsSuratPengantar", group: "Utama", lencana: "pesan" },
   /* Cara memakai panel, langkah demi langkah — permintaan pemilik. Di Utama
      supaya terlihat tanpa menggulir rel. */
-  { label: "Panduan", href: "/admin/panduan", icon: "info", ikonKit: "Question", group: "Utama" },
+  { label: "Panduan", href: "/admin/panduan", icon: "info", ikonKit: "ArsArahUtara", group: "Utama" },
   {
     label: "Proyek",
     icon: "project",
-    ikonKit: "Ruler",
+    ikonKit: "ArsTampakRumah",
     group: "Pekerjaan",
     children: [
-      { label: "Semua Proyek", href: "/admin/proyek", icon: "list", ikonKit: "List" },
+      { label: "Semua Proyek", href: "/admin/proyek", icon: "list", ikonKit: "ArsOrdner" },
       // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
       // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
-      { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document", ikonKit: "UserCircle" },
-      { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "globe", ikonKit: "Globe" },
+      { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document", ikonKit: "ArsKunciRumah" },
+      { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "globe", ikonKit: "ArsBingkaiFoto" },
     ],
   },
   /* Ketiganya satu menu, bukan tiga baris berjajar. Alasan berdampingannya
@@ -126,43 +126,43 @@ export const NAV: NavItem[] = [
   {
     label: "Keuangan",
     icon: "finance",
-    ikonKit: "NavCoins",
+    ikonKit: "ArsKurvaS",
     group: "Pekerjaan",
     children: [
-      { label: "Ringkasan", href: "/admin/keuangan", icon: "finance", ikonKit: "ChartBar" },
-      { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "CoinIn" },
-      { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar", icon: "cash", ikonKit: "CoinOut" },
-      { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", icon: "list", ikonKit: "NavArrowsLeftRight" },
+      { label: "Ringkasan", href: "/admin/keuangan", icon: "finance", ikonKit: "ArsRekap" },
+      { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "ArsKartuBayar" },
+      { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar", icon: "cash", ikonKit: "ArsNotaPaku" },
+      { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", icon: "list", ikonKit: "ArsKertasLubang" },
       /* Uang di luar proyek (PVC, bagi hasil, konsumsi, sewa) + target semester
          — sheet "KELUAR MASUK". */
-      { label: "Kas Studio", href: "/admin/keuangan/kas", icon: "bank", ikonKit: "CoinVertical" },
-      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "NavReceipt" },
-      { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "NavCurrencyCircleDollar" },
-      { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "Wallet" },
+      { label: "Kas Studio", href: "/admin/keuangan/kas", icon: "bank", ikonKit: "ArsMesinKas" },
+      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "ArsTermin" },
+      { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "ArsKuitansi" },
+      { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "ArsBukuGaji" },
       /* Hak, dibayar, terutang, dan slip per orang — sheet "GAJI <nama>". */
-      { label: "Bayaran Tim", href: "/admin/gaji/tim", icon: "team", ikonKit: "Users" },
+      { label: "Bayaran Tim", href: "/admin/gaji/tim", icon: "team", ikonKit: "ArsAmplopGaji" },
     ],
   },
   /* Orang di luar dan di dalam studio. "Tim & Freelancer" di sini (orangnya),
      "Tim Studio" di Konten Situs (halaman yang dibaca pengunjung). */
-  { label: "Direktori", href: "/admin/direktori", icon: "directory", ikonKit: "IdentificationBadge", group: "Relasi" },
-  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", ikonKit: "Users", group: "Relasi" },
-  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", ikonKit: "ChatTeardropDots", group: "Relasi" },
-  { label: "Jurnal", href: "/admin/jurnal", icon: "document", ikonKit: "NavNewspaper", group: "Konten Situs" },
+  { label: "Direktori", href: "/admin/direktori", icon: "directory", ikonKit: "ArsKartuIndeks", group: "Relasi" },
+  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", ikonKit: "ArsSkalaManusia", group: "Relasi" },
+  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", ikonKit: "ArsAwanRevisi", group: "Relasi" },
+  { label: "Jurnal", href: "/admin/jurnal", icon: "document", ikonKit: "ArsBukuSketsa", group: "Konten Situs" },
   /* Halaman yang isinya dibaca PENGUNJUNG, dikumpulkan jadi satu menu. */
   {
     label: "Situs Publik",
     icon: "globe",
-    ikonKit: "Globe",
+    ikonKit: "ArsFasad",
     group: "Konten Situs",
     children: [
-      { label: "Paket Layanan", href: "/admin/paket", icon: "cash", ikonKit: "NavSealPercent" },
-      { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", ikonKit: "ImageSquare" },
-      { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", ikonKit: "Users" },
-      { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", ikonKit: "ArrowsLeftRight" },
-      { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info", ikonKit: "Question" },
-      { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock", ikonKit: "FileText" },
-      { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", ikonKit: "House" },
+      { label: "Paket Layanan", href: "/admin/paket", icon: "cash", ikonKit: "ArsLantai" },
+      { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", ikonKit: "ArsLencanaKlien" },
+      { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", ikonKit: "ArsTimStudio" },
+      { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", ikonKit: "ArsSebelumSesudah" },
+      { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info", ikonKit: "ArsGarisUkur" },
+      { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock", ikonKit: "ArsGembok" },
+      { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", ikonKit: "ArsStempel" },
     ],
   },
   /* Kategori Pengaturan: isinya baris DATAR, bukan submenu "Pengaturan" di
@@ -170,14 +170,14 @@ export const NAV: NavItem[] = [
   /* masterOnly: halamannya memang hanya untuk master (`RequireAuth masterOnly`
      di InfoStudioKit). Tanpa tanda ini rel menawarkannya ke staf, lalu
      halamannya menolak dengan "Tidak bisa memuat panel". */
-  { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "GearSix", group: "Pengaturan", masterOnly: true },
+  { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "ArsMejaGambar", group: "Pengaturan", masterOnly: true },
   /* Persen tiap peran tim desain — dibaca Proyek Baru dan Tim & Bayaran. */
-  { label: "Aturan Fee Tim", href: "/admin/pengaturan/fee", icon: "cash", ikonKit: "NavSealPercent", group: "Pengaturan" },
-  { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "UserCircle", group: "Pengaturan" },
+  { label: "Aturan Fee Tim", href: "/admin/pengaturan/fee", icon: "cash", ikonKit: "ArsJangka", group: "Pengaturan" },
+  { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "ArsAkun", group: "Pengaturan" },
   /* Ke pustaka komponen KIT, bukan /admin/ui: /admin/ui berisi sistem lama di
      kerangka lama, dan menu yang membawa ke tampilan lain sama sekali terbaca
      sebagai panel yang rusak. /admin/ui masih bisa dibuka lewat alamatnya. */
-  { label: "UI Component", href: "/admin/kit", icon: "component", ikonKit: "SpecialCube", group: "Pengaturan", masterOnly: true },
+  { label: "UI Component", href: "/admin/kit", icon: "component", ikonKit: "ArsMal", group: "Pengaturan", masterOnly: true },
 ];
 
 /* =============================================================================

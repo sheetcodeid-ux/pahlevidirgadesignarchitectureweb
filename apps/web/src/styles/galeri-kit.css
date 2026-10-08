@@ -194,9 +194,9 @@
 .gal-dl dd { margin: 0; color: var(--text-strong); font-weight: var(--k-semi); }
 .gal-rel { width: 240px; max-width: 100%; height: 380px; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--brand-soft); }
 .gal-rel .k-sisi { height: 100%; }
-/* Varian gambar selebar rel panel sungguhan (240): di 192 kolom nomor lembar
-   memotong label submenu terpanjang. */
-.gal-rel .k-sisi--gambar { width: 100%; }
+/* Selebar rel panel sungguhan (240): di 192 kolom nomor lembar memotong
+   label submenu terpanjang. */
+.gal-rel .k-sisi { width: 100%; }
 .gal-logo { color: var(--brand); font-size: var(--k-t16); }
 .gal-navmenu { min-height: 230px; }
 .gal-gulirdatar { min-width: 0; overflow-x: auto; }

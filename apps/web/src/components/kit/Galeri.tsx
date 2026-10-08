@@ -5,7 +5,7 @@ import { Ikon, type DataIkon } from "./Ikon";
 import { Lencana } from "./Lencana";
 import { Kosong } from "./Tampilan";
 import { MenuNavigasi } from "./Overlay";
-import { ArrowLeft, ArrowRight, MagnifyingGlass } from "./ikon";
+import { ArrowLeft, ArrowRight, IKON_ARSITEKTUR, MagnifyingGlass } from "./ikon";
 import { KATALOG, JUMLAH_KOMPONEN, IKON_FOLDER_IKON, type Entri, type Folder } from "./galeri/katalog";
 import { halamanRata } from "../../lib/navAdmin";
 
@@ -167,7 +167,7 @@ export function Galeri({ pakai = {} }: { pakai?: Record<string, string[]> }) {
                   onBuka={() => ke(f.id)}
                 />
               ))}
-              <KartuFolder ikon={IKON_FOLDER_IKON} nama="Ikon" ket="Bahan semua komponen — 179 bentuk dari Coinest." jumlah={179} cuplik={[]} onBuka={() => ke("ikon")} satuan="bentuk" />
+              <KartuFolder ikon={IKON_FOLDER_IKON} nama="Ikon" ket={`Bahan semua komponen — ${IKON_ARSITEKTUR.length} bentuk arsitektur buatan studio + 179 dari Coinest.`} jumlah={IKON_ARSITEKTUR.length + 179} cuplik={[]} onBuka={() => ke("ikon")} satuan="bentuk" />
             </div>
           </>
         )}
@@ -362,21 +362,31 @@ function FolderIkon() {
       hidup = false;
     };
   }, []);
-  const tampil = (ikon ?? []).filter(([n]) => n.toLowerCase().includes(cari.toLowerCase()));
+  const saring = (d: ReadonlyArray<readonly [string, DataIkon]>) => d.filter(([n]) => n.toLowerCase().includes(cari.toLowerCase()));
+  const ars = saring(IKON_ARSITEKTUR);
+  const coinest = saring(ikon ?? []);
+  const kisi = (d: ReadonlyArray<readonly [string, DataIkon]>) => (
+    <div className="gal-ikonkisi">
+      {d.map(([nama, data]) => (
+        <figure key={nama}>
+          <Ikon ikon={data} ukuran={24} />
+          <figcaption>{nama}</figcaption>
+        </figure>
+      ))}
+    </div>
+  );
   return (
     <>
       <div className="gal-atas gal-atas--dalam">
-        <h2 className="gal-h2">Ikon — {ikon?.length ?? 179} bentuk</h2>
+        <h2 className="gal-h2">Ikon — {IKON_ARSITEKTUR.length + (ikon?.length ?? 179)} bentuk</h2>
         <Cari judul="Cari ikon" placeholder="Cari nama ikon" value={cari} onChange={(e) => setCari(e.target.value)} ukuran="small" />
       </div>
-      <div className="gal-ikonkisi">
-        {tampil.map(([nama, data]) => (
-          <figure key={nama}>
-            <Ikon ikon={data} ukuran={24} />
-            <figcaption>{nama}</figcaption>
-          </figure>
-        ))}
-      </div>
+      {/* Ikon arsitektur buatan sendiri — rel samping dan palet perintah.
+          Garisnya digambar pena saat lembarnya dibuka. */}
+      <h3 className="gal-h3">Arsitektur — {IKON_ARSITEKTUR.length} bentuk</h3>
+      {kisi(ars)}
+      <h3 className="gal-h3">Coinest — {ikon?.length ?? 179} bentuk</h3>
+      {kisi(coinest)}
     </>
   );
 }
