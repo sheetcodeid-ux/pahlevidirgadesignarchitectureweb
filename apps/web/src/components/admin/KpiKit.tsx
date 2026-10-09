@@ -1465,7 +1465,7 @@ function Tabel({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null })
             )}
           </header>
           <Jejak
-            key={`${aktif.kunci}-${lampiranBaru}`}
+            key={`jejak-${aktif.kunci}-${lampiranBaru}`}
             baru={lampiranBaru > 0}
             pasal={aktif}
             skala={skala[aktif.kunci]}
@@ -1474,7 +1474,10 @@ function Tabel({ k, studio }: { k: KpiStrategi; studio: StudioSettings | null })
             onPilih={pilihSnap}
           />
           <KotakKebutuhan b={kebutuhanDari(aktif, k)} />
-          <div key={`${aktif.kunci}-${lampiranBaru}`} className={lampiranBaru ? "tks__lampiranisi is-baru" : "tks__lampiranisi"}>
+          {/* Kunci BERBEDA dari jejak di atasnya: dua saudara berkunci sama
+              membuat React tidak pernah membuang yang lama — lampiran
+              sempat memuat dua blok jejak sesudah pasal diganti. */}
+          <div key={`isi-${aktif.kunci}-${lampiranBaru}`} className={lampiranBaru ? "tks__lampiranisi is-baru" : "tks__lampiranisi"}>
             {lampiran}
           </div>
           <p className="tks__lampirankaki">Rincian per {tglPanjang(k.hariIni)}</p>
