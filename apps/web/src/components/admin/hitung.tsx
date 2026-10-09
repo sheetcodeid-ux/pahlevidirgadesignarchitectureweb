@@ -17,11 +17,14 @@ export function Hitung({
   hidup,
   format,
   className,
+  tunda = 0,
 }: {
   nilai: number;
   hidup: boolean;
   format: (v: number) => string;
   className?: string;
+  /** Jeda sebelum mulai berhitung (ms) — angka lama tetap tampil selama itu. */
+  tunda?: number;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const kini = useRef<number | null>(null);
@@ -40,17 +43,21 @@ export function Hitung({
       tulis(nilai);
       return;
     }
-    const mulai = performance.now();
+    let mulai = 0;
     let r = 0;
     const f = (t: number) => {
+      if (!mulai) mulai = t;
       const p = Math.min(1, (t - mulai) / 560);
       const v = p < 1 ? dari + (nilai - dari) * (1 - Math.pow(1 - p, 3)) : nilai;
       kini.current = v;
       tulis(v);
       if (p < 1) r = requestAnimationFrame(f);
     };
-    r = requestAnimationFrame(f);
+    let w = 0;
+    if (tunda > 0) w = window.setTimeout(() => (r = requestAnimationFrame(f)), tunda);
+    else r = requestAnimationFrame(f);
     return () => {
+      window.clearTimeout(w);
       cancelAnimationFrame(r);
       kini.current = nilai;
       tulis(nilai);
