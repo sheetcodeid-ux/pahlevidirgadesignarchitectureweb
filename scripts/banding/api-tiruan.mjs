@@ -329,6 +329,40 @@ const sampulSvg = (n) => {
     `<circle cx="210" cy="150" r="70" fill="${rona[1]}" opacity=".7"/></svg>`;
 };
 
+/* Foto galeri tiruan — RASIONYA beragam (16:9 dari fotografer, 3:2 kamera,
+   4:3 ponsel, potret 2:3), supaya garis potong 16:9 di Halaman Publik bisa
+   diperiksa. Gambarnya bangunan sederhana: langit, massa, bukaan, tanah. */
+const fotoSvg = (n) => {
+  const [w, h] = [[1600, 900], [1500, 1000], [1200, 900], [1000, 1500], [1920, 1080], [1500, 1000]][(n - 1) % 6];
+  const [langit, massa, aksen] = [["#DCE7E2", "#1E4841", "#BBF49C"], ["#E9E3D8", "#3B4A45", "#E2B867"],
+    ["#D6E4EC", "#2F5D50", "#ECF4E9"], ["#E7ECE6", "#4A3F35", "#BBF49C"], ["#F0E6D6", "#1E4841", "#F2B007"],
+    ["#DDE8E0", "#26332F", "#9FD3A8"]][(n - 1) % 6];
+  const gx = w * 0.18, gy = h * 0.34, gw = w * 0.64, gh = h * 0.46;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">` +
+    `<rect width="${w}" height="${h}" fill="${langit}"/>` +
+    `<rect y="${h * 0.8}" width="${w}" height="${h * 0.2}" fill="${massa}" opacity=".35"/>` +
+    `<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="${massa}"/>` +
+    `<path d="M${gx - w * 0.04} ${gy} L${gx + gw / 2} ${gy - h * 0.14} L${gx + gw + w * 0.04} ${gy}Z" fill="${massa}"/>` +
+    `<rect x="${gx + gw * 0.12}" y="${gy + gh * 0.22}" width="${gw * 0.3}" height="${gh * 0.5}" fill="${aksen}" opacity=".85"/>` +
+    `<rect x="${gx + gw * 0.56}" y="${gy + gh * 0.22}" width="${gw * 0.3}" height="${gh * 0.78}" fill="${aksen}" opacity=".55"/>` +
+    `<circle cx="${w * 0.82}" cy="${h * 0.16}" r="${Math.min(w, h) * 0.06}" fill="#FBFBFC" opacity=".9"/>` +
+    `<text x="${w * 0.04}" y="${h * 0.95}" font-family="sans-serif" font-size="${h * 0.05}" fill="${massa}">${w}×${h}</text></svg>`;
+};
+/* Sampel material tiruan — tekstur persegi: kayu, beton, batu. */
+const bahanSvg = (n) => {
+  const jenis = (n - 1) % 3;
+  if (jenis === 0) {
+    const serat = Array.from({ length: 14 }, (_, k) => `<path d="M0 ${k * 30 + 8} Q200 ${k * 30 - 6} 400 ${k * 30 + 12}" stroke="#6B4423" stroke-width="5" fill="none" opacity=".45"/>`).join("");
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400"><rect width="400" height="400" fill="#A0703F"/>${serat}</svg>`;
+  }
+  if (jenis === 1) {
+    const pori = Array.from({ length: 60 }, (_, k) => `<circle cx="${(k * 97) % 400}" cy="${(k * 53) % 400}" r="${3 + (k % 4)}" fill="#8E918F" opacity=".5"/>`).join("");
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400"><rect width="400" height="400" fill="#B9BCBA"/>${pori}</svg>`;
+  }
+  const batu = Array.from({ length: 9 }, (_, k) => `<rect x="${(k % 3) * 133 + 6}" y="${Math.floor(k / 3) * 133 + 6}" width="121" height="121" rx="18" fill="${["#7D8A80", "#95A197", "#6A766D"][k % 3]}"/>`).join("");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400"><rect width="400" height="400" fill="#4E5A52"/>${batu}</svg>`;
+};
+
 /* Riwayat biaya 30 bulan ke belakang — dipakai halaman Fee Proyek, yang
    grafiknya membaca biaya PER BULAN dan PER TAHUN. Lima baris di atas cuma
    menjangkau beberapa hari terakhir, dan grafik tangga sepuluh bulan dengan
@@ -418,6 +452,39 @@ const proyekAdmin = proyekKeu.map((p, i) => ({
      supaya "Tanpa paket" ikut tergambar. */
   tierId: i === 0 ? "t0000000-0000-4000-8000-000000000002" : i === 1 ? "t0000000-0000-4000-8000-000000000005"
     : i === 3 ? "t0000000-0000-4000-8000-000000000002" : null,
+  /* Isi halaman publik (/proyek/<slug>) — proyek pertama lengkap, yang lain
+     makin kosong, supaya Halaman Publik bisa diperiksa di keadaan penuh,
+     sebagian, dan "nama menyusul". */
+  ...[
+    {
+      subtitle: "Kedai yang menghadap jalan dan sungai sekaligus",
+      summary: "Coffee shop dua lantai di Jl. Gajah Mada dengan bar yang menghadap jalan dan teras yang menghadap Sungai Kapuas.",
+      description: "Pemilik ingin kedai yang terasa terbuka ke jalan tapi tetap teduh di siang hari. Lantai dasar kami jadikan bar memanjang dengan meja seduh menghadap kaca, supaya orang yang lewat melihat kopinya dibuat.\n\nLantai atas berupa teras kayu ulin dengan atap miring yang menjorok dua meter. Angin sungai masuk dari sisi belakang, jadi tidak ada satu pun pendingin udara di lantai ini.\n\nMaterialnya sengaja sedikit: beton ekspos, kayu ulin bekas dermaga, dan batu alam di dinding bar.",
+      location: "Jl. Gajah Mada No. 18",
+      areaSqm: 186,
+      leadArchitect: "Pahlevi Dirga",
+      contractor: "CV Karya Bangun",
+      photographer: "Studio Kapuas Foto",
+      lightingDesigner: null,
+      clientWhatsapp: "628125678901",
+      seoTitle: null,
+      seoDescription: null,
+    },
+    {
+      subtitle: "Rumah Tropis Sungai Raya",
+      summary: "Rumah dua lantai di lahan 12×20 m yang mempertahankan pohon mangga di tengah tapak.",
+      description: null,
+      location: null,
+      areaSqm: 240,
+      leadArchitect: null,
+      contractor: null,
+      photographer: null,
+      lightingDesigner: null,
+      clientWhatsapp: null,
+      seoTitle: null,
+      seoDescription: null,
+    },
+  ][i] ?? {},
 }));
 
 /* Tim per peran (fase 1-2 alur Excel pemilik). Hitungannya disalin dari
@@ -466,8 +533,8 @@ const gambarAdmin = Object.fromEntries(
     const buat = (kind, n, awal) =>
       Array.from({ length: n }, (_, k) => ({
         id: `${p.id}-${kind}-${k + 1}`,
-        storageKey: `projects/${p.slug}/contoh-${((awal + k) % 6) + 1}.svg`,
-        url: `http://127.0.0.1:${PORT}/media/projects/${p.slug}/contoh-${((awal + k) % 6) + 1}.svg`,
+        storageKey: `projects/${p.slug}/${kind === "material" ? "bahan" : "foto"}-${((awal + k) % 6) + 1}.svg`,
+        url: `http://127.0.0.1:${PORT}/media/projects/${p.slug}/${kind === "material" ? "bahan" : "foto"}-${((awal + k) % 6) + 1}.svg`,
         thumbUrl: null,
         caption: kind === "material" ? ["Kayu ulin", "Beton ekspos", "Batu alam"][k % 3] : k === 0 ? "Fasad depan" : null,
         altText: null,
@@ -1188,6 +1255,8 @@ function tulis(metode, path, badan) {
       const x = proyekAdmin.find((y) => y.id === up[1]);
       if (!x) return { galat: 404 };
       Object.assign(x, badan);
+      if ("coverImageKey" in badan) x.coverImageUrl = urlMedia(badan.coverImageKey);
+      delete x.coverImageKey;
       return { updated: true };
     }
   }
@@ -1665,6 +1734,16 @@ createServer((req, res) => {
     if (m) {
       res.writeHead(200, { "content-type": "image/svg+xml", "access-control-allow-origin": "*" });
       return res.end(sampulSvg(Number(m[1])));
+    }
+    const ft = path.match(/^\/media\/.*foto-(\d+)\.svg$/);
+    if (ft) {
+      res.writeHead(200, { "content-type": "image/svg+xml", "access-control-allow-origin": "*" });
+      return res.end(fotoSvg(Number(ft[1])));
+    }
+    const bh = path.match(/^\/media\/.*bahan-(\d+)\.svg$/);
+    if (bh) {
+      res.writeHead(200, { "content-type": "image/svg+xml", "access-control-allow-origin": "*" });
+      return res.end(bahanSvg(Number(bh[1])));
     }
     /* Logo tiruan: lebar (4:1), persegi, dan tinggi (2:3). */
     const lg = path.match(/^\/media\/.*logo-(\d+)\.svg$/);
