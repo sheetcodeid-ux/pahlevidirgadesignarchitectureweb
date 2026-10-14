@@ -501,6 +501,10 @@ const dokumenAdmin = Object.fromEntries(
   }))]),
 );
 const komentarAdmin = {
+  /* Komentar terakhir dari KLIEN = "perlu dibalas" di papan presentasi. */
+  "k1-dok-1": [
+    { id: "c0", documentId: "k1-dok-1", author: "klien", body: "Kamar mandi tamu bisa dipindah ke dekat teras belakang?", createdAt: hariLalu(1, 10) },
+  ],
   "k1-dok-2": [
     { id: "c1", documentId: "k1-dok-2", author: "klien", body: "Jendela samping tolong diperbesar, supaya dapur lebih terang.", createdAt: hariLalu(3, 14) },
     { id: "c2", documentId: "k1-dok-2", author: "staf", body: "Baik, kami revisi minggu ini.", createdAt: hariLalu(2, 9) },
