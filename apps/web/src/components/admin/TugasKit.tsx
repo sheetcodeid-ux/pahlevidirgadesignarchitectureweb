@@ -806,7 +806,7 @@ function Disposisi({
       <div className="rbg__tindak">
         {maju && t.status !== "menunggu_klien" && (
           <Tombol ukuran="medium" jenis="primary" onClick={() => onPindah(t, maju.nilai)}>
-            Teruskan ke {maju.label} →
+            {maju.nilai === "menunggu_klien" ? "Kirim ke klien →" : `Teruskan ke ${maju.pelat} →`}
           </Tombol>
         )}
         {t.status === "menunggu_klien" && (
