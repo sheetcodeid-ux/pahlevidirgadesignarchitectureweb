@@ -913,6 +913,10 @@ export interface Tugas {
   status: string;
   dueDate?: string | null;
   sortOrder: number;
+  /** Kapan dibuat dan terakhir diubah — riwayat Lembar Disposisi dan
+      hitungan "selesai 7 hari terakhir" di halaman Tugas. */
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const daftarTugas = () => panggil<Tugas[]>("/admin/tasks");

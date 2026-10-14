@@ -13,6 +13,8 @@ interface Row {
   status: string;
   due_date: string | null;
   sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 function rowToTask(row: Row): ProjectTask {
@@ -27,6 +29,8 @@ function rowToTask(row: Row): ProjectTask {
     status: row.status,
     dueDate: row.due_date,
     sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -34,7 +38,8 @@ function rowToTask(row: Row): ProjectTask {
 export async function listAll(sql: Sql): Promise<ProjectTask[]> {
   const rows = await sql<Row[]>`
     select t.id, t.project_id, p.title as project_title, t.title, t.stage,
-           t.assignee_id, m.name as assignee_name, t.status, t.due_date, t.sort_order
+           t.assignee_id, m.name as assignee_name, t.status, t.due_date, t.sort_order,
+           t.created_at, t.updated_at
     from public.project_tasks t
     join public.projects p on p.id = t.project_id
     left join public.team_members m on m.id = t.assignee_id
@@ -45,7 +50,8 @@ export async function listAll(sql: Sql): Promise<ProjectTask[]> {
 export async function listForProject(sql: Sql, projectID: string): Promise<ProjectTask[]> {
   const rows = await sql<Row[]>`
     select t.id, t.project_id, t.title, t.stage,
-           t.assignee_id, m.name as assignee_name, t.status, t.due_date, t.sort_order
+           t.assignee_id, m.name as assignee_name, t.status, t.due_date, t.sort_order,
+           t.created_at, t.updated_at
     from public.project_tasks t
     left join public.team_members m on m.id = t.assignee_id
     where t.project_id = ${projectID}::uuid

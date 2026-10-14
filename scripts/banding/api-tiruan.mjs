@@ -606,7 +606,15 @@ const JUDUL_TUGAS = {
   finish: ["Serah terima gambar", "Kunjungan akhir"],
   pelunasan: ["Terbitkan tagihan pelunasan"],
 };
-const TIM = ["Dirga", "Sari Ningsih", "Bima", null];
+/* PIC menunjuk anggota tim tiruan SUNGGUHAN (id + nama), seperti join
+   team_members di Worker — pemilih PIC di Lembar Disposisi butuh id-nya. */
+const TIM = ["t1", "t2", "t3", null];
+/* Status di tahap berjalan dibuat beragam supaya keempat baki di halaman
+   Tugas punya isi: selesai, ke klien / review, berjalan, belum mulai. */
+const STATUS_KINI = [
+  ["selesai", "menunggu_klien", "berjalan", "review_internal", "belum_mulai"],
+  ["selesai", "review_internal", "berjalan", "berjalan", "belum_mulai"],
+];
 const tugasAdmin = Object.fromEntries(
   proyekAdmin.map((p, i) => {
     const urut = ["proposal", "deal_kontrak", "dp_50", "desain_1", "desain_2", "finish", "pelunasan"];
@@ -616,17 +624,25 @@ const tugasAdmin = Object.fromEntries(
       (JUDUL_TUGAS[tahap] ?? []).forEach((judul, j) => {
         const d = new Date();
         d.setDate(d.getDate() + (t - kini) * 12 + j * 3 - 4);
+        const status = t < kini ? "selesai" : t === kini ? (STATUS_KINI[i % 2][j] ?? "belum_mulai") : "belum_mulai";
+        const pic = TIM[(i + t + j) % TIM.length];
+        const dibuat = new Date(d.getTime() - 21 * 864e5);
+        /* Yang selesai "diubah" sehari sebelum tenggatnya (tidak pernah di
+           masa depan); yang lain dua hari sesudah dibuat. */
+        const diubah = new Date(Math.min(Date.now() - (i + j + 1) * 36e5, d.getTime() - (status === "selesai" ? 864e5 : -2 * 864e5 + 19 * 864e5)));
         daftar.push({
           id: `${p.id}-tugas-${t}-${j}`,
           projectId: p.id,
           projectTitle: p.title,
           title: judul,
           stage: tahap,
-          assigneeId: null,
-          assigneeName: TIM[(i + t + j) % TIM.length],
-          status: t < kini ? "selesai" : t === kini ? (j < 2 ? "selesai" : j === 2 ? "berjalan" : "belum_mulai") : "belum_mulai",
+          assigneeId: pic,
+          assigneeName: timAdmin.find((x) => x.id === pic)?.name ?? null,
+          status,
           dueDate: d.toISOString().slice(0, 10),
           sortOrder: j,
+          createdAt: dibuat.toISOString(),
+          updatedAt: diubah.toISOString(),
         });
       });
     });
@@ -1247,7 +1263,8 @@ function tulis(metode, path, badan) {
       const id = `${tb[1]}-tugas-baru-${Date.now()}`;
       (tugasAdmin[tb[1]] ??= []).push({ id, projectId: tb[1], projectTitle: p?.title, title: badan.title,
         stage: badan.stage ?? null, assigneeId: badan.assigneeId ?? null, assigneeName: orang?.name ?? null,
-        status: "belum_mulai", dueDate: badan.dueDate ?? null, sortOrder: 99 });
+        status: "belum_mulai", dueDate: badan.dueDate ?? null, sortOrder: 99,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       return { id };
     }
     const tu = path.match(/^\/api\/v1\/admin\/tasks\/([^/?]+)$/);
@@ -1256,7 +1273,9 @@ function tulis(metode, path, badan) {
         const i = daftar.findIndex((t) => t.id === tu[1]);
         if (i < 0) continue;
         if (metode === "DELETE") { daftar.splice(i, 1); return { deleted: true }; }
-        Object.assign(daftar[i], badan);
+        Object.assign(daftar[i], badan, { updatedAt: new Date().toISOString() });
+        /* Seperti join team_members di Worker: nama PIC ikut id-nya. */
+        if ("assigneeId" in badan) daftar[i].assigneeName = timAdmin.find((x) => x.id === badan.assigneeId)?.name ?? null;
         return { updated: true };
       }
       return { galat: 404 };

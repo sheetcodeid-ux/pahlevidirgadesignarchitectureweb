@@ -151,7 +151,8 @@ function susunNotifikasi(
         detail: `${t.title}${t.projectTitle ? ` — ${t.projectTitle}` : ""}`,
         waktu: t.dueDate ? tanggal(t.dueDate) : undefined,
         tanggal: t.dueDate ?? undefined,
-        ke: "/admin/list-kerjaan",
+        /* Langsung ke lembar disposisinya di rak baki. */
+        ke: `/admin/list-kerjaan?tugas=${encodeURIComponent(t.id)}`,
       })),
     ...testimoni
       /* "menunggu", bukan "pending": enum `testimonial_status`. Dengan

@@ -668,6 +668,10 @@ export interface ProjectTask {
   status: string;
   dueDate?: string | null;
   sortOrder: number;
+  /** Kapan tugas dibuat dan terakhir diubah (trigger `touch_updated_at`).
+      Riwayat di Lembar Disposisi dan hitungan "selesai 7 hari terakhir". */
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProjectTaskInput {
