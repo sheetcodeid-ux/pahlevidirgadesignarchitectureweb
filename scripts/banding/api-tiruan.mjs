@@ -227,12 +227,32 @@ const pesanAdmin = [
     "Kami sudah menemukan kontraktor lain, terima kasih atas waktunya."],
   ["Clara Hartono", "clara.hartono@gmail.com", "0812 9900 1122", "residential", "Rp500 jt – Rp1 M", "contacted", 15, 10,
     "Kami tinggal di Jakarta dan membangun rumah untuk orang tua di Pontianak. Apakah koordinasinya bisa dilakukan jarak jauh?"],
+  /* Sebelas ke atas: bulan-bulan sebelumnya, dengan bentuk data yang memang
+     ada di produksi — jenis kosong (form lama membuangnya), anggaran
+     berbahasa Inggris, angka mentah, dan baris lokasi tapak di depan pesan. */
+  ["Agus Salim", "agus.salim@gmail.com", "0896 1200 4455", "coffeeshop", "Di bawah Rp 500 juta", "new", 25, 20,
+    "Lokasi tapak: Jl. Tanjungpura, Pontianak\n\nKami punya ruko satu lantai 6 x 15 m dan ingin dijadikan kedai kopi dengan bar terbuka ke jalan. Bisa bantu dari konsep sampai gambar kerja?"],
+  ["Shinta Maharani", "shinta.m@gmail.com", "0813 5522 7788", null, "Rp 500 million – 1,5 billion", "contacted", 40, 15,
+    "Site location: Kubu Raya\n\nWe are planning a two-storey family house on a 15 x 30 m lot. Could the studio send a portfolio and an estimate of the design fee?"],
+  ["Budi Hartanto", "budi.h@hartantogroup.co.id", "0811 5600 300", "commercial", "Rp 1,5 – 5 miliar", "qualified", 55, 11,
+    "Lokasi tapak: Jl. Ahmad Yani, Pontianak\n\nKantor perusahaan tiga lantai dengan ruang pamer di lantai dasar. Kami ingin bangunan yang hemat energi dan tetap terang tanpa banyak lampu di siang hari."],
+  ["Wulan Sari", "wulan.sari@gmail.com", "", "residential", "500000000", "closed", 70, 9,
+    "Rumah tinggal satu lantai untuk pensiun, tiga kamar, dengan halaman yang cukup untuk berkebun."],
+  ["Rudi Gunawan", "rudi.gunawan@yahoo.com", "0852 4433 1100", "renovation", "Belum tahu", "new", 95, 16,
+    "Lokasi tapak: Singkawang\n\nRumah toko warisan keluarga yang ingin diperbaiki tampak depannya. Belum tahu anggarannya, ingin konsultasi dulu."],
+  ["Kopi Kenangan Senja", "halo@kopisenja.id", "0812 7788 9900", "coffeeshop", "Rp 500 juta – 1,5 miliar", "qualified", 96, 13,
+    "Kami ingin membuka cabang ketiga dengan kapasitas 80 kursi dan area roastery yang terlihat dari ruang duduk."],
+  ["Teguh Prasetyo", "teguh.p@outlook.com", "0857 6612 0098", "landscape", "Di atas Rp 5 miliar", "closed", 99, 10,
+    "Lanskap kawasan perumahan seluas 4 hektar, termasuk taman pusat dan jalur pejalan kaki."],
 ].map(([name, email, phone, projectType, budgetRange, status, mundur, jam, message], i) => {
   const d = new Date();
   d.setDate(d.getDate() - mundur);
   d.setHours(jam, (i * 17) % 60, 0, 0);
-  return { id: `q${i + 1}`, name, email, phone: phone || undefined, projectType, budgetRange, message, status, createdAt: d.toISOString() };
+  return { id: `q${i + 1}`, name, email, phone: phone || undefined, projectType: projectType ?? undefined, budgetRange, message, status, createdAt: d.toISOString() };
 });
+/* KPI membaca sepuluh pesan yang pertama saja, supaya angka lead kuartal di
+   halaman KPI tidak berubah karena pesan contoh bulan-bulan sebelumnya. */
+const pesanKpi = pesanAdmin.slice(0, 10);
 
 /* Paket layanan — isi awalnya sama dengan migrasi 20260929000025, supaya
    beranda yang dibangun dari API tiruan identik dengan yang tayang. */
@@ -926,7 +946,7 @@ function kpiTiruan() {
   const perBulan = [0, 1, 2].map((i) => { const d = new Date(awalK); d.setMonth(d.getMonth() + i); return d; })
     .filter((d) => d <= new Date())
     .map((d) => ({ bulan: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, jumlah: 0 }));
-  for (const x of pesanAdmin) {
+  for (const x of pesanKpi) {
     const b = perBulan.find((m) => m.bulan === bln(x.createdAt)) ?? perBulan[perBulan.length - 1];
     b.jumlah += 1;
   }
@@ -940,8 +960,8 @@ function kpiTiruan() {
     margin: { rata: tk ? ((tk - tb) / tk) * 100 : null, proyek: margins.length,
       dibawah: [...margins, { projectId: "k6", title: "Renovasi Dapur Bu Ratna", kontrak: 18_000_000, biaya: 13_500_000, margin: 25 }]
         .filter((m) => m.margin < 35).sort((a, b) => a.margin - b.margin) },
-    lead: { kuartalIni: pesanAdmin.length, ditindaklanjuti: pesanAdmin.filter((x) => ["contacted", "qualified"].includes(x.status)).length,
-      status: Object.fromEntries(["new", "contacted", "qualified", "closed"].map((st) => [st, pesanAdmin.filter((x) => x.status === st).length])),
+    lead: { kuartalIni: pesanKpi.length, ditindaklanjuti: pesanKpi.filter((x) => ["contacted", "qualified"].includes(x.status)).length,
+      status: Object.fromEntries(["new", "contacted", "qualified", "closed"].map((st) => [st, pesanKpi.filter((x) => x.status === st).length])),
       perBulan },
     signature: { jumlah: sig.length, proyek: sig.map((p) => ({ projectId: p.id, title: p.title, tier: paketAdmin.find((t) => t.id === p.tierId).name })) },
     cadangan: { saldo, keluarPerBulan, bulanBerdata, bulan: saldo / keluarPerBulan, bulanan },

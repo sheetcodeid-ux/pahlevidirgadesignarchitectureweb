@@ -186,7 +186,7 @@ const jsonLd = [
             </div>
             <div class="bidang" data-bidang="pesan">
               <label for="f-pesan"><span>Ceritakan</span><span class="wajib">*</span></label>
-              <textarea class="isian" id="f-pesan" name="pesan" placeholder="What is the site like? What is the part you are unsure about?"></textarea>
+              <textarea class="isian" id="f-pesan" name="pesan" placeholder="Seperti apa tapaknya? Bagian mana yang masih membuat ragu?"></textarea>
               <p class="bantu" data-pesan>Bagian brief yang canggung justru bagian yang berguna.</p>
             </div>
 
@@ -561,7 +561,9 @@ const jsonLd = [
       const data = new FormData(form);
       try {
         // Lokasi belum punya kolomnya sendiri di API, jadi ia ditulis sebagai
-        // baris pertama pesan dengan label yang jelas — bukan dibuang.
+        // baris pertama pesan dengan label yang jelas — bukan dibuang. Lembar
+        // brief di Pesan Masuk membaca baris ini (juga bentuk lamanya,
+        // "Site location:") dan memindahkannya ke isian Lokasi tapak.
         const lokasi = String(data.get("lokasi") ?? "").trim();
         const pesan = String(data.get("pesan") ?? "").trim();
         await submitInquiry({
@@ -570,7 +572,7 @@ const jsonLd = [
           phone: String(data.get("wa") ?? "").trim() || undefined,
           projectType: String(data.get("jenis") ?? "") || undefined,
           budgetRange: String(data.get("anggaran") ?? "") || undefined,
-          message: lokasi ? `Site location: ${lokasi}\n\n${pesan}` : pesan,
+          message: lokasi ? `Lokasi tapak: ${lokasi}\n\n${pesan}` : pesan,
           turnstileToken: String(data.get("cf-turnstile-response") ?? ""),
           website: String(data.get("website") ?? ""),
         });

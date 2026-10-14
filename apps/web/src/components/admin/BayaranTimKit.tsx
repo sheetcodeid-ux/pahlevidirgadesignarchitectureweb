@@ -43,6 +43,7 @@ import { keteranganFee, unduhSlipGaji } from "../../lib/pdfProyek";
 import { terbilang } from "../../lib/terbilang";
 import { BULAN, BULAN_PENDEK } from "./frame25";
 import { DialogBayar, SYARAT, type PilihanBayar } from "./timProyekKit";
+import { nomorWa, tampilWa } from "../../lib/telepon";
 
 /* =============================================================================
    Bayaran Tim — MEJA GAJI.
@@ -88,20 +89,6 @@ function nomorAmplop(nama: string, period: string): string {
   return `GJ-${period.slice(2, 4)}${period.slice(5, 7)}-${inisial}`;
 }
 
-/** Nomor Indonesia untuk wa.me: "0812-3456-7890" / "+62 812…" → "62812…". */
-export function nomorWa(telepon: string | null | undefined): string | null {
-  const d = (telepon ?? "").replace(/\D/g, "");
-  if (d.length < 9) return null;
-  if (d.startsWith("62")) return d;
-  if (d.startsWith("0")) return `62${d.slice(1)}`;
-  if (d.startsWith("8")) return `62${d}`;
-  return d;
-}
-/** "6281312345678" → "+62 813-1234-5678", untuk dibaca, bukan untuk dikirim. */
-function tampilWa(n: string): string {
-  const s = n.slice(2);
-  return `+62 ${s.slice(0, 3)}-${s.slice(3, 7)}-${s.slice(7)}`;
-}
 
 function teksWa(slip: SlipGaji, namaBulan: string): string {
   const baris = [`Slip gaji ${namaBulan} — ${slip.name}`, ""];

@@ -13,6 +13,7 @@ import { daftarLembar, lembarUntuk } from "../../lib/navAdmin";
 import { AreaGulir, Kosong as KosongKit, RangkaBaris } from "../kit/Tampilan";
 import type { BarisNotifikasi } from "../../lib/notifikasi";
 import { kepalaHari, waktuButir } from "./linimasaNotif";
+import { nomorAgenda } from "../../lib/nomorDokumen";
 
 /* =============================================================================
    Panel di kepala halaman — tombol Pesan (surat pengantar) dan notifikasi
@@ -110,28 +111,6 @@ function Rangka() {
 /* --- Pesan: SURAT PENGANTAR DI ATAS TUMPUKAN ------------------------------ */
 
 const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-
-/** Nomor agenda surat masuk SM-YYMM-NN: urutan surat itu di antara SEMUA
-    pesan yang masuk pada bulan yang sama, menurut waktu masuknya — nomor
-    yang diturunkan dari data, seperti BKM/BKK di Kas Studio, bukan nomor
-    karangan. Dihitung dari daftar lengkap, jadi surat yang sudah dibaca ikut
-    memakan nomornya. */
-function nomorAgenda(semua: Pesan[]): Map<string, string> {
-  const hasil = new Map<string, string>();
-  const perBulan = new Map<string, Pesan[]>();
-  for (const p of semua) {
-    const d = new Date(p.createdAt);
-    const k = `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}`;
-    perBulan.set(k, [...(perBulan.get(k) ?? []), p]);
-  }
-  for (const [k, isi] of perBulan) {
-    isi
-      .slice()
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-      .forEach((p, i) => hasil.set(p.id, `SM-${k}-${String(i + 1).padStart(2, "0")}`));
-  }
-  return hasil;
-}
 
 const jenisPesan = (p: Pesan) => (p.projectType ? (CATEGORY_LABELS as Record<string, string>)[p.projectType] ?? p.projectType : null);
 

@@ -6,7 +6,7 @@ import { checkInquiry, ValidationError } from "../lib/validate";
 import { verifyTurnstile } from "../lib/turnstile";
 import { hashIP } from "../lib/ipHash";
 import { sendInquiryNotification } from "../lib/mailer";
-import { VALID_CATEGORIES } from "../types";
+import { jenisDariForm } from "../lib/jenisForm";
 
 export const inquiries = new Hono<{ Bindings: Env }>();
 
@@ -65,7 +65,7 @@ inquiries.post("/inquiries", async (c) => {
     return c.json({ error: { status: 403, message: "verifikasi anti-bot gagal" } }, 403);
   }
 
-  const projectType = body.projectType && VALID_CATEGORIES.has(body.projectType) ? body.projectType : null;
+  const projectType = jenisDariForm(body.projectType);
 
   const ipHash = await hashIP(ip, c.env.IP_HASH_SALT);
 
