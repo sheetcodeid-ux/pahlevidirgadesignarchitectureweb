@@ -601,18 +601,25 @@
 .ppr__stempel.is-disetujui,
 .ppr__stempel.is-final { color: var(--ppr-cetak); }
 .ppr__stempel.is-draft { border-style: dashed; }
-/* Muka pendek (≤ 146px): isi sebaris di atas, stempel kecil di bawah.
-   Ambangnya dari ukuran: isi bertumpuk 14 + 58 + celah + stempel ±50 +
-   13 = ±141. Diuji pada muka 88px (alur: "muka pendek"). Blok ini HARUS di
-   bawah aturan dasar .ppr__stempel — kekhususannya sama, jadi yang belakangan
-   menang; di atasnya, posisi dan miringnya diam-diam tidak pernah berlaku. */
-@container muka (max-height: 146px) {
+/* Muka pendek, dua tingkat. Blok ini HARUS di bawah aturan dasar
+   .ppr__stempel — kekhususannya sama, jadi yang belakangan menang; di
+   atasnya, posisi dan miringnya diam-diam tidak pernah berlaku (jebakan #82).
+   Kueri ukuran wadah membaca KOTAK ISI: muka punya padding atas 14 + garis
+   1+1, jadi ambang di sini = tinggi muka − 16.
+   Muka ≤ 146px (isi ≤ 130): isi muka sebaris di atas (14 + 24), stempel tetap
+   utuh dengan baris nomor + tanggal, miring 9° (±49 tinggi) — perlu muka
+   ±109px, jadi muka 1440x790 (128px) masih utuh.
+   Muka ≤ 110px (isi ≤ 94): stempel kecil tanpa baris nomor (nomornya tetap di
+   kop gambar), ±80 × 19 miring 5° = ±26 tinggi — muat bahkan pada muka 88px
+   (dua baris lembar di 1300x760). Diuji alur "muka pendek" dan audit
+   tumpang-tindih. */
+@container muka (max-height: 130px) {
   .ppr__mukaisi { flex-direction: row; justify-content: center; gap: 6px; padding-inline: 8px; }
   .ppr__mukaisi small { align-self: center; }
   .ppr__gel { width: 52%; height: 24px; }
-  /* Stempel kecil tanpa baris nomor (nomornya tetap di kop gambar):
-     ±80 × 19, miring 5° = ±26 tinggi — muat di bawah isi sebaris (14 + 24)
-     bahkan pada muka 88px (dua baris lembar di 1300x760). */
+  .ppr__stempel { --ppr-miring: -9deg; }
+}
+@container muka (max-height: 94px) {
   .ppr__stempel { right: 12px; bottom: 13px; padding: 2px 6px; --ppr-miring: -5deg; }
   .ppr__stempel b { font-size: 9px; line-height: 11px; letter-spacing: 0.1em; }
   .ppr__stempel small { display: none; }
