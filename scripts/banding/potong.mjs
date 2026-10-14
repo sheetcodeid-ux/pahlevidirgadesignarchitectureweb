@@ -78,13 +78,25 @@ for (const h of halaman) {
         const kiri = Math.min(...rr.map((x) => x.left)), kanan = Math.max(...rr.map((x) => x.right));
         const atas = Math.min(...rr.map((x) => x.top)), bawah = Math.max(...rr.map((x) => x.bottom));
         const teks = n.textContent.trim().slice(0, 30);
-        /* Meluber: keluar dari kartu/benda terdekat walau tidak dipotong. */
+        /* Meluber: keluar dari kartu/benda terdekat walau tidak dipotong.
+           Teks yang sudah DIPOTONG kotak di dalam kartu (elipsis yang sah,
+           atau leluhur ber-overflow hidden yang kotaknya sendiri di dalam
+           kartu) tidak meluber — Range tetap melaporkan bagian yang
+           tersembunyi (jebakan #36). Pemeriksaan "terpotong" di bawah yang
+           menilai pemotongan itu. */
         const kartu = el.closest(kartuSel);
         if (kartu) {
           const k = kartu.getBoundingClientRect();
-          let gulir = false;
-          for (let a = el; a && a !== kartu; a = a.parentElement) if (/(auto|scroll)/.test(getComputedStyle(a).overflowX)) gulir = true;
-          if (!gulir && (kiri < k.left - 1 || kanan > k.right + 1)) { out.add(`meluber ${nama(el)}: ${teks} ⊄ ${nama(kartu)}`); continue; }
+          let gulir = false, terpotongDiDalam = false;
+          for (let a = el; a && a !== kartu; a = a.parentElement) {
+            const ac = getComputedStyle(a);
+            if (/(auto|scroll)/.test(ac.overflowX)) gulir = true;
+            if (/(hidden|clip)/.test(ac.overflowX)) {
+              const ka = a.getBoundingClientRect();
+              if (ka.left >= k.left - 1 && ka.right <= k.right + 1) terpotongDiDalam = true;
+            }
+          }
+          if (!gulir && !terpotongDiDalam && (kiri < k.left - 1 || kanan > k.right + 1)) { out.add(`meluber ${nama(el)}: ${teks} ⊄ ${nama(kartu)}`); continue; }
         }
         /* Terpotong: dibandingkan dengan setiap leluhur pemotong. */
         const elipsisSah = cs.textOverflow === "ellipsis" && /^(block|inline-block|list-item|table-cell)$/.test(cs.display);
