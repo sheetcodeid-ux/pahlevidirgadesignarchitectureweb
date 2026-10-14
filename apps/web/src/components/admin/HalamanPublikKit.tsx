@@ -26,6 +26,7 @@ import {
   CaretLeft,
   CaretRight,
   CaretUp,
+  Check,
   CornersOut,
   DotsThree,
   Globe,
@@ -153,9 +154,13 @@ function pindahkan<T>(a: T[], dari: number, ke: number): T[] {
   return b;
 }
 
-/* Lingkaran spidol yang digambar tangan — elips yang sedikit tidak rapi dan
-   ujungnya melewati titik awal, seperti lingkaran sungguhan di bingkai slide. */
-const LINGKAR = "M50 3.5C77 2.2 97.6 13 97.2 49.4 96.8 84 76.4 97.4 49 96.6 21 95.8 2.6 83 3 49.2 3.4 18.4 20.4 4.6 56 4.2";
+/* Lingkaran spidol yang digambar tangan di SEKELILING bingkai slide —
+   persegi bersudut bulat yang sedikit tidak rapi, ujungnya melewati titik
+   awal. Bukan elips: elips selalu memotong sudut kotak, dan sudut bingkai
+   berisi nomor dan persen potongan (jebakan #70). Jalurnya di celah 8px
+   antara bingkai dan tepi kotak SVG, sudutnya ±3px di luar sudut bingkai. */
+const LINGKAR =
+  "M14 2.6C40 1.8 66 3.2 86 2.4Q97.6 2.2 97.8 13C98.4 40 97.2 64 97.8 86Q98 97.6 86.5 97.4C62 98.2 38 97 13.5 97.6Q2.4 97.8 2.2 86C1.8 60 3 36 2.4 13.8Q2.4 2.8 16 3.2L24 3.6";
 
 /* ---- Foto per jenis (galeri, material) ---------------------------------------------- */
 
@@ -579,7 +584,12 @@ function Meja({
   const [mengunggahSampul, setMengunggahSampul] = useState(false);
   const [halaman, setHalaman] = useState<Halaman>("data");
   const [halamanGerak, setHalamanGerak] = useState(0);
+  /* Dua sumber sorotan: menyentuh BENDA (slide, sampul, papan sampel) hanya
+     mengarsir denah; menyentuh DENAH menyalakan bendanya juga. Kalau satu
+     state, kursor yang sekadar lewat di atas deret slide menyalakan cincin
+     di kesepuluh slide. */
   const [sorotArah, setSorotArah] = useState<Zona | null>(null);
+  const [sorotDenah, setSorotDenah] = useState<Zona | null>(null);
   const [fokusZona, setFokusZona] = useState<Zona | null>(null);
   const [setelan, setSetelan] = useState<StudioSettings | null>(() => bacaCache<StudioSettings>("settings"));
   const [rasio, setRasio] = useState<Record<string, number>>({});
@@ -681,7 +691,7 @@ function Meja({
     galeri: { ada: daftarGaleri.length > 0, ket: daftarGaleri.length ? `Galeri · ${daftarGaleri.length} foto` : "Galeri — tidak tampil, belum ada foto" },
     kredit: { ada: true, ket: menyusul.length ? `Kredit · ${menyusul.length} tampil "${BELUM_ADA}"` : "Kredit · lengkap" },
   };
-  const sorot = sorotArah ?? fokusZona;
+  const sorot = sorotDenah ?? sorotArah ?? fokusZona;
 
   /* ---- Aksi ---------------------------------------------------------------- */
   async function gantiProyek(baru: string) {
@@ -910,7 +920,7 @@ function Meja({
     },
   ];
 
-  const kelasPapan = ["mjc__papan", diseret ? `is-seret-${diseret}` : "", sorot ? `is-sorot-${sorot}` : ""].filter(Boolean).join(" ");
+  const kelasPapan = ["mjc__papan", diseret ? `is-seret-${diseret}` : "", sorotDenah ? `is-sorot-${sorotDenah}` : ""].filter(Boolean).join(" ");
 
   return (
     <div className="mjc">
@@ -977,6 +987,7 @@ function Meja({
               memuat={menyimpan}
               ukuran="medium"
               jenis="primary"
+              kiri={adaPerubahan || menyimpan ? undefined : Check}
               disabled={!adaPerubahan || menyimpan}
               onClick={() => void simpan()}
               title={adaPerubahan ? `${berubah.length} isian ditulis pensil — simpan supaya jadi tinta` : "Semua isian sudah tinta"}
@@ -1137,7 +1148,8 @@ function Meja({
           menyusul={menyusul.length}
           zona={zona}
           sorot={sorot}
-          onSorot={setSorotArah}
+          sorotDenah={sorotDenah}
+          onSorot={setSorotDenah}
           onLompat={lompat}
           onFokus={fokusMasuk}
           onLepasFokus={fokusKeluar}
@@ -1498,17 +1510,19 @@ function DeretSlide({
                 )}
               </span>
               <span className={`mjc__ket${g.caption ? "" : " is-kosong"}`}>{g.caption || "tanpa keterangan"}</span>
+              {/* Di DALAM bingkai, supaya ikut terangkat saat slide dipilih atau
+                  disentuh — di luar bingkai, tepinya menyentuh nomor dan persen. */}
+              {sampul && (
+                <svg
+                  className={`mjc__lingkar${lingkarBaru ? " is-digambar" : ""}${pensilSampul ? " is-pensil" : ""}`}
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path className="mjc__lingkargaris" d={LINGKAR} pathLength={1} />
+                </svg>
+              )}
             </button>
-            {sampul && (
-              <svg
-                className={`mjc__lingkar${lingkarBaru ? " is-digambar" : ""}${pensilSampul ? " is-pensil" : ""}`}
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-              >
-                <path className="mjc__lingkargaris" d={LINGKAR} pathLength={1} />
-              </svg>
-            )}
           </li>
         );
       })}
@@ -1886,6 +1900,7 @@ function LembarData({
   menyusul,
   zona,
   sorot,
+  sorotDenah,
   onSorot,
   onLompat,
   onFokus,
@@ -1911,6 +1926,7 @@ function LembarData({
   menyusul: number;
   zona: Record<Zona, { ada: boolean; ket: string }>;
   sorot: Zona | null;
+  sorotDenah: Zona | null;
   onSorot: (z: Zona | null) => void;
   onLompat: (z: Zona) => void;
   onFokus: (e: RFocusEvent) => void;
@@ -1972,7 +1988,7 @@ function LembarData({
 
   return (
     <section
-      className={`mjc__lembar${sorot ? ` is-sorot-${sorot}` : ""}`}
+      className={`mjc__lembar${sorotDenah ? ` is-sorot-${sorotDenah}` : ""}`}
       aria-label="Lembar data karya"
       onFocusCapture={onFokus}
       onBlurCapture={onLepasFokus}

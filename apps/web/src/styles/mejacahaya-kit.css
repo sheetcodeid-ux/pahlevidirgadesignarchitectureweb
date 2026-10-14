@@ -672,6 +672,9 @@ button.mjc__slide:focus-visible { outline: 2px solid var(--kas-bidang); outline-
   left: -8px;
   top: -7px;
   width: calc(100% + 16px);
+  /* global.css menjepit svg tanpa atribut ukuran ke max-width 100% — tanpa
+     ini kotaknya 16px lebih sempit dan jalurnya masuk ke bingkai. */
+  max-width: none;
   height: calc(100% + 14px);
   overflow: visible;
   pointer-events: none;
@@ -1321,6 +1324,7 @@ button.mjc__slide:focus-visible { outline: 2px solid var(--kas-bidang); outline-
   border-radius: 6px;
   background: color-mix(in srgb, var(--kas-bidang) 3%, var(--kas-nilai));
 }
+.mjc__bagikan small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mjc__cuplik figcaption,
 .mjc__bagikan small {
   font-size: 8.5px;
@@ -1416,7 +1420,25 @@ button.mjc__slide:focus-visible { outline: 2px solid var(--kas-bidang); outline-
   .mjc__sampulkosong:disabled svg,
   .mjc__catbtn:disabled svg { animation: mjc-putar 900ms linear infinite; }
 }
+/* Cahaya meja memendar di sekeliling slide yang terangkat dari kaca. Di
+   slot (li), bukan di bingkai: bingkai yang terangkat ber-transform jadi
+   konteks tumpukan sendiri, dan z-index -1 di sana tergambar DI ATAS
+   latar bingkainya. */
+.mjc__slot:not(.is-kosong)::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: -1;
+  border-radius: 10px;
+  background: radial-gradient(closest-side, var(--kas-nilai) 62%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.mjc__slot.is-terpilih::before,
+.mjc__slot.is-diangkat::before { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .mjc__slot:not(.is-kosong):not(.is-diangkat):hover::before { opacity: 1; }
   /* Slide terangkat sedikit dari kaca saat disentuh. */
   .mjc__slot:not(.is-terpilih):not(.is-diangkat) button.mjc__slide:hover {
     transform: translateY(-2px);
@@ -1496,7 +1518,10 @@ button.mjc__slide:focus-visible { outline: 2px solid var(--kas-bidang); outline-
     padding: 12px;
     row-gap: 12px;
   }
-  .mjc__kop { flex-direction: column; align-items: stretch; }
+  /* Kolom tanpa bungkus: `flex-basis: 100%` dari lebar sedang di sini berarti
+     100% TINGGI, dan sisanya terlempar ke kolom kedua di luar papan. */
+  .mjc__kop { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+  .mjc__kopjudul { flex-basis: auto; padding-right: 40px; }
   .mjc__proyek h2 { font-size: 21px; line-height: 28px; }
   .mjc__pelat { flex-wrap: wrap; align-self: flex-start; max-width: 100%; }
   .mjc__simpan .k-tombol { width: 100%; }
