@@ -3,8 +3,8 @@
 
    Empat benda: RAK amplop (kiri), AMPLOP orang terpilih (bidang uang pejal,
    tutup segitiga + segel), BUKU UPAH per proyek, dan SLIP yang keluar dari
-   balik amplop. Dialog bayar dan `.sat__*` milik Satu Proyek (satu-kit.css,
-   dimuat halaman ini — jebakan #5).
+   balik amplop. Dialog bayar dan `.sat__*`/`.tim__*` milik `timProyekKit`
+   (timproyek-kit.css, dimuat halaman ini — jebakan #5).
 
    Amplop memakai token yang TIDAK berbalik tema (`--kas-bidang`, `--kas-ink`,
    `--kas-nilai`, `--brand-mint`, `--warn`) — warnanya sama di terang dan

@@ -2,14 +2,14 @@
 import KitLayout from "../../../layouts/KitLayout.astro";
 import { SatuProyekKit } from "../../../components/admin/SatuProyekKit";
 import { CAP_BUILD } from "../../../lib/capBuild";
-/* `.pro__pilih` (pemilih teks ber-<select>) milik halaman Semua Proyek
-   dipakai ulang untuk judul pemilih proyek, bukan disalin. */
+/* `.pro__pilih` (pemilih teks) milik `PilihTeks` — dipakai stempel tahap. */
 import "../../../styles/proyek-kit.css";
-import "../../../styles/satu-kit.css";
+/* Isi dialog Tugaskan / Bayar / Lingkup & tenggat (timProyekKit). */
+import "../../../styles/timproyek-kit.css";
+import "../../../styles/jadwal-kit.css";
 
-/* Halaman KETUJUH yang pindah ke kit (P4), mengikuti frame Figma
-   "22. Saving Plans": satu proyek, dilihat per tahap pipelinenya. Dibuka
-   dari tombol "Buka" di Semua Proyek dengan `?id=`. */
+/* Satu proyek sebagai JADWAL PELAKSANAAN PEKERJAAN: lembar time schedule
+   dengan kop gambar. Dibuka dari tombol "Buka" di Semua Proyek dengan `?id=`. */
 ---
 
 <KitLayout title="Satu Proyek" judul="Satu Proyek" remah={[{ label: "Proyek" }, { label: "Semua Proyek", href: "/admin/proyek" }, { label: "Satu Proyek" }]}>

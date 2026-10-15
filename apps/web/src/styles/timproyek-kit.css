@@ -1,0 +1,35 @@
+/* =============================================================================
+   Tim & bayaran proyek — bagian BERSAMA dari `timProyekKit.tsx`: sel tahap
+   bayaran (`SelTahap`, dipakai Bayaran Tim dan pratinjau Aturan Fee Tim) dan
+   isi dialog Bayar / Tugaskan / Lingkup & tenggat. Dimuat Satu Proyek,
+   Bayaran Tim, dan Aturan Fee Tim.
+
+   Tata letak Satu Proyek sendiri (frame 22) sudah dibuang — halaman itu kini
+   Jadwal Pelaksanaan, `jadwal-kit.css`.
+   ============================================================================= */
+
+.sat__redup { color: var(--text-muted); }
+
+.tim__tahap { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.tim__tahap small { font-size: var(--k-t11); color: var(--text-muted); white-space: nowrap; }
+.tim__tunggu { padding: 0; border: 0; background: none; cursor: pointer; }
+.tim__tunggu:hover .k-lencana { border-color: var(--border-strong); }
+.tim__tunggu:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+.tim__catatan {
+  max-width: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--warn-soft);
+  font-size: var(--k-t12);
+  line-height: 1.5;
+  color: var(--warn-ink);
+}
+.tim__hapus { margin-right: auto; }
+
+.sat__dialogisi { display: flex; flex-direction: column; gap: 16px; }
+.sat__dialogdua { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+@media (max-width: 40rem) {
+  .sat__dialogdua { grid-template-columns: minmax(0, 1fr); }
+}
