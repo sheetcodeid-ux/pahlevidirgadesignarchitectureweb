@@ -1790,9 +1790,7 @@ function Pembuka({ k }: { k: Kit }) {
       <article className="mjl__hal is-kanan is-pembuka" aria-label="Halaman 2 — tentang proyek">
         <p className="mjl__kicker">
           Tentang proyek
-          <em>
-            {k.paragraf.length} paragraf · {jumlahKata(k.teks("description"))} kata
-          </em>
+          <em title={`${jumlahKata(k.teks("description"))} kata`}>{k.paragraf.length} paragraf</em>
         </p>
         <label className={`mjl__kutip${k.pensil("summary") ? " is-pensil" : ""}${dicari("ringkasan")}`}>
           <span className="sr-only">Ringkasan — tampil di beranda, daftar karya, dan pencarian</span>
@@ -2383,7 +2381,7 @@ function Kredit({ k }: { k: Kit }) {
           <figcaption>
             <small>{DOMAIN}</small>
             <b>{judulCari}</b>
-            <span>{ketCari || "—"}</span>
+            <span title={ketCari || undefined}>{ketCari || "—"}</span>
             {k.urlSampul && k.potongBagikan.buang >= 0.02 && <em>foto dipotong {persen(k.potongBagikan.buang)}</em>}
           </figcaption>
         </figure>

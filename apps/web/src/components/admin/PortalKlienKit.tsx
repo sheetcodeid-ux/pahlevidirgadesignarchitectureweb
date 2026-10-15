@@ -13,20 +13,31 @@ import { IsianTanggal, IsianPanjang, Lampiran, PilihMenu } from "../kit/Formulir
 import { RequireAuth } from "./RequireAuth";
 import { ToastProvider, useToast } from "../kit/Toast";
 import { AlertDialog } from "../kit/Overlay";
-import { Icon } from "../ui/Icon";
 import { Tombol } from "../kit/Tombol";
 import { Isian } from "../kit/Isian";
 import { Gelembung } from "../kit/Item";
 import { GulirPesan, RangkaBaris } from "../kit/Tampilan";
 import { Ikon } from "../kit/Ikon";
-import { ArrowRight, CaretDown, ChatTeardropDots, CopySimple, Eye, FilePdf, FileText, Globe, Plus, Trash } from "../kit/ikon";
+import { Icon } from "../ui/Icon";
+import {
+  ArrowClockwise,
+  ArrowRight,
+  CaretDown,
+  ChatTeardropDots,
+  CopySimple,
+  Eye,
+  FilePdf,
+  FileText,
+  Globe,
+  Plus,
+  Trash,
+} from "../kit/ikon";
 import { PemutarSuaraKit, PerekamSuaraKit } from "../kit/Suara";
 import { formatDurasi } from "../ui/misc/VoiceNote";
 import { usePilihProyek } from "./pilihProyekKit";
 import { geraknya, Hitung } from "./hitung";
 import { kodeProyek } from "../../lib/nomorDokumen";
 import { CATEGORY_LABELS } from "../../lib/api";
-import { formatRupiahRingkas } from "../../lib/format";
 import {
   ambilBrief,
   ubahBrief,
@@ -58,51 +69,43 @@ import { tanya } from "../../lib/tanya";
 import { bukaLightbox } from "../../lib/lightbox";
 
 /* =============================================================================
-   Portal Klien = PAPAN PRESENTASI + LEMBAR TINJAUAN.
+   Portal Klien = MAP PRESENTASI KLIEN.
 
-   Semua yang dilihat klien lewat tautan /progres?t=… Di studio, gambar yang
-   diserahkan ke klien dipajang di PAPAN PRESENTASI (sesi pin-up): lembar
-   demi lembar digantung di REL dengan dua klip, disorot lampu rel, dan tiap
-   lembar akhirnya membawa CAP tanggapan klien. Halaman ini benda itu, di
-   papan hijau berjahit (`--kas-bidang`).
+   Semua yang dilihat klien lewat tautan /progres?t=… Di studio arsitek, gambar
+   yang diserahkan ke klien dibawa dalam MAP PRESENTASI: tas kulit beritsleting
+   yang dibuka di meja klien — di kanan lembar-lembar gambar, di sayap kiri
+   kartu nama studio dan kantong plastik berisi catatan asistensi, kerangka
+   acuan, dan kabar. Halaman ini benda itu.
 
-   1. KOP = PAPAN NAMA PROYEK — judul (sekaligus pemilih proyek) dan baris
-      pelat Pemilik · Lokasi · Jenis · Perencana (Info Studio, dibaca saja) ·
-      Jadwal (brief klien, atau tenggat final). Di kanan LINTASAN TAHAP yang
-      dilihat klien: enam stasiun, garis terisi sampai tahap kini, dan cincin
-      penanda yang meluncur saat fase diganti (sekaligus pengubah fase).
-   2. PAPAN PRESENTASI — kepala bermeter status (jumlah per cap, "perlu
-      dibalas"), lalu dinding kain tempat lembar digantung: REL aluminium
-      per baris, LAMPU REL per lembar (yang sedang ditinjau menyala, lembar
-      lain meredup), dua KLIP berkawat, dan lembar kertas dengan muka gambar
-      (gambar utuh, lembar PDF berbingkai, atau gelombang pesan suara),
-      STEMPEL tanggapan besar miring (status + nomor + tanggal cap =
-      `updatedAt`), AWAN REVISI merah di lembar yang diminta revisi, dan
-      KOP GAMBAR di kakinya: judul, nomor {KODE}-NN (urutan kirim), umur
-      keadaannya ("menunggu 4 hr"), dan jumlah komentar — merah kalau
-      komentar terakhir dari klien (perlu dibalas).
-   3. BRIEF KLIEN (anggaran besar, gaya, PITA JADWAL dengan penanda hari
-      ini, kebutuhan) dan KABAR KE KLIEN (linimasa tiga kabar terbaru).
-   4. LEMBAR di kanan — kertas putih tetap yang berganti menurut pilihan:
-      LEMBAR TINJAUAN satu dokumen (kop gambar No./Dikirim/Jenis/Ukuran,
-      pratinjau berbingkai dengan stempel dan awan revisi yang sama dengan
-      di papan, LUP saat disentuh tetikus, RAK CAP KARET yang sekaligus
-      pengubah status, catatan revisi klien, utas), KERANGKA ACUAN (brief,
-      disimpan hanya kolom yang berubah), KABAR, atau LEMBAR KIRIM.
-   5. KAKI — tautan portal: salin, buka seperti klien, buat ulang.
+   1. KOP di tutup map — nomor map, judul proyek (sekaligus pemilih), baris
+      Pemilik · Lokasi · Jenis · Perencana (Info Studio, dibaca saja) · Jadwal,
+      dan LINTASAN TAHAP yang dilihat klien (enam stasiun, sekaligus pengubah
+      fase).
+   2. LEMBAR GAMBAR besar — satu dokumen di atas tumpukan: bidang gambar
+      berbingkai rangkap (gambar utuh, lembar PDF, atau pesan suara) dengan
+      STEMPEL tanggapan dan AWAN REVISI, dan KOP GAMBAR di tepi kanan seperti
+      gambar kerja sungguhan: perencana, proyek, pemilik, judul gambar,
+      nomor lembar {KODE}-NN (urutan kirim), tanggal kirim, jenis/ukuran,
+      kotak STATUS (lima kotak centang — sekaligus pengubah status), dan
+      asistensi (jumlah komentar, merah kalau klien menunggu balasan).
+   3. TUMPUKAN — tab tiap lembar di bawah lembar besar: muka kecil, nomor,
+      keadaan, dan titik merah "perlu dibalas". Diklik = lembarnya DITARIK ke
+      atas tumpukan.
+   4. SAYAP KIRI — KARTU NAMA di celah sayap (tautan portal: salin, buka
+      seperti klien, buat ulang) dan KANTONG berindeks: Asistensi (utas
+      lembar yang terbuka), Kerangka acuan (brief, disimpan hanya kolom yang
+      berubah), Kabar (linimasa portal), Kirim (unggah banyak + rekam suara).
 
-   Lembar brief, kabar, dan kirim tetap terpasang selagi tersembunyi, supaya
-   brief yang setengah diketik atau rekaman yang belum dikirim tidak hilang
-   karena staf melirik lembar lain.
+   Isi kantong tetap terpasang selagi tersembunyi — brief yang setengah
+   diketik atau rekaman yang belum dikirim tidak hilang karena staf melirik
+   isi kantong lain.
 
    Gerak, hanya karena perbuatan (jebakan #74), seketika bila gerak
-   dikurangi: lembar yang dipilih TERBANG dari papan ke meja dan membesar
-   jadi lembar tinjauan (kartu brief/kabar juga); lampu rel berpindah ke
-   lembar itu; status diganti = STEMPEL MENGHANTAM pratinjau dan lembar di
-   papan (lingkar tinta, pratinjau tersentak), meter status ikut bergeser
-   dan berhitung; fase diganti = cincin penanda MELUNCUR dan garis terisi
-   memanjang; lembar baru JATUH dari rel lalu BERAYUN di klipnya sampai
-   diam. Disentuh tetikus, lembar di papan berayun sedikit menjauhi kursor.
+   dikurangi: lembar yang dipilih DITARIK dari tabnya ke atas tumpukan sambil
+   lembar lama turun kembali ke tumpukan; status diganti = stempel MENGHANTAM
+   dan kotak status tercentang; fase diganti = cincin MELUNCUR; lembar baru
+   DISELIPKAN ke map dari tepi kanan. Disentuh tetikus: tab lembar terangkat,
+   dan LUP pembesar mengikuti kursor di atas gambar.
    ============================================================================= */
 
 /* Sama persis dengan allowlist R2 di Worker API. Kalau berbeda, staf bisa
@@ -142,13 +145,20 @@ const STATUS: { nilai: string; label: string; cap: string; meter: string }[] = [
 ];
 const CAP = Object.fromEntries(STATUS.map((s) => [s.nilai, s])) as Record<string, (typeof STATUS)[number]>;
 const capDari = (status: string) => CAP[status] ?? { nilai: status, label: status, cap: status, meter: status };
-/* Meter di kepala papan: yang perlu tindakan lebih dulu. */
+/* Ringkasan tumpukan: yang perlu tindakan lebih dulu. */
 const URUT_METER = ["revisi_diminta", "menunggu_klien", "draft", "disetujui", "final"];
 
-type Pilihan = { jenis: "dok"; id: string } | { jenis: "brief" } | { jenis: "kabar" } | { jenis: "kirim" };
+type Kantong = "asistensi" | "acuan" | "kabar" | "kirim";
+const KANTONG: { k: Kantong; label: string }[] = [
+  { k: "asistensi", label: "Asistensi" },
+  { k: "acuan", label: "Kerangka acuan" },
+  { k: "kabar", label: "Kabar" },
+  { k: "kirim", label: "Kirim" },
+];
 
 const BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const HARI = 86_400_000;
+const LEMBUT = "cubic-bezier(0.22, 0.7, 0.2, 1)";
 const keTanggal = (iso: string) => new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
 const tanggal = (iso: string) => {
   const d = keTanggal(iso);
@@ -206,8 +216,8 @@ function lembarBawaan(d: DokumenProyek[]): DokumenProyek | null {
   );
 }
 
-/** Umur keadaan lembar untuk kop gambarnya. Status berganti = `updatedAt`
- *  bergeser, jadi "menunggu 4 hr" dihitung dari saat cap itu dibubuhkan. */
+/** Umur keadaan lembar. Status berganti = `updatedAt` bergeser, jadi
+ *  "menunggu 4 hr" dihitung dari saat cap itu dibubuhkan. */
 function umurLembar(d: DokumenProyek): { teks: string; nada: string } {
   const n = hariSejak(d.updatedAt);
   const lama = n === 0 ? "hari ini" : `${n} hr`;
@@ -244,7 +254,7 @@ function gelombang(id: string, n = 18): number[] {
  *  (r = 1,15 × setengah langkah), jadi garisnya tidak pernah keluar kotak. */
 function jalurAwan(w: number, h: number): string {
   const m = 5;
-  const langkah = 14;
+  const langkah = 16;
   const lw = w - 2 * m;
   const lh = h - 2 * m;
   if (lw < langkah || lh < langkah) return "";
@@ -277,7 +287,7 @@ function AwanRevisi() {
     return () => ro.disconnect();
   }, []);
   return (
-    <span ref={ref} className="ppr__awan" aria-hidden="true">
+    <span ref={ref} className="mpk__awan" aria-hidden="true">
       {uk && (
         <svg viewBox={`0 0 ${uk[0]} ${uk[1]}`} width={uk[0]} height={uk[1]}>
           <path d={jalurAwan(uk[0], uk[1])} />
@@ -287,22 +297,6 @@ function AwanRevisi() {
   );
 }
 
-/** Stempel tanggapan: status, nomor lembar, dan tanggal cap (`updatedAt`).
- *  `key` = status, jadi status yang berganti memasang stempel BARU — dan
- *  hanya stempel itu yang menghantam. */
-const stempel = (d: DokumenProyek, nomor: string, besar: boolean, tercap: boolean) => (
-  <span
-    key={`cap-${d.status}`}
-    className={`ppr__stempel is-${d.status}${besar ? " is-besar" : ""}${tercap ? " is-tercap" : ""}`}
-    aria-hidden="true"
-  >
-    <b>{capDari(d.status).cap}</b>
-    <small>
-      {nomor} · {tanggalCap(d.updatedAt)}
-    </small>
-  </span>
-);
-
 function Isi() {
   const { semua, asli, galat, id, pilih } = usePilihProyek();
 
@@ -310,21 +304,21 @@ function Isi() {
   if (!semua) return <Rangka />;
   if (!asli) {
     return (
-      <div className="ppr">
-        <p className="ppr__tanpa">
+      <div className="mpk">
+        <p className="mpk__tanpa">
           {id ? "Proyek ini tidak ditemukan — mungkin sudah dihapus." : "Belum ada proyek."}{" "}
           <a href="/admin/proyek">Buka Semua Proyek</a>
         </p>
       </div>
     );
   }
-  /* `key`: berpindah proyek memasang ulang seluruh papan, jadi tidak ada
-     sisa brief, lembar, atau kabar proyek sebelumnya yang sempat tergambar
-     di bawah judul proyek yang baru. */
-  return <Papan key={asli.id} proyek={asli} semua={semua} onPilih={pilih} />;
+  /* `key`: berpindah proyek memasang ulang seluruh map, jadi tidak ada sisa
+     brief, lembar, atau kabar proyek sebelumnya yang sempat tergambar di
+     bawah judul proyek yang baru. */
+  return <Map key={asli.id} proyek={asli} semua={semua} onPilih={pilih} />;
 }
 
-function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; onPilih: (id: string) => void }) {
+function Map({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; onPilih: (id: string) => void }) {
   const toast = useToast();
   const [brief, setBrief] = useState<BriefProyek | null>(() => bacaCache<BriefProyek>(`brief:${proyek.id}`));
   const [dokumen, setDokumen] = useState<DokumenProyek[] | null>(() =>
@@ -333,29 +327,28 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
   const [progres, setProgres] = useState<ProjectProgress | null>(() =>
     bacaCache<ProjectProgress>(`progres:${proyek.id}`),
   );
-  /* Nama studio untuk kolom Perencana — dibaca saja; kunci `settings` milik
-     Info Studio (jebakan #8). */
+  /* Nama studio untuk Perencana — dibaca saja; kunci `settings` milik Info
+     Studio (jebakan #8). */
   const [setelan, setSetelan] = useState<StudioSettings | null>(() => bacaCache<StudioSettings>("settings"));
-  /* Utas per lembar: jumlah komentar dan "perlu dibalas" di kop gambar
-     tiap lembar, sekaligus isi utas di lembar tinjauan. */
+  /* Utas per lembar: jumlah komentar dan "perlu dibalas" di tab tiap lembar,
+     sekaligus isi kantong Asistensi. */
   const [utas, setUtas] = useState<Record<string, KomentarDokumen[]>>({});
   const [briefBerubah, setBriefBerubah] = useState(0);
-  const [pilihan, setPilihan] = useState<Pilihan | null>(null);
-  /* Lembar yang statusnya baru berganti (stempelnya menghantam sekali) dan
-     yang baru diunggah (jatuh dan berayun sekali). */
+  const [pilihanDok, setPilihanDok] = useState<string | null>(null);
+  const [kantong, setKantong] = useState<Kantong | null>(null);
+  /* Lembar yang statusnya baru berganti (stempelnya menghantam sekali). */
   const [tercap, setTercap] = useState<string | null>(null);
-  const [baru, setBaru] = useState<string[]>([]);
-  /* Transisi meter dan lintasan tahap baru menyala sesudah perbuatan
+  /* Transisi ringkasan dan lintasan tahap baru menyala sesudah perbuatan
      pertama — tidak saat data segar menggantikan cache (jebakan #74). */
   const [bertindak, setBertindak] = useState(false);
   const [faseTiba, setFaseTiba] = useState<string | null>(null);
   const [antre, setAntre] = useState<{ selesai: number; total: number } | null>(null);
   const [judulKirim, setJudulKirim] = useState("");
   const [seret, setSeret] = useState(false);
-  const turunRef = useRef(false);
-  const dariRef = useRef<DOMRect | null>(null);
-  const mejaRef = useRef<HTMLDivElement>(null);
-  const kotakAyun = useRef(new WeakMap<Element, DOMRect>());
+  const gerakRef = useRef<{ jenis: "tarik"; dari: DOMRect | null; lama: HTMLElement | null } | { jenis: "selip" } | null>(null);
+  const alasRef = useRef<HTMLDivElement>(null);
+  const lapisRef = useRef<HTMLDivElement>(null);
+  const sayapRef = useRef<HTMLElement>(null);
   const waktu = useRef<number[]>([]);
   useEffect(() => () => waktu.current.forEach((t) => clearTimeout(t)), []);
   const nanti = (f: () => void, ms: number) => waktu.current.push(window.setTimeout(f, ms));
@@ -367,7 +360,7 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
         setBrief(d);
       })
       .catch(() => setBrief((l) => l ?? {}));
-    muatDokumen();
+    void muatDokumen();
     ambilProgress(proyek.id)
       .then((d) => {
         tulisCache(`progres:${proyek.id}`, d);
@@ -380,117 +373,130 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proyek.id]);
 
-  function muatDokumen(): Promise<DokumenProyek[] | null> {
-    return daftarDokumen(proyek.id)
-      .then((d) => {
-        tulisCache(`dokumen:${proyek.id}`, d);
-        setDokumen(d);
-        return d;
-      })
-      .catch(() => {
-        setDokumen((l) => l ?? []);
-        return null;
-      });
+  async function muatDokumen(): Promise<DokumenProyek[] | null> {
+    try {
+      const d = await daftarDokumen(proyek.id);
+      tulisCache(`dokumen:${proyek.id}`, d);
+      setDokumen(d);
+      return d;
+    } catch {
+      setDokumen((l) => l ?? []);
+      return null;
+    }
   }
 
-  function muatUtas(documentId: string): Promise<void> {
-    return daftarKomentarDokumen(documentId)
-      .then((k) => setUtas((u) => ({ ...u, [documentId]: k })))
-      .catch(() => setUtas((u) => (u[documentId] ? u : { ...u, [documentId]: [] })));
+  async function muatUtas(documentId: string): Promise<void> {
+    try {
+      const k = await daftarKomentarDokumen(documentId);
+      setUtas((u) => ({ ...u, [documentId]: k }));
+    } catch {
+      setUtas((u) => (u[documentId] ? u : { ...u, [documentId]: [] }));
+    }
   }
-  /* Satu permintaan per lembar, serentak — papan proyek berisi belasan
-     lembar paling banyak. */
+  /* Satu permintaan per lembar, serentak — map proyek berisi belasan lembar
+     paling banyak. */
   const idDokumen = (dokumen ?? []).map((d) => d.id).join(",");
   useEffect(() => {
     for (const d of dokumen ?? []) void muatUtas(d.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idDokumen]);
 
-  /* Pilihan bawaan dihitung, bukan disimpan, sampai staf memilih sendiri:
-     lembar yang paling perlu dilihat, atau brief kalau papan masih kosong. */
-  const bawaan: Pilihan | null = dokumen
-    ? (() => {
-        const l = lembarBawaan(dokumen);
-        return l ? { jenis: "dok", id: l.id } : { jenis: "brief" };
-      })()
-    : null;
-  const kini: Pilihan | null =
-    pilihan && (pilihan.jenis !== "dok" || dokumen?.some((d) => d.id === pilihan.id)) ? pilihan : bawaan;
-  const dokKini = kini?.jenis === "dok" ? dokumen?.find((d) => d.id === kini.id) ?? null : null;
-  const kunciKini = kini ? (kini.jenis === "dok" ? `dok:${kini.id}` : kini.jenis) : "";
+  /* Lembar di atas tumpukan dihitung, bukan disimpan, sampai staf memilih
+     sendiri: yang paling perlu dilihat. */
+  const daftar = dokumen ?? [];
+  const bawaan = lembarBawaan(daftar);
+  const dokKini = (pilihanDok ? daftar.find((d) => d.id === pilihanDok) : null) ?? bawaan;
+  const kantongKini: Kantong = kantong ?? (dokumen && daftar.length === 0 ? "acuan" : "asistensi");
 
-  /** `dari`: benda yang diklik (lembar di papan, kartu brief/kabar) — lembar
-   *  tinjauan terbang dari kotak benda itu ke meja. */
-  function pilihLembar(p: Pilihan, dari?: Element | null) {
-    const k = p.jenis === "dok" ? `dok:${p.id}` : p.jenis;
-    if (k === kunciKini) return;
+  /** Menarik lembar ke atas tumpukan. `dari`: tab yang diklik — lembar besar
+   *  tumbuh dari kotak tab itu. Lembar lama disalin dan turun ke tumpukan. */
+  function tarik(id: string, dari?: Element | null) {
+    if (id === dokKini?.id) return;
     const sempit = matchMedia("(max-width: 1288px)").matches;
-    dariRef.current = geraknya() && !sempit && dari ? dari.getBoundingClientRect() : null;
-    turunRef.current = geraknya() && !dariRef.current;
-    setPilihan(p);
-    /* Di layar sempit lembar kanan ada di bawah papan: bawa ke sana. */
+    if (geraknya()) {
+      const lama = alasRef.current?.querySelector<HTMLElement>(":scope > .mpk__gambar") ?? null;
+      gerakRef.current = { jenis: "tarik", dari: !sempit && dari ? dari.getBoundingClientRect() : null, lama };
+      if (lama && lapisRef.current) {
+        /* Salinan lembar lama di lapisan tetap — React tidak pernah
+           merendernya, jadi tidak ada id ganda maupun state yang ikut. */
+        const r = lama.getBoundingClientRect();
+        const salin = lama.cloneNode(true) as HTMLElement;
+        salin.querySelectorAll("[id]").forEach((x) => x.removeAttribute("id"));
+        salin.removeAttribute("id");
+        salin.setAttribute("inert", "");
+        salin.classList.add("is-salinan");
+        salin.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;margin:0`;
+        lapisRef.current.appendChild(salin);
+        const a = salin.animate(
+          [
+            { transform: "none", opacity: 1 },
+            { transform: "translateY(46px) scale(0.94)", opacity: 0 },
+          ],
+          { duration: 460, easing: "cubic-bezier(0.4, 0, 0.7, 0.4)", fill: "forwards" },
+        );
+        const buang = () => salin.remove();
+        a.onfinish = buang;
+        a.oncancel = buang;
+      }
+    }
+    setPilihanDok(id);
+    /* Di layar sempit lembar besar ada di atas tumpukan tab: bawa ke sana. */
     if (sempit)
-      requestAnimationFrame(() => mejaRef.current?.scrollIntoView({ block: "start", behavior: geraknya() ? "smooth" : "auto" }));
+      requestAnimationFrame(() => alasRef.current?.scrollIntoView({ block: "start", behavior: geraknya() ? "smooth" : "auto" }));
   }
 
-  /* Lembar tinjauan TERBANG dari benda yang diklik: dimulai tepat di atas
-     kotak benda itu (diskalakan ke ukurannya), terangkat sedikit di tengah
-     jalan, lalu rebah selebar meja. Tanpa asal (papan ketik di layar sempit,
-     lembar kirim, unggahan) = diturunkan dari arah papan. */
+  /* Lembar yang baru ditarik tumbuh dari tabnya, terangkat sedikit di tengah
+     jalan, lalu rebah di atas tumpukan. Lembar yang baru diselipkan (unggahan)
+     masuk dari tepi kanan map. */
+  const kunciLembar = dokKini?.id ?? "";
   useLayoutEffect(() => {
-    const dari = dariRef.current;
-    const turun = turunRef.current;
-    dariRef.current = null;
-    turunRef.current = false;
-    if (!dari && !turun) return;
-    const meja = mejaRef.current;
-    const el = meja?.querySelector<HTMLElement>(":scope > .ppr__lembar:not([hidden])");
-    if (!meja || !el) return;
-    const ke = el.getBoundingClientRect();
-    if (dari && ke.width > 1 && ke.height > 1) {
-      const sx = dari.width / ke.width;
-      const sy = dari.height / ke.height;
-      const dx = dari.left - ke.left;
-      const dy = dari.top - ke.top;
-      meja.classList.add("is-terbang");
-      const a = el.animate(
+    const g = gerakRef.current;
+    gerakRef.current = null;
+    if (!g) return;
+    const el = alasRef.current?.querySelector<HTMLElement>(":scope > .mpk__gambar");
+    if (!el) return;
+    if (g.jenis === "selip") {
+      el.animate(
         [
-          { transformOrigin: "0 0", transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy}) rotate(-1.4deg)` },
-          {
-            transformOrigin: "0 0",
-            transform: `translate(${dx * 0.32}px, ${dy * 0.32 - 22}px) scale(${0.32 * sx + 0.68}, ${0.32 * sy + 0.68}) rotate(-0.5deg)`,
-            offset: 0.58,
-          },
-          { transformOrigin: "0 0", transform: "none" },
+          { transform: "translateX(70px) rotate(1.2deg)", opacity: 0 },
+          { transform: "none", opacity: 1 },
         ],
-        { duration: 640, easing: "cubic-bezier(0.3, 0.7, 0.2, 1)" },
+        { duration: 560, easing: LEMBUT },
       );
-      const lepas = () => meja.classList.remove("is-terbang");
-      a.onfinish = lepas;
-      a.oncancel = lepas;
       return;
     }
-    el.animate(
-      [{ transform: "translate(-22px, -10px) rotate(-1.2deg) scale(0.975)", opacity: 0.4 }, { transform: "none", opacity: 1 }],
-      { duration: 380, easing: "cubic-bezier(0.22, 0.7, 0.2, 1)" },
-    );
-  }, [kunciKini]);
+    const ke = el.getBoundingClientRect();
+    if (g.dari && ke.width > 1 && ke.height > 1) {
+      const sx = g.dari.width / ke.width;
+      const sy = g.dari.height / ke.height;
+      const dx = g.dari.left - ke.left;
+      const dy = g.dari.top - ke.top;
+      el.animate(
+        [
+          { transformOrigin: "0 0", transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 1 },
+          {
+            transformOrigin: "0 0",
+            transform: `translate(${dx * 0.3}px, ${dy * 0.3 - 24}px) scale(${0.3 * sx + 0.7}, ${0.3 * sy + 0.7}) rotate(-0.6deg)`,
+            opacity: 1,
+            offset: 0.6,
+          },
+          { transformOrigin: "0 0", transform: "none", opacity: 1 },
+        ],
+        { duration: 600, easing: "cubic-bezier(0.3, 0.7, 0.2, 1)" },
+      );
+      return;
+    }
+    el.animate([{ transform: "translateY(30px) scale(0.97)", opacity: 0.3 }, { transform: "none", opacity: 1 }], {
+      duration: 420,
+      easing: LEMBUT,
+    });
+  }, [kunciLembar]);
 
-  /* Lembar di papan berayun sedikit menjauhi kursor — tetikus saja (jebakan
-     #9); kotaknya dibaca sekali saat kursor masuk (jebakan #21). */
-  function masukAyun(e: PointerEventReact<HTMLLIElement>) {
-    if (e.pointerType !== "mouse" || !geraknya()) return;
-    kotakAyun.current.set(e.currentTarget, e.currentTarget.getBoundingClientRect());
-  }
-  function geserAyun(e: PointerEventReact<HTMLLIElement>) {
-    const r = kotakAyun.current.get(e.currentTarget);
-    if (!r || e.pointerType !== "mouse") return;
-    const x = Math.max(-0.5, Math.min(0.5, (e.clientX - r.left) / r.width - 0.5));
-    e.currentTarget.style.setProperty("--ppr-ayun", `${(x * 3.2).toFixed(2)}deg`);
-  }
-  function keluarAyun(e: PointerEventReact<HTMLLIElement>) {
-    kotakAyun.current.delete(e.currentTarget);
-    e.currentTarget.style.removeProperty("--ppr-ayun");
+  function bukaKantong(k: Kantong) {
+    setKantong(k);
+    /* Di layar sempit sayap ada di bawah lembar: bawa ke sana. */
+    if (matchMedia("(max-width: 1288px)").matches)
+      requestAnimationFrame(() => sayapRef.current?.scrollIntoView({ block: "start", behavior: geraknya() ? "smooth" : "auto" }));
   }
 
   /* ---- Tautan portal ---- */
@@ -541,14 +547,14 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     e.preventDefault();
     if (j === faseKe) return;
     void ubahFase(FASE[j]![0]);
-    requestAnimationFrame(() => document.querySelector<HTMLElement>(`.ppr__tahap [data-fase="${FASE[j]![0]}"]`)?.focus());
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`.mpk__tahap [data-fase="${FASE[j]![0]}"]`)?.focus());
   }
 
   async function gantiProyek(baruId: string) {
     if (baruId === proyek.id) return;
     if (
       briefBerubah > 0 &&
-      !(await tanya({ judul: "Pindah proyek?", isi: `Ada ${briefBerubah} perubahan brief yang belum disimpan.`, ya: "Tinggalkan", bahaya: true }))
+      !(await tanya({ judul: "Pindah proyek?", isi: `Ada ${briefBerubah} perubahan kerangka acuan yang belum disimpan.`, ya: "Tinggalkan", bahaya: true }))
     )
       return;
     onPilih(baruId);
@@ -575,24 +581,20 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
   async function sesudahUnggah(sebelum: Set<string>) {
     const d = await muatDokumen();
     const masuk = (d ?? []).filter((x) => !sebelum.has(x.id)).map((x) => x.id);
-    if (masuk.length) setBertindak(true);
-    if (masuk.length && geraknya()) {
-      setBaru(masuk);
-      nanti(() => setBaru([]), 1300);
-    }
     if (masuk.length) {
-      turunRef.current = geraknya();
-      setPilihan({ jenis: "dok", id: masuk[masuk.length - 1]! });
+      setBertindak(true);
+      if (geraknya()) gerakRef.current = { jenis: "selip" };
+      setPilihanDok(masuk[masuk.length - 1]!);
     }
   }
 
-  async function unggahBanyak(daftar: File[]) {
-    if (daftar.length === 0 || mengunggah) return;
+  async function unggahBanyak(berkas: File[]) {
+    if (berkas.length === 0 || mengunggah) return;
     /* Yang kebesaran dilewati, bukan membatalkan antrean: kalau sembilan
        dari sepuluh sah, sembilan itu tetap naik. */
-    const kebesaran = daftar.filter((f) => f.size > MAKS_BYTE_DOKUMEN);
-    const sah = daftar.filter((f) => f.size <= MAKS_BYTE_DOKUMEN && TIPE_SAH.includes(f.type));
-    const ditolak = daftar.length - sah.length - kebesaran.length;
+    const kebesaran = berkas.filter((f) => f.size > MAKS_BYTE_DOKUMEN);
+    const sah = berkas.filter((f) => f.size <= MAKS_BYTE_DOKUMEN && TIPE_SAH.includes(f.type));
+    const ditolak = berkas.length - sah.length - kebesaran.length;
     if (kebesaran.length > 0) {
       toast({
         judul:
@@ -609,7 +611,7 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     /* Judul yang diketik hanya dipakai kalau berkasnya satu. */
     const manual = judulKirim.trim();
     const pakaiManual = sah.length === 1 && manual.length >= 2;
-    const sebelum = new Set((dokumen ?? []).map((d) => d.id));
+    const sebelum = new Set(daftar.map((d) => d.id));
     setAntre({ selesai: 0, total: sah.length });
     let gagal = 0;
     for (let i = 0; i < sah.length; i++) {
@@ -627,7 +629,7 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     const berhasil = sah.length - gagal;
     if (berhasil > 0) {
       toast({
-        judul: berhasil === 1 ? "Lembar dipasang di papan" : `${berhasil} lembar dipasang di papan`,
+        judul: berhasil === 1 ? "Lembar diselipkan ke map" : `${berhasil} lembar diselipkan ke map`,
         keterangan: "Langsung terlihat di portal klien.",
         nada: "sukses",
       });
@@ -635,7 +637,7 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
   }
 
   async function kirimSuara(blob: Blob, durasiMs: number, mime: string) {
-    const sebelum = new Set((dokumen ?? []).map((d) => d.id));
+    const sebelum = new Set(daftar.map((d) => d.id));
     try {
       const target = await mintaUrlUnggah(proyek.slug, mime);
       const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": mime }, body: blob });
@@ -662,6 +664,10 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
        `updated_at` saat status diganti. */
     const kini = new Date().toISOString();
     setBertindak(true);
+    /* Lembar yang dicap tetap di atas tumpukan — tanpa ini pilihan bawaan
+       ("yang paling perlu dilihat") dihitung ulang dari status barunya dan
+       lembar lain yang tiba-tiba naik. */
+    setPilihanDok(d.id);
     setDokumen(dokumen.map((x) => (x.id === d.id ? { ...x, status, updatedAt: kini } : x)));
     setTercap(d.id);
     nanti(() => setTercap((t) => (t === d.id ? null : t)), 1000);
@@ -677,21 +683,24 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     try {
       await hapusDokumen(d.id);
       setBertindak(true);
-      setDokumen((l) => l?.filter((x) => x.id !== d.id) ?? l);
-      setPilihan(null);
-      toast({ judul: "Lembar diturunkan dari papan", keterangan: d.title, nada: "sukses" });
-      /* Tombol hapusnya ikut lenyap bersama lembarnya; fokus pindah ke
-         lembar yang kini terbuka (jebakan #39). */
+      const sisa = daftar.filter((x) => x.id !== d.id);
+      const i = daftar.findIndex((x) => x.id === d.id);
+      const lanjut = sisa[i] ?? sisa[i - 1] ?? null;
+      setDokumen(sisa);
+      setPilihanDok(lanjut?.id ?? null);
+      toast({ judul: "Lembar dikeluarkan dari map", keterangan: d.title, nada: "sukses" });
+      /* Tombol hapusnya ikut lenyap bersama lembarnya; fokus pindah ke tab
+         lembar yang kini di atas (jebakan #39). */
       requestAnimationFrame(() =>
-        document.querySelector<HTMLElement>(".ppr__lbr.is-pilih .ppr__lbrbuka, .ppr__slot, .ppr__kirim")?.focus(),
+        document.querySelector<HTMLElement>(".mpk__tab.is-pilih button, .mpk__kosong, .mpk__tabkirim")?.focus(),
       );
     } catch (e) {
       toast({ judul: "Gagal menghapus dokumen", keterangan: (e as Error).message, nada: "gagal" });
     }
   }
 
-  /* Berkas yang dijatuhkan ke papan langsung naik — kebiasaan yang sama
-     dengan zona unggah di lembar kirim. */
+  /* Berkas yang dijatuhkan ke lembar langsung naik — kebiasaan yang sama
+     dengan zona unggah di kantong Kirim. */
   function jatuh(e: DragEvent<HTMLElement>) {
     if (!e.dataTransfer?.files?.length) return;
     e.preventDefault();
@@ -699,16 +708,16 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     void unggahBanyak(Array.from(e.dataTransfer.files));
   }
 
-  /* Papan ketik di papan: panah memindah lembar terpilih. */
-  const daftar = dokumen ?? [];
   const kode = kodeProyek(proyek.title);
-  const nomor = new Map(
+  const nomor = new globalThis.Map(
     daftar
       .slice()
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
       .map((d, i) => [d.id, `${kode}-${String(i + 1).padStart(2, "0")}`]),
   );
-  function tombolPapan(e: KeyboardEvent<HTMLElement>) {
+
+  /* Papan ketik di deret tab: panah memindah lembar di atas tumpukan. */
+  function tombolTumpuk(e: KeyboardEvent<HTMLElement>) {
     if (!dokKini) return;
     const i = daftar.findIndex((d) => d.id === dokKini.id);
     let j = i;
@@ -720,8 +729,8 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     e.preventDefault();
     if (j === i) return;
     const tujuan = daftar[j]!.id;
-    pilihLembar({ jenis: "dok", id: tujuan }, document.querySelector(`[data-lembar="${tujuan}"] .ppr__kertas`));
-    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-lembar="${tujuan}"] .ppr__lbrbuka`)?.focus());
+    tarik(tujuan, document.querySelector(`[data-lembar="${tujuan}"]`));
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-lembar="${tujuan}"] button`)?.focus());
   }
 
   const hitung = Object.fromEntries(URUT_METER.map((s) => [s, daftar.filter((d) => d.status === s).length])) as Record<
@@ -729,7 +738,6 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
     number
   >;
   const balas = daftar.filter((d) => perluDibalas(utas[d.id])).length;
-  /* Keping meter yang baru bertambah berdenyut sekali bersama stempelnya. */
   const statusTercap = tercap ? daftar.find((d) => d.id === tercap)?.status ?? null : null;
   const jenis = CATEGORY_LABELS[proyek.category as keyof typeof CATEGORY_LABELS] ?? proyek.category;
   const studio = setelan?.studioName?.trim() || "—";
@@ -740,104 +748,32 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
         ? `final ${tanggalTahun(proyek.deadlineFinal)}`
         : brief?.timeline || "—";
 
-  /* ---- Lembar di papan (fungsi, bukan komponen — jebakan #80) ---- */
-  const lembarPapan = (d: DokumenProyek) => {
-    const j = jenisBerkas(d);
-    const dipilih = dokKini?.id === d.id;
-    const cap = capDari(d.status);
-    const nmr = nomor.get(d.id) ?? "";
-    const umur = umurLembar(d);
-    const k = utas[d.id];
-    const minta = perluDibalas(k);
-    return (
-      <li
-        key={d.id}
-        data-lembar={d.id}
-        className={`ppr__lbr is-${d.status}${dipilih ? " is-pilih" : ""}${baru.includes(d.id) ? " is-baru" : ""}`}
-        onPointerEnter={masukAyun}
-        onPointerMove={geserAyun}
-        onPointerLeave={keluarAyun}
-      >
-        {/* Rel dan lampunya milik dinding — diam saat lembarnya berayun. */}
-        <span className="ppr__rel" aria-hidden="true">
-          <i className="ppr__lampu" />
-        </span>
-        <div className="ppr__ayun">
-          <i className="ppr__klip is-kiri" aria-hidden="true" />
-          <i className="ppr__klip is-kanan" aria-hidden="true" />
-          <div className="ppr__kertas">
-            <button
-              type="button"
-              className="ppr__lbrbuka"
-              title={d.title}
-              tabIndex={dipilih || (!dokKini && d === daftar[0]) ? 0 : -1}
-              aria-pressed={dipilih}
-              aria-label={`${nmr} ${d.title}, ${cap.label}, ${umur.teks}${k ? `, ${k.length} komentar${minta ? ", perlu dibalas" : ""}` : ""}`}
-              onClick={(e) => pilihLembar({ jenis: "dok", id: d.id }, e.currentTarget.parentElement)}
-            />
-            <span className={`ppr__muka is-${j}`} aria-hidden="true">
-              {j === "gambar" ? (
-                <img src={d.fileUrl} alt="" loading="lazy" />
-              ) : j === "suara" ? (
-                <span className="ppr__mukaisi">
-                  <span className="ppr__gel">
-                    {gelombang(d.id).map((t, i) => (
-                      <i key={i} style={{ height: `${Math.round(t * 100)}%` }} />
-                    ))}
-                  </span>
-                  <b>{d.durationMs ? formatDurasi(d.durationMs) : "Suara"}</b>
-                </span>
-              ) : (
-                <span className="ppr__mukaisi">
-                  <Ikon ikon={j === "pdf" ? FilePdf : FileText} ukuran={24} />
-                  <b>{j === "pdf" ? "PDF" : "Berkas"}</b>
-                  {typeof d.fileSize === "number" && <small>{ukuranBerkas(d.fileSize)}</small>}
-                </span>
-              )}
-              {d.status === "revisi_diminta" && <AwanRevisi />}
-              {stempel(d, nmr, false, tercap === d.id)}
-            </span>
-            <span className="ppr__kopgbr" aria-hidden="true">
-              <b className="ppr__kgjudul">{d.title}</b>
-              <span className="ppr__kgno">{nmr}</span>
-              <span className={`ppr__kgumur${umur.nada ? ` is-${umur.nada}` : ""}`}>{umur.teks}</span>
-              <span className={`ppr__kgutas${minta ? " is-balas" : ""}${k && k.length === 0 ? " is-nol" : ""}`}>
-                <Ikon ikon={ChatTeardropDots} ukuran={11} />
-                {k ? k.length : "·"}
-              </span>
-            </span>
-          </div>
-        </div>
-      </li>
-    );
+  /* Lencana indeks kantong: data sungguhan, bukan hiasan. */
+  const kDok = dokKini ? utas[dokKini.id] : undefined;
+  const lencana: Record<Kantong, { teks: string; nada?: string } | null> = {
+    asistensi: dokKini ? (kDok ? { teks: String(kDok.length), nada: perluDibalas(kDok) ? "merah" : undefined } : null) : null,
+    acuan: briefBerubah > 0 ? { teks: "•", nada: "amber" } : brief && !brief.submittedAt ? { teks: "!", nada: "amber" } : null,
+    kabar: progres?.updates.length ? { teks: String(progres.updates.length) } : null,
+    kirim: antre ? { teks: `${antre.selesai}/${antre.total}`, nada: "amber" } : null,
   };
-
-  const kabarTerbaru = progres?.updates.slice(0, 3) ?? [];
-  const kabarAkhir = progres?.updates[0];
-
-  /* Pita jadwal brief: posisi hari ini di antara mulai dan selesai. */
-  let posJadwal: number | null = null;
-  let ketJadwal = brief === null ? "" : brief.timeline || "belum ada jadwal";
-  if (brief?.startDate && brief.endDate && brief.endDate >= brief.startDate) {
-    const a = keTanggal(brief.startDate).getTime();
-    const b = keTanggal(brief.endDate).getTime();
-    const hariIni = new Date();
-    hariIni.setHours(0, 0, 0, 0);
-    const t = hariIni.getTime();
-    posJadwal = Math.max(0, Math.min(1, (t - a) / Math.max(HARI, b - a)));
-    const total = Math.round((b - a) / HARI) + 1;
-    const ke = Math.round((t - a) / HARI) + 1;
-    ketJadwal = ke < 1 ? `mulai ${1 - ke} hari lagi` : ke > total ? `lewat ${ke - total} hari` : `hari ke-${ke} dari ${total}`;
+  const indeks = useRef<(HTMLButtonElement | null)[]>([]);
+  function tombolIndeks(e: KeyboardEvent, i: number) {
+    const arah = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!arah && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const j = e.key === "Home" ? 0 : e.key === "End" ? KANTONG.length - 1 : (i + arah + KANTONG.length) % KANTONG.length;
+    setKantong(KANTONG[j]!.k);
+    indeks.current[j]?.focus();
   }
 
   return (
-    <div className="ppr">
-      <div className="ppr__papan">
-        {/* ---- Kop: papan nama proyek -------------------------------- */}
-        <header className="ppr__kop">
-          <div className="ppr__kopjudul">
+    <div className="mpk">
+      <div className="mpk__map">
+        {/* ---- Kop di tutup map ---------------------------------------- */}
+        <header className="mpk__kop">
+          <div className="mpk__kopjudul">
             <p>
-              Papan nama proyek · No. <b>{kode}</b>
+              Map presentasi · No. <b>{kode}</b>
             </p>
             <PilihMenu
               label="Pilih proyek"
@@ -845,13 +781,13 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
               opsi={semua.map((p) => ({ nilai: p.id, label: p.title }))}
               onUbah={(v) => void gantiProyek(v)}
               pemicu={
-                <button type="button" className="ppr__proyek">
+                <button type="button" className="mpk__proyek">
                   <h2>{proyek.title}</h2>
                   <Ikon ikon={CaretDown} ukuran={16} />
                 </button>
               }
             />
-            <dl className="ppr__nama">
+            <dl className="mpk__nama">
               <div>
                 <dt>Pemilik</dt>
                 <dd>{proyek.client || "—"}</dd>
@@ -874,22 +810,22 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
               </div>
             </dl>
           </div>
-          <div className="ppr__tahapkop">
-            <p id="ppr-tahap">
+          <div className="mpk__tahapkop">
+            <p id="mpk-tahap">
               <Ikon ikon={Eye} ukuran={13} />
-              Tahap yang dilihat klien
+              Tahap dilihat klien
               <b>{faseKe >= 0 ? `${faseKe + 1}/${FASE.length} · ${FASE[faseKe]![1]}` : "—"}</b>
             </p>
             <div
-              className={`ppr__tahap${bertindak ? " is-hidup" : ""}`}
+              className={`mpk__tahap${bertindak ? " is-hidup" : ""}`}
               role="radiogroup"
-              aria-labelledby="ppr-tahap"
+              aria-labelledby="mpk-tahap"
               onKeyDown={tombolTahap}
-              style={{ "--ppr-fase": faseKe > 0 ? faseKe / (FASE.length - 1) : 0 } as CSSProperties}
+              style={{ "--mpk-fase": faseKe > 0 ? faseKe / (FASE.length - 1) : 0 } as CSSProperties}
             >
-              <span className="ppr__lintas" aria-hidden="true">
-                <i className="ppr__lintasisi" />
-                {faseKe >= 0 && <i className="ppr__cincin" />}
+              <span className="mpk__lintas" aria-hidden="true">
+                <i className="mpk__lintasisi" />
+                {faseKe >= 0 && <i className="mpk__cincin" />}
               </span>
               {FASE.map(([nilai, label], i) => (
                 <button
@@ -911,10 +847,135 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
           </div>
         </header>
 
-        {/* ---- Papan presentasi -------------------------------------- */}
+        {/* ---- Sayap kiri: kartu nama + kantong berindeks ----------------- */}
+        <aside className="mpk__sayap" ref={sayapRef} aria-label="Sayap map">
+          <div className="mpk__slotkartu">
+            <div className="mpk__kartunama">
+              <span className="mpk__kartuteks">
+                <small>Portal klien · {studio}</small>
+                <b title={tautan || undefined}>{tautan ? tautan.replace(/^https?:\/\//, "") : "Memuat tautan…"}</b>
+              </span>
+              <span className="mpk__kartualat">
+                <button type="button" disabled={!tautan} onClick={salin} title="Salin tautan">
+                  <Ikon ikon={CopySimple} ukuran={14} />
+                  <span>Salin</span>
+                </button>
+                {tautan ? (
+                  <a href={tautan} target="_blank" rel="noreferrer" title="Buka seperti klien">
+                    <Ikon ikon={Globe} ukuran={14} />
+                    <span>Buka</span>
+                  </a>
+                ) : (
+                  <span className="mpk__kartumati" aria-hidden="true">
+                    <Ikon ikon={Globe} ukuran={14} />
+                    <span>Buka</span>
+                  </span>
+                )}
+                <AlertDialog
+                  destructive
+                  title="Buat tautan baru?"
+                  description="Tautan lama langsung berhenti bekerja. Pakai kalau tautannya telanjur sampai ke orang yang salah."
+                  confirmLabel="Ya, buat baru"
+                  onConfirm={buatUlang}
+                  trigger={
+                    <button type="button" disabled={!progres} title="Buat ulang tautan" aria-label="Buat ulang tautan">
+                      <Ikon ikon={ArrowClockwise} ukuran={14} />
+                    </button>
+                  }
+                />
+              </span>
+            </div>
+          </div>
+
+          <div className="mpk__kantong">
+            <div className="mpk__indeks" role="tablist" aria-label="Isi kantong">
+              {KANTONG.map((t, i) => {
+                const aktif = kantongKini === t.k;
+                const l = lencana[t.k];
+                return (
+                  <button
+                    key={t.k}
+                    ref={(el) => {
+                      indeks.current[i] = el;
+                    }}
+                    type="button"
+                    role="tab"
+                    id={`mpk-tab-${t.k}`}
+                    aria-selected={aktif}
+                    aria-controls={`mpk-kantong-${t.k}`}
+                    tabIndex={aktif ? 0 : -1}
+                    className={`mpk__indekstab${aktif ? " is-aktif" : ""}`}
+                    onClick={() => setKantong(t.k)}
+                    onKeyDown={(e) => tombolIndeks(e, i)}
+                  >
+                    {t.label}
+                    {l && <em className={l.nada ? `is-${l.nada}` : undefined}>{l.teks}</em>}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mpk__lembarkantong">
+              <div id="mpk-kantong-asistensi" role="tabpanel" aria-labelledby="mpk-tab-asistensi" className="mpk__panel" hidden={kantongKini !== "asistensi"}>
+                {dokKini ? (
+                  <Asistensi
+                    key={dokKini.id}
+                    d={dokKini}
+                    nomor={nomor.get(dokKini.id) ?? ""}
+                    komentar={utas[dokKini.id]}
+                    onMuat={() => muatUtas(dokKini.id)}
+                  />
+                ) : (
+                  <p className="mpk__kosongteks">{dokumen === null ? "Memuat lembar…" : "Belum ada lembar di map — asistensi dengan klien muncul di sini per lembar."}</p>
+                )}
+              </div>
+              <div id="mpk-kantong-acuan" role="tabpanel" aria-labelledby="mpk-tab-acuan" className="mpk__panel" hidden={kantongKini !== "acuan"}>
+                {brief ? (
+                  <KerangkaAcuan projectId={proyek.id} brief={brief} onTersimpan={setBrief} onBerubah={setBriefBerubah} />
+                ) : (
+                  <RangkaBaris jumlah={4} label="Memuat kerangka acuan…" />
+                )}
+              </div>
+              <div id="mpk-kantong-kabar" role="tabpanel" aria-labelledby="mpk-tab-kabar" className="mpk__panel" hidden={kantongKini !== "kabar"}>
+                <Kabar projectId={proyek.id} progres={progres} setProgres={setProgres} />
+              </div>
+              <div id="mpk-kantong-kirim" role="tabpanel" aria-labelledby="mpk-tab-kirim" className="mpk__panel mpk__kirim" hidden={kantongKini !== "kirim"}>
+                <header className="mpk__pkop">
+                  <p className="mpk__plabel">Lembar berikutnya · {kode}-{String(daftar.length + 1).padStart(2, "0")}</p>
+                  <h3 className="mpk__pjudul">Selipkan lembar ke map</h3>
+                </header>
+                <Isian
+                  label="Judul lembar (opsional)"
+                  placeholder="mis. DED Rev.2"
+                  value={judulKirim}
+                  disabled={mengunggah}
+                  onChange={(e) => setJudulKirim(e.currentTarget.value)}
+                />
+                {/* Lampiran kit sebagai zona unggah langsung: berkas yang
+                    dijatuhkan langsung diunggah, jadi daftar pilihannya selalu
+                    kosong. */}
+                <Lampiran
+                  banyak
+                  berkas={[]}
+                  onUbah={(f) => void unggahBanyak(f)}
+                  terima={TIPE_DOKUMEN}
+                  mati={mengunggah}
+                  label="Pilih dokumen untuk diunggah"
+                  judul={antre ? `Mengunggah ${antre.selesai}/${antre.total}…` : "Tarik berkas ke sini, atau klik untuk memilih"}
+                  ket="PDF, JPG, PNG, WebP, atau rekaman — maks 100 MB per berkas, boleh beberapa sekaligus."
+                />
+                <PerekamSuaraKit onKirim={kirimSuara} disabled={mengunggah} />
+                <p className="mpk__catatkirim">Lembar yang diselipkan langsung terlihat klien di portalnya.</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <span className="mpk__punggung" aria-hidden="true" />
+
+        {/* ---- Lembar gambar + tumpukan --------------------------------- */}
         <section
-          className={`ppr__pajang${seret ? " is-seret" : ""}`}
-          aria-labelledby="ppr-pajang"
+          className={`mpk__isimap${seret ? " is-seret" : ""}`}
+          aria-label="Lembar di map"
           onDragOver={(e) => {
             if (e.dataTransfer?.types?.includes("Files")) {
               e.preventDefault();
@@ -926,273 +987,146 @@ function Papan({ proyek, semua, onPilih }: { proyek: Proyek; semua: Proyek[]; on
           }}
           onDrop={jatuh}
         >
-          <div className="ppr__pajangkop">
-            <h3 id="ppr-pajang">Papan presentasi</h3>
+          <div className="mpk__alas" ref={alasRef}>
             {dokumen === null ? (
-              <p>memuat…</p>
+              <div className="mpk__gambar is-rangka">
+                <RangkaBaris jumlah={3} label="Memuat lembar…" />
+              </div>
+            ) : dokKini ? (
+              <LembarGambar
+                key={dokKini.id}
+                d={dokKini}
+                nomor={nomor.get(dokKini.id) ?? ""}
+                proyek={proyek}
+                studio={studio}
+                semuaGambar={daftar.filter((x) => jenisBerkas(x) === "gambar")}
+                tercap={tercap === dokKini.id}
+                komentar={utas[dokKini.id]}
+                onStatus={(s) => void ubahStatus(dokKini, s)}
+                onHapus={() => hapus(dokKini)}
+                onAsistensi={() => bukaKantong("asistensi")}
+              />
             ) : (
-              <>
-                <p className="ppr__jumlah">
-                  <Hitung nilai={daftar.length} hidup={bertindak} format={(v) => String(Math.round(v))} /> lembar
-                </p>
-                {daftar.length > 0 && (
-                  <ul className="ppr__meter" aria-label="Lembar per tanggapan klien">
-                    {URUT_METER.filter((s) => hitung[s]! > 0).map((s) => (
-                      <li key={s} className={`is-${s}${statusTercap === s ? " is-naik" : ""}`}>
-                        <Hitung nilai={hitung[s]!} hidup={bertindak} format={(v) => String(Math.round(v))} />
-                        <span>{capDari(s).meter}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {balas > 0 && (
-                  <em className="ppr__perlubalas">
-                    <Ikon ikon={ChatTeardropDots} ukuran={12} />
-                    {balas} perlu dibalas
-                  </em>
-                )}
-              </>
-            )}
-            {antre && (
-              <span className="ppr__antre" role="status">
-                Memasang {antre.selesai}/{antre.total}…
-              </span>
-            )}
-            <button
-              type="button"
-              className={`ppr__kirim${kini?.jenis === "kirim" ? " is-pilih" : ""}`}
-              aria-pressed={kini?.jenis === "kirim"}
-              onClick={() => pilihLembar({ jenis: "kirim" })}
-            >
-              <Ikon ikon={Plus} ukuran={13} />
-              Kirim lembar
-            </button>
-          </div>
-          <div className="ppr__lis" onKeyDown={tombolPapan}>
-            {dokumen === null ? (
-              <RangkaBaris jumlah={2} label="Memuat lembar…" />
-            ) : (
-              <ol
-                className={`ppr__lembaran${daftar.length === 0 ? " is-kosong" : ""}${kini?.jenis === "dok" ? " is-sorot" : ""}`}
-              >
-                {daftar.map(lembarPapan)}
-                {/* Papan kosong: satu slot selebar papan, supaya halaman
-                    pertama proyek baru menunjuk pekerjaan berikutnya. */}
-                {daftar.length === 0 && (
-                  <li className="ppr__lbrslot">
-                    <span className="ppr__rel" aria-hidden="true" />
-                    <button type="button" className="ppr__slot" onClick={() => pilihLembar({ jenis: "kirim" })}>
-                      <Ikon ikon={Plus} ukuran={22} />
-                      <b>Belum ada lembar di papan</b>
-                      <small>Kirim gambar, PDF, atau pesan suara — atau jatuhkan berkasnya ke sini.</small>
-                    </button>
-                  </li>
-                )}
-              </ol>
+              <button type="button" className="mpk__gambar mpk__kosong" onClick={() => bukaKantong("kirim")}>
+                <Ikon ikon={Plus} ukuran={26} />
+                <b>Map masih kosong</b>
+                <small>Selipkan gambar, PDF, atau pesan suara untuk klien — atau jatuhkan berkasnya ke sini.</small>
+              </button>
             )}
           </div>
-        </section>
 
-        {/* ---- Brief dan kabar --------------------------------------- */}
-        <div className="ppr__bawah">
-          <button
-            type="button"
-            className={`ppr__kartu${kini?.jenis === "brief" ? " is-pilih" : ""}`}
-            aria-pressed={kini?.jenis === "brief"}
-            onClick={(e) => pilihLembar({ jenis: "brief" }, e.currentTarget)}
-          >
-            <span className="ppr__kartukop">
-              <b>Brief klien</b>
-              <small className={brief?.submittedAt ? "is-ada" : "is-belum"}>
-                {brief === null ? "memuat…" : brief.submittedAt ? `dikirim klien ${tanggalPendek(brief.submittedAt)}` : "belum diisi klien"}
-              </small>
-              {briefBerubah > 0 && <em>{briefBerubah} belum disimpan</em>}
-            </span>
-            <span className="ppr__bkisi">
-              <span className="ppr__bangka">
-                <small>Anggaran</small>
-                <b>{brief?.budgetAmount ? formatRupiahRingkas(brief.budgetAmount) : brief?.budgetRange || "—"}</b>
-              </span>
-              <span className="ppr__bgaya">
-                <small>Gaya</small>
-                <b>{brief?.stylePreference || "—"}</b>
-              </span>
-            </span>
-            <span className="ppr__bjadwal">
-              <small>
-                Jadwal <em>{ketJadwal}</em>
-              </small>
-              <span className="ppr__bjbaris">
-                <time>{brief?.startDate ? tanggalTahun(brief.startDate) : "—"}</time>
-                <span className={`ppr__bjrel${posJadwal === null ? " is-kosong" : ""}`} aria-hidden="true">
-                  {posJadwal !== null && (
-                    <>
-                      <i style={{ width: `${posJadwal * 100}%` }} />
-                      <b style={{ left: `${posJadwal * 100}%` }} />
-                    </>
-                  )}
-                </span>
-                <time>{brief?.endDate ? tanggalTahun(brief.endDate) : "—"}</time>
-              </span>
-            </span>
-            <span className="ppr__bbutuh">
-              <small>Kebutuhan</small>
-              <span>{brief?.requirements || "—"}</span>
-            </span>
-          </button>
-          <button
-            type="button"
-            className={`ppr__kartu${kini?.jenis === "kabar" ? " is-pilih" : ""}`}
-            aria-pressed={kini?.jenis === "kabar"}
-            onClick={(e) => pilihLembar({ jenis: "kabar" }, e.currentTarget)}
-          >
-            <span className="ppr__kartukop">
-              <b>Kabar ke klien</b>
-              <small>
-                {progres
-                  ? `${progres.updates.length} kabar${kabarAkhir ? ` · terakhir ${hariSejak(kabarAkhir.createdAt) === 0 ? "hari ini" : `${hariSejak(kabarAkhir.createdAt)} hr lalu`}` : ""}`
-                  : "memuat…"}
-              </small>
-              <span className="ppr__tambah" aria-hidden="true">
-                <Ikon ikon={Plus} ukuran={12} />
-                Kabar
-              </span>
-            </span>
-            {kabarTerbaru.length ? (
-              <ol className="ppr__kabarlini">
-                {kabarTerbaru.map((u) => (
-                  <li key={u.id}>
+          <div className="mpk__tumpukkop">
+            <p>
+              Isi map ·{" "}
+              <Hitung nilai={daftar.length} hidup={bertindak} format={(v) => String(Math.round(v))} /> lembar
+            </p>
+            {daftar.length > 0 && (
+              <ul className="mpk__meter" aria-label="Lembar per tanggapan klien">
+                {URUT_METER.filter((s) => hitung[s]! > 0).map((s) => (
+                  <li key={s} className={`is-${s}${statusTercap === s ? " is-naik" : ""}`}>
                     <i aria-hidden="true" />
-                    <time dateTime={u.createdAt}>{tanggalPendek(u.createdAt)}</time>
-                    <span>
-                      <b>{u.title}</b>
-                      {u.note && <small>{u.note}</small>}
-                    </span>
+                    <Hitung nilai={hitung[s]!} hidup={bertindak} format={(v) => String(Math.round(v))} /> {capDari(s).meter}
                   </li>
                 ))}
-              </ol>
-            ) : (
-              <span className="ppr__kosongkartu">{progres ? "Belum ada kabar untuk klien." : ""}</span>
+              </ul>
             )}
-          </button>
-        </div>
-
-        {/* ---- Lembar di meja ---------------------------------------- */}
-        <div className="ppr__meja" ref={mejaRef}>
-          {kini?.jenis === "dok" && dokKini && (
-            <LembarTinjauan
-              key={dokKini.id}
-              d={dokKini}
-              nomor={nomor.get(dokKini.id) ?? ""}
-              semuaGambar={daftar.filter((x) => jenisBerkas(x) === "gambar")}
-              tercap={tercap === dokKini.id}
-              komentar={utas[dokKini.id]}
-              onMuatUtas={() => muatUtas(dokKini.id)}
-              onStatus={(s) => void ubahStatus(dokKini, s)}
-              onHapus={() => hapus(dokKini)}
-            />
-          )}
-          <div className="ppr__lembar ppr__lembar--brief" hidden={kini?.jenis !== "brief"}>
-            {brief ? (
-              <LembarBrief projectId={proyek.id} brief={brief} onTersimpan={setBrief} onBerubah={setBriefBerubah} />
-            ) : (
-              <RangkaBaris jumlah={4} label="Memuat brief…" />
+            {balas > 0 && (
+              <em className="mpk__perlubalas">
+                <Ikon ikon={ChatTeardropDots} ukuran={12} />
+                {balas} perlu dibalas
+              </em>
+            )}
+            {antre && (
+              <span className="mpk__antre" role="status">
+                Menyelipkan {antre.selesai}/{antre.total}…
+              </span>
             )}
           </div>
-          <div className="ppr__lembar ppr__lembar--kabar" hidden={kini?.jenis !== "kabar"}>
-            <LembarKabar projectId={proyek.id} progres={progres} setProgres={setProgres} />
-          </div>
-          <div className="ppr__lembar ppr__lembar--kirim" hidden={kini?.jenis !== "kirim"}>
-            <p className="ppr__dlabel">
-              Lembar kirim · {kode}-{String(daftar.length + 1).padStart(2, "0")}
-            </p>
-            <h3 className="ppr__djudul">Kirim lembar ke klien</h3>
-            <Isian
-              label="Judul lembar (opsional)"
-              placeholder="mis. DED Rev.2"
-              value={judulKirim}
-              disabled={mengunggah}
-              onChange={(e) => setJudulKirim(e.currentTarget.value)}
-            />
-            {/* Lampiran kit sebagai zona unggah langsung: berkas yang
-                dijatuhkan langsung diunggah, jadi daftar pilihannya selalu
-                kosong. */}
-            <Lampiran
-              banyak
-              berkas={[]}
-              onUbah={(f) => void unggahBanyak(f)}
-              terima={TIPE_DOKUMEN}
-              mati={mengunggah}
-              label="Pilih dokumen untuk diunggah"
-              judul={antre ? `Mengunggah ${antre.selesai}/${antre.total}…` : "Tarik berkas ke sini, atau klik untuk memilih"}
-              ket="PDF, JPG, PNG, WebP, atau rekaman — maks 100 MB per berkas, boleh beberapa sekaligus."
-            />
-            <PerekamSuaraKit onKirim={kirimSuara} disabled={mengunggah} />
-            <p className="ppr__catatkirim">Lembar yang dikirim langsung terlihat klien di portalnya.</p>
-          </div>
-        </div>
-
-        {/* ---- Kaki: tautan portal ----------------------------------- */}
-        <footer className="ppr__kaki" aria-label="Tautan portal klien">
-          <span className="ppr__kakilabel">Tautan portal</span>
-          <span className="ppr__tautan" title={tautan || undefined}>
-            {tautan || "Memuat…"}
-          </span>
-          <button type="button" className="ppr__salin" disabled={!tautan} onClick={salin}>
-            <Ikon ikon={CopySimple} ukuran={14} />
-            Salin tautan
-          </button>
-          {tautan && (
-            <a className="ppr__buka" href={tautan} target="_blank" rel="noreferrer">
-              <Ikon ikon={Globe} ukuran={14} />
-              Buka seperti klien
-            </a>
-          )}
-          <AlertDialog
-            destructive
-            title="Buat tautan baru?"
-            description="Tautan lama langsung berhenti bekerja. Pakai kalau tautannya telanjur sampai ke orang yang salah."
-            confirmLabel="Ya, buat baru"
-            onConfirm={buatUlang}
-            trigger={
-              <button type="button" className="ppr__ulang" disabled={!progres}>
-                Buat ulang tautan
+          <ol className="mpk__tumpuk" onKeyDown={tombolTumpuk} aria-label="Lembar di map — urutan sama dengan yang dilihat klien">
+            {daftar.map((d) => {
+              const j = jenisBerkas(d);
+              const pilih = d.id === dokKini?.id;
+              const k = utas[d.id];
+              const minta = perluDibalas(k);
+              const umur = umurLembar(d);
+              return (
+                <li key={d.id} data-lembar={d.id} className={`mpk__tab is-${d.status}${pilih ? " is-pilih" : ""}`}>
+                  <button
+                    type="button"
+                    aria-pressed={pilih}
+                    tabIndex={pilih ? 0 : -1}
+                    title={d.title}
+                    aria-label={`${nomor.get(d.id)} ${d.title}, ${capDari(d.status).label}, ${umur.teks}${k ? `, ${k.length} komentar${minta ? ", perlu dibalas" : ""}` : ""}`}
+                    onClick={(e) => tarik(d.id, e.currentTarget)}
+                  >
+                    <span className={`mpk__tabmuka is-${j}`} aria-hidden="true">
+                      {j === "gambar" ? (
+                        <img src={d.fileUrl} alt="" loading="lazy" />
+                      ) : j === "suara" ? (
+                        <span className="mpk__tabgel">
+                          {gelombang(d.id, 7).map((t, i) => (
+                            <i key={i} style={{ height: `${Math.round(t * 100)}%` }} />
+                          ))}
+                        </span>
+                      ) : (
+                        <b>{j === "pdf" ? "PDF" : "Berkas"}</b>
+                      )}
+                    </span>
+                    <span className="mpk__tabteks">
+                      <b>{nomor.get(d.id)}</b>
+                      <small className={umur.nada ? `is-${umur.nada}` : undefined}>{umur.teks}</small>
+                    </span>
+                    {minta && <i className="mpk__tabbalas" aria-hidden="true" />}
+                  </button>
+                </li>
+              );
+            })}
+            <li className="mpk__tab is-kirim">
+              <button type="button" className="mpk__tabkirim" onClick={() => bukaKantong("kirim")}>
+                <Ikon ikon={Plus} ukuran={15} />
+                <span>Selipkan</span>
               </button>
-            }
-          />
-        </footer>
+            </li>
+          </ol>
+        </section>
+        <div className="mpk__lapis" ref={lapisRef} aria-hidden="true" />
       </div>
     </div>
   );
 }
 
-/* --- Lembar tinjauan satu dokumen ------------------------------------------ */
+/* --- Lembar gambar besar: bidang gambar + kop gambar ------------------------------- */
 
-function LembarTinjauan({
+function LembarGambar({
   d,
   nomor,
+  proyek,
+  studio,
   semuaGambar,
   tercap,
   komentar,
-  onMuatUtas,
   onStatus,
   onHapus,
+  onAsistensi,
 }: {
   d: DokumenProyek;
   nomor: string;
+  proyek: Proyek;
+  studio: string;
   semuaGambar: DokumenProyek[];
   tercap: boolean;
   komentar: KomentarDokumen[] | undefined;
-  onMuatUtas: () => Promise<void>;
   onStatus: (s: string) => void;
   onHapus: () => void;
+  onAsistensi: () => void;
 }) {
   const j = jenisBerkas(d);
   const i = STATUS.findIndex((s) => s.nilai === d.status);
   const lupRef = useRef<HTMLSpanElement>(null);
   const kotakLup = useRef<{ x: number; y: number; w: number; h: number; ox: number; oy: number } | null>(null);
+  const minta = perluDibalas(komentar);
 
-  function tombolCap(e: KeyboardEvent<HTMLElement>) {
+  function tombolStatus(e: KeyboardEvent<HTMLElement>) {
     let k = i;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") k = Math.min(STATUS.length - 1, i + 1);
     else if (e.key === "ArrowLeft" || e.key === "ArrowUp") k = Math.max(0, i - 1);
@@ -1202,7 +1136,7 @@ function LembarTinjauan({
     e.preventDefault();
     if (k === i) return;
     onStatus(STATUS[k]!.nilai);
-    requestAnimationFrame(() => document.querySelector<HTMLElement>(`.ppr__rakcap [data-status="${STATUS[k]!.nilai}"]`)?.focus());
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`.mpk__status [data-status="${STATUS[k]!.nilai}"]`)?.focus());
   }
 
   /* LUP: lingkaran pembesar 2,6× yang mengikuti tetikus di atas gambar.
@@ -1231,7 +1165,7 @@ function LembarTinjauan({
       return;
     }
     const Z = 2.6;
-    const R = lup.offsetWidth / 2 || 56;
+    const R = lup.offsetWidth / 2 || 64;
     lup.style.backgroundImage = `url("${d.fileUrl}")`;
     lup.style.backgroundSize = `${k.w * Z}px ${k.h * Z}px`;
     lup.style.backgroundPosition = `${R - px * Z}px ${R - py * Z}px`;
@@ -1246,41 +1180,15 @@ function LembarTinjauan({
   const jenisLabel = j === "suara" ? "Pesan suara" : j === "pdf" ? "PDF" : j === "gambar" ? "Gambar" : "Berkas";
   const ukuran =
     j === "suara" && d.durationMs ? formatDurasi(d.durationMs) : typeof d.fileSize === "number" ? ukuranBerkas(d.fileSize) : "—";
+  const umur = umurLembar(d);
 
   return (
-    <article className="ppr__lembar ppr__lembar--tinjau" aria-labelledby="ppr-tinjau">
-      <header className="ppr__tkop">
-        <div className="ppr__tkopjudul">
-          <p className="ppr__dlabel">Lembar tinjauan</p>
-          <h3 id="ppr-tinjau" className="ppr__djudul">
-            {d.title}
-          </h3>
-        </div>
-        <dl className="ppr__kopgambar">
-          <div>
-            <dt>No. lembar</dt>
-            <dd>{nomor}</dd>
-          </div>
-          <div>
-            <dt>Dikirim</dt>
-            <dd>{tanggalTahun(d.createdAt)}</dd>
-          </div>
-          <div>
-            <dt>Jenis</dt>
-            <dd>{jenisLabel}</dd>
-          </div>
-          <div>
-            <dt>{j === "suara" ? "Durasi" : "Ukuran"}</dt>
-            <dd>{ukuran}</dd>
-          </div>
-        </dl>
-      </header>
-
-      <div className={`ppr__pratinjau is-${j}${tercap ? " is-hentak" : ""}`}>
+    <article className={`mpk__gambar is-${d.status}`} aria-labelledby="mpk-judulgambar">
+      <div className={`mpk__bidang is-${j}${tercap ? " is-hentak" : ""}`}>
         {j === "gambar" ? (
           <button
             type="button"
-            className="ppr__perbesar"
+            className="mpk__perbesar"
             aria-label={`Perbesar ${d.title}`}
             onPointerEnter={masukLup}
             onPointerMove={geserLup}
@@ -1295,13 +1203,22 @@ function LembarTinjauan({
             <img src={d.fileUrl} alt="" />
           </button>
         ) : j === "suara" ? (
-          <div className="ppr__putar">
-            <Icon name="mic" size={22} />
-            <PemutarSuaraKit url={d.fileUrl} durationMs={d.durationMs} label={d.title} className="ppr__pemutar" />
+          <div className="mpk__suara">
+            <span className="mpk__gel" aria-hidden="true">
+              {gelombang(d.id, 34).map((t, k) => (
+                <i key={k} style={{ height: `${Math.round(t * 100)}%` }} />
+              ))}
+            </span>
+            <span className="mpk__putar">
+              <Icon name="mic" size={20} />
+              <PemutarSuaraKit url={d.fileUrl} durationMs={d.durationMs} label={d.title} className="mpk__pemutar" />
+            </span>
           </div>
         ) : (
-          <a className="ppr__bukaberkas" href={d.fileUrl} target="_blank" rel="noreferrer">
-            <Ikon ikon={j === "pdf" ? FilePdf : FileText} ukuran={30} />
+          <a className="mpk__bukaberkas" href={d.fileUrl} target="_blank" rel="noreferrer">
+            <span className="mpk__pdfmuka" aria-hidden="true">
+              <Ikon ikon={j === "pdf" ? FilePdf : FileText} ukuran={34} />
+            </span>
             <b>{d.fileName || d.title}</b>
             <span>
               Buka {j === "pdf" ? "PDF" : "berkas"}
@@ -1310,85 +1227,135 @@ function LembarTinjauan({
           </a>
         )}
         {d.status === "revisi_diminta" && <AwanRevisi />}
-        {stempel(d, nomor, true, tercap)}
-        {j === "gambar" && <span className="ppr__lup" ref={lupRef} aria-hidden="true" />}
+        <span key={`cap-${d.status}`} className={`mpk__stempel is-${d.status}${tercap ? " is-tercap" : ""}`} aria-hidden="true">
+          <b>{capDari(d.status).cap}</b>
+          <small>
+            {nomor} · {tanggalCap(d.updatedAt)}
+          </small>
+        </span>
+        {j === "gambar" && <span className="mpk__lup" ref={lupRef} aria-hidden="true" />}
       </div>
 
-      <section className="ppr__tanggap" aria-labelledby="ppr-cap">
-        <h4 id="ppr-cap" className="ppr__dlabel">
-          Cap tanggapan
-        </h4>
-        <div className="ppr__rakcap" role="radiogroup" aria-labelledby="ppr-cap" onKeyDown={tombolCap}>
-          {STATUS.map((s) => (
-            <button
-              key={s.nilai}
-              type="button"
-              role="radio"
-              data-status={s.nilai}
-              aria-checked={d.status === s.nilai}
-              tabIndex={d.status === s.nilai || (i < 0 && s.nilai === "draft") ? 0 : -1}
-              className={`ppr__capkaret is-${s.nilai}`}
-              onClick={() => onStatus(s.nilai)}
-            >
-              <span className="ppr__gagang" aria-hidden="true" />
-              <span className="ppr__karet">{s.cap}</span>
-            </button>
-          ))}
+      {/* Kop gambar di tepi kanan, seperti gambar kerja sungguhan. */}
+      <aside className="mpk__kopgambar" aria-label="Kop gambar">
+        <div className="mpk__kg is-studio">
+          <small>Perencana</small>
+          <b>{studio}</b>
         </div>
-        {d.status === "revisi_diminta" && d.clientNote && (
-          <p className="ppr__catatanklien">
-            <b>Catatan klien</b>
-            {d.clientNote}
-          </p>
-        )}
-      </section>
-
-      <Komentar documentId={d.id} komentar={komentar} onMuat={onMuatUtas} />
-
-      <footer className="ppr__dkaki">
-        {j !== "suara" && (
-          <a href={d.fileUrl} target="_blank" rel="noreferrer">
-            Buka berkas asli
-          </a>
-        )}
-        <AlertDialog
-          destructive
-          title={`Hapus ${d.title}?`}
-          description="Beserta seluruh komentarnya. Klien tidak lagi melihatnya."
-          confirmLabel="Ya, hapus"
-          onConfirm={onHapus}
-          trigger={
-            <button type="button" className="ppr__hapus" aria-label={`Hapus ${d.title}`}>
-              <Ikon ikon={Trash} ukuran={13} />
-              Hapus lembar
-            </button>
-          }
-        />
-      </footer>
+        <div className="mpk__kg">
+          <small>Proyek</small>
+          <b>{proyek.title}</b>
+          <span>
+            Pemilik <em>{proyek.client || "—"}</em>
+          </span>
+        </div>
+        <div className="mpk__kg is-judul">
+          <small>Judul gambar</small>
+          <h3 id="mpk-judulgambar" title={d.title}>
+            {d.title}
+          </h3>
+          <span>
+            {jenisLabel} · {ukuran}
+          </span>
+        </div>
+        <div className="mpk__kg is-dua">
+          <div>
+            <small>No. lembar</small>
+            <b className="is-nomor">{nomor}</b>
+          </div>
+          <div>
+            <small>Dikirim</small>
+            <b>{tanggalTahun(d.createdAt)}</b>
+          </div>
+        </div>
+        <div className="mpk__kg is-status">
+          <small id="mpk-status">Status · tanggapan klien</small>
+          <div className="mpk__status" role="radiogroup" aria-labelledby="mpk-status" onKeyDown={tombolStatus}>
+            {STATUS.map((s) => {
+              const ya = d.status === s.nilai;
+              return (
+                <button
+                  key={s.nilai}
+                  type="button"
+                  role="radio"
+                  data-status={s.nilai}
+                  aria-checked={ya}
+                  tabIndex={ya || (i < 0 && s.nilai === "draft") ? 0 : -1}
+                  aria-label={s.label}
+                  className={`mpk__statusbaris is-${s.nilai}${ya ? " is-ya" : ""}${ya && tercap ? " is-tercap" : ""}`}
+                  onClick={() => onStatus(s.nilai)}
+                >
+                  <span className="mpk__kotakcentang" aria-hidden="true">
+                    {ya && (
+                      <svg viewBox="0 0 16 16" width="12" height="12">
+                        <path d="M3.5 8.4l3 3 6-6.6" />
+                      </svg>
+                    )}
+                  </span>
+                  {s.cap}
+                </button>
+              );
+            })}
+          </div>
+          <span className={`mpk__umur${umur.nada ? ` is-${umur.nada}` : ""}`}>{umur.teks}</span>
+        </div>
+        <button type="button" className={`mpk__kg is-asistensi${minta ? " is-balas" : ""}`} onClick={onAsistensi}>
+          <small>Asistensi</small>
+          <span>
+            <Ikon ikon={ChatTeardropDots} ukuran={13} />
+            {komentar === undefined ? "memuat…" : komentar.length === 0 ? "belum ada komentar" : `${komentar.length} komentar${minta ? " · perlu dibalas" : ""}`}
+          </span>
+        </button>
+        <div className="mpk__kgaksi">
+          {j !== "suara" && (
+            <a href={d.fileUrl} target="_blank" rel="noreferrer">
+              Berkas asli
+            </a>
+          )}
+          <AlertDialog
+            destructive
+            title={`Hapus ${d.title}?`}
+            description="Beserta seluruh komentarnya. Klien tidak lagi melihatnya."
+            confirmLabel="Ya, hapus"
+            onConfirm={onHapus}
+            trigger={
+              <button type="button" className="mpk__hapus" aria-label={`Hapus ${d.title}`}>
+                <Ikon ikon={Trash} ukuran={13} />
+                Hapus
+              </button>
+            }
+          />
+        </div>
+      </aside>
     </article>
   );
 }
 
-function Komentar({
-  documentId,
+/* --- Kantong: asistensi satu lembar ----------------------------------------------------- */
+
+function Asistensi({
+  d,
+  nomor,
   komentar,
   onMuat,
 }: {
-  documentId: string;
+  d: DokumenProyek;
+  nomor: string;
   komentar: KomentarDokumen[] | undefined;
   onMuat: () => Promise<void>;
 }) {
   const toast = useToast();
   const [isi, setIsi] = useState("");
   const [mengirim, setMengirim] = useState(false);
+  useCegahPindah(isi.trim() !== "");
 
-  async function kirim(e: React.FormEvent) {
+  async function kirim(e: { preventDefault: () => void }) {
     e.preventDefault();
     const bersih = isi.trim();
     if (!bersih) return;
     setMengirim(true);
     try {
-      await tambahKomentarDokumen(documentId, bersih);
+      await tambahKomentarDokumen(d.id, bersih);
       setIsi("");
       await onMuat();
     } catch (err) {
@@ -1400,41 +1367,45 @@ function Komentar({
 
   const terakhir = komentar?.[komentar.length - 1];
   return (
-    <section className="ppr__utas" aria-labelledby={`ppr-utas-${documentId}`}>
-      <div className="ppr__utaskop">
-        <h4 id={`ppr-utas-${documentId}`} className="ppr__dlabel">
-          Utas dengan klien{komentar && komentar.length > 0 ? ` · ${komentar.length}` : ""}
-        </h4>
-        {terakhir &&
-          (terakhir.author === "klien" ? (
-            <em className="ppr__utasstatus is-balas">perlu dibalas</em>
-          ) : (
-            <em className="ppr__utasstatus">dibalas {tanggalPendek(terakhir.createdAt)}</em>
-          ))}
-      </div>
-      <div className="ppr__utasisi">
+    <section className="mpk__utas" aria-labelledby={`mpk-utas-${d.id}`}>
+      <header className="mpk__pkop">
+        <p className="mpk__plabel">Asistensi lembar {nomor}</p>
+        <div className="mpk__utaskop">
+          <h3 id={`mpk-utas-${d.id}`} className="mpk__pjudul" title={d.title}>
+            {d.title}
+          </h3>
+          {terakhir &&
+            (terakhir.author === "klien" ? (
+              <em className="mpk__utasstatus is-balas">perlu dibalas</em>
+            ) : (
+              <em className="mpk__utasstatus">dibalas {tanggalPendek(terakhir.createdAt)}</em>
+            ))}
+        </div>
+      </header>
+      {d.status === "revisi_diminta" && d.clientNote && (
+        <p className="mpk__catatanklien">
+          <b>Catatan revisi klien</b>
+          {d.clientNote}
+        </p>
+      )}
+      <div className="mpk__utasisi">
         {komentar === undefined ? (
           <RangkaBaris jumlah={2} label="Memuat komentar…" />
         ) : komentar.length === 0 ? (
-          <p className="ppr__utaskosong">Belum ada komentar. Balasan di sini terlihat klien di bawah lembarnya.</p>
+          <p className="mpk__kosongteks">Belum ada komentar. Balasan di sini terlihat klien di bawah lembarnya.</p>
         ) : (
           /* Menempel di bawah: balasan baru menggeser ke bawah hanya kalau
              staf memang sedang di bawah. */
           <GulirPesan tinggi="100%" jumlah={komentar.length}>
             {komentar.map((k) => (
-              <Gelembung
-                key={k.id}
-                sendiri={k.author === "staf"}
-                nama={k.author === "staf" ? "Studio" : "Klien"}
-                waktu={tanggalJam(k.createdAt)}
-              >
+              <Gelembung key={k.id} sendiri={k.author === "staf"} nama={k.author === "staf" ? "Studio" : "Klien"} waktu={tanggalJam(k.createdAt)}>
                 {k.body}
               </Gelembung>
             ))}
           </GulirPesan>
         )}
       </div>
-      <form className="ppr__balas" onSubmit={kirim}>
+      <form className="mpk__balas" onSubmit={kirim}>
         <span className="k-isian__kotak">
           <input
             className="k-isian__input"
@@ -1453,7 +1424,7 @@ function Komentar({
   );
 }
 
-/* --- Kerangka acuan (brief) ------------------------------------------------- */
+/* --- Kantong: kerangka acuan (brief) ---------------------------------------------------- */
 
 type KunciBrief = "budgetAmount" | "stylePreference" | "startDate" | "endDate" | "requirements" | "internalNotes";
 const KUNCI_BRIEF: KunciBrief[] = ["budgetAmount", "stylePreference", "startDate", "endDate", "requirements", "internalNotes"];
@@ -1461,7 +1432,7 @@ const KUNCI_BRIEF: KunciBrief[] = ["budgetAmount", "stylePreference", "startDate
    huruf terhitung sebagai perubahan. */
 const kosongkan = (v: unknown) => (v === "" || v === undefined ? null : v);
 
-function LembarBrief({
+function KerangkaAcuan({
   projectId,
   brief,
   onTersimpan,
@@ -1501,37 +1472,32 @@ function LembarBrief({
       await ubahBrief(projectId, patch);
       onTersimpan({ ...brief, ...patch });
       setDraf({});
-      toast({ judul: "Brief disimpan", nada: "sukses" });
+      toast({ judul: "Kerangka acuan disimpan", nada: "sukses" });
     } catch (e) {
-      toast({ judul: "Gagal menyimpan brief", keterangan: (e as Error).message, nada: "gagal" });
+      toast({ judul: "Gagal menyimpan kerangka acuan", keterangan: (e as Error).message, nada: "gagal" });
     } finally {
       setMenyimpan(false);
     }
   }
 
   const anggaran = nilai("budgetAmount");
-  /* Isian bentuk lama (teks bebas) masih dikirim API untuk brief yang
-     diisi sebelum formulirnya berubah. Tidak bisa disunting lagi, tapi juga
-     tidak boleh hilang dari pandangan. */
-  const lama = [brief.budgetRange && `anggaran “${brief.budgetRange}”`, brief.timeline && `jadwal “${brief.timeline}”`].filter(
-    Boolean,
-  );
+  /* Isian bentuk lama (teks bebas) masih dikirim API untuk brief yang diisi
+     sebelum formulirnya berubah. Tidak bisa disunting lagi, tapi juga tidak
+     boleh hilang dari pandangan. */
+  const lama = [brief.budgetRange && `anggaran “${brief.budgetRange}”`, brief.timeline && `jadwal “${brief.timeline}”`].filter(Boolean);
 
   return (
-    <div className="ppr__brief">
-      <header className="ppr__dkop">
-        <div>
-          <p className="ppr__dlabel">Kerangka acuan · brief klien</p>
-          <h3 className="ppr__djudul">Brief</h3>
-          <small className={brief.submittedAt ? "is-ada" : "is-belum"}>
-            {brief.submittedAt
-              ? `Dikirim klien ${tanggal(brief.submittedAt)} — perubahan di sini ikut terlihat di portalnya.`
-              : "Klien belum mengisi brief — staf bisa mengisikannya di sini."}
-          </small>
-        </div>
+    <div className="mpk__acuan">
+      <header className="mpk__pkop">
+        <p className="mpk__plabel">Kerangka acuan · brief klien</p>
+        <small className={brief.submittedAt ? "is-ada" : "is-belum"}>
+          {brief.submittedAt
+            ? `Dikirim klien ${tanggal(brief.submittedAt)} — perubahan di sini ikut terlihat di portalnya.`
+            : "Klien belum mengisi — staf bisa mengisikannya di sini."}
+        </small>
       </header>
-      <div className="ppr__briefisi">
-        <div className="ppr__kisi">
+      <div className="mpk__acuanisi">
+        <div className="mpk__kisi">
           <Isian
             label="Anggaran (Rp)"
             inputMode="numeric"
@@ -1552,7 +1518,7 @@ function LembarBrief({
           <IsianTanggal
             label="Selesai"
             min={mulai || undefined}
-            className={tanggalTerbalik ? "ppr__peringatan" : undefined}
+            className={tanggalTerbalik ? "mpk__peringatan" : undefined}
             bantu={tanggalTerbalik ? "Mendahului tanggal mulai." : undefined}
             nilai={selesai}
             onUbah={(v) => set("endDate", v || null)}
@@ -1567,7 +1533,7 @@ function LembarBrief({
             onChange={(e) => set("requirements", e.currentTarget.value)}
           />
         </label>
-        {lama.length > 0 && <p className="ppr__lama">Isian bentuk lama dari klien: {lama.join(", ")}.</p>}
+        {lama.length > 0 && <p className="mpk__lama">Isian bentuk lama dari klien: {lama.join(", ")}.</p>}
         <label className="k-isian">
           <span className="k-isian__label">Catatan internal · hanya staf</span>
           <IsianPanjang
@@ -1578,13 +1544,9 @@ function LembarBrief({
           />
         </label>
       </div>
-      <footer className="ppr__dkaki">
-        <p className={`ppr__penanda${n > 0 || tanggalTerbalik ? " is-belum" : ""}`}>
-          {tanggalTerbalik
-            ? "Tanggal selesai mendahului tanggal mulai."
-            : n > 0
-              ? `${n} perubahan belum disimpan`
-              : "Semua perubahan tersimpan"}
+      <footer className="mpk__pkaki">
+        <p className={`mpk__tanda${n > 0 || tanggalTerbalik ? " is-belum" : ""}`}>
+          {tanggalTerbalik ? "Tanggal selesai mendahului tanggal mulai." : n > 0 ? `${n} perubahan belum disimpan` : "Semua perubahan tersimpan"}
         </p>
         {n > 0 && (
           <Tombol ukuran="medium" jenis="ghost" disabled={menyimpan} onClick={() => setDraf({})}>
@@ -1592,16 +1554,16 @@ function LembarBrief({
           </Tombol>
         )}
         <Tombol memuat={menyimpan} ukuran="medium" jenis="primary" disabled={n === 0 || tanggalTerbalik || menyimpan} onClick={simpan}>
-          {menyimpan ? "Menyimpan…" : "Simpan brief"}
+          {menyimpan ? "Menyimpan…" : "Simpan"}
         </Tombol>
       </footer>
     </div>
   );
 }
 
-/* --- Kabar ke klien (linimasa progres) -------------------------------------- */
+/* --- Kantong: kabar ke klien (linimasa progres) ----------------------------------------- */
 
-function LembarKabar({
+function Kabar({
   projectId,
   progres,
   setProgres,
@@ -1616,7 +1578,7 @@ function LembarKabar({
   const [sibuk, setSibuk] = useState(false);
   useCegahPindah(judul.trim() !== "" || catatan.trim() !== "");
 
-  async function tambah(e: React.FormEvent) {
+  async function tambah(e: { preventDefault: () => void }) {
     e.preventDefault();
     const j = judul.trim();
     if (j.length < 2) return;
@@ -1644,22 +1606,13 @@ function LembarKabar({
   }
 
   return (
-    <div className="ppr__kabar">
-      <header className="ppr__dkop">
-        <div>
-          <p className="ppr__dlabel">Kabar ke klien · linimasa portal</p>
-          <h3 className="ppr__djudul">Kabar</h3>
-          <small>Terbaru di atas — persis urutan yang dibaca klien.</small>
-        </div>
+    <div className="mpk__kabar">
+      <header className="mpk__pkop">
+        <p className="mpk__plabel">Kabar ke klien · linimasa portal</p>
+        <small>Terbaru di atas — persis urutan yang dibaca klien.</small>
       </header>
-      <form className="ppr__kabarform" onSubmit={tambah}>
-        <Isian
-          label="Judul kabar"
-          placeholder="mis. Fondasi selesai dicor"
-          maxLength={160}
-          value={judul}
-          onChange={(e) => setJudul(e.currentTarget.value)}
-        />
+      <form className="mpk__kabarform" onSubmit={tambah}>
+        <Isian label="Judul kabar" placeholder="mis. Fondasi selesai dicor" maxLength={160} value={judul} onChange={(e) => setJudul(e.currentTarget.value)} />
         <label className="k-isian">
           <span className="k-isian__label">Catatan (opsional)</span>
           <IsianPanjang
@@ -1669,8 +1622,8 @@ function LembarKabar({
             onChange={(e) => setCatatan(e.currentTarget.value)}
           />
         </label>
-        <div className="ppr__kabaraksi">
-          {judul.trim().length < 2 && <span className="ppr__alasan">Isi judulnya dulu, minimal 2 huruf.</span>}
+        <div className="mpk__kabaraksi">
+          {judul.trim().length < 2 && <span className="mpk__alasan">Isi judulnya dulu, minimal 2 huruf.</span>}
           <Tombol ukuran="medium" jenis="primary" tipeHtml="submit" disabled={judul.trim().length < 2 || sibuk}>
             {sibuk ? "Menambah…" : "Tambah ke linimasa"}
           </Tombol>
@@ -1679,11 +1632,12 @@ function LembarKabar({
       {progres === null ? (
         <RangkaBaris jumlah={3} label="Memuat kabar…" />
       ) : progres.updates.length === 0 ? (
-        <p className="ppr__utaskosong">Belum ada kabar. Kabar pertama langsung tampil di portal klien.</p>
+        <p className="mpk__kosongteks">Belum ada kabar. Kabar pertama langsung tampil di portal klien.</p>
       ) : (
-        <ol className="ppr__lini">
+        <ol className="mpk__lini">
           {progres.updates.map((u) => (
             <li key={u.id}>
+              <i aria-hidden="true" />
               <time dateTime={u.createdAt}>{tanggalPendek(u.createdAt)}</time>
               <span>
                 <b>{u.title}</b>
@@ -1696,7 +1650,7 @@ function LembarKabar({
                 confirmLabel="Ya, hapus"
                 onConfirm={() => hapus(u.id)}
                 trigger={
-                  <button type="button" className="ppr__hapuskecil" aria-label={`Hapus kabar ${u.title}`}>
+                  <button type="button" className="mpk__hapuskecil" aria-label={`Hapus kabar ${u.title}`}>
                     <Ikon ikon={Trash} ukuran={13} />
                   </button>
                 }
@@ -1709,18 +1663,22 @@ function LembarKabar({
   );
 }
 
-/* Kerangka memuat berbentuk papan dan setinggi papan aslinya. */
+/* Kerangka memuat berbentuk map dan setinggi map aslinya. */
 function Rangka() {
   return (
-    <div className="ppr" aria-busy="true">
-      <div className="ppr__papan">
-        <div className="ppr__kop ppr__kop--rangka" />
-        <div className="ppr__pajang ppr__pajang--rangka" />
-        <div className="ppr__bawah ppr__bawah--rangka" />
-        <div className="ppr__meja">
-          <div className="ppr__lembar ppr__lembar--rangka" />
+    <div className="mpk" aria-busy="true">
+      <div className="mpk__map">
+        <div className="mpk__kop mpk__kop--rangka" />
+        <div className="mpk__sayap">
+          <div className="mpk__slotkartu" />
+          <div className="mpk__kantong" />
         </div>
-        <div className="ppr__kaki ppr__kaki--rangka" />
+        <span className="mpk__punggung" />
+        <div className="mpk__isimap">
+          <div className="mpk__alas">
+            <div className="mpk__gambar is-rangka" />
+          </div>
+        </div>
       </div>
     </div>
   );
