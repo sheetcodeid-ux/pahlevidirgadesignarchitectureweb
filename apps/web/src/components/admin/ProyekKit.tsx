@@ -1,3 +1,5 @@
+import { IsiPunggung, RONA, bandingRak, tahunProyek } from "./punggungOrdner";
+import { TAHAP } from "../../lib/tahap";
 import { PilihMenu, PilihTombol } from "../kit/Formulir";
 import { navigate } from "astro:transitions/client";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -75,18 +77,10 @@ const STATUS: Record<string, { teks: string; nada: "selesai" | "menunggu" | "net
   archived: { teks: "Arsip", nada: "menunggu" },
 };
 
-// Dua daftar ini SAMA dengan daftar lama (ProjectList) dan dengan editor
-// proyek — nilainya disimpan di database, jadi mengubah satu kata di sini
-// berarti tahap lama tidak lagi punya label.
-export const TAHAP: { value: string; label: string }[] = [
-  { value: "proposal", label: "Proposal" },
-  { value: "deal_kontrak", label: "Deal Kontrak" },
-  { value: "dp_50", label: "DP 50%" },
-  { value: "desain_1", label: "Desain 1" },
-  { value: "desain_2", label: "Desain 2" },
-  { value: "finish", label: "Finish" },
-  { value: "pelunasan", label: "Pelunasan" },
-];
+// TAHAP kini di lib/tahap.ts (dipakai juga Proyek Baru); diekspor ulang di
+// sini supaya pemakai lama tidak berubah. FASE tetap di sini — nilainya juga
+// disimpan di database, jadi jangan mengubah satu kata pun.
+export { TAHAP };
 const FASE: { value: string; label: string }[] = [
   { value: "konsultasi", label: "Konsultasi" },
   { value: "konsep", label: "Konsep" },
@@ -209,10 +203,7 @@ export function PilihTeks({
   );
 }
 
-/** Tiga rona punggung menurut JENIS proyek — rona, bukan warna makna. */
-const RONA: Record<string, number> = { residential: 0, commercial: 1, coffeeshop: 2, hospitality: 2, interior: 1, renovation: 0, landscape: 2, masterplan: 1 };
 
-const tahunProyek = (p: Proyek) => p.year ?? (p.publishedAt ? Number(p.publishedAt.slice(0, 4)) : null);
 
 const geraknya = () =>
   typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -295,10 +286,7 @@ function Isi() {
      lalu urutan bawaan daftar lama di dalamnya. */
   const urut = useMemo(
     () =>
-      [...(proyek ?? [])].sort(
-        (a, b) =>
-          (tahunProyek(b) ?? 0) - (tahunProyek(a) ?? 0) || (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""),
-      ),
+      [...(proyek ?? [])].sort(bandingRak),
     [proyek],
   );
   /* Papan rak di ujung deret: jumlah seluruh kontrak dan yang sudah masuk. */
@@ -503,20 +491,13 @@ function Isi() {
                         aria-label={`${p.title}, ${p.client || "tanpa klien"}, tahap ${tahap}${k ? `, ${Math.round(isi)}% dibayar` : ""}`}
                         onClick={() => pilihProyek(p.id)}
                       >
-                        <span className={`ord__jendela${p.coverImageUrl ? "" : " is-kosong"}`}>
-                          {p.coverImageUrl ? (
-                            <img src={p.coverImageUrl} alt="" loading="lazy" decoding="async" />
-                          ) : (
-                            <span>{(KATEGORI[p.category] ?? p.category).slice(0, 1)}</span>
-                          )}
-                        </span>
-                        <span className="ord__kantong">
-                          <b>{kodeProyek(p.title)}</b>
-                          <span className="ord__judultegak">{p.title}</span>
-                          <small>{tahap}</small>
-                        </span>
-                        <i className="ord__lubang" aria-hidden="true" />
-                        <i className="ord__meter" aria-hidden="true" />
+                        <IsiPunggung
+                          kode={kodeProyek(p.title)}
+                          judul={p.title}
+                          tahap={tahap}
+                          sampulUrl={p.coverImageUrl}
+                          huruf={(KATEGORI[p.category] ?? p.category).slice(0, 1)}
+                        />
                       </button>
                     </ContextMenu>
                   </li>

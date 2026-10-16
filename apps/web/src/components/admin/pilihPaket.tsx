@@ -1,4 +1,4 @@
-import { PilihMenu } from "../kit/Formulir";
+import { PilihMenu, type OpsiPilih } from "../kit/Formulir";
 import type { Paket } from "../../lib/admin";
 
 /* =============================================================================
@@ -14,6 +14,20 @@ const KELOMPOK: Record<Paket["group"], string> = { kafe: "Coffee shop", rumah: "
 
 export const labelPaket = (p: Paket) => `${p.name} · Rp${p.feeMin}–${p.feeMax} jt`;
 
+/** Opsi paket untuk PilihMenu — juga dipakai surat perjanjian Proyek Baru,
+ *  yang menulis paketnya di garis isian Pasal 3. */
+export function opsiPaket(paket: Paket[], nilai: string): OpsiPilih[] {
+  const tampil = paket.filter((p) => p.active || p.id === nilai);
+  return [
+    { nilai: "", label: "Tanpa paket" },
+    ...(Object.keys(KELOMPOK) as Paket["group"][]).flatMap((g) =>
+      tampil
+        .filter((p) => p.group === g)
+        .map((p) => ({ nilai: p.id, label: `${labelPaket(p)}${p.active ? "" : " (dihentikan)"}`, kelompok: KELOMPOK[g] })),
+    ),
+  ];
+}
+
 export function PilihPaket({
   paket,
   nilai,
@@ -27,23 +41,10 @@ export function PilihPaket({
   label?: string;
   bantu?: string;
 }) {
-  const tampil = paket.filter((p) => p.active || p.id === nilai);
   return (
     <div className="k-isian">
       <span className="k-isian__label">{label}</span>
-      <PilihMenu
-        label={label}
-        nilai={nilai}
-        onUbah={onUbah}
-        opsi={[
-          { nilai: "", label: "Tanpa paket" },
-          ...(Object.keys(KELOMPOK) as Paket["group"][]).flatMap((g) =>
-            tampil
-              .filter((p) => p.group === g)
-              .map((p) => ({ nilai: p.id, label: `${labelPaket(p)}${p.active ? "" : " (dihentikan)"}`, kelompok: KELOMPOK[g] })),
-          ),
-        ]}
-      />
+      <PilihMenu label={label} nilai={nilai} onUbah={onUbah} opsi={opsiPaket(paket, nilai)} />
       {bantu && <span className="k-isian__bantu">{bantu}</span>}
     </div>
   );
