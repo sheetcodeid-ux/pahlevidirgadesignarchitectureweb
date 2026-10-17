@@ -192,15 +192,19 @@ const timAdmin = [
   ["Nanda Wijaya", "proyek", "3D artist"],
   ["Rizki Ardian", "proyek", "Drafter lepas"],
   ["Tuti Hartati", "proyek", "Quantity surveyor"],
-].map(([name, kind, role], i) => ({
+  /* Nonaktif — mengisi laci arsip bagan Tim & Freelancer. Paling akhir
+     supaya urutan t1..t6 yang dipakai data lain tidak bergeser. */
+  ["Hadi Gunawan", "proyek", "Drafter lepas", false],
+].map(([name, kind, role, aktif], i) => ({
   id: `t${i + 1}`,
   name,
   role,
   kind,
-  rate: null,
+  /* Tarif acuan sebagian saja — kolomnya memang boleh kosong. */
+  rate: [null, 6500000, 4500000, 3500000, 2500000, null, 2000000][i],
   /* Dua bernomor, supaya tombol WhatsApp slip gaji punya keadaan hidup dan mati. */
   phone: i === 1 ? "0812-3456-7890" : i === 2 ? "+62 813 1111 2222" : null,
-  active: true,
+  active: aktif !== false,
 }));
 
 /* Pesan masuk dari form kontak — dipakai halaman Pesan Masuk (frame 28).
@@ -600,15 +604,30 @@ const kontakAdmin = [
   ["Andi Saputra", "kontraktor", "Saputra Konstruksi", "0852-4545-9090", null, null],
   ["Toko Kayu Jati Borneo", "supplier", null, "0561-744-118", "jatiborneo@gmail.com", "Diskon 5% di atas 10 m³"],
   ["Studio Cahaya", "lainnya", "Konsultan pencahayaan", null, "halo@studiocahaya.id", null],
+  /* Tambahan untuk Buku Rekanan: lebih dari sembilan kartu supaya map punya
+     halaman kedua, dan dua kontak seperusahaan. */
+  ["Rina Kartika", "kontraktor", "CV Karya Bangun", "0812-9090-1212", null, "Pengawas lapangan, cepat balas WA"],
+  ["UD Batu Alam Kapuas", "supplier", null, "0561-711-404", "batualam.kapuas@gmail.com", "Batu candi & andesit, kirim 2 hari"],
+  ["Toko Besi Sinar Jaya", "supplier", "Sinar Jaya", "0561-722-909", null, null],
+  ["Notaris Ahmad", "klien", "Kantor Notaris Ahmad", "0811-5656-3030", "ahmad.notaris@gmail.com", "Rapat hanya Sabtu pagi"],
+  ["Joko Susilo", "kontraktor", "Mandor bangunan", "0857-3131-4747", null, "Tim 6 orang, kuat di pasangan bata"],
+  ["PT Kaca Prima", "supplier", "Kaca & aluminium", "0561-766-232", "sales@kacaprima.co.id", null],
+  ["Dewi Lestari", "lainnya", "Fotografer arsitektur", "0813-4848-2121", "dewi@lensa.id", "Tarif per sesi, bawa drone"],
+  ["Bakmi Hauw", "klien", "Rumah makan", "0812-7777-5151", null, null],
 ].map(([name, category, company, phone, email, note], i) => ({
   id: `kt${i + 1}`, name, category, company, phone, email, note,
-  createdAt: hariLalu(40 - i * 5), updatedAt: hariLalu(40 - i * 5),
+  createdAt: hariLalu(70 - i * 5), updatedAt: hariLalu(70 - i * 5),
 }));
 const testimoniAdmin = [
   ["Ratna Sari", "k1", "Kedai Kopi Ruas", "Alur bar-nya benar-benar dipikirkan. Barista kami tidak lagi saling tabrak di jam ramai, dan pelanggan betah duduk lama.", 5, "disetujui", true, 20],
   ["Hendra Wijaya", "k2", "Rumah Tropis Sungai Raya", "Rumahnya sejuk tanpa AC di siang hari. Tim studio sabar menjelaskan setiap revisi.", 5, "disetujui", false, 12],
   ["Liana", "k3", "Renovasi Bakmi Hauw", "Renovasinya selesai tepat waktu dan dapur jadi jauh lebih lega.", 4, "menunggu", false, 3],
   ["Anonim", null, null, "Bagus.", null, "ditolak", false, 30],
+  /* Tambahan untuk Buku Tamu: lebih dari satu halaman, dua yang menunggu,
+     dan dua yang terpajang supaya papan pameran beranda terisi. */
+  ["Ahmad Fauzi", "k4", "Kantor Notaris Ahmad", "Ruang tunggunya tenang dan klien kami langsung merasa dihargai. Pencahayaan alaminya pas, tidak silau.", 5, "disetujui", true, 8],
+  ["Yohanes Liem", "k5", "Guest House Kapuas", "Tim responsif sejak survei lokasi. Kamar menghadap sungai jadi favorit tamu.", 4, "menunggu", false, 1],
+  ["Maria Ulfa", "k1", "Kedai Kopi Ruas", "Pesanan ramai, antrean tetap rapi. Desain barnya memudahkan kerja kami.", 5, "disetujui", false, 15],
 ].map(([clientName, projectId, projectTitle, quote, rating, status, isFeatured, umur], i) => ({
   id: `ts${i + 1}`, clientName, projectId, projectTitle, quote, rating, status, isFeatured,
   createdAt: hariLalu(umur), updatedAt: hariLalu(umur),

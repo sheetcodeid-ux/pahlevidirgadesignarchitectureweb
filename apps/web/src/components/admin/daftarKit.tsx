@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Tabel, type KolomTabel, type Urutan } from "../kit/Tabel";
 import { Paginasi } from "../kit/Paginasi";
-import { Tombol, TombolIkon } from "../kit/Tombol";
+import { TombolIkon } from "../kit/Tombol";
 import { Ikon, type DataIkon } from "../kit/Ikon";
 import { CaretDown, MagnifyingGlass, Trash } from "../kit/ikon";
 import { Avatar, Kosong, RangkaBaris } from "../kit/Tampilan";
@@ -29,46 +29,6 @@ import { jagaFokusSesudahHapus } from "../../lib/fokus";
    ============================================================================= */
 
 export { PilihTombol } from "../kit/Formulir";
-
-/**
- * Status yang sekaligus pemilih: titik warna di depan <select> asli. Satu
- * benda yang menunjukkan DAN mengubah — bukan lencana ditambah pemilih
- * terpisah. Dipakai Portal Klien (status dokumen) dan Tugas.
- *
- * `nada` mengikuti aturan warna situs: amber = menunggu pihak lain,
- * merah = perlu tindakan, hijau = beres, abu = belum mulai.
- */
-export type NadaStatus = "netral" | "tunggu" | "tindak" | "jalan" | "beres";
-export function PilihStatus({
-  judul,
-  nilai,
-  nada,
-  opsi,
-  onPilih,
-}: {
-  judul: string;
-  nilai: string;
-  nada: NadaStatus;
-  opsi: { nilai: string; label: string }[];
-  onPilih: (nilai: string) => void;
-}) {
-  const daftar = opsi.some((o) => o.nilai === nilai) ? opsi : [...opsi, { nilai, label: nilai }];
-  return (
-    <PilihMenu
-      label={judul}
-      nilai={nilai}
-      opsi={daftar}
-      onUbah={onPilih}
-      pemicu={
-        <button type="button" className="kd-status" data-nada={nada}>
-          <span className="kd-status__titik" aria-hidden="true" />
-          <span className="kd-status__teks">{daftar.find((o) => o.nilai === nilai)?.label}</span>
-          <Ikon ikon={CaretDown} ukuran={12} />
-        </button>
-      }
-    />
-  );
-}
 
 export interface PropDaftarKit {
   /** Kelas tambahan pada kartunya — mis. `trx` untuk tinggi tetap frame 13. */

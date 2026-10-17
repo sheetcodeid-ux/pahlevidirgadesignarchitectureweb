@@ -1,33 +1,74 @@
-import { SorotTeks } from "../kit/Tampilan";
-import { PilihMenu } from "../kit/Formulir";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { RequireAuth } from "./RequireAuth";
+import { GagalMuat } from "./gagalMuat";
 import { ToastProvider, useToast } from "../kit/Toast";
 import { Dialog } from "../kit/Overlay";
-import { SelDua, type KolomTabel } from "../kit/Tabel";
 import { Cari, Isian } from "../kit/Isian";
+import { PilihMenu } from "../kit/Formulir";
 import { Tombol } from "../kit/Tombol";
-import { Plus } from "../kit/ikon";
-import { DaftarKit, PilihTombol, Inisial, HapusBaris } from "./daftarKit";
+import { Ikon } from "../kit/Ikon";
+import { SorotTeks } from "../kit/Tampilan";
+import {
+  ArrowClockwise,
+  CaretLeft,
+  CaretRight,
+  ChatTeardropDots,
+  NavEnvelope,
+  NotePencil,
+  Phone,
+  Plus,
+  Trash,
+} from "../kit/ikon";
+import { geraknya } from "./hitung";
+import { inisial } from "../../lib/nomorDokumen";
+import { nomorWa } from "../../lib/telepon";
+import { tanya } from "../../lib/tanya";
+import { TAHAP } from "../../lib/tahap";
 import {
   daftarKontak,
   tambahKontak,
   ubahKontak,
   hapusKontak,
+  daftarProyek,
   bacaCache,
   tulisCache,
   type KontakDirektori,
+  type Proyek,
 } from "../../lib/admin";
 
 /* =============================================================================
-   Direktori — klien, kontraktor, dan supplier yang dipakai berulang.
+   Direktori = BUKU REKANAN — map kartu nama studio.
 
-   Tidak punya frame sendiri di Coinest; kerangkanya daftar frame 13 yang
-   sama dengan Semua Transaksi (daftarKit.tsx). Yang dibawa dari halaman
-   lama tanpa berubah: kategori sebagai saringan, catatan yang disunting
-   langsung di barisnya (membuka dialog untuk satu baris teks yang sering
-   diubah justru memperlambat pekerjaan yang paling sering dilakukan di
-   sini), dan telepon/email yang bisa diklik.
+   Di meja studio, klien, kontraktor, dan supplier yang dipakai berulang
+   disimpan sebagai KARTU NAMA di map berkantong plastik: sembilan saku per
+   halaman, dipisah lembar pembatas per kategori, dan indeks abjad di tepi
+   lembarnya. Kartu yang dibutuhkan DITARIK ke meja; catatan tentang orangnya
+   ditulis di BALIK kartu — kebiasaan yang memang berlaku untuk kartu nama.
+
+   1. KOP — "Map kartu nama · N kartu", cari, urutan (A–Z / terbaru), dan
+      "Kartu baru".
+   2. MAP — sampul gelap `--kas-dalam`, cincin di tepi kiri, lembar pembatas
+      bertab (Semua / Klien / Kontraktor / Supplier / Lainnya, jumlahnya ikut
+      kata cari), lembar plastik 3×3 saku, indeks abjad A–Z di tepi kanan,
+      dan kaki halaman. Nomor kartu RK-NN = urutan diselipkan (createdAt) di
+      antara SEMUA kartu — nomor yang diturunkan dari data, seperti nomor
+      agenda surat masuk. Kartu yang sedang di meja meninggalkan saku kosong
+      bergaris putus "Di meja".
+   3. MEJA — kartu besar dua muka: muka depan data kartunya, muka BELAKANG
+      catatan yang disimpan saat ditinggalkan. Di bawahnya Telepon / WhatsApp
+      / Email (mati beralasan), lalu slip "rekanan ini di studio": proyek yang
+      mencatat nama ini sebagai klien atau kontraktor (`client`/`contractor`
+      proyek, dicocokkan tanpa sapaan), rekanan seperusahaan, dan tanggalnya.
+
+   Bahan kartu menurut kategori (rona, bukan warna makna): klien kertas putih
+   bermonogram mint, kontraktor karton hijau tua, supplier kertas mint pucat,
+   lainnya kertas putih berbingkai cetak.
+
+   Gerak — hanya karena perbuatan (jebakan #74), seketika bila gerak
+   dikurangi: kartu yang dipilih TERBANG dari sakunya ke meja sementara kartu
+   lama kembali ke sakunya (serentak); satu-satunya 3D adalah kartu di meja
+   yang DIBALIK; halaman map bergeser saat dibalik; kartu baru diselipkan ke
+   sakunya. Disentuh tetikus, kartu di saku tertarik sedikit keluar.
    ============================================================================= */
 
 const KATEGORI: Record<string, string> = {
@@ -36,197 +77,1026 @@ const KATEGORI: Record<string, string> = {
   supplier: "Supplier",
   lainnya: "Lainnya",
 };
+const URUT_KAT = Object.keys(KATEGORI);
+const PEMBATAS = ["semua", ...URUT_KAT];
+const PER_HAL = 9;
+const ABJAD = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const LEMBUT = "cubic-bezier(0.22, 0.7, 0.2, 1)";
+
+const katDari = (c: string) => (KATEGORI[c] ? c : "lainnya");
+const tanggal = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+};
+function umur(iso: string) {
+  const n = Math.floor((Date.now() - Date.parse(iso)) / 864e5);
+  if (n <= 0) return "hari ini";
+  if (n === 1) return "kemarin";
+  if (n < 60) return `${n} hari lalu`;
+  return tanggal(iso);
+}
+
+/** Nomor kartu RK-NN: urutan diselipkan di antara SEMUA kartu. */
+function nomorKartu(semua: readonly KontakDirektori[]) {
+  const urut = semua
+    .slice()
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.id.localeCompare(b.id)));
+  return new Map(urut.map((k, i) => [k.id, `RK-${String(i + 1).padStart(2, "0")}`]));
+}
+
+/* Nama tanpa sapaan dan bentuk badan usaha — "Bu Ratna Sari" dan "Bu Ratna"
+   di kolom klien proyek adalah orang yang sama, begitu juga "CV Karya Bangun"
+   dan "Karya Bangun". */
+const SAPAAN = /^(bu|ibu|pak|bapak|bpk|sdr|sdri|saudara|saudari|tn|ny|nn|pt|cv|ud|toko)\s+/;
+function normal(s?: string | null) {
+  let t = (s ?? "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  for (let i = 0; i < 2; i++) t = t.replace(SAPAAN, "");
+  return t;
+}
+function sama(a?: string | null, b?: string | null) {
+  const x = normal(a);
+  const y = normal(b);
+  if (x.length < 3 || y.length < 3) return false;
+  return x === y || x.startsWith(`${y} `) || y.startsWith(`${x} `);
+}
+/** "Bu Ratna Sari" → RS, "Toko Kayu Jati Borneo" → KJ. */
+function monogram(nama: string) {
+  let t = nama.trim();
+  for (let i = 0; i < 2; i++) t = t.replace(/^(bu|ibu|pak|bapak|bpk|sdr|sdri|pt|cv|ud|toko)\.?\s+/i, "");
+  return inisial(t || nama) || "–";
+}
+
+interface Relasi {
+  p: Proyek;
+  peran: "klien" | "kontraktor";
+}
+function proyekRekanan(k: KontakDirektori, proyek: readonly Proyek[]): Relasi[] {
+  const hasil: Relasi[] = [];
+  for (const p of proyek) {
+    if (p.client && (sama(p.client, k.name) || sama(p.client, k.company))) hasil.push({ p, peran: "klien" });
+    else if (p.contractor && (sama(p.contractor, k.name) || sama(p.contractor, k.company)))
+      hasil.push({ p, peran: "kontraktor" });
+  }
+  return hasil;
+}
+
+/* Isi kartu — sama di saku, di meja, dan di pratinjau dialog. */
+type IsiKartu = Pick<KontakDirektori, "name" | "category" | "company" | "phone" | "email" | "note">;
+function KartuNama({
+  k,
+  nomor,
+  cari = "",
+  besar = false,
+  diselipkan,
+}: {
+  k: IsiKartu;
+  nomor: string;
+  cari?: string;
+  besar?: boolean;
+  diselipkan?: string;
+}) {
+  const kat = katDari(k.category);
+  const q = cari.trim().toLowerCase();
+  const cocokCatatan =
+    Boolean(q) &&
+    (k.note ?? "").toLowerCase().includes(q) &&
+    ![k.name, k.company, k.phone, k.email, nomor].some((v) => (v ?? "").toLowerCase().includes(q));
+  const uk = besar ? 13 : 10;
+  return (
+    <>
+      <span className="brk__kkop">
+        <span className="brk__mono" aria-hidden="true">
+          {monogram(k.name || "?")}
+        </span>
+        <span className="brk__kkat">{cocokCatatan ? <mark>cocok di catatan</mark> : KATEGORI[kat]}</span>
+        {k.note ? (
+          <span className="brk__adacatat" aria-hidden="true">
+            <Ikon ikon={NotePencil} ukuran={besar ? 13 : 10} />
+          </span>
+        ) : null}
+        <span className="brk__nomor">{nomor}</span>
+      </span>
+      <span className="brk__knama">
+        <SorotTeks teks={k.name.trim() || "Nama rekanan"} cari={cari} />
+      </span>
+      <span className={`brk__kpt${k.company ? "" : " is-kosong"}`}>
+        {k.company ? <SorotTeks teks={k.company} cari={cari} /> : "—"}
+      </span>
+      <span className="brk__kbaris">
+        <span>
+          <Ikon ikon={Phone} ukuran={uk} />
+          <span>{k.phone ? <SorotTeks teks={k.phone} cari={cari} /> : "—"}</span>
+        </span>
+        <span>
+          <Ikon ikon={NavEnvelope} ukuran={uk} />
+          <span>{k.email ? <SorotTeks teks={k.email} cari={cari} /> : "—"}</span>
+        </span>
+      </span>
+      {besar && diselipkan && (
+        <span className="brk__kkaki">
+          <span>Diselipkan {tanggal(diselipkan)}</span>
+          <span className="brk__petunjuk">
+            <Ikon ikon={ArrowClockwise} ukuran={12} />
+            Balik untuk catatan
+          </span>
+        </span>
+      )}
+    </>
+  );
+}
+
+function labelKartu(k: KontakDirektori, nomor: string) {
+  return [nomor, k.name, k.company, KATEGORI[katDari(k.category)], k.note ? "ada catatan di balik kartu" : null]
+    .filter(Boolean)
+    .join(", ");
+}
 
 function Isi() {
   const toast = useToast();
   const [kontak, setKontak] = useState<KontakDirektori[] | null>(() => bacaCache<KontakDirektori[]>("direktori"));
+  const [galat, setGalat] = useState<string | null>(null);
+  /* Kunci "proyek" milik Semua Proyek — dibaca saja (jebakan #8). */
+  const [proyek, setProyek] = useState<Proyek[]>(() => bacaCache<Proyek[]>("proyek") ?? []);
   const [cari, setCari] = useState("");
-  const [kategori, setKategori] = useState("semua");
-  const [urut, setUrut] = useState("nama");
+  const [kat, setKat] = useState("semua");
+  const [urut, setUrut] = useState<"az" | "baru">("az");
+  const [hal, setHal] = useState(0);
+  const [pilihId, setPilihId] = useState<string | null>(() =>
+    typeof location === "undefined" ? null : new URLSearchParams(location.search).get("id"),
+  );
+  const [balik, setBalik] = useState(false);
+  const [dialog, setDialog] = useState<null | { mode: "baru" } | { mode: "ubah"; k: KontakDirektori }>(null);
+  const [baruId, setBaruId] = useState<string | null>(null);
+
+  const besarRef = useRef<HTMLDivElement>(null);
+  const miringRef = useRef<HTMLDivElement>(null);
+  const lapisRef = useRef<HTMLDivElement>(null);
+  const kantongRef = useRef<HTMLUListElement>(null);
+  const catatanRef = useRef<HTMLTextAreaElement>(null);
+  const tambahRef = useRef<HTMLButtonElement>(null);
+  const terbang = useRef<{ lama: string | null; salinan: HTMLElement | null } | null>(null);
+  const geser = useRef(0);
+  const fokusKe = useRef<string | null>(null);
+  const lompatKe = useRef<string | null>(null);
 
   function muat() {
     daftarKontak()
       .then((d) => {
         tulisCache("direktori", d);
         setKontak(d);
+        setGalat(null);
       })
-      .catch(() => setKontak((l) => l ?? []));
+      .catch((e) => setGalat((e as Error).message));
   }
   useEffect(muat, []);
+  useEffect(() => {
+    daftarProyek()
+      .then(setProyek)
+      .catch(() => {});
+  }, []);
 
+  const semua = kontak ?? [];
+  const nomor = useMemo(() => nomorKartu(semua), [kontak]);
+  const q = cari.trim().toLowerCase();
+  const hasilCari = useMemo(
+    () =>
+      semua.filter(
+        (k) => !q || [k.name, k.company, k.phone, k.email, k.note, nomor.get(k.id)].some((v) => (v ?? "").toLowerCase().includes(q)),
+      ),
+    [kontak, q, nomor],
+  );
+  const perKat = useMemo(() => {
+    const m = new Map<string, number>([["semua", hasilCari.length]]);
+    for (const k of hasilCari) m.set(katDari(k.category), (m.get(katDari(k.category)) ?? 0) + 1);
+    return m;
+  }, [hasilCari]);
+  const tampak = useMemo(
+    () =>
+      hasilCari
+        .filter((k) => kat === "semua" || katDari(k.category) === kat)
+        .sort((a, b) =>
+          urut === "az"
+            ? a.name.localeCompare(b.name, "id", { sensitivity: "base" })
+            : a.createdAt < b.createdAt
+              ? 1
+              : a.createdAt > b.createdAt
+                ? -1
+                : 0,
+        ),
+    [hasilCari, kat, urut],
+  );
+  const nHal = Math.max(1, Math.ceil(tampak.length / PER_HAL));
+  const halKini = Math.min(hal, nHal - 1);
+  const isiHal = tampak.slice(halKini * PER_HAL, halKini * PER_HAL + PER_HAL);
+  const kini = tampak.find((k) => k.id === pilihId) ?? tampak[0] ?? null;
+  const posisi = kini ? tampak.indexOf(kini) : -1;
+  const kiniDiHal = kini ? isiHal.includes(kini) : false;
+
+  const huruf = useMemo(() => {
+    const m = new Map<string, number>();
+    tampak.forEach((k, i) => {
+      const h = monogramHuruf(k.name);
+      if (h && !m.has(h)) m.set(h, i);
+    });
+    return m;
+  }, [tampak]);
+  const hurufHal = new Set(isiHal.map((k) => monogramHuruf(k.name)));
+  const hurufKini = kini ? monogramHuruf(kini.name) : null;
+  const hurufTab = hurufKini && huruf.has(hurufKini) ? hurufKini : (ABJAD.find((h) => huruf.has(h)) ?? null);
+
+  const relasi = useMemo(() => (kini ? proyekRekanan(kini, proyek) : []), [kini, proyek]);
+  const seperusahaan = useMemo(
+    () =>
+      kini
+        ? semua.filter(
+            (k) =>
+              k.id !== kini.id &&
+              ((kini.company && (sama(k.company, kini.company) || sama(k.name, kini.company))) ||
+                (k.company && sama(k.company, kini.name))),
+          )
+        : [],
+    [kini, kontak],
+  );
+
+  /* ---- Memilih kartu: terbang dari sakunya ke meja ------------------------ */
+  function pilih(k: KontakDirektori, opsi: { fokus?: boolean } = {}) {
+    if (opsi.fokus) fokusKe.current = k.id;
+    if (kini && k.id === kini.id) {
+      if (opsi.fokus) setHal(Math.floor(tampak.indexOf(k) / PER_HAL));
+      return;
+    }
+    const i = tampak.indexOf(k);
+    if (i >= 0) setHal(Math.floor(i / PER_HAL));
+    if (geraknya()) {
+      let salinan: HTMLElement | null = null;
+      const el = besarRef.current;
+      const lapis = lapisRef.current;
+      if (kini && el && lapis) {
+        /* Salinan kartu lama, di lapisan yang tidak pernah dirender React —
+           ia kembali ke sakunya sementara kartu baru terbang ke meja. */
+        const r = el.getBoundingClientRect();
+        salinan = el.cloneNode(true) as HTMLElement;
+        salinan.removeAttribute("id");
+        salinan.querySelectorAll("[id]").forEach((x) => x.removeAttribute("id"));
+        salinan.querySelectorAll(".is-balik").forEach((x) => x.classList.remove("is-balik"));
+        salinan.setAttribute("inert", "");
+        salinan.classList.add("brk__salinan");
+        Object.assign(salinan.style, {
+          left: `${r.left}px`,
+          top: `${r.top}px`,
+          width: `${r.width}px`,
+          height: `${r.height}px`,
+        });
+        lapis.replaceChildren(salinan);
+      }
+      terbang.current = { lama: kini?.id ?? null, salinan };
+    }
+    setBalik(false);
+    setPilihId(k.id);
+    history.replaceState(null, "", `?id=${encodeURIComponent(k.id)}`);
+  }
+
+  useLayoutEffect(() => {
+    const t = terbang.current;
+    terbang.current = null;
+    if (!t || !kini) return;
+    const besar = besarRef.current;
+    const asal = document.querySelector<HTMLElement>(`[data-saku="${CSS.escape(kini.id)}"] .brk__kartu`);
+    const D = 560;
+    if (besar && asal) {
+      const a = asal.getBoundingClientRect();
+      const b = besar.getBoundingClientRect();
+      besar.animate(
+        [
+          {
+            transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width}, ${a.height / b.height})`,
+            transformOrigin: "0 0",
+          },
+          { transform: "none", transformOrigin: "0 0" },
+        ],
+        { duration: D, easing: LEMBUT },
+      );
+    } else if (besar) {
+      besar.animate([{ transform: "translateY(-14px)", opacity: 0 }, { transform: "none", opacity: 1 }], {
+        duration: 420,
+        easing: LEMBUT,
+      });
+    }
+    const s = t.salinan;
+    if (!s) return;
+    const tujuan = t.lama ? document.querySelector<HTMLElement>(`[data-saku="${CSS.escape(t.lama)}"] .brk__kartu`) : null;
+    const r = s.getBoundingClientRect();
+    if (tujuan) {
+      const a = tujuan.getBoundingClientRect();
+      tujuan.style.visibility = "hidden";
+      const anim = s.animate(
+        [
+          { transform: "none" },
+          {
+            transform: `translate(${a.left - r.left}px, ${a.top - r.top}px) scale(${a.width / r.width}, ${a.height / r.height})`,
+          },
+        ],
+        { duration: D, easing: LEMBUT, fill: "forwards" },
+      );
+      anim.onfinish = anim.oncancel = () => {
+        tujuan.style.visibility = "";
+        s.remove();
+      };
+    } else {
+      const anim = s.animate(
+        [
+          { transform: "none", opacity: 1 },
+          { transform: "translateY(22px) scale(0.94)", opacity: 0 },
+        ],
+        { duration: 380, easing: LEMBUT, fill: "forwards" },
+      );
+      anim.onfinish = anim.oncancel = () => s.remove();
+    }
+  }, [kini?.id]);
+
+  /* Fokus papan ketik mengikuti kartu yang dipilih di map. */
+  useLayoutEffect(() => {
+    const id = fokusKe.current;
+    if (!id) return;
+    fokusKe.current = null;
+    document.querySelector<HTMLElement>(`[data-saku="${CSS.escape(id)}"] .brk__kartu`)?.focus();
+  });
+
+  /* Kartu baru: halaman map berpindah ke halaman tempat ia diselipkan. */
+  useLayoutEffect(() => {
+    const id = lompatKe.current;
+    if (!id) return;
+    const i = tampak.findIndex((k) => k.id === id);
+    if (i < 0) return;
+    lompatKe.current = null;
+    setHal(Math.floor(i / PER_HAL));
+  });
+  useEffect(() => {
+    if (!baruId) return;
+    const t = window.setTimeout(() => setBaruId(null), 1400);
+    return () => window.clearTimeout(t);
+  }, [baruId]);
+
+  /* ---- Halaman map ---------------------------------------------------------- */
+  function keHal(n: number) {
+    const tuju = Math.max(0, Math.min(nHal - 1, n));
+    if (tuju === halKini) return;
+    if (geraknya()) geser.current = tuju > halKini ? 1 : -1;
+    setHal(tuju);
+  }
+  useLayoutEffect(() => {
+    const g = geser.current;
+    geser.current = 0;
+    if (!g) return;
+    kantongRef.current?.animate(
+      [
+        { transform: `translateX(${g * 36}px)`, opacity: 0.15 },
+        { transform: "none", opacity: 1 },
+      ],
+      { duration: 340, easing: LEMBUT },
+    );
+  }, [halKini]);
+
+  function gantiKat(v: string) {
+    setKat(v);
+    setHal(0);
+  }
+
+  function tombolTab(e: KeyboardEvent<HTMLDivElement>) {
+    let i = PEMBATAS.indexOf(kat);
+    if (e.key === "ArrowRight") i = (i + 1) % PEMBATAS.length;
+    else if (e.key === "ArrowLeft") i = (i - 1 + PEMBATAS.length) % PEMBATAS.length;
+    else if (e.key === "Home") i = 0;
+    else if (e.key === "End") i = PEMBATAS.length - 1;
+    else return;
+    e.preventDefault();
+    gantiKat(PEMBATAS[i]!);
+    document.getElementById(`brk-tab-${PEMBATAS[i]}`)?.focus();
+  }
+
+  function tombolMap(e: KeyboardEvent<HTMLUListElement>) {
+    const id = (e.target as HTMLElement).closest("[data-saku]")?.getAttribute("data-saku");
+    const dari = tampak.findIndex((k) => k.id === id);
+    if (dari < 0) return;
+    const langkah: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 3, ArrowUp: -3, PageDown: 9, PageUp: -9 };
+    let j: number;
+    if (e.key in langkah) j = dari + langkah[e.key]!;
+    else if (e.key === "Home") j = 0;
+    else if (e.key === "End") j = tampak.length - 1;
+    else return;
+    e.preventDefault();
+    j = Math.max(0, Math.min(tampak.length - 1, j));
+    if (j !== dari) pilih(tampak[j]!, { fokus: true });
+  }
+
+  function tombolAbjad(e: KeyboardEvent<HTMLElement>) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const tombol = [...e.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")];
+    const i = tombol.indexOf(e.target as HTMLButtonElement);
+    tombol[Math.max(0, Math.min(tombol.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))]?.focus();
+  }
+
+  /* Kartu di meja menyusul tetikus — terangkat ke arah kursor, tetikus saja
+     (jebakan #9); kotaknya dibaca sekali saat masuk. */
+  const kotakMiring = useRef<DOMRect | null>(null);
+  function masukMiring(e: PointerEvent<HTMLDivElement>) {
+    if (e.pointerType !== "mouse" || !geraknya()) return;
+    kotakMiring.current = e.currentTarget.getBoundingClientRect();
+  }
+  function gerakMiring(e: PointerEvent<HTMLDivElement>) {
+    const r = kotakMiring.current;
+    const el = miringRef.current;
+    if (!r || !el || e.pointerType !== "mouse") return;
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--brk-gx", `${(x * 6).toFixed(2)}px`);
+    el.style.setProperty("--brk-gy", `${(y * 4 - 3).toFixed(2)}px`);
+  }
+  function keluarMiring() {
+    kotakMiring.current = null;
+    miringRef.current?.style.removeProperty("--brk-gx");
+    miringRef.current?.style.removeProperty("--brk-gy");
+  }
+
+  function balikKartu(ke: boolean) {
+    setBalik(ke);
+    if (ke) window.setTimeout(() => catatanRef.current?.focus({ preventScroll: true }), geraknya() ? 320 : 0);
+  }
+
+  /* ---- Menulis ---------------------------------------------------------------- */
   async function ubahCatatan(k: KontakDirektori, note: string) {
     if (note === (k.note ?? "")) return;
-    setKontak((l) => l?.map((x) => (x.id === k.id ? { ...x, note } : x)) ?? l);
+    const lama = k;
+    const kini2 = { ...k, note, updatedAt: new Date().toISOString() };
+    setKontak((l) => l?.map((x) => (x.id === k.id ? kini2 : x)) ?? l);
     try {
       await ubahKontak(k.id, { note });
+      toast({ judul: "Catatan disimpan", keterangan: `Di balik kartu ${nomor.get(k.id)} · ${k.name}`, nada: "sukses" });
     } catch (e) {
-      setKontak((l) => l?.map((x) => (x.id === k.id ? k : x)) ?? l);
+      setKontak((l) => l?.map((x) => (x.id === k.id ? lama : x)) ?? l);
       toast({ judul: "Gagal menyimpan catatan", keterangan: (e as Error).message, nada: "gagal" });
     }
   }
 
-  async function hapus(k: KontakDirektori) {
+  async function simpanKartu(isi: Bentuk, awal: KontakDirektori | null) {
+    const bersih = {
+      name: isi.name.trim(),
+      category: isi.category,
+      company: isi.company.trim() || null,
+      phone: isi.phone.trim() || null,
+      email: isi.email.trim() || null,
+    };
+    if (awal) {
+      const patch: Partial<KontakDirektori> = {};
+      (Object.keys(bersih) as (keyof typeof bersih)[]).forEach((kunci) => {
+        if ((bersih[kunci] ?? null) !== (awal[kunci] ?? null)) (patch as Record<string, unknown>)[kunci] = bersih[kunci];
+      });
+      await ubahKontak(awal.id, patch);
+      setKontak((l) => l?.map((x) => (x.id === awal.id ? { ...x, ...patch, updatedAt: new Date().toISOString() } : x)) ?? l);
+      toast({ judul: "Kartu diubah", keterangan: `${nomor.get(awal.id)} · ${bersih.name}`, nada: "sukses" });
+      muat();
+      return;
+    }
+    const { id } = await tambahKontak(bersih);
+    const sekarang = new Date().toISOString();
+    setKontak((l) => [...(l ?? []), { id, ...bersih, note: null, createdAt: sekarang, updatedAt: sekarang }]);
+    setCari("");
+    if (kat !== "semua" && kat !== bersih.category) setKat(bersih.category);
+    lompatKe.current = id;
+    if (geraknya()) setBaruId(id);
+    toast({ judul: "Kartu diselipkan", keterangan: `RK-${String(semua.length + 1).padStart(2, "0")} · ${bersih.name}`, nada: "sukses" });
+    muat();
+  }
+
+  async function hapus(k: KontakDirektori, pemicu: HTMLElement | null) {
+    const ya = await tanya({
+      judul: `Hapus kartu ${k.name}?`,
+      isi: "Kartu ini beserta catatan di baliknya dikeluarkan dari buku rekanan.",
+      ya: "Hapus kartu",
+      bahaya: true,
+    });
+    if (!ya) return;
+    const i = tampak.indexOf(k);
+    const ganti = tampak[i + 1] ?? tampak[i - 1] ?? null;
     try {
       await hapusKontak(k.id);
       setKontak((l) => l?.filter((x) => x.id !== k.id) ?? l);
-      toast({ judul: "Kontak dihapus", keterangan: k.name, nada: "sukses" });
+      setBalik(false);
+      setPilihId(ganti?.id ?? null);
+      history.replaceState(null, "", ganti ? `?id=${encodeURIComponent(ganti.id)}` : location.pathname);
+      if (ganti) setHal(Math.floor(tampak.filter((x) => x.id !== k.id).indexOf(ganti) / PER_HAL));
+      toast({ judul: "Kartu dihapus", keterangan: k.name, nada: "sukses" });
+      /* Dialog konfirmasi baru dilepas sesudah animasi tutupnya, dan fokus
+         balikannya sempat jatuh ke <body> (jebakan #39) — tunggu dialognya
+         lenyap, lalu kembalikan ke tombol Hapus kartu berikutnya, atau ke
+         "Kartu baru" kalau map sudah kosong. */
+      for (let i = 0; i < 60 && document.querySelector("[role=alertdialog]"); i++)
+        await new Promise((r) => requestAnimationFrame(r));
+      await new Promise((r) => requestAnimationFrame(r));
+      if (document.activeElement === document.body || !document.activeElement)
+        (pemicu?.isConnected ? pemicu : tambahRef.current)?.focus();
     } catch (e) {
       toast({ judul: "Gagal menghapus", keterangan: (e as Error).message, nada: "gagal" });
     }
   }
 
-  const tersaring = useMemo(() => {
-    const q = cari.trim().toLowerCase();
-    return (kontak ?? [])
-      .filter((k) => kategori === "semua" || k.category === kategori)
-      .filter(
-        (k) =>
-          !q ||
-          [k.name, k.company, k.phone, k.email, k.note].some((v) => (v ?? "").toLowerCase().includes(q)),
-      )
-      .sort((a, b) =>
-        urut === "nama" ? a.name.localeCompare(b.name, "id") : (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
-      );
-  }, [kontak, cari, kategori, urut]);
+  if (galat && kontak === null) return <GagalMuat apa="Buku rekanan" galat={galat} />;
+  if (kontak === null) return <Rangka />;
 
-  const kolom: KolomTabel[] = [
-    { judul: "Kontak", lebar: 290 },
-    { judul: "Kategori", lebar: 110 },
-    { judul: "Telepon", lebar: 150 },
-    { judul: "Email", lebar: 220 },
-    { judul: "Catatan", lebar: 330 },
-    { judul: "", lebar: 60 },
-  ];
-
-  const baris = tersaring.map((k) => [
-    <div className="kd__sel">
-      <Inisial nama={k.name} />
-      <SelDua atas={<SorotTeks teks={k.name} cari={cari} />} bawah={k.company ? <SorotTeks teks={k.company} cari={cari} /> : "—"} />
-    </div>,
-    KATEGORI[k.category] ?? k.category,
-    k.phone ? (
-      <a className="kd__tautan" href={`tel:${k.phone.replace(/[^\d+]/g, "")}`}>
-        {k.phone}
-      </a>
-    ) : (
-      <span className="kd__redup">—</span>
-    ),
-    k.email ? (
-      <a className="kd__tautan" href={`mailto:${k.email}`}>
-        {k.email}
-      </a>
-    ) : (
-      <span className="kd__redup">—</span>
-    ),
-    <input
-      /* `key` ikut nilai catatannya: defaultValue cuma dibaca sekali, jadi
-         tanpa ini catatan yang berubah dari luar tidak pernah tergambar. */
-      key={`${k.id}:${k.note ?? ""}`}
-      className="kd__isian"
-      defaultValue={k.note ?? ""}
-      placeholder="Tambah catatan"
-      aria-label={`Catatan untuk ${k.name}`}
-      onBlur={(e) => ubahCatatan(k, e.currentTarget.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") e.currentTarget.blur();
-      }}
-    />,
-    <HapusBaris
-      judul={`Hapus ${k.name}?`}
-      keterangan="Kontak ini beserta catatannya dihapus dari direktori."
-      label={`Hapus ${k.name}`}
-      onHapus={() => hapus(k)}
-    />,
-  ]);
+  const nomorBaru = `RK-${String(semua.length + 1).padStart(2, "0")}`;
+  const awalHal = halKini * PER_HAL;
+  const kosongPertama = isiHal.length;
+  const tabFokus = kiniDiHal ? kini!.id : isiHal[0]?.id;
+  const kat0 = kini ? katDari(kini.category) : "klien";
+  const wa = nomorWa(kini?.phone);
+  const waSeluler = wa && /^628/.test(wa) ? wa : null;
+  const tahap = (v?: string) => TAHAP.find((t) => t.value === v)?.label ?? "Proposal";
 
   return (
-    <DaftarKit
-      kunciSaring={`${cari}|${kategori}|${urut}`}
-      kiri={
-        <>
-          <Cari
-            ukuran="medium"
-            judul="Cari kontak"
-            placeholder="Cari kontak"
-            value={cari}
-            onChange={(e) => setCari(e.currentTarget.value)}
-          />
-          <PilihTombol
-            judul="Saring kategori"
-            nilai={kategori}
-            onPilih={setKategori}
-            opsi={[
-              { nilai: "semua", label: "Semua kategori" },
-              ...Object.entries(KATEGORI).map(([nilai, label]) => ({ nilai, label })),
-            ]}
-          />
-          <PilihTombol
-            judul="Urutkan kontak"
-            nilai={urut}
-            onPilih={setUrut}
-            opsi={[
-              { nilai: "nama", label: "Nama A–Z" },
-              { nilai: "baru", label: "Terbaru ditambahkan" },
-            ]}
-          />
-        </>
-      }
-      kanan={<DialogKontak onSelesai={muat} />}
-      kolom={kolom}
-      baris={baris}
-      kunci={tersaring.map((k) => k.id)}
-      memuat={kontak === null}
-      teksMemuat="Memuat kontak…"
-      kosong={
-        kontak && kontak.length > 0
-          ? "Tidak ada kontak pada saringan ini."
-          : "Belum ada kontak. Klien, kontraktor, atau supplier yang dipakai berulang disimpan di sini."
-      }
-      satuan="kontak"
-    />
+    <div className="brk">
+      <div className="brk__papan">
+        {/* ---- Kop ---- */}
+        <header className="brk__kop">
+          <div className="brk__kopjudul">
+            <p>
+              Map kartu nama · {semua.length} kartu · {Math.max(1, Math.ceil(semua.length / PER_HAL))} hal.
+            </p>
+            <h2>Buku rekanan</h2>
+          </div>
+          <div className="brk__alat">
+            <Cari
+              className="brk__cari"
+              ukuran="medium"
+              judul="Cari kartu"
+              placeholder="Cari kartu"
+              value={cari}
+              onChange={(e) => {
+                setCari(e.currentTarget.value);
+                setHal(0);
+              }}
+            />
+            <div className="brk__urut" role="radiogroup" aria-label="Urutan kartu">
+              {(
+                [
+                  ["az", "A–Z"],
+                  ["baru", "Terbaru"],
+                ] as const
+              ).map(([v, l]) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="radio"
+                  aria-checked={urut === v}
+                  tabIndex={urut === v ? 0 : -1}
+                  className={urut === v ? "is-pilih" : ""}
+                  onClick={() => {
+                    setUrut(v);
+                    setHal(0);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+                    e.preventDefault();
+                    const lain = v === "az" ? "baru" : "az";
+                    setUrut(lain);
+                    setHal(0);
+                    (e.currentTarget.parentElement?.querySelector(`[data-urut="${lain}"]`) as HTMLElement | null)?.focus();
+                  }}
+                  data-urut={v}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+            <button ref={tambahRef} type="button" className="brk__tambah" onClick={() => setDialog({ mode: "baru" })}>
+              <Ikon ikon={Plus} ukuran={16} />
+              Kartu baru
+            </button>
+          </div>
+        </header>
+
+        {/* ---- Map ---- */}
+        <section className="brk__map" aria-label="Map kartu nama">
+          <div className="brk__pembatas" role="tablist" aria-label="Lembar pembatas kategori" onKeyDown={tombolTab}>
+            {PEMBATAS.map((v) => (
+              <button
+                key={v}
+                id={`brk-tab-${v}`}
+                type="button"
+                role="tab"
+                aria-selected={kat === v}
+                aria-controls="brk-lembar"
+                tabIndex={kat === v ? 0 : -1}
+                className={`brk__tab is-${v}${kat === v ? " is-pilih" : ""}`}
+                onClick={() => gantiKat(v)}
+              >
+                <span>{v === "semua" ? "Semua" : KATEGORI[v]}</span>
+                <b>{perKat.get(v) ?? 0}</b>
+              </button>
+            ))}
+          </div>
+          <div className="brk__sampul">
+            <span className="brk__cincin" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+            <div className="brk__lembar" id="brk-lembar" role="tabpanel" aria-labelledby={`brk-tab-${kat}`}>
+              <ul
+                ref={kantongRef}
+                className="brk__kantong"
+                aria-label={`Halaman ${halKini + 1} dari ${nHal}`}
+                onKeyDown={tombolMap}
+              >
+                {Array.from({ length: PER_HAL }, (_, j) => {
+                  const k = isiHal[j];
+                  if (!k) {
+                    const pertama = j === kosongPertama;
+                    return (
+                      <li key={`kosong-${j}`} className="brk__ruang">
+                        <span className="brk__saku is-kosong">
+                          <span className="brk__kartu is-kosong">
+                            {pertama && tampak.length === 0 && q ? (
+                              <span className="brk__tidakada">
+                                Tidak ada kartu yang cocok dengan “{cari.trim()}”
+                              </span>
+                            ) : pertama && halKini === nHal - 1 ? (
+                              <button type="button" className="brk__selip" onClick={() => setDialog({ mode: "baru" })}>
+                                <Ikon ikon={Plus} ukuran={14} />
+                                Selipkan kartu
+                              </button>
+                            ) : null}
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  }
+                  const diMeja = kini?.id === k.id;
+                  const no = nomor.get(k.id) ?? "RK";
+                  return (
+                    <li key={k.id} className="brk__ruang" data-saku={k.id}>
+                      <span className="brk__saku">
+                        <button
+                          type="button"
+                          className={`brk__kartu is-${katDari(k.category)}${diMeja ? " is-meja" : ""}${baruId === k.id ? " is-baru" : ""}`}
+                          tabIndex={k.id === tabFokus ? 0 : -1}
+                          aria-pressed={diMeja}
+                          aria-label={diMeja ? `${no}, ${k.name}, sedang di meja` : labelKartu(k, no)}
+                          onClick={() => pilih(k)}
+                        >
+                          {diMeja ? (
+                            <span className="brk__dimeja" aria-hidden="true">
+                              <b>{no}</b>
+                              <span>Di meja</span>
+                            </span>
+                          ) : (
+                            <KartuNama k={k} nomor={no} cari={cari} />
+                          )}
+                        </button>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <nav className="brk__abjad" aria-label="Indeks abjad" onKeyDown={tombolAbjad}>
+                {ABJAD.map((h) => {
+                  const i = huruf.get(h);
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      disabled={i === undefined}
+                      tabIndex={h === hurufTab ? 0 : -1}
+                      className={hurufHal.has(h) ? "is-hal" : ""}
+                      aria-label={`Kartu berawalan ${h}`}
+                      onClick={() => i !== undefined && pilih(tampak[i]!)}
+                    >
+                      {h}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+          <div className="brk__kaki">
+            <button type="button" className="brk__balikhal" aria-label="Halaman sebelumnya" disabled={halKini === 0} onClick={() => keHal(halKini - 1)}>
+              <Ikon ikon={CaretLeft} ukuran={14} />
+            </button>
+            <span className="brk__hal">
+              Hal. <b>{halKini + 1}</b> dari {nHal}
+            </span>
+            <button
+              type="button"
+              className="brk__balikhal"
+              aria-label="Halaman berikutnya"
+              disabled={halKini >= nHal - 1}
+              onClick={() => keHal(halKini + 1)}
+            >
+              <Ikon ikon={CaretRight} ukuran={14} />
+            </button>
+            {nHal > 1 && nHal <= 12 && (
+              <span className="brk__tepi">
+                {Array.from({ length: nHal }, (_, n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={n === halKini ? "is-kini" : ""}
+                    aria-label={`Halaman ${n + 1}`}
+                    aria-current={n === halKini ? "page" : undefined}
+                    onClick={() => keHal(n)}
+                  />
+                ))}
+              </span>
+            )}
+            <span className="brk__jumlah">
+              {tampak.length === 0
+                ? "Tidak ada kartu"
+                : `Kartu ${awalHal + 1}–${awalHal + isiHal.length} dari ${tampak.length}`}
+            </span>
+          </div>
+        </section>
+
+        {/* ---- Meja ---- */}
+        <aside className="brk__meja" aria-label="Kartu di meja">
+          {kini ? (
+            <>
+              <p className="brk__mejajudul">
+                <span>Di meja</span>
+                <b>{nomor.get(kini.id)}</b>
+                {posisi >= 0 && <span>kartu {posisi + 1} dari {tampak.length}</span>}
+              </p>
+              {/* Alas potong berkisi di meja studio — kartunya diletakkan di atasnya. */}
+              <div className="brk__alas">
+              <div
+                ref={besarRef}
+                className="brk__besar"
+                onPointerEnter={masukMiring}
+                onPointerMove={gerakMiring}
+                onPointerLeave={keluarMiring}
+              >
+                <div ref={miringRef} className="brk__miring">
+                  <div className={`brk__putar${balik ? " is-balik" : ""}`}>
+                    <button
+                      type="button"
+                      className={`brk__muka brk__muka--depan brk__kartu brk__kartu--besar is-${kat0}`}
+                      inert={balik}
+                      aria-label={`${labelKartu(kini, nomor.get(kini.id) ?? "")}. Balik kartu untuk catatan`}
+                      onClick={() => balikKartu(true)}
+                    >
+                      <KartuNama k={kini} nomor={nomor.get(kini.id) ?? ""} besar diselipkan={kini.createdAt} />
+                    </button>
+                    <div className="brk__muka brk__muka--belakang" inert={!balik}>
+                      <p className="brk__bjudul">
+                        <span>Catatan di balik kartu</span>
+                        <b>{nomor.get(kini.id)}</b>
+                      </p>
+                      <textarea
+                        ref={catatanRef}
+                        key={`${kini.id}:${kini.note ?? ""}`}
+                        className="brk__catatan"
+                        defaultValue={kini.note ?? ""}
+                        placeholder="Tulis catatan tentang rekanan ini…"
+                        aria-label={`Catatan di balik kartu ${kini.name}`}
+                        onBlur={(e) => ubahCatatan(kini, e.currentTarget.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            e.currentTarget.blur();
+                            balikKartu(false);
+                          }
+                        }}
+                      />
+                      <p className="brk__bkaki">
+                        <span>Disimpan saat ditinggalkan · diubah {umur(kini.updatedAt)}</span>
+                        <button type="button" onClick={() => balikKartu(false)}>
+                          <Ikon ikon={ArrowClockwise} ukuran={12} />
+                          Muka depan
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </div>
+
+              <div className="brk__hubungi">
+                {kini.phone ? (
+                  <a className="brk__tuts" href={`tel:${kini.phone.replace(/[^\d+]/g, "")}`}>
+                    <Ikon ikon={Phone} ukuran={15} />
+                    Telepon
+                  </a>
+                ) : (
+                  <span className="brk__tuts is-mati" role="link" aria-disabled="true" tabIndex={0} title="Nomor telepon belum diisi">
+                    <Ikon ikon={Phone} ukuran={15} />
+                    Telepon
+                  </span>
+                )}
+                {waSeluler ? (
+                  <a className="brk__tuts" href={`https://wa.me/${waSeluler}`} target="_blank" rel="noreferrer">
+                    <Ikon ikon={ChatTeardropDots} ukuran={15} />
+                    WhatsApp
+                  </a>
+                ) : (
+                  <span
+                    className="brk__tuts is-mati"
+                    role="link"
+                    aria-disabled="true"
+                    tabIndex={0}
+                    title={wa ? "Nomor kantor — bukan nomor WhatsApp" : "Nomor telepon belum diisi"}
+                  >
+                    <Ikon ikon={ChatTeardropDots} ukuran={15} />
+                    WhatsApp
+                  </span>
+                )}
+                {kini.email ? (
+                  <a className="brk__tuts" href={`mailto:${kini.email}`}>
+                    <Ikon ikon={NavEnvelope} ukuran={15} />
+                    Email
+                  </a>
+                ) : (
+                  <span className="brk__tuts is-mati" role="link" aria-disabled="true" tabIndex={0} title="Email belum diisi">
+                    <Ikon ikon={NavEnvelope} ukuran={15} />
+                    Email
+                  </span>
+                )}
+              </div>
+
+              <section className="brk__slip" aria-label="Rekanan ini di studio">
+                <h3>
+                  <span>Proyek bersama studio</span>
+                  <b>{relasi.length}</b>
+                </h3>
+                {relasi.length ? (
+                  <ul className="brk__proyek">
+                    {relasi.map(({ p, peran }) => (
+                      <li key={p.id}>
+                        <a href={`/admin/proyek/satu?id=${encodeURIComponent(p.id)}`}>
+                          <span>{p.title}</span>
+                          <small>
+                            {peran === "klien" ? "sebagai klien" : "sebagai kontraktor"} · {tahap(p.pipelineStage)}
+                          </small>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="brk__slipkosong">
+                    {kat0 === "klien"
+                      ? "Belum ada proyek atas nama ini."
+                      : kat0 === "kontraktor"
+                        ? "Belum tercatat sebagai kontraktor proyek mana pun."
+                        : "Data proyek tidak mencatat supplier dan rekanan lain."}
+                  </p>
+                )}
+                <h3>
+                  <span>Di balik kartu</span>
+                  <b>{kini.note ? `${kini.note.trim().split(/\s+/).length} kata` : "kosong"}</b>
+                </h3>
+                <button type="button" className="brk__intip" onClick={() => balikKartu(true)}>
+                  {kini.note ? <q>{kini.note}</q> : <span>Belum ada catatan. Balik kartu untuk menulis.</span>}
+                </button>
+                <h3>
+                  <span>Seperusahaan</span>
+                  <b>{seperusahaan.length}</b>
+                </h3>
+                {seperusahaan.length ? (
+                  <ul className="brk__rekan">
+                    {seperusahaan.map((k) => (
+                      <li key={k.id}>
+                        <button type="button" onClick={() => pilih(k)} disabled={!tampak.includes(k)}>
+                          <span aria-hidden="true">{monogram(k.name)}</span>
+                          {k.name}
+                          <small>{nomor.get(k.id)}</small>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="brk__slipkosong">{kini.company ? "Satu-satunya kartu dari perusahaan ini." : "Kartu perorangan."}</p>
+                )}
+                <dl className="brk__fakta">
+                  <div>
+                    <dt>Kategori</dt>
+                    <dd>{KATEGORI[kat0]}</dd>
+                  </div>
+                  <div>
+                    <dt>Diselipkan</dt>
+                    <dd>{tanggal(kini.createdAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Diubah</dt>
+                    <dd>{umur(kini.updatedAt)}</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <div className="brk__aksi">
+                <button type="button" onClick={() => balikKartu(!balik)} aria-pressed={balik}>
+                  <Ikon ikon={ArrowClockwise} ukuran={14} />
+                  {balik ? "Muka depan" : "Balik kartu"}
+                </button>
+                <button type="button" onClick={() => setDialog({ mode: "ubah", k: kini })}>
+                  <Ikon ikon={NotePencil} ukuran={14} />
+                  Ubah
+                </button>
+                <button type="button" className="is-bahaya" onClick={(e) => hapus(kini, e.currentTarget)}>
+                  <Ikon ikon={Trash} ukuran={14} />
+                  Hapus
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="brk__mejakosong">
+              <p>Meja masih kosong.</p>
+              <small>{semua.length ? "Pilih kartu dari map." : "Belum ada kartu di buku rekanan."}</small>
+            </div>
+          )}
+        </aside>
+      </div>
+      <div ref={lapisRef} className="brk__lapis" aria-hidden="true" />
+      <DialogKartu
+        buka={dialog !== null}
+        awal={dialog?.mode === "ubah" ? dialog.k : null}
+        nomor={dialog?.mode === "ubah" ? (nomor.get(dialog.k.id) ?? "") : nomorBaru}
+        onTutup={() => setDialog(null)}
+        onSimpan={simpanKartu}
+      />
+    </div>
   );
 }
 
-function DialogKontak({ onSelesai }: { onSelesai: () => void }) {
-  const toast = useToast();
-  /* Dikendalikan, bukan dibiarkan Radix: footer Dialog tidak menutup
-     sendiri, dan staf yang mengira belum tersimpan menekan Simpan dua kali. */
-  const [buka, setBuka] = useState(false);
-  const [nama, setNama] = useState("");
-  const [kategori, setKategori] = useState("klien");
-  const [perusahaan, setPerusahaan] = useState("");
-  const [telepon, setTelepon] = useState("");
-  const [email, setEmail] = useState("");
-  const [kirim, setKirim] = useState(false);
-  const alasan = nama.trim().length < 2 ? "Isi nama dulu, minimal 2 huruf." : null;
+/** Huruf indeks — sama dengan urutan A–Z (nama apa adanya). */
+function monogramHuruf(nama: string) {
+  const h = nama.trim()[0]?.toUpperCase() ?? "";
+  return /[A-Z]/.test(h) ? h : "";
+}
 
-  function saatBuka(b: boolean) {
-    setBuka(b);
-    if (b) {
-      setNama("");
-      setKategori("klien");
-      setPerusahaan("");
-      setTelepon("");
-      setEmail("");
-    }
-  }
+interface Bentuk {
+  name: string;
+  category: string;
+  company: string;
+  phone: string;
+  email: string;
+}
+const KOSONG: Bentuk = { name: "", category: "klien", company: "", phone: "", email: "" };
+
+function DialogKartu({
+  buka,
+  awal,
+  nomor,
+  onTutup,
+  onSimpan,
+}: {
+  buka: boolean;
+  awal: KontakDirektori | null;
+  nomor: string;
+  onTutup: () => void;
+  onSimpan: (isi: Bentuk, awal: KontakDirektori | null) => Promise<void>;
+}) {
+  const toast = useToast();
+  const [f, setF] = useState<Bentuk>(KOSONG);
+  const [kirim, setKirim] = useState(false);
+  useEffect(() => {
+    if (!buka) return;
+    setF(
+      awal
+        ? {
+            name: awal.name,
+            category: katDari(awal.category),
+            company: awal.company ?? "",
+            phone: awal.phone ?? "",
+            email: awal.email ?? "",
+          }
+        : KOSONG,
+    );
+  }, [buka, awal?.id]);
+
+  const berubah =
+    !awal ||
+    f.name.trim() !== awal.name ||
+    f.category !== katDari(awal.category) ||
+    (f.company.trim() || null) !== (awal.company ?? null) ||
+    (f.phone.trim() || null) !== (awal.phone ?? null) ||
+    (f.email.trim() || null) !== (awal.email ?? null);
+  const alasan = f.name.trim().length < 2 ? "Isi nama dulu, minimal 2 huruf." : !berubah ? "Belum ada yang diubah." : null;
+  const ubah = (kunci: keyof Bentuk) => (e: { currentTarget: { value: string } }) => {
+    const v = e.currentTarget.value;
+    setF((l) => ({ ...l, [kunci]: v }));
+  };
 
   async function simpan() {
     if (alasan) return;
     setKirim(true);
     try {
-      await tambahKontak({
-        name: nama.trim(),
-        category: kategori,
-        company: perusahaan.trim() || null,
-        phone: telepon.trim() || null,
-        email: email.trim() || null,
-      });
-      setBuka(false);
-      onSelesai();
-      toast({ judul: "Kontak ditambahkan", keterangan: nama.trim(), nada: "sukses" });
+      await onSimpan(f, awal);
+      onTutup();
     } catch (e) {
-      toast({ judul: "Gagal menambah kontak", keterangan: (e as Error).message, nada: "gagal" });
+      toast({ judul: awal ? "Gagal mengubah kartu" : "Gagal menyelipkan kartu", keterangan: (e as Error).message, nada: "gagal" });
     } finally {
       setKirim(false);
     }
@@ -235,68 +1105,72 @@ function DialogKontak({ onSelesai }: { onSelesai: () => void }) {
   return (
     <Dialog
       open={buka}
-      onOpenChange={saatBuka}
-      title="Tambah kontak"
-      trigger={
-        <Tombol ukuran="medium" jenis="primary" kiri={Plus}>
-          Tambah kontak
-        </Tombol>
-      }
+      onOpenChange={(b) => !b && onTutup()}
+      title={awal ? `Ubah kartu ${nomor}` : "Kartu baru"}
       footer={
         <div className="kd-form__kaki">
           {alasan && <small className="kd-form__alasan">{alasan}</small>}
           <Tombol memuat={kirim} ukuran="large" jenis="primary" disabled={Boolean(alasan) || kirim} onClick={simpan}>
-            {kirim ? "Menyimpan…" : "Simpan"}
+            {kirim ? "Menyimpan…" : awal ? "Simpan kartu" : "Selipkan ke map"}
           </Tombol>
         </div>
       }
     >
       <div className="kd-form">
+        {/* Pratinjau: kartunya persis seperti nanti di saku map. */}
+        <div className="brk brk--pratinjau" aria-hidden="true">
+          <span className={`brk__kartu is-${katDari(f.category)}`}>
+            <KartuNama k={{ ...f, note: awal?.note ?? null }} nomor={nomor} />
+          </span>
+        </div>
         <div className="kd-form__dua">
-          <Isian label="Nama" placeholder="mis. Bu Ratna" value={nama} onChange={(e) => setNama(e.currentTarget.value)} />
+          <Isian label="Nama" placeholder="mis. Bu Ratna Sari" value={f.name} onChange={ubah("name")} />
           <div className="k-isian">
-            <label className="k-isian__label" htmlFor="dk-kategori">
+            <label className="k-isian__label" htmlFor="brk-kategori">
               Kategori
             </label>
             <PilihMenu
-              id="dk-kategori"
-              nilai={kategori}
-              onUbah={setKategori}
-              opsi={Object.entries(KATEGORI).map(([v, l]) => ({ nilai: v, label: l }))}
+              id="brk-kategori"
+              nilai={f.category}
+              onUbah={(v) => setF((l) => ({ ...l, category: v }))}
+              opsi={URUT_KAT.map((v) => ({ nilai: v, label: KATEGORI[v]! }))}
             />
           </div>
         </div>
-        <Isian
-          label="Perusahaan"
-          placeholder="Opsional"
-          value={perusahaan}
-          onChange={(e) => setPerusahaan(e.currentTarget.value)}
-        />
+        <Isian label="Perusahaan" placeholder="Opsional" value={f.company} onChange={ubah("company")} />
         <div className="kd-form__dua">
-          <Isian
-            label="Telepon"
-            type="tel"
-            inputMode="tel"
-            placeholder="Opsional"
-            value={telepon}
-            onChange={(e) => setTelepon(e.currentTarget.value)}
-          />
-          <Isian
-            label="Email"
-            type="email"
-            placeholder="Opsional"
-            value={email}
-            onChange={(e) => setEmail(e.currentTarget.value)}
-          />
+          <Isian label="Telepon" type="tel" inputMode="tel" placeholder="Opsional" value={f.phone} onChange={ubah("phone")} />
+          <Isian label="Email" type="email" placeholder="Opsional" value={f.email} onChange={ubah("email")} />
         </div>
       </div>
     </Dialog>
   );
 }
 
+/* Kerangka memuat berbentuk papan dan setinggi papan aslinya. */
+function Rangka() {
+  return (
+    <div className="brk" aria-busy="true">
+      <div className="brk__papan">
+        <div className="brk__kop brk__kop--rangka" />
+        <div className="brk__map">
+          <div className="brk__pembatas" />
+          <div className="brk__sampul">
+            <div className="brk__lembar brk__lembar--rangka" />
+          </div>
+          <div className="brk__kaki" />
+        </div>
+        <div className="brk__meja">
+          <div className="brk__besar brk__besar--rangka" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DirektoriKit() {
   return (
-    <RequireAuth skeleton={<div className="kd" aria-busy="true" />}>
+    <RequireAuth skeleton={<Rangka />}>
       <ToastProvider>
         <Isi />
       </ToastProvider>
