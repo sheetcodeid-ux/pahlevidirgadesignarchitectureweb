@@ -1,4 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 import { RequireAuth } from "./RequireAuth";
 import { GagalMuat } from "./gagalMuat";
 import { ToastProvider, useToast } from "../kit/Toast";
@@ -19,11 +28,12 @@ import {
   Plus,
   Trash,
 } from "../kit/ikon";
-import { geraknya } from "./hitung";
-import { inisial } from "../../lib/nomorDokumen";
+import { geraknya, Hitung } from "./hitung";
+import { inisial, kodeProyek } from "../../lib/nomorDokumen";
 import { nomorWa } from "../../lib/telepon";
 import { tanya } from "../../lib/tanya";
 import { TAHAP } from "../../lib/tahap";
+import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 import {
   daftarKontak,
   tambahKontak,
@@ -62,13 +72,26 @@ import {
 
    Bahan kartu menurut kategori (rona, bukan warna makna): klien kertas putih
    bermonogram mint, kontraktor karton hijau tua, supplier kertas mint pucat,
-   lainnya kertas putih berbingkai cetak.
+   lainnya kertas putih berbingkai cetak. DESAIN kartunya milik PERUSAHAANNYA
+   (`desainKartu`: pita / kepala / logo / garis, diturunkan dari nama kantor)
+   — dua orang dari kantor yang sama memegang kartu yang sama rupanya, seperti
+   kartu nama sungguhan.
+
+   Kop membawa kelengkapan buku: berapa kartu yang siap di-WhatsApp, yang
+   terlibat proyek studio, dan yang bercatatan; menyentuh satu sel menyorot
+   kartunya di lembar yang terbuka. Map berpunggung logam dengan tiga cincin,
+   saku plastik bertakik jempol dan berlas, lembar pembatas dari karton
+   kategorinya, tepi lembar di kanan bawah = lembar yang masih tersisa. Meja
+   = ALAS POTONG berskala milimeter: kartu tergambar 85 × 55 mm, lengkap
+   dengan penggaris dan garis ukurnya.
 
    Gerak — hanya karena perbuatan (jebakan #74), seketika bila gerak
-   dikurangi: kartu yang dipilih TERBANG dari sakunya ke meja sementara kartu
-   lama kembali ke sakunya (serentak); satu-satunya 3D adalah kartu di meja
-   yang DIBALIK; halaman map bergeser saat dibalik; kartu baru diselipkan ke
-   sakunya. Disentuh tetikus, kartu di saku tertarik sedikit keluar.
+   dikurangi: kartu yang dipilih DITARIK naik dari sakunya lalu terbang ke
+   meja sementara kartu lama melayang kembali dan TURUN ke sakunya
+   (serentak); lembar plastik DIBALIK di cincinnya saat pindah halaman atau
+   pembatas (datar, `scaleX` dari punggung — satu-satunya 3D tetap kartu di
+   meja yang DIBALIK); angka kop berhitung; kartu baru diselipkan ke sakunya.
+   Disentuh tetikus, kartu di saku tertarik sedikit keluar.
    ============================================================================= */
 
 const KATEGORI: Record<string, string> = {
@@ -96,6 +119,27 @@ function umur(iso: string) {
   if (n < 60) return `${n} hari lalu`;
   return tanggal(iso);
 }
+
+/* Desain kartu — milik PERUSAHAANNYA (atau orangnya, kalau perorangan):
+   kartu dari kantor yang sama selalu bergaya sama. */
+const DESAIN = ["pita", "kepala", "logo", "garis"] as const;
+type Desain = (typeof DESAIN)[number];
+function desainKartu(k: Pick<KontakDirektori, "name" | "company">): Desain {
+  const kunci = normal(k.company) || normal(k.name) || "?";
+  let h = 5381;
+  for (const c of kunci) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0;
+  return DESAIN[h % DESAIN.length]!;
+}
+const kelasKartu = (k: Pick<KontakDirektori, "name" | "company" | "category">) =>
+  `is-${katDari(k.category)} is-d-${desainKartu(k)}`;
+
+/** Nomor yang bisa dibuka di WhatsApp — seluler (62 8…), bukan nomor kantor. */
+function waSeluler(telepon?: string | null) {
+  const w = nomorWa(telepon);
+  return w && /^628/.test(w) ? w : null;
+}
+
+type Sorot = "wa" | "proyek" | "catatan";
 
 /** Nomor kartu RK-NN: urutan diselipkan di antara SEMUA kartu. */
 function nomorKartu(semua: readonly KontakDirektori[]) {
@@ -145,7 +189,9 @@ function proyekRekanan(k: KontakDirektori, proyek: readonly Proyek[]): Relasi[] 
   return hasil;
 }
 
-/* Isi kartu — sama di saku, di meja, dan di pratinjau dialog. */
+/* Isi kartu — sama di saku, di meja, dan di pratinjau dialog. Anaknya rata
+   (tanpa pembungkus) supaya tiap desain menata letaknya sendiri lewat
+   `grid-template-areas` di stylesheet. */
 type IsiKartu = Pick<KontakDirektori, "name" | "category" | "company" | "phone" | "email" | "note">;
 function KartuNama({
   k,
@@ -153,14 +199,17 @@ function KartuNama({
   cari = "",
   besar = false,
   diselipkan,
+  proyekN = 0,
 }: {
   k: IsiKartu;
   nomor: string;
   cari?: string;
   besar?: boolean;
   diselipkan?: string;
+  proyekN?: number;
 }) {
   const kat = katDari(k.category);
+  const desain = desainKartu(k);
   const q = cari.trim().toLowerCase();
   const cocokCatatan =
     Boolean(q) &&
@@ -169,17 +218,24 @@ function KartuNama({
   const uk = besar ? 13 : 10;
   return (
     <>
-      <span className="brk__kkop">
-        <span className="brk__mono" aria-hidden="true">
-          {monogram(k.name || "?")}
+      {desain === "garis" && <i className="brk__kgaris" aria-hidden="true" />}
+      {/* Bagian atas kartu. Di desain KEPALA ia bidang sewarna kantornya
+          (leluhur sungguhan tulisannya); di desain lain `display: contents`. */}
+      <span className="brk__katas">
+      <span className="brk__mono" aria-hidden="true">
+        {monogram(k.name || "?")}
+      </span>
+      <span className="brk__kkat">
+        {cocokCatatan ? <mark>cocok di catatan</mark> : KATEGORI[kat]}
+      </span>
+      {k.note ? (
+        <span className="brk__adacatat" aria-hidden="true">
+          <Ikon ikon={NotePencil} ukuran={besar ? 13 : 10} />
         </span>
-        <span className="brk__kkat">{cocokCatatan ? <mark>cocok di catatan</mark> : KATEGORI[kat]}</span>
-        {k.note ? (
-          <span className="brk__adacatat" aria-hidden="true">
-            <Ikon ikon={NotePencil} ukuran={besar ? 13 : 10} />
-          </span>
-        ) : null}
-        <span className="brk__nomor">{nomor}</span>
+      ) : null}
+      <span className="brk__nomor">
+        {nomor}
+        {proyekN > 0 && <small className="brk__kjejak">{proyekN} proyek</small>}
       </span>
       <span className="brk__knama">
         <SorotTeks teks={k.name.trim() || "Nama rekanan"} cari={cari} />
@@ -187,15 +243,14 @@ function KartuNama({
       <span className={`brk__kpt${k.company ? "" : " is-kosong"}`}>
         {k.company ? <SorotTeks teks={k.company} cari={cari} /> : "—"}
       </span>
-      <span className="brk__kbaris">
-        <span>
-          <Ikon ikon={Phone} ukuran={uk} />
-          <span>{k.phone ? <SorotTeks teks={k.phone} cari={cari} /> : "—"}</span>
-        </span>
-        <span>
-          <Ikon ikon={NavEnvelope} ukuran={uk} />
-          <span>{k.email ? <SorotTeks teks={k.email} cari={cari} /> : "—"}</span>
-        </span>
+      </span>
+      <span className="brk__ktel">
+        <Ikon ikon={Phone} ukuran={uk} />
+        <span>{k.phone ? <SorotTeks teks={k.phone} cari={cari} /> : "—"}</span>
+      </span>
+      <span className="brk__kmail">
+        <Ikon ikon={NavEnvelope} ukuran={uk} />
+        <span>{k.email ? <SorotTeks teks={k.email} cari={cari} /> : "—"}</span>
       </span>
       {besar && diselipkan && (
         <span className="brk__kkaki">
@@ -232,15 +287,18 @@ function Isi() {
   const [balik, setBalik] = useState(false);
   const [dialog, setDialog] = useState<null | { mode: "baru" } | { mode: "ubah"; k: KontakDirektori }>(null);
   const [baruId, setBaruId] = useState<string | null>(null);
+  /* Sel kop yang sedang disentuh tetikus — kartunya disorot di lembar. */
+  const [sorot, setSorot] = useState<Sorot | null>(null);
 
   const besarRef = useRef<HTMLDivElement>(null);
   const miringRef = useRef<HTMLDivElement>(null);
   const lapisRef = useRef<HTMLDivElement>(null);
   const kantongRef = useRef<HTMLUListElement>(null);
+  const lembarRef = useRef<HTMLDivElement>(null);
   const catatanRef = useRef<HTMLTextAreaElement>(null);
   const tambahRef = useRef<HTMLButtonElement>(null);
   const terbang = useRef<{ lama: string | null; salinan: HTMLElement | null } | null>(null);
-  const geser = useRef(0);
+  const balikRef = useRef<{ arah: number; lama: HTMLElement } | null>(null);
   const fokusKe = useRef<string | null>(null);
   const lompatKe = useRef<string | null>(null);
 
@@ -293,7 +351,20 @@ function Isi() {
   const nHal = Math.max(1, Math.ceil(tampak.length / PER_HAL));
   const halKini = Math.min(hal, nHal - 1);
   const isiHal = tampak.slice(halKini * PER_HAL, halKini * PER_HAL + PER_HAL);
-  const kini = tampak.find((k) => k.id === pilihId) ?? tampak[0] ?? null;
+  /* Kartu bawaan di meja = yang paling banyak bekerja dengan studio di
+     halaman pertama (lalu urutan map) — kartu indeksnya langsung berisi.
+     Dihitung dari halaman PERTAMA saja, jadi membalik halaman tidak
+     menukar kartu di meja; setiap perbuatan pada satu kartu mengunci
+     pilihannya lebih dulu (jebakan #88). */
+  const jejakN = (k: KontakDirektori) => proyekRekanan(k, proyek).length;
+  const bawaan = useMemo(() => {
+    let best: KontakDirektori | null = null;
+    for (const k of tampak.slice(0, PER_HAL)) {
+      if (!best || (jejakN(k) > jejakN(best))) best = k;
+    }
+    return best;
+  }, [tampak, proyek]);
+  const kini = tampak.find((k) => k.id === pilihId) ?? bawaan ?? null;
   const posisi = kini ? tampak.indexOf(kini) : -1;
   const kiniDiHal = kini ? isiHal.includes(kini) : false;
 
@@ -309,7 +380,25 @@ function Isi() {
   const hurufKini = kini ? monogramHuruf(kini.name) : null;
   const hurufTab = hurufKini && huruf.has(hurufKini) ? hurufKini : (ABJAD.find((h) => huruf.has(h)) ?? null);
 
-  const relasi = useMemo(() => (kini ? proyekRekanan(kini, proyek) : []), [kini, proyek]);
+  /* Proyek bersama studio untuk SETIAP kartu — angkanya tercetak di kartu
+     ("Klien · 2 proyek") dan di sel kop. */
+  const jejak = useMemo(() => new Map(semua.map((k) => [k.id, proyekRekanan(k, proyek)])), [kontak, proyek]);
+  const relasi = kini ? (jejak.get(kini.id) ?? []) : [];
+  /* Jumlah kontrak bersama baru ditulis kalau ada DUA proyek bernilai atau
+     lebih — untuk satu proyek angkanya sudah ada di barisnya sendiri. */
+  const bernilai = relasi.filter((r) => r.peran === "klien" && r.p.contractValue);
+  const nilaiBersama = bernilai.length > 1 ? bernilai.reduce((a, r) => a + (r.p.contractValue ?? 0), 0) : 0;
+  const cocokSorot = (k: KontakDirektori, s: Sorot) =>
+    s === "wa" ? Boolean(waSeluler(k.phone)) : s === "proyek" ? (jejak.get(k.id)?.length ?? 0) > 0 : Boolean(k.note?.trim());
+  const statistik = useMemo(() => {
+    const terlibat = semua.filter((k) => (jejak.get(k.id)?.length ?? 0) > 0);
+    return {
+      wa: semua.filter((k) => waSeluler(k.phone)).length,
+      terlibat: terlibat.length,
+      proyekUnik: new Set(terlibat.flatMap((k) => jejak.get(k.id)!.map((r) => r.p.id))).size,
+      catatan: semua.filter((k) => k.note?.trim()).length,
+    };
+  }, [kontak, jejak]);
   const seperusahaan = useMemo(
     () =>
       kini
@@ -331,7 +420,11 @@ function Isi() {
       return;
     }
     const i = tampak.indexOf(k);
-    if (i >= 0) setHal(Math.floor(i / PER_HAL));
+    if (i >= 0) {
+      const tuju = Math.floor(i / PER_HAL);
+      if (tuju !== halKini) siapBalik(Math.sign(tuju - halKini));
+      setHal(tuju);
+    }
     if (geraknya()) {
       let salinan: HTMLElement | null = null;
       const el = besarRef.current;
@@ -352,7 +445,8 @@ function Isi() {
           width: `${r.width}px`,
           height: `${r.height}px`,
         });
-        lapis.replaceChildren(salinan);
+        lapis.querySelectorAll(".brk__salinan").forEach((x) => x.remove());
+        lapis.appendChild(salinan);
       }
       terbang.current = { lama: kini?.id ?? null, salinan };
     }
@@ -367,19 +461,26 @@ function Isi() {
     if (!t || !kini) return;
     const besar = besarRef.current;
     const asal = document.querySelector<HTMLElement>(`[data-saku="${CSS.escape(kini.id)}"] .brk__kartu`);
-    const D = 560;
+    const D = 680;
     if (besar && asal) {
+      /* DITARIK dulu: naik sepertiga tinggi kartu dari bibir sakunya, baru
+         terbang ke meja sambil membesar. */
       const a = asal.getBoundingClientRect();
       const b = besar.getBoundingClientRect();
+      const sk = `scale(${a.width / b.width}, ${a.height / b.height})`;
+      const tarik = a.height * 0.34;
       besar.animate(
         [
+          { transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) ${sk}`, transformOrigin: "0 0", easing: "ease-out" },
           {
-            transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width}, ${a.height / b.height})`,
+            transform: `translate(${a.left - b.left}px, ${a.top - b.top - tarik}px) ${sk}`,
             transformOrigin: "0 0",
+            offset: 0.24,
+            easing: LEMBUT,
           },
           { transform: "none", transformOrigin: "0 0" },
         ],
-        { duration: D, easing: LEMBUT },
+        { duration: D },
       );
     } else if (besar) {
       besar.animate([{ transform: "translateY(-14px)", opacity: 0 }, { transform: "none", opacity: 1 }], {
@@ -392,16 +493,17 @@ function Isi() {
     const tujuan = t.lama ? document.querySelector<HTMLElement>(`[data-saku="${CSS.escape(t.lama)}"] .brk__kartu`) : null;
     const r = s.getBoundingClientRect();
     if (tujuan) {
+      /* Kartu lama melayang di atas sakunya, lalu TURUN masuk. */
       const a = tujuan.getBoundingClientRect();
       tujuan.style.visibility = "hidden";
+      const sk = `scale(${a.width / r.width}, ${a.height / r.height})`;
       const anim = s.animate(
         [
-          { transform: "none" },
-          {
-            transform: `translate(${a.left - r.left}px, ${a.top - r.top}px) scale(${a.width / r.width}, ${a.height / r.height})`,
-          },
+          { transform: "none", easing: LEMBUT },
+          { transform: `translate(${a.left - r.left}px, ${a.top - r.top - a.height * 0.34}px) ${sk}`, offset: 0.76, easing: "ease-in" },
+          { transform: `translate(${a.left - r.left}px, ${a.top - r.top}px) ${sk}` },
         ],
-        { duration: D, easing: LEMBUT, fill: "forwards" },
+        { duration: D, fill: "forwards" },
       );
       anim.onfinish = anim.oncancel = () => {
         tujuan.style.visibility = "";
@@ -442,27 +544,69 @@ function Isi() {
     return () => window.clearTimeout(t);
   }, [baruId]);
 
-  /* ---- Halaman map ---------------------------------------------------------- */
+  /* ---- Halaman map: lembar plastik DIBALIK di cincinnya ----------------------
+     Salinan lembar lama diambil SEBELUM halaman berganti, lalu diputar di
+     lapisan yang tidak pernah dirender React. Maju = lembar lama terlipat ke
+     punggung (ke kiri) dan lembar baru sudah menunggu di bawahnya; mundur =
+     lembar sebelumnya datang dari punggung menutupi lembar yang terbuka. */
+  function salinLembar() {
+    const lb = lembarRef.current;
+    if (!lb) return null;
+    const r = lb.getBoundingClientRect();
+    const el = lb.cloneNode(true) as HTMLElement;
+    el.removeAttribute("id");
+    el.querySelectorAll("[id]").forEach((x) => x.removeAttribute("id"));
+    el.querySelectorAll("[data-saku]").forEach((x) => x.removeAttribute("data-saku"));
+    el.setAttribute("inert", "");
+    el.classList.add("brk__salinanlembar");
+    Object.assign(el.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+    return el;
+  }
+  function siapBalik(arah: number) {
+    if (!arah || !geraknya()) return;
+    balikRef.current?.lama.remove();
+    const lama = salinLembar();
+    balikRef.current = lama ? { arah, lama } : null;
+  }
+  useLayoutEffect(() => {
+    const b = balikRef.current;
+    balikRef.current = null;
+    const lapis = lapisRef.current;
+    if (!b || !lapis) return;
+    const D = 540;
+    const lipat: Keyframe[] = [
+      { transform: "none", filter: "brightness(1)" },
+      { transform: "scaleX(0.02) skewY(-2deg)", filter: "brightness(0.42)" },
+    ];
+    if (b.arah > 0) {
+      lapis.appendChild(b.lama);
+      const a = b.lama.animate(lipat, { duration: D, easing: "cubic-bezier(0.5, 0, 0.75, 0.45)", fill: "forwards" });
+      a.onfinish = a.oncancel = () => b.lama.remove();
+      return;
+    }
+    const baru = salinLembar();
+    if (!baru) {
+      b.lama.remove();
+      return;
+    }
+    lapis.append(b.lama, baru);
+    const a = baru.animate([...lipat].reverse(), { duration: D, easing: LEMBUT, fill: "forwards" });
+    a.onfinish = a.oncancel = () => {
+      b.lama.remove();
+      baru.remove();
+    };
+  }, [halKini, kat]);
+
   function keHal(n: number) {
     const tuju = Math.max(0, Math.min(nHal - 1, n));
     if (tuju === halKini) return;
-    if (geraknya()) geser.current = tuju > halKini ? 1 : -1;
+    siapBalik(tuju - halKini);
     setHal(tuju);
   }
-  useLayoutEffect(() => {
-    const g = geser.current;
-    geser.current = 0;
-    if (!g) return;
-    kantongRef.current?.animate(
-      [
-        { transform: `translateX(${g * 36}px)`, opacity: 0.15 },
-        { transform: "none", opacity: 1 },
-      ],
-      { duration: 340, easing: LEMBUT },
-    );
-  }, [halKini]);
 
   function gantiKat(v: string) {
+    if (v === kat) return;
+    siapBalik(PEMBATAS.indexOf(v) - PEMBATAS.indexOf(kat));
     setKat(v);
     setHal(0);
   }
@@ -532,6 +676,7 @@ function Isi() {
   /* ---- Menulis ---------------------------------------------------------------- */
   async function ubahCatatan(k: KontakDirektori, note: string) {
     if (note === (k.note ?? "")) return;
+    setPilihId(k.id);
     const lama = k;
     const kini2 = { ...k, note, updatedAt: new Date().toISOString() };
     setKontak((l) => l?.map((x) => (x.id === k.id ? kini2 : x)) ?? l);
@@ -553,6 +698,7 @@ function Isi() {
       email: isi.email.trim() || null,
     };
     if (awal) {
+      setPilihId(awal.id);
       const patch: Partial<KontakDirektori> = {};
       (Object.keys(bersih) as (keyof typeof bersih)[]).forEach((kunci) => {
         if ((bersih[kunci] ?? null) !== (awal[kunci] ?? null)) (patch as Record<string, unknown>)[kunci] = bersih[kunci];
@@ -615,8 +761,17 @@ function Isi() {
   const tabFokus = kiniDiHal ? kini!.id : isiHal[0]?.id;
   const kat0 = kini ? katDari(kini.category) : "klien";
   const wa = nomorWa(kini?.phone);
-  const waSeluler = wa && /^628/.test(wa) ? wa : null;
+  const waNo = waSeluler(kini?.phone);
   const tahap = (v?: string) => TAHAP.find((t) => t.value === v)?.label ?? "Proposal";
+  /* Tepi lembar di kanan bawah = lembar yang masih tersisa sesudah halaman ini. */
+  const tumpuk = Math.min(4, nHal - 1 - halKini);
+  const total = Math.max(1, semua.length);
+  const sel: { kunci: Sorot; label: string; n: number; ket?: string }[] = [
+    { kunci: "wa", label: "Siap WhatsApp", n: statistik.wa },
+    { kunci: "proyek", label: "Terlibat proyek", n: statistik.terlibat, ket: `${statistik.proyekUnik} proyek` },
+    { kunci: "catatan", label: "Bercatatan", n: statistik.catatan },
+  ];
+  const domain = kini?.email?.split("@")[1];
 
   return (
     <div className="brk">
@@ -629,6 +784,23 @@ function Isi() {
             </p>
             <h2>Buku rekanan</h2>
           </div>
+          <dl className="brk__kopsel" aria-label="Kelengkapan buku rekanan" onPointerLeave={() => setSorot(null)}>
+            {sel.map((c) => (
+              <div
+                key={c.kunci}
+                className={`brk__sel${sorot === c.kunci ? " is-sorot" : ""}`}
+                style={{ "--brk-isi": `${(c.n / total) * 100}%` } as CSSProperties}
+                onPointerEnter={(e) => e.pointerType === "mouse" && setSorot(c.kunci)}
+              >
+                <dt>{c.label}</dt>
+                <dd>
+                  <Hitung className="brk__selangka" nilai={c.n} hidup format={(v) => String(Math.round(v))} />
+                  <span className="brk__seldari">/ {semua.length}</span>
+                  {c.ket && <span className="brk__selket">{c.ket}</span>}
+                </dd>
+              </div>
+            ))}
+          </dl>
           <div className="brk__alat">
             <Cari
               className="brk__cari"
@@ -701,15 +873,24 @@ function Isi() {
             ))}
           </div>
           <div className="brk__sampul">
-            <span className="brk__cincin" aria-hidden="true">
+            {/* Punggung logam: pelat berpaku keling dan tiga cincin yang masuk ke
+                lubang pons di margin kiri lembar — di luar daerah tulisan. */}
+            <span className="brk__mekanik" aria-hidden="true">
               <i />
               <i />
               <i />
             </span>
-            <div className="brk__lembar" id="brk-lembar" role="tabpanel" aria-labelledby={`brk-tab-${kat}`}>
+            <div
+              ref={lembarRef}
+              className={`brk__lembar is-div-${kat}`}
+              id="brk-lembar"
+              role="tabpanel"
+              aria-labelledby={`brk-tab-${kat}`}
+              data-tumpuk={tumpuk > 0 ? tumpuk : undefined}
+            >
               <ul
                 ref={kantongRef}
-                className="brk__kantong"
+                className={`brk__kantong${sorot ? " is-menyorot" : ""}`}
                 aria-label={`Halaman ${halKini + 1} dari ${nHal}`}
                 onKeyDown={tombolMap}
               >
@@ -739,11 +920,15 @@ function Isi() {
                   const diMeja = kini?.id === k.id;
                   const no = nomor.get(k.id) ?? "RK";
                   return (
-                    <li key={k.id} className="brk__ruang" data-saku={k.id}>
+                    <li
+                      key={k.id}
+                      className={`brk__ruang${sorot && cocokSorot(k, sorot) ? " is-sorot" : ""}`}
+                      data-saku={k.id}
+                    >
                       <span className="brk__saku">
                         <button
                           type="button"
-                          className={`brk__kartu is-${katDari(k.category)}${diMeja ? " is-meja" : ""}${baruId === k.id ? " is-baru" : ""}`}
+                          className={`brk__kartu ${kelasKartu(k)}${diMeja ? " is-meja" : ""}${baruId === k.id ? " is-baru" : ""}`}
                           tabIndex={k.id === tabFokus ? 0 : -1}
                           aria-pressed={diMeja}
                           aria-label={diMeja ? `${no}, ${k.name}, sedang di meja` : labelKartu(k, no)}
@@ -755,7 +940,7 @@ function Isi() {
                               <span>Di meja</span>
                             </span>
                           ) : (
-                            <KartuNama k={k} nomor={no} cari={cari} />
+                            <KartuNama k={k} nomor={no} cari={cari} proyekN={jejak.get(k.id)?.length ?? 0} />
                           )}
                         </button>
                       </span>
@@ -830,8 +1015,24 @@ function Isi() {
                 <b>{nomor.get(kini.id)}</b>
                 {posisi >= 0 && <span>kartu {posisi + 1} dari {tampak.length}</span>}
               </p>
-              {/* Alas potong berkisi di meja studio — kartunya diletakkan di atasnya. */}
+              {/* Alas potong hijau berskala milimeter — kartunya tergambar 85 × 55 mm,
+                  lengkap dengan penggaris dan garis ukurnya di margin alas. */}
               <div className="brk__alas">
+              <span className="brk__mat" aria-hidden="true" />
+              <span className="brk__penggaris brk__penggaris--x" aria-hidden="true">
+                {Array.from({ length: 9 }, (_, i) => (
+                  <i key={i} style={{ "--i": i } as CSSProperties}>
+                    {i}
+                  </i>
+                ))}
+              </span>
+              <span className="brk__penggaris brk__penggaris--y" aria-hidden="true">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <i key={i} style={{ "--i": i } as CSSProperties}>
+                    {i}
+                  </i>
+                ))}
+              </span>
               <div
                 ref={besarRef}
                 className="brk__besar"
@@ -843,12 +1044,18 @@ function Isi() {
                   <div className={`brk__putar${balik ? " is-balik" : ""}`}>
                     <button
                       type="button"
-                      className={`brk__muka brk__muka--depan brk__kartu brk__kartu--besar is-${kat0}`}
+                      className={`brk__muka brk__muka--depan brk__kartu brk__kartu--besar ${kelasKartu(kini)}`}
                       inert={balik}
                       aria-label={`${labelKartu(kini, nomor.get(kini.id) ?? "")}. Balik kartu untuk catatan`}
                       onClick={() => balikKartu(true)}
                     >
-                      <KartuNama k={kini} nomor={nomor.get(kini.id) ?? ""} besar diselipkan={kini.createdAt} />
+                      <KartuNama
+                        k={kini}
+                        nomor={nomor.get(kini.id) ?? ""}
+                        besar
+                        diselipkan={kini.createdAt}
+                        proyekN={relasi.length}
+                      />
                     </button>
                     <div className="brk__muka brk__muka--belakang" inert={!balik}>
                       <p className="brk__bjudul">
@@ -882,24 +1089,39 @@ function Isi() {
                   </div>
                 </div>
               </div>
+              <span className="brk__ukur brk__ukur--x" aria-hidden="true">
+                <b>85 mm</b>
+              </span>
+              <span className="brk__ukur brk__ukur--y" aria-hidden="true">
+                <b>55 mm</b>
+              </span>
               </div>
 
               <div className="brk__hubungi">
                 {kini.phone ? (
                   <a className="brk__tuts" href={`tel:${kini.phone.replace(/[^\d+]/g, "")}`}>
                     <Ikon ikon={Phone} ukuran={15} />
-                    Telepon
+                    <span>
+                      <b>Telepon</b>
+                      <small>{kini.phone}</small>
+                    </span>
                   </a>
                 ) : (
                   <span className="brk__tuts is-mati" role="link" aria-disabled="true" tabIndex={0} title="Nomor telepon belum diisi">
                     <Ikon ikon={Phone} ukuran={15} />
-                    Telepon
+                    <span>
+                      <b>Telepon</b>
+                      <small>belum diisi</small>
+                    </span>
                   </span>
                 )}
-                {waSeluler ? (
-                  <a className="brk__tuts" href={`https://wa.me/${waSeluler}`} target="_blank" rel="noreferrer">
+                {waNo ? (
+                  <a className="brk__tuts" href={`https://wa.me/${waNo}`} target="_blank" rel="noreferrer">
                     <Ikon ikon={ChatTeardropDots} ukuran={15} />
-                    WhatsApp
+                    <span>
+                      <b>WhatsApp</b>
+                      <small>nomor seluler</small>
+                    </span>
                   </a>
                 ) : (
                   <span
@@ -910,39 +1132,67 @@ function Isi() {
                     title={wa ? "Nomor kantor — bukan nomor WhatsApp" : "Nomor telepon belum diisi"}
                   >
                     <Ikon ikon={ChatTeardropDots} ukuran={15} />
-                    WhatsApp
+                    <span>
+                      <b>WhatsApp</b>
+                      <small>{wa ? "nomor kantor" : "belum diisi"}</small>
+                    </span>
                   </span>
                 )}
                 {kini.email ? (
                   <a className="brk__tuts" href={`mailto:${kini.email}`}>
                     <Ikon ikon={NavEnvelope} ukuran={15} />
-                    Email
+                    <span>
+                      <b>Email</b>
+                      <small>{domain ? `@${domain}` : kini.email}</small>
+                    </span>
                   </a>
                 ) : (
                   <span className="brk__tuts is-mati" role="link" aria-disabled="true" tabIndex={0} title="Email belum diisi">
                     <Ikon ikon={NavEnvelope} ukuran={15} />
-                    Email
+                    <span>
+                      <b>Email</b>
+                      <small>belum diisi</small>
+                    </span>
                   </span>
                 )}
               </div>
 
+              {/* Bingkai cetak milik kertasnya; yang menggulir isinya, di DALAM
+                  bingkai — tulisan tidak pernah lewat di bawah garis bingkai. */}
               <section className="brk__slip" aria-label="Rekanan ini di studio">
+                <div className="brk__slipisi">
                 <h3>
                   <span>Proyek bersama studio</span>
                   <b>{relasi.length}</b>
                 </h3>
                 {relasi.length ? (
                   <ul className="brk__proyek">
-                    {relasi.map(({ p, peran }) => (
-                      <li key={p.id}>
-                        <a href={`/admin/proyek/satu?id=${encodeURIComponent(p.id)}`}>
-                          <span>{p.title}</span>
-                          <small>
-                            {peran === "klien" ? "sebagai klien" : "sebagai kontraktor"} · {tahap(p.pipelineStage)}
-                          </small>
-                        </a>
-                      </li>
-                    ))}
+                    {relasi.map(({ p, peran }) => {
+                      const ke = TAHAP.findIndex((t) => t.value === (p.pipelineStage ?? "proposal"));
+                      return (
+                        <li key={p.id}>
+                          <a href={`/admin/proyek/satu?id=${encodeURIComponent(p.id)}`}>
+                            <span className="brk__pfoto" aria-hidden="true">
+                              {p.coverImageUrl ? <img src={p.coverImageUrl} alt="" loading="lazy" /> : <b>{kodeProyek(p.title)}</b>}
+                            </span>
+                            <span className="brk__pjudul">{p.title}</span>
+                            <small className="brk__pket">
+                              {peran === "klien" ? "klien" : "kontraktor"} · {tahap(p.pipelineStage)}
+                            </small>
+                            <span className="brk__ptangga" aria-hidden="true">
+                              {TAHAP.map((t, i) => (
+                                <i key={t.value} className={i <= ke ? "is-lewat" : ""} />
+                              ))}
+                            </span>
+                            {peran === "klien" && p.contractValue ? (
+                              <span className="brk__pnilai" title={formatRupiah(p.contractValue)}>
+                                {formatRupiahRingkas(p.contractValue)}
+                              </span>
+                            ) : null}
+                          </a>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="brk__slipkosong">
@@ -951,6 +1201,12 @@ function Isi() {
                       : kat0 === "kontraktor"
                         ? "Belum tercatat sebagai kontraktor proyek mana pun."
                         : "Data proyek tidak mencatat supplier dan rekanan lain."}
+                  </p>
+                )}
+                {nilaiBersama > 0 && (
+                  <p className="brk__pjumlah">
+                    <span>Kontrak bersama</span>
+                    <b>{formatRupiah(nilaiBersama)}</b>
                   </p>
                 )}
                 <h3>
@@ -962,7 +1218,7 @@ function Isi() {
                 </button>
                 <h3>
                   <span>Seperusahaan</span>
-                  <b>{seperusahaan.length}</b>
+                  <b>{seperusahaan.length ? seperusahaan.length : kini.company ? "satu-satunya" : "perorangan"}</b>
                 </h3>
                 {seperusahaan.length ? (
                   <ul className="brk__rekan">
@@ -976,23 +1232,8 @@ function Isi() {
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="brk__slipkosong">{kini.company ? "Satu-satunya kartu dari perusahaan ini." : "Kartu perorangan."}</p>
-                )}
-                <dl className="brk__fakta">
-                  <div>
-                    <dt>Kategori</dt>
-                    <dd>{KATEGORI[kat0]}</dd>
-                  </div>
-                  <div>
-                    <dt>Diselipkan</dt>
-                    <dd>{tanggal(kini.createdAt)}</dd>
-                  </div>
-                  <div>
-                    <dt>Diubah</dt>
-                    <dd>{umur(kini.updatedAt)}</dd>
-                  </div>
-                </dl>
+                ) : null}
+                </div>
               </section>
 
               <div className="brk__aksi">
@@ -1119,9 +1360,10 @@ function DialogKartu({
       <div className="kd-form">
         {/* Pratinjau: kartunya persis seperti nanti di saku map. */}
         <div className="brk brk--pratinjau" aria-hidden="true">
-          <span className={`brk__kartu is-${katDari(f.category)}`}>
+          <span className={`brk__kartu ${kelasKartu(f)}`}>
             <KartuNama k={{ ...f, note: awal?.note ?? null }} nomor={nomor} />
           </span>
+          <small className="brk__pratinjauket">Desain kartu mengikuti nama perusahaan</small>
         </div>
         <div className="kd-form__dua">
           <Isian label="Nama" placeholder="mis. Bu Ratna Sari" value={f.name} onChange={ubah("name")} />
@@ -1161,7 +1403,9 @@ function Rangka() {
           <div className="brk__kaki" />
         </div>
         <div className="brk__meja">
-          <div className="brk__besar brk__besar--rangka" />
+          <div className="brk__alas">
+            <div className="brk__besar brk__besar--rangka" />
+          </div>
         </div>
       </div>
     </div>
