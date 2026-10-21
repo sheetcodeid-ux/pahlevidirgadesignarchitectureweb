@@ -136,3 +136,59 @@ export function periksaSandi(s: string): string | null {
   if (s.length > 72) return "kata sandi maksimal 72 karakter";
   return kurang.length ? `kata sandi belum memenuhi: ${kurang.join(", ")}` : null;
 }
+
+/* --- Admin GoTrue (service_role) ------------------------------------------------
+   HANYA untuk halaman Pengguna & Akses milik owner: membuat akun dan
+   menyetel ulang kata sandinya. service_role hidup di Worker saja (invarian
+   #2) dan tidak pernah keluar dari fungsi-fungsi ini. */
+
+function kepalaAdmin(env: Env): Record<string, string> {
+  const kunci = env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  return { "Content-Type": "application/json", apikey: kunci, Authorization: `Bearer ${kunci}` };
+}
+
+export class GalatAkun extends Error {
+  constructor(public readonly status: number, pesan: string) {
+    super(pesan);
+  }
+}
+
+/** Membuat akun yang langsung terkonfirmasi. Mengembalikan id-nya. */
+export async function buatAkun(env: Env, email: string, sandi: string): Promise<string> {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) throw new GalatAkun(503, "pembuatan akun belum dikonfigurasi");
+  const res = await fetch(alamat(env, "/admin/users"), {
+    method: "POST",
+    headers: kepalaAdmin(env),
+    body: JSON.stringify({ email, password: sandi, email_confirm: true }),
+  });
+  const body = (await res.json().catch(() => null)) as { id?: string; error_code?: string; msg?: string } | null;
+  if (res.ok && body?.id) return body.id;
+  if (body?.error_code === "email_exists" || res.status === 422) throw new GalatAkun(409, "email ini sudah terdaftar");
+  if (body?.error_code === "weak_password") throw new GalatAkun(422, pesanGalatSandi(body));
+  throw new GalatAkun(502, "Supabase menolak membuat akun");
+}
+
+/** Menyetel kata sandi akun lain (owner menyetel ulang untuk pengguna yang lupa). */
+export async function setelSandiAkun(env: Env, id: string, sandi: string): Promise<void> {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) throw new GalatAkun(503, "penyetelan sandi belum dikonfigurasi");
+  const res = await fetch(alamat(env, `/admin/users/${encodeURIComponent(id)}`), {
+    method: "PUT",
+    headers: kepalaAdmin(env),
+    body: JSON.stringify({ password: sandi }),
+  });
+  if (!res.ok) throw new GalatAkun(502, pesanGalatSandi(await res.json().catch(() => null)));
+}
+
+/** Kata sandi sementara yang memenuhi aturan proyek (12+ dengan keempat jenis). */
+export function sandiSementara(): string {
+  const set = ["ABCDEFGHJKLMNPQRSTUVWXYZ", "abcdefghijkmnopqrstuvwxyz", "23456789", "!@#$%*?-"];
+  const acak = (n: number) => crypto.getRandomValues(new Uint32Array(1))[0]! % n;
+  const huruf = set.map((s) => s[acak(s.length)]!);
+  const semua = set.join("");
+  while (huruf.length < 16) huruf.push(semua[acak(semua.length)]!);
+  for (let i = huruf.length - 1; i > 0; i--) {
+    const j = acak(i + 1);
+    [huruf[i], huruf[j]] = [huruf[j]!, huruf[i]!];
+  }
+  return huruf.join("");
+}

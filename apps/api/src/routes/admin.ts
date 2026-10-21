@@ -2,9 +2,12 @@ import { Hono } from "hono";
 import type { Env, ImagePatch } from "../types";
 import { withDb } from "../db";
 import { requireSupabaseAuth } from "../middleware/auth";
-import { requireStaff } from "../middleware/staff";
+import { requireAkses, type VarsAkses } from "../middleware/akses";
+import { catatPerubahan } from "../middleware/audit";
+import * as aksesRepo from "../repository/akses";
+import { adalahFiturPaket } from "../lib/fitur";
 import * as akunRepo from "../repository/akun";
-import { cabutSesi, gantiSandi, periksaSandi, tukarToken } from "../lib/gotrue";
+import { cabutSesi, gantiSandi, periksaSandi, tukarToken, buatAkun, setelSandiAkun, sandiSementara, GalatAkun } from "../lib/gotrue";
 import * as adminRepo from "../repository/admin";
 import * as settingsRepo from "../repository/settings";
 import * as progressRepo from "../repository/progress";
@@ -47,14 +50,16 @@ import {
   VALID_TESTIMONIAL_STATUS,
 } from "../types";
 
-type Vars = { userID: string; userEmail?: string; accessToken: string; sessionID?: string };
+type Vars = VarsAkses;
 
 export const admin = new Hono<{ Bindings: Env; Variables: Vars }>();
 
-// Dua lapis: token harus sah, DAN pemiliknya harus terdaftar sebagai staf.
-// Lapis kedua tidak bisa didelegasikan ke RLS, karena koneksi backend
-// memakai kredensial yang melewatinya.
-admin.use("*", requireSupabaseAuth(), requireStaff());
+// Tiga lapis: token harus sah; setiap perubahan dicatat ke buku log audit
+// (termasuk yang DITOLAK, supaya upaya membuka fitur di luar paket ikut
+// terbaca); lalu akun harus berhak atas rute ini — peran, langganan, dan
+// fitur paketnya (lib/fitur.ts). Penjagaan ini tidak bisa didelegasikan ke
+// RLS, karena koneksi backend memakai kredensial yang melewatinya.
+admin.use("*", requireSupabaseAuth(), catatPerubahan(), requireAkses());
 
 function assetBase(env: Env): string {
   return env.R2_PUBLIC_BASE_URL ?? "";
@@ -63,12 +68,15 @@ function assetBase(env: Env): string {
 // GET /api/v1/admin/me
 admin.get("/me", async (c) => {
   const userID = c.get("userID");
-  const p = await withDb(c.env, c.executionCtx, (sql) => akunRepo.profil(sql, userID));
-  const peran = p?.role ?? "";
+  // Profil dan aksesnya sudah dimuat requireAkses — tanpa kueri kedua.
+  const p = c.get("profilAkses");
+  const akses = c.get("akses");
   return c.json({
     data: {
-      id: userID, email: c.get("userEmail"), role: peran, isMasterAdmin: peran === "admin", nama: p?.nama ?? null,
-      avatarUrl: akunRepo.urlFoto(assetBase(c.env), p?.avatarKey ?? null),
+      id: userID, email: c.get("userEmail"), role: p.role, isMasterAdmin: p.role === "admin", nama: p.nama,
+      avatarUrl: akunRepo.urlFoto(assetBase(c.env), p.avatarKey),
+      fitur: akses.fitur,
+      langganan: { status: akses.status, planId: p.planId, planName: p.planName, accessUntil: p.accessUntil },
     },
   });
 });
@@ -1593,4 +1601,164 @@ admin.delete("/tiers/:id", async (c) => {
     }
     throw err;
   }
+});
+
+// --- Pengguna & Akses (owner saja — ATURAN_RUTE "pemilik") ---------------------
+//
+// Akun, peran, paket langganan, masa aktif, mapping fitur per paket, dan buku
+// log audit. Seluruh rute di sini sudah dijaga requireAkses; tiap perubahan
+// tercatat catatPerubahan dengan potret sebelum/sesudah.
+
+const PERAN_SAH = ["admin", "editor", "pelanggan"] as const;
+const tanggalSah = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
+
+admin.get("/users", async (c) => {
+  const daftar = await withDb(c.env, c.executionCtx, (sql) => aksesRepo.daftarPengguna(sql));
+  return c.json({ data: daftar });
+});
+
+admin.post("/users", async (c) => {
+  type Badan = { email?: unknown; nama?: unknown; role?: unknown; planId?: unknown; accessUntil?: unknown };
+  const b = ((await c.req.json<unknown>().catch(() => ({}))) ?? {}) as Badan;
+  const email = typeof b.email === "string" ? b.email.trim().toLowerCase() : "";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return c.json({ error: { status: 422, message: "email tidak sah" } }, 422);
+  const role = (PERAN_SAH as readonly unknown[]).includes(b.role) ? (b.role as (typeof PERAN_SAH)[number]) : "pelanggan";
+  if (b.accessUntil != null && !tanggalSah(b.accessUntil)) return c.json({ error: { status: 422, message: "tanggal masa aktif tidak sah" } }, 422);
+  const sandi = sandiSementara();
+  try {
+    const id = await buatAkun(c.env, email, sandi);
+    await withDb(c.env, c.executionCtx, (sql) =>
+      aksesRepo.buatProfil(sql, id, {
+        nama: typeof b.nama === "string" && b.nama.trim() ? b.nama.trim().slice(0, 80) : null,
+        role,
+        planId: typeof b.planId === "string" && b.planId ? b.planId : null,
+        accessUntil: (b.accessUntil as string | null | undefined) ?? null,
+      }));
+    // Sandi sementara dibalas SEKALI ke owner untuk diserahkan ke penggunanya.
+    // Tidak disimpan di mana pun (log audit membuang kunci "sandi").
+    return c.json({ data: { id, sandiSementara: sandi } }, 201);
+  } catch (err) {
+    if (err instanceof GalatAkun) return c.json({ error: { status: err.status, message: err.message } }, err.status as 409);
+    throw err;
+  }
+});
+
+admin.patch("/users/:id", async (c) => {
+  const id = c.req.param("id");
+  type Badan = { nama?: unknown; role?: unknown; planId?: unknown; accessUntil?: unknown; isSuspended?: unknown };
+  const b = ((await c.req.json<unknown>().catch(() => ({}))) ?? {}) as Badan;
+  const patch: aksesRepo.PenggunaPatch = {};
+  if ("nama" in b) patch.nama = typeof b.nama === "string" && b.nama.trim() ? b.nama.trim().slice(0, 80) : null;
+  if ("role" in b) {
+    if (!(PERAN_SAH as readonly unknown[]).includes(b.role)) return c.json({ error: { status: 422, message: "peran tidak sah" } }, 422);
+    patch.role = b.role as (typeof PERAN_SAH)[number];
+  }
+  if ("planId" in b) patch.planId = typeof b.planId === "string" && b.planId ? b.planId : null;
+  if ("accessUntil" in b) {
+    if (b.accessUntil !== null && !tanggalSah(b.accessUntil)) return c.json({ error: { status: 422, message: "tanggal masa aktif tidak sah" } }, 422);
+    patch.accessUntil = b.accessUntil as string | null;
+  }
+  if ("isSuspended" in b) patch.isSuspended = b.isSuspended === true;
+
+  const diriSendiri = id === c.get("userID");
+  if (diriSendiri && (patch.isSuspended || (patch.role && patch.role !== "admin"))) {
+    return c.json({ error: { status: 422, message: "tidak bisa menurunkan peran atau menonaktifkan akun sendiri" } }, 422);
+  }
+  const hasil = await withDb(c.env, c.executionCtx, async (sql) => {
+    const turun = patch.isSuspended || (patch.role && patch.role !== "admin");
+    if (turun) {
+      const kini = (await aksesRepo.daftarPengguna(sql)).find((u) => u.id === id);
+      if (kini?.role === "admin" && (await aksesRepo.ownerLain(sql, id)) === 0) return "owner-terakhir" as const;
+    }
+    const ok = await aksesRepo.ubahPengguna(sql, id, patch);
+    if (ok && patch.isSuspended) await aksesRepo.cabutSemuaSesi(sql, id);
+    return ok ? ("ok" as const) : ("tidak-ada" as const);
+  });
+  if (hasil === "owner-terakhir") return c.json({ error: { status: 422, message: "harus tersisa minimal satu owner aktif" } }, 422);
+  if (hasil === "tidak-ada") return c.json({ error: { status: 404, message: "pengguna tidak ditemukan" } }, 404);
+  return c.json({ data: { updated: true } });
+});
+
+// POST /users/:id/reset-sandi — sandi sementara baru, dibalas sekali.
+admin.post("/users/:id/reset-sandi", async (c) => {
+  const id = c.req.param("id");
+  const sandi = sandiSementara();
+  try {
+    await setelSandiAkun(c.env, id, sandi);
+    await withDb(c.env, c.executionCtx, (sql) => aksesRepo.cabutSemuaSesi(sql, id));
+    return c.json({ data: { sandiSementara: sandi } });
+  } catch (err) {
+    if (err instanceof GalatAkun) return c.json({ error: { status: err.status, message: err.message } }, err.status as 502);
+    throw err;
+  }
+});
+
+admin.get("/access-plans", async (c) => {
+  const daftar = await withDb(c.env, c.executionCtx, (sql) => aksesRepo.daftarPaketAkses(sql));
+  return c.json({ data: daftar });
+});
+
+function bacaPaket(b: Record<string, unknown>): aksesRepo.PaketAksesInput | string {
+  const p: aksesRepo.PaketAksesInput = {};
+  if ("name" in b) {
+    if (typeof b.name !== "string" || b.name.trim().length < 2 || b.name.trim().length > 40) return "nama paket 2–40 karakter";
+    p.name = b.name;
+  }
+  if ("description" in b) p.description = typeof b.description === "string" && b.description.trim() ? b.description.trim().slice(0, 200) : null;
+  if ("priceMonth" in b) {
+    if (b.priceMonth !== null && !(typeof b.priceMonth === "number" && Number.isInteger(b.priceMonth) && b.priceMonth >= 0)) return "harga harus bilangan bulat ≥ 0";
+    p.priceMonth = b.priceMonth as number | null;
+  }
+  if ("isActive" in b) p.isActive = b.isActive === true;
+  return p;
+}
+
+admin.post("/access-plans", async (c) => {
+  const b = ((await c.req.json<unknown>().catch(() => ({}))) ?? {}) as Record<string, unknown>;
+  const p = bacaPaket(b);
+  if (typeof p === "string") return c.json({ error: { status: 422, message: p } }, 422);
+  if (!p.name) return c.json({ error: { status: 422, message: "nama paket wajib diisi" } }, 422);
+  const id = await withDb(c.env, c.executionCtx, (sql) => aksesRepo.buatPaketAkses(sql, { ...p, name: p.name! }));
+  return c.json({ data: { id } }, 201);
+});
+
+admin.patch("/access-plans/:id", async (c) => {
+  const b = ((await c.req.json<unknown>().catch(() => ({}))) ?? {}) as Record<string, unknown>;
+  const p = bacaPaket(b);
+  if (typeof p === "string") return c.json({ error: { status: 422, message: p } }, 422);
+  const ok = await withDb(c.env, c.executionCtx, (sql) => aksesRepo.ubahPaketAkses(sql, c.req.param("id"), p));
+  return ok ? c.json({ data: { updated: true } }) : c.json({ error: { status: 404, message: "paket tidak ditemukan" } }, 404);
+});
+
+admin.delete("/access-plans/:id", async (c) => {
+  const h = await withDb(c.env, c.executionCtx, (sql) => aksesRepo.hapusPaketAkses(sql, c.req.param("id")));
+  if (h === "dipakai") return c.json({ error: { status: 409, message: "paket ini masih dipakai pengguna — nonaktifkan saja" } }, 409);
+  if (h === "tidak-ada") return c.json({ error: { status: 404, message: "paket tidak ditemukan" } }, 404);
+  return c.json({ data: { deleted: true } });
+});
+
+// PUT/DELETE /access-plans/:id/features/:fitur — satu sel matriks.
+admin.put("/access-plans/:id/features/:fitur", async (c) => {
+  const fitur = c.req.param("fitur");
+  if (!adalahFiturPaket(fitur)) return c.json({ error: { status: 422, message: "fitur tidak dikenal" } }, 422);
+  await withDb(c.env, c.executionCtx, (sql) => aksesRepo.aturFitur(sql, c.req.param("id"), fitur, true));
+  return c.json({ data: { updated: true } });
+});
+
+admin.delete("/access-plans/:id/features/:fitur", async (c) => {
+  const fitur = c.req.param("fitur");
+  if (!adalahFiturPaket(fitur)) return c.json({ error: { status: 422, message: "fitur tidak dikenal" } }, 422);
+  await withDb(c.env, c.executionCtx, (sql) => aksesRepo.aturFitur(sql, c.req.param("id"), fitur, false));
+  return c.json({ data: { updated: true } });
+});
+
+// GET /audit?sebelum=&batas=&aktor=&aksi=
+admin.get("/audit", async (c) => {
+  const q = c.req.query();
+  const angka = (v?: string) => (v && /^\d+$/.test(v) ? Number(v) : undefined);
+  const aktor = q.aktor && /^[0-9a-f-]{36}$/i.test(q.aktor) ? q.aktor : undefined;
+  const aksi = q.aksi && /^[a-z_]{3,20}$/.test(q.aksi) ? q.aksi : undefined;
+  const daftar = await withDb(c.env, c.executionCtx, (sql) =>
+    aksesRepo.daftarAudit(sql, { sebelum: angka(q.sebelum), batas: angka(q.batas), aktor, aksi }));
+  return c.json({ data: daftar });
 });

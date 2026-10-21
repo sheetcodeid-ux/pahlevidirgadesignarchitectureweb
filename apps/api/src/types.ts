@@ -26,6 +26,12 @@ export interface Env {
      serba bisa. Kalau kosong, tombol Terbitkan situs mengatakan dirinya
      belum dikonfigurasi, bukan diam-diam gagal. */
   GITHUB_DISPATCH_TOKEN?: string;
+
+  /* "1" = akun berperan pelanggan boleh masuk. Bawaan tertutup: di tahap 1
+     datanya masih satu studio, jadi pelanggan yang masuk akan melihat
+     proyek dan keuangan studio pemilik. Baru dibuka sesudah pemisahan data
+     per studio selesai. */
+  PELANGGAN_DIIZINKAN?: string;
   GITHUB_REPO?: string;
   GITHUB_WORKFLOW?: string;
   GITHUB_BRANCH?: string;

@@ -20,7 +20,11 @@
     "SUPABASE_URL": "https://ddzuzokkqofrpkpokcfa.supabase.co",
     "R2_ACCOUNT_ID": "cf6a6bde45d3fd8a93463e6cc7e71aa1",
     "R2_BUCKET": "pahlevidirga-media",
-    "R2_PUBLIC_BASE_URL": "https://media.pahlevidirgaarchitecture.com"
+    "R2_PUBLIC_BASE_URL": "https://media.pahlevidirgaarchitecture.com",
+    // Akun berperan pelanggan DITOLAK masuk selama ini bukan "1": datanya
+    // masih satu studio (tahap 1). Baru dibuka sesudah pemisahan data per
+    // studio selesai — lihat migrasi 20261021000032.
+    "PELANGGAN_DIIZINKAN": "0"
   },
 
   // Dibuat dengan: wrangler hyperdrive create pahlevidirga-db --connection-string="postgresql://..."
