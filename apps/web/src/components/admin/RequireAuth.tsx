@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { Icon } from "../ui/Icon";
 import { ambilProfil, GagalAuth, hapusSesi, profilTersimpan, sinkronkanProfil, type Profil } from "../../lib/admin";
+import { daftarLembar, fiturProfil, fiturUntukJalur, lembarTampil } from "../../lib/navAdmin";
+import { FITUR_PEMILIK } from "../../../../api/src/lib/fitur";
 
 const Ctx = createContext<Profil | null>(null);
 
@@ -82,13 +84,12 @@ export function RequireAuth({ children, masterOnly = false, skeleton }: {
     ambilProfil()
       .then((p) => {
         if (batal) return;
-        if (masterOnly && !p.isMasterAdmin) {
-          setStatus("ditolak");
-          return;
-        }
         // Nama atau peran yang diubah dari perangkat lain ikut sampai ke
         // profil tersimpan (dan ke kartu akun di rel) di sini.
-        sinkronkanProfil({ nama: p.nama ?? null, avatarUrl: p.avatarUrl ?? null, role: p.role, isMasterAdmin: p.isMasterAdmin });
+        sinkronkanProfil({
+          nama: p.nama ?? null, avatarUrl: p.avatarUrl ?? null, role: p.role, isMasterAdmin: p.isMasterAdmin,
+          fitur: p.fitur, langganan: p.langganan ?? null,
+        });
         setProfil(p);
         setStatus("siap");
       })
@@ -136,5 +137,54 @@ export function RequireAuth({ children, masterOnly = false, skeleton }: {
     );
   }
 
+  /* Halaman yang tidak termasuk akses akun ini. Yang menolak sungguhan API
+     (requireAkses); di sini halaman tidak dirender sama sekali, supaya tidak
+     ada isian kosong dan galat 403 beruntun yang terbaca sebagai panel rusak. */
+  const kunci = typeof window === "undefined" ? null : fiturUntukJalur(window.location.pathname);
+  const fitur = fiturProfil(profil);
+  /* Halaman khusus owner yang dibuka akun lain: kalimatnya "khusus pemilik",
+     bukan "sesi berakhir" — sesinya sah, haknya yang tidak ada. */
+  if (masterOnly && !profil.isMasterAdmin) {
+    return <Terkunci profil={profil} kunci={kunci ?? "pengguna"} fitur={fitur ?? new Set()} pemilik />;
+  }
+  if (kunci && fitur && !fitur.has(kunci)) return <Terkunci profil={profil} kunci={kunci} fitur={fitur} />;
+
   return <Ctx.Provider value={profil}>{children}</Ctx.Provider>;
+}
+
+/* --- Halaman terkunci ------------------------------------------------------------
+   Ungu = upgrade dan fitur berbayar (aturan warna #1). Kalimatnya menyebut
+   SEBABNYA — paket, masa aktif, atau khusus pemilik — bukan "akses ditolak". */
+function Terkunci({ profil, kunci, fitur, pemilik: paksaPemilik = false }: {
+  profil: Profil; kunci: string; fitur: ReadonlySet<string>; pemilik?: boolean;
+}) {
+  const lembar = daftarLembar().halaman.find((l) => l.fitur === kunci);
+  const nama = lembar?.label ?? "Halaman ini";
+  const status = profil.langganan?.status;
+  const pemilik = paksaPemilik || (FITUR_PEMILIK as readonly string[]).includes(kunci);
+  const [judul, isi] = pemilik
+    ? ["Khusus pemilik aplikasi", `${nama} hanya bisa dibuka akun owner.`]
+    : status === "habis"
+      ? ["Masa langganan berakhir", `Langganan ${profil.langganan?.planName ?? ""} berakhir ${profil.langganan?.accessUntil ? new Date(`${profil.langganan.accessUntil}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : ""}. Perpanjang untuk membuka ${nama} lagi.`]
+      : status === "belum"
+        ? ["Langganan belum aktif", `${nama} terbuka begitu pembayaran langganan diterima.`]
+        : [`${nama} tidak termasuk paket Anda`, `Paket ${profil.langganan?.planName ?? "Anda"} belum mencakup lembar ini. Naikkan paket untuk membukanya.`];
+  // Jalan keluar: lembar pertama yang memang boleh dibuka.
+  const pulang = lembarTampil(fitur)[0];
+  return (
+    <div className="k-kunci" role="region" aria-labelledby="k-kunci-judul">
+      <span className="k-kunci__gembok" aria-hidden="true">
+        <Icon name="lock" size={22} />
+      </span>
+      <p className="k-kunci__kode">{lembar ? `Lembar ${lembar.kode}` : "Lembar terkunci"}</p>
+      <h2 id="k-kunci-judul">{judul}</h2>
+      <p className="k-kunci__isi">{isi}</p>
+      {!pemilik && <p className="k-kunci__paket">Hubungi pemilik aplikasi untuk menaikkan atau memperpanjang paket.</p>}
+      {pulang && (
+        <a className="k-kunci__pulang" href={pulang.href}>
+          Ke {pulang.label}
+        </a>
+      )}
+    </div>
+  );
 }

@@ -10,7 +10,8 @@ import {
 import type { DataIkon } from "../kit/Ikon";
 import { Avatar } from "../kit/Tampilan";
 import { TombolIkon } from "../kit/Tombol";
-import { daftarLembar, KODE_KELOMPOK, lembarTampil, NAV, posisiLembar, rapiPath, revisiPerLembar, type Lembar } from "../../lib/navAdmin";
+import { daftarLembar, KODE_KELOMPOK, lembarTampil, NAV, navTampil, posisiLembar, rapiPath, revisiPerLembar, type Lembar } from "../../lib/navAdmin";
+import { labelPeran, useFiturAkun } from "./fiturAkun";
 import {
   ambilSettings, bacaCache, keluar, namaTampilan, PERISTIWA_PROFIL, profilTersimpan, type Profil, type StudioSettings,
 } from "../../lib/admin";
@@ -185,14 +186,13 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
   const kini = rapi(path);
   /* Peran, akun, dan angka revisi datang SESUDAH hidrasi: rel ini dirender
      statis. Dibaca di efek, bukan saat render (jebakan #8). */
-  const [master, setMaster] = useState<boolean | undefined>(undefined);
+  const fitur = useFiturAkun();
   const [akun, setAkun] = useState<{ nama: string; email: string; peran: string; foto: string | null } | null>(null);
   const [revisi, setRevisi] = useState<Record<string, number>>({});
   useEffect(() => {
     const p = profilTersimpan();
-    setMaster(p?.isMasterAdmin);
     const pasangAkun = (q: Profil | null) => {
-      if (q) setAkun({ nama: namaTampilan(q), email: q.email, peran: q.isMasterAdmin ? "Master" : "Staf", foto: q.avatarUrl ?? null });
+      if (q) setAkun({ nama: namaTampilan(q), email: q.email, peran: labelPeran(q), foto: q.avatarUrl ?? null });
     };
     pasangAkun(p);
     const awal = barisNotifikasiTerakhir();
@@ -202,7 +202,6 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
     const dengarProfil = (e: Event) => {
       const q = (e as CustomEvent<Profil>).detail;
       pasangAkun(q);
-      if (q) setMaster(q.isMasterAdmin);
     };
     const dengarRevisi = (e: Event) => setRevisi((e as CustomEvent<Record<string, number>>).detail);
     window.addEventListener(PERISTIWA_REVISI, dengarRevisi);
@@ -236,11 +235,11 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
     const d = daftar.getBoundingClientRect();
     if (b.top < d.top) daftar.scrollTop -= d.top - b.top + 8;
     else if (b.bottom > d.bottom) daftar.scrollTop += b.bottom - d.bottom + 8;
-  }, [kini, master]);
+  }, [kini, fitur]);
   const lipat = (label: string) => setTerbuka((t) => (t.includes(label) ? t.filter((x) => x !== label) : [...t, label]));
 
   /* Lembar yang TAMPIL untuk peran ini; nomornya tetap dari NAV lengkap. */
-  const tampil = lembarTampil(master);
+  const tampil = lembarTampil(fitur);
   const perKelompok = new Map<string, number>();
   for (const l of tampil) perKelompok.set(l.kelompok, (perKelompok.get(l.kelompok) ?? 0) + 1);
 
@@ -249,7 +248,7 @@ export function RelKit({ path, namaStudio, revisi: capBuild }: PropRelKit) {
      Semua Proyek). */
   const revKode = revisiPerLembar(revisi);
 
-  const item: ItemNav[] = NAV.filter((n) => !n.masterOnly || master).map((n) => {
+  const item: ItemNav[] = navTampil(fitur).map((n) => {
     const anak = n.children?.map((c) => {
       const kode = KODE_HALAMAN.get(rapi(c.href));
       return {

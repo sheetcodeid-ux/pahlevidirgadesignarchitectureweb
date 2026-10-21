@@ -6,7 +6,8 @@ import { ArrowLeft, ArsLampuMeja, ArsLembar, ArsSetGambar } from "../kit/ikon";
 import { gantiTema, temaGelap, PERISTIWA_TEMA } from "../../lib/tema";
 import { PERISTIWA_REL, PERISTIWA_REL_KEADAAN, PERISTIWA_REVISI, ID_REL, ikonNav } from "./RelKit";
 import { daftarLembar, lembarTampil, lembarUntuk, posisiLembar } from "../../lib/navAdmin";
-import { PERISTIWA_PROFIL, profilTersimpan, type Profil } from "../../lib/admin";
+import { useFiturAkun } from "./fiturAkun";
+import { profilTersimpan } from "../../lib/admin";
 import { navigate } from "astro:transitions/client";
 import { TerbitKit } from "./TerbitKit";
 /* Palet dimuat LANGSUNG, bukan malas: versi malasnya terukur kehilangan
@@ -81,17 +82,8 @@ export function KepalaKit({ judul, kembali, dibangunPada, path }: {
      dan klien. "10 / 32" bergantung pada peran (staf tidak menghitung lembar
      master) dan baru ditulis sesudah peran terbaca — sama dengan kop rel. */
   const dibuka = lembarUntuk(path, LEMBAR);
-  const [master, setMaster] = useState<boolean | undefined>(undefined);
-  useEffect(() => {
-    setMaster(profilTersimpan()?.isMasterAdmin);
-    const dengar = (e: Event) => {
-      const q = (e as CustomEvent<Profil>).detail;
-      if (q) setMaster(q.isMasterAdmin);
-    };
-    window.addEventListener(PERISTIWA_PROFIL, dengar);
-    return () => window.removeEventListener(PERISTIWA_PROFIL, dengar);
-  }, []);
-  const keterangan = master === undefined ? null : posisiLembar(path, lembarTampil(master)).keterangan;
+  const fitur = useFiturAkun();
+  const keterangan = fitur === undefined ? null : posisiLembar(path, lembarTampil(fitur)).keterangan;
 
   /* Pintasan palet ditulis menurut mesinnya — sesudah dipasang, karena
      server tidak tahu mesin pengunjung. */
@@ -277,7 +269,8 @@ export function KepalaKit({ judul, kembali, dibangunPada, path }: {
               titipToast. Portal ke <body>, jadi tidak menambah apa pun di sini. */}
           <TitipanToast />
           <span className="k-kepalahal__grup">
-            <TerbitKit dibangunPada={dibangunPada} />
+            {/* Terbitkan = membangun ulang situs studio pemilik; pelanggan tidak punya urusan di sana. */}
+            {!(fitur && profilTersimpan()?.role === "pelanggan") && <TerbitKit dibangunPada={dibangunPada} />}
             {/* Tema terang/gelap = LAMPU MEJA GAMBAR: di tema gelap lampunya
                 menyala (malam, lampu meja dinyalakan), di terang padam. */}
             <TombolBulat

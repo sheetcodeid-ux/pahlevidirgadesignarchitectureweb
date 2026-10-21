@@ -21,12 +21,27 @@ export interface Profil {
   nama?: string | null;
   /** Foto pribadi (R2 `akun/`); kosong = inisial. */
   avatarUrl?: string | null;
+  /** Kunci fitur yang boleh dibuka — dihitung API dari peran, paket, dan
+   *  masa aktif (lib/fitur.ts). Kosong pada profil tersimpan dari sebelum
+   *  langganan ada; `fiturProfil` menurunkannya dari peran. */
+  fitur?: string[];
+  langganan?: Langganan | null;
+}
+
+export interface Langganan {
+  status: "pemilik" | "staf" | "aktif" | "habis" | "belum" | "nonaktif";
+  planId: string | null;
+  planName: string | null;
+  accessUntil: string | null;
 }
 
 /** Bentuk profil yang disimpan — satu tempat, supaya simpanSesi dan
  *  sinkronkanProfil tidak bisa lupa satu kolom. */
 function profilUntukDisimpan(p: Profil): string {
-  return JSON.stringify({ email: p.email, role: p.role, isMasterAdmin: p.isMasterAdmin, nama: p.nama ?? null, avatarUrl: p.avatarUrl ?? null });
+  return JSON.stringify({
+    email: p.email, role: p.role, isMasterAdmin: p.isMasterAdmin, nama: p.nama ?? null, avatarUrl: p.avatarUrl ?? null,
+    fitur: p.fitur ?? null, langganan: p.langganan ?? null,
+  });
 }
 
 /** Nama yang ditampilkan untuk sebuah profil: nama tampilannya kalau diisi,
@@ -82,7 +97,7 @@ function tulis(kunci: string, nilai: string, tetap: boolean) {
 }
 
 function simpanSesi(
-  d: { accessToken: string; refreshToken: string; email: string; role: string; isMasterAdmin: boolean; nama?: string | null; avatarUrl?: string | null },
+  d: { accessToken: string; refreshToken: string } & Profil,
   tetap = true,
 ) {
   tulis(KUNCI_AKSES, d.accessToken, tetap);
@@ -1497,3 +1512,86 @@ export const ubahTestimoni = (id: string, patch: Partial<TestimoniAdmin>) =>
 export const hapusTestimoni = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/testimonials/${id}`, { method: "DELETE" });
 
+
+// --- Pengguna & Akses (owner saja) ------------------------------------------
+// Akun, paket langganan aplikasi, mapping fitur, dan buku log audit
+// (migrasi 20261021000032, apps/api/src/lib/fitur.ts).
+
+export type PeranAkun = "admin" | "editor" | "pelanggan";
+
+export interface PenggunaAdmin {
+  id: string;
+  email: string | null;
+  nama: string | null;
+  role: PeranAkun;
+  planId: string | null;
+  planName: string | null;
+  accessUntil: string | null;
+  isSuspended: boolean;
+  dibuat: string;
+  terakhirMasuk: string | null;
+  perubahan30: number;
+}
+
+export interface PaketAkses {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  priceMonth: number | null;
+  sortOrder: number;
+  isActive: boolean;
+  fitur: string[];
+  pengguna: number;
+}
+
+export interface EntriAudit {
+  id: number;
+  at: string;
+  actorId: string | null;
+  actorEmail: string | null;
+  actorRole: string | null;
+  actorNama: string | null;
+  action: "masuk" | "gagal_masuk" | "keluar" | "buat" | "ubah" | "hapus" | "ditolak";
+  method: string | null;
+  path: string | null;
+  entity: string | null;
+  entityId: string | null;
+  status: number | null;
+  detail: { kiriman?: unknown; sebelum?: Record<string, unknown> | null; sesudah?: Record<string, unknown> | null; alasan?: string } | null;
+}
+
+export const daftarPengguna = () => panggil<PenggunaAdmin[]>("/admin/users");
+
+export const buatPengguna = (p: { email: string; nama?: string | null; role: PeranAkun; planId?: string | null; accessUntil?: string | null }) =>
+  panggil<{ id: string; sandiSementara: string }>("/admin/users", { method: "POST", body: JSON.stringify(p) });
+
+export const ubahPengguna = (id: string, p: Partial<Pick<PenggunaAdmin, "nama" | "role" | "planId" | "accessUntil" | "isSuspended">>) =>
+  panggil<{ updated: boolean }>(`/admin/users/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(p) });
+
+export const resetSandiPengguna = (id: string) =>
+  panggil<{ sandiSementara: string }>(`/admin/users/${encodeURIComponent(id)}/reset-sandi`, { method: "POST" });
+
+export const daftarPaketAkses = () => panggil<PaketAkses[]>("/admin/access-plans");
+
+export const buatPaketAkses = (p: { name: string; description?: string | null; priceMonth?: number | null }) =>
+  panggil<{ id: string }>("/admin/access-plans", { method: "POST", body: JSON.stringify(p) });
+
+export const ubahPaketAkses = (id: string, p: Partial<Pick<PaketAkses, "name" | "description" | "priceMonth" | "isActive">>) =>
+  panggil<{ updated: boolean }>(`/admin/access-plans/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(p) });
+
+export const hapusPaketAkses = (id: string) =>
+  panggil<{ deleted: boolean }>(`/admin/access-plans/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+/** Satu sel matriks: nyalakan/matikan satu fitur untuk satu paket. */
+export const aturFiturPaket = (planId: string, fitur: string, nyala: boolean) =>
+  panggil<{ updated: boolean }>(`/admin/access-plans/${encodeURIComponent(planId)}/features/${encodeURIComponent(fitur)}`, {
+    method: nyala ? "PUT" : "DELETE",
+  });
+
+export const daftarAudit = (q: { sebelum?: number; batas?: number; aktor?: string; aksi?: string } = {}) => {
+  const s = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) if (v !== undefined && v !== "") s.set(k, String(v));
+  const qs = s.toString();
+  return panggil<EntriAudit[]>(`/admin/audit${qs ? `?${qs}` : ""}`);
+};

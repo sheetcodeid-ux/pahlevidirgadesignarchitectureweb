@@ -407,7 +407,12 @@ for (let m = 1; m <= 30; m++) {
 }
 
 
-const profil = { id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", nama: "Dirga Pahlevi", role: "master", isMasterAdmin: true, avatarUrl: null };
+const profil = {
+  id: "u1", email: "dirga@contoh.id", name: "Dirga Pahlevi", nama: "Dirga Pahlevi", role: "admin", isMasterAdmin: true, avatarUrl: null,
+  fitur: ["dashboard", "kpi", "tugas", "pesan", "proyek", "portal-klien", "keuangan", "terima", "keluar", "transaksi", "kas", "tagihan",
+    "fee", "gaji", "bayaran-tim", "direktori", "tim", "testimoni", "aturan-fee", "akun", "panduan", "notifikasi", "info-studio", "pengguna", "ui-kit"],
+  langganan: { status: "pemilik", planId: null, planName: null, accessUntil: null },
+};
 /* Berkas yang diunggah ke /unggah?key=… disimpan di memori dan disajikan
    lagi di /media/<key>, supaya foto akun hasil potongan benar-benar tampil
    di uji — bukan gambar contoh pengganti. */
@@ -1079,6 +1084,76 @@ function kpiTiruan() {
     }),
   };
 }
+
+/* ---- Pengguna & Akses (tahap 1) -----------------------------------------------
+   Bentuk sama dengan routes/admin.ts: /users, /access-plans (+ features),
+   /audit. Pelanggan contoh memakai example.com — bukan orang sungguhan. */
+const FITUR_DASAR = ["dashboard", "tugas", "pesan", "proyek", "portal-klien", "direktori"];
+const FITUR_STUDIO = [...FITUR_DASAR, "keuangan", "terima", "keluar", "transaksi", "tagihan", "kas", "tim", "testimoni"];
+const FITUR_PRO = [...FITUR_STUDIO, "kpi", "fee", "gaji", "bayaran-tim", "aturan-fee"];
+const paketAkses = [
+  { id: "pa-dasar", slug: "dasar", name: "Dasar", description: "Proyek, tugas, dan relasi klien.", priceMonth: 149000, sortOrder: 1, isActive: true, fitur: [...FITUR_DASAR].sort() },
+  { id: "pa-studio", slug: "studio", name: "Studio", description: "Dasar + keuangan proyek dan tagihan.", priceMonth: 349000, sortOrder: 2, isActive: true, fitur: [...FITUR_STUDIO].sort() },
+  { id: "pa-pro", slug: "pro", name: "Pro", description: "Semua fitur kerja, termasuk gaji dan KPI.", priceMonth: null, sortOrder: 3, isActive: true, fitur: [...FITUR_PRO].sort() },
+];
+const hariGeser = (n) => {
+  const d = new Date(Date.now() + 7 * 3600e3);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+const penggunaAkses = [
+  { id: "u1", email: "dirga@contoh.id", nama: "Dirga Pahlevi", role: "admin", planId: null, accessUntil: null, isSuspended: false, dibuat: "2026-08-18T03:00:00.000Z", terakhirMasuk: jamLalu(1) },
+  { id: "u2", email: "raffi@contoh.id", nama: "Raffi Akbar", role: "editor", planId: null, accessUntil: null, isSuspended: false, dibuat: "2026-08-25T03:00:00.000Z", terakhirMasuk: jamLalu(20) },
+  { id: "u3", email: "admin@studio-ruang.example.com", nama: "Studio Ruang Teduh", role: "pelanggan", planId: "pa-studio", accessUntil: hariGeser(48), isSuspended: false, dibuat: "2026-10-02T03:00:00.000Z", terakhirMasuk: null },
+  { id: "u4", email: "kantor@garis-tiga.example.com", nama: "Garis Tiga Arsitek", role: "pelanggan", planId: "pa-dasar", accessUntil: hariGeser(5), isSuspended: false, dibuat: "2026-09-21T03:00:00.000Z", terakhirMasuk: null },
+  { id: "u5", email: "halo@denah-kita.example.com", nama: "Denah Kita", role: "pelanggan", planId: "pa-pro", accessUntil: hariGeser(-9), isSuspended: false, dibuat: "2026-07-30T03:00:00.000Z", terakhirMasuk: null },
+  { id: "u6", email: "studio@atap-rendah.example.com", nama: "Atap Rendah", role: "pelanggan", planId: "pa-dasar", accessUntil: null, isSuspended: false, dibuat: "2026-10-19T03:00:00.000Z", terakhirMasuk: null },
+  { id: "u7", email: "info@bidang-miring.example.com", nama: "Bidang Miring", role: "pelanggan", planId: "pa-studio", accessUntil: hariGeser(120), isSuspended: true, dibuat: "2026-06-12T03:00:00.000Z", terakhirMasuk: null },
+];
+let nomorAudit = 400;
+const logAudit = [];
+function catatTiruan(e, menitLalu = 0) {
+  const u = penggunaAkses.find((x) => x.id === (e.actorId ?? "u1"));
+  logAudit.unshift({
+    id: ++nomorAudit, at: new Date(Date.now() - menitLalu * 60e3).toISOString(),
+    actorId: u?.id ?? null, actorEmail: e.actorEmail ?? u?.email ?? null, actorRole: u?.role ?? null, actorNama: u?.nama ?? null,
+    action: e.action, method: e.method ?? null, path: e.path ?? null, entity: e.entity ?? null, entityId: e.entityId ?? null,
+    status: e.status ?? 200, detail: e.detail ?? null,
+  });
+}
+[
+  [60 * 52, { action: "masuk", actorId: "u2", method: "POST", path: "/auth/login", detail: { kiriman: { email: "raffi@contoh.id" } } }],
+  [60 * 51, { action: "ubah", actorId: "u2", method: "PATCH", path: "/tasks/t3", entity: "tasks", entityId: "t3", detail: { sebelum: { status: "berjalan", title: "Gambar kerja tampak" }, sesudah: { status: "review", title: "Gambar kerja tampak" } } }],
+  [60 * 49, { action: "buat", actorId: "u2", method: "POST", path: "/costs", entity: "costs", detail: { kiriman: { label: "Cetak A1 denah", amount: 85000, category: "operasional" } } }],
+  [60 * 30, { action: "gagal_masuk", actorId: null, actorEmail: "kantor@garis-tiga.example.com", method: "POST", path: "/auth/login", status: 403, detail: { alasan: "akun pelanggan belum dibuka" } }],
+  [60 * 27, { action: "ubah", method: "PATCH", path: "/users/u4", entity: "users", entityId: "u4", detail: { sebelum: { access_until: hariGeser(-25), plan_id: "pa-dasar" }, sesudah: { access_until: hariGeser(5), plan_id: "pa-dasar" } } }],
+  [60 * 26, { action: "buat", method: "PUT", path: "/access-plans/pa-studio/features/testimoni", entity: "access-plans", entityId: "pa-studio", detail: { kiriman: null } }],
+  [60 * 6, { action: "masuk", method: "POST", path: "/auth/login", detail: { kiriman: { email: "dirga@contoh.id" } } }],
+  [60 * 5, { action: "ubah", method: "PATCH", path: "/projects/k1", entity: "projects", entityId: "k1", detail: { sebelum: { pipeline_stage: "desain1", title: "Rumah Tropis Kapuas" }, sesudah: { pipeline_stage: "desain2", title: "Rumah Tropis Kapuas" } } }],
+  [60 * 4, { action: "ditolak", actorId: "u2", method: "PATCH", path: "/access-plans/pa-pro", entity: "access-plans", entityId: "pa-pro", status: 403, detail: { kiriman: { priceMonth: 0 } } }],
+  [180, { action: "hapus", actorId: "u2", method: "DELETE", path: "/directory/d9", entity: "directory", entityId: "d9", detail: { sebelum: { name: "Toko Kaca Sentosa", category: "supplier", phone: "0561 700 112" } } }],
+  [95, { action: "buat", method: "POST", path: "/users", entity: "users", detail: { kiriman: { email: "studio@atap-rendah.example.com", role: "pelanggan", planId: "pa-dasar", password: "[disembunyikan]" } } }],
+  [40, { action: "ubah", method: "PATCH", path: "/users/u7", entity: "users", entityId: "u7", detail: { sebelum: { is_suspended: false }, sesudah: { is_suspended: true } } }],
+  [12, { action: "ubah", actorId: "u2", method: "PATCH", path: "/invoices/i2", entity: "invoices", entityId: "i2", detail: { sebelum: { status: "terbit", paid_at: null }, sesudah: { status: "lunas", paid_at: new Date().toISOString().slice(0, 10) } } }],
+].forEach(([menit, e]) => catatTiruan(e, menit));
+logAudit.sort((a, b) => b.at.localeCompare(a.at));
+
+function penggunaTiruan() {
+  return penggunaAkses.map((u) => ({
+    ...u,
+    planName: paketAkses.find((p) => p.id === u.planId)?.name ?? null,
+    perubahan30: logAudit.filter((l) => l.actorId === u.id && ["buat", "ubah", "hapus"].includes(l.action)).length,
+  }));
+}
+const paketTiruan = () => paketAkses.map((p) => ({ ...p, pengguna: penggunaAkses.filter((u) => u.planId === p.id && u.role === "pelanggan").length }));
+function auditTiruan(path) {
+  const q = new URL(path, "http://x").searchParams;
+  const sebelum = Number(q.get("sebelum") || 0);
+  const batas = Math.min(200, Number(q.get("batas") || 60));
+  return logAudit.filter((l) => !sebelum || l.id < sebelum).slice(0, batas);
+}
+const sandiTiruan = () => "Uji-" + Math.random().toString(36).slice(2, 8) + "#K7q";
+
 let capBerubah = "2026-01-01T00:00:00.000Z";
 const jawab = (path) => {
   {
@@ -1123,6 +1198,9 @@ const jawab = (path) => {
       },
     };
   }
+  if (path.startsWith("/api/v1/admin/users")) return penggunaTiruan();
+  if (path.startsWith("/api/v1/admin/access-plans")) return paketTiruan();
+  if (path.startsWith("/api/v1/admin/audit")) return auditTiruan(path);
   if (path.startsWith("/api/v1/admin/me")) return profil;
   if (path.startsWith("/api/v1/admin/finance/overview")) return ringkasanKeu;
   if (path.startsWith("/api/v1/admin/finance/monthly")) return bulananTiruan();
@@ -1257,7 +1335,90 @@ const jawab = (path) => {
  * penyimpanan di sini lencananya selalu kembali ke nilai lama dan jalur
  * suksesnya tidak pernah benar-benar terlihat. Sisanya tetap baca saja;
  * meniru seluruh API berarti membuat API kedua yang pasti menyimpang. */
+
+/* Pengguna, paket, dan mapping fitur — tiap tulisan juga masuk buku log,
+   seperti middleware audit di Worker. */
+function tulisAkses(metode, path, badan) {
+  const jalur = path.replace(/^\/api\/v1\/admin/, "");
+  const log = (e) => catatTiruan({ method: metode, path: jalur, ...e });
+  if (jalur === "/users" && metode === "POST") {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(badan.email ?? "")) return { galat: 422, pesan: "Email tidak sah." };
+    if (penggunaAkses.some((u) => u.email === badan.email)) return { galat: 409, pesan: "Email itu sudah punya akun." };
+    const id = `u${Date.now()}`;
+    penggunaAkses.push({ id, email: badan.email, nama: badan.nama ?? null, role: badan.role ?? "pelanggan", planId: badan.planId ?? null,
+      accessUntil: badan.accessUntil ?? null, isSuspended: false, dibuat: new Date().toISOString(), terakhirMasuk: null });
+    log({ action: "buat", entity: "users", detail: { kiriman: badan } });
+    return { id, sandiSementara: sandiTiruan() };
+  }
+  const ru = jalur.match(/^\/users\/([^/]+)(\/reset-sandi)?$/);
+  if (ru) {
+    const u = penggunaAkses.find((x) => x.id === ru[1]);
+    if (!u) return { galat: 404 };
+    if (ru[2] && metode === "POST") {
+      log({ action: "ubah", entity: "users", entityId: u.id, detail: { kiriman: { sandi: "[disembunyikan]" } } });
+      return { sandiSementara: sandiTiruan() };
+    }
+    if (metode === "PATCH") {
+      if (u.id === "u1" && (badan.role && badan.role !== "admin" || badan.isSuspended)) return { galat: 422, pesan: "Akun sendiri tidak bisa diturunkan atau dinonaktifkan." };
+      const sebelum = { role: u.role, plan_id: u.planId, access_until: u.accessUntil, is_suspended: u.isSuspended, full_name: u.nama };
+      if ("nama" in badan) u.nama = badan.nama;
+      if ("role" in badan) u.role = badan.role;
+      if ("planId" in badan) u.planId = badan.planId;
+      if ("accessUntil" in badan) u.accessUntil = badan.accessUntil;
+      if ("isSuspended" in badan) u.isSuspended = badan.isSuspended;
+      const sesudah = { role: u.role, plan_id: u.planId, access_until: u.accessUntil, is_suspended: u.isSuspended, full_name: u.nama };
+      log({ action: "ubah", entity: "users", entityId: u.id, detail: { kiriman: badan, sebelum, sesudah } });
+      return { updated: true };
+    }
+  }
+  if (jalur === "/access-plans" && metode === "POST") {
+    const nama = String(badan.name ?? "").trim();
+    if (nama.length < 2) return { galat: 422, pesan: "Nama paket 2–40 karakter." };
+    const id = `pa-${Date.now()}`;
+    paketAkses.push({ id, slug: nama.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name: nama, description: badan.description ?? null,
+      priceMonth: badan.priceMonth ?? null, sortOrder: paketAkses.length + 1, isActive: true, fitur: [] });
+    log({ action: "buat", entity: "access-plans", detail: { kiriman: badan } });
+    return { id };
+  }
+  const rf = jalur.match(/^\/access-plans\/([^/]+)\/features\/([^/]+)$/);
+  if (rf) {
+    const p = paketAkses.find((x) => x.id === rf[1]);
+    if (!p) return { galat: 404 };
+    const f = decodeURIComponent(rf[2]);
+    if (metode === "PUT" && !p.fitur.includes(f)) p.fitur = [...p.fitur, f].sort();
+    if (metode === "DELETE") p.fitur = p.fitur.filter((x) => x !== f);
+    log({ action: metode === "PUT" ? "buat" : "hapus", entity: "access-plans", entityId: p.id, detail: { kiriman: { fitur: f, paket: p.name } } });
+    return { updated: true };
+  }
+  const rp = jalur.match(/^\/access-plans\/([^/]+)$/);
+  if (rp) {
+    const i = paketAkses.findIndex((x) => x.id === rp[1]);
+    if (i < 0) return { galat: 404 };
+    const p = paketAkses[i];
+    if (metode === "DELETE") {
+      if (penggunaAkses.some((u) => u.planId === p.id)) return { galat: 409, pesan: "Paket masih dipakai pelanggan." };
+      paketAkses.splice(i, 1);
+      log({ action: "hapus", entity: "access-plans", entityId: p.id, detail: { sebelum: { name: p.name, price_month: p.priceMonth } } });
+      return { deleted: true };
+    }
+    if (metode === "PATCH") {
+      const sebelum = { name: p.name, price_month: p.priceMonth, description: p.description, is_active: p.isActive };
+      if ("name" in badan) p.name = badan.name;
+      if ("priceMonth" in badan) p.priceMonth = badan.priceMonth;
+      if ("description" in badan) p.description = badan.description;
+      if ("isActive" in badan) p.isActive = badan.isActive;
+      log({ action: "ubah", entity: "access-plans", entityId: p.id, detail: { kiriman: badan, sebelum, sesudah: { name: p.name, price_month: p.priceMonth, description: p.description, is_active: p.isActive } } });
+      return { updated: true };
+    }
+  }
+  return undefined;
+}
+
 function tulis(metode, path, badan) {
+  {
+    const hasil = tulisAkses(metode, path, badan);
+    if (hasil !== undefined) return hasil;
+  }
   if (path === "/api/v1/admin/publish" && metode === "POST") return { dimulai: true };
   if (path.startsWith("/api/v1/admin/")) capBerubah = new Date().toISOString();
   /* Proyek baru dan ubah proyek — sebelumnya jatuh ke balasan umum, jadi

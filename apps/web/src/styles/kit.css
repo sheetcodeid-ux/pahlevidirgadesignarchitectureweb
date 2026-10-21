@@ -4537,3 +4537,47 @@ html[data-kl-pindah] .kl__lembarikon svg g > :nth-child(n + 5):not(.isi) { anima
 @media (prefers-reduced-motion: reduce) {
   .k-grafikkartu, .k-kolom__kartu { animation: none; }
 }
+
+/* --- Halaman terkunci (RequireAuth) ------------------------------------------
+   Ungu = upgrade & fitur berbayar — satu-satunya tempat di panel yang memakai
+   --upgrade, sesuai aturan warna #1. */
+.kl .k-kunci {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 460px;
+  /* Anak pulau di kerangka satu layar diberi flex: 1 — kartu terkunci
+     tidak boleh meregang setinggi layar. */
+  flex: none !important;
+  margin: 48px auto;
+  padding: 32px 28px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  text-align: center;
+}
+.kl .k-kunci__gembok {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  background: var(--upgrade-soft);
+  color: var(--upgrade);
+}
+.kl .k-kunci__kode { margin: 0; font-size: var(--k-t11); font-weight: var(--k-semi); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.kl .k-kunci h2 { margin: 0; font-size: var(--k-t18); font-weight: var(--k-semi); color: var(--text-strong); text-wrap: balance; }
+.kl .k-kunci__isi { max-width: 40ch; margin: 0; font-size: var(--k-t14); color: var(--text-muted); text-wrap: pretty; }
+.kl .k-kunci__paket { margin: 4px 0 0; padding: 6px 12px; border-radius: 999px; background: var(--upgrade-soft); color: var(--upgrade); font-size: var(--k-t12); font-weight: var(--k-semi); }
+.kl .k-kunci__pulang {
+  margin-top: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: var(--k-t12);
+  font-weight: var(--k-semi);
+  text-decoration: none;
+}

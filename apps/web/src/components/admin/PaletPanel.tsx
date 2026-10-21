@@ -7,8 +7,9 @@ import { Revisi } from "../kit/Nav";
 import { Tuts } from "../kit/Tampilan";
 import { ArsLampuMeja, ArsOrdner, ArsRevisi, ArsSetGambar, ArsTampakRumah } from "../kit/ikon";
 import { daftarLembar, KODE_KELOMPOK, lembarTampil, lembarUntuk, revisiPerLembar, type Lembar } from "../../lib/navAdmin";
+import { useFiturAkun } from "./fiturAkun";
 import { ikonNav, KunciDenah, zonaDenah } from "./RelKit";
-import { daftarProyek, bacaCache, profilTersimpan, type Proyek } from "../../lib/admin";
+import { daftarProyek, bacaCache, type Proyek } from "../../lib/admin";
 import { CATEGORY_LABELS } from "../../lib/api";
 import { formatRupiah } from "../../lib/format";
 import { revisiPerHalaman, TAHAP_PROYEK, type BarisNotifikasi } from "../../lib/notifikasi";
@@ -117,13 +118,12 @@ export function PaletPanel({
   dibangunPada: string;
 }) {
   const [proyek, setProyek] = useState<Proyek[] | null>(null);
-  const [master, setMaster] = useState(false);
+  const fitur = useFiturAkun();
   const [gelap, setGelap] = useState(false);
   const kini = useRef({ buka, onBuka });
   kini.current = { buka, onBuka };
 
   useEffect(() => {
-    setMaster(Boolean(profilTersimpan()?.isMasterAdmin));
     const tekan = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -146,7 +146,7 @@ export function PaletPanel({
     navigate(ke);
   };
 
-  const tampil = lembarTampil(master);
+  const tampil = lembarTampil(fitur);
   const rev = revisiPerLembar(revisiPerHalaman(baris ?? []));
   const semua = daftarLembar().halaman;
   const zona = zonaDenah(tampil);

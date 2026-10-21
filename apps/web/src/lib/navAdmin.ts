@@ -1,5 +1,9 @@
 import type { NamaIkonNav } from "../components/admin/RelKit";
 import type { IconName } from "../components/ui/Icon";
+/* Kunci fitur dari berkas yang SAMA dengan penjagaan API — rel, palet, dan
+   halaman Pengguna & Akses tidak bisa menyimpang dari yang ditolak server. */
+import { FITUR_PAKET, FITUR_PEMILIK, FITUR_SELALU, type KunciFitur } from "../../../api/src/lib/fitur";
+export type { KunciFitur };
 
 /* =============================================================================
    Peta navigasi panel admin — SATU daftar, dua pemakai.
@@ -43,6 +47,8 @@ import type { IconName } from "../components/ui/Icon";
 export interface SubItem {
   label: string;
   href: string;
+  /** Kunci fitur yang membuka halaman ini (lib/fitur.ts di API). */
+  fitur: KunciFitur;
   icon: IconName;
   /** Lihat `NavItem.ikonKit`. */
   ikonKit: NamaIkonNav;
@@ -51,6 +57,9 @@ export interface SubItem {
 export interface NavItem {
   label: string;
   href?: string;
+  /** Kunci fitur halaman ini. Induk submenu tidak punya — ia tampil kalau
+      salah satu anaknya boleh dibuka. */
+  fitur?: KunciFitur;
   icon: IconName;
   children?: SubItem[];
   /** Hanya tampil untuk master admin. */
@@ -95,26 +104,26 @@ export const NAV: NavItem[] = [
      tidak punya; bentrok dengan frame itu disebutkan terbuka ke pemilik.
      Urutannya tetap lingkaran bisnis di atas: yang dikerjakan tiap hari di
      atas, setelan paling bawah. */
-  { label: "Dashboard", href: "/admin", icon: "dashboard", ikonKit: "ArsLembar", group: "Utama" },
+  { label: "Dashboard", href: "/admin", fitur: "dashboard", icon: "dashboard", ikonKit: "ArsLembar", group: "Utama" },
   /* Lima angka target dokumen strategi §8 — fase 4. */
-  { label: "KPI Strategi", href: "/admin/kpi", icon: "finance", ikonKit: "ArsPeil", group: "Utama" },
-  { label: "Tugas", href: "/admin/list-kerjaan", icon: "checklist", ikonKit: "ArsDaftarPeriksa", group: "Utama" },
+  { label: "KPI Strategi", href: "/admin/kpi", fitur: "kpi", icon: "finance", ikonKit: "ArsPeil", group: "Utama" },
+  { label: "Tugas", href: "/admin/list-kerjaan", fitur: "tugas", icon: "checklist", ikonKit: "ArsDaftarPeriksa", group: "Utama" },
   /* Pesan Masuk membawa angka merah, sama seperti "Inbox 99" di Coinest —
      satu-satunya baris nav yang isinya berubah sendiri tanpa disentuh. */
-  { label: "Pesan Masuk", href: "/admin/pesan", icon: "inquiry", ikonKit: "ArsSuratPengantar", group: "Utama", lencana: "pesan" },
+  { label: "Pesan Masuk", href: "/admin/pesan", fitur: "pesan", icon: "inquiry", ikonKit: "ArsSuratPengantar", group: "Utama", lencana: "pesan" },
   /* Cara memakai panel, langkah demi langkah — permintaan pemilik. Di Utama
      supaya terlihat tanpa menggulir rel. */
-  { label: "Panduan", href: "/admin/panduan", icon: "info", ikonKit: "ArsArahUtara", group: "Utama" },
+  { label: "Panduan", href: "/admin/panduan", fitur: "panduan", icon: "info", ikonKit: "ArsArahUtara", group: "Utama" },
   {
     label: "Proyek",
     icon: "project",
     ikonKit: "ArsTampakRumah",
     group: "Pekerjaan",
     children: [
-      { label: "Semua Proyek", href: "/admin/proyek", icon: "list", ikonKit: "ArsOrdner" },
+      { label: "Semua Proyek", href: "/admin/proyek", fitur: "proyek", icon: "list", ikonKit: "ArsOrdner" },
       // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
       // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
-      { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document", ikonKit: "ArsKunciRumah" },
+      { label: "Portal Klien", href: "/admin/proyek/klien", fitur: "portal-klien", icon: "document", ikonKit: "ArsKunciRumah" },
     ],
   },
   /* Ketiganya satu menu, bukan tiga baris berjajar. Alasan berdampingannya
@@ -128,37 +137,40 @@ export const NAV: NavItem[] = [
     ikonKit: "ArsKurvaS",
     group: "Pekerjaan",
     children: [
-      { label: "Ringkasan", href: "/admin/keuangan", icon: "finance", ikonKit: "ArsRekap" },
-      { label: "Terima Pembayaran", href: "/admin/keuangan/terima", icon: "cash", ikonKit: "ArsKartuBayar" },
-      { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar", icon: "cash", ikonKit: "ArsNotaPaku" },
-      { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", icon: "list", ikonKit: "ArsKertasLubang" },
+      { label: "Ringkasan", href: "/admin/keuangan", fitur: "keuangan", icon: "finance", ikonKit: "ArsRekap" },
+      { label: "Terima Pembayaran", href: "/admin/keuangan/terima", fitur: "terima", icon: "cash", ikonKit: "ArsKartuBayar" },
+      { label: "Catat Pengeluaran", href: "/admin/keuangan/keluar", fitur: "keluar", icon: "cash", ikonKit: "ArsNotaPaku" },
+      { label: "Semua Transaksi", href: "/admin/keuangan/transaksi", fitur: "transaksi", icon: "list", ikonKit: "ArsKertasLubang" },
       /* Uang di luar proyek (PVC, bagi hasil, konsumsi, sewa) + target semester
          — sheet "KELUAR MASUK". */
-      { label: "Kas Studio", href: "/admin/keuangan/kas", icon: "bank", ikonKit: "ArsMesinKas" },
-      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", icon: "cash", ikonKit: "ArsTermin" },
-      { label: "Fee Proyek", href: "/admin/fee", icon: "cash", ikonKit: "ArsKuitansi" },
-      { label: "Gaji", href: "/admin/gaji", icon: "bank", ikonKit: "ArsBukuGaji" },
+      { label: "Kas Studio", href: "/admin/keuangan/kas", fitur: "kas", icon: "bank", ikonKit: "ArsMesinKas" },
+      { label: "Tagihan & Termin", href: "/admin/keuangan/tagihan", fitur: "tagihan", icon: "cash", ikonKit: "ArsTermin" },
+      { label: "Fee Proyek", href: "/admin/fee", fitur: "fee", icon: "cash", ikonKit: "ArsKuitansi" },
+      { label: "Gaji", href: "/admin/gaji", fitur: "gaji", icon: "bank", ikonKit: "ArsBukuGaji" },
       /* Hak, dibayar, terutang, dan slip per orang — sheet "GAJI <nama>". */
-      { label: "Bayaran Tim", href: "/admin/gaji/tim", icon: "team", ikonKit: "ArsAmplopGaji" },
+      { label: "Bayaran Tim", href: "/admin/gaji/tim", fitur: "bayaran-tim", icon: "team", ikonKit: "ArsAmplopGaji" },
     ],
   },
   /* Orang di luar dan di dalam studio. */
-  { label: "Direktori", href: "/admin/direktori", icon: "directory", ikonKit: "ArsKartuIndeks", group: "Relasi" },
-  { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", ikonKit: "ArsSkalaManusia", group: "Relasi" },
-  { label: "Testimoni", href: "/admin/testimoni", icon: "quote", ikonKit: "ArsAwanRevisi", group: "Relasi" },
+  { label: "Direktori", href: "/admin/direktori", fitur: "direktori", icon: "directory", ikonKit: "ArsKartuIndeks", group: "Relasi" },
+  { label: "Tim & Freelancer", href: "/admin/tim", fitur: "tim", icon: "team", ikonKit: "ArsSkalaManusia", group: "Relasi" },
+  { label: "Testimoni", href: "/admin/testimoni", fitur: "testimoni", icon: "quote", ikonKit: "ArsAwanRevisi", group: "Relasi" },
   /* Kategori Pengaturan: isinya baris DATAR, bukan submenu "Pengaturan" di
      dalam kategori "Pengaturan" — dua tingkat bernama sama untuk dua baris. */
   /* masterOnly: halamannya memang hanya untuk master (`RequireAuth masterOnly`
      di InfoStudioKit). Tanpa tanda ini rel menawarkannya ke staf, lalu
      halamannya menolak dengan "Tidak bisa memuat panel". */
-  { label: "Info Studio", href: "/admin/pengaturan", icon: "info", ikonKit: "ArsMejaGambar", group: "Pengaturan", masterOnly: true },
+  { label: "Info Studio", href: "/admin/pengaturan", fitur: "info-studio", icon: "info", ikonKit: "ArsMejaGambar", group: "Pengaturan", masterOnly: true },
   /* Persen tiap peran tim desain — dibaca Proyek Baru dan Tim & Bayaran. */
-  { label: "Aturan Fee Tim", href: "/admin/pengaturan/fee", icon: "cash", ikonKit: "ArsJangka", group: "Pengaturan" },
-  { label: "Akun", href: "/admin/pengaturan/akun", icon: "user", ikonKit: "ArsAkun", group: "Pengaturan" },
+  { label: "Aturan Fee Tim", href: "/admin/pengaturan/fee", fitur: "aturan-fee", icon: "cash", ikonKit: "ArsJangka", group: "Pengaturan" },
+  { label: "Akun", href: "/admin/pengaturan/akun", fitur: "akun", icon: "user", ikonKit: "ArsAkun", group: "Pengaturan" },
   /* Ke pustaka komponen KIT, bukan /admin/ui: /admin/ui berisi sistem lama di
      kerangka lama, dan menu yang membawa ke tampilan lain sama sekali terbaca
      sebagai panel yang rusak. /admin/ui masih bisa dibuka lewat alamatnya. */
-  { label: "UI Component", href: "/admin/kit", icon: "component", ikonKit: "ArsMal", group: "Pengaturan", masterOnly: true },
+  /* Akun, peran, paket langganan, mapping fitur, dan buku log audit —
+     MATRIKS DAFTAR GAMBAR. Owner saja (kunci "pengguna" milik pemilik). */
+  { label: "Pengguna & Akses", href: "/admin/pengguna", fitur: "pengguna", icon: "lock", ikonKit: "ArsGembok", group: "Pengaturan", masterOnly: true },
+  { label: "UI Component", href: "/admin/kit", fitur: "ui-kit", icon: "component", ikonKit: "ArsMal", group: "Pengaturan", masterOnly: true },
 ];
 
 /* =============================================================================
@@ -195,6 +207,7 @@ export interface Lembar {
   kelompok: string;
   /** Ikon arsitekturnya — sama dengan barisnya di rel. */
   ikon: NamaIkonNav;
+  fitur: KunciFitur;
   masterOnly?: boolean;
   /** Label induknya kalau lembar ini anak submenu. */
   induk?: string;
@@ -232,11 +245,11 @@ function hitungLembar(): DaftarLembar {
       if (n.children.length > 9) console.warn(`[navAdmin] ${n.label} punya ${n.children.length} anak — nomor lembarnya bertabrakan`);
       induk.set(n.label, `${huruf}-${ke}0`);
       n.children.forEach((c, j) =>
-        halaman.push({ kode: `${huruf}-${ke}${j + 1}`, label: c.label, href: c.href, kelompok: n.group, ikon: c.ikonKit, induk: n.label }),
+        halaman.push({ kode: `${huruf}-${ke}${j + 1}`, label: c.label, href: c.href, kelompok: n.group, ikon: c.ikonKit, fitur: c.fitur, induk: n.label }),
       );
     } else {
       const kode = berseri.has(n.group) ? `${huruf}-${ke}0` : `${huruf}-${dua(ke)}`;
-      halaman.push({ kode, label: n.label, href: n.href!, kelompok: n.group, ikon: n.ikonKit, masterOnly: n.masterOnly });
+      halaman.push({ kode, label: n.label, href: n.href!, kelompok: n.group, ikon: n.ikonKit, fitur: n.fitur!, masterOnly: n.masterOnly });
     }
   }
   return { halaman, induk };
@@ -266,9 +279,49 @@ export function lembarUntuk(path: string, daftar: Lembar[]): { lembar: Lembar; t
   return terbaik ? { lembar: terbaik, turunan: true } : null;
 }
 
-/** Lembar yang TAMPIL untuk peran ini — staf tidak menghitung lembar master. */
-export const lembarTampil = (master: boolean | undefined): Lembar[] =>
-  daftarLembar().halaman.filter((l) => !l.masterOnly || master);
+/* --- Akses per akun ------------------------------------------------------------
+   Daftar fitur datang dari /me (dihitung API dari peran + paket + masa aktif)
+   dan disimpan bersama profil. Profil tersimpan dari sebelum fitur ada belum
+   membawanya — ia diturunkan dari peran lamanya sampai /me berikutnya tiba. */
+
+export const SEMUA_FITUR: readonly KunciFitur[] = [...FITUR_PAKET, ...FITUR_SELALU, ...FITUR_PEMILIK];
+
+export function fiturProfil(p: { fitur?: readonly string[] | null; isMasterAdmin?: boolean } | null | undefined): ReadonlySet<string> | undefined {
+  if (!p) return undefined;
+  if (p.fitur) return new Set(p.fitur);
+  return new Set(p.isMasterAdmin ? SEMUA_FITUR : [...FITUR_PAKET, ...FITUR_SELALU]);
+}
+
+/** Halaman di luar rel yang tetap butuh kuncinya sendiri. */
+const FITUR_LAIN: [string, KunciFitur][] = [
+  ["/admin/proyek/baru", "proyek"],
+  ["/admin/proyek/edit", "proyek"],
+  ["/admin/notifikasi", "notifikasi"],
+];
+
+/** Kunci fitur milik sebuah path — lembar persis, `/satu`, atau turunannya.
+    Null = halaman di luar peta (masuk, UI lama): tidak dijaga di sini. */
+export function fiturUntukJalur(path: string): KunciFitur | null {
+  const kini = rapiPath(path);
+  const lain = FITUR_LAIN.find(([h]) => h === kini);
+  if (lain) return lain[1];
+  return lembarUntuk(kini, daftarLembar().halaman)?.lembar.fitur ?? null;
+}
+
+/** Lembar yang TAMPIL untuk akun ini. `fitur` belum diketahui = sebelum
+    profil terbaca: lembar pemilik disembunyikan, seperti dulu untuk staf. */
+export const lembarTampil = (fitur: ReadonlySet<string> | undefined): Lembar[] =>
+  daftarLembar().halaman.filter((l) => (fitur ? fitur.has(l.fitur) : !l.masterOnly));
+
+/** Baris NAV yang tampil: anak disaring, induk tanpa anak yang boleh ikut hilang. */
+export function navTampil(fitur: ReadonlySet<string> | undefined): NavItem[] {
+  const boleh = (k: KunciFitur | undefined, master?: boolean) => (fitur ? !!k && fitur.has(k) : !master);
+  return NAV.flatMap((n) => {
+    if (!n.children) return boleh(n.fitur, n.masterOnly) ? [n] : [];
+    const anak = n.children.filter((c) => boleh(c.fitur));
+    return anak.length ? [{ ...n, children: anak }] : [];
+  });
+}
 
 export interface PosisiLembar {
   dibuka: { lembar: Lembar; turunan: boolean } | null;
