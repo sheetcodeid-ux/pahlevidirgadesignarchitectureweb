@@ -150,7 +150,7 @@ function pasalDari(k: KpiStrategi): Pasal[] {
       bulat: true,
       besar: (v) => `${koma(v, 0)} proyek`,
       selisih: (d) => `${koma(Math.abs(d), 0)} proyek`,
-      sumber: "/admin/paket",
+      sumber: "/admin/proyek",
     },
     {
       kunci: "cadangan",

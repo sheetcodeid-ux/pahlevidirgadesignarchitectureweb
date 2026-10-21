@@ -11,12 +11,11 @@ import {
   type PointerEvent as PointerEventReact,
 } from "react";
 import { RequireAuth } from "./RequireAuth";
-import { ToastProvider, useToast } from "../kit/Toast";
+import { ToastProvider, useToast, titipToast } from "../kit/Toast";
 import { DropdownMenu } from "../kit/Overlay";
 import { PilihMenu } from "../kit/Formulir";
 import { Ikon } from "../kit/Ikon";
 import {
-  ArsBingkaiFoto,
   ArsKunciRumah,
   ArsTermin,
   CaretDown,
@@ -34,7 +33,7 @@ import { GagalMuat } from "./gagalMuat";
 import { usePilihProyek } from "./pilihProyekKit";
 import { geraknya, Hitung } from "./hitung";
 import { TAHAP, PilihTeks } from "./ProyekKit";
-import { DialogBayar, DialogLingkup, DialogTugaskan, type PilihanBayar, type UbahTugaskan } from "./timProyekKit";
+import { DialogBayar, DialogDataProyek, DialogLingkup, DialogTugaskan, type PilihanBayar, type UbahTugaskan } from "./timProyekKit";
 import { unduhRincianBiaya, unduhDaftarTagihan } from "../../lib/pdfProyek";
 import { kodeProyek, inisial } from "../../lib/nomorDokumen";
 import { CATEGORY_LABELS } from "../../lib/api";
@@ -429,6 +428,17 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
   const [studio, setStudio] = useState<StudioSettings | null>(() => bacaCache<StudioSettings>("settings"));
   const [tahapPilih, setTahapPilih] = useState<string | null>(null);
   const [lingkupBuka, setLingkupBuka] = useState(false);
+  /* ?ubah=1 (tombol Ubah di Semua Proyek, alamat lama /admin/proyek/edit)
+     membuka dialog Data proyek begitu halamannya dimuat. */
+  const [dataBuka, setDataBuka] = useState(false);
+  const ubahDiminta = useRef(typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ubah") === "1");
+  useEffect(() => {
+    // Sesudah hidrasi dan sesudah proyeknya ada — dialog butuh data proyeknya.
+    if (ubahDiminta.current && kini) {
+      ubahDiminta.current = false;
+      setDataBuka(true);
+    }
+  }, [kini]);
   const [tugaskan, setTugaskan] = useState<UbahTugaskan | null>(null);
   const [bayar, setBayar] = useState<PilihanBayar | null>(null);
   const [membuatPdf, setMembuatPdf] = useState(false);
@@ -1932,10 +1942,10 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
                 <Ikon ikon={ArsKunciRumah} ukuran={14} />
                 Portal klien
               </a>
-              <a className="jdp__aksitombol" href={`/admin/proyek/publik?id=${idKini}`}>
-                <Ikon ikon={ArsBingkaiFoto} ukuran={14} />
-                Halaman publik
-              </a>
+              <button type="button" className="jdp__aksitombol" onClick={() => setDataBuka(true)}>
+                <Ikon ikon={NotePencil} ukuran={14} />
+                Data proyek
+              </button>
               <DropdownMenu
                 trigger={
                   <button type="button" className="jdp__aksitombol jdp__aksilain" aria-label="Aksi lain proyek ini">
@@ -1969,6 +1979,22 @@ function Isi({ dibangunPada }: { dibangunPada?: string }) {
       </div>
 
       <Keterangan kabar={kabar} />
+      <DialogDataProyek
+        proyek={kini}
+        buka={dataBuka}
+        onTutup={() => setDataBuka(false)}
+        onBerubah={(baru) =>
+          setSemua((l) => {
+            const n = l?.map((p) => (p.id === baru.id ? baru : p)) ?? l;
+            if (n) tulisCache("proyek", n);
+            return n;
+          })
+        }
+        onTerhapus={() => {
+          titipToast({ judul: "Proyek dihapus", keterangan: kini.title, nada: "sukses" });
+          void navigate("/admin/proyek");
+        }}
+      />
       <DialogLingkup
         proyek={kini}
         paket={paket}

@@ -4,7 +4,7 @@ import type { Paket } from "./api";
  * Tier layanan — bentuk yang dirender seksi tarif di beranda.
  *
  * Angkanya SEKARANG DI DATABASE (tabel service_tiers, migrasi
- * 20260929000025), diurus pemilik dari /admin/paket, dan dibaca saat build
+ * 20260929000025), isinya di tabel service_tiers (halaman panelnya dibuang Okt 2026), dan dibaca saat build
  * lewat `listTiers()`. Isi awalnya enam paket dari dokumen strategi (§3.1
  * dan §3.2). Aturan kenaikannya tetap: setiap 3 proyek selesai pada satu
  * tier, naikkan 10–15% untuk klien baru — sekarang lewat panel, bukan kode.

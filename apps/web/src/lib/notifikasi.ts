@@ -181,7 +181,7 @@ function susunMilestone(proyek: Proyek[]): Omit<IsiNotifikasi, "notifikasi"> {
       ikon: "project" as const,
       judul: `${p.title} sampai tahap ${TAHAP_PROYEK[p.pipelineStage!]}`,
       detail: p.city ? `${jenis(p.category)} — ${p.city}` : jenis(p.category),
-      ke: `/admin/proyek/edit?id=${p.id}`,
+      ke: `/admin/proyek/satu?id=${p.id}`,
     }));
 
   const proyekAktif = proyek.filter((p) => p.pipelineStage && p.pipelineStage !== "pelunasan").length;

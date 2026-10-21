@@ -5,13 +5,14 @@ import { Dialog } from "../kit/Overlay";
 import { useToast } from "../kit/Toast";
 import { IsianPanjang, IsianTanggal, IsianTempel, KelompokIsian, PilihMenu } from "../kit/Formulir";
 import {
-  daftarTim, tambahTimProyek, ubahTimProyek, hapusTimProyek, bayarTahap, simpanProyek,
+  daftarTim, tambahTimProyek, ubahTimProyek, hapusTimProyek, bayarTahap, simpanProyek, hapusProyek,
   LABEL_PERAN, URUTAN_PERAN,
   type Proyek, type PenugasanTim, type AnggotaTim, type PeranTim, type TahapBayaran, type Paket,
 } from "../../lib/admin";
 import { formatRupiah, formatRupiahRingkas } from "../../lib/format";
 import { jagaFokusSesudahHapus } from "../../lib/fokus";
 import { PilihPaket } from "./pilihPaket";
+import { tanya } from "../../lib/tanya";
 
 /* =============================================================================
    Tim & bayaran proyek — kolom "TEAM DESIGN" dan "TEAM DESIGN FEE" di Excel
@@ -146,6 +147,198 @@ export function DialogLingkup({
             bantu={urutanSalah ? "Tenggat final tidak boleh sebelum preview." : undefined}
           />
         </div>
+      </div>
+    </Dialog>
+  );
+}
+
+/* --- Data proyek ---------------------------------------------------------------
+   Pengganti isian identitas yang dulu menumpang di Halaman Publik (halaman itu
+   dibuang bersama Konten Situs): nama, jenis, kota, alamat, tahun, luas, dan
+   WhatsApp klien — semuanya dipakai fitur kerja (kode proyek, rak ordner,
+   kartu bayar, bukti pembayaran). Hapus proyek juga pindah ke sini.
+
+   Yang dikirim hanya kolom yang BERUBAH. Tahun dan luas yang sudah terisi
+   tidak bisa dikosongkan (API melewati null untuk kolom itu) — jadi kalau
+   isiannya dikosongkan, kolomnya tidak dikirim, bukan dikirim sebagai null. */
+
+const JENIS_PROYEK: { nilai: string; label: string }[] = [
+  { nilai: "residential", label: "Hunian" },
+  { nilai: "commercial", label: "Komersial" },
+  { nilai: "coffeeshop", label: "Coffee shop" },
+  { nilai: "interior", label: "Interior" },
+  { nilai: "landscape", label: "Lanskap" },
+  { nilai: "masterplan", label: "Masterplan" },
+  { nilai: "renovation", label: "Renovasi" },
+];
+
+export function DialogDataProyek({
+  proyek,
+  buka,
+  onTutup,
+  onBerubah,
+  onTerhapus,
+}: {
+  proyek: Proyek;
+  buka: boolean;
+  onTutup: () => void;
+  onBerubah: (baru: Proyek) => void;
+  onTerhapus: () => void;
+}) {
+  const toast = useToast();
+  const kosong = { title: "", category: "", city: "", location: "", year: "", area: "", wa: "" };
+  const [f, setF] = useState(kosong);
+  const [menyimpan, setMenyimpan] = useState(false);
+
+  useEffect(() => {
+    if (!buka) return;
+    setF({
+      title: proyek.title ?? "",
+      category: proyek.category ?? "",
+      city: proyek.city ?? "",
+      location: proyek.location ?? "",
+      year: proyek.year ? String(proyek.year) : "",
+      area: proyek.areaSqm ? String(proyek.areaSqm) : "",
+      wa: proyek.clientWhatsapp ?? "",
+    });
+  }, [buka]);
+
+  const tahun = f.year ? Number(f.year) : null;
+  const tahunSalah = tahun !== null && (!/^\d{4}$/.test(f.year) || tahun < 1900 || tahun > 2100);
+  const luas = f.area ? Number(f.area.replace(",", ".")) : null;
+  const luasSalah = luas !== null && (!Number.isFinite(luas) || luas <= 0);
+  const judulKosong = !f.title.trim();
+
+  function ubahan(): Partial<Proyek> {
+    const p: Partial<Proyek> = {};
+    if (f.title.trim() !== proyek.title) p.title = f.title.trim();
+    if (f.category && f.category !== proyek.category) p.category = f.category;
+    if (f.city.trim() !== (proyek.city ?? "")) p.city = f.city.trim();
+    if (f.location.trim() !== (proyek.location ?? "")) p.location = f.location.trim();
+    if (tahun !== null && tahun !== proyek.year) p.year = tahun;
+    if (luas !== null && luas !== proyek.areaSqm) p.areaSqm = luas;
+    if (f.wa.trim() !== (proyek.clientWhatsapp ?? "")) p.clientWhatsapp = f.wa.trim() || null;
+    return p;
+  }
+
+  async function simpan() {
+    const p = ubahan();
+    if (!Object.keys(p).length) return onTutup();
+    setMenyimpan(true);
+    try {
+      await simpanProyek(proyek.id, p);
+      toast({ judul: "Data proyek disimpan", nada: "sukses" });
+      onBerubah({ ...proyek, ...p });
+      onTutup();
+    } catch (e) {
+      toast({ judul: "Gagal menyimpan", keterangan: (e as Error).message, nada: "gagal" });
+    } finally {
+      setMenyimpan(false);
+    }
+  }
+
+  async function hapus() {
+    // Dialog ini ditutup dulu: dua dialog modal bertumpuk saling berebut fokus.
+    onTutup();
+    const ya = await tanya({
+      judul: `Hapus ${proyek.title}?`,
+      isi: "Proyek beserta tagihan, pembayaran, biaya, tugas, dan dokumennya ikut terhapus. Tidak bisa dikembalikan.",
+      ya: "Ya, hapus",
+      bahaya: true,
+    });
+    if (!ya) return;
+    try {
+      await hapusProyek(proyek.id);
+      onTerhapus();
+    } catch (e) {
+      toast({ judul: "Gagal menghapus", keterangan: (e as Error).message, nada: "gagal" });
+    }
+  }
+
+  return (
+    <Dialog
+      open={buka}
+      onOpenChange={(o) => !o && onTutup()}
+      title="Data proyek"
+      footer={
+        <>
+          <Tombol ukuran="medium" jenis="bahaya" className="tim__hapus" onClick={() => void hapus()} disabled={menyimpan}>
+            Hapus proyek
+          </Tombol>
+          <Tombol ukuran="medium" jenis="ghost" onClick={onTutup} disabled={menyimpan}>
+            Batal
+          </Tombol>
+          <Tombol
+            ukuran="medium"
+            jenis="primary"
+            onClick={() => void simpan()}
+            disabled={menyimpan || judulKosong || tahunSalah || luasSalah}
+            memuat={menyimpan}
+          >
+            Simpan
+          </Tombol>
+        </>
+      }
+    >
+      <div className="sat__dialogisi">
+        <label className="k-isian">
+          <span className="k-isian__label">Nama proyek</span>
+          <KelompokIsian value={f.title} maxLength={160} onChange={(e) => setF({ ...f, title: e.currentTarget.value })} />
+          {judulKosong && <span className="k-isian__bantu">Nama proyek wajib diisi.</span>}
+        </label>
+        <div className="sat__dialogdua">
+          <div className="k-isian">
+            <span className="k-isian__label">Jenis</span>
+            <PilihMenu
+              label="Jenis proyek"
+              opsi={JENIS_PROYEK}
+              nilai={f.category}
+              onUbah={(v) => setF({ ...f, category: v })}
+            />
+          </div>
+          <label className="k-isian">
+            <span className="k-isian__label">Kota</span>
+            <KelompokIsian value={f.city} maxLength={80} onChange={(e) => setF({ ...f, city: e.currentTarget.value })} />
+          </label>
+        </div>
+        <label className="k-isian">
+          <span className="k-isian__label">Alamat lokasi</span>
+          <KelompokIsian value={f.location} maxLength={200} onChange={(e) => setF({ ...f, location: e.currentTarget.value })} />
+        </label>
+        <div className="sat__dialogdua">
+          <label className="k-isian">
+            <span className="k-isian__label">Tahun</span>
+            <KelompokIsian
+              value={f.year}
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="2026"
+              onChange={(e) => setF({ ...f, year: e.currentTarget.value.replace(/\D/g, "") })}
+            />
+            {tahunSalah && <span className="k-isian__bantu">Tulis tahun empat angka.</span>}
+          </label>
+          <label className="k-isian">
+            <span className="k-isian__label">Luas</span>
+            <KelompokIsian
+              value={f.area}
+              inputMode="decimal"
+              maxLength={8}
+              kanan="m²"
+              onChange={(e) => setF({ ...f, area: e.currentTarget.value.replace(/[^\d.,]/g, "") })}
+            />
+            {luasSalah && <span className="k-isian__bantu">Luas harus angka lebih dari nol.</span>}
+          </label>
+        </div>
+        <label className="k-isian">
+          <span className="k-isian__label">WhatsApp klien</span>
+          <KelompokIsian
+            value={f.wa}
+            inputMode="tel"
+            maxLength={24}
+            placeholder="0812…"
+            onChange={(e) => setF({ ...f, wa: e.currentTarget.value })}
+          />
+        </label>
       </div>
     </Dialog>
   );

@@ -115,7 +115,6 @@ export const NAV: NavItem[] = [
       // Keduanya mengikuti proyek yang dipilih di combobox topbar. Semua
       // Proyek sengaja TIDAK ikut — ia daftar, bukan tampilan satu proyek.
       { label: "Portal Klien", href: "/admin/proyek/klien", icon: "document", ikonKit: "ArsKunciRumah" },
-      { label: "Halaman Publik", href: "/admin/proyek/publik", icon: "globe", ikonKit: "ArsBingkaiFoto" },
     ],
   },
   /* Ketiganya satu menu, bukan tiga baris berjajar. Alasan berdampingannya
@@ -143,28 +142,10 @@ export const NAV: NavItem[] = [
       { label: "Bayaran Tim", href: "/admin/gaji/tim", icon: "team", ikonKit: "ArsAmplopGaji" },
     ],
   },
-  /* Orang di luar dan di dalam studio. "Tim & Freelancer" di sini (orangnya),
-     "Tim Studio" di Konten Situs (halaman yang dibaca pengunjung). */
+  /* Orang di luar dan di dalam studio. */
   { label: "Direktori", href: "/admin/direktori", icon: "directory", ikonKit: "ArsKartuIndeks", group: "Relasi" },
   { label: "Tim & Freelancer", href: "/admin/tim", icon: "team", ikonKit: "ArsSkalaManusia", group: "Relasi" },
   { label: "Testimoni", href: "/admin/testimoni", icon: "quote", ikonKit: "ArsAwanRevisi", group: "Relasi" },
-  { label: "Jurnal", href: "/admin/jurnal", icon: "document", ikonKit: "ArsBukuSketsa", group: "Konten Situs" },
-  /* Halaman yang isinya dibaca PENGUNJUNG, dikumpulkan jadi satu menu. */
-  {
-    label: "Situs Publik",
-    icon: "globe",
-    ikonKit: "ArsFasad",
-    group: "Konten Situs",
-    children: [
-      { label: "Paket Layanan", href: "/admin/paket", icon: "cash", ikonKit: "ArsLantai" },
-      { label: "Logo Klien", href: "/admin/halaman/klien", icon: "image", ikonKit: "ArsLencanaKlien" },
-      { label: "Tim Studio", href: "/admin/halaman/tim", icon: "team", ikonKit: "ArsTimStudio" },
-      { label: "Sebelum & Sesudah", href: "/admin/halaman/banding", icon: "camera", ikonKit: "ArsSebelumSesudah" },
-      { label: "Angka di FAQ", href: "/admin/halaman/faq", icon: "info", ikonKit: "ArsGarisUkur" },
-      { label: "Halaman Privasi", href: "/admin/halaman/privasi", icon: "lock", ikonKit: "ArsGembok" },
-      { label: "Identitas Studio", href: "/admin/halaman/identitas", icon: "building", ikonKit: "ArsStempel" },
-    ],
-  },
   /* Kategori Pengaturan: isinya baris DATAR, bukan submenu "Pengaturan" di
      dalam kategori "Pengaturan" — dua tingkat bernama sama untuk dua baris. */
   /* masterOnly: halamannya memang hanya untuk master (`RequireAuth masterOnly`
@@ -204,7 +185,6 @@ export const KODE_KELOMPOK: Record<string, string> = {
   Utama: "U",
   Pekerjaan: "P",
   Relasi: "R",
-  "Konten Situs": "K",
   Pengaturan: "G",
 };
 

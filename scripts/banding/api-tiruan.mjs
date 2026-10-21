@@ -1278,6 +1278,12 @@ function tulis(metode, path, badan) {
       delete x.coverImageKey;
       return { updated: true };
     }
+    if (up && metode === "DELETE") {
+      const i = proyekAdmin.findIndex((y) => y.id === up[1]);
+      if (i < 0) return { galat: 404 };
+      proyekAdmin.splice(i, 1);
+      return { deleted: true };
+    }
   }
   /* Catat Pengeluaran — bentuk badan dan galatnya sama dengan costs.create. */
   if (path === "/api/v1/admin/costs" && metode === "POST") {

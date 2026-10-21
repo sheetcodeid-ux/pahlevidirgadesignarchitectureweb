@@ -8,7 +8,7 @@ import { KolomGrafik, LabelYGrafik } from "../kit/Grafik";
 import { useUrutTabel, type Urutan } from "../kit/Tabel";
 import { Lencana } from "../kit/Lencana";
 import { Ikon } from "../kit/Ikon";
-import { CaretDown, CoinIn, CoinOut, Eye, Globe, NotePencil, Plus, UserCircle } from "../kit/ikon";
+import { CaretDown, CoinIn, CoinOut, Eye, NotePencil, Plus, UserCircle } from "../kit/ikon";
 import { ContextMenu } from "../kit/Overlay";
 import {
   daftarProyek,
@@ -471,14 +471,13 @@ function Isi() {
                           label: p.title,
                           items: [
                             { label: "Buka proyek", ikon: Eye, onSelect: () => navigate(`/admin/proyek/satu?id=${id}`) },
-                            { label: "Ubah data", ikon: NotePencil, onSelect: () => navigate(`/admin/proyek/edit?id=${id}`) },
+                            { label: "Ubah data", ikon: NotePencil, onSelect: () => navigate(`/admin/proyek/satu?id=${id}&ubah=1`) },
                             { label: "Terima pembayaran", ikon: CoinIn, onSelect: () => navigate(`/admin/keuangan/terima?proyek=${id}`) },
                           ],
                         },
                         {
                           items: [
                             { label: "Portal klien", ikon: UserCircle, onSelect: () => navigate(`/admin/proyek/klien?id=${id}`) },
-                            { label: "Halaman publik", ikon: Globe, onSelect: () => navigate(`/admin/proyek/publik?id=${id}`) },
                           ],
                         },
                       ]}
@@ -548,7 +547,7 @@ function Isi() {
                     <Ikon ikon={Eye} ukuran={14} />
                     Buka
                   </a>
-                  <a href={`/admin/proyek/edit?id=${idK}`}>
+                  <a href={`/admin/proyek/satu?id=${idK}&ubah=1`}>
                     <Ikon ikon={NotePencil} ukuran={14} />
                     Ubah
                   </a>

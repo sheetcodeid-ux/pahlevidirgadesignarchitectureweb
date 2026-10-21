@@ -4,9 +4,9 @@ import "../../../styles/proyekform-kit.css";
 ---
 
 <!-- Alamat lama untuk "ubah proyek". Tautan yang masih tersimpan di riwayat
-     browser, bookmark, atau tombol Ubah di Semua Proyek tidak boleh berakhir
-     di halaman kosong: ?id= dipakai sekali untuk menetapkan proyek aktif,
-     lalu halaman ini dialihkan ke halaman proyek pertama. -->
+     browser atau bookmark tidak boleh berakhir di halaman kosong: ?id= dipakai
+     sekali untuk menetapkan proyek aktif, lalu halaman ini dialihkan ke Satu
+     Proyek dengan dialog Data proyek terbuka. -->
 <KitLayout title="Membuka proyek" judul="Membuka proyek">
   <p class="pf__membuka" role="status">Membuka proyek…</p>
 </KitLayout>
@@ -25,6 +25,6 @@ import "../../../styles/proyekform-kit.css";
     if (!/^\/admin\/proyek\/edit\/?$/.test(location.pathname)) return;
     const id = new URLSearchParams(location.search).get("id");
     if (id) setProyekAktif(id);
-    navigate(HALAMAN_PROYEK[0]!, { history: "replace" });
+    navigate(`${HALAMAN_PROYEK[0]!}${id ? `?id=${encodeURIComponent(id)}&ubah=1` : ""}`, { history: "replace" });
   });
 </script>

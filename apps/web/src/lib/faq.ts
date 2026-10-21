@@ -4,7 +4,7 @@
  * tempat lain: dua salinan pasti menyimpang, dan itu bug yang sudah
  * memakan berjam-jam di stylesheet sistem.
  *
- * `angka` menyebut isian mana di /admin/halaman/faq yang mengisi
+ * `angka` menyebut kolom studio_settings mana yang mengisi
  * angkanya. Selama isian itu kosong, halaman menandai pertanyaannya dengan
  * lencana "FIGURES ON REQUEST" persis seperti rancangan yang di-ACC; begitu
  * terisi, lencananya padam dan angkanya ikut dicetak di bawah jawaban —
@@ -32,7 +32,7 @@ export interface Tanya {
   jawab: string;
   /**
    * Angkanya ditunggu dari pemilik, dan INI nama isian yang mengisinya di
-   * /admin/halaman/faq.
+   * studio_settings (halaman panelnya dibuang Okt 2026).
    *
    * Bukan sekadar `menunggu: boolean` seperti sebelumnya. Boolean cuma bisa
    * menyalakan lencana "FIGURES ON REQUEST"; ia tidak tahu isian mana yang

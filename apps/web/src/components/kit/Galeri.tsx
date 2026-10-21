@@ -41,8 +41,6 @@ const LABEL_HALAMAN = new Map<string, string>([
   ["/admin/proyek/satu", "Proyek — Satu Proyek"],
   ["/admin/proyek/baru", "Proyek — Proyek Baru"],
   ["/admin/proyek/edit", "Proyek — Ubah Proyek"],
-  ["/admin/jurnal/satu", "Jurnal — Detail Tulisan"],
-  ["/admin/paket/satu", "Situs Publik — Detail Paket"],
   ["/admin/notifikasi", "Notifikasi"],
 ]);
 const labelHalaman = (r: string) => LABEL_HALAMAN.get(r) ?? r.replace(/^\/admin\/?/, "").replace(/\//g, " / ") ?? r;

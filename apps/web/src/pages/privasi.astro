@@ -4,7 +4,7 @@ import { getSettings } from "../lib/api";
 const settings = await getSettings();
 
 /* Kelima keterangan ini datang dari database, diisi pemilik lewat
-   /admin/halaman/privasi. Sengaja TIDAK ada nilai bawaan: halaman privasi
+   studio_settings (halaman panelnya dibuang Okt 2026). Sengaja TIDAK ada nilai bawaan: halaman privasi
    yang salah berbunyi seperti janji hukum, jadi yang belum diisi ditandai apa
    adanya, bukan ditebak. */
 const badanUsaha = settings.legalEntity?.trim() || null;

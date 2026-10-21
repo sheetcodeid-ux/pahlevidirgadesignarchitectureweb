@@ -11,10 +11,22 @@ export default defineConfig({
   // peringkat apa pun yang sudah dikumpulkannya.
   redirects: {
     "/tentang": "/studio",
-    // Pindah ke kelompok Situs Publik di sidebar. Alamat lama tetap hidup:
-    // panel admin sering dibuka dari tab yang sudah dibookmark, dan halaman
-    // yang mendadak 404 terbaca sebagai fitur yang dihapus.
-    "/admin/klien": "/admin/halaman/klien",
+    // Kategori Konten Situs dan Halaman Publik dibuang dari panel (Okt 2026) —
+    // isi situs pemilik tidak lagi diurus dari sini. Alamat lamanya tetap
+    // hidup sebagai pengalihan: panel sering dibuka dari tab yang sudah
+    // dibookmark, dan halaman yang mendadak 404 terbaca sebagai panel rusak.
+    "/admin/klien": "/admin",
+    "/admin/jurnal": "/admin",
+    "/admin/jurnal/satu": "/admin",
+    "/admin/paket": "/admin",
+    "/admin/paket/satu": "/admin",
+    "/admin/halaman/klien": "/admin",
+    "/admin/halaman/tim": "/admin",
+    "/admin/halaman/banding": "/admin",
+    "/admin/halaman/faq": "/admin",
+    "/admin/halaman/privasi": "/admin",
+    "/admin/halaman/identitas": "/admin",
+    "/admin/proyek/publik": "/admin/proyek/satu",
   },
   site,
 

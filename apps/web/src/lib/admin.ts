@@ -506,37 +506,8 @@ export const ubahStatusPesan = (id: string, status: string) =>
 export type { Paket } from "./api";
 import type { Paket as PaketApi } from "./api";
 
-/** undefined = jangan diubah. Fee dalam juta. */
-export type PaketInput = Partial<Omit<PaketApi, "id" | "updatedAt">>;
-
 /** Semua paket, TERMASUK yang dihentikan — beranda cuma melihat yang aktif. */
 export const daftarPaket = () => panggil<PaketApi[]>("/admin/tiers");
-export const ambilPaket = (id: string) => panggil<PaketApi>(`/admin/tiers/${encodeURIComponent(id)}`);
-export const buatPaket = (p: PaketInput) =>
-  panggil<{ id: string }>("/admin/tiers", { method: "POST", body: JSON.stringify(p) });
-export const ubahPaket = (id: string, p: PaketInput) =>
-  panggil<{ updated: boolean }>(`/admin/tiers/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: JSON.stringify(p),
-  });
-export const hapusPaket = (id: string) =>
-  panggil<{ deleted: boolean }>(`/admin/tiers/${encodeURIComponent(id)}`, { method: "DELETE" });
-
-/**
- * Pemakaian tiap paket — dasar pengingat §3.3 ("tiap 3 proyek selesai pada
- * satu tier, harga naik 10–15% untuk klien baru"). Panel saja, tidak pernah
- * ke beranda.
- */
-export interface PemakaianPaket {
-  tierId: string;
-  priceChangedAt: string;
-  proyek: number;
-  selesai: number;
-  selesaiSejakHarga: number;
-  saatnyaNaik: boolean;
-}
-export const pemakaianPaket = () => panggil<PemakaianPaket[]>("/admin/tiers/usage");
-
 /** KPI dokumen strategi §8 — dihitung API, tidak pernah diketik. */
 export interface KpiStrategi {
   hariIni: string;
@@ -658,45 +629,6 @@ export interface StudioSettings {
   faqKunjungan?: string | null;
 }
 
-/** Satu orang di halaman /studio. Bukan Tim & Freelancer — itu urusan lain. */
-export interface OrangStudio {
-  id: string;
-  /** Boleh kosong: kartunya tetap tampil beserta peran, bertanda menunggu. */
-  name: string | null;
-  role: string;
-  bio: string | null;
-  photoUrl: string | null;
-  slotLabel: string;
-  sortOrder: number;
-}
-
-export interface OrangStudioInput {
-  name?: string | null;
-  role?: string;
-  bio?: string | null;
-  photoKey?: string | null;
-  slotLabel?: string;
-  sortOrder?: number;
-}
-
-export const daftarOrangStudio = () => panggil<OrangStudio[]>("/admin/studio-team");
-
-export const buatOrangStudio = (input: OrangStudioInput) =>
-  panggil<{ id: string }>("/admin/studio-team", { method: "POST", body: JSON.stringify(input) });
-
-export const ubahOrangStudio = (id: string, input: OrangStudioInput) =>
-  panggil<{ updated: boolean }>(`/admin/studio-team/${id}`, {
-    method: "PATCH", body: JSON.stringify(input),
-  });
-
-export const hapusOrangStudio = (id: string) =>
-  panggil<{ deleted: boolean }>(`/admin/studio-team/${id}`, { method: "DELETE" });
-
-/** Aset tingkat studio yang BUKAN logo: potret tim, foto sebelum/sesudah. */
-export const mintaUrlUnggahStudio = (contentType: string) =>
-  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
-    method: "POST", body: JSON.stringify({ scope: "studio", contentType }),
-  });
 
 /** Tiga zona Indonesia beserta singkatan yang dibaca manusia. */
 export const ZONA_WAKTU: { id: string; label: string; nama: string; utc: string }[] = [
@@ -1478,32 +1410,6 @@ export interface GambarProyek {
   sortOrder: number;
 }
 
-/** Foto galeri dan foto material tinggal di tabel yang sama, dibedakan kind. */
-export type JenisGambar = "galeri" | "material";
-
-export const daftarGambar = (projectId: string, kind: JenisGambar = "galeri") =>
-  panggil<GambarProyek[]>(`/admin/projects/${projectId}/images?kind=${kind}`);
-
-export const tambahGambar = (
-  projectId: string,
-  storageKey: string,
-  sortOrder: number,
-  kind: JenisGambar = "galeri",
-  /* Kosong kalau panel gagal membuat versi kecilnya — bukan galat: situsnya
-     jatuh kembali ke foto penuh, persis seperti sebelum kolomnya ada. */
-  thumbKey?: string | null,
-) =>
-  panggil<{ id: string }>(`/admin/projects/${projectId}/images`, {
-    method: "POST",
-    body: JSON.stringify({ storageKey, sortOrder, kind, thumbKey: thumbKey ?? null }),
-  });
-
-export const ubahGambar = (id: string, patch: { altText?: string | null; caption?: string | null; sortOrder?: number }) =>
-  panggil<{ updated: boolean }>(`/admin/images/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-
-export const hapusGambar = (id: string) =>
-  panggil<{ deleted: boolean }>(`/admin/images/${id}`, { method: "DELETE" });
-
 // --- Direktori (klien, kontraktor, supplier) ------------------------------
 
 export interface KontakDirektori {
@@ -1591,92 +1497,3 @@ export const ubahTestimoni = (id: string, patch: Partial<TestimoniAdmin>) =>
 export const hapusTestimoni = (id: string) =>
   panggil<{ deleted: boolean }>(`/admin/testimonials/${id}`, { method: "DELETE" });
 
-// --- Jurnal ---------------------------------------------------------------
-
-export type KategoriJurnal = "site" | "money" | "permit" | "build";
-
-export interface TulisanAdmin {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  body?: string | null;
-  category: KategoriJurnal;
-  readMinutes: number;
-  /** null = masih rencana. Tanggal di masa depan = terjadwal. */
-  publishedAt?: string | null;
-  /** Kunci R2 sampul (folder jurnal/); null = belum bersampul. */
-  coverKey?: string | null;
-  coverUrl?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** URL unggah sampul tulisan — folder jurnal/ di R2. */
-export const mintaUrlUnggahSampul = (contentType: string) =>
-  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
-    method: "POST",
-    body: JSON.stringify({ scope: "jurnal", contentType }),
-  });
-
-export const daftarTulisan = () => panggil<TulisanAdmin[]>("/admin/journal");
-
-export const ambilTulisan = (id: string) => panggil<TulisanAdmin>(`/admin/journal/${id}`);
-
-export const buatTulisan = (isi: Partial<TulisanAdmin>) =>
-  panggil<{ id: string }>("/admin/journal", { method: "POST", body: JSON.stringify(isi) });
-
-export const ubahTulisan = (id: string, patch: Partial<TulisanAdmin>) =>
-  panggil<{ updated: boolean }>(`/admin/journal/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-
-export const hapusTulisan = (id: string) =>
-  panggil<{ deleted: boolean }>(`/admin/journal/${id}`, { method: "DELETE" });
-
-/**
- * Judul jadi slug. Dijalankan di klien supaya pemilik melihat alamatnya
- * SEBELUM menyimpan — slug ikut ke URL yang dibagikan, dan mengubahnya
- * setelah tulisan tersebar berarti mematikan setiap tautan yang sudah ada.
- */
-export function slugDariJudul(judul: string): string {
-  return judul
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // buang aksen
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120)
-    .replace(/-+$/g, "");
-}
-
-// --- Logo klien -----------------------------------------------------------
-
-export interface KlienAdmin {
-  id: string;
-  name: string;
-  /** URL siap-pakai, dibalas server. Kosong = logonya belum diunggah. */
-  logoUrl?: string | null;
-  sortOrder: number;
-}
-
-/** Yang DIKIRIM saat menyimpan. logoKey null berarti "hapus logonya". */
-export interface KlienPatch {
-  name?: string;
-  logoKey?: string | null;
-  sortOrder?: number;
-}
-
-export const daftarKlien = () => panggil<KlienAdmin[]>("/admin/clients");
-
-export const buatKlien = (isi: KlienPatch) =>
-  panggil<{ id: string }>("/admin/clients", { method: "POST", body: JSON.stringify(isi) });
-
-export const ubahKlien = (id: string, patch: KlienPatch) =>
-  panggil<{ updated: boolean }>(`/admin/clients/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-
-export const hapusKlien = (id: string) =>
-  panggil<{ deleted: boolean }>(`/admin/clients/${id}`, { method: "DELETE" });
-
-export const mintaUrlUnggahLogoKlien = (contentType: string) =>
-  panggil<{ key: string; uploadUrl: string; expiresAt: string }>("/admin/uploads", {
-    method: "POST",
-    body: JSON.stringify({ scope: "klien", contentType }),
-  });

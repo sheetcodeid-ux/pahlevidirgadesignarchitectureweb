@@ -12,7 +12,7 @@ const tarif = kalimatTarif(kelompokkan(await listTiers()));
 const FAQ: Tanya[] = FAQ_MENTAH.map((t) => ({ ...t, jawab: t.jawab.replace("{{TARIF}}", tarif) }));
 
 /**
- * Angka yang sudah diisi pemilik di /admin/halaman/faq.
+ * Angka yang sudah diisi pemilik di studio_settings.
  *
  * Dipakai dua kali di bawah dan sengaja dihitung sekali: lencana "FIGURES ON
  * REQUEST" hanya menyala kalau angkanya BELUM ada, dan angkanya hanya dicetak
