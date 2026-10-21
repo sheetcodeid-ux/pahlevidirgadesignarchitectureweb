@@ -1872,4 +1872,105 @@ begin
 end;
 $$;
 
+-- Akses langganan & buku log audit (20261021000032) ------------------------
+-- Ketiga tabel hanya milik Worker API: anon maupun staf tidak menyentuhnya
+-- langsung. Log audit yang bisa diubah dari luar bukan log audit.
+do $$
+begin
+  perform pg_temp.jadi_anon();
+  begin
+    perform id from public.access_plans;
+    raise exception 'GAGAL: anon bisa membaca access_plans';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca access_plans';
+  end;
+  begin
+    perform feature from public.plan_features;
+    raise exception 'GAGAL: anon bisa membaca plan_features';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca plan_features';
+  end;
+  begin
+    perform id from public.audit_log;
+    raise exception 'GAGAL: anon bisa membaca audit_log';
+  exception when insufficient_privilege then
+    raise notice 'ok: anon ditolak membaca audit_log';
+  end;
+  reset role;
+end;
+$$;
+
+do $$
+begin
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  begin
+    insert into public.audit_log (action) values ('masuk');
+    raise exception 'GAGAL: staf bisa menulis audit_log langsung';
+  exception when insufficient_privilege then
+    raise notice 'ok: staf ditolak menulis audit_log';
+  end;
+  begin
+    delete from public.audit_log;
+    raise exception 'GAGAL: staf bisa menghapus audit_log';
+  exception when insufficient_privilege then
+    raise notice 'ok: staf ditolak menghapus audit_log';
+  end;
+  begin
+    update public.access_plans set price_month = 0;
+    raise exception 'GAGAL: staf bisa mengubah paket langganan langsung';
+  exception when insufficient_privilege then
+    raise notice 'ok: staf ditolak mengubah access_plans';
+  end;
+  reset role;
+end;
+$$;
+
+-- Pelanggan BUKAN staf: di tahap 1 datanya milik studio pemilik, jadi
+-- policy konten (is_staff) tidak boleh terbuka untuknya. Begitu juga staf
+-- yang dinonaktifkan.
+do $$
+declare terlihat int;
+begin
+  insert into auth.users (id, email, instance_id, aud, role)
+  values ('cccc0000-0000-4000-8000-000000000003', 'tes-pelanggan@example.com',
+          '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
+  insert into public.profiles (id, full_name, role, plan_id, access_until)
+  select 'cccc0000-0000-4000-8000-000000000003', 'Pelanggan Tes', 'pelanggan', id, current_date + 30
+  from public.access_plans where slug = 'pro';
+
+  perform pg_temp.jadi_user('cccc0000-0000-4000-8000-000000000003');
+  perform pg_temp.tolak(public.is_staff(), 'pelanggan tidak terhitung staf');
+  select count(*) into terlihat from public.projects where slug = 'tes-draft';
+  perform pg_temp.tolak(terlihat <> 0, 'pelanggan tidak bisa membaca proyek draf studio');
+  reset role;
+
+  update public.profiles set is_suspended = true where id = 'aaaa0000-0000-4000-8000-000000000001';
+  perform pg_temp.jadi_user('aaaa0000-0000-4000-8000-000000000001');
+  perform pg_temp.tolak(public.is_staff(), 'staf yang dinonaktifkan tidak terhitung staf');
+  reset role;
+  update public.profiles set is_suspended = false where id = 'aaaa0000-0000-4000-8000-000000000001';
+
+  begin
+    update public.profiles set role = 'tamu' where id = 'cccc0000-0000-4000-8000-000000000003';
+    raise exception 'GAGAL: peran di luar admin/editor/pelanggan diterima';
+  exception when check_violation then
+    raise notice 'ok: peran asing ditolak';
+  end;
+end;
+$$;
+
+-- Isi awal: tiga paket, fitur Pro mencakup seluruh fitur Studio.
+do $$
+declare kurang int;
+begin
+  perform pg_temp.tolak((select count(*) from public.access_plans) < 3, 'tiga paket awal ada');
+  select count(*) into kurang from public.plan_features s
+  join public.access_plans ps on ps.id = s.plan_id and ps.slug = 'studio'
+  where not exists (
+    select 1 from public.plan_features p join public.access_plans pp on pp.id = p.plan_id and pp.slug = 'pro'
+    where p.feature = s.feature);
+  perform pg_temp.tolak(kurang <> 0, 'paket Pro mencakup semua fitur Studio');
+end;
+$$;
+
 rollback;
